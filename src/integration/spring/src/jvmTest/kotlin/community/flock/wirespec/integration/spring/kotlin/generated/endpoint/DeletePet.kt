@@ -32,14 +32,20 @@ object DeletePet : Wirespec.Endpoint {
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
-      headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+      headers = mapOf(
+          "api_key" to request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty()
+        ),
       body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserializePath(request.path[1], typeOf<Long>()),
-      api_key = request.headers["api_key"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
+      api_key =
+        request.headers
+          .entries
+          .find { it.key.equals("api_key", ignoreCase = true) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>

@@ -19,7 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 
-interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageName, JavaTypeDefinitionEmitter {
+interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageName, JavaTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.emitImports()}
@@ -49,10 +49,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         |${Spacer(2)}}
         |
         |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-        |${Spacer(3)}switch (response.statusCode()) {
-        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
-        |${Spacer(4)}default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-        |${Spacer(3)}}
+        |${endpoint.emitFromResponse()}
         |${Spacer(2)}}
         |
         |${Spacer(2)}${emitHandleFunction(endpoint)}
@@ -82,7 +79,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
 
     private fun Reference?.emitGetType() = "Wirespec.getType(${emitRoot("Void")}.class, ${emitGetTypeRaw()})"
     private fun Reference?.emitGetTypeRaw() = when {
-        this?.isNullable?:false -> "java.util.Optional.class"
+        this?.isNullable ?: false -> "java.util.Optional.class"
         this is Reference.Iterable -> "java.util.List.class"
         else -> null
     }
@@ -109,18 +106,21 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
             ).joinToString()
         }) {\n${Spacer(3)}this(${
             listOfNotNull(
-                endpoint.pathParams.joinToString { emit(it.identifier) }.let { "new Path($it)" }.orNull() ?: "new Path()",
+                endpoint.pathParams.joinToString { emit(it.identifier) }.let { "new Path($it)" }
+                    .orNull() ?: "new Path()",
                 "Wirespec.Method.${endpoint.method.name}",
-                endpoint.queries.joinToString { emit(it.identifier) }.let { "new Queries($it)" }.orNull() ?: "new Queries()",
-                endpoint.headers.joinToString { emit(it.identifier) }.let { "new RequestHeaders($it)" }.orNull() ?: "new RequestHeaders()",
+                endpoint.queries.joinToString { emit(it.identifier) }.let { "new Queries($it)" }
+                    .orNull() ?: "new Queries()",
+                endpoint.headers.joinToString { emit(it.identifier) }.let { "new RequestHeaders($it)" }
+                    .orNull() ?: "new RequestHeaders()",
                 content?.let { "body" } ?: "null"
             ).joinToString()
         });\n${Spacer(2)}}"
 
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
-        endpoint.queries.joinToString(",\n"){ it.emitDeserializedParams("queries") }.orNull(),
-        endpoint.headers.joinToString(",\n"){ it.emitDeserializedParams("headers") }.orNull(),
+        endpoint.queries.joinToString(",\n") { it.emitDeserializedParams("queries", caseSensitive = true) }.orNull(),
+        endpoint.headers.joinToString(",\n") { it.emitDeserializedParams("headers", caseSensitive = false) }.orNull(),
         content?.let { """${Spacer(4)}serialization.deserializeBody(request.body(), ${it.reference.emitGetType()})""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
@@ -131,37 +131,59 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         |${Spacer(2)}${content.emit()} body
         |${Spacer}) implements Response${status.first()}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
         |${Spacer(2)}public Response${status.firstToUpper()}(${listOfNotNull(headers.joinToString { it.emit() }.orNull(), content?.let { "${it.emit()} body" }).joinToString()}) {
-        |${Spacer(3)}this(${status.fixStatus()}, ${headers.joinToString { emit(it.identifier) }.let { "new Headers($it)" }}, ${if (content == null) "null" else "body"});
+        |${Spacer(3)}this(${status.fixStatus()}, ${
+        headers.joinToString { emit(it.identifier) }.let { "new Headers($it)" }
+    }, ${if (content == null) "null" else "body"});
         |${Spacer(2)}}
         |${Spacer(1)}${headers.emitObject("Headers", "Wirespec.Response.Headers") { it.emit() }}
         |${Spacer}}
     """.trimMargin()
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
-        headers.joinToString(",\n") { """${Spacer(4)}serialization.deserializeParam(response.headers().getOrDefault("${it.identifier.value}", java.util.Collections.emptyList()), ${it.reference.emitGetType()})""" }.orNull(),
-        content?.let { """${Spacer(4)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
-    ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
+        headers.joinToString(",\n") {
+            """${Spacer(5)}serialization.<${it.reference.emit()}>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("${it.identifier.value}")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), ${it.reference.emitGetType()})"""
+        }.orNull(),
+        content?.let { """${Spacer(5)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
+    ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(4)}" }
 
-    private fun Endpoint.Response.emitSerialized() =
-        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.status(), ${if (headers.isNotEmpty()) "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else EMPTY_MAP}, ${
-            if (content != null) "serialization.serializeBody(r.body, ${content!!.reference.emitGetType()})"
-            else "null"}); }"""
+    private fun Endpoint.Response.emitSerialized(): String {
+        val body = if (content != null) {
+            "serialization.serializeBody(r.body, ${content!!.reference.emitGetType()})"
+        } else {
+            "null"
+        }
+        val headers =
+            if (headers.isNotEmpty()) {
+                "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})"
+            } else {
+                EMPTY_MAP
+            }
+
+        return """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.status(), $headers, $body); }"""
+    }
 
     private fun Endpoint.Response.emitDeserialized() =
-        """${Spacer(4)}case $status: return new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
+        """${Spacer(4)}case $status -> new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
 
 
-    private fun Field.emitSerializedParams(fields: String) =
+    private fun Field.emitSerializedParams(fields: String): String =
         """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.${if (fields == "queries") "queries" else "headers"}().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserializePath(request.path().get(${index}), ${value.reference.emitGetType()})"""
 
-    private fun Field.emitDeserializedParams(fields: String) =
-        """${Spacer(4)}serialization.deserializeParam(request.$fields().getOrDefault("${identifier.value}", java.util.Collections.emptyList()), ${reference.emitGetType()})"""
+    private fun Field.emitDeserializedParams(fields: String, caseSensitive: Boolean): String {
+        // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
+        val valuesFromField = if (caseSensitive) {
+            """request.$fields().getOrDefault("${identifier.value}", java.util.Collections.emptyList())"""
+        } else {
+            """request.$fields().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("${identifier.value}")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList())"""
+        }
+        return """${Spacer(4)}serialization.<${reference.emit()}>deserializeParam($valuesFromField, ${reference.emitGetType()})"""
+    }
 
     private fun Field.emitSerializedHeader() =
-        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(r.headers().${emit(identifier)}(), ${reference.emitGetType()}))"""
+        """java.util.Map.entry("${identifier.value}", serialization.<${reference.emit()}>serializeParam(r.headers().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "serialization.serializePath(request.path().${emit(identifier).firstToLower()}(), ${reference.emitGetType()})"
@@ -169,8 +191,6 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Void"
 
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${emit(identifier)}"
-
-    private val Reference.isIterable get() = this is Reference.Iterable
 
     private fun Definition.emitImports() = importReferences()
         .filter { identifier.value != it.value }
@@ -215,5 +235,30 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
 
     companion object {
         private const val EMPTY_MAP = "java.util.Collections.emptyMap()"
+    }
+
+    private fun Endpoint.emitFromResponse(): String {
+        val statusResponses = responses.distinctByStatus().filter { it.status.isStatusCode() }
+        return if (statusResponses.isEmpty()) {
+                """
+                 |${Spacer(3)}throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+                """.trimMargin()
+            } else if (statusResponses.size == 1) {
+                val response = statusResponses.first()
+                """
+                    |${Spacer(3)}if (response.statusCode() == ${response.status}) {
+                    |${Spacer(4)}return new Response${response.status.firstToUpper()}(${response.emitDeserializedParams()});
+                    |${Spacer(3)}} else {
+                    |${Spacer(4)}throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+                    |${Spacer(3)}}
+                """.trimMargin()
+            } else {
+                """
+                    |${Spacer(3)}return switch (response.statusCode()) {
+                    |${statusResponses.joinToString("\n") { it.emitDeserialized() }}
+                    |${Spacer(4)}default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+                    |${Spacer(3)}};
+                """.trimMargin()
+            }
     }
 }

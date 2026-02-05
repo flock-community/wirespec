@@ -29,7 +29,11 @@ kotlin {
     sourceSets {
         commonTest {
             dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.bundles.kotest)
                 implementation(project(":src:integration:wirespec"))
+                implementation(project(":src:compiler:test"))
+                implementation(project(":src:compiler:core"))
             }
         }
         jvmMain {
@@ -55,6 +59,7 @@ kotlin {
                 implementation(libs.spring.boot.test)
                 implementation(libs.kotlin.junit)
                 implementation(libs.kotlinx.io.core)
+                implementation(libs.wiremock)
             }
         }
     }

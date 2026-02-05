@@ -58,8 +58,8 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
-        serialization.deserializeParam(request.queries().getOrDefault("name", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.deserializeParam(request.queries().getOrDefault("status", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
+        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("name", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("status", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
     }
 
@@ -69,9 +69,10 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 405: return new Response405();
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      if (response.statusCode() == 405) {
+        return new Response405();
+      } else {
+        throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }
 

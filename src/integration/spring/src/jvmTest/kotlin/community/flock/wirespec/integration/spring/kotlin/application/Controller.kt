@@ -4,6 +4,7 @@ import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.Add
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.DeletePet
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.FindPetsByTags
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.GetPetById
+import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.RequestParrot
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UpdatePet
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UploadFile
 import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
@@ -17,7 +18,8 @@ class Controller(
     UpdatePet.Handler,
     DeletePet.Handler,
     FindPetsByTags.Handler,
-    UploadFile.Handler {
+    UploadFile.Handler,
+    RequestParrot.Handler {
 
     override suspend fun addPet(request: AddPet.Request): AddPet.Response<*> {
         service.create(request.body)
@@ -53,4 +55,12 @@ class Controller(
             ),
         )
     }
+
+    override suspend fun requestParrot(request: RequestParrot.Request): RequestParrot.Response<*> = RequestParrot.Response200(
+        body = request.body,
+        XRequestID = request.headers.XRequestID,
+        RanDoMHeADer = request.headers.RanDoMHeADer,
+        QueryParamParrot = request.queries.QueryParam,
+        RanDoMQueRYParrot = request.queries.RanDoMQueRY,
+    )
 }
