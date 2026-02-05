@@ -564,6 +564,31 @@ class AvroEmitterTest {
     }
 
     @Test
+    fun compileNegativeEnumTest() {
+        val result = CompileEnumTest.negativeCompiler {
+            AvroEmitter
+        }
+        val expect =
+            //language=json
+            """
+            |[
+            |  {
+            |    "type": "enum",
+            |    "name": "InnerErrorCode",
+            |    "symbols": [
+            |      "0",
+            |      "1",
+            |      "-1",
+            |      "2",
+            |      "-999"
+            |    ]
+            |  }
+            |]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
     fun compileRefinedTest() {
         val result = CompileRefinedTest.compiler {
             AvroEmitter
