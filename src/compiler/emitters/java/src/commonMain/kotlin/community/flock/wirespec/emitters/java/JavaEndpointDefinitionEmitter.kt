@@ -141,28 +141,33 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
         headers.joinToString(",\n") {
-            // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
             """${Spacer(5)}serialization.<${it.reference.emit()}>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("${it.identifier.value}")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), ${it.reference.emitGetType()})"""
         }.orNull(),
         content?.let { """${Spacer(5)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(4)}" }
 
-    private fun Endpoint.Response.emitSerialized() =
-        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.status(), ${if (headers.isNotEmpty()) "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else EMPTY_MAP}, ${
-            if (content != null) "serialization.serializeBody(r.body, ${content!!.reference.emitGetType()})"
-            else "null"
-        }); }"""
+    private fun Endpoint.Response.emitSerialized(): String {
+        val body = if (content != null) {
+            "serialization.serializeBody(r.body, ${content!!.reference.emitGetType()})"
+        } else {
+            "null"
+        }
+        val headers =
+            if (headers.isNotEmpty()) {
+                "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})"
+            } else {
+                EMPTY_MAP
+            }
+
+        return """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.status(), $headers, $body); }"""
+    }
 
     private fun Endpoint.Response.emitDeserialized() =
         """${Spacer(4)}case $status -> new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
 
 
     private fun Field.emitSerializedParams(fields: String): String =
-        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.${if (fields == "queries") "queries" else "headers"}().${
-            emit(
-                identifier
-            )
-        }(), ${reference.emitGetType()}))"""
+        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.${if (fields == "queries") "queries" else "headers"}().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserializePath(request.path().get(${index}), ${value.reference.emitGetType()})"""
@@ -178,11 +183,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
     }
 
     private fun Field.emitSerializedHeader() =
-        """java.util.Map.entry("${identifier.value}", serialization.<${reference.emit()}>serializeParam(r.headers().${
-            emit(
-                identifier
-            )
-        }(), ${reference.emitGetType()}))"""
+        """java.util.Map.entry("${identifier.value}", serialization.<${reference.emit()}>serializeParam(r.headers().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "serialization.serializePath(request.path().${emit(identifier).firstToLower()}(), ${reference.emitGetType()})"
@@ -199,23 +200,9 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         |${Spacer(2)}static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method().name(),
-        |${Spacer(4)}java.util.List.of(${
-        endpoint.path.joinToString {
-            when (it) {
-                is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier()
-            }
-        }
-    }),
-        |${Spacer(4)}${
-        if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${
-            endpoint.queries.joinToString { it.emitSerializedParams("queries") }
-        })" else EMPTY_MAP
-    },
-        |${Spacer(4)}${
-        if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${
-            endpoint.headers.joinToString { it.emitSerializedParams("headers") }
-        })" else EMPTY_MAP
-    },
+        |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
+        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
+        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
         |${Spacer(4)}${if (content != null) "serialization.serializeBody(request.body(), ${content?.reference?.emitGetType()})" else "null"}
         |${Spacer(3)});
         |${Spacer(2)}}
