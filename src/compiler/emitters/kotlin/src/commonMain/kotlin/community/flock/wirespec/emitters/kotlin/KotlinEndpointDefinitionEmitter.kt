@@ -20,10 +20,7 @@ import community.flock.wirespec.compiler.core.removeQuestionMark
 interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageName, KotlinTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
-        |${
-        endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }
-            .joinToString("\n") { it.trimStart() }
-    }
+        |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}
         |
         |object ${emit(endpoint.identifier)} : Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
@@ -49,10 +46,7 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
         |
         |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
         |${Spacer(2)}when (response.statusCode) {
-        |${
-        endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }
-            .joinToString("\n") { it.emitDeserialized() }
-    }
+        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
@@ -93,20 +87,12 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
         |${Spacer(2)}override val path = Path${endpoint.pathParams.joinToString { emit(it.identifier) }.brace()}
         |${Spacer(2)}override val method = Wirespec.Method.${endpoint.method.name}
         |${Spacer(2)}override val queries = Queries${endpoint.queries.joinToString { emit(it.identifier) }.brace()}
-        |${Spacer(2)}override val headers = Headers${
-        endpoint.headers.joinToString { emit(it.identifier) }.brace()
-    }${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
-        |${Spacer}}
+        |${Spacer(2)}override val headers = Headers${endpoint.headers.joinToString { emit(it.identifier) }.brace()}
+        |${if (content == null) "${Spacer(2)}override val body = Unit\n${Spacer}}" else "${Spacer}}"}
         |
         |${Spacer}fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
-        |${Spacer(3)}path = listOf(${
-        endpoint.path.joinToString {
-            when (it) {
-                is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier()
-            }
-        }
-    }),
+        |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
         |${Spacer(3)}queries = ${emitQueries(endpoint)},
         |${Spacer(3)}headers = ${endpoint.emitRequestHeaders()},
@@ -132,15 +118,16 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
         """.trimMargin()
     else EMPTY_MAP
 
-    fun Endpoint.Response.emit() = """
-        |${Spacer}data class Response$status(override val body: ${content.emit()}${
-        headers.joinToString(", ") { "val ${it.emit()}" }.let { if (it.isBlank()) "" else ", $it" }
-    }) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
-        |${Spacer(2)}override val status = ${status.fixStatus()}
-        |${Spacer(2)}override val headers = ResponseHeaders${headers.joinToString { emit(it.identifier) }.brace()}
-        |${headers.emitObject("ResponseHeaders", "Wirespec.Response.Headers", 2) { it.emit() }}
-        |${Spacer}}
-    """.trimMargin()
+    fun Endpoint.Response.emit(): String {
+        val responseHeaderFields = headers.joinToString(", ") { "val ${it.emit()}" }.let { if (it.isBlank()) "" else ", $it" }
+        return """
+            |${Spacer}data class Response$status(override val body: ${content.emit()}$responseHeaderFields) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
+            |${Spacer(2)}override val status = ${status.fixStatus()}
+            |${Spacer(2)}override val headers = ResponseHeaders${headers.joinToString { emit(it.identifier) }.brace()}
+            |${headers.emitObject("ResponseHeaders", "Wirespec.Response.Headers", 2) { it.emit() }}
+            |${Spacer}}
+        """.trimMargin()
+    }
 
     private fun Endpoint.Request.emitConstructor(endpoint: Endpoint) = listOfNotNull(
         endpoint.pathParams.joinToString { Spacer(2) + it.emit() }.orNull(),
