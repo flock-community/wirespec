@@ -1,5 +1,6 @@
 package community.flock.wirespec.java.serde;
 
+import community.flock.wirespec.java.Wirespec;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -11,6 +12,18 @@ import static org.junit.Assert.assertEquals;
 public class DefaultPathSerializationTest {
 
     private final DefaultPathSerialization serde = new DefaultPathSerialization() {};
+
+    record StringRefined(String value) implements Wirespec.Refined<String> {
+        @Override public String getValue() { return value; }
+    }
+
+    record LongRefined(Long value) implements Wirespec.Refined<Long> {
+        @Override public Long getValue() { return value; }
+    }
+
+    record DoubleRefined(Double value) implements Wirespec.Refined<Double> {
+        @Override public Double getValue() { return value; }
+    }
 
     @Test
     public void shouldSerializePrimitiveTypesCorrectly() {
@@ -24,6 +37,20 @@ public class DefaultPathSerializationTest {
         primitiveTestCases().forEach(testCase ->
                 assertEquals(testCase.value, serde.deserializePath(testCase.expected, testCase.type))
         );
+    }
+
+    @Test
+    public void shouldSerializeRefinedTypesCorrectly() {
+        assertEquals("test-uuid", serde.serializePath(new StringRefined("test-uuid"), StringRefined.class));
+        assertEquals("42", serde.serializePath(new LongRefined(42L), LongRefined.class));
+        assertEquals("3.14", serde.serializePath(new DoubleRefined(3.14), DoubleRefined.class));
+    }
+
+    @Test
+    public void shouldDeserializeRefinedTypesCorrectly() {
+        assertEquals(new StringRefined("test-uuid"), serde.deserializePath("test-uuid", StringRefined.class));
+        assertEquals(new LongRefined(42L), serde.deserializePath("42", LongRefined.class));
+        assertEquals(new DoubleRefined(3.14), serde.deserializePath("3.14", DoubleRefined.class));
     }
 
     record PrimitiveTestCase(
