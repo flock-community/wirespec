@@ -39,17 +39,15 @@ object EnumParser {
         }
     }
 
-    private fun TokenProvider.isEnumEntry() = token.type is WirespecType || token.type is Integer
-
     private fun TokenProvider.parseEnumTypeEntries() = parseToken {
-        when {
-            isEnumEntry() -> mutableListOf<String>().apply {
+        when (token.type) {
+            is WirespecType, is Integer -> mutableListOf<String>().apply {
                 add(token.value)
                 eatToken().bind()
                 while (token.type == Comma) {
                     eatToken().bind()
-                    when {
-                        isEnumEntry() -> add(token.value).also { eatToken().bind() }
+                    when (token.type) {
+                        is WirespecType, is Integer -> add(token.value).also { eatToken().bind() }
                         else -> raiseWrongToken<WirespecType>().bind()
                     }
                 }
