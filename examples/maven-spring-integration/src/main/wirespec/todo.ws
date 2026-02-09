@@ -11,6 +11,8 @@ type NumberRefinedLowerBound = Number(-1.0,_)
 type NumberRefinedUpperBound = Number(_,2.0)
 type NumberRefinedLowerAndUpper = Number(3.0,4.0)
 
+type TodoId = String
+
 endpoint GetTodos GET /todos ? {done: Boolean?} -> {
   200 -> Todo[]
   404 -> Error
@@ -21,28 +23,28 @@ endpoint CreateTodo POST TodoInput /todos -> {
   404 -> Error
 }
 
-endpoint GetTodoById GET /todos/{id: String} -> {
+endpoint GetTodoById GET /todos/{id: TodoId} -> {
   200 -> Todo
   404 -> Error
 }
 
-endpoint UpdateTodo PUT TodoInput /todos/{id: String} -> {
+endpoint UpdateTodo PUT TodoInput /todos/{id: TodoId} -> {
   200 -> Todo
   404 -> Error
 }
 
-endpoint DeleteTodo DELETE /todos/{id: String} -> {
+endpoint DeleteTodo DELETE /todos/{id: TodoId} -> {
   200 -> Todo
   404 -> Error
 }
 
-endpoint UploadAttachment POST Attachment /todos/{id: String}/upload -> {
+endpoint UploadAttachment POST Attachment /todos/{id: TodoId}/upload -> {
   201 -> Unit
   500 -> Error
 }
 
 type Todo {
-  id: String,
+  id: TodoId,
   name: String,
   done: Boolean
 }

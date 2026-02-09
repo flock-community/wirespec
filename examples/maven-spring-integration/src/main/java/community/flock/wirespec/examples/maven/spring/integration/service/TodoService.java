@@ -1,6 +1,7 @@
 package community.flock.wirespec.examples.maven.spring.integration.service;
 
 import community.flock.wirespec.generated.examples.spring.model.Todo;
+import community.flock.wirespec.generated.examples.spring.model.TodoId;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,9 +16,9 @@ public class TodoService {
     public Map<String, Object> files = new HashMap<>();
 
     public TodoService(){
-        store.add(new Todo(UUID.randomUUID().toString(), "First todo", false));
-        store.add(new Todo(UUID.randomUUID().toString(), "Second todo", false));
-        store.add(new Todo(UUID.randomUUID().toString(), "Third todo", false));
+        store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "First todo", false));
+        store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "Second todo", false));
+        store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "Third todo", false));
     }
 
     public CompletableFuture<Todo> create(Todo todo) {

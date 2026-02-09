@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileEndpointWithRefinedTypeTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
@@ -500,6 +501,146 @@ class TypeScriptEmitterTest {
         """.trimMargin()
 
         CompileRefinedTest.compiler { TypeScriptEmitter() } shouldBeRight ts
+    }
+
+    @Test
+    fun compileEndpointWithRefinedTypeTest() {
+        val ts = """
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TodoId = string;
+            |export const validateTodoId = (value: string): value is TodoId => {
+            |  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}/g.test(value);
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |import {type TodoId} from '../model'
+            |import {type TodoDto} from '../model'
+            |export namespace GetTodoById {
+            |  type Path = {
+            |    "id": TodoId,
+            |  }
+            |  type Queries = {}
+            |  type Headers = {}
+            |  export type Request = {
+            |    path: Path
+            |    method: "GET"
+            |    queries: Queries
+            |    headers: Headers
+            |    body: undefined
+            |  }
+            |  export type Response200 = {
+            |    status: 200
+            |    headers: {}
+            |    body: TodoDto
+            |  }
+            |  export type Response = Response200
+            |  export type RequestParams = {"id": TodoId}
+            |  export const request = (params: RequestParams): Request => ({
+            |    path: {"id": params["id"]},
+            |    method: "GET",
+            |    queries: {},
+            |    headers: {},
+            |    body: undefined,
+            |  })
+            |  export type Response200Params = {"body": TodoDto}
+            |  export const response200 = (params: Response200Params): Response200 => ({
+            |    status: 200,
+            |    headers: {},
+            |    body: params.body,
+            |  })
+            |  export type Handler = {
+            |    getTodoById: (request:Request) => Promise<Response>
+            |  }
+            |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
+            |    to: (it) => ({
+            |      method: "GET",
+            |      path: ["todos", serialization.serialize(it.path["id"])],
+            |      queries: {},
+            |      headers: {},
+            |      body: serialization.serialize(it.body)
+            |    }),
+            |    from: (it) => {
+            |      switch (it.status) {
+            |        case 200:
+            |          return {
+            |            status: 200,
+            |            headers: {},
+            |            body: serialization.deserialize<TodoDto>(it.body)
+            |          };
+            |        default:
+            |          throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
+            |      }
+            |    }
+            |  })
+            |  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
+            |    from: (it) => {
+            |      return {
+            |        method: "GET",
+            |        path: {
+            |          "id": serialization.deserialize(it.path[1])
+            |        },
+            |        queries: {
+            |  
+            |        },
+            |        headers: {
+            |  
+            |        },
+            |        body: serialization.deserialize(it.body)
+            |      }
+            |    },
+            |    to: (it) => {
+            |      switch (it.status) {
+            |        case 200:
+            |          return {
+            |            status: 200,
+            |            headers: {} as Record<string, string>,
+            |            body: serialization.serialize(it.body),
+            |          };
+            |      }
+            |    }
+            |  })
+            |  export const api = {
+            |    name: "getTodoById",
+            |    method: "GET",
+            |    path: "todos/:id",
+            |    server,
+            |    client
+            |  } as const
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |
+            |export type TodoDto = {
+            |  "description": string
+            |}
+            |
+            |import {Wirespec} from "./Wirespec"
+            |
+            |import {GetTodoById} from "./endpoint/GetTodoById"
+            |
+            |import {type TodoId} from "./model/TodoId"
+            |import {type TodoDto} from "./model/TodoDto"
+            |
+            |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
+            |
+            |export const client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
+            |  GetTodoById: async (params: {"id": TodoId}) => {
+            |    const req = GetTodoById.request(params)
+            |    const rawRequest = GetTodoById.client(serialization).to(req)
+            |    const rawResponse = await handler(rawRequest)
+            |    return GetTodoById.client(serialization).from(rawResponse)
+            |  },
+            |})
+            |
+            |export {TodoId} from './TodoId'
+            |export {TodoDto} from './TodoDto'
+            |export {GetTodoById} from './GetTodoById'
+        """.trimMargin()
+
+        CompileEndpointWithRefinedTypeTest.compiler { TypeScriptEmitter() } shouldBeRight ts
     }
 
     @Test

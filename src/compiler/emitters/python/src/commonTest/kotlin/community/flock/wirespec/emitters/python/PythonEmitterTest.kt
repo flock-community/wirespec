@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileEndpointWithRefinedTypeTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
@@ -726,6 +727,168 @@ class PythonEmitterTest {
             |
             """.trimMargin()
         result shouldBeRight expect
+    }
+
+    @Test
+    fun compileEndpointWithRefinedTypeTest() {
+        val python = """
+        |import re
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |@dataclass
+        |class TodoId(Wirespec.Refined):
+        |  value: str
+        |
+        |  def validate(self) -> bool:
+        |    return bool(re.match(r"/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}/g", self.value))
+        |
+        |  def __str__(self) -> str:
+        |    return str(self.value)
+        |
+        |import re
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |@dataclass
+        |class TodoDto:
+        |  description: 'str'
+        |
+        |
+        |import re
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |from ..model.TodoId import TodoId
+        |from ..model.TodoDto import TodoDto
+        |
+        |class GetTodoById (Wirespec.Endpoint):
+        |  @dataclass
+        |  class Request(Wirespec.Request[None]):
+        |    @dataclass
+        |    class Path (Wirespec.Request.Path):
+        |        id: TodoId
+        |    @dataclass
+        |    class Queries (Wirespec.Request.Queries): pass
+        |    @dataclass
+        |    class Headers (Wirespec.Request.Headers): pass
+        |
+        |    @property
+        |    def body(self) -> None:
+        |      return self._body
+        |
+        |    @property
+        |    def path(self) -> Path:
+        |      return self._path
+        |
+        |    @property
+        |    def queries(self) -> Queries:
+        |      return self._queries
+        |
+        |    @property
+        |    def headers(self) -> Headers:
+        |      return self._headers
+        |
+        |    _body:  None
+        |    _headers: Headers
+        |    _queries: Queries
+        |    _path: Path
+        |    method: Wirespec.Method = Wirespec.Method.GET
+        |
+        |    def __init__(self, id: TodoId):
+        |      self._path = GetTodoById.Request.Path(id = id)
+        |      self._queries =GetTodoById.Request.Queries()
+        |      self._headers = GetTodoById.Request.Headers()
+        |      self._body = None
+        |
+        |  @dataclass
+        |  class Response200(Wirespec.Response[TodoDto]):
+        |    @dataclass
+        |    class Headers (Wirespec.Response.Headers): pass
+        |
+        |    @property
+        |    def headers(self) -> Headers:
+        |      return self._headers
+        |
+        |    @property
+        |    def body(self) -> TodoDto:
+        |      return self._body
+        |
+        |    _body: TodoDto
+        |    _headers: Headers
+        |    status: int = 200
+        |
+        |    def __init__(self, body: TodoDto):
+        |      self._headers = GetTodoById.Response200.Headers()
+        |      self._body = body
+        |
+        |  Response = Response200
+        |
+        |  class Handler(Wirespec.Endpoint.Handler):
+        |    @abstractmethod
+        |    def GetTodoById(self, req: 'GetTodoById.Request') -> 'GetTodoById.Response': pass
+        |
+        |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+        |    @staticmethod
+        |    def to_raw_request(serialization: Wirespec.Serializer, request: 'GetTodoById.Request') -> Wirespec.RawRequest:
+        |      return Wirespec.RawRequest(
+        |        path = ["todos", str(request.path.id)],
+        |        method = request.method.value,
+        |        queries = {},
+        |        headers = {},
+        |        body = serialization.serialize(request.body, type(None)),
+        |      )
+        |
+        |    @staticmethod
+        |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'GetTodoById.Request':
+        |      return GetTodoById.Request(
+        |          id = serialization.deserialize(request.path[1], TodoId)
+        |    )
+        |
+        |    @staticmethod
+        |    def to_raw_response(serialization: Wirespec.Serializer, response: 'GetTodoById.Response') -> Wirespec.RawResponse:
+        |      match response:
+        |        case GetTodoById.Response200():
+        |          return Wirespec.RawResponse(
+        |            status_code = response.status,
+        |            headers = {},
+        |            body = serialization.serialize(response.body, TodoDto),
+        |          )
+        |        case _:
+        |          raise Exception("Cannot match response with status: " + str(response.status))
+        |    @staticmethod
+        |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'GetTodoById.Response':
+        |      match response.status_code:
+        |        case 200:
+        |          return GetTodoById.Response200(
+        |            body = serialization.deserialize(response.body, TodoDto),
+        |          )
+        |        case _:
+        |          raise Exception("Cannot match response with status: " + str(response.status_code))
+        |
+        |
+        |
+        |from . import model
+        |from . import endpoint
+        |from . import wirespec
+        |
+        """.trimMargin()
+        CompileEndpointWithRefinedTypeTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test

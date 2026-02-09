@@ -56,6 +56,36 @@ class DefaultPathSerializationTest {
     }
 
     @Test
+    fun `should serialize Wirespec Refined String correctly`() {
+        assertEquals("test-uuid", serde.serializePath(StringRefined("test-uuid"), typeOf<StringRefined>()))
+    }
+
+    @Test
+    fun `should serialize Wirespec Refined Long correctly`() {
+        assertEquals("42", serde.serializePath(LongRefined(42L), typeOf<LongRefined>()))
+    }
+
+    @Test
+    fun `should serialize Wirespec Refined Double correctly`() {
+        assertEquals("3.14", serde.serializePath(DoubleRefined(3.14), typeOf<DoubleRefined>()))
+    }
+
+    @Test
+    fun `should deserialize Wirespec Refined String correctly`() {
+        assertEquals(StringRefined("test-uuid"), serde.deserializePath<StringRefined>("test-uuid", typeOf<StringRefined>()))
+    }
+
+    @Test
+    fun `should deserialize Wirespec Refined Long correctly`() {
+        assertEquals(LongRefined(42L), serde.deserializePath<LongRefined>("42", typeOf<LongRefined>()))
+    }
+
+    @Test
+    fun `should deserialize Wirespec Refined Double correctly`() {
+        assertEquals(DoubleRefined(3.14), serde.deserializePath<DoubleRefined>("3.14", typeOf<DoubleRefined>()))
+    }
+
+    @Test
     fun `should throw exception when deserializing invalid enum value`() {
         assertFailsWith<IllegalStateException> {
             serde.deserializePath<StatusEnum>(
@@ -64,6 +94,10 @@ class DefaultPathSerializationTest {
             )
         }
     }
+
+    data class StringRefined(override val value: String) : Wirespec.Refined<String>
+    data class LongRefined(override val value: Long) : Wirespec.Refined<Long>
+    data class DoubleRefined(override val value: Double) : Wirespec.Refined<Double>
 
     enum class StatusEnum(override val label: String) : Wirespec.Enum {
         ACTIVE("active"),

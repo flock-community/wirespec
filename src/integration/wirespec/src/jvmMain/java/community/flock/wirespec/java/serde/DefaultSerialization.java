@@ -99,6 +99,11 @@ public interface DefaultSerialization {
         return type instanceof Class<?> && Optional.class.isAssignableFrom((Class<?>) type);
     }
 
+    static boolean isWirespecRefined(Class<?> clazz) {
+        return Arrays.stream(clazz.getInterfaces())
+                .anyMatch(iface -> iface == Wirespec.Refined.class);
+    }
+
     static boolean isWirespecEnum(Class<?> clazz) {
         return Arrays.stream(clazz.getInterfaces())
                 .anyMatch(iface -> iface == Wirespec.Enum.class);

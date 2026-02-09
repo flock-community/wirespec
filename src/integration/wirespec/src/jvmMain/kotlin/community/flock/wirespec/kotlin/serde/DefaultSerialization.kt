@@ -54,6 +54,8 @@ object DefaultSerialization {
 
     internal fun KType.isWirespecEnum() = (classifier as? KClass<*>)?.supertypes?.any { it.classifier == Wirespec.Enum::class } == true
 
+    internal fun KType.isWirespecRefined() = (classifier as? KClass<*>)?.supertypes?.any { it.classifier == Wirespec.Refined::class } == true
+
     internal fun KType.getListElementType() = arguments.single().type
         ?: error("Cannot determine list element type")
 

@@ -6,6 +6,7 @@ import community.flock.wirespec.generated.examples.spring.endpoint.GetTodoById;
 import community.flock.wirespec.generated.examples.spring.endpoint.GetTodos;
 import community.flock.wirespec.generated.examples.spring.endpoint.UploadAttachment;
 import community.flock.wirespec.generated.examples.spring.model.Todo;
+import community.flock.wirespec.generated.examples.spring.model.TodoId;
 import community.flock.wirespec.generated.examples.spring.endpoint.UpdateTodo;
 import org.springframework.web.bind.annotation.RestController;
 import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
@@ -30,7 +31,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
             case CreateTodo.Request req -> req.body();
         };
         var todo = new Todo(
-                UUID.randomUUID().toString(),
+                new TodoId(UUID.randomUUID().toString()),
                 todoInput.name(),
                 todoInput.done()
         );
@@ -49,7 +50,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
         var id = switch (request){
             case GetTodoById.Request req -> req.path().id();
         };
-        var res = new GetTodoById.Response200(service.store.get(parseInt(id)));
+        var res = new GetTodoById.Response200(service.store.get(parseInt(id.getValue())));
         return CompletableFuture.completedFuture(res);
     }
 
