@@ -557,33 +557,7 @@ class OpenAPIV3EmitterTest {
                 |    "schemas": {
                 |      "MyAwesomeEnum": {
                 |        "type": "string",
-                |        "enum": ["ONE", "Two", "THREE_MORE", "UnitedKingdom"]
-                |      }
-                |    }
-                |  }
-                |}
-            """.trimMargin()
-        result.shouldBeRight() shouldEqualJson expect
-    }
-
-    @Test
-    fun compileNegativeEnumTest() {
-        val result = CompileEnumTest.negativeCompiler { OpenAPIV3Emitter }
-        val expect =
-            // language=json
-            """
-                |{
-                |  "openapi": "3.0.0",
-                |  "info": {
-                |    "title": "Wirespec",
-                |    "version": "0.0.0"
-                |  },
-                |  "paths": {},
-                |  "components": {
-                |    "schemas": {
-                |      "InnerErrorCode": {
-                |        "type": "string",
-                |        "enum": ["0", "1", "-1", "2", "-999"]
+                |        "enum": ["ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"]
                 |      }
                 |    }
                 |  }

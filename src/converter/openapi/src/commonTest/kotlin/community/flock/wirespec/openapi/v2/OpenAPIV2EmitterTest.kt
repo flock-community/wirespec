@@ -416,33 +416,7 @@ class OpenAPIV2EmitterTest {
                 |  "definitions": {
                 |    "MyAwesomeEnum": {
                 |      "type": "string",
-                |      "enum": ["ONE", "Two", "THREE_MORE", "UnitedKingdom"]
-                |    }
-                |  }
-                |}
-            """.trimMargin()
-        result.shouldBeRight() shouldEqualJson expect
-    }
-
-    @Test
-    fun compileNegativeEnumTest() {
-        val result = CompileEnumTest.negativeCompiler { OpenAPIV2Emitter }
-        val expect =
-            // language=json
-            """
-                |{
-                |  "swagger": "2.0",
-                |  "info": {
-                |    "title": "Wirespec",
-                |    "version": "0.0.0"
-                |  },
-                |  "consumes": ["application/json"],
-                |  "produces": ["application/json"],
-                |  "paths": {},
-                |  "definitions": {
-                |    "InnerErrorCode": {
-                |      "type": "string",
-                |      "enum": ["0", "1", "-1", "2", "-999"]
+                |      "enum": ["ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"]
                 |    }
                 |  }
                 |}

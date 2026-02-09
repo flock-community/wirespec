@@ -555,32 +555,12 @@ class AvroEmitterTest {
             |      "ONE",
             |      "Two",
             |      "THREE_MORE",
-            |      "UnitedKingdom"
-            |    ]
-            |  }
-            |]
-            """.trimMargin()
-        result.shouldBeRight() shouldEqualJson expect
-    }
-
-    @Test
-    fun compileNegativeEnumTest() {
-        val result = CompileEnumTest.negativeCompiler {
-            AvroEmitter
-        }
-        val expect =
-            //language=json
-            """
-            |[
-            |  {
-            |    "type": "enum",
-            |    "name": "InnerErrorCode",
-            |    "symbols": [
-            |      "0",
-            |      "1",
+            |      "UnitedKingdom",
             |      "-1",
-            |      "2",
-            |      "-999"
+            |      "0",
+            |      "10",
+            |      "-999",
+            |      "88"
             |    ]
             |  }
             |]

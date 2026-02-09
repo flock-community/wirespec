@@ -343,7 +343,12 @@ class JavaEmitterTest {
             |  ONE("ONE"),
             |  Two("Two"),
             |  THREE_MORE("THREE_MORE"),
-            |  UnitedKingdom("UnitedKingdom");
+            |  UnitedKingdom("UnitedKingdom"),
+            |  __1("-1"),
+            |  _0("0"),
+            |  _10("10"),
+            |  __999("-999"),
+            |  _88("88");
             |  public final String label;
             |  MyAwesomeEnum(String label) {
             |    this.label = label;
@@ -361,38 +366,6 @@ class JavaEmitterTest {
         """.trimMargin()
 
         CompileEnumTest.compiler { JavaEmitter() } shouldBeRight java
-    }
-
-    @Test
-    fun compileNegativeEnumTest() {
-        val java = """
-            |package community.flock.wirespec.generated.model;
-            |
-            |import community.flock.wirespec.java.Wirespec;
-            |
-            |public enum InnerErrorCode implements Wirespec.Enum {
-            |  _0("0"),
-            |  _1("1"),
-            |  __1("-1"),
-            |  _2("2"),
-            |  __999("-999");
-            |  public final String label;
-            |  InnerErrorCode(String label) {
-            |    this.label = label;
-            |  }
-            |  @Override
-            |  public String toString() {
-            |    return label;
-            |  }
-            |  @Override
-            |  public String getLabel() {
-            |    return label;
-            |  }
-            |}
-            |
-        """.trimMargin()
-
-        CompileEnumTest.negativeCompiler { JavaEmitter() } shouldBeRight java
     }
 
     @Test

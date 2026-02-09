@@ -6,15 +6,7 @@ object CompileEnumTest {
         // language=ws
         """
         |enum MyAwesomeEnum {
-        |  ONE, Two, THREE_MORE, UnitedKingdom
-        |}
-        """.trimMargin().let(::compile)
-
-    val negativeCompiler =
-        // language=ws
-        """
-        |enum InnerErrorCode {
-        |  0, 1, -1, 2, -999
+        |  ONE, Two, THREE_MORE, UnitedKingdom, -1, 0, 10, -999, 88
         |}
         """.trimMargin().let(::compile)
 }
