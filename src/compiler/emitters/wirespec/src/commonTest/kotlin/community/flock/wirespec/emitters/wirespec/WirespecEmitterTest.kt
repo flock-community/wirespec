@@ -60,7 +60,7 @@ class WirespecEmitterTest {
     fun compileEnumTest() {
         val wirespec = """
             |enum MyAwesomeEnum {
-            |  ONE, Two, THREE_MORE, UnitedKingdom
+            |  ONE, Two, THREE_MORE, UnitedKingdom, -1, 0, 10, -999, 88
             |}
             |
         """.trimMargin()

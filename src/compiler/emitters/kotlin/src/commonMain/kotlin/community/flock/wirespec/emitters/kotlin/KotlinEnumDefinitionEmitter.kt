@@ -18,7 +18,10 @@ interface KotlinEnumDefinitionEmitter : EnumDefinitionEmitter, KotlinIdentifierE
         |
     """.trimMargin()
 
-    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
+    private fun String.sanitizeNegative() = if (startsWith("-")) "__${substring(1)}" else this
+
+    private fun String.sanitizeEnum() = sanitizeNegative()
+        .split("-", ", ", ".", " ", "//")
         .joinToString("_")
         .sanitizeFirstIsDigit()
 

@@ -557,7 +557,7 @@ class OpenAPIV3EmitterTest {
                 |    "schemas": {
                 |      "MyAwesomeEnum": {
                 |        "type": "string",
-                |        "enum": ["ONE", "Two", "THREE_MORE", "UnitedKingdom"]
+                |        "enum": ["ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"]
                 |      }
                 |    }
                 |  }

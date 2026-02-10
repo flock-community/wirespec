@@ -561,7 +561,12 @@ class AvroJavaEmitterTest {
             |  ONE("ONE"),
             |  Two("Two"),
             |  THREE_MORE("THREE_MORE"),
-            |  UnitedKingdom("UnitedKingdom");
+            |  UnitedKingdom("UnitedKingdom"),
+            |  __1("-1"),
+            |  _0("0"),
+            |  _10("10"),
+            |  __999("-999"),
+            |  _88("88");
             |  public final String label;
             |  MyAwesomeEnum(String label) {
             |    this.label = label;
@@ -583,7 +588,7 @@ class AvroJavaEmitterTest {
             |public class MyAwesomeEnumAvro {
             |
             |  public static final org.apache.avro.Schema SCHEMA = 
-            |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"MyAwesomeEnum\",\"symbols\":[\"ONE\",\"Two\",\"THREE_MORE\",\"UnitedKingdom\"]}");
+            |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"MyAwesomeEnum\",\"symbols\":[\"ONE\",\"Two\",\"THREE_MORE\",\"UnitedKingdom\",\"-1\",\"0\",\"10\",\"-999\",\"88\"]}");
             |  
             |  public static MyAwesomeEnum from(org.apache.avro.generic.GenericData.EnumSymbol record) {
             |    return MyAwesomeEnum.valueOf(record.toString());

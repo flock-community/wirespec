@@ -714,6 +714,11 @@ class PythonEmitterTest {
             |  Two = "Two"
             |  THREE_MORE = "THREE_MORE"
             |  UnitedKingdom = "UnitedKingdom"
+            |  __1 = "-1"
+            |  _0 = "0"
+            |  _10 = "10"
+            |  __999 = "-999"
+            |  _88 = "88"
             |
             |  @property
             |  def label(self) -> str:

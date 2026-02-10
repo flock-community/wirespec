@@ -19,6 +19,9 @@ interface PythonEnumDefinitionEmitter: EnumDefinitionEmitter, PythonIdentifierEm
         |${Spacer(2)}return self.value
     """.trimMargin()
 
-    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_")
+    private fun String.sanitizeNegative() = if (startsWith("-")) "__${substring(1)}" else this
+
+    private fun String.sanitizeEnum() = sanitizeNegative()
+        .split("-", ", ", ".", " ", "//").joinToString("_")
         .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
 }

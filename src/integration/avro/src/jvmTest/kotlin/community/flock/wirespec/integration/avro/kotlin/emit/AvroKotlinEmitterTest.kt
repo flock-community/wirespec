@@ -556,7 +556,12 @@ class AvroKotlinEmitterTest {
             |  ONE("ONE"),
             |  Two("Two"),
             |  THREE_MORE("THREE_MORE"),
-            |  UnitedKingdom("UnitedKingdom");
+            |  UnitedKingdom("UnitedKingdom"),
+            |  __1("-1"),
+            |  _0("0"),
+            |  _10("10"),
+            |  __999("-999"),
+            |  _88("88");
             |  override fun toString(): String {
             |    return label
             |  }
@@ -568,7 +573,7 @@ class AvroKotlinEmitterTest {
             |
             |object MyAwesomeEnumAvro {
             |
-            |  val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"MyAwesomeEnum\",\"symbols\":[\"ONE\",\"Two\",\"THREE_MORE\",\"UnitedKingdom\"]}")
+            |  val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"MyAwesomeEnum\",\"symbols\":[\"ONE\",\"Two\",\"THREE_MORE\",\"UnitedKingdom\",\"-1\",\"0\",\"10\",\"-999\",\"88\"]}")
             |
             |  @JvmStatic
             |  fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): MyAwesomeEnum {

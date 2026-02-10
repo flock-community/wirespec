@@ -555,7 +555,12 @@ class AvroEmitterTest {
             |      "ONE",
             |      "Two",
             |      "THREE_MORE",
-            |      "UnitedKingdom"
+            |      "UnitedKingdom",
+            |      "-1",
+            |      "0",
+            |      "10",
+            |      "-999",
+            |      "88"
             |    ]
             |  }
             |]
