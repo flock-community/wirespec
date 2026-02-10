@@ -58,26 +58,26 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
         java.util.List.of("user", "createWithList"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.body(), Wirespec.getType(User.class, java.util.List.class))
+        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(User.class, java.util.List.class)))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserializeBody(request.body(), Wirespec.getType(User.class, java.util.List.class))
+        request.body().<java.util.List<User>>map(body -> serialization.deserializeBody(body, Wirespec.getType(User.class, java.util.List.class))).orElse(null)
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(User.class, null))); }
-      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(User.class, null)))); }
+      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       if (response.statusCode() == 200) {
         return new Response200(
-          serialization.deserializeBody(response.body(), Wirespec.getType(User.class, null))
+          response.body().<User>map(body -> serialization.deserializeBody(body, Wirespec.getType(User.class, null))).orElse(null)
         );
       } else {
         throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

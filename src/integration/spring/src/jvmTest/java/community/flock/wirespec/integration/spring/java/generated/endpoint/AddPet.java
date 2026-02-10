@@ -60,19 +60,19 @@ public interface AddPet extends Wirespec.Endpoint {
         java.util.List.of("pet"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.body(), Wirespec.getType(Pet.class, null))
+        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Pet.class, null)))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserializeBody(request.body(), Wirespec.getType(Pet.class, null))
+        request.body().<Pet>map(body -> serialization.deserializeBody(body, Wirespec.getType(Pet.class, null))).orElse(null)
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null))); }
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class)))), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null)))); }
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -80,7 +80,7 @@ public interface AddPet extends Wirespec.Endpoint {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
           serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Rate-Limit")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
-          serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, null))
+          response.body().<Pet>map(body -> serialization.deserializeBody(body, Wirespec.getType(Pet.class, null))).orElse(null)
         );
         case 405 -> new Response405();
         default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

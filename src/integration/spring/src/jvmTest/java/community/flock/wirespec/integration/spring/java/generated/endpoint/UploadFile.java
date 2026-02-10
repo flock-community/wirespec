@@ -51,7 +51,7 @@ public interface UploadFile extends Wirespec.Endpoint {
         java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null)), "uploadImage"),
         java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.queries().additionalMetadata(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null))
+        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null)))
       );
     }
 
@@ -59,19 +59,19 @@ public interface UploadFile extends Wirespec.Endpoint {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
         serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.deserializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null))
+        request.body().<UploadFileRequestBody>map(body -> serialization.deserializeBody(body, Wirespec.getType(UploadFileRequestBody.class, null))).orElse(null)
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null)))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       if (response.statusCode() == 200) {
         return new Response200(
-          serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
+          response.body().<ApiResponse>map(body -> serialization.deserializeBody(body, Wirespec.getType(ApiResponse.class, null))).orElse(null)
         );
       } else {
         throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

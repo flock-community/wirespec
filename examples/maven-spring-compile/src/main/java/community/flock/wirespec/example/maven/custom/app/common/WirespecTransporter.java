@@ -39,7 +39,7 @@ public class WirespecTransporter {
         return completedFuture(new RawResponse(
                 res.getStatusCode().value(),
                 toMultiValueMap(res.getHeaders()),
-                res.getBody()
+                java.util.Optional.ofNullable(res.getBody())
         ));
     }
 }

@@ -60,7 +60,7 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
         java.util.List.of("pet", "findByTags"),
         java.util.Map.ofEntries(java.util.Map.entry("tags", serialization.serializeParam(request.queries().tags(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        null
+        java.util.Optional.empty()
       );
     }
 
@@ -71,15 +71,15 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, java.util.List.class))); }
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Pet.class, java.util.List.class)))); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-          serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, java.util.List.class))
+          response.body().<java.util.List<Pet>>map(body -> serialization.deserializeBody(body, Wirespec.getType(Pet.class, java.util.List.class))).orElse(null)
         );
         case 400 -> new Response400();
         default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

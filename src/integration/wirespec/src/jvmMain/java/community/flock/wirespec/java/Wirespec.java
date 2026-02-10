@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface Wirespec {
     interface Enum { String getLabel(); }
@@ -46,8 +47,8 @@ public interface Wirespec {
     interface ParamSerialization extends ParamSerializer, ParamDeserializer {}
     interface ParamSerializer { <T> List<String> serializeParam(T value, Type type); }
     interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
-    record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, byte[] body) {}
-    record RawResponse(int statusCode, Map<String, List<String>> headers, byte[] body) {}
+    record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, Optional<byte[]> body) {}
+    record RawResponse(int statusCode, Map<String, List<String>> headers, Optional<byte[]> body) {}
     static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         if(rawType != null) {
             return new ParameterizedType() {

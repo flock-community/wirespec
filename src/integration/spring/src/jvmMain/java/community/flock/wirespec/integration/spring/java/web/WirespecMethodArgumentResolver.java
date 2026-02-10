@@ -89,7 +89,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
                 UtilsKt.extractPath(request),
                 UtilsKt.extractQueries(request),
                 getHeadersMap(request),
-                objectMapper.writeValueAsBytes(map)
+                java.util.Optional.of(objectMapper.writeValueAsBytes(map))
             );
         }
 
@@ -98,7 +98,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
             UtilsKt.extractPath(request),
             UtilsKt.extractQueries(request),
             getHeadersMap(request),
-            request.getInputStream().readAllBytes()
+            java.util.Optional.of(request.getInputStream().readAllBytes())
         );
     }
 

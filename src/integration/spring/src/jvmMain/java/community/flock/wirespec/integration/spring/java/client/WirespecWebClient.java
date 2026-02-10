@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class WirespecWebClient {
@@ -65,9 +66,9 @@ public class WirespecWebClient {
                     }
                 }));
 
-        if (request.body() != null) {
+        if (request.body().isPresent()) {
             spec.contentType(MediaType.APPLICATION_JSON);
-            spec.bodyValue(request.body());
+            spec.bodyValue(request.body().get());
         }
 
         return spec.exchangeToMono(response ->
@@ -75,12 +76,12 @@ public class WirespecWebClient {
                                 .map(body -> new Wirespec.RawResponse(
                                         response.statusCode().value(),
                                         CollectionUtils.toMultiValueMap(response.headers().asHttpHeaders()),
-                                        body
+                                        Optional.of(body)
                                 ))
                                 .defaultIfEmpty(new Wirespec.RawResponse(
                                         response.statusCode().value(),
                                         CollectionUtils.toMultiValueMap(response.headers().asHttpHeaders()),
-                                        null
+                                        Optional.empty()
                                 ))
                 )
                 .onErrorResume(throwable -> {
@@ -88,7 +89,7 @@ public class WirespecWebClient {
                         return Mono.just(new Wirespec.RawResponse(
                                 e.getStatusCode().value(),
                                 CollectionUtils.toMultiValueMap(e.getHeaders()),
-                                e.getResponseBodyAsByteArray()
+                                Optional.of(e.getResponseBodyAsByteArray())
                         ));
                     } else {
                         return Mono.error(throwable);
