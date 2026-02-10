@@ -10,13 +10,14 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-public class Controller implements 
-    AddPet.Handler,
-    GetPetById.Handler,
-    UpdatePet.Handler,
-    DeletePet.Handler,
-    FindPetsByTags.Handler,
-    UploadFile.Handler {
+public class Controller implements
+        AddPet.Handler,
+        GetPetById.Handler,
+        UpdatePet.Handler,
+        DeletePet.Handler,
+        FindPetsByTags.Handler,
+        UploadFile.Handler,
+        RequestParrot.Handler {
 
     private final Service service;
 
@@ -67,13 +68,25 @@ public class Controller implements
         if (file.isEmpty()) throw new RuntimeException("Missing file");
         service.upload(file.get());
         return CompletableFuture.completedFuture(
-            new UploadFile.Response200(
-                new ApiResponse(
-                    Optional.of(200),
-                    Optional.of("type"),
-                    Optional.of(request.body().additionalMetadata().orElse("none"))
+                new UploadFile.Response200(
+                        new ApiResponse(
+                                Optional.of(200),
+                                Optional.of("type"),
+                                Optional.of(request.body().additionalMetadata().orElse("none"))
+                        )
                 )
-            )
+        );
+    }
+
+    @Override
+    public CompletableFuture<RequestParrot.Response<?>> requestParrot(RequestParrot.Request request) {
+        return CompletableFuture.completedFuture(
+                new RequestParrot.Response200(
+                        request.headers().XRequestID(),
+                        request.headers().RanDoMHeADer(),
+                        request.queries().QueryParam(),
+                        request.queries().RanDoMQueRY(),
+                        request.body())
         );
     }
 }

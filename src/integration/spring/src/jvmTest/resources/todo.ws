@@ -1,5 +1,17 @@
 type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
 
+endpoint RequestParrot POST RequestBodyParrot /api/parrot
+    ?{ `Query-Param`: String?, `RanDoMQueRY`: String? }
+    #{ `X-Request-ID`: String?, `RanDoMHeADer`: String? } -> {
+  200 -> RequestBodyParrot # {`X-Request-ID`: String?, `RanDoMHeADer`: String?, `Query-Param-Parrot`: String?, `RanDoMQueRYParrot`: String? }
+  500 -> Error
+}
+
+type RequestBodyParrot{
+   number: Integer,
+   string: String
+}
+
 type TodoDto {
     id: TodoId,
     name: String,

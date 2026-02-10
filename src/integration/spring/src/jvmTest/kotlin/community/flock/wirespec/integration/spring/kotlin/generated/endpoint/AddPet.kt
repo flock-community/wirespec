@@ -61,7 +61,9 @@ object AddPet : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = (mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))),
+        headers = mapOf(
+          "X-Rate-Limit" to response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) }.orEmpty()
+        ),
         body = serialization.serializeBody(response.body, typeOf<Pet>()),
       )
       is Response405 -> Wirespec.RawResponse(
@@ -75,7 +77,11 @@ object AddPet : Wirespec.Endpoint {
     when (response.statusCode) {
       200 -> Response200(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Pet>()),
-        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) }
+        XRateLimit =
+          response.headers
+            .entries
+            .find { it.key.equals("X-Rate-Limit", ignoreCase = true) }
+            ?.let { serialization.deserializeParam(it.value, typeOf<Int?>()) }
       )
       405 -> Response405(
         body = Unit,

@@ -159,10 +159,12 @@ class TypeScriptEmitterTest {
             |          "id": serialization.deserialize(it.path[1])
             |        },
             |        queries: {
-            |          "done": serialization.deserialize(it.queries["done"]),      "name": serialization.deserialize(it.queries["name"])
+            |          "done": serialization.deserialize(it.queries["done"]),
+            |          "name": serialization.deserialize(it.queries["name"])
             |        },
             |        headers: {
-            |          "token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]),      "Refresh-Token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refresh-token")?.[1])
+            |          "token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]),
+            |          "Refresh-Token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refresh-token")?.[1])
             |        },
             |        body: serialization.deserialize(it.body)
             |      }
@@ -172,19 +174,26 @@ class TypeScriptEmitterTest {
             |        case 200:
             |          return {
             |            status: 200,
-            |            headers: {} as Record<string, string>,
+            |            headers: {
+            |      
+            |            } as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |        case 201:
             |          return {
             |            status: 201,
-            |            headers: {"token": serialization.serialize(it.headers["token"]), "refreshToken": serialization.serialize(it.headers["refreshToken"])} as Record<string, string>,
+            |            headers: {
+            |              "token": serialization.serialize(it.headers["token"]),
+            |              "refreshToken": serialization.serialize(it.headers["refreshToken"])
+            |            } as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |        case 500:
             |          return {
             |            status: 500,
-            |            headers: {} as Record<string, string>,
+            |            headers: {
+            |      
+            |            } as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |      }
@@ -343,7 +352,9 @@ class TypeScriptEmitterTest {
             |        case 200:
             |          return {
             |            status: 200,
-            |            headers: {} as Record<string, string>,
+            |            headers: {
+            |      
+            |            } as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |      }
@@ -595,7 +606,9 @@ class TypeScriptEmitterTest {
             |        case 200:
             |          return {
             |            status: 200,
-            |            headers: {} as Record<string, string>,
+            |            headers: {
+            |      
+            |            } as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |      }

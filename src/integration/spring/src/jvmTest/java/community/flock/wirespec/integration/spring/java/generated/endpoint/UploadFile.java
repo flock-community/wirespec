@@ -58,7 +58,7 @@ public interface UploadFile extends Wirespec.Endpoint {
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
-        serialization.deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null))
       );
     }
@@ -69,11 +69,12 @@ public interface UploadFile extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 200: return new Response200(
-        serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
-      );
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      if (response.statusCode() == 200) {
+        return new Response200(
+          serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
+        );
+      } else {
+        throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }
 

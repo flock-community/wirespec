@@ -29,14 +29,20 @@ object FindPetsByStatus : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", "findByStatus"),
       method = request.method.name,
-      queries = (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) } ?: emptyList()))),
+      queries = mapOf(
+          "status" to request.queries.status?.let{ serialization.serializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) }.orEmpty()
+        ),
       headers = emptyMap(),
       body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      status = request.queries["status"]?.let{ serialization.deserializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) }
+      status =
+        request.queries
+          .entries
+          .find { it.key.equals("status", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<FindPetsByStatusParameterStatus?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>

@@ -1,0 +1,106 @@
+package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+import community.flock.wirespec.integration.spring.kotlin.generated.model.TodoDtoPatch
+import community.flock.wirespec.integration.spring.kotlin.generated.model.TodoDto
+import community.flock.wirespec.integration.spring.kotlin.generated.model.Error
+
+object PatchTodos : Wirespec.Endpoint {
+  data class Path(
+    val id: String,
+  ) : Wirespec.Path
+
+  data object Queries : Wirespec.Queries
+
+  data object Headers : Wirespec.Request.Headers
+
+  class Request(
+    id: String,
+    override val body: TodoDtoPatch,
+  ) : Wirespec.Request<TodoDtoPatch> {
+    override val path = Path(id)
+    override val method = Wirespec.Method.PATCH
+    override val queries = Queries
+    override val headers = Headers
+  }
+
+  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      path = listOf("api", "todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
+      method = request.method.name,
+      queries = emptyMap(),
+      headers = emptyMap(),
+      body = serialization.serializeBody(request.body, typeOf<TodoDtoPatch>()),
+    )
+
+  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    Request(
+      id = serialization.deserializePath(request.path[2], typeOf<String>()),
+      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<TodoDtoPatch>()),
+    )
+
+  sealed interface Response<T: Any> : Wirespec.Response<T>
+
+  sealed interface Response2XX<T: Any> : Response<T>
+  sealed interface Response5XX<T: Any> : Response<T>
+
+  sealed interface ResponseTodoDto : Response<TodoDto>
+  sealed interface ResponseError : Response<Error>
+
+  data class Response200(override val body: TodoDto) : Response2XX<TodoDto>, ResponseTodoDto {
+    override val status = 200
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
+  }
+
+  data class Response500(override val body: Error) : Response5XX<Error>, ResponseError {
+    override val status = 500
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
+  }
+
+  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+    when(response) {
+      is Response200 -> Wirespec.RawResponse(
+        statusCode = response.status,
+        headers = emptyMap(),
+        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
+      )
+      is Response500 -> Wirespec.RawResponse(
+        statusCode = response.status,
+        headers = emptyMap(),
+        body = serialization.serializeBody(response.body, typeOf<Error>()),
+      )
+    }
+
+  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+    when (response.statusCode) {
+      200 -> Response200(
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+      )
+      500 -> Response500(
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
+      )
+      else -> error("Cannot match response with status: ${response.statusCode}")
+    }
+
+  interface Handler: Wirespec.Handler {
+    @org.springframework.web.bind.annotation.PatchMapping("/api/todos/{id}")
+    suspend fun patchTodos(request: Request): Response<*>
+
+    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+      override val pathTemplate = "/api/todos/{id}"
+      override val method = "PATCH"
+      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
+        override fun to(response: Response<*>) = toResponse(serialization, response)
+      }
+      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+        override fun to(request: Request) = toRequest(serialization, request)
+        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
+      }
+    }
+  }
+}

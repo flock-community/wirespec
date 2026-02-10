@@ -57,7 +57,7 @@ public interface DeletePet extends Wirespec.Endpoint {
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
-        serialization.deserializeParam(request.headers().getOrDefault("api_key", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
+        serialization.<java.util.Optional<String>>deserializeParam(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("api_key")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
     }
 
@@ -67,9 +67,10 @@ public interface DeletePet extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 400: return new Response400();
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      if (response.statusCode() == 400) {
+        return new Response400();
+      } else {
+        throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }
 
