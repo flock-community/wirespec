@@ -606,7 +606,9 @@ class TypeScriptEmitterTest {
             |        case 200:
             |          return {
             |            status: 200,
-            |            headers: {} as Record<string, string>,
+            |            headers: {
+            |      
+            |            } as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |      }

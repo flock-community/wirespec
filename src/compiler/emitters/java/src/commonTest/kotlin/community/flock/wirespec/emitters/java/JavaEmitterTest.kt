@@ -707,11 +707,12 @@ class JavaEmitterTest {
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-            |      switch (response.statusCode()) {
-            |        case 200: return new Response200(
-            |        serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
-            |      );
-            |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+            |      if (response.statusCode() == 200) {
+            |        return new Response200(
+            |          serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
+            |        );
+            |      } else {
+            |        throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      }
             |    }
             |

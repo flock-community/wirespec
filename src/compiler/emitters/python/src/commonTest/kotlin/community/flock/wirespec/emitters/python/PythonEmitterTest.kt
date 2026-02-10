@@ -862,8 +862,12 @@ class PythonEmitterTest {
         |      return Wirespec.RawRequest(
         |        path = ["todos", str(request.path.id)],
         |        method = request.method.value,
-        |        queries = {},
-        |        headers = {},
+        |        queries = {
+        |
+        |        },
+        |        headers = {
+        |
+        |        },
         |        body = serialization.serialize(request.body, type(None)),
         |      )
         |
