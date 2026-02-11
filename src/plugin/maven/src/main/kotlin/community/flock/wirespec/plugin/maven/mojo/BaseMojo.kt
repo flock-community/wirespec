@@ -87,28 +87,26 @@ abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    private val emitter
-        get() = try {
-            val clazz = getClassLoader(project).loadClass(emitterClass)
-            val constructor = clazz.constructors.first()
-            val args: List<Any> = constructor.parameters
-                .map {
-                    when (it.type) {
-                        PackageName::class.java -> PackageName(packageName)
-                        EmitShared::class.java -> EmitShared(shared)
-                        else -> error("Cannot map constructor parameter")
-                    }
+    private fun emitter() = if (emitterClass != null) {
+        val clazz = getClassLoader(project).loadClass(emitterClass) ?: error("No class found: $emitterClass")
+        val constructor = clazz.constructors.first() ?: error("No constructor found: $emitterClass")
+        val args: List<Any> = constructor.parameters
+            .map {
+                when (it.type) {
+                    PackageName::class.java -> PackageName(packageName)
+                    EmitShared::class.java -> EmitShared(shared)
+                    else -> error("Cannot map constructor parameter: $emitterClass - ${it.type.simpleName}")
                 }
-            constructor.newInstance(*args.toTypedArray()) as Emitter
-        } catch (e: Exception) {
-            logger.debug(e.toString())
-            null
-        }
+            }
+        constructor.newInstance(*args.toTypedArray()) as Emitter
+    } else {
+        null
+    }
 
     val emitters
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-            .plus(emitter)
+            .plus(emitter())
             .mapNotNull { it }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguageOrEmitter()
