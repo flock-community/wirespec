@@ -2,9 +2,11 @@ package community.flock.wirespec.compiler.test
 
 object CompileChannelTest {
 
-    val compiler =
+    val source =
         // language=ws
         """
         |channel Queue -> String
-        """.trimMargin().let(::compile)
+        """.trimMargin()
+
+    val compiler = source.let(::compile)
 }

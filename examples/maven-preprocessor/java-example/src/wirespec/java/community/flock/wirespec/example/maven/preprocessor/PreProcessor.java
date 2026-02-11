@@ -41,7 +41,7 @@ public class PreProcessor implements Function<String, String> {
 
     private void patchOperationObject(JsonNode node) {
         if (node != null && node.isObject()) {
-            ((ObjectNode) node).put("operationId", node.get("operationId") + "Processed"); // Replace "newOperationId" with the desired value
+            ((ObjectNode) node).put("operationId", node.get("operationId").asText() + "Processed"); // Replace "newOperationId" with the desired value
         }
     }
 }

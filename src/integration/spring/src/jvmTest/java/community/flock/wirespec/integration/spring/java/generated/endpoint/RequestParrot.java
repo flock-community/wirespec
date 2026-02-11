@@ -37,7 +37,7 @@ public interface RequestParrot extends Wirespec.Endpoint {
   sealed interface ResponseError extends Response<Error> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     RequestBodyParrot body
   ) implements Response2XX<RequestBodyParrot>, ResponseRequestBodyParrot {
@@ -52,7 +52,7 @@ public interface RequestParrot extends Wirespec.Endpoint {
   ) implements Wirespec.Response.Headers {}
   }
   record Response500(
-    int status,
+    Integer status,
     Headers headers,
     Error body
   ) implements Response5XX<Error>, ResponseError {

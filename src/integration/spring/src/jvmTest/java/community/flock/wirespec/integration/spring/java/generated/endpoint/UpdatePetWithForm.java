@@ -33,7 +33,7 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record Response405(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements Response4XX<Void>, ResponseVoid {

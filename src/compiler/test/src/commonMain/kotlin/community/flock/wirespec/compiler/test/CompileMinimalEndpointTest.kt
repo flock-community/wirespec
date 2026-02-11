@@ -2,7 +2,7 @@ package community.flock.wirespec.compiler.test
 
 object CompileMinimalEndpointTest {
 
-    val compiler =
+    val source =
         // language=ws
         """
         |endpoint GetTodos GET /todos -> {
@@ -11,5 +11,7 @@ object CompileMinimalEndpointTest {
         |type TodoDto {
         |    description: String
         |}
-        """.trimMargin().let(::compile)
+        """.trimMargin()
+
+    val compiler = source.let(::compile)
 }

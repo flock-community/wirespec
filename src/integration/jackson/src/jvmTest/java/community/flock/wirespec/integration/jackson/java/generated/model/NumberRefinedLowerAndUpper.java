@@ -9,5 +9,5 @@ public record NumberRefinedLowerAndUpper (Double value) implements Wirespec.Refi
     return 3.0 < record.value && record.value < 4.0;
   }
   @Override
-  public Double getValue() { return value; }
+  public Double value() { return value; }
 }

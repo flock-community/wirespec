@@ -52,12 +52,12 @@ object Serialization :
     Wirespec.ParamSerialization by DefaultParamSerialization(),
     Wirespec.PathSerialization by DefaultPathSerialization() {
 
-    override fun <T> serializeBody(
+    override fun <T : Any> serializeBody(
         t: T,
         kType: KType,
     ): ByteArray = Json.encodeToString(Json.serializersModule.serializer(kType), t).toByteArray()
 
-    override fun <T> deserializeBody(
+    override fun <T : Any> deserializeBody(
         raw: ByteArray,
         kType: KType,
     ): T = when (kType) {

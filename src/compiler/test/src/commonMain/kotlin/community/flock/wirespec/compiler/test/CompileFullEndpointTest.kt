@@ -2,7 +2,7 @@ package community.flock.wirespec.compiler.test
 
 object CompileFullEndpointTest {
 
-    val compiler =
+    val source =
         // language=ws
         """
         |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String}
@@ -28,5 +28,7 @@ object CompileFullEndpointTest {
         |    code: Integer,
         |    description: String
         |}
-        """.trimMargin().let(::compile)
+        """.trimMargin()
+
+    val compiler = source.let(::compile)
 }

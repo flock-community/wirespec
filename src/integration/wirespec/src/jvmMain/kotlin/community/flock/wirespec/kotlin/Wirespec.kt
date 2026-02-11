@@ -1,12 +1,11 @@
 package community.flock.wirespec.kotlin
-
 import kotlin.reflect.KType
-
 object Wirespec {
     interface Enum {
         val label: String
     }
     interface Endpoint
+    interface Channel
     interface Refined<T : Any> {
         val value: T
     }
@@ -14,6 +13,79 @@ object Wirespec {
     interface Queries
     interface Headers
     interface Handler
+    enum class Method {
+        GET,
+        PUT,
+        POST,
+        DELETE,
+        OPTIONS,
+        HEAD,
+        PATCH,
+        TRACE,
+    } interface Request<T : Any> {
+        val path: Path
+        val method: Method
+        val queries: Queries
+        val headers: Headers
+        val body: T
+        interface Headers
+    }
+    interface Response<T : Any> {
+        val status: Int
+        val headers: Headers
+        val body: T
+        interface Headers
+    }
+    interface Serialization :
+        Serializer,
+        Deserializer
+    interface Serializer :
+        BodySerializer,
+        PathSerializer,
+        ParamSerializer
+    interface Deserializer :
+        BodyDeserializer,
+        PathDeserializer,
+        ParamDeserializer
+    interface BodySerialization :
+        BodySerializer,
+        BodyDeserializer
+    interface BodySerializer {
+        fun <T : Any> serializeBody(t: T, type: KType): ByteArray
+    }
+    interface BodyDeserializer {
+        fun <T : Any> deserializeBody(raw: ByteArray, type: KType): T
+    }
+    interface PathSerialization :
+        PathSerializer,
+        PathDeserializer
+    interface PathSerializer {
+        fun <T : Any> serializePath(t: T, type: KType): String
+    }
+    interface PathDeserializer {
+        fun <T : Any> deserializePath(raw: String, type: KType): T
+    }
+    interface ParamSerialization :
+        ParamSerializer,
+        ParamDeserializer
+    interface ParamSerializer {
+        fun <T : Any> serializeParam(value: T, type: KType): List<String>
+    }
+    interface ParamDeserializer {
+        fun <T : Any> deserializeParam(values: List<String>, type: KType): T
+    }
+    data class RawRequest(
+        val method: String,
+        val path: List<String>,
+        val queries: Map<String, List<String>>,
+        val headers: Map<String, List<String>>,
+        val body: ByteArray?,
+    )
+    data class RawResponse(
+        val statusCode: Int,
+        val headers: Map<String, List<String>>,
+        val body: ByteArray?,
+    )
     interface ServerEdge<Req : Request<*>, Res : Response<*>> {
         fun from(request: RawRequest): Req
         fun to(response: Res): RawResponse
@@ -32,59 +104,4 @@ object Wirespec {
         val method: String
         fun server(serialization: Serialization): ServerEdge<Req, Res>
     }
-    enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
-    interface Request<T : Any> {
-        val path: Path
-        val method: Method
-        val queries: Queries
-        val headers: Headers
-        val body: T
-        interface Headers : Wirespec.Headers
-    }
-    interface Response<T : Any> {
-        val status: Int
-        val headers: Headers
-        val body: T
-        interface Headers : Wirespec.Headers
-    }
-    interface Serialization :
-        Serializer,
-        Deserializer
-    interface Serializer :
-        BodySerializer,
-        PathSerializer,
-        ParamSerializer
-    interface Deserializer :
-        BodyDeserializer,
-        PathDeserializer,
-        ParamDeserializer
-    interface BodySerialization :
-        BodySerializer,
-        BodyDeserializer
-    interface BodySerializer {
-        fun <T> serializeBody(t: T, kType: KType): ByteArray
-    }
-    interface BodyDeserializer {
-        fun <T> deserializeBody(raw: ByteArray, kType: KType): T
-    }
-    interface PathSerialization :
-        PathSerializer,
-        PathDeserializer
-    interface PathSerializer {
-        fun <T> serializePath(t: T, kType: KType): String
-    }
-    interface PathDeserializer {
-        fun <T> deserializePath(raw: String, kType: KType): T
-    }
-    interface ParamSerialization :
-        ParamSerializer,
-        ParamDeserializer
-    interface ParamSerializer {
-        fun <T> serializeParam(value: T, kType: KType): List<String>
-    }
-    interface ParamDeserializer {
-        fun <T> deserializeParam(values: List<String>, kType: KType): T
-    }
-    data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: ByteArray?)
-    data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: ByteArray?)
 }

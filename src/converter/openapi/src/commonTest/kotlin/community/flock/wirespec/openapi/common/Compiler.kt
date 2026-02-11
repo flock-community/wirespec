@@ -7,8 +7,8 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.utils.NoLogger
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 
 internal fun compile(source: String) = object : CompilationContext, NoLogger {
-    override val emitters = nonEmptySetOf(KotlinEmitter())
+    override val emitters = nonEmptySetOf(KotlinIrEmitter())
 }.compile(nonEmptyListOf(ModuleContent(FileUri("SomeTestFileUri"), source)))

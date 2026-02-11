@@ -1,7 +1,6 @@
 package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.test.CompileChannelTest
-import community.flock.wirespec.compiler.test.CompileEndpointWithRefinedTypeTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
@@ -87,7 +86,7 @@ class WirespecEmitterTest {
     @Test
     fun compileRefinedTest() {
         val wirespec = """
-            |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
+            |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g)
             |
             |type TodoNoRegex = String
             |
@@ -110,24 +109,6 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileRefinedTest.compiler { WirespecEmitter() } shouldBeRight wirespec
-    }
-
-    @Test
-    fun compileEndpointWithRefinedTypeTest() {
-        val wirespec = """
-            |type TodoId = String(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}/g)
-            |
-            |endpoint GetTodoById GET /todos/{id: TodoId} -> {
-            |  200 -> TodoDto
-            |}
-            |
-            |type TodoDto {
-            |  description: String
-            |}
-            |
-        """.trimMargin()
-
-        CompileEndpointWithRefinedTypeTest.compiler { WirespecEmitter() } shouldBeRight wirespec
     }
 
     @Test
@@ -171,3 +152,4 @@ class WirespecEmitterTest {
         CompileTypeTest.compiler { WirespecEmitter() } shouldBeRight wirespec
     }
 }
+

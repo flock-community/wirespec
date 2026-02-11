@@ -30,7 +30,7 @@ public interface PlaceOrder extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     Order body
   ) implements Response2XX<Order>, ResponseOrder {
@@ -40,7 +40,7 @@ public interface PlaceOrder extends Wirespec.Endpoint {
     static class Headers implements Wirespec.Response.Headers {}
   }
   record Response405(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements Response4XX<Void>, ResponseVoid {

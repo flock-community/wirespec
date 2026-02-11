@@ -33,7 +33,7 @@ public interface GetTodos extends Wirespec.Endpoint {
   sealed interface ResponseError extends Response<Error> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     java.util.List<TodoDto> body
   ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
@@ -45,7 +45,7 @@ public interface GetTodos extends Wirespec.Endpoint {
   ) implements Wirespec.Response.Headers {}
   }
   record Response500(
-    int status,
+    Integer status,
     Headers headers,
     Error body
   ) implements Response5XX<Error>, ResponseError {
