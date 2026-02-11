@@ -62,30 +62,30 @@ public interface PatchTodos extends Wirespec.Endpoint {
         java.util.List.of("api", "todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.body(), Wirespec.getType(TodoDtoPatch.class, null))
+        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(TodoDtoPatch.class, null)))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(2), Wirespec.getType(String.class, null)),
-        serialization.deserializeBody(request.body(), Wirespec.getType(TodoDtoPatch.class, null))
+        request.body().<TodoDtoPatch>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDtoPatch.class, null))).orElse(null)
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null))); }
-      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Error.class, null))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
+      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Error.class, null)))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-          serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
+          response.body().<TodoDto>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDto.class, null))).orElse(null)
         );
         case 500 -> new Response500(
-          serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null))
+          response.body().<Error>map(body -> serialization.deserializeBody(body, Wirespec.getType(Error.class, null))).orElse(null)
         );
         default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       };
