@@ -12,6 +12,7 @@ data object TypeScriptShared : Shared {
         |${Spacer}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
         |${Spacer}export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
         |${Spacer}export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
+        |${Spacer}export type Transportation = (request: RawRequest) => Promise<RawResponse>
         |${Spacer}export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
         |${Spacer}export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
         |${Spacer}export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }

@@ -38,6 +38,7 @@ include(
     "src:converter:openapi",
     "src:integration:avro",
     "src:integration:jackson",
+    "src:integration:jvm",
     "src:integration:wirespec",
     "src:integration:spring",
     "src:tools:generator",
