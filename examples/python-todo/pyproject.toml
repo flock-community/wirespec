@@ -1,0 +1,26 @@
+[project]
+name = "python-todo"
+version = "1.0.0"
+description = "Example: How to use Wirespec with Python"
+authors = [
+    {name = "Flock Community", email = "info@flock.community"}
+]
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"

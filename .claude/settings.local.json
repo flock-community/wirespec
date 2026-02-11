@@ -1,0 +1,1 @@
+{"permissions": {"allow": ["Bash(./gradlew :src:integration:spring:jvmTest:*)", "Bash(./gradlew :src:integration:spring:clean :src:integration:spring:jvmTest:*)"]}}
