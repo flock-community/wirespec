@@ -22,7 +22,7 @@ export async function wirespecFetch(req, handler) {
     const contentType = res.headers.get('Content-Type');
     const contentLength = res.headers.get('Content-Length');
     return {
-        status: res.status,
+        statusCode: res.status,
         headers: {
             ...[...res.headers.entries()].reduce((acc, [key, value]) => ({...acc, [key]: value}), {}),
             'Content-Type': contentType,

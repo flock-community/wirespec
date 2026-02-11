@@ -10,9 +10,8 @@ interface KotlinRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, Kotl
     override fun emit(refined: Refined) = """
         |data class ${refined.identifier.sanitize()}(override val value: ${refined.reference.emit()}): Wirespec.Refined<${refined.reference.emit()}> {
         |${Spacer}override fun toString() = value.toString()
+        |${Spacer}override fun validate() = ${refined.emitValidator()}
         |}
-        |
-        |fun ${refined.identifier.value}.validate() = ${refined.emitValidator()}
         |
     """.trimMargin()
 

@@ -28,7 +28,7 @@ public interface GetInventory extends Wirespec.Endpoint {
   sealed interface ResponseMapStringInteger extends Response<java.util.Map<String, Integer>> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     java.util.Map<String, Integer> body
   ) implements Response2XX<java.util.Map<String, Integer>>, ResponseMapStringInteger {

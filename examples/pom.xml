@@ -14,7 +14,7 @@
 
     <modules>
         <module>maven-preprocessor</module>
-        <module>maven-spring-avro</module>
+        <!--        <module>maven-spring-avro</module>-->
         <module>maven-spring-compile</module>
         <module>maven-spring-convert</module>
         <module>maven-spring-custom</module>
