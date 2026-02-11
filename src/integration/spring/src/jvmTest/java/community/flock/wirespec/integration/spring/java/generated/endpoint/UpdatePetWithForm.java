@@ -51,7 +51,7 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
         java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
         java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("status", serialization.serializeParam(request.queries().status(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        null
+        java.util.Optional.empty()
       );
     }
 
@@ -64,7 +64,7 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 

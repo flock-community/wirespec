@@ -50,7 +50,7 @@ public interface DeletePet extends Wirespec.Endpoint {
         java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers().api_key(), Wirespec.getType(String.class, java.util.Optional.class)))),
-        null
+        java.util.Optional.empty()
       );
     }
 
@@ -62,7 +62,7 @@ public interface DeletePet extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 

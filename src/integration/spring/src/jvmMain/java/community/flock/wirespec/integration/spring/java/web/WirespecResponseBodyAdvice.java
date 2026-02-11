@@ -68,10 +68,7 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
                 for (Map.Entry<String, List<String>> entry : rawResponse.headers().entrySet()) {
                     response.getHeaders().put(entry.getKey(), entry.getValue());
                 }
-                if (rawResponse.body() != null) {
-                    return new RawJsonBody(rawResponse.body());
-                }
-                return null;
+                return rawResponse.body().map(RawJsonBody::new).orElse(null);
             }
             return body;
         } catch (Exception e) {

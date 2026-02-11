@@ -58,26 +58,26 @@ public interface PlaceOrder extends Wirespec.Endpoint {
         java.util.List.of("store", "order"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.body(), Wirespec.getType(Order.class, null))
+        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Order.class, null)))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserializeBody(request.body(), Wirespec.getType(Order.class, null))
+        request.body().<Order>map(body -> serialization.deserializeBody(body, Wirespec.getType(Order.class, null))).orElse(null)
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Order.class, null))); }
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Order.class, null)))); }
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-          serialization.deserializeBody(response.body(), Wirespec.getType(Order.class, null))
+          response.body().<Order>map(body -> serialization.deserializeBody(body, Wirespec.getType(Order.class, null))).orElse(null)
         );
         case 405 -> new Response405();
         default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

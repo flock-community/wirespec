@@ -58,7 +58,7 @@ public interface DeleteOrder extends Wirespec.Endpoint {
         java.util.List.of("store", "order", serialization.serializePath(request.path().orderId(), Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        null
+        java.util.Optional.empty()
       );
     }
 
@@ -69,8 +69,8 @@ public interface DeleteOrder extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
-      if (response instanceof Response404 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response404 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 

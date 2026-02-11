@@ -121,7 +121,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString(",\n") { it.emitDeserializedParams("queries", caseSensitive = true) }.orNull(),
         endpoint.headers.joinToString(",\n") { it.emitDeserializedParams("headers", caseSensitive = false) }.orNull(),
-        content?.let { """${Spacer(4)}serialization.deserializeBody(request.body(), ${it.reference.emitGetType()})""" }
+        content?.let { """${Spacer(4)}request.body().<${it.emit()}>map(body -> serialization.deserializeBody(body, ${it.reference.emitGetType()})).orElse(null)""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     fun Endpoint.Response.emit() = """
@@ -143,14 +143,14 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         headers.joinToString(",\n") {
             """${Spacer(5)}serialization.<${it.reference.emit()}>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("${it.identifier.value}")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), ${it.reference.emitGetType()})"""
         }.orNull(),
-        content?.let { """${Spacer(5)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
+        content?.let { """${Spacer(5)}response.body().<${it.emit()}>map(body -> serialization.deserializeBody(body, ${it.reference.emitGetType()})).orElse(null)""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(4)}" }
 
     private fun Endpoint.Response.emitSerialized(): String {
         val body = if (content != null) {
-            "serialization.serializeBody(r.body, ${content!!.reference.emitGetType()})"
+            "java.util.Optional.ofNullable(serialization.serializeBody(r.body, ${content!!.reference.emitGetType()}))"
         } else {
-            "null"
+            "java.util.Optional.empty()"
         }
         val headers =
             if (headers.isNotEmpty()) {
@@ -203,7 +203,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
         |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
-        |${Spacer(4)}${if (content != null) "serialization.serializeBody(request.body(), ${content?.reference?.emitGetType()})" else "null"}
+        |${Spacer(4)}${if (content != null) "java.util.Optional.ofNullable(serialization.serializeBody(request.body(), ${content?.reference?.emitGetType()}))" else "java.util.Optional.empty()"}
         |${Spacer(3)});
         |${Spacer(2)}}
         |
