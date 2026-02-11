@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 
-@SpringBootTest(classes = [Application::class])
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = [Application::class])
 @AutoConfigureMockMvc
 class RestControllerIntegrationTest {
 
