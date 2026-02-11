@@ -200,7 +200,7 @@ private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequest
 }
 
 private fun OpenAPIV2Model.parseResponseBody(): List<Definition> = flatMapResponses {
-    val schema = resolve(response as OpenAPIV2Response).schema
+    val schema = resolve(response as OpenAPIV2ResponseOrReference).schema
     val name = (operation as OpenAPIV2Operation).toName() ?: (path.toName() + method.name)
     when (schema) {
         is OpenAPIV2Schema -> when (schema.type) {
