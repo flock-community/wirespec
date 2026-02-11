@@ -38,13 +38,13 @@ const handleFetch =
     const mock = (
       method: Wirespec.Method,
       path: string[],
-      status: number,
-      headers: Record<string, string>,
+      statusCode: number,
+      headers: Record<string, string[]>,
       body: any,
     ) => ({
       method,
       path,
-      status,
+      statusCode,
       headers,
       body,
     });
@@ -53,7 +53,7 @@ const handleFetch =
         "GET",
         ["api", "todos"],
         200,
-        { "x-total": "2" },
+        { xTotal: ["2"] },
         JSON.stringify(body),
       ),
       mock("GET", ["api", "todos", "1"], 200, {}, JSON.stringify(body[0])),
@@ -95,7 +95,7 @@ const api: Api = {
 test("testGetTodos", async () => {
   const request: GetTodos.Request = GetTodos.request({ done: undefined });
   const response = await api.getTodos(request);
-  const expected = { status: 200, headers: { "X-Total": "2" }, body };
+  const expected = { status: 200, headers: { xTotal: 2 }, body };
 
   expect(response).toEqual(expected);
 });

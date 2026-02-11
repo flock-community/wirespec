@@ -34,7 +34,7 @@ public interface PatchTodos extends Wirespec.Endpoint {
   sealed interface ResponseError extends Response<Error> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     TodoDto body
   ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -44,7 +44,7 @@ public interface PatchTodos extends Wirespec.Endpoint {
     static class Headers implements Wirespec.Response.Headers {}
   }
   record Response500(
-    int status,
+    Integer status,
     Headers headers,
     Error body
   ) implements Response5XX<Error>, ResponseError {

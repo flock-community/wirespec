@@ -1,19 +1,8 @@
-#!/usr/bin/env bash
+./gradlew :src:plugin:cli:linkReleaseExecutableMacosArm64
 
-dir="$(dirname -- "$0")"
-root="$dir/.."
+src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe compile -i ./verify/todo.ws -o ./verify/python/gen -l python --shared --ir
 
-output="$root/types/out"
-
-archSpecific=""
-if [[ $(uname -m) = arm64 ]]; then
-  archSpecific="--platform=linux/amd64"
-fi
-
-# Compare output directories for same content and copy one of them to a 'combined' dir.
-# Then that combined directory serves as a single input for the type checkers.
-diff -qr "$output/docker/" "$output/jvm/" --exclude='*.jar' && \
-diff -qr "$output/jvm/" "$output/native/" --exclude='*.jar' && \
-diff -qr "$output/native/" "$output/node/" --exclude='*.jar' && \
-cp -r "$output/jvm/." "$output/combined" && \
-docker run $archSpecific --rm -it -v ./types/:/app/types wirespec /app/compileTypes.sh
+docker run --rm \
+  -v "$(pwd)/verify/python/gen:/app/gen" \
+  python:3.12-slim \
+  bash -c "pip install mypy && cd /app && python -m mypy --disable-error-code=empty-body gen/"

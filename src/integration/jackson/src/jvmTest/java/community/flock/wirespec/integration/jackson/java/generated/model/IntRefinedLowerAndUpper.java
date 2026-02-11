@@ -9,5 +9,5 @@ public record IntRefinedLowerAndUpper (Long value) implements Wirespec.Refined<L
     return 3 < record.value && record.value < 4;
   }
   @Override
-  public Long getValue() { return value; }
+  public Long value() { return value; }
 }

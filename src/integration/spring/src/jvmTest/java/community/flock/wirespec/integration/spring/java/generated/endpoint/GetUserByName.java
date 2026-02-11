@@ -32,7 +32,7 @@ public interface GetUserByName extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     User body
   ) implements Response2XX<User>, ResponseUser {
@@ -42,7 +42,7 @@ public interface GetUserByName extends Wirespec.Endpoint {
     static class Headers implements Wirespec.Response.Headers {}
   }
   record Response400(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements Response4XX<Void>, ResponseVoid {
@@ -52,7 +52,7 @@ public interface GetUserByName extends Wirespec.Endpoint {
     static class Headers implements Wirespec.Response.Headers {}
   }
   record Response404(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements Response4XX<Void>, ResponseVoid {

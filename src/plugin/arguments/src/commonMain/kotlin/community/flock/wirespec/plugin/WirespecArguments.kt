@@ -20,6 +20,7 @@ sealed interface WirespecArguments {
     val logger: Logger
     val shared: Boolean
     val strict: Boolean
+    val ir: Boolean
 }
 
 data class CompilerArguments(
@@ -31,6 +32,7 @@ data class CompilerArguments(
     override val logger: Logger,
     override val shared: Boolean,
     override val strict: Boolean,
+    override val ir: Boolean,
 ) : WirespecArguments
 
 data class ConverterArguments(
@@ -43,6 +45,7 @@ data class ConverterArguments(
     override val logger: Logger,
     override val shared: Boolean,
     override val strict: Boolean,
+    override val ir: Boolean,
 ) : WirespecArguments
 
 fun PackageName?.toDirectory() = this?.value

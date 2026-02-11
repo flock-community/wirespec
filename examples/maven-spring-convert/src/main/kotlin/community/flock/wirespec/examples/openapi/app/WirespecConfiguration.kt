@@ -21,21 +21,21 @@ class Serialization(private val objectMapper: ObjectMapper) :
 
     private val defaultParamSerialization = DefaultParamSerialization()
 
-    override fun <T> serializeBody(t: T, kType: KType): ByteArray = objectMapper.writeValueAsBytes(t)
+    override fun <T: Any> serializeBody(t: T, kType: KType): ByteArray = objectMapper.writeValueAsBytes(t)
 
-    override fun <T> deserializeBody(raw: ByteArray, kType: KType): T = objectMapper
+    override fun <T: Any> deserializeBody(raw: ByteArray, kType: KType): T = objectMapper
         .constructType(kType.javaType)
         .let { objectMapper.readValue(raw, it) }
 
-    override fun <T> serializePath(t: T, kType: KType): String = objectMapper.writeValueAsString(t)
+    override fun <T: Any> serializePath(t: T, kType: KType): String = objectMapper.writeValueAsString(t)
 
-    override fun <T> deserializePath(raw: String, kType: KType): T = objectMapper
+    override fun <T: Any> deserializePath(raw: String, kType: KType): T = objectMapper
         .constructType(kType.javaType)
         .let { objectMapper.readValue(raw, it) }
 
-    override fun <T> serializeParam(value: T, kType: KType): List<String> =
+    override fun <T: Any> serializeParam(value: T, kType: KType): List<String> =
         defaultParamSerialization.serializeParam(value, kType)
 
-    override fun <T> deserializeParam(values: List<String>, kType: KType): T =
+    override fun <T: Any> deserializeParam(values: List<String>, kType: KType): T =
         defaultParamSerialization.deserializeParam(values, kType)
 }

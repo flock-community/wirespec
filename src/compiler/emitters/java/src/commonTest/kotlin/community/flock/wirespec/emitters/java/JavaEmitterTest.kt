@@ -81,7 +81,7 @@ class JavaEmitterTest {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
             |  }
             |  @Override
-            |  public String getValue() { return value; }
+            |  public String value() { return value; }
             |}
             |
             """.trimMargin(),
@@ -171,7 +171,7 @@ class JavaEmitterTest {
             |  sealed interface ResponseError extends Response<Error> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -181,7 +181,7 @@ class JavaEmitterTest {
             |    static class Headers implements Wirespec.Response.Headers {}
             |  }
             |  record Response201(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -194,7 +194,7 @@ class JavaEmitterTest {
             |  ) implements Wirespec.Response.Headers {}
             |  }
             |  record Response500(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    Error body
             |  ) implements Response5XX<Error>, ResponseError {
@@ -401,7 +401,7 @@ class JavaEmitterTest {
             |  sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    java.util.List<TodoDto> body
             |  ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
@@ -489,7 +489,7 @@ class JavaEmitterTest {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
             |  }
             |  @Override
-            |  public String getValue() { return value; }
+            |  public String value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -503,7 +503,7 @@ class JavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public String getValue() { return value; }
+            |  public String value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -517,7 +517,7 @@ class JavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -531,7 +531,7 @@ class JavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -545,7 +545,7 @@ class JavaEmitterTest {
             |    return 0 < record.value;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -559,7 +559,7 @@ class JavaEmitterTest {
             |    return 3 < record.value && record.value < 1;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -573,7 +573,7 @@ class JavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -587,7 +587,7 @@ class JavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -601,7 +601,7 @@ class JavaEmitterTest {
             |    return record.value < 0.5;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.model;
@@ -615,7 +615,7 @@ class JavaEmitterTest {
             |    return -0.2 < record.value && record.value < 0.5;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
         """.trimMargin()
@@ -637,7 +637,7 @@ class JavaEmitterTest {
             |    return java.util.regex.Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}").matcher(record.value).find();
             |  }
             |  @Override
-            |  public String getValue() { return value; }
+            |  public String value() { return value; }
             |}
             |
             |package community.flock.wirespec.generated.endpoint;
@@ -673,7 +673,7 @@ class JavaEmitterTest {
             |  sealed interface ResponseTodoDto extends Response<TodoDto> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
