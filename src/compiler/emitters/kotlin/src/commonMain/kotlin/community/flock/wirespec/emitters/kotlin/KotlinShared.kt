@@ -45,14 +45,14 @@ data object KotlinShared : Shared {
         |${Spacer}interface Serializer : BodySerializer, PathSerializer, ParamSerializer
         |${Spacer}interface Deserializer : BodyDeserializer, PathDeserializer, ParamDeserializer
         |${Spacer}interface BodySerialization : BodySerializer, BodyDeserializer
-        |${Spacer}interface BodySerializer { fun <T> serializeBody(t: T, kType: KType): ByteArray }
-        |${Spacer}interface BodyDeserializer { fun <T> deserializeBody(raw: ByteArray, kType: KType): T }
+        |${Spacer}interface BodySerializer { fun <T : Any> serializeBody(t: T, kType: KType): ByteArray }
+        |${Spacer}interface BodyDeserializer { fun <T : Any> deserializeBody(raw: ByteArray, kType: KType): T }
         |${Spacer}interface PathSerialization : PathSerializer, PathDeserializer
-        |${Spacer}interface PathSerializer { fun <T> serializePath(t: T, kType: KType): String }
-        |${Spacer}interface PathDeserializer { fun <T> deserializePath(raw: String, kType: KType): T }
+        |${Spacer}interface PathSerializer { fun <T : Any> serializePath(t: T, kType: KType): String }
+        |${Spacer}interface PathDeserializer { fun <T : Any> deserializePath(raw: String, kType: KType): T }
         |${Spacer}interface ParamSerialization : ParamSerializer, ParamDeserializer
-        |${Spacer}interface ParamSerializer { fun <T> serializeParam(value: T, kType: KType): List<String> }
-        |${Spacer}interface ParamDeserializer { fun <T> deserializeParam(values: List<String>, kType: KType): T }
+        |${Spacer}interface ParamSerializer { fun <T : Any> serializeParam(value: T, kType: KType): List<String> }
+        |${Spacer}interface ParamDeserializer { fun <T : Any> deserializeParam(values: List<String>, kType: KType): T }
         |${Spacer}data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: ByteArray?) 
         |${Spacer}data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: ByteArray?)
         |}

@@ -11,14 +11,14 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
 
 class DefaultPathSerialization : Wirespec.PathSerialization {
-    override fun <T> serializePath(t: T, kType: KType): String = when (t) {
+    override fun <T : Any> serializePath(t: T, kType: KType): String = when (t) {
         is Wirespec.Refined<*> -> t.value.toString()
         is Wirespec.Enum -> t.label
         else -> t.toString()
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> deserializePath(value: String, kType: KType): T = when {
+    override fun <T : Any> deserializePath(value: String, kType: KType): T = when {
         kType.isWirespecRefined() -> {
             val kClass = kType.classifierAsKClass()
             val constructor = kClass.primaryConstructor
