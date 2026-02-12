@@ -9,5 +9,5 @@ public record NumberRefinedNoBound (Double value) implements Wirespec.Refined<Do
     return true;
   }
   @Override
-  public Double getValue() { return value; }
+  public Double value() { return value; }
 }

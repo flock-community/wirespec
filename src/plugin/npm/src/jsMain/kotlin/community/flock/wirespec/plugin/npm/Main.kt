@@ -24,14 +24,10 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroEmitter
 import community.flock.wirespec.converter.avro.AvroParser
-import community.flock.wirespec.emitters.java.JavaEmitter
-import community.flock.wirespec.emitters.java.JavaShared
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinShared
-import community.flock.wirespec.emitters.python.PythonEmitter
-import community.flock.wirespec.emitters.python.PythonShared
-import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptShared
+import community.flock.wirespec.emitters.java.JavaIrEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.emitters.python.PythonIrEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.generator.generate
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
@@ -45,10 +41,10 @@ import kotlinx.serialization.json.Json
 
 @JsExport
 enum class Shared(val source: String) {
-    KOTLIN(KotlinShared.source),
-    JAVA(JavaShared.source),
-    TYPESCRIPT(TypeScriptShared.source),
-    PYTHON(PythonShared.source),
+    KOTLIN(KotlinIrEmitter().shared.source),
+    JAVA(JavaIrEmitter().shared.source),
+    TYPESCRIPT(TypeScriptIrEmitter().shared.source),
+    PYTHON(PythonIrEmitter().shared.source),
 }
 
 @JsExport
@@ -100,23 +96,23 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
     val ast = wsAst.consume()
     return when (emitter) {
         Emitters.WIRESPEC -> ast.modules.flatMap { WirespecEmitter().emit(it, noLogger) }
-        Emitters.TYPESCRIPT -> ast.modules.flatMap { TypeScriptEmitter().emit(it, noLogger) }
+        Emitters.TYPESCRIPT -> ast.modules.flatMap { TypeScriptIrEmitter().emit(it, noLogger) }
         Emitters.JAVA -> ast.modules.flatMap {
-            JavaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
+            JavaIrEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
                 it,
                 noLogger,
             )
         }
 
         Emitters.KOTLIN -> ast.modules.flatMap {
-            KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
+            KotlinIrEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
                 it,
                 noLogger,
             )
         }
 
         Emitters.PYTHON -> ast.modules.flatMap {
-            PythonEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
+            PythonIrEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
                 it,
                 noLogger,
             )

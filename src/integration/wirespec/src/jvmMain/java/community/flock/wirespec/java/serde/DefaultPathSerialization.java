@@ -13,10 +13,10 @@ public interface DefaultPathSerialization extends Wirespec.PathSerialization {
     @Override
     default <T> String serializePath(T t, Type type) {
         if(t instanceof Wirespec.Refined<?> refined){
-            return refined.getValue().toString();
+            return refined.value().toString();
         }
         if(t instanceof Wirespec.Enum refined){
-            return refined.getLabel();
+            return refined.label();
         }
         return t.toString();
     }

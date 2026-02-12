@@ -79,7 +79,7 @@ public interface DefaultSerialization {
 
     static Object findEnumByLabel(Class<?> enumClass, String label) {
         return Arrays.stream(enumClass.getEnumConstants())
-                .filter(e -> ((Wirespec.Enum) e).getLabel().equals(label))
+                .filter(e -> ((Wirespec.Enum) e).label().equals(label))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Invalid enum value '" + label + "' for type: " + enumClass.getSimpleName()));

@@ -3,7 +3,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
@@ -122,15 +122,25 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     preProcessor = { it.replaceFirst("http://www.apache.org/licenses/LICENSE-2.0.html", "https://flock.community") }
 }
 
-class KotlinSerializableEmitter : KotlinEmitter(PackageName("community.flock.wirespec.generated.kotlin")) {
+class KotlinSerializableEmitter : KotlinIrEmitter(PackageName("community.flock.wirespec.generated.kotlin")) {
 
-    override fun emit(type: Type, module: Module): String = """
-        |@kotlinx.serialization.Serializable
-        |${super.emit(type, module)}
-    """.trimMargin()
+    override fun emit(type: Type, module: Module) = super.emit(type, module)
+        .run {
+            copy(
+                result = """
+                |@kotlinx.serialization.Serializable
+                |$result
+                """.trimMargin(),
+            )
+        }
 
-    override fun emit(refined: Refined): String = """
-        |@kotlinx.serialization.Serializable
-        |${super.emit(refined)}
-    """.trimMargin()
+    override fun emit(refined: Refined) = super.emit(refined)
+        .run {
+            copy(
+                result = """
+                |@kotlinx.serialization.Serializable
+                |$result
+                """.trimMargin(),
+            )
+        }
 }

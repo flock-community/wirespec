@@ -162,7 +162,7 @@ class AvroJavaEmitterTest {
             |  sealed interface ResponseError extends Response<Error> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -172,7 +172,7 @@ class AvroJavaEmitterTest {
             |    static class Headers implements Wirespec.Response.Headers {}
             |  }
             |  record Response201(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -185,7 +185,7 @@ class AvroJavaEmitterTest {
             |  ) implements Wirespec.Response.Headers {}
             |  }
             |  record Response500(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    Error body
             |  ) implements Response5XX<Error>, ResponseError {
@@ -433,7 +433,7 @@ class AvroJavaEmitterTest {
             |  sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    java.util.List<TodoDto> body
             |  ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
@@ -577,7 +577,7 @@ class AvroJavaEmitterTest {
             |    return label;
             |  }
             |  @Override
-            |  public String getLabel() {
+            |  public String label() {
             |    return label;
             |  }
             |}
@@ -620,7 +620,7 @@ class AvroJavaEmitterTest {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
             |  }
             |  @Override
-            |  public String getValue() { return value; }
+            |  public String value() { return value; }
             |}
             |
             |package packageName.model;
@@ -634,7 +634,7 @@ class AvroJavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public String getValue() { return value; }
+            |  public String value() { return value; }
             |}
             |
             |package packageName.model;
@@ -648,7 +648,7 @@ class AvroJavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package packageName.model;
@@ -662,7 +662,7 @@ class AvroJavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package packageName.model;
@@ -676,7 +676,7 @@ class AvroJavaEmitterTest {
             |    return 0 < record.value;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package packageName.model;
@@ -690,7 +690,7 @@ class AvroJavaEmitterTest {
             |    return 3 < record.value && record.value < 1;
             |  }
             |  @Override
-            |  public Long getValue() { return value; }
+            |  public Long value() { return value; }
             |}
             |
             |package packageName.model;
@@ -704,7 +704,7 @@ class AvroJavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
             |package packageName.model;
@@ -718,7 +718,7 @@ class AvroJavaEmitterTest {
             |    return true;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
             |package packageName.model;
@@ -732,7 +732,7 @@ class AvroJavaEmitterTest {
             |    return record.value < 0.5;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
             |package packageName.model;
@@ -746,7 +746,7 @@ class AvroJavaEmitterTest {
             |    return -0.2 < record.value && record.value < 0.5;
             |  }
             |  @Override
-            |  public Double getValue() { return value; }
+            |  public Double value() { return value; }
             |}
             |
             """.trimMargin()

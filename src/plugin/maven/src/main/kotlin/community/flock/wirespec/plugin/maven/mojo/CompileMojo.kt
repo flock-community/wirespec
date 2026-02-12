@@ -53,6 +53,7 @@ class CompileMojo : BaseMojo() {
             logger = logger,
             shared = shared,
             strict = strict,
+            ir = ir,
         ).let(::compile)
     }
 }

@@ -32,7 +32,7 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     java.util.List<Pet> body
   ) implements Response2XX<java.util.List<Pet>>, ResponseListPet {
@@ -42,7 +42,7 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
     static class Headers implements Wirespec.Response.Headers {}
   }
   record Response400(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements Response4XX<Void>, ResponseVoid {
