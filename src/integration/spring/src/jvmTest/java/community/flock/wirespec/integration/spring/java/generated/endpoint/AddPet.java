@@ -1,8 +1,15 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.Pet;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.Pet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
 
 public interface AddPet extends Wirespec.Endpoint {
   static class Path implements Wirespec.Path {}
@@ -34,11 +41,11 @@ public interface AddPet extends Wirespec.Endpoint {
     Headers headers,
     Pet body
   ) implements Response2XX<Pet>, ResponsePet {
-    public Response200(java.util.Optional<Integer> XRateLimit, Pet body) {
+    public Response200(Optional<Integer> XRateLimit, Pet body) {
       this(200, new Headers(XRateLimit), body);
     }
     public record Headers(
-    java.util.Optional<Integer> XRateLimit
+    Optional<Integer> XRateLimit
   ) implements Wirespec.Response.Headers {}
   }
   record Response405(
@@ -57,10 +64,10 @@ public interface AddPet extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("pet"),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Pet.class, null)))
+        List.of("pet"),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Pet.class, null)))
       );
     }
 
@@ -71,15 +78,15 @@ public interface AddPet extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class)))), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null)))); }
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Map.ofEntries(Map.entry("X-Rate-Limit", serialization.<Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, Optional.class)))), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null)))); }
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-          serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Rate-Limit")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
+          serialization.<Optional<Integer>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Rate-Limit")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(Integer.class, Optional.class)),
           response.body().<Pet>map(body -> serialization.deserializeBody(body, Wirespec.getType(Pet.class, null))).orElse(null)
         );
         case 405 -> new Response405();
@@ -88,7 +95,7 @@ public interface AddPet extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/pet")
-    java.util.concurrent.CompletableFuture<Response<?>> addPet(Request request);
+    CompletableFuture<Response<?>> addPet(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/pet"; }

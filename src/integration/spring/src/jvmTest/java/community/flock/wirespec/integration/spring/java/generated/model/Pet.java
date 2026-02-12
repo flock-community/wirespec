@@ -2,12 +2,15 @@ package community.flock.wirespec.integration.spring.java.generated.model;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.List;
+import java.util.Optional;
+
 public record Pet (
-  java.util.Optional<Long> id,
+  Optional<Long> id,
   String name,
-  java.util.Optional<Category> category,
-  java.util.List<String> photoUrls,
-  java.util.Optional<java.util.List<Tag>> tags,
-  java.util.Optional<PetStatus> status
+  Optional<Category> category,
+  List<String> photoUrls,
+  Optional<List<Tag>> tags,
+  Optional<PetStatus> status
 ) {
 };

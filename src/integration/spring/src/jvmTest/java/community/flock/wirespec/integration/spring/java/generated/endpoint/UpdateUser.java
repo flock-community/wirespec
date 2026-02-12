@@ -1,8 +1,14 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.User;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.User;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
 
 public interface UpdateUser extends Wirespec.Endpoint {
   public record Path(
@@ -45,10 +51,10 @@ public interface UpdateUser extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("user", serialization.serializePath(request.path().username(), Wirespec.getType(String.class, null))),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(User.class, null)))
+        List.of("user", serialization.serializePath(request.path().username(), Wirespec.getType(String.class, null))),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(User.class, null)))
       );
     }
 
@@ -60,7 +66,7 @@ public interface UpdateUser extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -69,7 +75,7 @@ public interface UpdateUser extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.PutMapping("/user/{username}")
-    java.util.concurrent.CompletableFuture<Response<?>> updateUser(Request request);
+    CompletableFuture<Response<?>> updateUser(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/user/{username}"; }
