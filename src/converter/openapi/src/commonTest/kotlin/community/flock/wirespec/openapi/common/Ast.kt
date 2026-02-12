@@ -589,6 +589,24 @@ object Ast {
             ),
             extends = emptyList(),
         ),
+        Type(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Baz"),
+            shape = Type.Shape(
+                value = listOf(
+                    Field(
+                        identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(null),
+                            isNullable = false,
+                        ),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        ),
     )
 
     val oneOf = nonEmptyListOf(
