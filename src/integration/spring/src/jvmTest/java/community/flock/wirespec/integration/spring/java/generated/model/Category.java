@@ -2,8 +2,10 @@ package community.flock.wirespec.integration.spring.java.generated.model;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Optional;
+
 public record Category (
-  java.util.Optional<Long> id,
-  java.util.Optional<String> name
+  Optional<Long> id,
+  Optional<String> name
 ) {
 };

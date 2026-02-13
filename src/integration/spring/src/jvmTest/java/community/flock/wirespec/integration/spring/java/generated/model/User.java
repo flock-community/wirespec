@@ -2,14 +2,16 @@ package community.flock.wirespec.integration.spring.java.generated.model;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Optional;
+
 public record User (
-  java.util.Optional<Long> id,
-  java.util.Optional<String> username,
-  java.util.Optional<String> firstName,
-  java.util.Optional<String> lastName,
-  java.util.Optional<String> email,
-  java.util.Optional<String> password,
-  java.util.Optional<String> phone,
-  java.util.Optional<Integer> userStatus
+  Optional<Long> id,
+  Optional<String> username,
+  Optional<String> firstName,
+  Optional<String> lastName,
+  Optional<String> email,
+  Optional<String> password,
+  Optional<String> phone,
+  Optional<Integer> userStatus
 ) {
 };

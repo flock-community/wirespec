@@ -2,6 +2,12 @@ package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 
 
 public interface UpdatePetWithForm extends Wirespec.Endpoint {
@@ -10,8 +16,8 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
   ) implements Wirespec.Path {}
 
   public record Queries(
-    java.util.Optional<String> name,
-    java.util.Optional<String> status
+    Optional<String> name,
+    Optional<String> status
   ) implements Wirespec.Queries {}
 
   static class RequestHeaders implements Wirespec.Request.Headers {}
@@ -23,7 +29,7 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     RequestHeaders headers,
     Void body
   ) implements Wirespec.Request<Void> {
-    public Request(Long petId, java.util.Optional<String> name, java.util.Optional<String> status) {
+    public Request(Long petId, Optional<String> name, Optional<String> status) {
       this(new Path(petId), Wirespec.Method.POST, new Queries(name, status), new RequestHeaders(), null);
     }
   }
@@ -48,23 +54,23 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
-        java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("status", serialization.serializeParam(request.queries().status(), Wirespec.getType(String.class, java.util.Optional.class)))),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.empty()
+        List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
+        Map.ofEntries(Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, Optional.class))), Map.entry("status", serialization.serializeParam(request.queries().status(), Wirespec.getType(String.class, Optional.class)))),
+        Collections.emptyMap(),
+        Optional.empty()
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
-        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("name", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("status", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
+        serialization.<Optional<String>>deserializeParam(request.queries().getOrDefault("name", Collections.emptyList()), Wirespec.getType(String.class, Optional.class)),
+        serialization.<Optional<String>>deserializeParam(request.queries().getOrDefault("status", Collections.emptyList()), Wirespec.getType(String.class, Optional.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -77,7 +83,7 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}")
-    java.util.concurrent.CompletableFuture<Response<?>> updatePetWithForm(Request request);
+    CompletableFuture<Response<?>> updatePetWithForm(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/pet/{petId}"; }

@@ -51,8 +51,7 @@ class AvroJavaEmitterTest {
         )
 
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type))))
-        val expected = //language=Java
-            """
+        val expected = """
             |package packageName.avro;
             |
             |import packageName.model.Identifier;
@@ -74,7 +73,7 @@ class AvroJavaEmitterTest {
             |    return record;
             |  }
             |}
-            """.trimMargin()
+        """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
         assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.java" }?.result)
     }
@@ -89,7 +88,6 @@ class AvroJavaEmitterTest {
         )
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum))))
         val expected =
-            //language=Java
             """
             |package packageName.avro;
             |
@@ -533,7 +531,6 @@ class AvroJavaEmitterTest {
     fun compileChannelTest() {
         val result = CompileChannelTest.compiler { emitter }
         val expect =
-            //language=Java
             """
             |package packageName.channel;
             |
@@ -552,7 +549,6 @@ class AvroJavaEmitterTest {
     fun compileEnumTest() {
         val result = CompileEnumTest.compiler { emitter }
         val expect =
-            //language=Java
             """
             |package packageName.model;
             |
@@ -607,7 +603,6 @@ class AvroJavaEmitterTest {
     fun compileRefinedTest() {
         val result = CompileRefinedTest.compiler { emitter }
         val expect =
-            //language=Java
             """
             |package packageName.model;
             |
@@ -757,7 +752,6 @@ class AvroJavaEmitterTest {
     fun compileUnionTest() {
         val result = CompileUnionTest.compiler { emitter }
         val expect =
-            //language=Java
             """
             |package packageName.model;
             |

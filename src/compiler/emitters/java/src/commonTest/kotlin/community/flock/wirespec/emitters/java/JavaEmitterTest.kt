@@ -33,10 +33,13 @@ class JavaEmitterTest {
             """
             |package community.flock.wirespec.generated.model;
             |
+            |import java.util.List;
+            |import java.util.Optional;
+            |
             |public record Todo (
             |  String name,
-            |  java.util.Optional<String> description,
-            |  java.util.List<String> notes,
+            |  Optional<String> description,
+            |  List<String> notes,
             |  Boolean done
             |) {
             |};
@@ -74,11 +77,13 @@ class JavaEmitterTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
+            |import java.util.regex.Pattern;
+            |
             |public record UUID (String value) implements Wirespec.Refined<String> {
             |  @Override
             |  public String toString() { return value.toString(); }
             |  public static boolean validate(UUID record) {
-            |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
+            |    return Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
             |  }
             |  @Override
             |  public String getValue() { return value; }
@@ -129,13 +134,17 @@ class JavaEmitterTest {
         val java = """
             |package community.flock.wirespec.generated.endpoint;
             |
-            |import community.flock.wirespec.java.Wirespec;
-            |
-            |import community.flock.wirespec.generated.model.Token;
-            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.Error;
             |import community.flock.wirespec.generated.model.PotentialTodoDto;
             |import community.flock.wirespec.generated.model.TodoDto;
-            |import community.flock.wirespec.generated.model.Error;
+            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |import java.util.Collections;
+            |import java.util.List;
+            |import java.util.Map;
+            |import java.util.Optional;
+            |import java.util.concurrent.CompletableFuture;
             |
             |public interface PutTodo extends Wirespec.Endpoint {
             |  public record Path(
@@ -144,12 +153,12 @@ class JavaEmitterTest {
             |
             |  public record Queries(
             |    Boolean done,
-            |    java.util.Optional<String> name
+            |    Optional<String> name
             |  ) implements Wirespec.Queries {}
             |
             |  public record RequestHeaders(
             |    Token token,
-            |    java.util.Optional<Token> RefreshToken
+            |    Optional<Token> RefreshToken
             |  ) implements Wirespec.Request.Headers {}
             |
             |  record Request (
@@ -159,7 +168,7 @@ class JavaEmitterTest {
             |    RequestHeaders headers,
             |    PotentialTodoDto body
             |  ) implements Wirespec.Request<PotentialTodoDto> {
-            |    public Request(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> RefreshToken, PotentialTodoDto body) {
+            |    public Request(String id, Boolean done, Optional<String> name, Token token, Optional<Token> RefreshToken, PotentialTodoDto body) {
             |      this(new Path(id), Wirespec.Method.PUT, new Queries(done, name), new RequestHeaders(token, RefreshToken), body);
             |    }
             |  }
@@ -185,12 +194,12 @@ class JavaEmitterTest {
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
-            |    public Response201(Token token, java.util.Optional<Token> refreshToken, TodoDto body) {
+            |    public Response201(Token token, Optional<Token> refreshToken, TodoDto body) {
             |      this(201, new Headers(token, refreshToken), body);
             |    }
             |    public record Headers(
             |    Token token,
-            |    java.util.Optional<Token> refreshToken
+            |    Optional<Token> refreshToken
             |  ) implements Wirespec.Response.Headers {}
             |  }
             |  record Response500(
@@ -209,28 +218,28 @@ class JavaEmitterTest {
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method().name(),
-            |        java.util.List.of("todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, java.util.Optional.class)))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", serialization.serializeParam(request.headers().RefreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))),
-            |        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null)))
+            |        List.of("todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
+            |        Map.ofEntries(Map.entry("done", serialization.serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, null))), Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, Optional.class)))),
+            |        Map.ofEntries(Map.entry("token", serialization.serializeParam(request.headers().token(), Wirespec.getType(Token.class, null))), Map.entry("Refresh-Token", serialization.serializeParam(request.headers().RefreshToken(), Wirespec.getType(Token.class, Optional.class)))),
+            |        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null)))
             |      );
             |    }
             |
             |    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
-            |        serialization.<Boolean>deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, null)),
-            |        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("name", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-            |        serialization.<Token>deserializeParam(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
-            |        serialization.<java.util.Optional<Token>>deserializeParam(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("Refresh-Token")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
+            |        serialization.<Boolean>deserializeParam(request.queries().getOrDefault("done", Collections.emptyList()), Wirespec.getType(Boolean.class, null)),
+            |        serialization.<Optional<String>>deserializeParam(request.queries().getOrDefault("name", Collections.emptyList()), Wirespec.getType(String.class, Optional.class)),
+            |        serialization.<Token>deserializeParam(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |        serialization.<Optional<Token>>deserializeParam(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("Refresh-Token")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(Token.class, Optional.class)),
             |        request.body().<PotentialTodoDto>map(body -> serialization.deserializeBody(body, Wirespec.getType(PotentialTodoDto.class, null))).orElse(null)
             |      );
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
-            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.<Token>serializeParam(r.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", serialization.<java.util.Optional<Token>>serializeParam(r.headers().refreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
-            |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Error.class, null)))); }
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
+            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.status(), Map.ofEntries(Map.entry("token", serialization.<Token>serializeParam(r.headers().token(), Wirespec.getType(Token.class, null))), Map.entry("refreshToken", serialization.<Optional<Token>>serializeParam(r.headers().refreshToken(), Wirespec.getType(Token.class, Optional.class)))), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
+            |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Error.class, null)))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
             |    }
             |
@@ -240,8 +249,8 @@ class JavaEmitterTest {
             |          response.body().<TodoDto>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDto.class, null))).orElse(null)
             |        );
             |        case 201 -> new Response201(
-            |          serialization.<Token>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
-            |          serialization.<java.util.Optional<Token>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("refreshToken")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
+            |          serialization.<Token>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |          serialization.<Optional<Token>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("refreshToken")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(Token.class, Optional.class)),
             |          response.body().<TodoDto>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDto.class, null))).orElse(null)
             |        );
             |        case 500 -> new Response500(
@@ -251,7 +260,7 @@ class JavaEmitterTest {
             |      };
             |    }
             |
-            |    java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);
+            |    CompletableFuture<Response<?>> putTodo(Request request);
             |    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
             |      @Override public String getPathTemplate() { return "/todos/{id}"; }
             |      @Override public String getMethod() { return "PUT"; }
@@ -373,9 +382,13 @@ class JavaEmitterTest {
         val java = """
             |package community.flock.wirespec.generated.endpoint;
             |
+            |import community.flock.wirespec.generated.model.TodoDto;
             |import community.flock.wirespec.java.Wirespec;
             |
-            |import community.flock.wirespec.generated.model.TodoDto;
+            |import java.util.Collections;
+            |import java.util.List;
+            |import java.util.Optional;
+            |import java.util.concurrent.CompletableFuture;
             |
             |public interface GetTodos extends Wirespec.Endpoint {
             |  static class Path implements Wirespec.Path {}
@@ -398,14 +411,14 @@ class JavaEmitterTest {
             |
             |  sealed interface Response<T> extends Wirespec.Response<T> {}
             |  sealed interface Response2XX<T> extends Response<T> {}
-            |  sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> {}
+            |  sealed interface ResponseListTodoDto extends Response<List<TodoDto>> {}
             |
             |  record Response200(
             |    int status,
             |    Headers headers,
-            |    java.util.List<TodoDto> body
-            |  ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
-            |    public Response200(java.util.List<TodoDto> body) {
+            |    List<TodoDto> body
+            |  ) implements Response2XX<List<TodoDto>>, ResponseListTodoDto {
+            |    public Response200(List<TodoDto> body) {
             |      this(200, new Headers(), body);
             |    }
             |    static class Headers implements Wirespec.Response.Headers {}
@@ -416,10 +429,10 @@ class JavaEmitterTest {
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method().name(),
-            |        java.util.List.of("todos"),
-            |        java.util.Collections.emptyMap(),
-            |        java.util.Collections.emptyMap(),
-            |        java.util.Optional.empty()
+            |        List.of("todos"),
+            |        Collections.emptyMap(),
+            |        Collections.emptyMap(),
+            |        Optional.empty()
             |      );
             |    }
             |
@@ -428,21 +441,21 @@ class JavaEmitterTest {
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, java.util.List.class)))); }
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, List.class)))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
             |      if (response.statusCode() == 200) {
             |        return new Response200(
-            |          response.body().<java.util.List<TodoDto>>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDto.class, java.util.List.class))).orElse(null)
+            |          response.body().<List<TodoDto>>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDto.class, List.class))).orElse(null)
             |        );
             |      } else {
             |        throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      }
             |    }
             |
-            |    java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
+            |    CompletableFuture<Response<?>> getTodos(Request request);
             |    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
             |      @Override public String getPathTemplate() { return "/todos"; }
             |      @Override public String getMethod() { return "GET"; }
@@ -482,11 +495,13 @@ class JavaEmitterTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
+            |import java.util.regex.Pattern;
+            |
             |public record TodoId (String value) implements Wirespec.Refined<String> {
             |  @Override
             |  public String toString() { return value.toString(); }
             |  public static boolean validate(TodoId record) {
-            |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
+            |    return Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
             |  }
             |  @Override
             |  public String getValue() { return value; }
@@ -630,11 +645,13 @@ class JavaEmitterTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
+            |import java.util.regex.Pattern;
+            |
             |public record TodoId (String value) implements Wirespec.Refined<String> {
             |  @Override
             |  public String toString() { return value.toString(); }
             |  public static boolean validate(TodoId record) {
-            |    return java.util.regex.Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}").matcher(record.value).find();
+            |    return Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}").matcher(record.value).find();
             |  }
             |  @Override
             |  public String getValue() { return value; }
@@ -642,10 +659,14 @@ class JavaEmitterTest {
             |
             |package community.flock.wirespec.generated.endpoint;
             |
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.model.TodoId;
             |import community.flock.wirespec.java.Wirespec;
             |
-            |import community.flock.wirespec.generated.model.TodoId;
-            |import community.flock.wirespec.generated.model.TodoDto;
+            |import java.util.Collections;
+            |import java.util.List;
+            |import java.util.Optional;
+            |import java.util.concurrent.CompletableFuture;
             |
             |public interface GetTodoById extends Wirespec.Endpoint {
             |  public record Path(
@@ -688,10 +709,10 @@ class JavaEmitterTest {
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method().name(),
-            |        java.util.List.of("todos", serialization.serializePath(request.path().id(), Wirespec.getType(TodoId.class, null))),
-            |        java.util.Collections.emptyMap(),
-            |        java.util.Collections.emptyMap(),
-            |        java.util.Optional.empty()
+            |        List.of("todos", serialization.serializePath(request.path().id(), Wirespec.getType(TodoId.class, null))),
+            |        Collections.emptyMap(),
+            |        Collections.emptyMap(),
+            |        Optional.empty()
             |      );
             |    }
             |
@@ -702,7 +723,7 @@ class JavaEmitterTest {
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
             |    }
             |
@@ -716,7 +737,7 @@ class JavaEmitterTest {
             |      }
             |    }
             |
-            |    java.util.concurrent.CompletableFuture<Response<?>> getTodoById(Request request);
+            |    CompletableFuture<Response<?>> getTodoById(Request request);
             |    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
             |      @Override public String getPathTemplate() { return "/todos/{id}"; }
             |      @Override public String getMethod() { return "GET"; }
@@ -789,13 +810,17 @@ class JavaEmitterTest {
         val java = """
             |package community.flock.wirespec.generated.model;
             |
+            |import java.util.List;
+            |import java.util.Map;
+            |import java.util.Optional;
+            |
             |public record Request (
             |  String type,
             |  String url,
-            |  java.util.Optional<String> BODY_TYPE,
-            |  java.util.List<String> params,
-            |  java.util.Map<String, String> headers,
-            |  java.util.Optional<java.util.Map<String, java.util.Optional<java.util.List<java.util.Optional<String>>>>> body
+            |  Optional<String> BODY_TYPE,
+            |  List<String> params,
+            |  Map<String, String> headers,
+            |  Optional<Map<String, Optional<List<Optional<String>>>>> body
             |) {
             |};
             |
