@@ -41,6 +41,7 @@ import community.flock.wirespec.openapi.common.flatMapResponses
 import community.flock.wirespec.openapi.common.getReference
 import community.flock.wirespec.openapi.common.jsonDefault
 import community.flock.wirespec.openapi.common.parseOpenApi
+import community.flock.wirespec.openapi.common.resolveEndpointNameCollisions
 import community.flock.wirespec.openapi.common.sanitize
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.common.toDict
@@ -63,6 +64,7 @@ object OpenAPIV2Parser : Parser {
         parseResponseBody(),
         parseDefinitions(),
     ).reduce(List<Definition>::plus)
+        .resolveEndpointNameCollisions()
         .toNonEmptyListOrNull()
         .let { requireNotNull(it) { "Cannot yield empty AST for OpenAPI v2" } }
 }
