@@ -62,28 +62,28 @@ object Wirespec {
         BodySerializer,
         BodyDeserializer
     interface BodySerializer {
-        fun <T> serializeBody(t: T, kType: KType): ByteArray
+        fun <T : Any> serializeBody(t: T, kType: KType): ByteArray
     }
     interface BodyDeserializer {
-        fun <T> deserializeBody(raw: ByteArray, kType: KType): T
+        fun <T : Any> deserializeBody(raw: ByteArray, kType: KType): T
     }
     interface PathSerialization :
         PathSerializer,
         PathDeserializer
     interface PathSerializer {
-        fun <T> serializePath(t: T, kType: KType): String
+        fun <T : Any> serializePath(t: T, kType: KType): String
     }
     interface PathDeserializer {
-        fun <T> deserializePath(raw: String, kType: KType): T
+        fun <T : Any> deserializePath(raw: String, kType: KType): T
     }
     interface ParamSerialization :
         ParamSerializer,
         ParamDeserializer
     interface ParamSerializer {
-        fun <T> serializeParam(value: T, kType: KType): List<String>
+        fun <T : Any> serializeParam(value: T, kType: KType): List<String>
     }
     interface ParamDeserializer {
-        fun <T> deserializeParam(values: List<String>, kType: KType): T
+        fun <T : Any> deserializeParam(values: List<String>, kType: KType): T
     }
     data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: ByteArray?)
     data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: ByteArray?)
