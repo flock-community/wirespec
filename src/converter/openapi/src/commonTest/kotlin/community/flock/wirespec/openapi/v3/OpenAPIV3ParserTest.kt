@@ -1537,4 +1537,51 @@ class OpenAPIV3ParserTest {
             listOf(Annotation.Parameter("default", Annotation.Value.Single("Get all todos"))),
         )
     }
+
+    @Test
+    fun nameCollision() {
+        val json =
+            """
+            |{
+            |    "openapi": "3.0.0",
+            |    "info": {
+            |        "title": "Test API",
+            |        "version": "1.0.0"
+            |    },
+            |    "components": {
+            |        "schemas": {
+            |            "Pet": {
+            |                "type": "object",
+            |                "properties": {
+            |                    "id": {
+            |                        "type": "string"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    },
+            |    "paths": {
+            |        "/pets": {
+            |            "get": {
+            |                "operationId": "Pet",
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "Ok"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
+
+        val ast = OpenAPIV3Parser.parse(ModuleContent(FileUri("test.json"), json), false)
+        val definitions = ast.modules.head.statements
+
+        val type = definitions.find { (it as? Type)?.identifier?.value == "Pet" }.shouldBeInstanceOf<Type>()
+        type.identifier.value shouldBe "Pet"
+
+        val endpoint = definitions.find { it is Endpoint }.shouldBeInstanceOf<Endpoint>()
+        endpoint.identifier.value shouldBe "PetEndpoint"
+    }
 }
