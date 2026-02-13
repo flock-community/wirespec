@@ -277,17 +277,6 @@ private fun OpenAPIV2Model.resolve(parameterOrReference: OpenAPIV2ParameterOrRef
 }
 
 private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String): List<Definition> = when {
-    // OpenAPI v2 workaround: we sometimes emit `{ allOf: [ { $ref: ... } ], description: ... }`
-    // to attach a field-level description to a referenced schema.
-    // This wrapper should *not* produce an extra synthetic definition during flattening.
-    schemaObject.allOf?.size == 1 &&
-        schemaObject.allOf!!.first() is OpenAPIV2Reference &&
-        schemaObject.properties == null &&
-        schemaObject.enum == null &&
-        schemaObject.type == null &&
-        schemaObject.items == null &&
-        schemaObject.additionalProperties == null -> emptyList()
-
     schemaObject.additionalProperties.exists() -> when (schemaObject.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->

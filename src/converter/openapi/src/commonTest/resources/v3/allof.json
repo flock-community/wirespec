@@ -66,6 +66,13 @@
           "type": "string"
         }
       }
+    },
+    "Baz": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Bar"
+        }
+      ]
     }
   }
 }
