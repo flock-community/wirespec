@@ -435,7 +435,7 @@ private class TypeScriptFileEmitter(val file: File) {
         Type.Bytes -> "Uint8Array"
         Type.Unit -> "void"
         Type.Wildcard -> "unknown"
-        Type.Reflect -> "string"
+        Type.Reflect -> "Type"
         is Type.Array -> {
             val element = elementType.emit()
             if (elementType is Type.Nullable) "($element)[]" else "$element[]"
