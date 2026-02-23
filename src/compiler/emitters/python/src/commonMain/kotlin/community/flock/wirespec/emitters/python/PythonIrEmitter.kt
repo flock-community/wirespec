@@ -5,7 +5,7 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.language.emit.IrEmitter
+import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -26,39 +26,42 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.language.converter.convert
-import community.flock.wirespec.language.converter.convertConstraint
-import community.flock.wirespec.language.converter.convertWithValidation
-import community.flock.wirespec.language.core.Assignment
-import community.flock.wirespec.language.core.ConstructorStatement
-import community.flock.wirespec.language.core.Element
-import community.flock.wirespec.language.core.FieldCall
-import community.flock.wirespec.language.core.File
-import community.flock.wirespec.language.core.Interface
-import community.flock.wirespec.language.core.RawElement
-import community.flock.wirespec.language.core.RawExpression
-import community.flock.wirespec.language.core.Static
-import community.flock.wirespec.language.core.Struct
-import community.flock.wirespec.language.core.VariableReference
-import community.flock.wirespec.language.core.findElement
-import community.flock.wirespec.language.core.function
-import community.flock.wirespec.language.core.transformChildren
-import community.flock.wirespec.language.core.transformMatchingElements
-import community.flock.wirespec.language.core.transformer
-import community.flock.wirespec.language.generator.generatePython
+import community.flock.wirespec.ir.converter.convert
+import community.flock.wirespec.ir.converter.convertConstraint
+import community.flock.wirespec.ir.converter.convertWithValidation
+import community.flock.wirespec.ir.core.Assignment
+import community.flock.wirespec.ir.core.ConstructorStatement
+import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.FieldCall
+import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.Namespace
+import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.renameType
+import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.core.transformMatchingElements
+import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.ir.generator.PythonGenerator
+import community.flock.wirespec.ir.generator.generatePython
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
-import community.flock.wirespec.language.core.Enum as LanguageEnum
-import community.flock.wirespec.language.core.Function as LanguageFunction
-import community.flock.wirespec.language.core.File as LanguageFile
-import community.flock.wirespec.language.core.Type as LanguageType
-import community.flock.wirespec.language.core.Union as LanguageUnion
+import community.flock.wirespec.ir.core.Enum as LanguageEnum
+import community.flock.wirespec.ir.core.Function as LanguageFunction
+import community.flock.wirespec.ir.core.File as LanguageFile
+import community.flock.wirespec.ir.core.Type as LanguageType
+import community.flock.wirespec.ir.core.Union as LanguageUnion
 
 open class PythonIrEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared()
 ) : IrEmitter {
 
-    override fun File.generate(): String = generatePython()
+    override val generator = PythonGenerator
 
     val import = """
         |from __future__ import annotations
@@ -95,13 +98,9 @@ open class PythonIrEmitter(
 
     override val shared = object : Shared {
         override val packageString = "shared"
-        override val source = sharedImport + AstShared(packageString).convert().generatePython()
-            .replace("path: Path\n", "path: Wirespec.Path\n")
-            .replace("method: Method\n", "method: Wirespec.Method\n")
-            .replace("queries: Queries\n", "queries: Wirespec.Queries\n")
-            .replace("request: RawRequest", "request: Wirespec.RawRequest")
-            .replace("-> RawResponse", "-> Wirespec.RawResponse")
-            .replace("type: Type)", "type: type[T])")
+        override val source = sharedImport + AstShared(packageString).convert()
+            .renameType("Type", "type[T]")
+            .generatePython()
     }
 
     fun sort(definition: Definition) = when (definition) {
@@ -118,23 +117,23 @@ open class PythonIrEmitter(
         return super.emit(module.copy(statements = statements), logger).let {
             fun emitInit(def: Definition) = "from .${def.identifier.sanitize()} import ${def.identifier.sanitize()}"
             val init = File(
-                packageName.toDir() + "__init__",
+                Name.of(packageName.toDir() + "__init__"),
                 listOf(RawElement("from . import model\nfrom . import endpoint\nfrom . import wirespec"))
             )
             val initEndpoint = File(
-                packageName.toDir() + "endpoint/" + "__init__",
+                Name.of(packageName.toDir() + "endpoint/" + "__init__"),
                 listOf(RawElement(module.statements.filter { it is Endpoint }.map { stmt -> emitInit(stmt) }.joinToString("\n")))
             )
             val initModel = File(
-                packageName.toDir() + "model/" + "__init__",
+                Name.of(packageName.toDir() + "model/" + "__init__"),
                 listOf(RawElement(module.statements.filter { it is Model }.map { stmt -> emitInit(stmt) }.joinToString("\n")))
             )
-            val shared = File(packageName.toDir() + "wirespec", listOf(RawElement(shared.source)))
+            val shared = File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(shared.source)))
             val parentInits = packageName.value.split(".")
                 .dropLast(1)
                 .runningFold("") { acc, segment -> if (acc.isEmpty()) segment else "$acc/$segment" }
                 .drop(1)
-                .map { File("$it/__init__", emptyList()) }
+                .map { File(Name.of("$it/__init__"), emptyList()) }
             if (emitShared.value)
                 it + init + initEndpoint + initModel + shared + parentInits
             else
@@ -146,7 +145,7 @@ open class PythonIrEmitter(
         val subPackageName = packageName + definition
         return super.emit(definition, module, logger).let { file ->
             File(
-                name = subPackageName.toDir() + file.name,
+                name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
                 elements = listOf(RawElement(import)) + file.elements
             )
         }
@@ -169,15 +168,15 @@ open class PythonIrEmitter(
         // Add self receiver to bare FieldCalls that reference type fields
         val addSelfReceiver = transformer(
             transformStatement = { s, t ->
-                if (s is FieldCall && s.receiver == null && s.field in fieldNames) {
-                    FieldCall(receiver = VariableReference("self"), field = s.field)
+                if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
+                    FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
                 } else {
                     s.transformChildren(t)
                 }
             },
             transformExpression = { e, t ->
-                if (e is FieldCall && e.receiver == null && e.field in fieldNames) {
-                    FieldCall(receiver = VariableReference("self"), field = e.field)
+                if (e is FieldCall && e.receiver == null && e.field.camelCase() in fieldNames) {
+                    FieldCall(receiver = VariableReference(Name.of("self")), field = e.field)
                 } else {
                     e.transformChildren(t)
                 }
@@ -185,10 +184,10 @@ open class PythonIrEmitter(
         )
         val file = type.convertWithValidation(module)
             .transformMatchingElements { fn: LanguageFunction ->
-                if (fn.name == "validate") {
+                if (fn.name == Name.of("validate")) {
                     val transformedBody = fn.body.map { addSelfReceiver.transformStatement(it) }
                     fn.copy(
-                        parameters = listOf(community.flock.wirespec.language.core.Parameter("self", LanguageType.Custom(""))),
+                        parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("self"), LanguageType.Custom(""))),
                         body = transformedBody,
                     )
                 } else fn
@@ -202,7 +201,7 @@ open class PythonIrEmitter(
         .transformMatchingElements { languageEnum: LanguageEnum ->
             languageEnum.copy(
                 entries = languageEnum.entries.map {
-                    LanguageEnum.Entry(it.name.sanitizeEnum().sanitizeKeywords(), listOf("\"${it.name}\""))
+                    LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.parts.first()}\""))
                 },
             )
         }
@@ -224,8 +223,8 @@ open class PythonIrEmitter(
     override fun emit(refined: Refined): File {
         val file = refined.convert()
         val struct = file.findElement<Struct>()!!
-        val validateFunction = struct.elements.filterIsInstance<LanguageFunction>().first { it.name == "validate" }
-        val constraintExpr = refined.reference.convertConstraint(FieldCall(VariableReference("self"), "value"))
+        val validateFunction = struct.elements.filterIsInstance<LanguageFunction>().first { it.name == Name.of("validate") }
+        val constraintExpr = refined.reference.convertConstraint(FieldCall(VariableReference(Name.of("self")), Name.of("value")))
         val validate = function("validate") {
             arg("self", LanguageType.Custom(""))
             returnType(LanguageType.Boolean)
@@ -253,12 +252,12 @@ open class PythonIrEmitter(
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.importReferences().distinctBy { it.value }
             .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
-        val converted = endpoint.convert().findElement<Interface>()!!
+        val converted = endpoint.convert().findElement<Namespace>()!!
         val (moduleElements, classElements) = flattenEndpointForPython(converted)
-        val endpointClass = Static(
+        val endpointClass = Namespace(
             name = converted.name,
             elements = classElements,
-            extends = converted.extends.firstOrNull(),
+            extends = converted.extends,
         )
         val elements = mutableListOf<Element>()
         if (imports.isNotEmpty()) elements.add(RawElement(imports))
@@ -267,7 +266,7 @@ open class PythonIrEmitter(
         return LanguageFile(converted.name, elements)
     }
 
-    private fun flattenEndpointForPython(converted: Interface): Pair<List<Element>, List<Element>> {
+    private fun flattenEndpointForPython(converted: Namespace): Pair<List<Element>, List<Element>> {
         val moduleElements = mutableListOf<Element>()
         val classElements = mutableListOf<Element>()
         for (element in converted.elements) {
@@ -275,9 +274,9 @@ open class PythonIrEmitter(
                 is Struct -> {
                     val nested = element.elements.filterIsInstance<Struct>()
                     if (nested.isNotEmpty()) {
-                        val nestedNames = nested.map { it.name }.toSet()
+                        val nestedNames = nested.map { it.name.pascalCase() }.toSet()
                         for (nestedStruct in nested) {
-                            moduleElements.add(nestedStruct.copy(name = "${element.name}${nestedStruct.name}"))
+                            moduleElements.add(nestedStruct.copy(name = Name.of("${element.name.pascalCase()}${nestedStruct.name.pascalCase()}")))
                         }
                         moduleElements.add(qualifyNestedRefs(element, nestedNames))
                     } else {
@@ -296,7 +295,7 @@ open class PythonIrEmitter(
         val qualifiedFields = struct.fields.map { field ->
             val typeName = (field.type as? LanguageType.Custom)?.name
             if (typeName != null && typeName in nestedNames) {
-                field.copy(type = LanguageType.Custom("${struct.name}$typeName"))
+                field.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName"))
             } else field
         }
         val qualifiedConstructors = struct.constructors.map { c ->
@@ -306,7 +305,7 @@ open class PythonIrEmitter(
                     if (value is ConstructorStatement) {
                         val typeName = (value.type as? LanguageType.Custom)?.name
                         if (typeName != null && typeName in nestedNames) {
-                            Assignment(stmt.name, value.copy(type = LanguageType.Custom("${struct.name}$typeName")))
+                            Assignment(stmt.name, value.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName")))
                         } else stmt
                     } else stmt
                 } else stmt

@@ -3,12 +3,14 @@
 build:
 	./mvnw verify && \
 	(cd gradle-ktor && ./gradlew check ) && \
-	(cd npm-typescript && npm ci && npm run build)
+	(cd npm-typescript && npm ci && npm run build) && \
+	(cd rust-petstore && cargo build)
 
 clean:
 	./mvnw clean && \
 	(cd gradle-ktor && ./gradlew clean) && \
-	(cd npm-typescript && npm run clean)
+	(cd npm-typescript && npm run clean) && \
+	(cd rust-petstore && cargo clean)
 
 format:
 	(cd gradle-ktor && ./gradlew spotlessApply) && \

@@ -26,8 +26,9 @@ dependencies {
     implementation(project(":src:compiler:emitters:kotlin"))
     implementation(project(":src:compiler:emitters:python"))
     implementation(project(":src:compiler:emitters:typescript"))
+    implementation(project(":src:compiler:emitters:rust"))
     implementation(libs.bundles.kotest)
     implementation(libs.testcontainers)
     testImplementation(libs.kotlin.test)
-    testImplementation(libs.junit.params)
+    testImplementation(libs.kotest.runner.junit5)
 }

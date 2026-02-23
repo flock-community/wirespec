@@ -2,6 +2,7 @@ package community.flock.wirespec.verify
 
 import arrow.core.nonEmptyListOf
 import arrow.core.nonEmptySetOf
+import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
@@ -16,32 +17,45 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.emitters.java.JavaIrEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.emitters.python.PythonIrEmitter
+import community.flock.wirespec.emitters.rust.RustIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
-import community.flock.wirespec.language.core.Assignment
-import community.flock.wirespec.language.core.ConstructorStatement
-import community.flock.wirespec.language.core.FieldCall
-import community.flock.wirespec.language.core.FunctionCall
-import community.flock.wirespec.language.core.Import
-import community.flock.wirespec.language.core.Main
-import community.flock.wirespec.language.core.Type
-import community.flock.wirespec.language.core.VariableReference
-import community.flock.wirespec.language.core.transformChildren
-import community.flock.wirespec.language.core.transformer
-import community.flock.wirespec.language.generator.generateJava
-import community.flock.wirespec.language.generator.generateKotlin
-import community.flock.wirespec.language.generator.generatePython
-import community.flock.wirespec.language.generator.generateTypeScript
+import community.flock.wirespec.ir.core.Assignment
+import community.flock.wirespec.ir.core.ConstructorStatement
+import community.flock.wirespec.ir.core.FieldCall
+import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Import
+import community.flock.wirespec.ir.core.Main
+import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Type
+import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.ir.generator.generateJava
+import community.flock.wirespec.ir.generator.generateKotlin
+import community.flock.wirespec.ir.generator.generatePython
+import community.flock.wirespec.ir.generator.generateRust
+import community.flock.wirespec.ir.generator.generateTypeScript
 import io.kotest.matchers.shouldBe
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
 import java.io.File
-import community.flock.wirespec.language.core.File as AstFile
+import community.flock.wirespec.ir.core.File as AstFile
+
+val languages = mapOf(
+    "java-17" to Language(JavaIrEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:17-jdk" }),
+    "java-21" to Language(JavaIrEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:21-jdk" }),
+    "kotlin-1" to Language(KotlinIrEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_1.image }),
+    "kotlin-2" to Language(KotlinIrEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_2.image }),
+    "python" to Language(PythonIrEmitter(emitShared = EmitShared(true)), { VerifyImage.PYTHON.image }),
+    "typescript" to Language(TypeScriptIrEmitter(), { "node:20-slim" }),
+    "rust" to Language(RustIrEmitter(emitShared = EmitShared(true)), { VerifyImage.RUST.image }),
+).onEach { (name, lang) -> lang.name = name }
 
 class Language(
-    val name: String,
     val emitter: Emitter,
     val image: () -> String,
 ) {
+    lateinit var name: String
     override fun toString() = name
     lateinit var container: GenericContainer<*>
     private lateinit var outputDir: File
@@ -66,11 +80,13 @@ class Language(
     }
 
     fun generate(file: AstFile, outputDir: File) {
+        val name = file.name.pascalCase()
         val (fileName, content) = when (emitter) {
-            is JavaIrEmitter -> "${file.name}.java" to file.generateJava()
-            is KotlinIrEmitter -> "${file.name}.kt" to file.generateKotlin()
-            is PythonIrEmitter -> "${file.name}.py" to file.generatePython()
-            is TypeScriptIrEmitter -> "${file.name}.ts" to file.generateTypeScript()
+            is JavaIrEmitter -> "${name}.java" to file.generateJava()
+            is KotlinIrEmitter -> "${name}.kt" to file.generateKotlin()
+            is PythonIrEmitter -> "${name}.py" to file.generatePython()
+            is RustIrEmitter -> "${name}.rs" to file.generateRust()
+            is TypeScriptIrEmitter -> "${name}.ts" to file.generateTypeScript()
             else -> error("Unknown language: $name")
         }
         outputDir.resolve(fileName).writeText(content)
@@ -98,6 +114,7 @@ class Language(
             is JavaIrEmitter -> "find /app/gen -name '*.java' | xargs javac -d /tmp/out"
             is KotlinIrEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
             is PythonIrEmitter -> "python -m mypy --disable-error-code=empty-body /app/gen/"
+            is RustIrEmitter -> "rm -rf /app/src/generated && cp -r /app/gen/community/flock/wirespec/generated /app/src/generated && printf 'mod generated;\\nfn main() {}\\n' > /app/src/main.rs && cd /app && cargo build"
             is TypeScriptIrEmitter -> "npm install -g typescript && cd /app/gen && tsc --noEmit"
             else -> error("Unknown language: ${emitter::class.simpleName}")
         }
@@ -108,11 +125,29 @@ class Language(
         val resolved = if (emitter is TypeScriptIrEmitter) testFile.adaptForTypeScript(fixture) else testFile
         generate(resolved, outputDir)
         compile()
-        val fileName = testFile.name
+        val fileName = testFile.name.pascalCase()
         val runCommand: String = when (emitter) {
             is JavaIrEmitter -> "java -ea -cp /tmp/out $fileName"
             is KotlinIrEmitter -> "java -ea -cp /tmp/run.jar ${fileName}Kt"
             is PythonIrEmitter -> "cd /app/gen && python -O ${fileName}.py"
+            is RustIrEmitter -> {
+                // Build use statements from the test file's imports
+                val imports = resolved.elements.filterIsInstance<Import>()
+                val useStatements = imports.map { imp ->
+                    val typeName = imp.type.name
+                    val snakeName = typeName.toRustSnakeCase()
+                    "use generated::model::${snakeName}::${typeName};"
+                }.joinToString("\n")
+                // Generate the test file content (which contains fn main())
+                val rustContent = resolved.generateRust()
+                // Filter out the import lines that the generator produced (use super::...)
+                val filteredContent = rustContent.lines()
+                    .filter { !it.startsWith("use super::") }
+                    .joinToString("\n")
+                val mainRs = "mod generated;\n$useStatements\n\n$filteredContent"
+                container.execInContainer("sh", "-c", "cat > /app/src/main.rs << 'RUSTEOF'\n$mainRs\nRUSTEOF")
+                "cd /app && cargo build && cargo run"
+            }
             is TypeScriptIrEmitter -> "npm install -g tsx && cd /app/gen && tsx ${fileName}.ts"
             else -> error("Unknown language: ${name}")
         }
@@ -197,13 +232,13 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     val body = main.body
 
     // Analyze: variable->type mapping and validate targets
-    val variableTypes = mutableMapOf<String, String>()
-    val validateTargets = mutableSetOf<String>()
+    val variableTypes = mutableMapOf<Name, String>()
+    val validateTargets = mutableSetOf<Name>()
     for (stmt in body) {
         if (stmt !is Assignment) continue
         when (val value = stmt.value) {
             is ConstructorStatement -> (value.type as? Type.Custom)?.let { variableTypes[stmt.name] = it.name }
-            is FunctionCall -> if (value.name == "validate" && value.receiver is VariableReference)
+            is FunctionCall -> if (value.name == Name("validate") && value.receiver is VariableReference)
                 validateTargets.add((value.receiver as VariableReference).name)
             else -> {}
         }
@@ -212,20 +247,22 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     // Refined wrappers to inline: refined type assignments NOT used as validate targets
     val inlineMap = body.filterIsInstance<Assignment>()
         .filter { variableTypes[it.name] in refinedTypes && it.name !in validateTargets }
-        .mapNotNull { a -> (a.value as? ConstructorStatement)?.namedArguments?.get("value")?.let { a.name to it } }
+        .mapNotNull { a -> (a.value as? ConstructorStatement)?.namedArguments?.get(Name("value"))?.let { a.name to it } }
         .toMap()
+
+    if (validateTargets.isEmpty() && inlineMap.isEmpty()) return this
 
     // Transform: inline refs + rewrite validate calls
     val t = transformer(
         transformExpression = { expr, self ->
             when {
                 expr is VariableReference && expr.name in inlineMap -> inlineMap.getValue(expr.name)
-                expr is FunctionCall && expr.name == "validate" && expr.receiver is VariableReference -> {
+                expr is FunctionCall && expr.name == Name("validate") && expr.receiver is VariableReference -> {
                     val varName = (expr.receiver as VariableReference).name
                     val typeName = variableTypes[varName] ?: return@transformer expr.transformChildren(self)
-                    val arg = if (typeName in refinedTypes) "value" to FieldCall(VariableReference(varName), "value")
-                    else "obj" to VariableReference(varName)
-                    FunctionCall(name = "validate$typeName", arguments = mapOf(arg))
+                    val arg = if (typeName in refinedTypes) Name("value") to FieldCall(VariableReference(varName), Name("value"))
+                    else Name("obj") to VariableReference(varName)
+                    FunctionCall(name = Name("validate$typeName"), arguments = mapOf(arg))
                 }
                 else -> expr.transformChildren(self)
             }
@@ -246,4 +283,16 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     }.distinct()
 
     return copy(elements = newImports + elements.filter { it !is Import && it !is Main } + Main(transformedBody))
+}
+
+private fun String.toRustSnakeCase(): String {
+    if (isEmpty()) return this
+    val result = StringBuilder()
+    for ((i, c) in withIndex()) {
+        if (c.isUpperCase() && i > 0 && this[i - 1].isLowerCase()) {
+            result.append('_')
+        }
+        result.append(c.lowercaseChar())
+    }
+    return result.toString()
 }

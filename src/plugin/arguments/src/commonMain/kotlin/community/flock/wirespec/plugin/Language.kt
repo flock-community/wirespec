@@ -9,6 +9,7 @@ import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.emitters.python.PythonEmitter
 import community.flock.wirespec.emitters.python.PythonIrEmitter
+import community.flock.wirespec.emitters.rust.RustIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
@@ -20,6 +21,7 @@ enum class Language {
     Kotlin,
     TypeScript,
     Python,
+    Rust,
     Wirespec,
     OpenAPIV2,
     OpenAPIV3,
@@ -36,6 +38,7 @@ fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared) = when 
     Language.Java -> JavaEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinEmitter(packageName, emitShared)
     Language.Python -> PythonEmitter(packageName, emitShared)
+    Language.Rust -> RustIrEmitter(packageName, emitShared)
     Language.TypeScript -> TypeScriptEmitter()
     Language.Wirespec -> WirespecEmitter()
     Language.OpenAPIV2 -> OpenAPIV2Emitter
@@ -47,6 +50,7 @@ fun Language.toIrEmitter(packageName: PackageName, emitShared: EmitShared) = whe
     Language.Java -> JavaIrEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinIrEmitter(packageName, emitShared)
     Language.Python -> PythonIrEmitter(packageName, emitShared)
+    Language.Rust -> RustIrEmitter(packageName, emitShared)
     Language.TypeScript -> TypeScriptIrEmitter()
     Language.Wirespec -> WirespecEmitter()
     Language.OpenAPIV2 -> OpenAPIV2Emitter

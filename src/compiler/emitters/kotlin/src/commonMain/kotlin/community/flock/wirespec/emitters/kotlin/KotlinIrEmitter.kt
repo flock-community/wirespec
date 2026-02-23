@@ -7,7 +7,8 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.HasPackageName
-import community.flock.wirespec.language.emit.IrEmitter
+import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.needImports
@@ -28,42 +29,44 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.language.converter.convert
-import community.flock.wirespec.language.converter.convertConstraint
-import community.flock.wirespec.language.converter.convertWithValidation
-import community.flock.wirespec.language.core.Assignment
-import community.flock.wirespec.language.core.Constructor
-import community.flock.wirespec.language.core.File
-import community.flock.wirespec.language.core.Import
-import community.flock.wirespec.language.core.Interface
-import community.flock.wirespec.language.core.RawElement
-import community.flock.wirespec.language.core.RawExpression
-import community.flock.wirespec.language.core.Static
-import community.flock.wirespec.language.core.Struct
-import community.flock.wirespec.language.core.VariableReference
-import community.flock.wirespec.language.core.findAll
-import community.flock.wirespec.language.core.findElement
-import community.flock.wirespec.language.core.function
-import community.flock.wirespec.language.core.injectAfter
-import community.flock.wirespec.language.core.raw
-import community.flock.wirespec.language.core.renameType
-import community.flock.wirespec.language.core.transformMatchingElements
-import community.flock.wirespec.language.generator.generateJava
-import community.flock.wirespec.language.generator.generateKotlin
+import community.flock.wirespec.ir.converter.convert
+import community.flock.wirespec.ir.converter.convertConstraint
+import community.flock.wirespec.ir.converter.convertWithValidation
+import community.flock.wirespec.ir.core.Assignment
+import community.flock.wirespec.ir.core.Constructor
+import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.Import
+import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.Namespace
+import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.findAll
+import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.injectAfter
+import community.flock.wirespec.ir.core.raw
+import community.flock.wirespec.ir.core.renameType
+import community.flock.wirespec.ir.core.transform
+import community.flock.wirespec.ir.core.transformMatchingElements
+import community.flock.wirespec.ir.generator.KotlinGenerator
+import community.flock.wirespec.ir.generator.generateJava
+import community.flock.wirespec.ir.generator.generateKotlin
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
-import community.flock.wirespec.language.core.Enum as LanguageEnum
-import community.flock.wirespec.language.core.File as LanguageFile
-import community.flock.wirespec.language.core.Field as LanguageField
-import community.flock.wirespec.language.core.Function as LanguageFunction
-import community.flock.wirespec.language.core.Package as LanguagePackage
-import community.flock.wirespec.language.core.Type as LanguageType
+import community.flock.wirespec.ir.core.Enum as LanguageEnum
+import community.flock.wirespec.ir.core.File as LanguageFile
+import community.flock.wirespec.ir.core.Field as LanguageField
+import community.flock.wirespec.ir.core.Function as LanguageFunction
+import community.flock.wirespec.ir.core.Package as LanguagePackage
+import community.flock.wirespec.ir.core.Type as LanguageType
 
 open class KotlinIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {
 
-    override fun File.generate(): String = generateKotlin()
+    override val generator = KotlinGenerator
 
     val import = """
         |
@@ -98,14 +101,16 @@ open class KotlinIrEmitter(
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
         override val source = AstShared(packageString)
             .convert()
-            .renameType("Type", "KType")
-            .transformMatchingElements { file: LanguageFile ->
-                val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
-                file.copy(elements = packageElements + Import("kotlin.reflect", LanguageType.Custom("KType")) + rest)
-            }
-            .injectAfter { static: Static ->
-                if (static.name == "Wirespec") listOf(RawElement(clientServer))
-                else emptyList()
+            .transform {
+                renameType("Type", "KType")
+                matchingElements { file: LanguageFile ->
+                    val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
+                    file.copy(elements = packageElements + Import("kotlin.reflect", LanguageType.Custom("KType")) + rest)
+                }
+                injectAfter { namespace: Namespace ->
+                    if (namespace.name == Name.of("Wirespec")) listOf(RawElement(clientServer))
+                    else emptyList()
+                }
             }
             .generateKotlin()
     }
@@ -113,7 +118,7 @@ open class KotlinIrEmitter(
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
         super.emit(module, logger).let {
             if (emitShared.value) it + File(
-                PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.kotlin").toDir() + "Wirespec",
+                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.kotlin").toDir() + "Wirespec"),
                 listOf(RawElement(shared.source))
             )
             else it
@@ -123,7 +128,7 @@ open class KotlinIrEmitter(
         super.emit(definition, module, logger).let { file ->
             val subPackageName = packageName + definition
             File(
-                name = subPackageName.toDir() + file.name,
+                name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
                 elements = listOf(LanguagePackage(subPackageName.value)) +
                     (if (module.needImports()) listOf(RawElement(import)) else emptyList()) +
                     file.elements
@@ -146,10 +151,12 @@ open class KotlinIrEmitter(
 
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
-            .renameType("Type", "KType")
-            .transformMatchingElements { struct: Struct ->
-                if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
-                else struct
+            .transform {
+                renameType("Type", "KType")
+                matchingElements { struct: Struct ->
+                    if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
+                    else struct
+                }
             }
 
     private fun Definition.emitEndpointImports() = importReferences()
@@ -159,24 +166,23 @@ open class KotlinIrEmitter(
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.emitEndpointImports()
         val file = endpoint.convert().renameType("Type", "KType")
-        val endpointInterface = file.findElement<Interface>()!!
-        val body = endpointInterface
+        val endpointNamespace = file.findElement<Namespace>()!!
+        val body = endpointNamespace
             .injectCompanionObject(endpoint)
-            .toStatic()
 
-        return if (imports.isNotEmpty()) LanguageFile(endpoint.identifier.sanitize(), listOf(RawElement(imports), body))
-        else LanguageFile(endpoint.identifier.sanitize(), listOf(body))
+        return if (imports.isNotEmpty()) LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
+        else LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
     }
 
-    private fun Interface.injectCompanionObject(endpoint: Endpoint): Interface {
+    private fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace {
         val companion = companionObject(endpoint)
         val rawHandleFunction = raw(emitHandleFunction(endpoint))
         val targetFunctionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
 
         return transformMatchingElements { iface: Interface ->
-            if (iface.name == "Handler") {
+            if (iface.name == Name.of("Handler")) {
                 val transformed = iface.transformMatchingElements { fn: LanguageFunction ->
-                    if (fn.name == targetFunctionName) rawHandleFunction else fn
+                    if (fn.name.camelCase() == targetFunctionName) rawHandleFunction else fn
                 }
                 transformed.injectAfter { iface2: Interface -> listOf(companion) }
             } else {
@@ -185,15 +191,9 @@ open class KotlinIrEmitter(
         }
     }
 
-    private fun Interface.toStatic(): Static = Static(
-        name = name,
-        elements = elements,
-        extends = extends.firstOrNull(),
-    )
-
     open fun emitHandleFunction(endpoint: Endpoint): String {
         return endpoint.convert().renameType("Type", "KType")
-            .findAll<Interface>().firstOrNull { it.name == "Handler" }
+            .findAll<Interface>().firstOrNull { it.name == Name.of("Handler") }
             ?.findElement<LanguageFunction>()
             ?.generateKotlin()
             ?.let { it + "\n" }
@@ -240,20 +240,20 @@ open class KotlinIrEmitter(
         .transformMatchingElements { languageEnum: LanguageEnum ->
             languageEnum.copy(
                 entries = languageEnum.entries.map {
-                    LanguageEnum.Entry(it.name.sanitizeEnum(), listOf("\"${it.name}\""))
+                    LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum()), listOf("\"${it.name.parts.first()}\""))
                 },
                 fields = listOf(
-                    LanguageField("label", LanguageType.String, isOverride = true),
+                    LanguageField(Name.of("label"), LanguageType.String, isOverride = true),
                 ),
                 constructors = listOf(
                     Constructor(
                         parameters = listOf(
-                            community.flock.wirespec.language.core.Parameter(
-                                "label",
+                            community.flock.wirespec.ir.core.Parameter(
+                                Name.of("label"),
                                 LanguageType.String
                             )
                         ),
-                        body = listOf(Assignment("this.label", RawExpression("label"), true)),
+                        body = listOf(Assignment(Name.of("this.label"), RawExpression("label"), true)),
                     ),
                 ),
                 elements = listOf(
@@ -290,11 +290,11 @@ open class KotlinIrEmitter(
                 },
                 function("validate", isOverride = true) {
                     returnType(LanguageType.Boolean)
-                    returns(refined.reference.convertConstraint(VariableReference("value")))
+                    returns(refined.reference.convertConstraint(VariableReference(Name.of("value"))))
                 },
             ),
         )
-        return LanguageFile(refined.identifier.sanitize(), listOf(updatedStruct))
+        return LanguageFile(Name.of(refined.identifier.sanitize()), listOf(updatedStruct))
     }
 
     companion object : Keywords {

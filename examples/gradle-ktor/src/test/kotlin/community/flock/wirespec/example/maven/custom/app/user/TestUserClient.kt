@@ -19,16 +19,16 @@ class TestUserClient : UserClient {
     override suspend fun getUserByName(request: GetUserByName.Request) = users
         .find { it.name == request.path.name }
         ?.let(GetUserByName::Response200)
-        ?: GetUserByName.Response404
+        ?: GetUserByName.Response404(Unit)
 
     override suspend fun postUser(request: PostUser.Request) = request.body
         .takeIf(users::add)
         ?.let(PostUser::Response200)
-        ?: PostUser.Response409
+        ?: PostUser.Response409(Unit)
 
     override suspend fun deleteUserByName(request: DeleteUserByName.Request) = users
         .find { it.name == request.path.name }
         ?.also(users::remove)
         ?.let(DeleteUserByName::Response200)
-        ?: DeleteUserByName.Response404
+        ?: DeleteUserByName.Response404(Unit)
 }

@@ -85,7 +85,7 @@
                             <languages>
                                 <language>Kotlin</language>
                             </languages>
-                            <shared>false</shared>
+                            <shared>true</shared>
                         </configuration>
                     </execution>
                     <execution>

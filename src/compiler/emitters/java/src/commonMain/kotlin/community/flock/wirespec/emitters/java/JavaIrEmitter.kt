@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.HasPackageName
-import community.flock.wirespec.language.emit.IrEmitter
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.needImports
@@ -18,60 +17,55 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
-import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.language.converter.convert
-import community.flock.wirespec.language.converter.convertConstraint
-import community.flock.wirespec.language.converter.convertWithValidation
-import community.flock.wirespec.language.core.Assignment
-import community.flock.wirespec.language.core.Constructor
-import community.flock.wirespec.language.core.Element
-import community.flock.wirespec.language.core.Field
-import community.flock.wirespec.language.core.FieldCall
-import community.flock.wirespec.language.core.File
-import community.flock.wirespec.language.core.Interface
-import community.flock.wirespec.language.core.Package
-import community.flock.wirespec.language.core.RawElement
-import community.flock.wirespec.language.core.RawExpression
-import community.flock.wirespec.language.core.Static
-import community.flock.wirespec.language.core.Struct
-import community.flock.wirespec.language.core.Type
-import community.flock.wirespec.language.core.VariableReference
-import community.flock.wirespec.language.core.file
-import community.flock.wirespec.language.core.findAll
-import community.flock.wirespec.language.core.findElement
-import community.flock.wirespec.language.core.function
-import community.flock.wirespec.language.core.import
-import community.flock.wirespec.language.core.injectAfter
-import community.flock.wirespec.language.core.`interface`
-import community.flock.wirespec.language.core.raw
-import community.flock.wirespec.language.core.struct
-import community.flock.wirespec.language.core.transformFieldsWhere
-import community.flock.wirespec.language.core.transformMatchingElements
-import community.flock.wirespec.language.core.transformParametersWhere
-import community.flock.wirespec.language.generator.generateJava
+import community.flock.wirespec.ir.converter.convert
+import community.flock.wirespec.ir.converter.convertWithValidation
+import community.flock.wirespec.ir.core.Assignment
+import community.flock.wirespec.ir.core.Constructor
+import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.Field
+import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Namespace
+import community.flock.wirespec.ir.core.Package
+import community.flock.wirespec.ir.core.Parameter
+import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.Type
+import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.import
+import community.flock.wirespec.ir.core.injectAfter
+import community.flock.wirespec.ir.core.`interface`
+import community.flock.wirespec.ir.core.raw
+import community.flock.wirespec.ir.core.struct
+import community.flock.wirespec.ir.core.transform
+import community.flock.wirespec.ir.core.transformFieldsWhere
+import community.flock.wirespec.ir.core.transformMatchingElements
+import community.flock.wirespec.ir.core.transformParametersWhere
+import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.generator.JavaGenerator
+import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
-import community.flock.wirespec.language.core.Enum as LanguageEnum
-import community.flock.wirespec.language.core.Function as LanguageFunction
+import community.flock.wirespec.ir.core.Enum as LanguageEnum
+import community.flock.wirespec.ir.core.Function as LanguageFunction
 
 open class JavaIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {
 
-    override fun File.generate(): String = generateJava()
+    override val generator = JavaGenerator
 
-    val import =
-        """
-        |
-        |import $DEFAULT_SHARED_PACKAGE_STRING.java.Wirespec;
-        |
-        """.trimMargin()
+    val wirespecImport = import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec")
 
     override val extension = FileExtension.Java
 
@@ -169,12 +163,14 @@ open class JavaIrEmitter(
         }
 
         private val wirespecFile = wirespecShared
-            .transformMatchingElements { file: File ->
-                val (packageElements, rest) = file.elements.partition { it is Package }
-                file.copy(elements = packageElements + imports + rest)
-            }
-            .injectAfter { static: Static ->
-                if (static.name == "Wirespec") clientServer else emptyList()
+            .transform {
+                matchingElements { file: File ->
+                    val (packageElements, rest) = file.elements.partition { it is Package }
+                    file.copy(elements = packageElements + imports + rest)
+                }
+                injectAfter { namespace: Namespace ->
+                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
+                }
             }
 
         override val source: String = wirespecFile.generateJava()
@@ -183,7 +179,7 @@ open class JavaIrEmitter(
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
         super.emit(module, logger).let {
             if (emitShared.value) it + File(
-                PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.java").toDir() + "Wirespec",
+                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.java").toDir() + "Wirespec"),
                 listOf(RawElement(shared.source))
             )
             else it
@@ -193,10 +189,10 @@ open class JavaIrEmitter(
         super.emit(definition, module, logger).let { file ->
             val subPackageName = packageName + definition
             File(
-                name = subPackageName.toDir() + file.name.sanitizeSymbol(),
+                name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
                 elements = listOf(Package(subPackageName.value)) +
-                    (if (module.needImports()) listOf(RawElement(import)) else emptyList()) +
-                    file.elements
+                        (if (module.needImports()) listOf(wirespecImport) else emptyList()) +
+                        file.elements
             )
         }
 
@@ -218,13 +214,14 @@ open class JavaIrEmitter(
 
     fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
 
-    private fun <T : Element> T.sanitizeNames(): T = this
-        .transformFieldsWhere({ true }) { field ->
-            field.copy(name = field.name.sanitizeSymbol().sanitizeKeywords())
+    private fun <T : Element> T.sanitizeNames(): T = transform {
+        fieldsWhere({ true }) { field ->
+            field.copy(name = Name.of(field.name.camelCase().sanitizeSymbol().sanitizeKeywords()))
         }
-        .transformParametersWhere({ true }) { param ->
-            param.copy(name = param.name.sanitizeSymbol().sanitizeKeywords())
+        parametersWhere({ true }) { param ->
+            param.copy(name = Name.of(param.name.camelCase().sanitizeSymbol().sanitizeKeywords()))
         }
+    }
 
     override fun emit(type: AstType, module: Module): File =
         type.convertWithValidation(module)
@@ -235,25 +232,28 @@ open class JavaIrEmitter(
         .transformMatchingElements { languageEnum: LanguageEnum ->
             languageEnum.copy(
                 entries = languageEnum.entries.map {
-                    LanguageEnum.Entry(it.name.sanitizeEnum(), listOf("\"${it.name}\""))
+                    LanguageEnum.Entry(
+                        Name.of(it.name.parts.first().sanitizeEnum()),
+                        listOf("\"${it.name.parts.first()}\"")
+                    )
                 },
                 fields = listOf(
-                    Field("label", Type.String),
+                    Field(Name.of("label"), Type.String),
                 ),
                 constructors = listOf(
                     Constructor(
-                        parameters = listOf(community.flock.wirespec.language.core.Parameter("label", Type.String)),
-                        body = listOf(Assignment("this.label", RawExpression("label"), true)),
+                        parameters = listOf(Parameter(Name.of("label"), Type.String)),
+                        body = listOf(Assignment(Name.of("this.label"), VariableReference(Name.of("label")), true)),
                     ),
                 ),
                 elements = listOf(
                     function("toString", isOverride = true) {
                         returnType(Type.String)
-                        returns(RawExpression("label"))
+                        returns(VariableReference(Name.of("label")))
                     },
                     function("label") {
                         returnType(Type.String)
-                        returns(RawExpression("label"))
+                        returns(VariableReference(Name.of("label")))
                     },
                 ),
             )
@@ -264,34 +264,30 @@ open class JavaIrEmitter(
         .convert()
         .sanitizeNames()
 
-    override fun emit(refined: Refined): File {
-        val file = refined.convert()
-        val struct = file.findElement<Struct>()!!
-        val validateFunction = struct.elements.filterIsInstance<LanguageFunction>().first { it.name == "validate" }
-        return file
-            .transformMatchingElements { s: Struct ->
+    override fun emit(refined: Refined): File = refined.convert()
+        .transform {
+            matchingElements { s: Struct ->
                 s.copy(
                     interfaces = listOf(Type.Custom("Wirespec.Refined")),
                     elements = listOf(
                         function("toString", isOverride = true) {
                             returnType(string)
-                            returns(RawExpression("value.toString()"))
+                            returns(FunctionCall(receiver = VariableReference(Name.of("value")), name = Name.of("toString")))
                         },
-                        function("validate", isOverride = true) {
-                            returnType(Type.Boolean)
-                            returns(
-                                refined.reference.convertConstraint(VariableReference("value"))
-                            )
-                        },
+                    ) + s.elements.map { element ->
+                        if (element is LanguageFunction && element.name == Name.of("validate")) {
+                            element.copy(isOverride = true)
+                        } else element
+                    } + listOf(
                         function("value", isOverride = true) {
                             returnType(refined.reference.convert())
-                            returns(RawExpression("value"))
+                            returns(VariableReference(Name.of("value")))
                         },
                     ),
                 )
             }
-            .sanitizeNames()
-    }
+        }
+        .sanitizeNames()
 
 
     override fun emit(channel: Channel): File {
@@ -302,17 +298,19 @@ open class JavaIrEmitter(
         }
         return channel.convert()
             .sanitizeNames()
-            .transformMatchingElements { it: Interface -> it.withFullyQualifiedPrefix(fullyQualifiedPrefix) }
-            .transformMatchingElements { file: File ->
-                val interfaceElement = file.findElement<Interface>()!!
-                file.copy(elements = listOf(RawElement("@FunctionalInterface\n"), interfaceElement))
+            .transform {
+                matchingElements { it: Interface -> it.withFullyQualifiedPrefix(fullyQualifiedPrefix) }
+                matchingElements { file: File ->
+                    val interfaceElement = file.findElement<Interface>()!!
+                    file.copy(elements = listOf(RawElement("@FunctionalInterface\n"), interfaceElement))
+                }
             }
     }
 
     private fun Interface.withFullyQualifiedPrefix(prefix: String): Interface =
         if (prefix.isNotEmpty()) {
             transformParametersWhere(
-                predicate = { it.name == "message" },
+                predicate = { it.name == Name.of("message") },
                 transform = { param ->
                     when (val t = param.type) {
                         is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
@@ -326,14 +324,14 @@ open class JavaIrEmitter(
 
 
     override fun emit(endpoint: Endpoint): File {
-        val imports = endpoint.emitImports()
+        val imports = endpoint.emitImportElements()
         return endpoint.convert()
             .sanitizeNames()
             .injectHandleFunction(endpoint)
             .let { file ->
                 if (imports.isNotEmpty()) {
                     file.transformMatchingElements { f: File ->
-                        f.copy(elements = listOf(RawElement("$imports\n\n")) + f.elements)
+                        f.copy(elements = imports + f.elements)
                     }
                 } else {
                     file
@@ -341,28 +339,11 @@ open class JavaIrEmitter(
             }
     }
 
-    open fun emitHandleFunction(endpoint: Endpoint): String {
-        return endpoint.convert()
-            .sanitizeNames()
-            .findAll<Interface>().firstOrNull { it.name == "Handler" }
-            ?.findElement<LanguageFunction>()
-            ?.generateJava()
-            ?.replace("static ", "")
-            ?.let { it + "\n" }
-            ?: ""
-    }
-
     private fun <T : Element> T.injectHandleFunction(endpoint: Endpoint): T {
-        val handleFunction = emitHandleFunction(endpoint)
-        val targetFunctionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
         val handlersStruct = buildHandlers(endpoint)
-
         return transformMatchingElements { iface: Interface ->
-            if (iface.name == "Handler") {
-                val transformed = iface.transformMatchingElements { fn: LanguageFunction ->
-                    if (handleFunction.isNotBlank() && fn.name == targetFunctionName) RawElement(handleFunction) else fn
-                }
-                transformed.injectAfter { iface2: Interface -> listOf(handlersStruct) }
+            if (iface.name == Name.of("Handler")) {
+                iface.injectAfter { _: Interface -> listOf(handlersStruct) }
             } else {
                 iface
             }
@@ -443,9 +424,9 @@ open class JavaIrEmitter(
         }
     }
 
-    private fun Definition.emitImports() = importReferences()
+    private fun Definition.emitImportElements() = importReferences()
         .filter { identifier.value != it.value }
-        .joinToString("\n") { "import ${packageName.value}.model.${it.value};" }
+        .map { import("${packageName.value}.model", it.value) }
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

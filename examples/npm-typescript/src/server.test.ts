@@ -42,7 +42,7 @@ const api: Api = {
     );
   },
   getTodos(_: GetTodos.Request): Promise<GetTodos.Response> {
-    return Promise.resolve(GetTodos.response200({ xTotal: 2, body }));
+    return Promise.resolve(GetTodos.response200({ "X-Total": 2, body }));
   },
   getTodoById(_: GetTodoById.Request): Promise<GetTodoById.Response> {
     return Promise.resolve(GetTodoById.response200({ body: body[0] }));
@@ -55,16 +55,15 @@ test("testGetTodos", async () => {
     path: ["todos"],
     queries: {},
     headers: {},
-    body: undefined,
   };
   const server = GetTodos.server(wirespecSerialization);
   const request = server.from(rawRequest);
   const response = await api.getTodos(request);
   const rawResponse = server.to(response);
   const expected = {
-    statusCode: 200,
-    headers: { xTotal: ["2"] },
-    body: new TextEncoder().encode(JSON.stringify(body)),
+    status: 200,
+    headers: { "X-Total": "2" },
+    body: JSON.stringify(body),
   };
 
   expect(rawResponse).toEqual(expected);
@@ -76,17 +75,12 @@ test("testGetTodoById", async () => {
     path: ["todos", "1"],
     queries: {},
     headers: {},
-    body: undefined,
   };
   const server = GetTodoById.server(wirespecSerialization);
   const request = server.from(rawRequest);
   const response = await api.getTodoById(request);
   const rawResponse = server.to(response);
-  const expected = {
-    statusCode: 200,
-    headers: {},
-    body: new TextEncoder().encode(JSON.stringify(body[0])),
-  };
+  const expected = { status: 200, headers: {}, body: JSON.stringify(body[0]) };
 
   expect(rawResponse).toEqual(expected);
 });
@@ -97,18 +91,16 @@ test("testPostTodo", async () => {
     path: ["todos"],
     queries: {},
     headers: {},
-    body: Buffer.from(JSON.stringify({ name: "Do it later", done: false })),
+    body: JSON.stringify({ name: "Do it later", done: false }),
   };
   const server = PostTodo.server(wirespecSerialization);
   const request = server.from(rawRequest);
   const response = await api.postTodo(request);
   const rawResponse = server.to(response);
   const expected = {
-    statusCode: 200,
+    status: 200,
     headers: {},
-    body: new TextEncoder().encode(
-      JSON.stringify({ id: "3", name: "Do it later", done: false }),
-    ),
+    body: JSON.stringify({ id: "3", name: "Do it later", done: false }),
   };
 
   expect(rawResponse).toEqual(expected);

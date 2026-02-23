@@ -650,7 +650,7 @@ class PythonIrEmitterTest {
             |class Request(Wirespec.Model):
             |    type: str
             |    url: str
-            |    bODY_TYPE: Optional[str]
+            |    BODY_TYPE: Optional[str]
             |    params: list[str]
             |    headers: dict[str, str]
             |    body: Optional[dict[str, Optional[list[Optional[str]]]]]

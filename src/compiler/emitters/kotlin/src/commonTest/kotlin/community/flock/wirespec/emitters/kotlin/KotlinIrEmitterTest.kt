@@ -621,7 +621,7 @@ class KotlinIrEmitterTest {
             |data class Request(
             |  val type: String,
             |  val url: String,
-            |  val bODY_TYPE: String?,
+            |  val BODY_TYPE: String?,
             |  val params: List<String>,
             |  val headers: Map<String, String>,
             |  val body: Map<String, List<String?>?>?

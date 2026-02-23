@@ -53,7 +53,6 @@
                             <languages>
                                 <language>TypeScript</language>
                             </languages>
-                            <ir>true</ir>
                         </configuration>
                     </execution>
                     <execution>
@@ -65,7 +64,6 @@
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <packageName>community.flock.wirespec.generated.java</packageName>
-                            <ir>true</ir>
                             <languages>
                                 <language>Java</language>
                             </languages>

@@ -57,7 +57,6 @@
                             <output>${project.build.directory}/generated-sources</output>
                             <emitterClass>community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter</emitterClass>
                             <packageName>community.flock.wirespec.generated.examples.spring</packageName>
-                            <ir>true</ir>
                         </configuration>
                     </execution>
                 </executions>

@@ -8,7 +8,6 @@ group_id = "community.flock.wirespec"
 intellij = "2.6.0"
 jackson = "2.20.1"
 java = "17"
-junit = "5.10.0"
 junit_launcher = "1.11.3"
 kafka_avro = "7.7.1"
 kotest = "5.9.1"
@@ -41,7 +40,7 @@ jackson_databind = { module = "com.fasterxml.jackson.core:jackson-databind", ver
 jackson_jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson" }
 jackson_kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 junit_launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit_launcher" }
-junit_params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit" }
+kotest_runner_junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kafka_avro = { module = "io.confluent:kafka-avro-serializer", version.ref ="kafka_avro"}
 kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest_assertions_arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest_arrow" }

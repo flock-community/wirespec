@@ -217,7 +217,7 @@ class JavaIrEmitterTest {
             |    public static record Headers () implements Wirespec.Response.Headers {
             |    };
             |  };
-            |  static public Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+            |  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
             |    return new Wirespec.RawRequest(
             |      request.method().name(),
             |      java.util.List.of("todos", serialization.<String>serializePath(request.path().id(), Wirespec.getType(String.class, null))),
@@ -226,7 +226,7 @@ class JavaIrEmitterTest {
             |      java.util.Optional.of(serialization.<PotentialTodoDto>serializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null)))
             |    );
             |  }
-            |  static public Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+            |  public static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
             |    return new Request(
             |      serialization.<String>deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
             |      java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, null))).orElseThrow(() -> new IllegalStateException("Param done cannot be null")),
@@ -236,7 +236,7 @@ class JavaIrEmitterTest {
             |      request.body().map(it -> serialization.<PotentialTodoDto>deserializeBody(it, Wirespec.getType(PotentialTodoDto.class, null))).orElseThrow(() -> new IllegalStateException("body is null"))
             |    );
             |  }
-            |  static public Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
+            |  public static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
             |    if (response instanceof Response200 r) {
             |      return new Wirespec.RawResponse(
             |        r.status(),
@@ -259,7 +259,7 @@ class JavaIrEmitterTest {
             |      throw new IllegalStateException(("Cannot match response with status: " + response.status()));
             |    }
             |  }
-            |  static public Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+            |  public static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
             |    switch (response.statusCode()) {
             |        case 200 -> {
             |          return new Response200(response.body().map(it -> serialization.<TodoDto>deserializeBody(it, Wirespec.getType(TodoDto.class, null))).orElseThrow(() -> new IllegalStateException("body is null")));
@@ -454,7 +454,7 @@ class JavaIrEmitterTest {
             |    public static record Headers () implements Wirespec.Response.Headers {
             |    };
             |  };
-            |  static public Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+            |  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
             |    return new Wirespec.RawRequest(
             |      request.method().name(),
             |      java.util.List.of("todos"),
@@ -463,10 +463,10 @@ class JavaIrEmitterTest {
             |      java.util.Optional.empty()
             |    );
             |  }
-            |  static public Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+            |  public static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
             |    return new Request();
             |  }
-            |  static public Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
+            |  public static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
             |    if (response instanceof Response200 r) {
             |      return new Wirespec.RawResponse(
             |        r.status(),
@@ -477,7 +477,7 @@ class JavaIrEmitterTest {
             |      throw new IllegalStateException(("Cannot match response with status: " + response.status()));
             |    }
             |  }
-            |  static public Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+            |  public static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
             |    switch (response.statusCode()) {
             |        case 200 -> {
             |          return new Response200(response.body().map(it -> serialization.<java.util.List<TodoDto>>deserializeBody(it, Wirespec.getType(TodoDto.class, java.util.List.class))).orElseThrow(() -> new IllegalStateException("body is null")));

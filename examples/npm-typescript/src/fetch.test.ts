@@ -18,12 +18,12 @@ test("wirespecFetch", async () => {
     method: "GET",
     path: ["test"],
     queries: {
-      test: ["test"],
+      test: "test",
     },
     headers: {
-      test: ["TEST"],
+      test: "TEST",
     },
-    body: new Uint8Array(),
+    body: "",
   };
   const res = await wirespecFetch(req, mockHandler);
 
