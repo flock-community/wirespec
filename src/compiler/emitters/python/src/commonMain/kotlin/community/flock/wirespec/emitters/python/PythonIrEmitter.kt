@@ -42,7 +42,6 @@ import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.renameType
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformMatchingElements
@@ -99,7 +98,6 @@ open class PythonIrEmitter(
     override val shared = object : Shared {
         override val packageString = "shared"
         override val source = sharedImport + AstShared(packageString).convert()
-            .renameType("Type", "type[T]")
             .generatePython()
     }
 

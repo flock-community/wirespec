@@ -105,6 +105,27 @@ jobs:
         run: |
           make example
 
+  verify:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Run
+        run: |
+          make verify
+
   version:
 
     runs-on: ubuntu-latest
@@ -114,6 +135,7 @@ jobs:
     needs:
       - build
       - example
+      - verify
 
     outputs:
       version: ${{steps.version.outputs.version}}

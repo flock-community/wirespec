@@ -243,6 +243,7 @@ object PythonGenerator : Generator {
         Type.Bytes -> "bytes"
         Type.Unit -> "None"
         Type.Wildcard -> "Any"
+        Type.Reflect -> "type"
         is Type.Array -> "list[${elementType.emit(qualifier)}]"
         is Type.Dict -> "dict[${keyType.emit(qualifier)}, ${valueType.emit(qualifier)}]"
         is Type.Custom -> {

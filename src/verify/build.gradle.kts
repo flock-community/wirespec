@@ -17,6 +17,7 @@ kotlin {
 tasks.test {
     useJUnitPlatform()
     systemProperty("buildDir", layout.buildDirectory.get().asFile.absolutePath)
+    onlyIf { project.hasProperty("verify") }
 }
 
 dependencies {

@@ -114,7 +114,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 returnType(bytes)
                 typeParam(type("T"))
                 arg("t", type("T"))
-                arg("type", type("Type"))
+                arg("type", reflect)
             }
         }
         `interface`("BodyDeserializer") {
@@ -122,7 +122,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 returnType(type("T"))
                 typeParam(type("T"))
                 arg("raw", bytes)
-                arg("type", type("Type"))
+                arg("type", reflect)
             }
         }
         `interface`("BodySerialization") {
@@ -134,7 +134,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 returnType(string)
                 typeParam(type("T"))
                 arg("t", type("T"))
-                arg("type", type("Type"))
+                arg("type", reflect)
             }
         }
         `interface`("PathDeserializer") {
@@ -142,7 +142,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 returnType(type("T"))
                 typeParam(type("T"))
                 arg("raw", string)
-                arg("type", type("Type"))
+                arg("type", reflect)
             }
         }
         `interface`("PathSerialization") {
@@ -154,7 +154,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 returnType(list(string))
                 typeParam(type("T"))
                 arg("value", type("T"))
-                arg("type", type("Type"))
+                arg("type", reflect)
             }
         }
         `interface`("ParamDeserializer") {
@@ -162,7 +162,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 returnType(type("T"))
                 typeParam(type("T"))
                 arg("values", list(string))
-                arg("type", type("Type"))
+                arg("type", reflect)
             }
         }
         `interface`("ParamSerialization") {
@@ -847,6 +847,7 @@ private fun Type.toTypeName(): String = when (this) {
     Type.Any -> "Any"
     is Type.Unit -> "Unit"
     is Type.Wildcard -> "Wildcard"
+    is Type.Reflect -> "Type"
     is Type.Custom -> name
     is Type.Array -> "List${elementType.toTypeName()}"
     is Type.Nullable -> "Optional${type.toTypeName()}"

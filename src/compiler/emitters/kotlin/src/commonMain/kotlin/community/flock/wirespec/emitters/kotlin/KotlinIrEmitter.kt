@@ -47,7 +47,6 @@ import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.injectAfter
 import community.flock.wirespec.ir.core.raw
-import community.flock.wirespec.ir.core.renameType
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.ir.generator.KotlinGenerator
@@ -102,7 +101,6 @@ open class KotlinIrEmitter(
         override val source = AstShared(packageString)
             .convert()
             .transform {
-                renameType("Type", "KType")
                 matchingElements { file: LanguageFile ->
                     val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
                     file.copy(elements = packageElements + Import("kotlin.reflect", LanguageType.Custom("KType")) + rest)
@@ -152,7 +150,6 @@ open class KotlinIrEmitter(
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .transform {
-                renameType("Type", "KType")
                 matchingElements { struct: Struct ->
                     if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
                     else struct
@@ -165,7 +162,7 @@ open class KotlinIrEmitter(
 
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.emitEndpointImports()
-        val file = endpoint.convert().renameType("Type", "KType")
+        val file = endpoint.convert()
         val endpointNamespace = file.findElement<Namespace>()!!
         val body = endpointNamespace
             .injectCompanionObject(endpoint)
@@ -192,7 +189,7 @@ open class KotlinIrEmitter(
     }
 
     open fun emitHandleFunction(endpoint: Endpoint): String {
-        return endpoint.convert().renameType("Type", "KType")
+        return endpoint.convert()
             .findAll<Interface>().firstOrNull { it.name == Name.of("Handler") }
             ?.findElement<LanguageFunction>()
             ?.generateKotlin()
@@ -229,14 +226,13 @@ open class KotlinIrEmitter(
 
     override fun emit(channel: Channel): File {
         val imports = channel.emitChannelImports()
-        val file = channel.convert().renameType("Type", "KType")
+        val file = channel.convert()
         return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
         else file
     }
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .renameType("Type", "KType")
         .transformMatchingElements { languageEnum: LanguageEnum ->
             languageEnum.copy(
                 entries = languageEnum.entries.map {
@@ -272,10 +268,9 @@ open class KotlinIrEmitter(
 
     override fun emit(union: Union): File = union
         .convert()
-        .renameType("Type", "KType")
 
     override fun emit(refined: Refined): File {
-        val file = refined.convert().renameType("Type", "KType")
+        val file = refined.convert()
         val struct = file.findElement<Struct>()!!
         val toStringExpr = when (refined.reference.type) {
             is Reference.Primitive.Type.String -> "value"

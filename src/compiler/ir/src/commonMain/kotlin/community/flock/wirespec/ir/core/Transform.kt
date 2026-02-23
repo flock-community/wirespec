@@ -53,7 +53,7 @@ fun Type.transformChildren(transformer: Transformer): Type = when (this) {
 
     is Type.Custom -> copy(generics = generics.map { transformer.transformType(it) })
     is Type.Nullable -> copy(type = transformer.transformType(type))
-    is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard -> this
+    is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect -> this
 }
 
 // Element transformation
@@ -462,7 +462,7 @@ fun Type.visitChildren(visitor: Visitor) {
 
         is Type.Custom -> generics.forEach { visitor.visitType(it) }
         is Type.Nullable -> visitor.visitType(type)
-        is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard -> {}
+        is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect -> {}
     }
 }
 

@@ -16,6 +16,7 @@ interface BaseBuilder {
     val bytes get() = Type.Bytes
     val unit get() = Type.Unit
     val wildcard get() = Type.Wildcard
+    val reflect get() = Type.Reflect
     fun list(type: Type) = Type.Array(type)
     fun dict(keyType: Type, valueType: Type) = Type.Dict(keyType, valueType)
     fun type(name: String, vararg generics: Type): Type.Custom = Type.Custom(name, generics.toList())

@@ -52,6 +52,7 @@ sealed interface Type {
     object Bytes : Type
     object Unit : Type
     object Wildcard : Type
+    object Reflect : Type
     data class Array(val elementType: Type) : Type
     data class Dict(val keyType: Type, val valueType: Type) : Type
     data class Custom(val name: kotlin.String, val generics: List<Type> = emptyList()) : Type

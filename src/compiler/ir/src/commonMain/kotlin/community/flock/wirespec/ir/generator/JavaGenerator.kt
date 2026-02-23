@@ -352,6 +352,7 @@ private class JavaEmitter(val file: File) {
         Type.Boolean -> "Boolean"
         Type.Unit -> "Void"
         Type.Wildcard -> "?"
+        Type.Reflect -> "Type"
         is Type.Array -> "java.util.List"
         is Type.Dict -> "java.util.Map"
         is Type.Custom -> name

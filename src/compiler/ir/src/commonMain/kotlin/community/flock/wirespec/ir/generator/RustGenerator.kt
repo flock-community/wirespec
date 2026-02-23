@@ -259,6 +259,7 @@ object RustGenerator : Generator {
         Type.Bytes -> "Vec<u8>"
         Type.Unit -> "()"
         Type.Wildcard -> "_"
+        Type.Reflect -> "&'static str"
         is Type.Array -> "Vec<${elementType.emit()}>"
         is Type.Dict -> "std::collections::HashMap<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {

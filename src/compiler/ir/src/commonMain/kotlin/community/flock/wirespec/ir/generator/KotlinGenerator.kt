@@ -372,6 +372,7 @@ private class KotlinEmitter(val file: File) {
         Type.Boolean -> "Boolean"
         Type.Unit -> "Unit"
         Type.Wildcard -> "*"
+        Type.Reflect -> "KType"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
         is Type.Custom -> name
