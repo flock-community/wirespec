@@ -2,13 +2,13 @@ package community.flock.wirespec.verify
 
 import arrow.core.nonEmptyListOf
 import arrow.core.nonEmptySetOf
-import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -19,8 +19,11 @@ import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.emitters.python.PythonIrEmitter
 import community.flock.wirespec.emitters.rust.RustIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
+import community.flock.wirespec.ir.core.BinaryOp
 import community.flock.wirespec.ir.core.ConstructorStatement
+import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Import
@@ -135,7 +138,7 @@ class Language(
                 val imports = resolved.elements.filterIsInstance<Import>()
                 val useStatements = imports.map { imp ->
                     val typeName = imp.type.name
-                    val snakeName = typeName.toRustSnakeCase()
+                    val snakeName = Name.of(typeName).snakeCase()
                     "use generated::model::${snakeName}::${typeName};"
                 }.joinToString("\n")
                 // Generate the test file content (which contains fn main())
@@ -148,6 +151,7 @@ class Language(
                 container.execInContainer("sh", "-c", "cat > /app/src/main.rs << 'RUSTEOF'\n$mainRs\nRUSTEOF")
                 "cd /app && cargo build && cargo run"
             }
+
             is TypeScriptIrEmitter -> "npm install -g tsx && cd /app/gen && tsx ${fileName}.ts"
             else -> error("Unknown language: ${name}")
         }
@@ -164,7 +168,7 @@ class Language(
             println("=== stderr ===")
             println(result.stderr)
         }
-        if(result.exitCode != 0){
+        if (result.exitCode != 0) {
             println("=== exit code ===")
             println(result.exitCode)
         }
@@ -193,7 +197,7 @@ fun compileAndVerify(
     val outputDir = File(System.getProperty("buildDir"), "generated/$name/$language")
     outputDir.deleteRecursively()
     outputDir.mkdirs()
-print(outputDir.absolutePath)
+    print(outputDir.absolutePath)
     files.forEach { file ->
         val target = File(outputDir, file.file)
         target.parentFile.mkdirs()
@@ -212,7 +216,9 @@ print(outputDir.absolutePath)
 }
 
 fun Fixture.refinedTypeNames(): Set<String> {
-    val ctx = object : ParseContext, NoLogger { override val spec = WirespecSpec }
+    val ctx = object : ParseContext, NoLogger {
+        override val spec = WirespecSpec
+    }
     val ast = ctx.parse(nonEmptyListOf(ModuleContent(FileUri("N/A"), source)))
         .getOrNull() ?: return emptySet()
     return ast.modules.toList()
@@ -240,6 +246,7 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
             is ConstructorStatement -> (value.type as? Type.Custom)?.let { variableTypes[stmt.name] = it.name }
             is FunctionCall -> if (value.name == Name("validate") && value.receiver is VariableReference)
                 validateTargets.add((value.receiver as VariableReference).name)
+
             else -> {}
         }
     }
@@ -247,7 +254,9 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     // Refined wrappers to inline: refined type assignments NOT used as validate targets
     val inlineMap = body.filterIsInstance<Assignment>()
         .filter { variableTypes[it.name] in refinedTypes && it.name !in validateTargets }
-        .mapNotNull { a -> (a.value as? ConstructorStatement)?.namedArguments?.get(Name("value"))?.let { a.name to it } }
+        .mapNotNull { a ->
+            (a.value as? ConstructorStatement)?.namedArguments?.get(Name("value"))?.let { a.name to it }
+        }
         .toMap()
 
     if (validateTargets.isEmpty() && inlineMap.isEmpty()) return this
@@ -260,11 +269,42 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
                 expr is FunctionCall && expr.name == Name("validate") && expr.receiver is VariableReference -> {
                     val varName = (expr.receiver as VariableReference).name
                     val typeName = variableTypes[varName] ?: return@transformer expr.transformChildren(self)
-                    val arg = if (typeName in refinedTypes) Name("value") to FieldCall(VariableReference(varName), Name("value"))
+                    val arg = if (typeName in refinedTypes) Name("value") to FieldCall(
+                        VariableReference(varName),
+                        Name("value")
+                    )
                     else Name("obj") to VariableReference(varName)
                     FunctionCall(name = Name("validate$typeName"), arguments = mapOf(arg))
                 }
+
                 else -> expr.transformChildren(self)
+            }
+        },
+    )
+
+    // Second pass: wrap variable-to-variable equality in JSON.stringify for TypeScript
+    // TypeScript uses === which compares references, not structural equality for arrays
+    val jsonStringifyTransformer = transformer(
+        transformStatement = { stmt, self ->
+            if (stmt is AssertStatement && stmt.expression is BinaryOp) {
+                val op = stmt.expression as BinaryOp
+                if ((op.operator == BinaryOp.Operator.EQUALS || op.operator == BinaryOp.Operator.NOT_EQUALS) &&
+                    op.left is VariableReference && op.right is VariableReference
+                ) {
+                    fun jsonStringify(e: Expression): FunctionCall = FunctionCall(
+                        receiver = VariableReference(Name(listOf("JSON"), preserveCase = true)),
+                        name = Name.of("stringify"),
+                        arguments = mapOf(Name.of("_") to e),
+                    )
+                    AssertStatement(
+                        BinaryOp(jsonStringify(op.left), op.operator, jsonStringify(op.right)),
+                        stmt.message,
+                    )
+                } else {
+                    stmt.transformChildren(self)
+                }
+            } else {
+                stmt.transformChildren(self)
             }
         },
     )
@@ -272,6 +312,7 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     val transformedBody = body
         .filter { it !is Assignment || it.name !in inlineMap }
         .map { t.transformStatement(it) }
+        .map { jsonStringifyTransformer.transformStatement(it) }
 
     // Rebuild imports: only validated types + their validate functions
     val newImports = validateTargets.flatMap { varName ->
@@ -283,16 +324,4 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     }.distinct()
 
     return copy(elements = newImports + elements.filter { it !is Import && it !is Main } + Main(transformedBody))
-}
-
-private fun String.toRustSnakeCase(): String {
-    if (isEmpty()) return this
-    val result = StringBuilder()
-    for ((i, c) in withIndex()) {
-        if (c.isUpperCase() && i > 0 && this[i - 1].isLowerCase()) {
-            result.append('_')
-        }
-        result.append(c.lowercaseChar())
-    }
-    return result.toString()
 }

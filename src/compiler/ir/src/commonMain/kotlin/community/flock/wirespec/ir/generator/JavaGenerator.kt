@@ -493,9 +493,10 @@ private class JavaEmitter(val file: File) {
         BinaryOp.Operator.NOT_EQUALS -> "!="
     }
 
-    private fun BinaryOp.isPrimitiveLiteral(): Boolean =
-        left is Literal && ((left as Literal).type is Type.Integer || (left as Literal).type is Type.Number || (left as Literal).type is Type.Boolean) ||
-            right is Literal && ((right as Literal).type is Type.Integer || (right as Literal).type is Type.Number || (right as Literal).type is Type.Boolean)
+    private fun BinaryOp.isPrimitiveLiteral(): Boolean = left is Literal &&
+        ((left as Literal).type is Type.Integer || (left as Literal).type is Type.Number || (left as Literal).type is Type.Boolean) ||
+        right is Literal &&
+        ((right as Literal).type is Type.Integer || (right as Literal).type is Type.Number || (right as Literal).type is Type.Boolean)
 
     private fun Expression.emit(): String = when (this) {
         is ConstructorStatement -> {

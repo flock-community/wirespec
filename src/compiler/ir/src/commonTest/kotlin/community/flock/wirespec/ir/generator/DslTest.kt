@@ -1061,7 +1061,12 @@ class DslTest {
         assertTrue(kotlinCode.contains("assert(value > 0) { \"Value must be positive\" }"))
 
         // TypeScript
-        assertTrue(tsCode.contains("console.assert(value > 0, 'Value must be positive');"))
+        assertTrue(
+            tsCode.contains(
+                "if (!(value > 0)) throw new Error('Value must be positive');" +
+                    "",
+            ),
+        )
 
         // Python
         assertTrue(pythonCode.contains("assert value > 0, 'Value must be positive'"))

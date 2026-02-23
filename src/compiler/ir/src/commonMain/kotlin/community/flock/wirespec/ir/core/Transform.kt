@@ -115,7 +115,7 @@ fun <T : Element> T.transform(transformer: Transformer): T = transformer.transfo
 
 @Dsl
 class TransformScope<E : Element> @PublishedApi internal constructor(
-    @PublishedApi internal var element: Element
+    @PublishedApi internal var element: Element,
 ) {
     inline fun <reified M : Type> matching(crossinline transform: (M) -> Type) {
         element = element.transformMatching(transform)
@@ -149,12 +149,16 @@ class TransformScope<E : Element> @PublishedApi internal constructor(
         element = element.transformTypeByName(name, transform)
     }
 
-    inline fun <reified T> injectBefore(crossinline produce: (T) -> List<Element>)
+    inline fun <reified T> injectBefore(
+        crossinline produce: (T) -> List<Element>,
+    )
         where T : Element, T : HasElements {
         element = element.injectBefore(produce)
     }
 
-    inline fun <reified T> injectAfter(crossinline produce: (T) -> List<Element>)
+    inline fun <reified T> injectAfter(
+        crossinline produce: (T) -> List<Element>,
+    )
         where T : Element, T : HasElements {
         element = element.injectAfter(produce)
     }
