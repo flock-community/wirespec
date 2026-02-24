@@ -58,7 +58,13 @@ object RustGenerator : Generator {
         else -> File(Name.of(""), listOf(element)).emit(0)
     }
 
-    private fun String.indentCode(level: Int): String = " ".repeat(level * 4) + this
+    private fun String.indentCode(level: Int): String {
+        if (level <= 0) return this
+        val prefix = " ".repeat(level * 4)
+        return this.lines().joinToString("\n") { line ->
+            if (line.isEmpty()) line else prefix + line
+        }
+    }
 
     private fun File.emit(indent: Int): String {
         val allUnions = elements.flatMap { it.findAllUnions() }
@@ -81,7 +87,7 @@ object RustGenerator : Generator {
         is Union -> emit(indent, parents, allUnions = allUnions)
         is Enum -> emit(indent)
         is Main -> {
-            val content = body.joinToString("") { it.emit(indent + 1) }
+            val content = body.joinToString("") { it.emit(1) }
             "fn main() {\n$content}\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope) }
@@ -107,12 +113,12 @@ object RustGenerator : Generator {
 
     private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
         val hasComplexElements = elements.any { it is Interface || it is Union || it is Enum || it is Struct }
-        val content = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, allUnions = allUnions, isStaticScope = !hasComplexElements) }
+        val content = elements.joinToString("") { it.emit(1, parents = parents + this, allUnions = allUnions, isStaticScope = !hasComplexElements) }
         val rustName = name.pascalCase()
         return if (content.isBlank()) {
             "pub struct $rustName;\n\n".indentCode(indent)
         } else if (hasComplexElements) {
-            val useSuper = "use super::*;\n".indentCode(indent + 1)
+            val useSuper = "use super::*;\n".indentCode(1)
             "pub mod $rustName {\n$useSuper$content}\n\n".indentCode(indent)
         } else {
             "pub struct $rustName;\n\nimpl $rustName {\n$content}\n\n".indentCode(indent)
@@ -124,9 +130,9 @@ object RustGenerator : Generator {
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val extStr = if (extends.isNotEmpty()) " : ${extends.joinToString(" + ") { it.emit() }}" else ""
         val fieldsContent = fields.joinToString("") { field ->
-            "fn ${field.name.snakeCase().sanitize()}(&self) -> ${field.type.emit()};\n".indentCode(indent + 1)
+            "fn ${field.name.snakeCase().sanitize()}(&self) -> ${field.type.emit()};\n".indentCode(1)
         }
-        val elementsContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, allUnions = allUnions, isStaticScope = false) }
+        val elementsContent = elements.joinToString("") { it.emit(1, parents = parents + this, allUnions = allUnions, isStaticScope = false) }
         val content = fieldsContent + elementsContent
         return if (content.isEmpty()) {
             "pub trait $rustName$typeParamsStr$extStr {}\n\n".indentCode(indent)
@@ -139,7 +145,7 @@ object RustGenerator : Generator {
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val enumDef = if (members.isNotEmpty()) {
-            val variants = members.joinToString("\n") { "${it.name}(${it.name}),".indentCode(indent + 1) }
+            val variants = members.joinToString("\n") { "${it.name}(${it.name}),".indentCode(1) }
             "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName$typeParamsStr {\n$variants\n}\n\n".indentCode(indent)
         } else {
             "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName$typeParamsStr {}\n\n".indentCode(indent)
@@ -162,15 +168,47 @@ object RustGenerator : Generator {
             ""
         } else {
             entries.joinToString("\n") { entry ->
-                if (entry.values.isNotEmpty()) {
-                    "#[serde(rename = ${entry.values.first()})]".indentCode(indent + 1) + "\n" +
-                        "${entry.name.pascalCase()},".indentCode(indent + 1)
-                } else {
-                    "${entry.name.pascalCase()},".indentCode(indent + 1)
-                }
+                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.pascalCase()
+                "#[serde(rename = \"$wireValue\")]\n${entry.name.pascalCase()},".indentCode(1)
             }
         }
-        return "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName {\n$entriesStr\n}\n\n".indentCode(indent)
+        val enumDef = "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName {\n$entriesStr\n}\n\n".indentCode(indent)
+
+        val enumImpl = if (entries.isNotEmpty()) {
+            val labelArms = entries.joinToString("\n") { entry ->
+                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.pascalCase()
+                "$rustName::${entry.name.pascalCase()} => \"$wireValue\",".indentCode(3)
+            }
+            val fromLabelArms = entries.joinToString("\n") { entry ->
+                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.pascalCase()
+                "\"$wireValue\" => Some($rustName::${entry.name.pascalCase()}),".indentCode(3)
+            }
+            """
+            |impl Enum for $rustName {
+            |    fn label(&self) -> &str {
+            |        match self {
+            |$labelArms
+            |        }
+            |    }
+            |    fn from_label(s: &str) -> Option<Self> {
+            |        match s {
+            |$fromLabelArms
+            |            _ => None,
+            |        }
+            |    }
+            |}
+            |impl std::fmt::Display for $rustName {
+            |    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            |        write!(f, "{}", self.label())
+            |    }
+            |}
+            |
+            """.trimMargin().indentCode(indent)
+        } else {
+            ""
+        }
+
+        return enumDef + enumImpl
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
@@ -182,7 +220,7 @@ object RustGenerator : Generator {
         if (fields.isEmpty() && constructors.isEmpty()) {
             val structDef = "#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]\npub struct $rustName;\n\n".indentCode(indent)
             val implBlock = if (functions.isNotEmpty()) {
-                val fnsContent = functions.joinToString("") { it.emit(indent + 1, isInClass = true, isStaticScope = false, isInInterface = false) }
+                val fnsContent = functions.joinToString("") { it.emit(1, isInClass = true, isStaticScope = false, isInInterface = false) }
                 "impl $rustName {\n$fnsContent}\n\n".indentCode(indent)
             } else {
                 ""
@@ -191,14 +229,28 @@ object RustGenerator : Generator {
         }
 
         val fieldsStr = fields.joinToString("\n") {
-            "pub ${it.name.snakeCase().sanitize()}: ${it.type.emit()},".indentCode(indent + 1)
+            val fieldName = it.name.snakeCase().sanitize()
+            val serdeAttrs = mutableListOf<String>()
+            if (fieldName.startsWith("r#")) {
+                serdeAttrs.add("rename = \"${fieldName.removePrefix("r#")}\"")
+            }
+            if (it.type !is Type.Nullable) {
+                serdeAttrs.add("default")
+                serdeAttrs.add("deserialize_with = \"null_default\"")
+            }
+            val serdeAttr = if (serdeAttrs.isNotEmpty()) {
+                "#[serde(${serdeAttrs.joinToString(", ")})]\n"
+            } else {
+                ""
+            }
+            "${serdeAttr}pub $fieldName: ${it.type.emit()},".indentCode(1)
         }
         val structDef = "#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]\n#[serde(default)]\npub struct $rustName {\n$fieldsStr\n}\n\n".indentCode(indent)
 
         val customConstructors = constructors.joinToString("") { it.emit(rustName, fields, indent) }
 
         val implBlock = if (functions.isNotEmpty()) {
-            val fnsContent = functions.joinToString("") { it.emit(indent + 1, isInClass = true, isStaticScope = false, isInInterface = false) }
+            val fnsContent = functions.joinToString("") { it.emit(1, isInClass = true, isStaticScope = false, isInInterface = false) }
             "impl $rustName {\n$fnsContent}\n\n".indentCode(indent)
         } else {
             ""
@@ -214,9 +266,11 @@ object RustGenerator : Generator {
         }
         val fieldInits = structFields.joinToString(",\n") { field ->
             val value = assignments[field.name.camelCase()] ?: "Default::default()"
-            "${field.name.snakeCase().sanitize()}: $value".indentCode(indent + 2)
+            "${field.name.snakeCase().sanitize()}: $value".indentCode(1)
         }
-        return "impl $structName {\n${"pub fn new($params) -> Self {\n".indentCode(indent + 1)}${"$structName {\n".indentCode(indent + 2)}$fieldInits\n${"}\n".indentCode(indent + 2)}${"}\n".indentCode(indent + 1)}}\n\n".indentCode(indent)
+        val constructorBody = "$structName {\n$fieldInits\n}".indentCode(1)
+        val fnBody = "pub fn new($params) -> Self {\n$constructorBody\n}".indentCode(1)
+        return "impl $structName {\n$fnBody\n}\n\n".indentCode(indent)
     }
 
     private fun AstFunction.emit(indent: Int, isInClass: Boolean = false, isStaticScope: Boolean = false, isInInterface: Boolean = false): String {
@@ -230,7 +284,7 @@ object RustGenerator : Generator {
         val content = if (body.isEmpty()) {
             return "${prefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr;\n".indentCode(indent)
         } else {
-            body.joinToString("") { it.emit(indent + 1) }
+            body.joinToString("") { it.emit(1) }
         }
         return "${prefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr {\n$content}\n\n".indentCode(indent)
     }
@@ -259,7 +313,7 @@ object RustGenerator : Generator {
         Type.Bytes -> "Vec<u8>"
         Type.Unit -> "()"
         Type.Wildcard -> "_"
-        Type.Reflect -> "&'static str"
+        Type.Reflect -> "std::any::TypeId"
         is Type.Array -> "Vec<${elementType.emit()}>"
         is Type.Dict -> "std::collections::HashMap<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
@@ -366,24 +420,24 @@ object RustGenerator : Generator {
             val isPatternSwitch = cases.any { it.type != null }
             if (isPatternSwitch) {
                 val casesStr = cases.joinToString("") { case ->
-                    val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
+                    val bodyStr = case.body.joinToString("") { it.emit(1) }
                     val typeStr = case.type?.emit() ?: "_"
                     val varBinding = variable?.let { it.snakeCase() } ?: "_"
-                    "$typeStr($varBinding) => {\n$bodyStr}\n".indentCode(indent + 1)
+                    "$typeStr($varBinding) => {\n$bodyStr}\n".indentCode(1)
                 }
                 val defaultStr = default?.let {
-                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(indent + 2) }
-                    "_ => {\n$bodyStr}\n".indentCode(indent + 1)
+                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
+                    "_ => {\n$bodyStr}\n".indentCode(1)
                 } ?: ""
                 "match ${expression.emit()} {\n$casesStr$defaultStr}\n".indentCode(indent)
             } else {
                 val casesStr = cases.joinToString("") { case ->
-                    val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
-                    "${case.value.emit()} => {\n$bodyStr}\n".indentCode(indent + 1)
+                    val bodyStr = case.body.joinToString("") { it.emit(1) }
+                    "${case.value.emit()} => {\n$bodyStr}\n".indentCode(1)
                 }
                 val defaultStr = default?.let {
-                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(indent + 2) }
-                    "_ => {\n$bodyStr}\n".indentCode(indent + 1)
+                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
+                    "_ => {\n$bodyStr}\n".indentCode(1)
                 } ?: ""
                 "match ${expression.emit()} {\n$casesStr$defaultStr}\n".indentCode(indent)
             }
@@ -408,7 +462,7 @@ object RustGenerator : Generator {
         is EnumReference -> "${enumType.emit()}::${entry.pascalCase()};\n".indentCode(indent)
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()});\n".indentCode(indent)
-        is TypeDescriptor -> "std::any::type_name::<${type.emit()}>();\n".indentCode(indent)
+        is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>();\n".indentCode(indent)
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -464,7 +518,7 @@ object RustGenerator : Generator {
         is EnumReference -> "${enumType.emit()}::${entry.pascalCase()}"
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()})"
-        is TypeDescriptor -> "std::any::type_name::<${type.emit()}>()"
+        is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>()"
         is NullCheck -> {
             val exprStr = expression.emit()
             val bodyStr = body.emit()

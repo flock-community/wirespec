@@ -49,10 +49,6 @@ import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformMatching
-import community.flock.wirespec.ir.core.transformFieldsWhere
-import community.flock.wirespec.ir.core.transformMatchingElements
-import community.flock.wirespec.ir.core.transformParametersWhere
 import community.flock.wirespec.ir.core.transformer
 import community.flock.wirespec.ir.generator.RustGenerator
 import community.flock.wirespec.ir.generator.generateRust
@@ -86,14 +82,16 @@ open class RustIrEmitter(
     override val shared = object : Shared {
         override val packageString = "shared"
         override val source = """
+            |use std::any::TypeId;
             |use std::collections::HashMap;
             |
             |pub trait Model {
             |    fn validate(&self) -> Vec<String>;
             |}
             |
-            |pub trait Enum {
-            |    fn label(&self) -> String;
+            |pub trait Enum: Sized {
+            |    fn label(&self) -> &str;
+            |    fn from_label(s: &str) -> Option<Self>;
             |}
             |
             |pub trait Endpoint {}
@@ -144,32 +142,40 @@ open class RustIrEmitter(
             |
             |pub trait ResponseHeaders: Headers {}
             |
+            |pub trait Serialize {
+            |    fn serialize(&self) -> Vec<u8>;
+            |}
+            |
+            |pub trait Deserialize: Sized {
+            |    fn deserialize(bytes: &[u8]) -> Result<Self, String>;
+            |}
+            |
             |pub trait BodySerializer {
-            |    fn serialize_body<T>(&self, t: &T, r#type: &str) -> Vec<u8>;
+            |    fn serialize_body<T: Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
             |}
             |
             |pub trait BodyDeserializer {
-            |    fn deserialize_body<T>(&self, raw: &[u8], r#type: &str) -> T;
+            |    fn deserialize_body<T: Deserialize>(&self, raw: &[u8], r#type: TypeId) -> T;
             |}
             |
             |pub trait BodySerialization: BodySerializer + BodyDeserializer {}
             |
             |pub trait PathSerializer {
-            |    fn serialize_path<T>(&self, t: &T, r#type: &str) -> String;
+            |    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;
             |}
             |
             |pub trait PathDeserializer {
-            |    fn deserialize_path<T>(&self, raw: &str, r#type: &str) -> T;
+            |    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;
             |}
             |
             |pub trait PathSerialization: PathSerializer + PathDeserializer {}
             |
             |pub trait ParamSerializer {
-            |    fn serialize_param<T>(&self, value: &T, r#type: &str) -> Vec<String>;
+            |    fn serialize_param<T: Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
             |}
             |
             |pub trait ParamDeserializer {
-            |    fn deserialize_param<T>(&self, values: &[String], r#type: &str) -> T;
+            |    fn deserialize_param<T: Deserialize>(&self, values: &[String], r#type: TypeId) -> T;
             |}
             |
             |pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
@@ -180,7 +186,7 @@ open class RustIrEmitter(
             |
             |pub trait Serialization: Serializer + Deserializer {}
             |
-            |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+            |#[derive(Debug, Clone, PartialEq)]
             |pub struct RawRequest {
             |    pub method: String,
             |    pub path: Vec<String>,
@@ -189,7 +195,7 @@ open class RustIrEmitter(
             |    pub body: Option<Vec<u8>>,
             |}
             |
-            |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+            |#[derive(Debug, Clone, PartialEq)]
             |pub struct RawResponse {
             |    pub status_code: i32,
             |    pub headers: HashMap<String, Vec<String>>,
@@ -213,6 +219,15 @@ open class RustIrEmitter(
             |    fn path_template(&self) -> &'static str;
             |    fn method(&self) -> Method;
             |}
+            |
+            |pub fn null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+            |where
+            |    D: serde::Deserializer<'de>,
+            |    T: Default + serde::Deserialize<'de>,
+            |{
+            |    use serde::Deserialize;
+            |    Option::<T>::deserialize(deserializer).map(|opt| opt.unwrap_or_default())
+            |}
             |""".trimMargin()
     }
 
@@ -231,7 +246,7 @@ open class RustIrEmitter(
             fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
             val modRs = File(
                 Name.of(packageName.toDir() + "mod"),
-                listOf(RawElement("pub mod model;\npub mod endpoint;\npub mod wirespec;"))
+                listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;\npub mod wirespec;"))
             )
             val modEndpoint = File(
                 Name.of(packageName.toDir() + "endpoint/" + "mod"),
@@ -286,93 +301,52 @@ open class RustIrEmitter(
 
     fun String.sanitizeKeywords() = if (this in reservedKeywords) "r#$this" else this
 
-    private fun Name.toSnakeCaseName(): Name = Name.of(Name(parts).snakeCase().sanitizeKeywords())
-
-    private fun <T : Element> T.sanitizeNames(): T {
-        val snakeCaseTransformer = transformer(
-            transformField = { field, _ ->
-                field.copy(name = field.name.toSnakeCaseName())
-            },
-            transformParameter = { param, _ ->
-                param.copy(name = param.name.toSnakeCaseName())
-            },
-            transformStatement = { stmt, tr ->
-                when (stmt) {
-                    is FieldCall -> FieldCall(
-                        receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                        field = stmt.field.toSnakeCaseName(),
-                    )
-                    is ConstructorStatement -> ConstructorStatement(
-                        type = tr.transformType(stmt.type),
-                        namedArguments = stmt.namedArguments
-                            .map { (k, v) -> k.toSnakeCaseName() to tr.transformExpression(v) }
-                            .toMap(),
-                    )
-                    else -> stmt.transformChildren(tr)
-                }
-            },
-            transformExpression = { expr, tr ->
-                when (expr) {
-                    is FieldCall -> FieldCall(
-                        receiver = expr.receiver?.let { tr.transformExpression(it) },
-                        field = expr.field.toSnakeCaseName(),
-                    )
-                    is ConstructorStatement -> ConstructorStatement(
-                        type = tr.transformType(expr.type),
-                        namedArguments = expr.namedArguments
-                            .map { (k, v) -> k.toSnakeCaseName() to tr.transformExpression(v) }
-                            .toMap(),
-                    )
-                    else -> expr.transformChildren(tr)
-                }
-            },
-        )
-        return this.transform(snakeCaseTransformer)
-    }
-
     override fun emit(type: Type, module: Module): File {
         val imports = type.importReferences().distinctBy { it.value }
             .joinToString("\n") { "use super::${it.value.toSnakeCase()}::${it.value};" }
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
-        val addSelfReceiver = transformer(
-            transformStatement = { s, t ->
+        val addSelfReceiver = transformer {
+            statement { s, t ->
                 if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
                     FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
                 } else {
                     s.transformChildren(t)
                 }
-            },
-            transformExpression = { e, t ->
+            }
+            expression { e, t ->
                 if (e is FieldCall && e.receiver == null && e.field.camelCase() in fieldNames) {
                     FieldCall(receiver = VariableReference(Name.of("self")), field = e.field)
                 } else {
                     e.transformChildren(t)
                 }
-            },
-        )
-        val file = type.convertWithValidation(module)
-            .transformMatchingElements { fn: LanguageFunction ->
-                if (fn.name == Name.of("validate")) {
-                    val transformedBody = fn.body.map { addSelfReceiver.transformStatement(it) }
-                    fn.copy(
-                        parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))),
-                        body = transformedBody,
-                    )
-                } else fn
             }
-            .sanitizeNames()
+        }
+        val file = type.convertWithValidation(module)
+            .transform {
+                matchingElements { fn: LanguageFunction ->
+                    if (fn.name == Name.of("validate")) {
+                        val transformedBody = fn.body.map { addSelfReceiver.transformStatement(it) }
+                        fn.copy(
+                            parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))),
+                            body = transformedBody,
+                        )
+                    } else fn
+                }
+            }
         return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
         else file
     }
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .transformMatchingElements { languageEnum: LanguageEnum ->
-            languageEnum.copy(
-                entries = languageEnum.entries.map {
-                    LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.parts.first()}\""))
-                },
-            )
+        .transform {
+            matchingElements { languageEnum: LanguageEnum ->
+                languageEnum.copy(
+                    entries = languageEnum.entries.map {
+                        LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.parts.first()}\""))
+                    },
+                )
+            }
         }
 
     fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_")
@@ -404,8 +378,10 @@ open class RustIrEmitter(
             returns(RawExpression(toStringExpr))
         }
         return file
-            .transformMatchingElements { s: Struct ->
-                s.copy(elements = listOf(validate, toString))
+            .transform {
+                matchingElements { s: Struct ->
+                    s.copy(elements = listOf(validate, toString))
+                }
             }
     }
 
@@ -427,36 +403,36 @@ open class RustIrEmitter(
 
         // Step 1b: Convert simple-identifier RawExpressions to VariableReference for proper snake_case
         val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
-        val fixRawExprToVarRef = transformer(
-            transformExpression = { e, t ->
+        val fixRawExprToVarRef = transformer {
+            expression { e, t ->
                 if (e is RawExpression && identifierPattern.matches(e.code) && !e.code.contains(".")) {
                     VariableReference(Name.of(e.code))
                 } else e.transformChildren(t)
-            },
-            transformStatement = { s, t ->
+            }
+            statement { s, t ->
                 if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
                     VariableReference(Name.of(s.code))
                 } else s.transformChildren(t)
-            },
-        )
+            }
+        }
 
         // Step 2: Strip "Wirespec." prefix from all Type.Custom names
-        val stripWirespecPrefix = transformer(
-            transformType = { type, t ->
+        val stripWirespecPrefix = transformer {
+            type { type, t ->
                 val transformed = if (type is LanguageType.Custom && type.name.startsWith("Wirespec.")) {
                     type.copy(name = type.name.removePrefix("Wirespec."))
                 } else type
                 transformed.transformChildren(t)
-            },
-        )
+            }
+        }
 
         // Step 5: Rename statusCode → status_code in fields, field calls, and constructor args
-        val renameStatusCode = transformer(
-            transformField = { field, t ->
+        val renameStatusCode = transformer {
+            field { field, t ->
                 val renamed = if (field.name == Name.of("statusCode")) field.copy(name = Name.of("status_code")) else field
                 renamed.transformChildren(t)
-            },
-            transformStatement = { s, t ->
+            }
+            statement { s, t ->
                 when {
                     s is FieldCall && s.field == Name.of("statusCode") ->
                         FieldCall(receiver = s.receiver?.let { t.transformExpression(it) }, field = Name.of("status_code"))
@@ -469,8 +445,8 @@ open class RustIrEmitter(
                         )
                     else -> s.transformChildren(t)
                 }
-            },
-            transformExpression = { e, t ->
+            }
+            expression { e, t ->
                 when {
                     e is FieldCall && e.field == Name.of("statusCode") ->
                         FieldCall(receiver = e.receiver?.let { t.transformExpression(it) }, field = Name.of("status_code"))
@@ -483,8 +459,8 @@ open class RustIrEmitter(
                         )
                     else -> e.transformChildren(t)
                 }
-            },
-        )
+            }
+        }
 
         return file
             .transform {
@@ -504,8 +480,8 @@ open class RustIrEmitter(
                 }
                 apply(renameStatusCode)           // Step 5: Rename statusCode → status_code
                 // Step 6: Fix response Switch patterns (Response200 → Response::Response200)
-                apply(transformer(
-                    transformStatement = { s, t ->
+                apply(transformer {
+                    statement { s, t ->
                         if (s is Switch && s.variable?.camelCase() == "r") {
                             val responsePattern = Regex("Response(\\d+|Default)")
                             val transformedCases = s.cases.map { case ->
@@ -533,8 +509,8 @@ open class RustIrEmitter(
                         } else {
                             s.transformChildren(t)
                         }
-                    },
-                ))
+                    }
+                })
                 // Step 7c: Fix constructors → ::new() calls for Response and Request types
                 apply(run {
                     val responsePattern = Regex("Response(\\d+|Default)")
@@ -562,16 +538,16 @@ open class RustIrEmitter(
                             else -> null
                         }
                     }
-                    transformer(
-                        transformExpression = { e, t ->
+                    transformer {
+                        expression { e, t ->
                             if (e is ConstructorStatement) transformConstructor(e, t) ?: e.transformChildren(t)
                             else e.transformChildren(t)
-                        },
-                        transformStatement = { s, t ->
+                        }
+                        statement { s, t ->
                             if (s is ConstructorStatement) transformConstructor(s, t) ?: s.transformChildren(t)
                             else s.transformChildren(t)
-                        },
-                    )
+                        }
+                    }
                 })
                 // Step 8: Fix Serializer/Deserializer parameter types to &impl
                 parametersWhere(
@@ -581,11 +557,13 @@ open class RustIrEmitter(
                 // Step 9: Snake_case Handler method names and add &self receiver
                 matchingElements<Interface> { iface ->
                     if (iface.name == Name.of("Handler")) {
-                        iface.transformMatchingElements<LanguageFunction, Interface> { fn ->
-                            fn.copy(
-                                name = Name.of(fn.name.snakeCase()),
-                                parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))) + fn.parameters,
-                            )
+                        iface.transform {
+                            matchingElements { fn: LanguageFunction ->
+                                fn.copy(
+                                    name = Name.of(fn.name.snakeCase()),
+                                    parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))) + fn.parameters,
+                                )
+                            }
                         }
                     } else iface
                 }

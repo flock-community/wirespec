@@ -1,9 +1,7 @@
 package community.flock.wirespec.ir.core
 
-/**
- * Transformer interface for AST mutations.
- * Override specific methods to transform only certain node types.
- */
+import kotlin.js.JsName
+
 interface Transformer {
     fun transformType(type: Type): Type = type.transformChildren(this)
     fun transformElement(element: Element): Element = element.transformChildren(this)
@@ -15,34 +13,58 @@ interface Transformer {
     fun transformCase(case: Case): Case = case.transformChildren(this)
 }
 
-/**
- * Creates an Transformer from lambda functions.
- */
-fun transformer(
-    transformType: (Type, Transformer) -> Type = { t, transformer -> t.transformChildren(transformer) },
-    transformElement: (Element, Transformer) -> Element = { e, transformer -> e.transformChildren(transformer) },
-    transformStatement: (Statement, Transformer) -> Statement = { s, transformer -> s.transformChildren(transformer) },
-    transformExpression: (Expression, Transformer) -> Expression = { e, transformer -> e.transformChildren(transformer) },
-    transformField: (Field, Transformer) -> Field = { f, transformer -> f.transformChildren(transformer) },
-    transformParameter: (Parameter, Transformer) -> Parameter = { p, transformer -> p.transformChildren(transformer) },
-    transformConstructor: (Constructor, Transformer) -> Constructor = { c, transformer ->
-        c.transformChildren(
-            transformer,
-        )
-    },
-    transformCase: (Case, Transformer) -> Case = { c, transformer -> c.transformChildren(transformer) },
-): Transformer = object : Transformer {
-    override fun transformType(type: Type): Type = transformType(type, this)
-    override fun transformElement(element: Element): Element = transformElement(element, this)
-    override fun transformStatement(statement: Statement): Statement = transformStatement(statement, this)
-    override fun transformExpression(expression: Expression): Expression = transformExpression(expression, this)
-    override fun transformField(field: Field): Field = transformField(field, this)
-    override fun transformParameter(parameter: Parameter): Parameter = transformParameter(parameter, this)
-    override fun transformConstructor(constructor: Constructor): Constructor = transformConstructor(constructor, this)
-    override fun transformCase(case: Case): Case = transformCase(case, this)
+@Dsl
+class TransformerBuilder @PublishedApi internal constructor() {
+    private var transformType: ((Type, Transformer) -> Type)? = null
+    private var transformElement: ((Element, Transformer) -> Element)? = null
+    private var transformStatement: ((Statement, Transformer) -> Statement)? = null
+    private var transformExpression: ((Expression, Transformer) -> Expression)? = null
+    private var transformField: ((Field, Transformer) -> Field)? = null
+    private var transformParameter: ((Parameter, Transformer) -> Parameter)? = null
+    private var transformConstructor: ((Constructor, Transformer) -> Constructor)? = null
+    private var transformCase: ((Case, Transformer) -> Case)? = null
+
+    fun type(transform: (Type, Transformer) -> Type) {
+        transformType = transform
+    }
+    fun element(transform: (Element, Transformer) -> Element) {
+        transformElement = transform
+    }
+    fun statement(transform: (Statement, Transformer) -> Statement) {
+        transformStatement = transform
+    }
+    fun expression(transform: (Expression, Transformer) -> Expression) {
+        transformExpression = transform
+    }
+    fun field(transform: (Field, Transformer) -> Field) {
+        transformField = transform
+    }
+    fun parameter(transform: (Parameter, Transformer) -> Parameter) {
+        transformParameter = transform
+    }
+
+    @JsName("constructorNode")
+    fun constructor(transform: (Constructor, Transformer) -> Constructor) {
+        transformConstructor = transform
+    }
+    fun case(transform: (Case, Transformer) -> Case) {
+        transformCase = transform
+    }
+
+    @PublishedApi
+    internal fun build(): Transformer = object : Transformer {
+        override fun transformType(type: Type): Type = transformType?.invoke(type, this) ?: type.transformChildren(this)
+        override fun transformElement(element: Element): Element = transformElement?.invoke(element, this) ?: element.transformChildren(this)
+        override fun transformStatement(statement: Statement): Statement = transformStatement?.invoke(statement, this) ?: statement.transformChildren(this)
+        override fun transformExpression(expression: Expression): Expression = transformExpression?.invoke(expression, this) ?: expression.transformChildren(this)
+        override fun transformField(field: Field): Field = transformField?.invoke(field, this) ?: field.transformChildren(this)
+        override fun transformParameter(parameter: Parameter): Parameter = transformParameter?.invoke(parameter, this) ?: parameter.transformChildren(this)
+        override fun transformConstructor(constructor: Constructor): Constructor = transformConstructor?.invoke(constructor, this) ?: constructor.transformChildren(this)
+        override fun transformCase(case: Case): Case = transformCase?.invoke(case, this) ?: case.transformChildren(this)
+    }
 }
 
-// Type transformation
+inline fun transformer(block: TransformerBuilder.() -> Unit): Transformer = TransformerBuilder().apply(block).build()
 
 fun Type.transformChildren(transformer: Transformer): Type = when (this) {
     is Type.Array -> copy(elementType = transformer.transformType(elementType))
@@ -50,13 +72,10 @@ fun Type.transformChildren(transformer: Transformer): Type = when (this) {
         keyType = transformer.transformType(keyType),
         valueType = transformer.transformType(valueType),
     )
-
     is Type.Custom -> copy(generics = generics.map { transformer.transformType(it) })
     is Type.Nullable -> copy(type = transformer.transformType(type))
     is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect -> this
 }
-
-// Element transformation
 
 fun Element.transformChildren(transformer: Transformer): Element = when (this) {
     is File -> copy(elements = elements.map { transformer.transformElement(it) })
@@ -68,24 +87,20 @@ fun Element.transformChildren(transformer: Transformer): Element = when (this) {
         interfaces = interfaces.map { transformer.transformType(it) as Type.Custom },
         elements = elements.map { transformer.transformElement(it) },
     )
-
     is Function -> copy(
         parameters = parameters.map { transformer.transformParameter(it) },
         returnType = returnType?.let { transformer.transformType(it) },
         body = body.map { transformer.transformStatement(it) },
     )
-
     is Namespace -> copy(
         elements = elements.map { transformer.transformElement(it) },
         extends = extends?.let { transformer.transformType(it) as Type.Custom },
     )
-
     is Interface -> copy(
         elements = elements.map { transformer.transformElement(it) },
         extends = extends.map { transformer.transformType(it) as Type.Custom },
         fields = fields.map { transformer.transformField(it) },
     )
-
     is Union -> copy(
         extends = extends?.let { transformer.transformType(it) as Type.Custom },
         members = members.map { transformer.transformType(it) as Type.Custom },
@@ -96,22 +111,124 @@ fun Element.transformChildren(transformer: Transformer): Element = when (this) {
             )
         },
     )
-
     is Enum -> copy(
         extends = extends?.let { transformer.transformType(it) as Type.Custom },
         fields = fields.map { transformer.transformField(it) },
         constructors = constructors.map { transformer.transformConstructor(it) },
         elements = elements.map { transformer.transformElement(it) },
     )
-
     is Main -> copy(body = body.map { transformer.transformStatement(it) })
     is RawElement -> this
 }
 
-@Suppress("UNCHECKED_CAST")
-fun <T : Element> T.transform(transformer: Transformer): T = transformer.transformElement(this) as T
+fun Field.transformChildren(transformer: Transformer): Field = copy(type = transformer.transformType(type))
 
-// Builder-style Transform DSL
+fun Parameter.transformChildren(transformer: Transformer): Parameter = copy(type = transformer.transformType(type))
+
+fun Constructor.transformChildren(transformer: Transformer): Constructor = copy(
+    parameters = parameters.map { transformer.transformParameter(it) },
+    body = body.map { transformer.transformStatement(it) },
+)
+
+fun Statement.transformChildren(transformer: Transformer): Statement = when (this) {
+    is PrintStatement -> copy(expression = transformer.transformExpression(expression))
+    is ReturnStatement -> copy(expression = transformer.transformExpression(expression))
+    is ConstructorStatement -> copy(
+        type = transformer.transformType(type),
+        namedArguments = namedArguments.mapValues { transformer.transformExpression(it.value) },
+    )
+    is Literal -> copy(type = transformer.transformType(type))
+    is LiteralList -> copy(
+        values = values.map { transformer.transformExpression(it) },
+        type = transformer.transformType(type),
+    )
+    is LiteralMap -> copy(
+        values = values.mapValues { transformer.transformExpression(it.value) },
+        keyType = transformer.transformType(keyType),
+        valueType = transformer.transformType(valueType),
+    )
+    is Assignment -> copy(value = transformer.transformExpression(value))
+    is ErrorStatement -> copy(message = transformer.transformExpression(message))
+    is AssertStatement -> copy(
+        expression = transformer.transformExpression(expression),
+    )
+    is Switch -> copy(
+        expression = transformer.transformExpression(expression),
+        cases = cases.map { transformer.transformCase(it) },
+        default = default?.map { transformer.transformStatement(it) },
+    )
+    is RawExpression -> this
+    is NullLiteral -> this
+    is NullableEmpty -> this
+    is VariableReference -> this
+    is FieldCall -> copy(receiver = receiver?.let { transformer.transformExpression(it) })
+    is FunctionCall -> copy(
+        receiver = receiver?.let { transformer.transformExpression(it) },
+        arguments = arguments.mapValues { transformer.transformExpression(it.value) },
+    )
+    is ArrayIndexCall -> copy(
+        receiver = transformer.transformExpression(receiver),
+        index = transformer.transformExpression(index),
+    )
+    is EnumReference -> copy(enumType = transformer.transformType(enumType) as Type.Custom)
+    is EnumValueCall -> copy(expression = transformer.transformExpression(expression))
+    is BinaryOp -> copy(
+        left = transformer.transformExpression(left),
+        right = transformer.transformExpression(right),
+    )
+    is TypeDescriptor -> copy(type = transformer.transformType(type))
+    is NullCheck -> copy(
+        expression = transformer.transformExpression(expression),
+        body = transformer.transformExpression(body),
+        alternative = alternative?.let { transformer.transformExpression(it) },
+    )
+    is NullableMap -> copy(
+        expression = transformer.transformExpression(expression),
+        body = transformer.transformExpression(body),
+        alternative = transformer.transformExpression(alternative),
+    )
+    is NullableOf -> copy(expression = transformer.transformExpression(expression))
+    is Constraint.RegexMatch -> copy(value = transformer.transformExpression(value))
+    is Constraint.BoundCheck -> copy(value = transformer.transformExpression(value))
+    is NotExpression -> copy(expression = transformer.transformExpression(expression))
+    is IfExpression -> copy(
+        condition = transformer.transformExpression(condition),
+        thenExpr = transformer.transformExpression(thenExpr),
+        elseExpr = transformer.transformExpression(elseExpr),
+    )
+    is MapExpression -> copy(
+        receiver = transformer.transformExpression(receiver),
+        body = transformer.transformExpression(body),
+    )
+    is FlatMapIndexed -> copy(
+        receiver = transformer.transformExpression(receiver),
+        body = transformer.transformExpression(body),
+    )
+    is ListConcat -> copy(lists = lists.map { transformer.transformExpression(it) })
+    is StringTemplate -> copy(
+        parts = parts.map {
+            when (it) {
+                is StringTemplate.Part.Text -> it
+                is StringTemplate.Part.Expr -> StringTemplate.Part.Expr(transformer.transformExpression(it.expression))
+            }
+        },
+    )
+}
+
+fun Expression.transformChildren(transformer: Transformer): Expression = when (this) {
+    is RawExpression -> this
+    is Statement -> transformChildren(transformer) as Expression
+}
+
+fun Case.transformChildren(transformer: Transformer): Case = copy(
+    value = transformer.transformExpression(value),
+    body = body.map { transformer.transformStatement(it) },
+    type = type?.let { transformer.transformType(it) },
+)
+
+@Suppress("UNCHECKED_CAST")
+@PublishedApi
+internal fun <T : Element> T.transform(transformer: Transformer): T = transformer.transformElement(this) as T
 
 @Dsl
 class TransformScope<E : Element> @PublishedApi internal constructor(
@@ -166,6 +283,35 @@ class TransformScope<E : Element> @PublishedApi internal constructor(
     fun apply(transformer: Transformer) {
         element = element.transform(transformer)
     }
+
+    fun type(transform: (Type, Transformer) -> Type) {
+        element = element.transform(transformer { type(transform) })
+    }
+
+    fun statement(transform: (Statement, Transformer) -> Statement) {
+        element = element.transform(transformer { statement(transform) })
+    }
+
+    fun expression(transform: (Expression, Transformer) -> Expression) {
+        element = element.transform(transformer { expression(transform) })
+    }
+
+    fun field(transform: (Field, Transformer) -> Field) {
+        element = element.transform(transformer { field(transform) })
+    }
+
+    fun parameter(transform: (Parameter, Transformer) -> Parameter) {
+        element = element.transform(transformer { parameter(transform) })
+    }
+
+    @JsName("constructorNode")
+    fun constructor(transform: (Constructor, Transformer) -> Constructor) {
+        element = element.transform(transformer { constructor(transform) })
+    }
+
+    fun case(transform: (Case, Transformer) -> Case) {
+        element = element.transform(transformer { case(transform) })
+    }
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -175,212 +321,65 @@ inline fun <E : Element> E.transform(block: TransformScope<E>.() -> Unit): E {
     return scope.element as E
 }
 
-// Field transformation
-
-fun Field.transformChildren(transformer: Transformer): Field = copy(type = transformer.transformType(type))
-
-// Parameter transformation
-
-fun Parameter.transformChildren(transformer: Transformer): Parameter = copy(type = transformer.transformType(type))
-
-// Constructor transformation
-
-fun Constructor.transformChildren(transformer: Transformer): Constructor = copy(
-    parameters = parameters.map { transformer.transformParameter(it) },
-    body = body.map { transformer.transformStatement(it) },
-)
-
-// Statement transformation
-
-fun Statement.transformChildren(transformer: Transformer): Statement = when (this) {
-    is PrintStatement -> copy(expression = transformer.transformExpression(expression))
-    is ReturnStatement -> copy(expression = transformer.transformExpression(expression))
-    is ConstructorStatement -> copy(
-        type = transformer.transformType(type),
-        namedArguments = namedArguments.mapValues { transformer.transformExpression(it.value) },
-    )
-
-    is Literal -> copy(type = transformer.transformType(type))
-    is LiteralList -> copy(
-        values = values.map { transformer.transformExpression(it) },
-        type = transformer.transformType(type),
-    )
-
-    is LiteralMap -> copy(
-        values = values.mapValues { transformer.transformExpression(it.value) },
-        keyType = transformer.transformType(keyType),
-        valueType = transformer.transformType(valueType),
-    )
-
-    is Assignment -> copy(value = transformer.transformExpression(value))
-    is ErrorStatement -> copy(message = transformer.transformExpression(message))
-    is AssertStatement -> copy(
-        expression = transformer.transformExpression(expression),
-    )
-    is Switch -> copy(
-        expression = transformer.transformExpression(expression),
-        cases = cases.map { transformer.transformCase(it) },
-        default = default?.map { transformer.transformStatement(it) },
-    )
-
-    is RawExpression -> this
-    is NullLiteral -> this
-    is NullableEmpty -> this
-    is VariableReference -> this
-    is FieldCall -> copy(receiver = receiver?.let { transformer.transformExpression(it) })
-    is FunctionCall -> copy(
-        receiver = receiver?.let { transformer.transformExpression(it) },
-        arguments = arguments.mapValues { transformer.transformExpression(it.value) },
-    )
-
-    is ArrayIndexCall -> copy(
-        receiver = transformer.transformExpression(receiver),
-        index = transformer.transformExpression(index),
-    )
-
-    is EnumReference -> copy(enumType = transformer.transformType(enumType) as Type.Custom)
-    is EnumValueCall -> copy(expression = transformer.transformExpression(expression))
-    is BinaryOp -> copy(
-        left = transformer.transformExpression(left),
-        right = transformer.transformExpression(right),
-    )
-
-    is TypeDescriptor -> copy(type = transformer.transformType(type))
-    is NullCheck -> copy(
-        expression = transformer.transformExpression(expression),
-        body = transformer.transformExpression(body),
-        alternative = alternative?.let { transformer.transformExpression(it) },
-    )
-
-    is NullableMap -> copy(
-        expression = transformer.transformExpression(expression),
-        body = transformer.transformExpression(body),
-        alternative = transformer.transformExpression(alternative),
-    )
-
-    is NullableOf -> copy(expression = transformer.transformExpression(expression))
-    is Constraint.RegexMatch -> copy(value = transformer.transformExpression(value))
-    is Constraint.BoundCheck -> copy(value = transformer.transformExpression(value))
-    is NotExpression -> copy(expression = transformer.transformExpression(expression))
-    is IfExpression -> copy(
-        condition = transformer.transformExpression(condition),
-        thenExpr = transformer.transformExpression(thenExpr),
-        elseExpr = transformer.transformExpression(elseExpr),
-    )
-    is MapExpression -> copy(
-        receiver = transformer.transformExpression(receiver),
-        body = transformer.transformExpression(body),
-    )
-    is FlatMapIndexed -> copy(
-        receiver = transformer.transformExpression(receiver),
-        body = transformer.transformExpression(body),
-    )
-    is ListConcat -> copy(lists = lists.map { transformer.transformExpression(it) })
-    is StringTemplate -> copy(
-        parts = parts.map {
-            when (it) {
-                is StringTemplate.Part.Text -> it
-                is StringTemplate.Part.Expr -> StringTemplate.Part.Expr(transformer.transformExpression(it.expression))
-            }
-        },
-    )
-}
-
-// Expression transformation
-
-fun Expression.transformChildren(transformer: Transformer): Expression = when (this) {
-    is RawExpression -> this
-    is Statement -> transformChildren(transformer) as Expression
-}
-
-// Case transformation
-
-fun Case.transformChildren(transformer: Transformer): Case = copy(
-    value = transformer.transformExpression(value),
-    body = body.map { transformer.transformStatement(it) },
-    type = type?.let { transformer.transformType(it) },
-)
-
-// Match and Transform DSL
-
-/**
- * Match and transform types using pattern matching.
- */
-inline fun <reified M : Type, E : Element> E.transformMatching(
+@PublishedApi
+internal inline fun <reified M : Type, E : Element> E.transformMatching(
     crossinline transform: (M) -> Type,
 ): E = transform(
-    transformer(
-        transformType = { type, transformer ->
+    transformer {
+        type { type, transformer ->
             val transformed = if (type is M) transform(type) else type
             transformed.transformChildren(transformer)
-        },
-    ),
+        }
+    },
 )
 
-/**
- * Match and transform elements using pattern matching.
- */
-inline fun <reified M : Element, E : Element> E.transformMatchingElements(
+@PublishedApi
+internal inline fun <reified M : Element, E : Element> E.transformMatchingElements(
     crossinline transform: (M) -> Element,
 ): E = transform(
-    transformer(
-        transformElement = { element, transformer ->
+    transformer {
+        element { element, transformer ->
             val transformed = if (element is M) transform(element) else element
             transformed.transformChildren(transformer)
-        },
-    ),
+        }
+    },
 )
 
-/**
- * Match and transform fields using a predicate.
- */
-fun <T : Element> T.transformFieldsWhere(
+internal fun <T : Element> T.transformFieldsWhere(
     predicate: (Field) -> Boolean,
     transform: (Field) -> Field,
 ): T = transform(
-    transformer(
-        transformField = { field, transformer ->
+    transformer {
+        field { field, transformer ->
             val transformed = if (predicate(field)) transform(field) else field
             transformed.transformChildren(transformer)
-        },
-    ),
+        }
+    },
 )
 
-/**
- * Match and transform types by name.
- */
-fun <T : Element> T.transformTypeByName(
+internal fun <T : Element> T.transformTypeByName(
     name: String,
     transform: (Type.Custom) -> Type,
 ): T = transformMatching { type: Type.Custom ->
     if (type.name == name) transform(type) else type
 }
 
-/**
- * Rename a custom type throughout the AST.
- */
-fun <T : Element> T.renameType(oldName: String, newName: String): T = transformTypeByName(oldName) { it.copy(name = newName) }
+internal fun <T : Element> T.renameType(oldName: String, newName: String): T = transformTypeByName(oldName) { it.copy(name = newName) }
 
-/**
- * Rename a field throughout the AST.
- */
-fun <T : Element> T.renameField(oldName: Name, newName: Name): T = transformFieldsWhere({ it.name == oldName }) { it.copy(name = newName) }
+internal fun <T : Element> T.renameField(oldName: Name, newName: Name): T = transformFieldsWhere({ it.name == oldName }) { it.copy(name = newName) }
 
-fun <T : Element> T.renameField(oldName: String, newName: String): T = renameField(Name.of(oldName), Name.of(newName))
+internal fun <T : Element> T.renameField(oldName: String, newName: String): T = renameField(Name.of(oldName), Name.of(newName))
 
-/**
- * Match and transform parameters using a predicate.
- */
-fun <T : Element> T.transformParametersWhere(
+internal fun <T : Element> T.transformParametersWhere(
     predicate: (Parameter) -> Boolean,
     transform: (Parameter) -> Parameter,
 ): T = transform(
-    transformer(
-        transformParameter = { parameter, transformer ->
+    transformer {
+        parameter { parameter, transformer ->
             val transformed = if (predicate(parameter)) transform(parameter) else parameter
             transformed.transformChildren(transformer)
-        },
-    ),
+        }
+    },
 )
 
 @Suppress("UNCHECKED_CAST")
@@ -397,324 +396,77 @@ internal fun <T : Element> T.withElements(elements: List<Element>): T = (
     }
     ) as T
 
-inline fun <reified T, E : Element> E.injectBefore(
+@PublishedApi
+internal inline fun <reified T, E : Element> E.injectBefore(
     crossinline produce: (T) -> List<Element>,
 ): E where T : Element, T : HasElements = transformMatchingElements<T, E> { element ->
     val injected = produce(element)
     if (injected.isNotEmpty()) element.withElements(injected + element.elements) else element
 }
 
-inline fun <reified T, E : Element> E.injectAfter(
+@PublishedApi
+internal inline fun <reified T, E : Element> E.injectAfter(
     crossinline produce: (T) -> List<Element>,
 ): E where T : Element, T : HasElements = transformMatchingElements<T, E> { element ->
     val injected = produce(element)
     if (injected.isNotEmpty()) element.withElements(element.elements + injected) else element
 }
 
-// Visitor interface for traversing AST without mutation
-
-/**
- * Visitor interface for traversing AST nodes.
- */
-interface Visitor {
-    fun visitType(type: Type) {
-        type.visitChildren(this)
-    }
-
-    fun visitElement(element: Element) {
-        element.visitChildren(this)
-    }
-
-    fun visitStatement(statement: Statement) {
-        statement.visitChildren(this)
-    }
-
-    fun visitExpression(expression: Expression) {
-        expression.visitChildren(this)
-    }
-
-    fun visitField(field: Field) {
-        field.visitChildren(this)
-    }
-
-    fun visitParameter(parameter: Parameter) {
-        parameter.visitChildren(this)
-    }
-
-    fun visitConstructor(constructor: Constructor) {
-        constructor.visitChildren(this)
-    }
-
-    fun visitCase(case: Case) {
-        case.visitChildren(this)
-    }
-}
-
-// Visitor child traversal functions
-
-fun Type.visitChildren(visitor: Visitor) {
-    when (this) {
-        is Type.Array -> visitor.visitType(elementType)
-        is Type.Dict -> {
-            visitor.visitType(keyType)
-            visitor.visitType(valueType)
-        }
-
-        is Type.Custom -> generics.forEach { visitor.visitType(it) }
-        is Type.Nullable -> visitor.visitType(type)
-        is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect -> {}
-    }
-}
-
-fun Element.visitChildren(visitor: Visitor) {
-    when (this) {
-        is File -> elements.forEach { visitor.visitElement(it) }
-        is Package -> {}
-        is Import -> visitor.visitType(type)
-        is Struct -> {
-            fields.forEach { visitor.visitField(it) }
-            constructors.forEach { visitor.visitConstructor(it) }
-            interfaces.forEach { visitor.visitType(it) }
-            elements.forEach { visitor.visitElement(it) }
-        }
-
-        is Function -> {
-            parameters.forEach { visitor.visitParameter(it) }
-            returnType?.let { visitor.visitType(it) }
-            body.forEach { visitor.visitStatement(it) }
-        }
-
-        is Namespace -> {
-            elements.forEach { visitor.visitElement(it) }
-            extends?.let { visitor.visitType(it) }
-        }
-
-        is Interface -> {
-            fields.forEach { visitor.visitField(it) }
-            elements.forEach { visitor.visitElement(it) }
-            extends.forEach { visitor.visitType(it) }
-        }
-
-        is Union -> {
-            extends?.let { visitor.visitType(it) }
-            members.forEach { visitor.visitType(it) }
-            typeParameters.forEach { tp ->
-                visitor.visitType(tp.type)
-                tp.extends.forEach { visitor.visitType(it) }
+internal fun Element.forEachType(action: (Type) -> Unit) {
+    transform(
+        transformer {
+            type { type, tr ->
+                action(type)
+                type.transformChildren(tr)
             }
-        }
-
-        is Enum -> {
-            extends?.let { visitor.visitType(it) }
-            fields.forEach { visitor.visitField(it) }
-            constructors.forEach { visitor.visitConstructor(it) }
-            elements.forEach { visitor.visitElement(it) }
-        }
-
-        is Main -> body.forEach { visitor.visitStatement(it) }
-        is RawElement -> {}
-    }
+        },
+    )
 }
 
-fun Field.visitChildren(visitor: Visitor) {
-    visitor.visitType(type)
-}
-
-fun Parameter.visitChildren(visitor: Visitor) {
-    visitor.visitType(type)
-}
-
-fun Constructor.visitChildren(visitor: Visitor) {
-    parameters.forEach { visitor.visitParameter(it) }
-    body.forEach { visitor.visitStatement(it) }
-}
-
-fun Statement.visitChildren(visitor: Visitor) {
-    when (this) {
-        is PrintStatement -> visitor.visitExpression(expression)
-        is ReturnStatement -> visitor.visitExpression(expression)
-        is ConstructorStatement -> {
-            visitor.visitType(type)
-            namedArguments.values.forEach { visitor.visitExpression(it) }
-        }
-
-        is Literal -> visitor.visitType(type)
-        is LiteralList -> {
-            values.forEach { visitor.visitExpression(it) }
-            visitor.visitType(type)
-        }
-
-        is LiteralMap -> {
-            values.values.forEach { visitor.visitExpression(it) }
-            visitor.visitType(keyType)
-            visitor.visitType(valueType)
-        }
-
-        is Assignment -> visitor.visitExpression(value)
-        is ErrorStatement -> visitor.visitExpression(message)
-        is AssertStatement -> {
-            visitor.visitExpression(expression)
-        }
-        is Switch -> {
-            visitor.visitExpression(expression)
-            cases.forEach { visitor.visitCase(it) }
-            default?.forEach { visitor.visitStatement(it) }
-        }
-
-        is RawExpression -> {}
-        is NullLiteral -> {}
-        is NullableEmpty -> {}
-        is VariableReference -> {}
-        is FieldCall -> receiver?.let { visitor.visitExpression(it) }
-        is FunctionCall -> {
-            receiver?.let { visitor.visitExpression(it) }
-            arguments.values.forEach { visitor.visitExpression(it) }
-        }
-
-        is ArrayIndexCall -> {
-            visitor.visitExpression(receiver)
-            visitor.visitExpression(index)
-        }
-
-        is EnumReference -> visitor.visitType(enumType)
-        is EnumValueCall -> visitor.visitExpression(expression)
-        is BinaryOp -> {
-            visitor.visitExpression(left)
-            visitor.visitExpression(right)
-        }
-
-        is TypeDescriptor -> visitor.visitType(type)
-        is NullCheck -> {
-            visitor.visitExpression(expression)
-            visitor.visitExpression(body)
-            alternative?.let { visitor.visitExpression(it) }
-        }
-
-        is NullableMap -> {
-            visitor.visitExpression(expression)
-            visitor.visitExpression(body)
-            visitor.visitExpression(alternative)
-        }
-
-        is NullableOf -> visitor.visitExpression(expression)
-        is Constraint.RegexMatch -> visitor.visitExpression(value)
-        is Constraint.BoundCheck -> visitor.visitExpression(value)
-        is NotExpression -> visitor.visitExpression(expression)
-        is IfExpression -> {
-            visitor.visitExpression(condition)
-            visitor.visitExpression(thenExpr)
-            visitor.visitExpression(elseExpr)
-        }
-        is MapExpression -> {
-            visitor.visitExpression(receiver)
-            visitor.visitExpression(body)
-        }
-        is FlatMapIndexed -> {
-            visitor.visitExpression(receiver)
-            visitor.visitExpression(body)
-        }
-        is ListConcat -> lists.forEach { visitor.visitExpression(it) }
-        is StringTemplate -> parts.forEach {
-            when (it) {
-                is StringTemplate.Part.Text -> {}
-                is StringTemplate.Part.Expr -> visitor.visitExpression(it.expression)
+@PublishedApi
+internal fun Element.forEachElement(action: (Element) -> Unit) {
+    transform(
+        transformer {
+            element { element, tr ->
+                action(element)
+                element.transformChildren(tr)
             }
-        }
-    }
+        },
+    )
 }
 
-fun Expression.visitChildren(visitor: Visitor) {
-    when (this) {
-        is RawExpression -> {}
-        is Statement -> visitChildren(visitor)
-    }
+internal fun Element.forEachField(action: (Field) -> Unit) {
+    transform(
+        transformer {
+            field { field, tr ->
+                action(field)
+                field.transformChildren(tr)
+            }
+        },
+    )
 }
 
-fun Case.visitChildren(visitor: Visitor) {
-    visitor.visitExpression(value)
-    body.forEach { visitor.visitStatement(it) }
-    type?.let { visitor.visitType(it) }
-}
-
-// Convenience extension functions for traversal
-
-fun Element.visit(visitor: Visitor) = visitor.visitElement(this)
-
-/**
- * Traverse all types in the AST.
- */
-fun Element.forEachType(action: (Type) -> Unit) {
-    visit(object : Visitor {
-        override fun visitType(type: Type) {
-            action(type)
-            type.visitChildren(this)
-        }
-    })
-}
-
-/**
- * Traverse all elements in the AST.
- */
-fun Element.forEachElement(action: (Element) -> Unit) {
-    visit(object : Visitor {
-        override fun visitElement(element: Element) {
-            action(element)
-            element.visitChildren(this)
-        }
-    })
-}
-
-/**
- * Traverse all fields in the AST.
- */
-fun Element.forEachField(action: (Field) -> Unit) {
-    visit(object : Visitor {
-        override fun visitField(field: Field) {
-            action(field)
-            field.visitChildren(this)
-        }
-    })
-}
-
-/**
- * Collect all types in the AST.
- */
-fun Element.collectTypes(): List<Type> = buildList {
+internal fun Element.collectTypes(): List<Type> = buildList {
     forEachType { add(it) }
 }
 
-/**
- * Collect all custom type names used in the AST.
- */
-fun Element.collectCustomTypeNames(): Set<String> = buildSet {
+internal fun Element.collectCustomTypeNames(): Set<String> = buildSet {
     forEachType { type ->
         if (type is Type.Custom) add(type.name)
     }
 }
 
-/**
- * Find an element by type in the direct children.
- */
 inline fun <reified T : Element> HasElements.findElement(): T? = elements.filterIsInstance<T>().firstOrNull()
 
-/**
- * Find an element by type and predicate in the direct children.
- */
 inline fun <reified T : Element> HasElements.findElement(predicate: (T) -> Boolean): T? = elements.filterIsInstance<T>().firstOrNull(predicate)
 
-/**
- * Find all elements matching a predicate.
- */
 inline fun <reified T : Element> Element.findAll(): List<T> = buildList {
     forEachElement { element ->
         if (element is T) add(element)
     }
 }
 
-/**
- * Find all types matching a predicate.
- */
-inline fun <reified T : Type> Element.findAllTypes(): List<T> = buildList {
+internal inline fun <reified T : Type> Element.findAllTypes(): List<T> = buildList {
     forEachType { type ->
         if (type is T) add(type)
     }

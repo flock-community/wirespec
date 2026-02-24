@@ -34,7 +34,6 @@ import community.flock.wirespec.ir.core.Parameter
 import community.flock.wirespec.ir.core.Statement
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.File
@@ -43,8 +42,6 @@ import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.injectAfter
-import community.flock.wirespec.ir.core.injectBefore
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
@@ -139,8 +136,8 @@ open class TypeScriptIrEmitter : IrEmitter {
         // Transform validate body for TypeScript:
         // 1. Add obj receiver to bare FieldCalls that reference type fields
         // 2. Convert method-style validate calls to standalone function calls: x.validate() -> validateFoo(x)
-        val tsTransformer = transformer(
-            transformStatement = { s, t ->
+        val tsTransformer = transformer {
+            statement { s, t ->
                 when {
                     s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
                         val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
@@ -150,8 +147,8 @@ open class TypeScriptIrEmitter : IrEmitter {
                         FieldCall(receiver = VariableReference(Name.of("obj")), field = s.field)
                     else -> s.transformChildren(t)
                 }
-            },
-            transformExpression = { e, t ->
+            }
+            expression { e, t ->
                 when {
                     e is FunctionCall && e.name == Name.of("validate") && e.receiver != null && e.typeArguments.isNotEmpty() -> {
                         val typeName = (e.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
@@ -161,19 +158,21 @@ open class TypeScriptIrEmitter : IrEmitter {
                         FieldCall(receiver = VariableReference(Name.of("obj")), field = e.field)
                     else -> e.transformChildren(t)
                 }
-            },
-        )
+            }
+        }
         val file = type.convertWithValidation(module)
-            .transformMatchingElements { fn: community.flock.wirespec.ir.core.Function ->
-                if (fn.name == Name.of("validate")) {
-                    val validateName = "validate${type.identifier.value}"
-                    val transformedBody = fn.body.map { tsTransformer.transformStatement(it) }
-                    fn.copy(
-                        name = Name.of(validateName),
-                        parameters = listOf(Parameter(Name.of("obj"), LanguageType.Custom(type.identifier.value))),
-                        body = transformedBody,
-                    )
-                } else fn
+            .transform {
+                matchingElements { fn: community.flock.wirespec.ir.core.Function ->
+                    if (fn.name == Name.of("validate")) {
+                        val validateName = "validate${type.identifier.value}"
+                        val transformedBody = fn.body.map { tsTransformer.transformStatement(it) }
+                        fn.copy(
+                            name = Name.of(validateName),
+                            parameters = listOf(Parameter(Name.of("obj"), LanguageType.Custom(type.identifier.value))),
+                            body = transformedBody,
+                        )
+                    } else fn
+                }
             }
         return if (allImports.isNotEmpty()) file.copy(elements = listOf(RawElement(allImports)) + file.elements)
         else file
@@ -245,7 +244,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
         val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
         val body = endpointNamespace
-            .injectAfter { _: Namespace -> listOf(raw(api)) }
+            .transform { injectAfter { _: Namespace -> listOf(raw(api)) } }
 
         return if (imports.isNotEmpty()) File(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
         else File(Name.of(endpoint.identifier.sanitize()), listOf(body))

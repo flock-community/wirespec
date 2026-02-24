@@ -33,6 +33,7 @@ import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.ir.generator.generateKotlin
 import community.flock.wirespec.ir.generator.generatePython
@@ -55,7 +56,7 @@ val languages = mapOf(
 ).onEach { (name, lang) -> lang.name = name }
 
 class Language(
-    val emitter: Emitter,
+    val emitter: IrEmitter,
     val image: () -> String,
 ) {
     lateinit var name: String
@@ -136,18 +137,30 @@ class Language(
             is RustIrEmitter -> {
                 // Build use statements from the test file's imports
                 val imports = resolved.elements.filterIsInstance<Import>()
-                val useStatements = imports.map { imp ->
+                val hasEndpointImports = imports.any { it.path.contains("endpoint") }
+                val useStatements = imports.flatMap { imp ->
                     val typeName = imp.type.name
                     val snakeName = Name.of(typeName).snakeCase()
-                    "use generated::model::${snakeName}::${typeName};"
+                    when {
+                        imp.path.contains("endpoint") -> listOf(
+                            "use generated::endpoint::${snakeName}::*;",
+                            "use generated::endpoint::${snakeName}::${typeName}::*;",
+                        )
+                        imp.path.contains("model") -> listOf("use generated::model::${snakeName}::${typeName};")
+                        else -> listOf("use generated::${snakeName}::${typeName};")
+                    }
                 }.joinToString("\n")
+                // Import specific wirespec traits to avoid name clashes with endpoint types (Request, Response, etc.)
+                val wirespecUse = if (hasEndpointImports) {
+                    "use generated::wirespec::{BodySerializer, BodyDeserializer, PathSerializer, PathDeserializer, ParamSerializer, ParamDeserializer, BodySerialization, PathSerialization, ParamSerialization, Serializer, Deserializer, Serialization, RawRequest, RawResponse, Method};"
+                } else ""
                 // Generate the test file content (which contains fn main())
                 val rustContent = resolved.generateRust()
                 // Filter out the import lines that the generator produced (use super::...)
                 val filteredContent = rustContent.lines()
                     .filter { !it.startsWith("use super::") }
                     .joinToString("\n")
-                val mainRs = "mod generated;\n$useStatements\n\n$filteredContent"
+                val mainRs = "mod generated;\n$useStatements\n$wirespecUse\n\n$filteredContent"
                 container.execInContainer("sh", "-c", "cat > /app/src/main.rs << 'RUSTEOF'\n$mainRs\nRUSTEOF")
                 "cd /app && cargo build && cargo run"
             }
@@ -262,13 +275,13 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     if (validateTargets.isEmpty() && inlineMap.isEmpty()) return this
 
     // Transform: inline refs + rewrite validate calls
-    val t = transformer(
-        transformExpression = { expr, self ->
+    val t = transformer {
+        expression { expr, self ->
             when {
                 expr is VariableReference && expr.name in inlineMap -> inlineMap.getValue(expr.name)
                 expr is FunctionCall && expr.name == Name("validate") && expr.receiver is VariableReference -> {
                     val varName = (expr.receiver as VariableReference).name
-                    val typeName = variableTypes[varName] ?: return@transformer expr.transformChildren(self)
+                    val typeName = variableTypes[varName] ?: return@expression expr.transformChildren(self)
                     val arg = if (typeName in refinedTypes) Name("value") to FieldCall(
                         VariableReference(varName),
                         Name("value")
@@ -279,13 +292,13 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
 
                 else -> expr.transformChildren(self)
             }
-        },
-    )
+        }
+    }
 
     // Second pass: wrap variable-to-variable equality in JSON.stringify for TypeScript
     // TypeScript uses === which compares references, not structural equality for arrays
-    val jsonStringifyTransformer = transformer(
-        transformStatement = { stmt, self ->
+    val jsonStringifyTransformer = transformer {
+        statement { stmt, self ->
             if (stmt is AssertStatement && stmt.expression is BinaryOp) {
                 val op = stmt.expression as BinaryOp
                 if ((op.operator == BinaryOp.Operator.EQUALS || op.operator == BinaryOp.Operator.NOT_EQUALS) &&
@@ -306,8 +319,8 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
             } else {
                 stmt.transformChildren(self)
             }
-        },
-    )
+        }
+    }
 
     val transformedBody = body
         .filter { it !is Assignment || it.name !in inlineMap }

@@ -32,7 +32,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Import
@@ -45,17 +44,15 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findAll
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
-import community.flock.wirespec.ir.core.injectAfter
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformMatchingElements
+import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.generator.KotlinGenerator
 import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.ir.generator.generateKotlin
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
-import community.flock.wirespec.ir.core.Field as LanguageField
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Type as LanguageType
@@ -176,14 +173,18 @@ open class KotlinIrEmitter(
         val rawHandleFunction = raw(emitHandleFunction(endpoint))
         val targetFunctionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
 
-        return transformMatchingElements { iface: Interface ->
-            if (iface.name == Name.of("Handler")) {
-                val transformed = iface.transformMatchingElements { fn: LanguageFunction ->
-                    if (fn.name.camelCase() == targetFunctionName) rawHandleFunction else fn
+        return transform {
+            matchingElements { iface: Interface ->
+                if (iface.name == Name.of("Handler")) {
+                    iface.transform {
+                        matchingElements { fn: LanguageFunction ->
+                            if (fn.name.camelCase() == targetFunctionName) rawHandleFunction else fn
+                        }
+                        injectAfter { _: Interface -> listOf(companion) }
+                    }
+                } else {
+                    iface
                 }
-                transformed.injectAfter { iface2: Interface -> listOf(companion) }
-            } else {
-                iface
             }
         }
     }
@@ -233,32 +234,14 @@ open class KotlinIrEmitter(
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .transformMatchingElements { languageEnum: LanguageEnum ->
-            languageEnum.copy(
-                entries = languageEnum.entries.map {
-                    LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum()), listOf("\"${it.name.parts.first()}\""))
-                },
-                fields = listOf(
-                    LanguageField(Name.of("label"), LanguageType.String, isOverride = true),
-                ),
-                constructors = listOf(
-                    Constructor(
-                        parameters = listOf(
-                            community.flock.wirespec.ir.core.Parameter(
-                                Name.of("label"),
-                                LanguageType.String
-                            )
-                        ),
-                        body = listOf(Assignment(Name.of("this.label"), RawExpression("label"), true)),
-                    ),
-                ),
-                elements = listOf(
-                    function("toString", isOverride = true) {
-                        returnType(LanguageType.String)
-                        returns(RawExpression("label"))
-                    },
-                ),
-            )
+        .transform {
+            matchingElements { languageEnum: LanguageEnum ->
+                languageEnum.withLabelField(
+                    sanitizeEntry = { it.sanitizeEnum() },
+                    labelFieldOverride = true,
+                    labelExpression = RawExpression("label"),
+                )
+            }
         }
 
     fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")

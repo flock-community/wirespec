@@ -23,17 +23,13 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Assignment
-import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
-import community.flock.wirespec.ir.core.Parameter
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
@@ -42,14 +38,11 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.injectAfter
+import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformFieldsWhere
-import community.flock.wirespec.ir.core.transformMatchingElements
-import community.flock.wirespec.ir.core.transformParametersWhere
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.generator.JavaGenerator
 import community.flock.wirespec.ir.generator.generateJava
@@ -229,34 +222,18 @@ open class JavaIrEmitter(
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .transformMatchingElements { languageEnum: LanguageEnum ->
-            languageEnum.copy(
-                entries = languageEnum.entries.map {
-                    LanguageEnum.Entry(
-                        Name.of(it.name.parts.first().sanitizeEnum()),
-                        listOf("\"${it.name.parts.first()}\"")
-                    )
-                },
-                fields = listOf(
-                    Field(Name.of("label"), Type.String),
-                ),
-                constructors = listOf(
-                    Constructor(
-                        parameters = listOf(Parameter(Name.of("label"), Type.String)),
-                        body = listOf(Assignment(Name.of("this.label"), VariableReference(Name.of("label")), true)),
+        .transform {
+            matchingElements { languageEnum: LanguageEnum ->
+                languageEnum.withLabelField(
+                    sanitizeEntry = { it.sanitizeEnum() },
+                    extraElements = listOf(
+                        function("label") {
+                            returnType(Type.String)
+                            returns(VariableReference(Name.of("label")))
+                        },
                     ),
-                ),
-                elements = listOf(
-                    function("toString", isOverride = true) {
-                        returnType(Type.String)
-                        returns(VariableReference(Name.of("label")))
-                    },
-                    function("label") {
-                        returnType(Type.String)
-                        returns(VariableReference(Name.of("label")))
-                    },
-                ),
-            )
+                )
+            }
         }
         .sanitizeNames()
 
@@ -309,15 +286,17 @@ open class JavaIrEmitter(
 
     private fun Interface.withFullyQualifiedPrefix(prefix: String): Interface =
         if (prefix.isNotEmpty()) {
-            transformParametersWhere(
-                predicate = { it.name == Name.of("message") },
-                transform = { param ->
-                    when (val t = param.type) {
-                        is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
-                        else -> param
-                    }
-                },
-            )
+            transform {
+                parametersWhere(
+                    predicate = { it.name == Name.of("message") },
+                    transform = { param ->
+                        when (val t = param.type) {
+                            is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
+                            else -> param
+                        }
+                    },
+                )
+            }
         } else {
             this
         }
@@ -330,8 +309,10 @@ open class JavaIrEmitter(
             .injectHandleFunction(endpoint)
             .let { file ->
                 if (imports.isNotEmpty()) {
-                    file.transformMatchingElements { f: File ->
-                        f.copy(elements = imports + f.elements)
+                    file.transform {
+                        matchingElements { f: File ->
+                            f.copy(elements = imports + f.elements)
+                        }
                     }
                 } else {
                     file
@@ -341,11 +322,13 @@ open class JavaIrEmitter(
 
     private fun <T : Element> T.injectHandleFunction(endpoint: Endpoint): T {
         val handlersStruct = buildHandlers(endpoint)
-        return transformMatchingElements { iface: Interface ->
-            if (iface.name == Name.of("Handler")) {
-                iface.injectAfter { _: Interface -> listOf(handlersStruct) }
-            } else {
-                iface
+        return transform {
+            matchingElements { iface: Interface ->
+                if (iface.name == Name.of("Handler")) {
+                    iface.transform { injectAfter { _: Interface -> listOf(handlersStruct) } }
+                } else {
+                    iface
+                }
             }
         }
     }

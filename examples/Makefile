@@ -4,7 +4,7 @@ build:
 	./mvnw verify && \
 	(cd gradle-ktor && ./gradlew check ) && \
 	(cd npm-typescript && npm ci && npm run build) && \
-	(cd rust-petstore && cargo build)
+	(cd rust-petstore && ./gen.sh && cargo build)
 
 clean:
 	./mvnw clean && \

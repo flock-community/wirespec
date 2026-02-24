@@ -361,15 +361,15 @@ class TransformTest {
             ),
         )
 
-        val transformer = transformer(
-            transformType = { type, t ->
+        val transformer = transformer {
+            type { type, t ->
                 when (type) {
                     is Type.Integer -> Type.Integer(Precision.P64)
                     is Type.Number -> Type.Number(Precision.P32)
                     else -> type.transformChildren(t)
                 }
-            },
-        )
+            }
+        }
 
         val result = struct.transform(transformer)
 
@@ -504,16 +504,12 @@ class TransformTest {
         )
 
         val result = struct.transform {
-            apply(
-                transformer(
-                    transformType = { type, t ->
-                        when (type) {
-                            is Type.Integer -> Type.Integer(Precision.P64)
-                            else -> type.transformChildren(t)
-                        }
-                    },
-                ),
-            )
+            type { type, t ->
+                when (type) {
+                    is Type.Integer -> Type.Integer(Precision.P64)
+                    else -> type.transformChildren(t)
+                }
+            }
         }
 
         assertEquals(Type.Integer(Precision.P64), result.fields[0].type)

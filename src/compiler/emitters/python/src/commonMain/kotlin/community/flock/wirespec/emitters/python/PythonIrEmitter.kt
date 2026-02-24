@@ -43,8 +43,8 @@ import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.ir.core.transformer
 import community.flock.wirespec.ir.generator.PythonGenerator
 import community.flock.wirespec.ir.generator.generatePython
@@ -164,31 +164,33 @@ open class PythonIrEmitter(
             .joinToString("\n") { "from .${it.value} import ${it.value}" }
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         // Add self receiver to bare FieldCalls that reference type fields
-        val addSelfReceiver = transformer(
-            transformStatement = { s, t ->
+        val addSelfReceiver = transformer {
+            statement { s, t ->
                 if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
                     FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
                 } else {
                     s.transformChildren(t)
                 }
-            },
-            transformExpression = { e, t ->
+            }
+            expression { e, t ->
                 if (e is FieldCall && e.receiver == null && e.field.camelCase() in fieldNames) {
                     FieldCall(receiver = VariableReference(Name.of("self")), field = e.field)
                 } else {
                     e.transformChildren(t)
                 }
-            },
-        )
+            }
+        }
         val file = type.convertWithValidation(module)
-            .transformMatchingElements { fn: LanguageFunction ->
-                if (fn.name == Name.of("validate")) {
-                    val transformedBody = fn.body.map { addSelfReceiver.transformStatement(it) }
-                    fn.copy(
-                        parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("self"), LanguageType.Custom(""))),
-                        body = transformedBody,
-                    )
-                } else fn
+            .transform {
+                matchingElements { fn: LanguageFunction ->
+                    if (fn.name == Name.of("validate")) {
+                        val transformedBody = fn.body.map { addSelfReceiver.transformStatement(it) }
+                        fn.copy(
+                            parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("self"), LanguageType.Custom(""))),
+                            body = transformedBody,
+                        )
+                    } else fn
+                }
             }
         return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
         else file
@@ -196,12 +198,14 @@ open class PythonIrEmitter(
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .transformMatchingElements { languageEnum: LanguageEnum ->
-            languageEnum.copy(
-                entries = languageEnum.entries.map {
-                    LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.parts.first()}\""))
-                },
-            )
+        .transform {
+            matchingElements { languageEnum: LanguageEnum ->
+                languageEnum.copy(
+                    entries = languageEnum.entries.map {
+                        LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.parts.first()}\""))
+                    },
+                )
+            }
         }
 
     fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_")
@@ -238,8 +242,10 @@ open class PythonIrEmitter(
             returns(RawExpression(toStringExpr))
         }
         return file
-            .transformMatchingElements { s: Struct ->
-                s.copy(elements = listOf(validate, toString))
+            .transform {
+                matchingElements { s: Struct ->
+                    s.copy(elements = listOf(validate, toString))
+                }
             }
     }
 
