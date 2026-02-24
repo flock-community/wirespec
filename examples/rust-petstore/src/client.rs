@@ -1,17 +1,15 @@
-mod generated;
-mod serialization;
-mod transportation;
-
-use generated::endpoint::{
+use wirespec_petstore::gen::endpoint::{
     find_pets_by_status, get_inventory, get_pet_by_id, place_order,
 };
-use generated::model::category::Category;
-use generated::model::order::Order;
-use generated::model::pet::Pet;
-use generated::model::tag::Tag;
-use generated::wirespec::Client;
-use serialization::JsonSerialization;
-use transportation::{ClientProxy, ReqwestTransport};
+use wirespec_petstore::gen::model::category::Category;
+use wirespec_petstore::gen::model::order::Order;
+use wirespec_petstore::gen::model::order_status::OrderStatus;
+use wirespec_petstore::gen::model::pet::Pet;
+use wirespec_petstore::gen::model::pet_status::PetStatus;
+use wirespec_petstore::gen::model::tag::Tag;
+use wirespec_petstore::gen::wirespec::Client;
+use wirespec_petstore::serialization::JsonSerialization;
+use wirespec_petstore::transportation::{ClientProxy, ReqwestTransport};
 
 trait PetstoreApi:
     find_pets_by_status::FindPetsByStatus::Handler
@@ -60,7 +58,7 @@ fn run(api: &impl PetstoreApi) {
     }
 
     println!("\n=== Add a new pet ===");
-    let new_pet = Pet {
+    let _new_pet = Pet {
         id: None,
         category: Some(Category {
             id: Some(1),
@@ -70,9 +68,9 @@ fn run(api: &impl PetstoreApi) {
         photoUrls: vec!["https://example.com/dog.jpg".into()],
         tags: Some(vec![Tag {
             id: Some(1),
-            name: Some("generated".into()),
+            name: Some("gen".into()),
         }]),
-        status: Some(generated::model::pet_status::PetStatus::Available),
+        status: Some(PetStatus::Available),
     };
 
     println!("\n=== Get store inventory ===");
@@ -83,7 +81,6 @@ fn run(api: &impl PetstoreApi) {
                 println!("  {}: {}", status, count);
             }
         }
-        _ => println!("Error fetching inventory"),
     }
 
     println!("\n=== Place an order ===");
@@ -92,7 +89,7 @@ fn run(api: &impl PetstoreApi) {
         petId: Some(1),
         quantity: Some(1),
         shipDate: Some("2025-01-01T00:00:00.000Z".into()),
-        status: Some(generated::model::order_status::OrderStatus::Placed),
+        status: Some(OrderStatus::Placed),
         complete: Some(false),
     };
     let resp = api.place_order(place_order::Request::new(order));

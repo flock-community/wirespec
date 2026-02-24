@@ -1,4 +1,4 @@
-use crate::generated::wirespec::{Client, RawRequest, RawResponse, Transportation};
+use crate::gen::wirespec::{Client, RawRequest, RawResponse, Transportation};
 use crate::serialization::JsonSerialization;
 use std::collections::HashMap;
 
