@@ -52,7 +52,7 @@ fn run(api: &impl PetstoreApi) {
             println!("  Category: {:?}", r.body.category);
             println!("  Tags: {:?}", r.body.tags);
             println!("  Status: {:?}", r.body.status);
-            println!("  Photo URLs: {:?}", r.body.photoUrls);
+            println!("  Photo URLs: {:?}", r.body.photo_urls);
         }
         _ => println!("Error fetching pet"),
     }
@@ -65,7 +65,7 @@ fn run(api: &impl PetstoreApi) {
             name: Some("Dogs".into()),
         }),
         name: "Wirespec Dog".into(),
-        photoUrls: vec!["https://example.com/dog.jpg".into()],
+        photo_urls: vec!["https://example.com/dog.jpg".into()],
         tags: Some(vec![Tag {
             id: Some(1),
             name: Some("gen".into()),
@@ -86,9 +86,9 @@ fn run(api: &impl PetstoreApi) {
     println!("\n=== Place an order ===");
     let order = Order {
         id: None,
-        petId: Some(1),
+        pet_id: Some(1),
         quantity: Some(1),
-        shipDate: Some("2025-01-01T00:00:00.000Z".into()),
+        ship_date: Some("2025-01-01T00:00:00.000Z".into()),
         status: Some(OrderStatus::Placed),
         complete: Some(false),
     };

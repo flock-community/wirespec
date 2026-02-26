@@ -1,29 +1,17 @@
 use std::any::TypeId;
 use crate::gen::wirespec::*;
 
-impl<T: serde::Serialize> Serialize for T {
-    fn serialize(&self) -> Vec<u8> {
-        serde_json::to_vec(self).unwrap()
-    }
-}
-
-impl<T: serde::de::DeserializeOwned> Deserialize for T {
-    fn deserialize(bytes: &[u8]) -> Result<Self, String> {
-        serde_json::from_slice(bytes).map_err(|e| e.to_string())
-    }
-}
-
 pub struct JsonSerialization;
 
 impl BodySerializer for JsonSerialization {
-    fn serialize_body<T: Serialize>(&self, t: &T, _type: TypeId) -> Vec<u8> {
-        t.serialize()
+    fn serialize_body<T: serde::Serialize>(&self, t: &T, _type: TypeId) -> Vec<u8> {
+        serde_json::to_vec(t).unwrap()
     }
 }
 
 impl BodyDeserializer for JsonSerialization {
-    fn deserialize_body<T: Deserialize>(&self, raw: &[u8], _type: TypeId) -> T {
-        T::deserialize(raw).unwrap()
+    fn deserialize_body<T: serde::de::DeserializeOwned>(&self, raw: &[u8], _type: TypeId) -> T {
+        serde_json::from_slice(raw).unwrap()
     }
 }
 
@@ -43,8 +31,8 @@ impl PathDeserializer for JsonSerialization {
 }
 
 impl ParamSerializer for JsonSerialization {
-    fn serialize_param<T: Serialize>(&self, value: &T, _type: TypeId) -> Vec<String> {
-        let bytes = value.serialize();
+    fn serialize_param<T: serde::Serialize>(&self, value: &T, _type: TypeId) -> Vec<String> {
+        let bytes = serde_json::to_vec(value).unwrap();
         let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
         match json {
             serde_json::Value::Array(arr) => arr.iter().map(json_value_to_string).collect(),
@@ -54,19 +42,19 @@ impl ParamSerializer for JsonSerialization {
 }
 
 impl ParamDeserializer for JsonSerialization {
-    fn deserialize_param<T: Deserialize>(&self, values: &[String], _type: TypeId) -> T {
+    fn deserialize_param<T: serde::de::DeserializeOwned>(&self, values: &[String], _type: TypeId) -> T {
         let parsed: Vec<serde_json::Value> = values
             .iter()
             .map(|v| serde_json::from_str(v).unwrap_or(serde_json::Value::String(v.clone())))
             .collect();
         if parsed.len() == 1 {
             let json_bytes = serde_json::to_vec(&parsed[0]).unwrap();
-            if let Ok(result) = T::deserialize(&json_bytes) {
+            if let Ok(result) = serde_json::from_slice(&json_bytes) {
                 return result;
             }
         }
         let json_bytes = serde_json::to_vec(&serde_json::Value::Array(parsed)).unwrap();
-        T::deserialize(&json_bytes).unwrap()
+        serde_json::from_slice(&json_bytes).unwrap()
     }
 }
 

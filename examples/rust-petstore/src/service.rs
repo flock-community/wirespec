@@ -13,7 +13,7 @@ impl get_pet_by_id::GetPetById::Handler for PetstoreService {
                 name: Some("Dogs".into()),
             }),
             name: format!("Pet {}", request.path.pet_id),
-            photoUrls: vec!["https://example.com/pet.jpg".into()],
+            photo_urls: vec!["https://example.com/pet.jpg".into()],
             tags: None,
             status: None,
         };
@@ -33,7 +33,7 @@ impl find_pets_by_status::FindPetsByStatus::Handler for PetstoreService {
                 name: Some("Dogs".into()),
             }),
             name: "Buddy".into(),
-            photoUrls: vec!["https://example.com/buddy.jpg".into()],
+            photo_urls: vec!["https://example.com/buddy.jpg".into()],
             tags: None,
             status: None,
         }];

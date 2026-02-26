@@ -75,7 +75,7 @@ fn test_petstore_endpoints() {
         id: None,
         category: None,
         name: "TestPet".into(),
-        photoUrls: vec![],
+        photo_urls: vec![],
         tags: None,
         status: None,
     };
