@@ -13,7 +13,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -22,6 +25,7 @@ import static community.flock.wirespec.integration.spring.java.configuration.Wir
 public class WirespecMethodArgumentResolver implements HandlerMethodArgumentResolver {
 
     private final Wirespec.Serialization wirespecSerialization;
+    private final Map<Class<?>, Method> fromRequestCache = new ConcurrentHashMap<>();
 
     public WirespecMethodArgumentResolver(Wirespec.Serialization wirespecSerialization) {
         this.wirespecSerialization = wirespecSerialization;
@@ -42,24 +46,19 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
         HttpServletRequest servletRequest = (HttpServletRequest) webRequest.getNativeRequest();
 
         Class<?> declaringClass = parameter.getParameterType().getDeclaringClass();
-        Class<?> handlerClass = Arrays.stream(declaringClass.getDeclaredClasses())
-                .filter(c -> c.getSimpleName().equals("Handler"))
-                .findFirst().orElse(null);
+        Method fromRequest = fromRequestCache.computeIfAbsent(declaringClass, cls -> {
+            Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
+                    .filter(c -> c.getSimpleName().equals("Handler"))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
+            return Arrays.stream(handlerClass.getDeclaredMethods())
+                    .filter(m -> m.getName().equals("fromRequest") && Modifier.isStatic(m.getModifiers()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("fromRequest method not found in " + handlerClass));
+        });
 
-        Class<?> handlersClass = null;
-        if (handlerClass != null) {
-            handlersClass = Arrays.stream(handlerClass.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handlers"))
-                    .findFirst().orElse(null);
-        }
-
-        if (handlersClass == null) {
-             throw new IllegalStateException("Could not find Handlers class in " + declaringClass);
-        }
-
-        Wirespec.Server<?, ?> instance = (Wirespec.Server<?, ?>) handlersClass.getDeclaredConstructor().newInstance();
         Wirespec.RawRequest req = toRawRequest(servletRequest);
-        return instance.getServer(wirespecSerialization).from(req);
+        return (Wirespec.Request<?>) fromRequest.invoke(null, wirespecSerialization, req);
     }
 
     private Wirespec.RawRequest toRawRequest(HttpServletRequest request) throws IOException {

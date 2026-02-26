@@ -11,14 +11,18 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ControllerAdvice
 public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
     private final Wirespec.Serialization wirespecSerialization;
+    private final Map<Class<?>, Method> toResponseCache = new ConcurrentHashMap<>();
 
     public WirespecResponseBodyAdvice(Wirespec.Serialization wirespecSerialization) {
         this.wirespecSerialization = wirespecSerialization;
@@ -41,28 +45,19 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     ) {
         try {
             Class<?> declaringClass = returnType.getParameterType().getDeclaringClass();
-            Class<?> handlerClass = Arrays.stream(declaringClass.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handler"))
-                    .findFirst().orElse(null);
-
-            Class<?> handlersClass = null;
-            if (handlerClass != null) {
-                handlersClass = Arrays.stream(handlerClass.getDeclaredClasses())
-                        .filter(c -> c.getSimpleName().equals("Handlers"))
-                        .findFirst().orElse(null);
-            }
-            
-            if (handlersClass == null) {
-                throw new IllegalStateException("Handlers not found");
-            }
-
-            Wirespec.Server<Wirespec.Request<?>, Wirespec.Response<?>> instance = 
-                    (Wirespec.Server<Wirespec.Request<?>, Wirespec.Response<?>>) handlersClass.getDeclaredConstructor().newInstance();
-            
-            Wirespec.ServerEdge<Wirespec.Request<?>, Wirespec.Response<?>> server = instance.getServer(wirespecSerialization);
+            Method toResponse = toResponseCache.computeIfAbsent(declaringClass, cls -> {
+                Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
+                        .filter(c -> c.getSimpleName().equals("Handler"))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
+                return Arrays.stream(handlerClass.getDeclaredMethods())
+                        .filter(m -> m.getName().equals("toResponse") && Modifier.isStatic(m.getModifiers()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("toResponse method not found in " + handlerClass));
+            });
 
             if (body instanceof Wirespec.Response<?> wirespecResponse) {
-                Wirespec.RawResponse rawResponse = server.to(wirespecResponse);
+                Wirespec.RawResponse rawResponse = (Wirespec.RawResponse) toResponse.invoke(null, wirespecSerialization, wirespecResponse);
                 
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode()));
                 for (Map.Entry<String, List<String>> entry : rawResponse.headers().entrySet()) {
