@@ -28,7 +28,7 @@ interface IrEmitter : Emitter {
             logger.info("Emitting Nodes from ${m.fileUri.value} ")
             emit(m, logger)
         }
-        .map { file -> Emitted(file.name.parts.first() + "." + extension.value, generator.generate(file)) }
+        .map { file -> Emitted(file.name.value() + "." + extension.value, generator.generate(file)) }
 
     fun emit(module: Module, logger: Logger): NonEmptyList<File> = module
         .statements
