@@ -18,6 +18,7 @@ import community.flock.wirespec.emitters.java.JavaIrEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.emitters.python.PythonIrEmitter
 import community.flock.wirespec.emitters.rust.RustIrEmitter
+import community.flock.wirespec.emitters.scala.ScalaIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
@@ -38,6 +39,7 @@ import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.ir.generator.generateKotlin
 import community.flock.wirespec.ir.generator.generatePython
 import community.flock.wirespec.ir.generator.generateRust
+import community.flock.wirespec.ir.generator.generateScala
 import community.flock.wirespec.ir.generator.generateTypeScript
 import io.kotest.matchers.shouldBe
 import org.testcontainers.containers.BindMode
@@ -53,6 +55,7 @@ val languages = mapOf(
     "python" to Language(PythonIrEmitter(emitShared = EmitShared(true)), { VerifyImage.PYTHON.image }),
     "typescript" to Language(TypeScriptIrEmitter(), { "node:20-slim" }),
     "rust" to Language(RustIrEmitter(emitShared = EmitShared(true)), { VerifyImage.RUST.image }),
+    "scala" to Language(ScalaIrEmitter(emitShared = EmitShared(true)), { VerifyImage.SCALA.image }),
 ).onEach { (name, lang) -> lang.name = name }
 
 class Language(
@@ -90,6 +93,7 @@ class Language(
             is KotlinIrEmitter -> "${name}.kt" to file.generateKotlin()
             is PythonIrEmitter -> "${name}.py" to file.generatePython()
             is RustIrEmitter -> "${name}.rs" to file.generateRust()
+            is ScalaIrEmitter -> "${name}.scala" to file.generateScala()
             is TypeScriptIrEmitter -> "${name}.ts" to file.generateTypeScript()
             else -> error("Unknown language: $name")
         }
@@ -119,6 +123,7 @@ class Language(
             is KotlinIrEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
             is PythonIrEmitter -> "python -m mypy --disable-error-code=empty-body /app/gen/"
             is RustIrEmitter -> "rm -rf /app/src/generated && cp -r /app/gen/community/flock/wirespec/generated /app/src/generated && printf 'mod generated;\\nfn main() {}\\n' > /app/src/main.rs && cd /app && cargo build"
+            is ScalaIrEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile --server=false"
             is TypeScriptIrEmitter -> "npm install -g typescript && cd /app/gen && tsc --noEmit"
             else -> error("Unknown language: ${emitter::class.simpleName}")
         }
@@ -165,6 +170,7 @@ class Language(
                 "cd /app && cargo build && cargo run"
             }
 
+            is ScalaIrEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --server=false --main-class ${fileName}"
             is TypeScriptIrEmitter -> "npm install -g tsx && cd /app/gen && tsx ${fileName}.ts"
             else -> error("Unknown language: ${name}")
         }

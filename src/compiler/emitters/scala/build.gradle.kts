@@ -5,8 +5,13 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "${libs.versions.group.id.get()}.plugin.arguments"
+group = "${libs.versions.group.id.get()}.compiler.emitters"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
 
 kotlin {
     macosX64()
@@ -14,6 +19,7 @@ kotlin {
     linuxX64()
     js(IR) {
         nodejs()
+        useEsModules()
     }
     jvm {
         withJava()
@@ -34,22 +40,14 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":src:compiler:core"))
-                api(project(":src:compiler:emitters:kotlin"))
-                api(project(":src:compiler:emitters:java"))
-                api(project(":src:compiler:emitters:typescript"))
-                api(project(":src:compiler:emitters:python"))
-                api(project(":src:compiler:emitters:rust"))
-                api(project(":src:compiler:emitters:scala"))
-                api(project(":src:compiler:emitters:wirespec"))
-                implementation(project(":src:converter:avro"))
-                implementation(project(":src:converter:openapi"))
-                implementation(libs.kotlinx.io.core)
+                api(project(":src:compiler:ir"))
             }
         }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
+                implementation(project(":src:compiler:test"))
             }
         }
     }

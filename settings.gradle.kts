@@ -27,6 +27,7 @@ include(
     "src:compiler:emitters:typescript",
     "src:compiler:emitters:python",
     "src:compiler:emitters:rust",
+    "src:compiler:emitters:scala",
     "src:compiler:emitters:wirespec",
     "src:compiler:test-updater",
     "src:ide:intellij-plugin",

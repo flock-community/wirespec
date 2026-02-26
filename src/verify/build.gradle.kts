@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":src:compiler:emitters:python"))
     implementation(project(":src:compiler:emitters:typescript"))
     implementation(project(":src:compiler:emitters:rust"))
+    implementation(project(":src:compiler:emitters:scala"))
     implementation(libs.bundles.kotest)
     implementation(libs.testcontainers)
     testImplementation(libs.kotlin.test)

@@ -62,6 +62,23 @@ enum class VerifyImage {
                 }
                 .get()
         }
+    },
+    SCALA {
+        override val image by lazy {
+            ImageFromDockerfile("wirespec-scala-verify", false)
+                .withDockerfileFromBuilder { builder ->
+                    builder
+                        .from("eclipse-temurin:17-jdk")
+                        .run("apt-get update -qq && apt-get install -y -qq curl > /dev/null 2>&1")
+                        .run(
+                            "curl -sSLf https://scala-cli.virtuslab.org/get | sh && " +
+                                "ln -s /root/.cache/scalacli/local-repo/bin/scala-cli/scala-cli /usr/local/bin/scala-cli && " +
+                                "scala-cli version"
+                        )
+                        .build()
+                }
+                .get()
+        }
     };
 
     abstract val image: String

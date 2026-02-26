@@ -15,3 +15,5 @@ fun Element.generateTypeScript() = TypeScriptGenerator.generate(this)
 fun Element.generateKotlin() = KotlinGenerator.generate(this)
 
 fun Element.generateRust() = RustGenerator.generate(this)
+
+fun Element.generateScala() = ScalaGenerator.generate(this)

@@ -142,20 +142,12 @@ open class RustIrEmitter(
             |
             |pub trait ResponseHeaders: Headers {}
             |
-            |pub trait Serialize {
-            |    fn serialize(&self) -> Vec<u8>;
-            |}
-            |
-            |pub trait Deserialize: Sized {
-            |    fn deserialize(bytes: &[u8]) -> Result<Self, String>;
-            |}
-            |
             |pub trait BodySerializer {
-            |    fn serialize_body<T: Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+            |    fn serialize_body<T: serde::Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
             |}
             |
             |pub trait BodyDeserializer {
-            |    fn deserialize_body<T: Deserialize>(&self, raw: &[u8], r#type: TypeId) -> T;
+            |    fn deserialize_body<T: serde::de::DeserializeOwned>(&self, raw: &[u8], r#type: TypeId) -> T;
             |}
             |
             |pub trait BodySerialization: BodySerializer + BodyDeserializer {}
@@ -171,11 +163,11 @@ open class RustIrEmitter(
             |pub trait PathSerialization: PathSerializer + PathDeserializer {}
             |
             |pub trait ParamSerializer {
-            |    fn serialize_param<T: Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
+            |    fn serialize_param<T: serde::Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
             |}
             |
             |pub trait ParamDeserializer {
-            |    fn deserialize_param<T: Deserialize>(&self, values: &[String], r#type: TypeId) -> T;
+            |    fn deserialize_param<T: serde::de::DeserializeOwned>(&self, values: &[String], r#type: TypeId) -> T;
             |}
             |
             |pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
@@ -301,6 +293,49 @@ open class RustIrEmitter(
 
     fun String.sanitizeKeywords() = if (this in reservedKeywords) "r#$this" else this
 
+    private fun Name.toSnakeCaseName(): Name = Name.of(Name(parts).snakeCase().sanitizeKeywords())
+
+    private fun <T : Element> T.sanitizeNames(): T = transform {
+        apply(transformer {
+            field { field, _ ->
+                field.copy(name = field.name.toSnakeCaseName())
+            }
+            parameter { param, _ ->
+                param.copy(name = param.name.toSnakeCaseName())
+            }
+            statement { stmt, tr ->
+                when (stmt) {
+                    is FieldCall -> FieldCall(
+                        receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                        field = stmt.field.toSnakeCaseName(),
+                    )
+                    is ConstructorStatement -> ConstructorStatement(
+                        type = tr.transformType(stmt.type),
+                        namedArguments = stmt.namedArguments
+                            .map { (k, v) -> k.toSnakeCaseName() to tr.transformExpression(v) }
+                            .toMap(),
+                    )
+                    else -> stmt.transformChildren(tr)
+                }
+            }
+            expression { expr, tr ->
+                when (expr) {
+                    is FieldCall -> FieldCall(
+                        receiver = expr.receiver?.let { tr.transformExpression(it) },
+                        field = expr.field.toSnakeCaseName(),
+                    )
+                    is ConstructorStatement -> ConstructorStatement(
+                        type = tr.transformType(expr.type),
+                        namedArguments = expr.namedArguments
+                            .map { (k, v) -> k.toSnakeCaseName() to tr.transformExpression(v) }
+                            .toMap(),
+                    )
+                    else -> expr.transformChildren(tr)
+                }
+            }
+        })
+    }
+
     override fun emit(type: Type, module: Module): File {
         val imports = type.importReferences().distinctBy { it.value }
             .joinToString("\n") { "use super::${it.value.toSnakeCase()}::${it.value};" }
@@ -333,6 +368,7 @@ open class RustIrEmitter(
                     } else fn
                 }
             }
+            .sanitizeNames()
         return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
         else file
     }

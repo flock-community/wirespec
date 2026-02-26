@@ -1,5 +1,5 @@
 use actix_web::{web, HttpRequest, HttpResponse};
-use crate::gen::wirespec::{Method, RawRequest, RawResponse, Server};
+use crate::gen::wirespec::{RawRequest, RawResponse};
 use std::collections::HashMap;
 
 pub fn to_raw_request(req: &HttpRequest, body: web::Bytes) -> RawRequest {

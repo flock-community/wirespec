@@ -98,7 +98,7 @@ class RustIrEmitterTest {
         |    pub r#type: String,
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub url: String,
-        |    pub BODY_TYPE: Option<String>,
+        |    pub body_type: Option<String>,
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub params: Vec<String>,
         |    #[serde(default, deserialize_with = "null_default")]
@@ -838,13 +838,13 @@ class RustIrEmitterTest {
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub street: String,
         |    #[serde(default, deserialize_with = "null_default")]
-        |    pub houseNumber: i64,
+        |    pub house_number: i64,
         |    #[serde(default, deserialize_with = "null_default")]
-        |    pub postalCode: DutchPostalCode,
+        |    pub postal_code: DutchPostalCode,
         |}
         |impl Address {
         |    pub fn validate(&self) -> Vec<String> {
-        |        return if !self.postalCode.validate() { vec![String::from("postalCode")] } else { Vec::<String>::new() };
+        |        return if !self.postal_code.validate() { vec![String::from("postalCode")] } else { Vec::<String>::new() };
         |    }
         |}
         |
@@ -978,13 +978,13 @@ class RustIrEmitterTest {
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub age: EmployeeAge,
         |    #[serde(default, deserialize_with = "null_default")]
-        |    pub contactInfo: ContactInfo,
+        |    pub contact_info: ContactInfo,
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub tags: Vec<Tag>,
         |}
         |impl Employee {
         |    pub fn validate(&self) -> Vec<String> {
-        |        return vec![if !self.age.validate() { vec![String::from("age")] } else { Vec::<String>::new() }.as_slice(), self.contactInfo.validate().iter().map(|e| format!("contactInfo.{}", e)).collect::<Vec<_>>().as_slice(), self.tags.iter().enumerate().flat_map(|(i, el)| if !el.validate() { vec![format!("tags[{}]", i)] } else { Vec::<String>::new() }).collect::<Vec<_>>().as_slice()].concat();
+        |        return vec![if !self.age.validate() { vec![String::from("age")] } else { Vec::<String>::new() }.as_slice(), self.contact_info.validate().iter().map(|e| format!("contactInfo.{}", e)).collect::<Vec<_>>().as_slice(), self.tags.iter().enumerate().flat_map(|(i, el)| if !el.validate() { vec![format!("tags[{}]", i)] } else { Vec::<String>::new() }).collect::<Vec<_>>().as_slice()].concat();
         |    }
         |}
         |
@@ -1095,20 +1095,12 @@ class RustIrEmitterTest {
             |
             |pub trait ResponseHeaders: Headers {}
             |
-            |pub trait Serialize {
-            |    fn serialize(&self) -> Vec<u8>;
-            |}
-            |
-            |pub trait Deserialize: Sized {
-            |    fn deserialize(bytes: &[u8]) -> Result<Self, String>;
-            |}
-            |
             |pub trait BodySerializer {
-            |    fn serialize_body<T: Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+            |    fn serialize_body<T: serde::Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
             |}
             |
             |pub trait BodyDeserializer {
-            |    fn deserialize_body<T: Deserialize>(&self, raw: &[u8], r#type: TypeId) -> T;
+            |    fn deserialize_body<T: serde::de::DeserializeOwned>(&self, raw: &[u8], r#type: TypeId) -> T;
             |}
             |
             |pub trait BodySerialization: BodySerializer + BodyDeserializer {}
@@ -1124,11 +1116,11 @@ class RustIrEmitterTest {
             |pub trait PathSerialization: PathSerializer + PathDeserializer {}
             |
             |pub trait ParamSerializer {
-            |    fn serialize_param<T: Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
+            |    fn serialize_param<T: serde::Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
             |}
             |
             |pub trait ParamDeserializer {
-            |    fn deserialize_param<T: Deserialize>(&self, values: &[String], r#type: TypeId) -> T;
+            |    fn deserialize_param<T: serde::de::DeserializeOwned>(&self, values: &[String], r#type: TypeId) -> T;
             |}
             |
             |pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
