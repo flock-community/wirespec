@@ -239,7 +239,7 @@ open class ScalaIrEmitter(
         val flattened = flattenNestedStructs(endpointNamespace)
         val requestIsObject = isRequestObject(flattened)
         val body = flattened
-            .injectCompanionObject(endpoint, requestIsObject)
+            .injectHandleFunction(endpoint, requestIsObject)
             .withClientServerObjects(endpoint, requestIsObject)
 
         return if (imports.isNotEmpty()) LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
@@ -302,23 +302,12 @@ open class ScalaIrEmitter(
         )
     }
 
-    private fun Namespace.injectCompanionObject(endpoint: Endpoint, requestIsObject: Boolean): Namespace {
-        val companion = companionObject(endpoint, requestIsObject)
-        val rawHandleFunction = raw(emitHandleFunction(endpoint, requestIsObject))
-        val targetFunctionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
+    private fun Namespace.injectHandleFunction(endpoint: Endpoint, requestIsObject: Boolean): Namespace {
+        val handlerRaw = raw(emitHandler(endpoint, requestIsObject))
 
         return transform {
             matchingElements { iface: Interface ->
-                if (iface.name == Name.of("Handler")) {
-                    iface.transform {
-                        matchingElements { fn: LanguageFunction ->
-                            if (fn.name.camelCase() == targetFunctionName) rawHandleFunction else fn
-                        }
-                        injectAfter { _: Interface -> listOf(companion) }
-                    }
-                } else {
-                    iface
-                }
+                if (iface.name == Name.of("Handler")) handlerRaw else iface
             }
         }
     }
@@ -326,31 +315,12 @@ open class ScalaIrEmitter(
     open fun emitHandleFunction(endpoint: Endpoint, requestIsObject: Boolean): String {
         val functionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
         val requestType = if (requestIsObject) "Request.type" else "Request"
-        return "def $functionName(request: $requestType): Response[?]\n"
+        return "def $functionName(request: $requestType): F[Response[?]]\n"
     }
 
-    fun companionObject(endpoint: Endpoint, requestIsObject: Boolean): RawElement {
-        val pathTemplate = "/" + endpoint.path.joinToString("/") {
-            when (it) {
-                is Endpoint.Segment.Literal -> it.value
-                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
-            }
-        }
-        val reqType = if (requestIsObject) "Request.type" else "Request"
-        return """
-            |object Companion extends Wirespec.Server[$reqType, Response[?]] with Wirespec.Client[$reqType, Response[?]] {
-            |  override val pathTemplate: String = "$pathTemplate"
-            |  override val method: String = "${endpoint.method}"
-            |  override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[$reqType, Response[?]] = new Wirespec.ServerEdge[$reqType, Response[?]] {
-            |    override def from(request: Wirespec.RawRequest): $reqType = fromRawRequest(serialization, request)
-            |    override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
-            |  }
-            |  override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[$reqType, Response[?]] = new Wirespec.ClientEdge[$reqType, Response[?]] {
-            |    override def to(request: $reqType): Wirespec.RawRequest = toRawRequest(serialization, request)
-            |    override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
-            |  }
-            |}
-        """.trimMargin().let(::raw)
+    open fun emitHandler(endpoint: Endpoint, requestIsObject: Boolean): String {
+        val handleFunction = emitHandleFunction(endpoint, requestIsObject)
+        return "trait Handler[F[_]] extends Wirespec.Handler {\n    $handleFunction}\n"
     }
 
     private fun Namespace.withClientServerObjects(endpoint: Endpoint, requestIsObject: Boolean): Namespace {

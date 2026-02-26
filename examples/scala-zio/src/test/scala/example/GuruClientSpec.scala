@@ -2,6 +2,7 @@ package example
 
 import community.flock.wirespec.generated.endpoint.*
 import community.flock.wirespec.generated.model.*
+import example.GuruClient.call
 import zio.*
 import zio.http.*
 import zio.test.*
@@ -15,7 +16,7 @@ object GuruClientSpec extends ZIOSpecDefault {
         _ <- TestClient.addRoutes(Routes(
           Method.GET / "v2" / "metrics.json" -> handler(Response.json(json))
         ))
-        result <- GuruClient.getMetrics
+        result <- GetMetrics.Client.call(GetMetrics.Request)
       } yield {
         val r200 = result.asInstanceOf[GetMetrics.Response200]
         assertTrue(
@@ -39,7 +40,7 @@ object GuruClientSpec extends ZIOSpecDefault {
         _ <- TestClient.addRoutes(Routes(
           Method.GET / "v2" / "metrics.json" -> handler(Response.json(json))
         ))
-        result <- GuruClient.getMetrics
+        result <- GetMetrics.Client.call(GetMetrics.Request)
       } yield {
         val r200 = result.asInstanceOf[GetMetrics.Response200]
         assertTrue(
@@ -59,7 +60,7 @@ object GuruClientSpec extends ZIOSpecDefault {
         _ <- TestClient.addRoutes(Routes(
           Method.GET / "v2" / "providers.json" -> handler(Response.json(json))
         ))
-        result <- GuruClient.getProviders
+        result <- GetProviders.Client.call(GetProviders.Request)
       } yield {
         val r200 = result.asInstanceOf[GetProviders.Response200]
         assertTrue(
@@ -75,7 +76,7 @@ object GuruClientSpec extends ZIOSpecDefault {
         _ <- TestClient.addRoutes(Routes(
           Method.GET / "v2" / "list.json" -> handler(Response.json(json))
         ))
-        result <- GuruClient.listAPIs
+        result <- ListAPIs.Client.call(ListAPIs.Request)
       } yield {
         val r200 = result.asInstanceOf[ListAPIs.Response200]
         assertTrue(

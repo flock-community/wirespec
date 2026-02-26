@@ -400,20 +400,24 @@ class ScalaIrEmitterTest {
             |        }
             |    }
             |  }
-            |  trait Handler extends Wirespec.Handler {
-            |      def getTodos(request: Request.type): Response[?]
-            |      object Companion extends Wirespec.Server[Request.type, Response[?]] with Wirespec.Client[Request.type, Response[?]] {
-            |        override val pathTemplate: String = "/todos"
-            |        override val method: String = "GET"
-            |        override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request.type, Response[?]] = new Wirespec.ServerEdge[Request.type, Response[?]] {
-            |          override def from(request: Wirespec.RawRequest): Request.type = fromRawRequest(serialization, request)
-            |          override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
-            |        }
-            |        override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request.type, Response[?]] = new Wirespec.ClientEdge[Request.type, Response[?]] {
-            |          override def to(request: Request.type): Wirespec.RawRequest = toRawRequest(serialization, request)
-            |          override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
-            |        }
-            |      }
+            |  trait Handler[F[_]] extends Wirespec.Handler {
+            |      def getTodos(request: Request.type): F[Response[?]]
+            |  }
+            |  object Client extends Wirespec.Client[Request.type, Response[?]] {
+            |    override val pathTemplate: String = "/todos"
+            |    override val method: String = "GET"
+            |    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request.type, Response[?]] = new Wirespec.ClientEdge[Request.type, Response[?]] {
+            |      override def to(request: Request.type): Wirespec.RawRequest = toRawRequest(serialization, request)
+            |      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
+            |    }
+            |  }
+            |  object Server extends Wirespec.Server[Request.type, Response[?]] {
+            |    override val pathTemplate: String = "/todos"
+            |    override val method: String = "GET"
+            |    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request.type, Response[?]] = new Wirespec.ServerEdge[Request.type, Response[?]] {
+            |      override def from(request: Wirespec.RawRequest): Request.type = fromRawRequest(serialization, request)
+            |      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
+            |    }
             |  }
             |}
             |
@@ -569,20 +573,24 @@ class ScalaIrEmitterTest {
             |        }
             |    }
             |  }
-            |  trait Handler extends Wirespec.Handler {
-            |      def putTodo(request: Request): Response[?]
-            |      object Companion extends Wirespec.Server[Request, Response[?]] with Wirespec.Client[Request, Response[?]] {
-            |        override val pathTemplate: String = "/todos/{id}"
-            |        override val method: String = "PUT"
-            |        override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request, Response[?]] = new Wirespec.ServerEdge[Request, Response[?]] {
-            |          override def from(request: Wirespec.RawRequest): Request = fromRawRequest(serialization, request)
-            |          override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
-            |        }
-            |        override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request, Response[?]] = new Wirespec.ClientEdge[Request, Response[?]] {
-            |          override def to(request: Request): Wirespec.RawRequest = toRawRequest(serialization, request)
-            |          override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
-            |        }
-            |      }
+            |  trait Handler[F[_]] extends Wirespec.Handler {
+            |      def putTodo(request: Request): F[Response[?]]
+            |  }
+            |  object Client extends Wirespec.Client[Request, Response[?]] {
+            |    override val pathTemplate: String = "/todos/{id}"
+            |    override val method: String = "PUT"
+            |    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request, Response[?]] = new Wirespec.ClientEdge[Request, Response[?]] {
+            |      override def to(request: Request): Wirespec.RawRequest = toRawRequest(serialization, request)
+            |      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
+            |    }
+            |  }
+            |  object Server extends Wirespec.Server[Request, Response[?]] {
+            |    override val pathTemplate: String = "/todos/{id}"
+            |    override val method: String = "PUT"
+            |    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request, Response[?]] = new Wirespec.ServerEdge[Request, Response[?]] {
+            |      override def from(request: Wirespec.RawRequest): Request = fromRawRequest(serialization, request)
+            |      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
+            |    }
             |  }
             |}
             |
