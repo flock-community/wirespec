@@ -11,7 +11,7 @@ pub struct Pet {
     #[serde(default, deserialize_with = "null_default")]
     pub name: String,
     #[serde(default, deserialize_with = "null_default")]
-    pub photoUrls: Vec<String>,
+    pub photo_urls: Vec<String>,
     pub tags: Option<Vec<Tag>>,
     pub status: Option<PetStatus>,
 }

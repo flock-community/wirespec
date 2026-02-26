@@ -101,6 +101,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
+      - uses: sbt/setup-sbt@v1
+      - uses: dtolnay/rust-toolchain@stable
       - name: Run
         run: |
           make example

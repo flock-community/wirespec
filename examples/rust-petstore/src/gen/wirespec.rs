@@ -43,17 +43,11 @@ pub trait Response<T> {
     fn body(&self) -> &T;
 }
 pub trait ResponseHeaders: Headers {}
-pub trait Serialize {
-    fn serialize(&self) -> Vec<u8>;
-}
-pub trait Deserialize: Sized {
-    fn deserialize(bytes: &[u8]) -> Result<Self, String>;
-}
 pub trait BodySerializer {
-    fn serialize_body<T: Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+    fn serialize_body<T: serde::Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
 }
 pub trait BodyDeserializer {
-    fn deserialize_body<T: Deserialize>(&self, raw: &[u8], r#type: TypeId) -> T;
+    fn deserialize_body<T: serde::de::DeserializeOwned>(&self, raw: &[u8], r#type: TypeId) -> T;
 }
 pub trait BodySerialization: BodySerializer + BodyDeserializer {}
 pub trait PathSerializer {
@@ -64,10 +58,10 @@ pub trait PathDeserializer {
 }
 pub trait PathSerialization: PathSerializer + PathDeserializer {}
 pub trait ParamSerializer {
-    fn serialize_param<T: Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
+    fn serialize_param<T: serde::Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
 }
 pub trait ParamDeserializer {
-    fn deserialize_param<T: Deserialize>(&self, values: &[String], r#type: TypeId) -> T;
+    fn deserialize_param<T: serde::de::DeserializeOwned>(&self, values: &[String], r#type: TypeId) -> T;
 }
 pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
 pub trait Serializer: BodySerializer + PathSerializer + ParamSerializer {}
