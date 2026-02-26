@@ -168,20 +168,20 @@ object RustGenerator : Generator {
             ""
         } else {
             entries.joinToString("\n") { entry ->
-                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.pascalCase()
-                "#[serde(rename = \"$wireValue\")]\n${entry.name.pascalCase()},".indentCode(1)
+                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.value()
+                "#[serde(rename = \"$wireValue\")]\n${entry.name.value()},".indentCode(1)
             }
         }
         val enumDef = "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName {\n$entriesStr\n}\n\n".indentCode(indent)
 
         val enumImpl = if (entries.isNotEmpty()) {
             val labelArms = entries.joinToString("\n") { entry ->
-                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.pascalCase()
-                "$rustName::${entry.name.pascalCase()} => \"$wireValue\",".indentCode(3)
+                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.value()
+                "$rustName::${entry.name.value()} => \"$wireValue\",".indentCode(3)
             }
             val fromLabelArms = entries.joinToString("\n") { entry ->
-                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.pascalCase()
-                "\"$wireValue\" => Some($rustName::${entry.name.pascalCase()}),".indentCode(3)
+                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.value()
+                "\"$wireValue\" => Some($rustName::${entry.name.value()}),".indentCode(3)
             }
             """
             |impl Enum for $rustName {
@@ -229,10 +229,11 @@ object RustGenerator : Generator {
         }
 
         val fieldsStr = fields.joinToString("\n") {
+            val originalName = it.name.value()
             val fieldName = it.name.snakeCase().sanitize()
             val serdeAttrs = mutableListOf<String>()
-            if (fieldName.startsWith("r#")) {
-                serdeAttrs.add("rename = \"${fieldName.removePrefix("r#")}\"")
+            if (fieldName != originalName) {
+                serdeAttrs.add("rename = \"$originalName\"")
             }
             if (it.type !is Type.Nullable) {
                 serdeAttrs.add("default")
@@ -262,10 +263,10 @@ object RustGenerator : Generator {
     private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int): String {
         val params = parameters.joinToString(", ") { "${it.name.snakeCase().sanitize()}: ${it.type.emit()}" }
         val assignments = body.filterIsInstance<Assignment>().associate {
-            it.name.camelCase() to it.value.emit()
+            it.name.value() to it.value.emit()
         }
         val fieldInits = structFields.joinToString(",\n") { field ->
-            val value = assignments[field.name.camelCase()] ?: "Default::default()"
+            val value = assignments[field.name.value()] ?: "Default::default()"
             "${field.name.snakeCase().sanitize()}: $value".indentCode(1)
         }
         val constructorBody = "$structName {\n$fieldInits\n}".indentCode(1)
@@ -275,7 +276,7 @@ object RustGenerator : Generator {
 
     private fun AstFunction.emit(indent: Int, isInClass: Boolean = false, isStaticScope: Boolean = false, isInInterface: Boolean = false): String {
         val params = parameters.joinToString(", ") {
-            val paramName = it.name.camelCase()
+            val paramName = it.name.value()
             if (paramName == "self" || paramName == "&self") paramName else "${it.name.snakeCase().sanitize()}: ${it.type.emit()}"
         }
         val rType = returnType?.takeIf { it != Type.Unit }?.emit()
@@ -452,14 +453,15 @@ object RustGenerator : Generator {
         }
         is FunctionCall -> {
             val recv = receiver
+            val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             if (recv != null) {
-                "${recv.emit()}.${name.snakeCase().sanitize()}(${emitFunctionCallArgs(arguments, name)});\n".indentCode(indent)
+                "${recv.emit()}.$funcName(${emitFunctionCallArgs(arguments, name)});\n".indentCode(indent)
             } else {
-                "${name.snakeCase().sanitize()}(${emitFunctionCallArgs(arguments, name)});\n".indentCode(indent)
+                "$funcName(${emitFunctionCallArgs(arguments, name)});\n".indentCode(indent)
             }
         }
         is ArrayIndexCall -> "${emitArrayIndex(receiver, index)};\n".indentCode(indent)
-        is EnumReference -> "${enumType.emit()}::${entry.pascalCase()};\n".indentCode(indent)
+        is EnumReference -> "${enumType.emit()}::${entry.value()};\n".indentCode(indent)
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()});\n".indentCode(indent)
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>();\n".indentCode(indent)
@@ -508,14 +510,15 @@ object RustGenerator : Generator {
         }
         is FunctionCall -> {
             val recv = receiver
+            val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             if (recv != null) {
-                "${recv.emit()}.${name.snakeCase().sanitize()}(${emitFunctionCallArgs(arguments, name)})"
+                "${recv.emit()}.$funcName(${emitFunctionCallArgs(arguments, name)})"
             } else {
-                "${name.snakeCase().sanitize()}(${emitFunctionCallArgs(arguments, name)})"
+                "$funcName(${emitFunctionCallArgs(arguments, name)})"
             }
         }
         is ArrayIndexCall -> emitArrayIndex(receiver, index)
-        is EnumReference -> "${enumType.emit()}::${entry.pascalCase()}"
+        is EnumReference -> "${enumType.emit()}::${entry.value()}"
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()})"
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>()"
@@ -575,13 +578,14 @@ object RustGenerator : Generator {
     }
 
     private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {
-        is VariableReference -> if (name.camelCase() == "it") replacement else emit()
+        is VariableReference -> if (name.value() == "it") replacement else emit()
         is FunctionCall -> {
             val recv = receiver
+            val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.${name.snakeCase().sanitize()}(${emitFunctionCallArgsInlined(arguments, name, replacement)})"
+                "${recv.emitWithInlinedIt(replacement)}.$funcName(${emitFunctionCallArgsInlined(arguments, name, replacement)})"
             } else {
-                "${name.snakeCase().sanitize()}(${emitFunctionCallArgsInlined(arguments, name, replacement)})"
+                "$funcName(${emitFunctionCallArgsInlined(arguments, name, replacement)})"
             }
         }
         is FieldCall -> {

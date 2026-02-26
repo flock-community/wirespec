@@ -311,7 +311,7 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
                     op.left is VariableReference && op.right is VariableReference
                 ) {
                     fun jsonStringify(e: Expression): FunctionCall = FunctionCall(
-                        receiver = VariableReference(Name(listOf("JSON"), preserveCase = true)),
+                        receiver = VariableReference(Name(listOf("JSON"))),
                         name = Name.of("stringify"),
                         arguments = mapOf(Name.of("_") to e),
                     )

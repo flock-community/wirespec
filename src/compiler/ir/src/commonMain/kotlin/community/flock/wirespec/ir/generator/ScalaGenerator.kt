@@ -100,7 +100,7 @@ ScalaEmitter(
         for (element in elements) {
             when (element) {
                 is Struct -> {
-                    result[element.name.pascalCase()] = element.fields.map { it.name.camelCase() }.toSet()
+                    result[element.name.pascalCase()] = element.fields.map { it.name.value() }.toSet()
                     result.putAll(collectPrimaryFieldNames(element.elements))
                 }
                 is Namespace -> result.putAll(collectPrimaryFieldNames(element.elements))
@@ -116,7 +116,7 @@ ScalaEmitter(
         if (namedArguments.isEmpty()) return false
         // Default to true for unknown types - `new CaseClass(args)` is always valid in Scala
         val primaryFields = primaryFieldNames[typeName] ?: return true
-        val argNames = namedArguments.keys.map { it.camelCase() }.toSet()
+        val argNames = namedArguments.keys.map { it.value() }.toSet()
         return argNames != primaryFields
     }
 
@@ -194,7 +194,7 @@ ScalaEmitter(
         val extStr = if (extends.isNotEmpty()) " extends ${extends.joinToString(" with ") { it.emitTypeAnnotation() }}" else ""
         val fieldsContent = fields.joinToString("") { field ->
             val overridePrefix = if (field.isOverride) "override " else ""
-            "${overridePrefix}def ${field.name.camelCase()}: ${field.type.emitTypeAnnotation()}\n".indentCode(indent + 1)
+            "${overridePrefix}def ${field.name.value()}: ${field.type.emitTypeAnnotation()}\n".indentCode(indent + 1)
         }
         val elementsContent = elements.joinToString("") { it.emit(indent + 1, isStatic = false, parents = parents + this) }
         val content = fieldsContent + elementsContent
@@ -217,12 +217,12 @@ ScalaEmitter(
         val hasFields = fields.isNotEmpty()
 
         if (hasFields) {
-            val fieldsStr = fields.joinToString(", ") { "${if (it.isOverride) "override " else ""}val ${it.name.camelCase()}: ${it.type.emitGenerics()}" }
+            val fieldsStr = fields.joinToString(", ") { "${if (it.isOverride) "override " else ""}val ${it.name.value()}: ${it.type.emitGenerics()}" }
             val entriesStr = entries.joinToString(",\n") { entry ->
                 val e = if (entry.values.isEmpty()) {
-                    "case ${entry.name.pascalCase()}"
+                    "case ${entry.name.value()}"
                 } else {
-                    "case ${entry.name.pascalCase()} extends ${name.pascalCase()}(${entry.values.joinToString(", ")})"
+                    "case ${entry.name.value()} extends ${name.pascalCase()}(${entry.values.joinToString(", ")})"
                 }
                 e.indentCode(indent + 1)
             }
@@ -235,7 +235,7 @@ ScalaEmitter(
         }
 
         val entriesStr = entries.joinToString("\n") { entry ->
-            "case ${entry.name.pascalCase()}".indentCode(indent + 1)
+            "case ${entry.name.value()}".indentCode(indent + 1)
         }
         val functionsStr = elements.filterIsInstance<AstFunction>().joinToString("\n") {
             val overridePrefix = if (it.isOverride || it.name.camelCase() == "toString") "override " else ""
@@ -276,9 +276,9 @@ ScalaEmitter(
             val constructor = constructors.single()
             val assignments = constructor.body.filterIsInstance<Assignment>()
             val fieldProperties = fields.joinToString("\n") { field ->
-                val assignment = assignments.find { it.name.camelCase() == field.name.camelCase() }
+                val assignment = assignments.find { it.name.camelCase() == field.name.value() }
                 val valueStr = assignment?.let { " = ${it.value.emit()}" } ?: ""
-                "${if (field.isOverride) "override " else ""}val ${field.name.camelCase().sanitize()}: ${field.type.emitTypeAnnotation()}$valueStr".indentCode(indent + 1)
+                "${if (field.isOverride) "override " else ""}val ${field.name.value().sanitize()}: ${field.type.emitTypeAnnotation()}$valueStr".indentCode(indent + 1)
             }
             val bodyContent = listOf(fieldProperties, nestedContent).filter { it.isNotEmpty() }.joinToString("\n")
             return if (bodyContent.isNotEmpty()) {
@@ -297,7 +297,7 @@ ScalaEmitter(
         }
 
         val params = fields.joinToString(",\n") {
-            "${if (it.isOverride) "override " else ""}val ${it.name.camelCase().sanitize()}: ${it.type.emitTypeAnnotation()}".indentCode(indent + 1)
+            "${if (it.isOverride) "override " else ""}val ${it.name.value().sanitize()}: ${it.type.emitTypeAnnotation()}".indentCode(indent + 1)
         }
         val paramsStr = if (fields.isEmpty()) "" else "(\n$params\n${")".indentCode(indent)}"
 
@@ -316,23 +316,23 @@ ScalaEmitter(
 
         if (isDelegating) {
             val delegationStmt = body.filterIsInstance<ConstructorStatement>().first()
-            val delegationArgs = delegationStmt.namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+            val delegationArgs = delegationStmt.namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
             val delegationStr = "this(${delegationArgs.joinToString(", ")})"
             return "def this($params) = $delegationStr\n".indentCode(indent)
         }
 
         val assignments = body.filterIsInstance<Assignment>().associate {
-            it.name.camelCase() to it.value.emit()
+            it.name.value() to it.value.emit()
         }
         val constructorArgs = structFields.map { field ->
-            assignments[field.name.camelCase()] ?: "null"
+            assignments[field.name.value()] ?: "null"
         }
 
         return "def this($params) = this(${constructorArgs.joinToString(", ")})\n".indentCode(indent)
     }
 
     private fun Struct.resolveParentUnions(parents: List<Element>): List<String> {
-        val bodyType = fields.find { it.name.camelCase() == "body" }?.type
+        val bodyType = fields.find { it.name.value() == "body" }?.type
 
         fun Union.emitAsImplements(): String = if (typeParameters.isNotEmpty() && bodyType != null) {
             "${name.pascalCase()}[${bodyType.emitGenerics()}]"
@@ -438,7 +438,7 @@ ScalaEmitter(
         is PrintStatement -> "println(${expression.emit()})\n".indentCode(indent)
         is ReturnStatement -> "${expression.emit()}\n".indentCode(indent)
         is ConstructorStatement -> {
-            val allArgs = namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+            val allArgs = namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
             val argsStr = when {
                 allArgs.isEmpty() -> ""
                 allArgs.size == 1 -> "(${allArgs.first()})"
@@ -453,7 +453,7 @@ ScalaEmitter(
         is LiteralMap -> "${emit()}\n".indentCode(indent)
         is Assignment -> {
             val expr = (value as? ConstructorStatement)?.let { constructorStmt ->
-                val allArgs = constructorStmt.namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+                val allArgs = constructorStmt.namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
                 val argsStr = when {
                     allArgs.isEmpty() -> ""
                     allArgs.size == 1 -> "(${allArgs.first()})"
@@ -463,7 +463,7 @@ ScalaEmitter(
                 "$prefix${constructorStmt.type.emitGenerics()}$argsStr"
             } ?: value.emit()
             if (isProperty) {
-                "${name.camelCase().sanitize()} = $expr\n".indentCode(indent)
+                "${name.value().sanitize()} = $expr\n".indentCode(indent)
             } else {
                 "val ${name.camelCase().sanitize()} = $expr\n".indentCode(indent)
             }
@@ -504,19 +504,19 @@ ScalaEmitter(
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase().sanitize()}\n".indentCode(indent)
+            "$receiverStr${field.value().sanitize()}\n".indentCode(indent)
         }
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.camelCase() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
+                if (typeArguments.isNotEmpty() && name.value() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${name.camelCase().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+            "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         }
 
         is ArrayIndexCall -> "${emitArrayIndex()}\n".indentCode(indent)
 
-        is EnumReference -> "${enumType.emitGenerics()}.${entry.pascalCase()}\n".indentCode(indent)
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.toString\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toScala()} ${right.emit()})\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
@@ -544,7 +544,7 @@ ScalaEmitter(
             if (type == Type.Unit) {
                 "()"
             } else {
-                val allArgs = namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+                val allArgs = namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
                 val argsStr = when {
                     allArgs.isEmpty() -> ""
                     allArgs.size == 1 -> "(${allArgs.first()})"
@@ -564,19 +564,19 @@ ScalaEmitter(
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase().sanitize()}"
+            "$receiverStr${field.value().sanitize()}"
         }
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.camelCase() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
+                if (typeArguments.isNotEmpty() && name.value() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${name.camelCase().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
+            "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
 
         is ArrayIndexCall -> emitArrayIndex()
 
-        is EnumReference -> "${enumType.emitGenerics()}.${entry.pascalCase()}"
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.toString"
         is BinaryOp -> "(${left.emit()} ${operator.toScala()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()

@@ -209,7 +209,7 @@ open class JavaIrEmitter(
 
     private fun <T : Element> T.sanitizeNames(): T = transform {
         fieldsWhere({ true }) { field ->
-            field.copy(name = Name.of(field.name.camelCase().sanitizeSymbol().sanitizeKeywords()))
+            field.copy(name = Name(listOf(field.name.value().sanitizeSymbol().sanitizeKeywords())))
         }
         parametersWhere({ true }) { param ->
             param.copy(name = Name.of(param.name.camelCase().sanitizeSymbol().sanitizeKeywords()))

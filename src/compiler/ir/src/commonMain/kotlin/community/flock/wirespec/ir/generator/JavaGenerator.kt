@@ -175,7 +175,7 @@ private class JavaEmitter(val file: File) {
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val extStr = if (extends.isNotEmpty()) " extends ${extends.joinToString(", ") { it.emitGenerics() }}" else ""
         val fieldsContent = fields.joinToString("") { field ->
-            "${field.type.emitGenerics()} ${field.name.camelCase()}();\n".indentCode(1)
+            "${field.type.emitGenerics()} ${field.name.value()}();\n".indentCode(1)
         }
         val elementsContent = elements.joinToString("") { it.emit(1, isStatic = false, parents = parents + this) }
         val content = fieldsContent + elementsContent
@@ -201,9 +201,9 @@ private class JavaEmitter(val file: File) {
     private fun Enum.emit(indent: Int): String {
         val entriesStr = entries.joinToString(",\n") { entry ->
             val e = if (entry.values.isEmpty()) {
-                entry.name.pascalCase()
+                entry.name.value()
             } else {
-                "${entry.name.pascalCase()}(${entry.values.joinToString(", ")})"
+                "${entry.name.value()}(${entry.values.joinToString(", ")})"
             }
             e.indentCode(indent + 1)
         }
@@ -212,7 +212,7 @@ private class JavaEmitter(val file: File) {
         val hasContent = fields.isNotEmpty() || constructors.isNotEmpty() || elements.isNotEmpty()
         val terminator = if (hasContent) ";\n" else ""
 
-        val fieldsStr = fields.joinToString("\n") { "public final ${it.type.emitGenerics()} ${it.name.camelCase()};".indentCode(indent + 1) }
+        val fieldsStr = fields.joinToString("\n") { "public final ${it.type.emitGenerics()} ${it.name.value()};".indentCode(indent + 1) }
         val constructorsStr = constructors.joinToString("\n") { it.emit(name.pascalCase(), fields, indent + 1, false, "") }
         val functionsStr = elements.filterIsInstance<AstFunction>().joinToString("\n") {
             val isOverride = it.isOverride || it.name.camelCase() == "toString" || it.name.camelCase() == "getLabel"
@@ -246,14 +246,14 @@ private class JavaEmitter(val file: File) {
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
-        val params = fields.joinToString(",\n") { "${it.type.emitGenerics()} ${it.name.camelCase().sanitize()}".indentCode(1) }
+        val params = fields.joinToString(",\n") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
         val paramsStr = if (fields.isEmpty()) " ()" else " (\n$params\n)"
 
         return "$typeModifier ${name.pascalCase()}$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
     }
 
     private fun Struct.resolveParentUnions(parents: List<Element>): List<String> {
-        val bodyType = fields.find { it.name.camelCase() == "body" }?.type
+        val bodyType = fields.find { it.name.value() == "body" }?.type
 
         fun Union.emitAsImplements(): String = if (typeParameters.isNotEmpty() && bodyType != null) {
             "${name.pascalCase()}<${bodyType.emitGenerics()}>"
@@ -274,12 +274,12 @@ private class JavaEmitter(val file: File) {
 
         if (isRecord && !isDelegating) {
             val assignments = body.filterIsInstance<Assignment>().associate {
-                it.name.camelCase().removePrefix("this.") to it.value.emit()
+                it.name.value().removePrefix("this.") to it.value.emit()
             }
             val constructorArgs = structFields.map { field ->
-                assignments[field.name.camelCase()] ?: "null"
+                assignments[field.name.value()] ?: "null"
             }
-            val otherStatements = body.filter { it !is Assignment || it.name.camelCase().removePrefix("this.") !in structFields.map { f -> f.name.camelCase() } }
+            val otherStatements = body.filter { it !is Assignment || it.name.value().removePrefix("this.") !in structFields.map { f -> f.name.value() } }
             val bodyContent = (
                 listOf("this(${constructorArgs.joinToString(", ")});\n") +
                     otherStatements.map { it.emit(0) }
@@ -411,7 +411,7 @@ private class JavaEmitter(val file: File) {
                 }
             } ?: value.emit()
             if (isProperty) {
-                "${name.camelCase().sanitize()} = $expr;\n".indentCode(indent)
+                "${name.value().sanitize()} = $expr;\n".indentCode(indent)
             } else {
                 "final var ${name.camelCase().sanitize()} = $expr;\n".indentCode(indent)
             }
@@ -453,15 +453,15 @@ private class JavaEmitter(val file: File) {
         is VariableReference -> "${name.camelCase().sanitize()};\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase().sanitize()}();\n".indentCode(indent)
+            "$receiverStr${field.value().sanitize()}();\n".indentCode(indent)
         }
         is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.camelCase() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr$typeArgsStr${name.camelCase().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
         }
         is ArrayIndexCall -> "${receiver.emit()}.get(${index.emit()});\n".indentCode(indent)
-        is EnumReference -> "${enumType.emitGenerics()}.${entry.pascalCase()};\n".indentCode(indent)
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()};\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.name();\n".indentCode(indent)
         is BinaryOp -> when {
             operator == BinaryOp.Operator.EQUALS && right is NullLiteral -> "(${left.emit()} == null);\n".indentCode(indent)
@@ -522,15 +522,15 @@ private class JavaEmitter(val file: File) {
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase().sanitize()}()"
+            "$receiverStr${field.value().sanitize()}()"
         }
         is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.camelCase() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr$typeArgsStr${name.camelCase().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})"
+            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})"
         }
         is ArrayIndexCall -> "${receiver.emit()}.get(${index.emit()})"
-        is EnumReference -> "${enumType.emitGenerics()}.${entry.pascalCase()}"
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.name()"
         is BinaryOp -> when {
             operator == BinaryOp.Operator.EQUALS && right is NullLiteral -> "(${left.emit()} == null)"
@@ -600,14 +600,14 @@ private class JavaEmitter(val file: File) {
         is FunctionCall -> {
             val recv = receiver?.emitWithSubstitution(varName, replacement)
             val args = arguments.values.map { it.emitWithSubstitution(varName, replacement) }
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.camelCase() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = recv?.let { "$it." } ?: ""
-            "$receiverStr$typeArgsStr${name.camelCase().sanitize()}(${args.joinToString(", ")})"
+            "$receiverStr$typeArgsStr${name.value().sanitize()}(${args.joinToString(", ")})"
         }
         is FieldCall -> {
             val recv = receiver?.emitWithSubstitution(varName, replacement) ?: ""
             val dot = if (recv.isNotEmpty()) "." else ""
-            "$recv$dot${field.camelCase().sanitize()}()"
+            "$recv$dot${field.value().sanitize()}()"
         }
         is NotExpression -> "!${expression.emitWithSubstitution(varName, replacement)}"
         is IfExpression -> "(${condition.emitWithSubstitution(varName, replacement)} ? ${thenExpr.emitWithSubstitution(varName, replacement)} : ${elseExpr.emitWithSubstitution(varName, replacement)})"

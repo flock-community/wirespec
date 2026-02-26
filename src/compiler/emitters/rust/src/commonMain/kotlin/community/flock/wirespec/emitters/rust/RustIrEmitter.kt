@@ -297,11 +297,10 @@ open class RustIrEmitter(
 
     private fun <T : Element> T.sanitizeNames(): T = transform {
         apply(transformer {
-            field { field, _ ->
-                field.copy(name = field.name.toSnakeCaseName())
-            }
             parameter { param, _ ->
-                param.copy(name = param.name.toSnakeCaseName())
+                val name = param.name.value()
+                if (name == "self" || name == "&self") param
+                else param.copy(name = param.name.toSnakeCaseName())
             }
             statement { stmt, tr ->
                 when (stmt) {
@@ -379,7 +378,7 @@ open class RustIrEmitter(
             matchingElements { languageEnum: LanguageEnum ->
                 languageEnum.copy(
                     entries = languageEnum.entries.map {
-                        LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.parts.first()}\""))
+                        LanguageEnum.Entry(Name.of(it.name.value().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.value()}\""))
                     },
                 )
             }
@@ -556,18 +555,18 @@ open class RustIrEmitter(
                             typeName != null && responsePattern.matches(typeName) -> {
                                 val transformedArgs = cs.namedArguments.mapValues { t.transformExpression(it.value) }
                                 val inner = FunctionCall(
-                                    name = Name(listOf("$typeName::new"), preserveCase = true),
+                                    name = Name(listOf("$typeName::new")),
                                     arguments = transformedArgs,
                                 )
                                 FunctionCall(
-                                    name = Name(listOf("Response::$typeName"), preserveCase = true),
+                                    name = Name(listOf("Response::$typeName")),
                                     arguments = mapOf(Name.of("inner") to inner),
                                 )
                             }
                             typeName == "Request" -> {
                                 val transformedArgs = cs.namedArguments.mapValues { t.transformExpression(it.value) }
                                 FunctionCall(
-                                    name = Name(listOf("Request::new"), preserveCase = true),
+                                    name = Name(listOf("Request::new")),
                                     arguments = transformedArgs,
                                 )
                             }

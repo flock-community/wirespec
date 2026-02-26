@@ -142,7 +142,7 @@ private class KotlinEmitter(val file: File) {
         val extStr = if (extends.isNotEmpty()) " : ${extends.joinToString(", ") { it.emitGenerics() }}" else ""
         val fieldsContent = fields.joinToString("") { field ->
             val overridePrefix = if (field.isOverride) "override " else ""
-            "${overridePrefix}val ${field.name.camelCase()}: ${field.type.emitGenerics()}\n".indentCode(indent + 1)
+            "${overridePrefix}val ${field.name.value()}: ${field.type.emitGenerics()}\n".indentCode(indent + 1)
         }
         val elementsContent = elements.joinToString("") { it.emit(indent + 1, isStatic = false, parents = parents + this) }
         val content = fieldsContent + elementsContent
@@ -162,9 +162,9 @@ private class KotlinEmitter(val file: File) {
     private fun Enum.emit(indent: Int): String {
         val entriesStr = entries.joinToString(",\n") { entry ->
             val e = if (entry.values.isEmpty()) {
-                entry.name.pascalCase()
+                entry.name.value()
             } else {
-                "${entry.name.pascalCase()}(${entry.values.joinToString(", ")})"
+                "${entry.name.value()}(${entry.values.joinToString(", ")})"
             }
             e.indentCode(indent + 1)
         }
@@ -172,7 +172,7 @@ private class KotlinEmitter(val file: File) {
         val terminator = if (hasContent) ";\n" else ""
 
         val constructorParamsStr = if (fields.isNotEmpty()) {
-            " (${fields.joinToString(", ") { "${if (it.isOverride) "override " else ""}val ${it.name.camelCase()}: ${it.type.emitGenerics()}" }})"
+            " (${fields.joinToString(", ") { "${if (it.isOverride) "override " else ""}val ${it.name.value()}: ${it.type.emitGenerics()}" }})"
         } else {
             ""
         }
@@ -220,9 +220,9 @@ private class KotlinEmitter(val file: File) {
             val constructor = constructors.single()
             val assignments = constructor.body.filterIsInstance<Assignment>()
             val fieldProperties = fields.joinToString("\n") { field ->
-                val assignment = assignments.find { it.name.camelCase() == field.name.camelCase() }
+                val assignment = assignments.find { it.name.camelCase() == field.name.value() }
                 val valueStr = assignment?.let { " = ${it.value.emit()}" } ?: ""
-                "${if (field.isOverride) "override " else ""}val ${field.name.camelCase().sanitize()}: ${field.type.emitGenerics()}$valueStr".indentCode(indent + 1)
+                "${if (field.isOverride) "override " else ""}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}$valueStr".indentCode(indent + 1)
             }
             val bodyContent = listOf(fieldProperties, nestedContent).filter { it.isNotEmpty() }.joinToString("\n")
             return if (bodyContent.isNotEmpty()) {
@@ -241,7 +241,7 @@ private class KotlinEmitter(val file: File) {
         }
 
         val params = fields.joinToString(",\n") {
-            "${if (it.isOverride) "override " else ""}val ${it.name.camelCase().sanitize()}: ${it.type.emitGenerics()}".indentCode(
+            "${if (it.isOverride) "override " else ""}val ${it.name.value().sanitize()}: ${it.type.emitGenerics()}".indentCode(
                 indent + 1,
             )
         }
@@ -264,7 +264,7 @@ private class KotlinEmitter(val file: File) {
 
         if (isDelegating) {
             val delegationStmt = body.filterIsInstance<ConstructorStatement>().first()
-            val delegationArgs = delegationStmt.namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+            val delegationArgs = delegationStmt.namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
             val delegationStr = "this(${delegationArgs.joinToString(", ")})"
             val otherStatements = body.filter { it !is ConstructorStatement }
             return if (otherStatements.isEmpty()) {
@@ -279,10 +279,10 @@ private class KotlinEmitter(val file: File) {
             it.name.camelCase() to it.value.emit()
         }
         val constructorArgs = structFields.map { field ->
-            assignments[field.name.camelCase()] ?: "null"
+            assignments[field.name.value()] ?: "null"
         }
         val otherStatements = body.filter {
-            it !is Assignment || it.name.camelCase() !in structFields.map { f -> f.name.camelCase() }
+            it !is Assignment || it.name.camelCase() !in structFields.map { f -> f.name.value() }
         }
 
         return if (otherStatements.isEmpty()) {
@@ -296,7 +296,7 @@ private class KotlinEmitter(val file: File) {
     }
 
     private fun Struct.resolveParentUnions(parents: List<Element>): List<String> {
-        val bodyType = fields.find { it.name.camelCase() == "body" }?.type
+        val bodyType = fields.find { it.name.value() == "body" }?.type
 
         fun Union.emitAsImplements(): String = if (typeParameters.isNotEmpty() && bodyType != null) {
             "${name.pascalCase()}<${bodyType.emitGenerics()}>"
@@ -398,7 +398,7 @@ private class KotlinEmitter(val file: File) {
         is PrintStatement -> "println(${expression.emit()})\n".indentCode(indent)
         is ReturnStatement -> "return ${expression.emit()}\n".indentCode(indent)
         is ConstructorStatement -> {
-            val allArgs = namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+            val allArgs = namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
             val argsStr = when {
                 allArgs.isEmpty() -> ""
                 allArgs.size == 1 -> "(${allArgs.first()})"
@@ -412,7 +412,7 @@ private class KotlinEmitter(val file: File) {
         is LiteralMap -> "${emit()}\n".indentCode(indent)
         is Assignment -> {
             val expr = (value as? ConstructorStatement)?.let { constructorStmt ->
-                val allArgs = constructorStmt.namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+                val allArgs = constructorStmt.namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
                 val argsStr = when {
                     allArgs.isEmpty() -> ""
                     allArgs.size == 1 -> "(${allArgs.first()})"
@@ -421,7 +421,7 @@ private class KotlinEmitter(val file: File) {
                 "${constructorStmt.type.emitGenerics()}$argsStr"
             } ?: value.emit()
             if (isProperty) {
-                "${name.camelCase().sanitize()} = $expr\n".indentCode(indent)
+                "${name.value().sanitize()} = $expr\n".indentCode(indent)
             } else {
                 "val ${name.camelCase().sanitize()} = $expr\n".indentCode(indent)
             }
@@ -462,21 +462,21 @@ private class KotlinEmitter(val file: File) {
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase().sanitize()}\n".indentCode(indent)
+            "$receiverStr${field.value().sanitize()}\n".indentCode(indent)
         }
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.camelCase() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+                if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${
-                name.camelCase().toKotlinStaticCall().sanitize()
+                name.value().toKotlinStaticCall().sanitize()
             }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         }
 
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
 
-        is EnumReference -> "${enumType.emitGenerics()}.${entry.pascalCase()}\n".indentCode(indent)
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.name\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
@@ -510,7 +510,7 @@ private class KotlinEmitter(val file: File) {
             if (type == Type.Unit) {
                 type.emitGenerics()
             } else {
-                val allArgs = namedArguments.map { "${it.key.camelCase()} = ${it.value.emit()}" }
+                val allArgs = namedArguments.map { "${it.key.value()} = ${it.value.emit()}" }
                 val argsStr = when {
                     allArgs.isEmpty() -> ""
                     allArgs.size == 1 -> "(${allArgs.first()})"
@@ -529,21 +529,21 @@ private class KotlinEmitter(val file: File) {
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase().sanitize()}"
+            "$receiverStr${field.value().sanitize()}"
         }
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.camelCase() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+                if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${
-                name.camelCase().toKotlinStaticCall().sanitize()
+                name.value().toKotlinStaticCall().sanitize()
             }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
 
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]"
 
-        is EnumReference -> "${enumType.emitGenerics()}.${entry.pascalCase()}"
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.name"
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()

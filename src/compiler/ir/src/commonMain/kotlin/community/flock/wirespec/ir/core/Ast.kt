@@ -1,38 +1,49 @@
 package community.flock.wirespec.ir.core
 
-data class Name(val parts: List<String>, val preserveCase: Boolean = false) {
+data class Name(val parts: List<String>) {
     constructor(vararg parts: String) : this(parts.toList())
 
-    fun camelCase(): String = if (preserveCase) {
-        parts.first()
-    } else if (parts.size == 1) {
-        parts[0].replaceFirstChar { it.lowercase() }
-    } else {
-        parts.mapIndexed { index, part ->
-            if (index == 0) part.replaceFirstChar { it.lowercase() } else part.replaceFirstChar { it.uppercase() }
-        }.joinToString("")
+    fun value(): String = parts.joinToString("")
+
+    private fun wordParts(): List<String> = parts.filter { it.isNotEmpty() && it.any { ch -> ch.isLetterOrDigit() } }
+
+    fun camelCase(): String {
+        val words = wordParts()
+        return if (words.size <= 1) {
+            words.firstOrNull()?.replaceFirstChar { it.lowercase() } ?: ""
+        } else {
+            words.mapIndexed { index, part ->
+                if (index == 0) part.replaceFirstChar { it.lowercase() } else part.replaceFirstChar { it.uppercase() }
+            }.joinToString("")
+        }
     }
 
-    fun pascalCase(): String = if (preserveCase) {
-        parts.first()
-    } else if (parts.size == 1) {
-        parts[0].replaceFirstChar { it.uppercase() }
-    } else {
-        parts.joinToString("") { it.replaceFirstChar { c -> c.uppercase() } }
+    fun pascalCase(): String {
+        val words = wordParts()
+        return if (words.size <= 1) {
+            words.firstOrNull()?.replaceFirstChar { it.uppercase() } ?: ""
+        } else {
+            words.joinToString("") { it.replaceFirstChar { c -> c.uppercase() } }
+        }
     }
 
-    fun snakeCase(): String = if (preserveCase) {
-        parts.first()
-    } else if (parts.size == 1) {
-        parts[0].replace(Regex("([a-z0-9])([A-Z])"), "$1_$2").lowercase()
-    } else {
-        parts.joinToString("_") { it.lowercase() }
+    fun snakeCase(): String {
+        val words = wordParts()
+        return if (words.size <= 1) {
+            words.firstOrNull()
+                ?.replace(Regex("([a-z0-9])([A-Z])"), "$1_$2")
+                ?.lowercase()
+                ?: ""
+        } else {
+            words.joinToString("_") { it.lowercase() }
+        }
     }
 
     override fun toString(): String = camelCase()
 
     companion object {
-        fun of(value: String): Name = Name(listOf(value))
+        private val SPLIT_PATTERN = Regex("[A-Z]{2,}(?=[A-Z][a-z])|[A-Z]?[a-z0-9]+|[A-Z]+|[^a-zA-Z0-9]+")
+        fun of(value: String): Name = Name(SPLIT_PATTERN.findAll(value).map { it.value }.toList())
     }
 }
 

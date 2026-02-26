@@ -98,6 +98,7 @@ class RustIrEmitterTest {
         |    pub r#type: String,
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub url: String,
+        |    #[serde(rename = "BODY_TYPE")]
         |    pub body_type: Option<String>,
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub params: Vec<String>,
@@ -621,6 +622,7 @@ class RustIrEmitterTest {
         |pub struct RequestHeaders {
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub token: Token,
+        |    #[serde(rename = "refreshToken")]
         |    pub refresh_token: Option<Token>,
         |}
         |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -701,6 +703,7 @@ class RustIrEmitterTest {
         |pub struct Response201Headers {
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub token: Token,
+        |    #[serde(rename = "refreshToken")]
         |    pub refresh_token: Option<Token>,
         |}
         |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -837,9 +840,9 @@ class RustIrEmitterTest {
         |pub struct Address {
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub street: String,
-        |    #[serde(default, deserialize_with = "null_default")]
+        |    #[serde(rename = "houseNumber", default, deserialize_with = "null_default")]
         |    pub house_number: i64,
-        |    #[serde(default, deserialize_with = "null_default")]
+        |    #[serde(rename = "postalCode", default, deserialize_with = "null_default")]
         |    pub postal_code: DutchPostalCode,
         |}
         |impl Address {
@@ -977,7 +980,7 @@ class RustIrEmitterTest {
         |    pub name: String,
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub age: EmployeeAge,
-        |    #[serde(default, deserialize_with = "null_default")]
+        |    #[serde(rename = "contactInfo", default, deserialize_with = "null_default")]
         |    pub contact_info: ContactInfo,
         |    #[serde(default, deserialize_with = "null_default")]
         |    pub tags: Vec<Tag>,

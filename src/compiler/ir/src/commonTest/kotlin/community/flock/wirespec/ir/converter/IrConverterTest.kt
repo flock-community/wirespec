@@ -55,7 +55,7 @@ class IrConverterTest {
         val expected = file("Foo") {
             struct("Foo") {
                 implements(Type.Custom("Wirespec.Model"))
-                field(Name(listOf("bar"), preserveCase = true), string)
+                field(Name(listOf("bar")), string)
                 function("validate", isOverride = true) {
                     returnType(Type.Array(Type.String))
                     returns(LiteralList(emptyList(), Type.String))
@@ -107,7 +107,7 @@ class IrConverterTest {
                 struct("Foo") {
                     implements(Type.Custom("Wirespec.Model"))
                     implements(Type.Custom("MyUnion"))
-                    field(Name(listOf("a"), preserveCase = true), string)
+                    field(Name(listOf("a")), string)
                     function("validate", isOverride = true) {
                         returnType(Type.Array(Type.String))
                         returns(LiteralList(emptyList(), Type.String))
@@ -118,7 +118,7 @@ class IrConverterTest {
                 struct("Bar") {
                     implements(Type.Custom("Wirespec.Model"))
                     implements(Type.Custom("MyUnion"))
-                    field(Name(listOf("b"), preserveCase = true), string)
+                    field(Name(listOf("b")), string)
                     function("validate", isOverride = true) {
                         returnType(Type.Array(Type.String))
                         returns(LiteralList(emptyList(), Type.String))

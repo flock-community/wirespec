@@ -34,7 +34,6 @@ import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.core.name
 import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec
@@ -110,7 +109,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             `interface`("Headers")
         }
         `interface`("BodySerializer") {
-            function(name("serialize", "body")) {
+            function(Name("serialize", "Body")) {
                 returnType(bytes)
                 typeParam(type("T"))
                 arg("t", type("T"))
@@ -118,7 +117,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             }
         }
         `interface`("BodyDeserializer") {
-            function(name("deserialize", "body")) {
+            function(Name("deserialize", "Body")) {
                 returnType(type("T"))
                 typeParam(type("T"))
                 arg("raw", bytes)
@@ -130,7 +129,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             extends(type("BodyDeserializer"))
         }
         `interface`("PathSerializer") {
-            function(name("serialize", "path")) {
+            function(Name("serialize", "Path")) {
                 returnType(string)
                 typeParam(type("T"))
                 arg("t", type("T"))
@@ -138,7 +137,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             }
         }
         `interface`("PathDeserializer") {
-            function(name("deserialize", "path")) {
+            function(Name("deserialize", "Path")) {
                 returnType(type("T"))
                 typeParam(type("T"))
                 arg("raw", string)
@@ -150,7 +149,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             extends(type("PathDeserializer"))
         }
         `interface`("ParamSerializer") {
-            function(name("serialize", "param")) {
+            function(Name("serialize", "Param")) {
                 returnType(list(string))
                 typeParam(type("T"))
                 arg("value", type("T"))
@@ -158,7 +157,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             }
         }
         `interface`("ParamDeserializer") {
-            function(name("deserialize", "param")) {
+            function(Name("deserialize", "Param")) {
                 returnType(type("T"))
                 typeParam(type("T"))
                 arg("values", list(string))
@@ -191,7 +190,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             field("body", bytes.nullable())
         }
         struct("RawResponse") {
-            field(name("status", "code"), integer)
+            field(Name("status", "Code"), integer)
             field("headers", dict(string, list(string)))
             field("body", bytes.nullable())
         }
@@ -204,7 +203,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
     }
 }
 
-private fun FieldIdentifier.toName(): Name = Name(listOf(value), preserveCase = true)
+private fun FieldIdentifier.toName(): Name = Name(listOf(value))
 
 fun TypeWirespec.convert() = file(identifier.sanitize()) {
     struct(identifier.sanitize()) {
@@ -254,7 +253,7 @@ private fun buildValidateBody(validations: List<FieldValidation>): Expression {
 }
 
 private fun FieldValidation.toExpression(): Expression {
-    val fieldRef: Expression = FieldCall(field = Name(listOf(fieldName), preserveCase = true))
+    val fieldRef: Expression = FieldCall(field = Name(listOf(fieldName)))
     // When nullable, NullableMap uses "it" as the lambda variable for the unwrapped value
     val valueRef: Expression = if (isNullable) VariableReference(Name.of("it")) else fieldRef
     // typeArguments carries the validated type name (used by TypeScript emitter to derive standalone function name)
@@ -569,7 +568,7 @@ fun EndpointWirespec.convert(): File {
             }
 
             // Conversion functions at Endpoint interface level
-            function(name("to", "raw", "request"), isStatic = true) {
+            function(Name("to", "Raw", "Request"), isStatic = true) {
                 returnType(type("Wirespec.RawRequest"))
                 arg("serialization", type("Wirespec.Serializer"))
                 arg("request", type("Request"))
@@ -584,7 +583,7 @@ fun EndpointWirespec.convert(): File {
                                         is EndpointWirespec.Segment.Literal -> Literal(it.value, Type.String)
                                         is EndpointWirespec.Segment.Param -> FunctionCall(
                                             receiver = VariableReference(Name.of("serialization")),
-                                            name = name("serialize", "path"),
+                                            name = Name("serialize", "Path"),
                                             typeArguments = listOf(it.reference.convert()),
                                             arguments = mapOf(
                                                 Name.of("value") to FieldCall(
@@ -637,7 +636,7 @@ fun EndpointWirespec.convert(): File {
                                 NullableOf(
                                     FunctionCall(
                                         receiver = VariableReference(Name.of("serialization")),
-                                        name = name("serialize", "body"),
+                                        name = Name("serialize", "Body"),
                                         typeArguments = listOf(it.reference.convert()),
                                         arguments = mapOf(
                                             Name.of("value") to FieldCall(VariableReference(Name.of("request")), Name.of("body")),
@@ -651,7 +650,7 @@ fun EndpointWirespec.convert(): File {
                 )
             }
 
-            function(name("from", "raw", "request"), isStatic = true) {
+            function(Name("from", "Raw", "Request"), isStatic = true) {
                 returnType(type("Request"))
                 arg("serialization", type("Wirespec.Deserializer"))
                 arg("request", type("Wirespec.RawRequest"))
@@ -663,7 +662,7 @@ fun EndpointWirespec.convert(): File {
                                     segment.identifier.sanitize(),
                                     FunctionCall(
                                         receiver = VariableReference(Name.of("serialization")),
-                                        name = name("deserialize", "path"),
+                                        name = Name("deserialize", "Path"),
                                         typeArguments = listOf(segment.reference.convert()),
                                         arguments = mapOf(
                                             Name.of("value") to ArrayIndexCall(
@@ -703,7 +702,7 @@ fun EndpointWirespec.convert(): File {
                                     expression = FieldCall(VariableReference(Name.of("request")), Name.of("body")),
                                     body = FunctionCall(
                                         receiver = VariableReference(Name.of("serialization")),
-                                        name = name("deserialize", "body"),
+                                        name = Name("deserialize", "Body"),
                                         typeArguments = listOf(it.reference.convert()),
                                         arguments = mapOf(
                                             Name.of("value") to VariableReference(Name.of("it")),
@@ -718,7 +717,7 @@ fun EndpointWirespec.convert(): File {
                 )
             }
 
-            function(name("to", "raw", "response"), isStatic = true) {
+            function(Name("to", "Raw", "Response"), isStatic = true) {
                 returnType(type("Wirespec.RawResponse"))
                 arg("serialization", type("Wirespec.Serializer"))
                 arg("response", type("Response", wildcard))
@@ -728,7 +727,7 @@ fun EndpointWirespec.convert(): File {
                         case(type("Response$statusClassName")) {
                             returns(
                                 construct(type("Wirespec.RawResponse")) {
-                                    arg(name("status", "code"), FieldCall(VariableReference(Name.of("r")), Name.of("status")))
+                                    arg(Name("status", "Code"), FieldCall(VariableReference(Name.of("r")), Name.of("status")))
                                     arg(
                                         "headers",
                                         LiteralMap(
@@ -751,7 +750,7 @@ fun EndpointWirespec.convert(): File {
                                             NullableOf(
                                                 FunctionCall(
                                                     receiver = VariableReference(Name.of("serialization")),
-                                                    name = name("serialize", "body"),
+                                                    name = Name("serialize", "Body"),
                                                     arguments = mapOf(
                                                         Name.of("value") to FieldCall(VariableReference(Name.of("r")), Name.of("body")),
                                                         Name.of("type") to content.reference.toTypeDescriptor(),
@@ -776,11 +775,11 @@ fun EndpointWirespec.convert(): File {
                 }
             }
 
-            function(name("from", "raw", "response"), isStatic = true) {
+            function(Name("from", "Raw", "Response"), isStatic = true) {
                 returnType(type("Response", wildcard))
                 arg("serialization", type("Wirespec.Deserializer"))
                 arg("response", type("Wirespec.RawResponse"))
-                switch(FieldCall(receiver = VariableReference(Name.of("response")), field = name("status", "code"))) {
+                switch(FieldCall(receiver = VariableReference(Name.of("response")), field = Name("status", "Code"))) {
                     endpoint.responses.distinctBy { it.status }.filter { it.status.toIntOrNull() != null }
                         .forEach { response ->
                             val statusClassName = response.status.replaceFirstChar { it.uppercaseChar() }
@@ -804,7 +803,7 @@ fun EndpointWirespec.convert(): File {
                                                     expression = FieldCall(VariableReference(Name.of("response")), Name.of("body")),
                                                     body = FunctionCall(
                                                         receiver = VariableReference(Name.of("serialization")),
-                                                        name = name("deserialize", "body"),
+                                                        name = Name("deserialize", "Body"),
                                                         typeArguments = listOf(content.reference.convert()),
                                                         arguments = mapOf(
                                                             Name.of("value") to VariableReference(Name.of("it")),
@@ -824,7 +823,7 @@ fun EndpointWirespec.convert(): File {
                             BinaryOp(
                                 Literal("Cannot match response with status: ", Type.String),
                                 BinaryOp.Operator.PLUS,
-                                FieldCall(VariableReference(Name.of("response")), name("status", "code")),
+                                FieldCall(VariableReference(Name.of("response")), Name("status", "Code")),
                             ),
                         )
                     }
@@ -925,7 +924,7 @@ private fun deserializeParamExpression(
         expression = getCall,
         body = FunctionCall(
             receiver = VariableReference(Name.of("serialization")),
-            name = name("deserialize", "param"),
+            name = Name("deserialize", "Param"),
             typeArguments = listOf(type.convert()),
             arguments = mapOf(
                 Name.of("value") to VariableReference(Name.of("it")),
@@ -952,7 +951,7 @@ private fun serializeParamExpression(
     val type = field.reference.copy(isNullable = false)
     val serializeCall = FunctionCall(
         receiver = VariableReference(Name.of("serialization")),
-        name = name("serialize", "param"),
+        name = Name("serialize", "Param"),
         typeArguments = listOf(type.convert()),
         arguments = mapOf(
             Name.of("value") to VariableReference(Name.of("it")),
@@ -968,7 +967,7 @@ private fun serializeParamExpression(
     } else {
         FunctionCall(
             receiver = VariableReference(Name.of("serialization")),
-            name = name("serialize", "param"),
+            name = Name("serialize", "Param"),
             typeArguments = listOf(type.convert()),
             arguments = mapOf(
                 Name.of("value") to fieldAccess,

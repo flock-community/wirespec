@@ -121,7 +121,7 @@ private class TypeScriptFileEmitter(val file: File) {
         val nonInterfaceElements = elements.filter { it !is Interface }
         val fieldsContent = fields.joinToString("") { field ->
             val typeStr = field.type.emitWithInlineInterfaces(nestedInterfaces)
-            "${field.name.camelCase()}: $typeStr;\n".indentCode(indent + 1)
+            "${field.name.value()}: $typeStr;\n".indentCode(indent + 1)
         }
         val elementsContent = nonInterfaceElements.joinToString("") {
             when (it) {
@@ -152,7 +152,7 @@ private class TypeScriptFileEmitter(val file: File) {
         }
     }
 
-    private fun Enum.emit(indent: Int): String = "export type ${name.pascalCase()} = ${entries.joinToString(" | ") { "\"${it.name.pascalCase()}\"" }}\n".indentCode(indent)
+    private fun Enum.emit(indent: Int): String = "export type ${name.pascalCase()} = ${entries.joinToString(" | ") { "\"${it.name.value()}\"" }}\n".indentCode(indent)
 
     private fun Struct.emit(indent: Int): String {
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
@@ -180,7 +180,7 @@ private class TypeScriptFileEmitter(val file: File) {
 
     private fun Field.emit(indent: Int, inlineStructs: Map<String, Struct> = emptyMap()): String {
         val typeStr = type.emitWithInlineStructs(inlineStructs)
-        return "\"${name.camelCase()}\": $typeStr,\n".indentCode(indent)
+        return "\"${name.value()}\": $typeStr,\n".indentCode(indent)
     }
 
     private fun Type.emitWithInlineStructs(inlineStructs: Map<String, Struct>): String = when (this) {
@@ -198,14 +198,14 @@ private class TypeScriptFileEmitter(val file: File) {
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
         return "{${fields.joinToString(", ") { field ->
             val typeStr = field.type.emitWithInlineStructs(nestedStructs)
-            "\"${field.name.camelCase()}\": $typeStr"
+            "\"${field.name.value()}\": $typeStr"
         }}}"
     }
 
     private fun emitStructConstructor(structName: String, constructor: Constructor, indent: Int): String {
         val funcName = structName.replaceFirstChar { it.lowercaseChar() }
         val paramsTypeName = "${structName}Params"
-        val paramNames = constructor.parameters.map { it.name.camelCase() }.toSet()
+        val paramNames = constructor.parameters.map { it.name.value() }.toSet()
 
         // Emit params type
         val paramsTypeContent = if (constructor.parameters.isEmpty()) {
@@ -213,8 +213,8 @@ private class TypeScriptFileEmitter(val file: File) {
         } else {
             constructor.parameters.joinToString(", ") { param ->
                 when (val t = param.type) {
-                    is Type.Nullable -> "\"${param.name.camelCase()}\"?: ${t.type.emit()}"
-                    else -> "\"${param.name.camelCase()}\": ${param.type.emit()}"
+                    is Type.Nullable -> "\"${param.name.value()}\"?: ${t.type.emit()}"
+                    else -> "\"${param.name.value()}\": ${param.type.emit()}"
                 }
             }.let { "{$it}" }
         }
@@ -225,7 +225,7 @@ private class TypeScriptFileEmitter(val file: File) {
         val bodyAssignments = constructor.body.filterIsInstance<Assignment>()
         val bodyContent = bodyAssignments.joinToString("") { assignment ->
             val value = emitConstructorValue(assignment.value, paramNames)
-            "${assignment.name.camelCase()}: $value,\n".indentCode(indent + 1)
+            "${assignment.name.value()}: $value,\n".indentCode(indent + 1)
         }
         val closingParen = "})".indentCode(indent)
         val funcLine = "export const $funcName = ($paramsArg): $structName => ({\n$bodyContent$closingParen\n".indentCode(indent)
@@ -238,13 +238,13 @@ private class TypeScriptFileEmitter(val file: File) {
             expr.code in paramNames -> "params.${expr.code}"
             else -> expr.code
         }
-        is EnumReference -> "\"${expr.entry.pascalCase()}\""
+        is EnumReference -> "\"${expr.entry.value()}\""
         is ConstructorStatement -> when {
             expr.type == Type.Unit -> "undefined"
             expr.namedArguments.isEmpty() -> "{}"
             else -> {
                 val args = expr.namedArguments.entries.joinToString(", ") { (key, value) ->
-                    "\"${key.camelCase()}\": ${emitConstructorArgValue(value, paramNames)}"
+                    "\"${key.value()}\": ${emitConstructorArgValue(value, paramNames)}"
                 }
                 "{$args}"
             }
@@ -281,7 +281,7 @@ private class TypeScriptFileEmitter(val file: File) {
             .associate { it.name.camelCase() to "_${it.name.camelCase()}" }
 
         val effectiveParams = parameters.map { p ->
-            renames[p.name.camelCase()]?.let { Parameter(Name.of(it), p.type) } ?: p
+            renames[p.name.camelCase()]?.let { Parameter(Name(listOf(it)), p.type) } ?: p
         }
         val effectiveBody = if (renames.isNotEmpty()) {
             body.map { stmt -> renameVariables(stmt, renames) }
@@ -315,7 +315,7 @@ private class TypeScriptFileEmitter(val file: File) {
         return when (expr) {
             is VariableReference -> {
                 val newName = renames[expr.name.camelCase()] ?: return expr
-                VariableReference(Name.of(newName)) as T
+                VariableReference(Name(listOf(newName))) as T
             }
             is RawExpression -> {
                 var code = expr.code
@@ -456,11 +456,11 @@ private class TypeScriptFileEmitter(val file: File) {
         if (typeName != null && typeName in structsWithConstructors) {
             val funcName = typeName.replaceFirstChar { it.lowercaseChar() }
             if (namedArguments.isEmpty()) return "$funcName()"
-            val args = namedArguments.map { "\"${it.key.camelCase()}\": ${it.value.emit()}" }.joinToString(", ")
+            val args = namedArguments.map { "\"${it.key.value()}\": ${it.value.emit()}" }.joinToString(", ")
             return "$funcName({$args})"
         }
         if (type == Type.Unit) return "undefined"
-        val named = namedArguments.map { "${it.key.camelCase()}: ${it.value.emit()}" }.joinToString(", ")
+        val named = namedArguments.map { "${it.key.value()}: ${it.value.emit()}" }.joinToString(", ")
         return if (named.isEmpty()) "{}" else "{ $named }"
     }
 
@@ -473,7 +473,7 @@ private class TypeScriptFileEmitter(val file: File) {
         is LiteralMap -> "${emit()};\n".indentCode(indent)
         is Assignment -> {
             if (isProperty) {
-                "${name.camelCase()} = ${value.emit()};\n".indentCode(indent)
+                "${name.value()} = ${value.emit()};\n".indentCode(indent)
             } else {
                 "const ${name.camelCase()} = ${value.emit()};\n".indentCode(indent)
             }
@@ -519,14 +519,14 @@ private class TypeScriptFileEmitter(val file: File) {
         is VariableReference -> "${name.camelCase()};\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase()};\n".indentCode(indent)
+            "$receiverStr${field.value()};\n".indentCode(indent)
         }
         is FunctionCall -> {
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.camelCase()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
             } else {
-                "${name.camelCase()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+                "${name.value()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
             }
         }
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}];\n".indentCode(indent)
@@ -564,14 +564,14 @@ private class TypeScriptFileEmitter(val file: File) {
         is VariableReference -> name.camelCase()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase()}"
+            "$receiverStr${field.value()}"
         }
         is FunctionCall -> {
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.camelCase()}(${arguments.values.joinToString(", ") { it.emit() }})"
+                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             } else {
-                "${name.camelCase()}(${arguments.values.joinToString(", ") { it.emit() }})"
+                "${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             }
         }
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]"
@@ -624,19 +624,19 @@ private class TypeScriptFileEmitter(val file: File) {
     }
 
     private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {
-        is VariableReference -> if (name.camelCase() == "it") replacement else emit()
+        is VariableReference -> if (name.value() == "it") replacement else emit()
         is FunctionCall -> {
             val recv = receiver
             val inlinedArgs = arguments.mapValues { it.value.emitWithInlinedIt(replacement) }
             if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.${name.camelCase()}(${inlinedArgs.values.joinToString(", ")})"
+                "${recv.emitWithInlinedIt(replacement)}.${name.value()}(${inlinedArgs.values.joinToString(", ")})"
             } else {
-                "${name.camelCase()}(${inlinedArgs.values.joinToString(", ")})"
+                "${name.value()}(${inlinedArgs.values.joinToString(", ")})"
             }
         }
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
-            "$receiverStr${field.camelCase()}"
+            "$receiverStr${field.value()}"
         }
         is ArrayIndexCall -> "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
         is EnumValueCall -> expression.emitWithInlinedIt(replacement)

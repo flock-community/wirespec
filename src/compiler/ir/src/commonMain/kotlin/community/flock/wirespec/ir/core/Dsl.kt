@@ -667,7 +667,7 @@ fun Enum.withLabelField(
     extraElements: List<Element> = emptyList(),
 ): Enum = copy(
     entries = entries.map {
-        Enum.Entry(Name.of(sanitizeEntry(it.name.parts.first())), listOf("\"${it.name.parts.first()}\""))
+        Enum.Entry(Name.of(sanitizeEntry(it.name.value())), listOf("\"${it.name.value()}\""))
     },
     fields = listOf(Field(Name.of("label"), Type.String, isOverride = labelFieldOverride)),
     constructors = listOf(

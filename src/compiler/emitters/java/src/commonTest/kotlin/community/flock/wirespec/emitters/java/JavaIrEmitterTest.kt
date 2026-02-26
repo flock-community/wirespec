@@ -788,7 +788,7 @@ class JavaIrEmitterTest {
             |public record Request (
             |  String type,
             |  String url,
-            |  java.util.Optional<String> bODY_TYPE,
+            |  java.util.Optional<String> BODY_TYPE,
             |  java.util.List<String> params,
             |  java.util.Map<String, String> headers,
             |  java.util.Optional<java.util.Map<String, java.util.Optional<java.util.List<java.util.Optional<String>>>>> body

@@ -202,7 +202,7 @@ open class PythonIrEmitter(
             matchingElements { languageEnum: LanguageEnum ->
                 languageEnum.copy(
                     entries = languageEnum.entries.map {
-                        LanguageEnum.Entry(Name.of(it.name.parts.first().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.parts.first()}\""))
+                        LanguageEnum.Entry(Name.of(it.name.value().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.value()}\""))
                     },
                 )
             }

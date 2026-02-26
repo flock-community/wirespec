@@ -136,7 +136,7 @@ object PythonGenerator : Generator {
             qualifier
         }
         val fieldsContent = fields.joinToString("") { field ->
-            "${field.name.camelCase()}: ${field.type.emit(adjustedQualifier)}\n".indentCode(indent + 1)
+            "${field.name.value()}: ${field.type.emit(adjustedQualifier)}\n".indentCode(indent + 1)
         }
         val elementsContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, allUnions = allUnions, isStaticScope = false, qualifier = adjustedQualifier) }
         val content = (fieldsContent + elementsContent).ifEmpty { "pass\n".indentCode(indent + 1) }
@@ -161,8 +161,8 @@ object PythonGenerator : Generator {
             "pass".indentCode(indent + 1)
         } else {
             entries.joinToString("\n") { entry ->
-                val value = entry.values.firstOrNull() ?: "\"${entry.name.pascalCase()}\""
-                "${entry.name.pascalCase()} = $value".indentCode(indent + 1)
+                val value = entry.values.firstOrNull() ?: "\"${entry.name.value()}\""
+                "${entry.name.value()} = $value".indentCode(indent + 1)
             }
         }
         return "class ${name.pascalCase()}$ext:\n$entriesStr\n\n".indentCode(indent)
@@ -194,7 +194,7 @@ object PythonGenerator : Generator {
         } else {
             body.joinToString("") { stmt ->
                 when (stmt) {
-                    is Assignment -> "self.${stmt.name.camelCase()} = ${stmt.value.emit()}\n".indentCode(indent + 1)
+                    is Assignment -> "self.${stmt.name.value()} = ${stmt.value.emit()}\n".indentCode(indent + 1)
                     else -> stmt.emit(indent + 1).replace("this.", "self.")
                 }
             }
@@ -210,7 +210,7 @@ object PythonGenerator : Generator {
         return "def __init__(\n$selfParam$paramLines,\n$closeParen$content\n".indentCode(indent)
     }
 
-    private fun Field.emit(indent: Int, qualifier: ((String) -> String)? = null): String = "${name.camelCase()}: ${type.emit(qualifier)}\n".indentCode(indent)
+    private fun Field.emit(indent: Int, qualifier: ((String) -> String)? = null): String = "${name.value()}: ${type.emit(qualifier)}\n".indentCode(indent)
 
     private fun AstFunction.emit(indent: Int, isInClass: Boolean = false, isStaticScope: Boolean = false, isInInterface: Boolean = false, qualifier: ((String) -> String)? = null): String {
         val params = parameters.joinToString(", ") {
@@ -231,7 +231,7 @@ object PythonGenerator : Generator {
         }
         val prefix = if (isAsync) "async " else ""
         val returnAnnotation = returnType?.let { " -> ${it.emit(qualifier)}" } ?: ""
-        return staticDecorator + abstractDecorator + "${prefix}def ${name.camelCase()}($selfPrefix$params)$returnAnnotation:\n$content\n".indentCode(indent)
+        return staticDecorator + abstractDecorator + "${prefix}def ${name.value()}($selfPrefix$params)$returnAnnotation:\n$content\n".indentCode(indent)
     }
 
     private fun Type.emit(qualifier: ((String) -> String)? = null): String = when (this) {
@@ -264,7 +264,7 @@ object PythonGenerator : Generator {
             if (type == Type.Unit) {
                 "None\n".indentCode(indent)
             } else {
-                val allArgs = namedArguments.map { "${it.key.camelCase()}=${it.value.emit()}" }
+                val allArgs = namedArguments.map { "${it.key.value()}=${it.value.emit()}" }
                 "${type.emit()}(${allArgs.joinToString(", ")})\n".indentCode(indent)
             }
         }
@@ -306,18 +306,18 @@ object PythonGenerator : Generator {
         is VariableReference -> "${name.camelCase()}\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase()}\n".indentCode(indent)
+            "$receiverStr${field.value()}\n".indentCode(indent)
         }
         is FunctionCall -> {
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.camelCase()}(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
             } else {
-                "${name.camelCase()}(${arguments.map { "${it.key.camelCase()}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
+                "${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
             }
         }
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
-        is EnumReference -> "${enumType.emit()}.${entry.pascalCase()}\n".indentCode(indent)
+        is EnumReference -> "${enumType.emit()}.${entry.value()}\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.value\n".indentCode(indent)
         is BinaryOp -> {
             if (operator == BinaryOp.Operator.PLUS && (left is Literal && (left as Literal).type == Type.String || right is Literal && (right as Literal).type == Type.String)) {
@@ -349,7 +349,7 @@ object PythonGenerator : Generator {
     }
 
     private fun Expression.emit(): String = when (this) {
-        is ConstructorStatement -> if (type == Type.Unit) "None" else "${type.emit()}(${namedArguments.map { "${it.key.camelCase()}=${it.value.emit()}" }.joinToString(", ")})"
+        is ConstructorStatement -> if (type == Type.Unit) "None" else "${type.emit()}(${namedArguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})"
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
@@ -359,18 +359,18 @@ object PythonGenerator : Generator {
         is VariableReference -> name.camelCase()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.camelCase()}"
+            "$receiverStr${field.value()}"
         }
         is FunctionCall -> {
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.camelCase()}(${arguments.values.joinToString(", ") { it.emit() }})"
+                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             } else {
-                "${name.camelCase()}(${arguments.map { "${it.key.camelCase()}=${it.value.emit()}" }.joinToString(", ")})"
+                "${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})"
             }
         }
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]"
-        is EnumReference -> "${enumType.emit()}.${entry.pascalCase()}"
+        is EnumReference -> "${enumType.emit()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.value"
         is BinaryOp -> {
             if (operator == BinaryOp.Operator.PLUS && (left is Literal && (left as Literal).type == Type.String || right is Literal && (right as Literal).type == Type.String)) {
@@ -427,19 +427,19 @@ object PythonGenerator : Generator {
     }
 
     private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {
-        is VariableReference -> if (name.camelCase() == "it") replacement else emit()
+        is VariableReference -> if (name.value() == "it") replacement else emit()
         is FunctionCall -> {
             val recv = receiver
             val inlinedArgs = arguments.mapValues { it.value.emitWithInlinedIt(replacement) }
             if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.${name.camelCase()}(${inlinedArgs.values.joinToString(", ")})"
+                "${recv.emitWithInlinedIt(replacement)}.${name.value()}(${inlinedArgs.values.joinToString(", ")})"
             } else {
-                "${name.camelCase()}(${inlinedArgs.map { "${it.key.camelCase()}=${it.value}" }.joinToString(", ")})"
+                "${name.value()}(${inlinedArgs.map { "${it.key.value()}=${it.value}" }.joinToString(", ")})"
             }
         }
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
-            "$receiverStr${field.camelCase()}"
+            "$receiverStr${field.value()}"
         }
         is ArrayIndexCall -> "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
         is EnumValueCall -> "${expression.emitWithInlinedIt(replacement)}.value"
