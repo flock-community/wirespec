@@ -27,6 +27,7 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Main
 import community.flock.wirespec.ir.core.Name
@@ -311,7 +312,7 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
                     op.left is VariableReference && op.right is VariableReference
                 ) {
                     fun jsonStringify(e: Expression): FunctionCall = FunctionCall(
-                        receiver = VariableReference(Name(listOf("JSON"))),
+                        receiver = RawExpression("JSON"),
                         name = Name.of("stringify"),
                         arguments = mapOf(Name.of("_") to e),
                     )
