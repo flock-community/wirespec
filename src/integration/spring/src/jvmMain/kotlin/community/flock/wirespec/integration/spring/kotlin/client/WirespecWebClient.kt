@@ -10,20 +10,29 @@ import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
-import kotlin.reflect.full.companionObjectInstance
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 
 class WirespecWebClient(
     private val client: WebClient,
     private val wirespecSerde: Serialization,
 ) {
+    private val toRequestCache = ConcurrentHashMap<Class<*>, Method>()
+    private val fromResponseCache = ConcurrentHashMap<Class<*>, Method>()
+
     @Suppress("UNCHECKED_CAST")
     suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
         val declaringClass = request::class.java.declaringClass
-        val handler = declaringClass.declaredClasses.toList()
-            .find { it.simpleName == "Handler" }
-            ?: error("Handler not found")
-        val instance = handler.kotlin.companionObjectInstance as Wirespec.Client<Req, Res>
-        return with(instance.client(wirespecSerde)) { executeRequest(to(request), client).let(::from) }
+        val toRequest = toRequestCache.computeIfAbsent(declaringClass) { cls ->
+            cls.declaredMethods.first { it.name == "toRequest" }
+        }
+        val fromResponse = fromResponseCache.computeIfAbsent(declaringClass) { cls ->
+            cls.declaredMethods.first { it.name == "fromResponse" }
+        }
+        val instance = declaringClass.getDeclaredField("INSTANCE").get(null)
+        val rawRequest = toRequest.invoke(instance, wirespecSerde, request) as Wirespec.RawRequest
+        val rawResponse = executeRequest(rawRequest, client)
+        return fromResponse.invoke(instance, wirespecSerde, rawResponse) as Res
     }
 
     private suspend fun executeRequest(

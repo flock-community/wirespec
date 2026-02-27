@@ -9,13 +9,19 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WirespecWebClient {
     private final WebClient client;
     private final Serialization wirespecSerde;
+    private final Map<Class<?>, Method> toRequestCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Method> fromResponseCache = new ConcurrentHashMap<>();
 
     public WirespecWebClient(WebClient client, Serialization wirespecSerde) {
         this.client = client;
@@ -26,21 +32,36 @@ public class WirespecWebClient {
     public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> CompletableFuture<Res> send(Req request) {
         try {
             Class<?> declaringClass = request.getClass().getDeclaringClass();
-            Class<?> handler = Arrays.stream(declaringClass.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handler"))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Handler not found"));
+            Method toRequest = toRequestCache.computeIfAbsent(declaringClass, cls -> {
+                Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
+                        .filter(c -> c.getSimpleName().equals("Handler"))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
+                return Arrays.stream(handlerClass.getDeclaredMethods())
+                        .filter(m -> m.getName().equals("toRequest") && Modifier.isStatic(m.getModifiers()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("toRequest method not found in " + handlerClass));
+            });
+            Method fromResponse = fromResponseCache.computeIfAbsent(declaringClass, cls -> {
+                Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
+                        .filter(c -> c.getSimpleName().equals("Handler"))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
+                return Arrays.stream(handlerClass.getDeclaredMethods())
+                        .filter(m -> m.getName().equals("fromResponse") && Modifier.isStatic(m.getModifiers()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("fromResponse method not found in " + handlerClass));
+            });
 
-            Class<?> handlers = Arrays.stream(handler.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handlers"))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Handlers not found"));
-
-            Wirespec.Client<Req, Res> instance = (Wirespec.Client<Req, Res>) handlers.getDeclaredConstructor().newInstance();
-            Wirespec.ClientEdge<Req, Res> edge = instance.getClient(wirespecSerde);
-
-            return executeRequest(edge.to(request), client)
-                    .thenApply(edge::from);
+            Wirespec.RawRequest rawRequest = (Wirespec.RawRequest) toRequest.invoke(null, wirespecSerde, request);
+            return executeRequest(rawRequest, client)
+                    .thenApply(rawResponse -> {
+                        try {
+                            return (Res) fromResponse.invoke(null, wirespecSerde, rawResponse);
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    });
 
         } catch (Exception e) {
             CompletableFuture<Res> future = new CompletableFuture<>();

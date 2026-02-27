@@ -10,12 +10,15 @@ import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
-import kotlin.reflect.full.companionObjectInstance
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 
 @ControllerAdvice
 class WirespecResponseBodyAdvice(
     private val wirespecSerialization: Wirespec.Serialization,
 ) : ResponseBodyAdvice<Any?> {
+
+    private val toResponseCache = ConcurrentHashMap<Class<*>, Method>()
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean = Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
 
@@ -29,15 +32,13 @@ class WirespecResponseBodyAdvice(
         response: ServerHttpResponse,
     ): Any? {
         val declaringClass = returnType.parameterType.declaringClass
-        val handler = declaringClass.declaredClasses.toList()
-            .find { it.simpleName == "Handler" }
-            ?: error("Handler not found")
-        val instance = handler
-            .kotlin.companionObjectInstance as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
-        val server = instance.server(wirespecSerialization)
+        val toResponse = toResponseCache.computeIfAbsent(declaringClass) { cls ->
+            cls.declaredMethods.first { it.name == "toResponse" }
+        }
+        val instance = declaringClass.getDeclaredField("INSTANCE").get(null)
         return when (body) {
             is Wirespec.Response<*> -> {
-                val rawResponse = server.to(body)
+                val rawResponse = toResponse.invoke(instance, wirespecSerialization, body) as Wirespec.RawResponse
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
                 response.headers.putAll(rawResponse.headers)
                 if (rawResponse.body == null) {

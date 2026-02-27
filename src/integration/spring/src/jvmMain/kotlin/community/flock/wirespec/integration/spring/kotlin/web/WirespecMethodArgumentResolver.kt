@@ -12,13 +12,16 @@ import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Collectors
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.reflect.full.companionObjectInstance
 
 class WirespecMethodArgumentResolver(
     private val wirespecSerialization: Wirespec.Serialization,
 ) : HandlerMethodArgumentResolver {
+
+    private val fromRequestCache = ConcurrentHashMap<Class<*>, Method>()
 
     override fun supportsParameter(parameter: MethodParameter): Boolean = Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
 
@@ -30,13 +33,12 @@ class WirespecMethodArgumentResolver(
     ): Wirespec.Request<*> {
         val servletRequest = webRequest.nativeRequest as HttpServletRequest
         val declaringClass = parameter.parameterType.declaringClass
-        val handler = declaringClass.declaredClasses.toList()
-            .find { it.simpleName == "Handler" }
-            ?: error("Handler not found")
-        val instance = handler.kotlin.companionObjectInstance as Wirespec.Server<*, *>
-        val server = instance.server(wirespecSerialization)
+        val fromRequest = fromRequestCache.computeIfAbsent(declaringClass) { cls ->
+            cls.declaredMethods.first { it.name == "fromRequest" }
+        }
+        val instance = declaringClass.getDeclaredField("INSTANCE").get(null)
         val rawRequest = servletRequest.toRawRequest()
-        return server.from(rawRequest)
+        return fromRequest.invoke(instance, wirespecSerialization, rawRequest) as Wirespec.Request<*>
     }
 
     @OptIn(ExperimentalEncodingApi::class)
