@@ -111,7 +111,7 @@ open class RustIrEmitter(
             |
             |pub trait Handler {}
             |
-            |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub enum Method {
             |    #[default]
             |    GET,
@@ -143,11 +143,11 @@ open class RustIrEmitter(
             |pub trait ResponseHeaders: Headers {}
             |
             |pub trait BodySerializer {
-            |    fn serialize_body<T: serde::Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+            |    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
             |}
             |
             |pub trait BodyDeserializer {
-            |    fn deserialize_body<T: serde::de::DeserializeOwned>(&self, raw: &[u8], r#type: TypeId) -> T;
+            |    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
             |}
             |
             |pub trait BodySerialization: BodySerializer + BodyDeserializer {}
@@ -163,11 +163,11 @@ open class RustIrEmitter(
             |pub trait PathSerialization: PathSerializer + PathDeserializer {}
             |
             |pub trait ParamSerializer {
-            |    fn serialize_param<T: serde::Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
+            |    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;
             |}
             |
             |pub trait ParamDeserializer {
-            |    fn deserialize_param<T: serde::de::DeserializeOwned>(&self, values: &[String], r#type: TypeId) -> T;
+            |    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
             |}
             |
             |pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
@@ -210,15 +210,6 @@ open class RustIrEmitter(
             |    type Res;
             |    fn path_template(&self) -> &'static str;
             |    fn method(&self) -> Method;
-            |}
-            |
-            |pub fn null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-            |where
-            |    D: serde::Deserializer<'de>,
-            |    T: Default + serde::Deserialize<'de>,
-            |{
-            |    use serde::Deserialize;
-            |    Option::<T>::deserialize(deserializer).map(|opt| opt.unwrap_or_default())
             |}
             |""".trimMargin()
     }

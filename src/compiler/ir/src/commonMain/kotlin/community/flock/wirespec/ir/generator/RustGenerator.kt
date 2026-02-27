@@ -146,9 +146,9 @@ object RustGenerator : Generator {
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val enumDef = if (members.isNotEmpty()) {
             val variants = members.joinToString("\n") { "${it.name}(${it.name}),".indentCode(1) }
-            "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName$typeParamsStr {\n$variants\n}\n\n".indentCode(indent)
+            "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName$typeParamsStr {\n$variants\n}\n\n".indentCode(indent)
         } else {
-            "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName$typeParamsStr {}\n\n".indentCode(indent)
+            "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName$typeParamsStr {}\n\n".indentCode(indent)
         }
 
         val fromImpls = if (rustName == "Response" && members.isNotEmpty()) {
@@ -168,11 +168,10 @@ object RustGenerator : Generator {
             ""
         } else {
             entries.joinToString("\n") { entry ->
-                val wireValue = if (entry.values.isNotEmpty()) entry.values.first().removeSurrounding("\"") else entry.name.value()
-                "#[serde(rename = \"$wireValue\")]\n${entry.name.value()},".indentCode(1)
+                "${entry.name.value()},".indentCode(1)
             }
         }
-        val enumDef = "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]\npub enum $rustName {\n$entriesStr\n}\n\n".indentCode(indent)
+        val enumDef = "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName {\n$entriesStr\n}\n\n".indentCode(indent)
 
         val enumImpl = if (entries.isNotEmpty()) {
             val labelArms = entries.joinToString("\n") { entry ->
@@ -218,7 +217,7 @@ object RustGenerator : Generator {
         val nestedContent = nonFunctions.joinToString("") { it.emit(indent, parents = parents + this, allUnions = allUnions, isStaticScope = false) }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
-            val structDef = "#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]\npub struct $rustName;\n\n".indentCode(indent)
+            val structDef = "#[derive(Debug, Clone, Default, PartialEq)]\npub struct $rustName;\n\n".indentCode(indent)
             val implBlock = if (functions.isNotEmpty()) {
                 val fnsContent = functions.joinToString("") { it.emit(1, isInClass = true, isStaticScope = false, isInInterface = false) }
                 "impl $rustName {\n$fnsContent}\n\n".indentCode(indent)
@@ -229,24 +228,10 @@ object RustGenerator : Generator {
         }
 
         val fieldsStr = fields.joinToString("\n") {
-            val originalName = it.name.value()
             val fieldName = it.name.snakeCase().sanitize()
-            val serdeAttrs = mutableListOf<String>()
-            if (fieldName != originalName) {
-                serdeAttrs.add("rename = \"$originalName\"")
-            }
-            if (it.type !is Type.Nullable) {
-                serdeAttrs.add("default")
-                serdeAttrs.add("deserialize_with = \"null_default\"")
-            }
-            val serdeAttr = if (serdeAttrs.isNotEmpty()) {
-                "#[serde(${serdeAttrs.joinToString(", ")})]\n"
-            } else {
-                ""
-            }
-            "${serdeAttr}pub $fieldName: ${it.type.emit()},".indentCode(1)
+            "pub $fieldName: ${it.type.emit()},".indentCode(1)
         }
-        val structDef = "#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]\n#[serde(default)]\npub struct $rustName {\n$fieldsStr\n}\n\n".indentCode(indent)
+        val structDef = "#[derive(Debug, Clone, Default, PartialEq)]\npub struct $rustName {\n$fieldsStr\n}\n\n".indentCode(indent)
 
         val customConstructors = constructors.joinToString("") { it.emit(rustName, fields, indent) }
 
@@ -340,7 +325,9 @@ object RustGenerator : Generator {
         val isSerialization = name.snakeCase() in serializationMethodNames
         return arguments.values.mapIndexed { idx, arg ->
             val emitted = arg.emit()
-            if (isSerialization && idx == 0) "&$emitted" else emitted
+            // Inside .map(|it| ...), `it` is already a reference — don't add `&`
+            val isAlreadyRef = arg is VariableReference && arg.name.value() == "it"
+            if (isSerialization && idx == 0 && !isAlreadyRef) "&$emitted" else emitted
         }.joinToString(", ")
     }
 
@@ -348,7 +335,8 @@ object RustGenerator : Generator {
         val isSerialization = name.snakeCase() in serializationMethodNames
         return arguments.values.mapIndexed { idx, arg ->
             val emitted = arg.emitWithInlinedIt(replacement)
-            if (isSerialization && idx == 0) "&$emitted" else emitted
+            val isAlreadyRef = arg is VariableReference && arg.name.value() == "it"
+            if (isSerialization && idx == 0 && !isAlreadyRef) "&$emitted" else emitted
         }.joinToString(", ")
     }
 

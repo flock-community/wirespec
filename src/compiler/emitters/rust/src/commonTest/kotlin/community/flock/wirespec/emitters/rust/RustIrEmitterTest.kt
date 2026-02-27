@@ -20,25 +20,16 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum MyAwesomeEnum {
-        |    #[serde(rename = "ONE")]
         |    ONE,
-        |    #[serde(rename = "Two")]
         |    Two,
-        |    #[serde(rename = "THREE_MORE")]
         |    THREEMORE,
-        |    #[serde(rename = "UnitedKingdom")]
         |    UnitedKingdom,
-        |    #[serde(rename = "-1")]
         |    _1,
-        |    #[serde(rename = "0")]
         |    _0,
-        |    #[serde(rename = "10")]
         |    _10,
-        |    #[serde(rename = "-999")]
         |    _999,
-        |    #[serde(rename = "88")]
         |    _88,
         |}
         |impl Enum for MyAwesomeEnum {
@@ -91,18 +82,12 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Request {
-        |    #[serde(rename = "type", default, deserialize_with = "null_default")]
         |    pub r#type: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub url: String,
-        |    #[serde(rename = "BODY_TYPE")]
         |    pub body_type: Option<String>,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub params: Vec<String>,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub headers: std::collections::HashMap<String, String>,
         |    pub body: Option<std::collections::HashMap<String, Option<Vec<Option<String>>>>>,
         |}
@@ -146,10 +131,8 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TodoId {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: String,
         |}
         |impl TodoId {
@@ -163,10 +146,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TodoNoRegex {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: String,
         |}
         |impl TodoNoRegex {
@@ -180,10 +161,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestInt {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: i64,
         |}
         |impl TestInt {
@@ -197,10 +176,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestInt0 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: i64,
         |}
         |impl TestInt0 {
@@ -214,10 +191,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestInt1 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: i64,
         |}
         |impl TestInt1 {
@@ -231,10 +206,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestInt2 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: i64,
         |}
         |impl TestInt2 {
@@ -248,10 +221,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestNum {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: f64,
         |}
         |impl TestNum {
@@ -265,10 +236,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestNum0 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: f64,
         |}
         |impl TestNum0 {
@@ -282,10 +251,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestNum1 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: f64,
         |}
         |impl TestNum1 {
@@ -299,10 +266,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TestNum2 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: f64,
         |}
         |impl TestNum2 {
@@ -329,12 +294,9 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct UserAccountPassword {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub username: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub password: String,
         |}
         |impl UserAccountPassword {
@@ -345,10 +307,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct UserAccountToken {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub token: String,
         |}
         |impl UserAccountToken {
@@ -360,12 +320,9 @@ class RustIrEmitterTest {
         |use super::super::wirespec::*;
         |use regex;
         |use super::user_account::UserAccount;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct User {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub username: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub account: UserAccount,
         |}
         |impl User {
@@ -376,7 +333,7 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum UserAccount {
         |    UserAccountPassword(UserAccountPassword),
         |    UserAccountToken(UserAccountToken),
@@ -397,10 +354,8 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TodoDto {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub description: String,
         |}
         |impl TodoDto {
@@ -412,24 +367,18 @@ class RustIrEmitterTest {
         |use super::super::wirespec::*;
         |use regex;
         |use super::super::model::todo_dto::TodoDto;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Path;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Queries;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct RequestHeaders;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Request {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub path: Path,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub method: Method,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub queries: Queries,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub headers: RequestHeaders,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub body: (),
         |}
         |impl Request {
@@ -443,29 +392,25 @@ class RustIrEmitterTest {
         |        }
         |    }
         |}
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum Response {
         |    Response200(Response200),
         |}
         |impl From<Response200> for Response { fn from(value: Response200) -> Self { Response::Response200(value) } }
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum Response2XX {
         |    Response200(Response200),
         |}
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum ResponseListTodoDto {
         |    Response200(Response200),
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response200Headers;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response200 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub status: i32,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub headers: Response200Headers,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub body: Vec<TodoDto>,
         |}
         |impl Response200 {
@@ -495,7 +440,7 @@ class RustIrEmitterTest {
         |    pub fn from_raw_response(serialization: &impl Deserializer, response: RawResponse) -> Response {
         |        match response.status_code {
         |            200_i32 => {
-        |                return Response::Response200(Response200::new(response.body.as_ref().map(|it| serialization.deserialize_body(&it, std::any::TypeId::of::<Vec<TodoDto>>())).expect("body is null")));
+        |                return Response::Response200(Response200::new(response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<Vec<TodoDto>>())).expect("body is null")));
         |            }
         |            _ => {
         |                panic!("Cannot match response with status: {}", response.status_code);
@@ -536,12 +481,9 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct PotentialTodoDto {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub name: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub done: bool,
         |}
         |impl PotentialTodoDto {
@@ -552,10 +494,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Token {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub iss: String,
         |}
         |impl Token {
@@ -566,14 +506,10 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct TodoDto {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub id: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub name: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub done: bool,
         |}
         |impl TodoDto {
@@ -584,12 +520,9 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Error {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub code: i64,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub description: String,
         |}
         |impl Error {
@@ -604,39 +537,26 @@ class RustIrEmitterTest {
         |use super::super::model::potential_todo_dto::PotentialTodoDto;
         |use super::super::model::todo_dto::TodoDto;
         |use super::super::model::error::Error;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Path {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub id: String,
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Queries {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub done: bool,
         |    pub name: Option<String>,
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct RequestHeaders {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub token: Token,
-        |    #[serde(rename = "refreshToken")]
         |    pub refresh_token: Option<Token>,
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Request {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub path: Path,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub method: Method,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub queries: Queries,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub headers: RequestHeaders,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub body: PotentialTodoDto,
         |}
         |impl Request {
@@ -650,7 +570,7 @@ class RustIrEmitterTest {
         |        }
         |    }
         |}
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum Response {
         |    Response200(Response200),
         |    Response201(Response201),
@@ -659,34 +579,30 @@ class RustIrEmitterTest {
         |impl From<Response200> for Response { fn from(value: Response200) -> Self { Response::Response200(value) } }
         |impl From<Response201> for Response { fn from(value: Response201) -> Self { Response::Response201(value) } }
         |impl From<Response500> for Response { fn from(value: Response500) -> Self { Response::Response500(value) } }
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum Response2XX {
         |    Response200(Response200),
         |    Response201(Response201),
         |}
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum Response5XX {
         |    Response500(Response500),
         |}
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum ResponseTodoDto {
         |    Response200(Response200),
         |    Response201(Response201),
         |}
-        |#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, PartialEq)]
         |pub enum ResponseError {
         |    Response500(Response500),
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response200Headers;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response200 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub status: i32,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub headers: Response200Headers,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub body: TodoDto,
         |}
         |impl Response200 {
@@ -698,22 +614,15 @@ class RustIrEmitterTest {
         |        }
         |    }
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response201Headers {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub token: Token,
-        |    #[serde(rename = "refreshToken")]
         |    pub refresh_token: Option<Token>,
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response201 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub status: i32,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub headers: Response201Headers,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub body: TodoDto,
         |}
         |impl Response201 {
@@ -725,16 +634,12 @@ class RustIrEmitterTest {
         |        }
         |    }
         |}
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response500Headers;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Response500 {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub status: i32,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub headers: Response500Headers,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub body: Error,
         |}
         |impl Response500 {
@@ -749,10 +654,10 @@ class RustIrEmitterTest {
         |pub mod PutTodo {
         |    use super::*;
         |    pub fn to_raw_request(serialization: &impl Serializer, request: Request) -> RawRequest {
-        |        return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("todos"), serialization.serialize_path(&request.path.id, std::any::TypeId::of::<String>())], queries: std::collections::HashMap::from([(String::from("done"), serialization.serialize_param(&request.queries.done, std::any::TypeId::of::<bool>())), (String::from("name"), request.queries.name.as_ref().map(|it| serialization.serialize_param(&it, std::any::TypeId::of::<String>())).unwrap_or(Vec::<String>::new()))]), headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&request.headers.token, std::any::TypeId::of::<Token>())), (String::from("refreshToken"), request.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(&it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&request.body, std::any::TypeId::of::<PotentialTodoDto>())) };
+        |        return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("todos"), serialization.serialize_path(&request.path.id, std::any::TypeId::of::<String>())], queries: std::collections::HashMap::from([(String::from("done"), serialization.serialize_param(&request.queries.done, std::any::TypeId::of::<bool>())), (String::from("name"), request.queries.name.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<String>())).unwrap_or(Vec::<String>::new()))]), headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&request.headers.token, std::any::TypeId::of::<Token>())), (String::from("refreshToken"), request.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&request.body, std::any::TypeId::of::<PotentialTodoDto>())) };
         |    }
         |    pub fn from_raw_request(serialization: &impl Deserializer, request: RawRequest) -> Request {
-        |        return Request::new(serialization.deserialize_path(&request.path[1], std::any::TypeId::of::<String>()), request.queries.get("done").as_ref().map(|it| serialization.deserialize_param(&it, std::any::TypeId::of::<bool>())).expect("Param done cannot be null"), request.queries.get("name").as_ref().map(|it| serialization.deserialize_param(&it, std::any::TypeId::of::<String>())), request.headers.get("token").as_ref().map(|it| serialization.deserialize_param(&it, std::any::TypeId::of::<Token>())).expect("Param token cannot be null"), request.headers.get("refreshToken").as_ref().map(|it| serialization.deserialize_param(&it, std::any::TypeId::of::<Token>())), request.body.as_ref().map(|it| serialization.deserialize_body(&it, std::any::TypeId::of::<PotentialTodoDto>())).expect("body is null"));
+        |        return Request::new(serialization.deserialize_path(&request.path[1], std::any::TypeId::of::<String>()), request.queries.get("done").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<bool>())).expect("Param done cannot be null"), request.queries.get("name").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<String>())), request.headers.get("token").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())).expect("Param token cannot be null"), request.headers.get("refreshToken").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())), request.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<PotentialTodoDto>())).expect("body is null"));
         |    }
         |    pub fn to_raw_response(serialization: &impl Serializer, response: Response) -> RawResponse {
         |        match response {
@@ -760,7 +665,7 @@ class RustIrEmitterTest {
         |                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
         |            }
         |            Response::Response201(r) => {
-        |                return RawResponse { status_code: r.status, headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&r.headers.token, std::any::TypeId::of::<Token>())), (String::from("refreshToken"), r.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(&it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
+        |                return RawResponse { status_code: r.status, headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&r.headers.token, std::any::TypeId::of::<Token>())), (String::from("refreshToken"), r.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
         |            }
         |            Response::Response500(r) => {
         |                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Error>())) };
@@ -770,13 +675,13 @@ class RustIrEmitterTest {
         |    pub fn from_raw_response(serialization: &impl Deserializer, response: RawResponse) -> Response {
         |        match response.status_code {
         |            200_i32 => {
-        |                return Response::Response200(Response200::new(response.body.as_ref().map(|it| serialization.deserialize_body(&it, std::any::TypeId::of::<TodoDto>())).expect("body is null")));
+        |                return Response::Response200(Response200::new(response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<TodoDto>())).expect("body is null")));
         |            }
         |            201_i32 => {
-        |                return Response::Response201(Response201::new(response.headers.get("token").as_ref().map(|it| serialization.deserialize_param(&it, std::any::TypeId::of::<Token>())).expect("Param token cannot be null"), response.headers.get("refreshToken").as_ref().map(|it| serialization.deserialize_param(&it, std::any::TypeId::of::<Token>())), response.body.as_ref().map(|it| serialization.deserialize_body(&it, std::any::TypeId::of::<TodoDto>())).expect("body is null")));
+        |                return Response::Response201(Response201::new(response.headers.get("token").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())).expect("Param token cannot be null"), response.headers.get("refreshToken").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())), response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<TodoDto>())).expect("body is null")));
         |            }
         |            500_i32 => {
-        |                return Response::Response500(Response500::new(response.body.as_ref().map(|it| serialization.deserialize_body(&it, std::any::TypeId::of::<Error>())).expect("body is null")));
+        |                return Response::Response500(Response500::new(response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<Error>())).expect("body is null")));
         |            }
         |            _ => {
         |                panic!("Cannot match response with status: {}", response.status_code);
@@ -817,10 +722,8 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct DutchPostalCode {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: String,
         |}
         |impl DutchPostalCode {
@@ -835,14 +738,10 @@ class RustIrEmitterTest {
         |use super::super::wirespec::*;
         |use regex;
         |use super::dutch_postal_code::DutchPostalCode;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Address {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub street: String,
-        |    #[serde(rename = "houseNumber", default, deserialize_with = "null_default")]
         |    pub house_number: i64,
-        |    #[serde(rename = "postalCode", default, deserialize_with = "null_default")]
         |    pub postal_code: DutchPostalCode,
         |}
         |impl Address {
@@ -854,14 +753,10 @@ class RustIrEmitterTest {
         |use super::super::wirespec::*;
         |use regex;
         |use super::address::Address;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Person {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub name: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub address: Address,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub tags: Vec<String>,
         |}
         |impl Person {
@@ -885,10 +780,8 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Email {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: String,
         |}
         |impl Email {
@@ -902,10 +795,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct PhoneNumber {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: String,
         |}
         |impl PhoneNumber {
@@ -919,10 +810,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Tag {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: String,
         |}
         |impl Tag {
@@ -936,10 +825,8 @@ class RustIrEmitterTest {
         |
         |use super::super::wirespec::*;
         |use regex;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct EmployeeAge {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub value: i64,
         |}
         |impl EmployeeAge {
@@ -955,10 +842,8 @@ class RustIrEmitterTest {
         |use regex;
         |use super::email::Email;
         |use super::phone_number::PhoneNumber;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct ContactInfo {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub email: Email,
         |    pub phone: Option<PhoneNumber>,
         |}
@@ -973,16 +858,11 @@ class RustIrEmitterTest {
         |use super::employee_age::EmployeeAge;
         |use super::contact_info::ContactInfo;
         |use super::tag::Tag;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Employee {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub name: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub age: EmployeeAge,
-        |    #[serde(rename = "contactInfo", default, deserialize_with = "null_default")]
         |    pub contact_info: ContactInfo,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub tags: Vec<Tag>,
         |}
         |impl Employee {
@@ -994,12 +874,9 @@ class RustIrEmitterTest {
         |use super::super::wirespec::*;
         |use regex;
         |use super::employee::Employee;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Department {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub name: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub employees: Vec<Employee>,
         |}
         |impl Department {
@@ -1011,12 +888,9 @@ class RustIrEmitterTest {
         |use super::super::wirespec::*;
         |use regex;
         |use super::department::Department;
-        |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-        |#[serde(default)]
+        |#[derive(Debug, Clone, Default, PartialEq)]
         |pub struct Company {
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub name: String,
-        |    #[serde(default, deserialize_with = "null_default")]
         |    pub departments: Vec<Department>,
         |}
         |impl Company {
@@ -1067,7 +941,7 @@ class RustIrEmitterTest {
             |
             |pub trait Handler {}
             |
-            |#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub enum Method {
             |    #[default]
             |    GET,
@@ -1099,11 +973,11 @@ class RustIrEmitterTest {
             |pub trait ResponseHeaders: Headers {}
             |
             |pub trait BodySerializer {
-            |    fn serialize_body<T: serde::Serialize>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+            |    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
             |}
             |
             |pub trait BodyDeserializer {
-            |    fn deserialize_body<T: serde::de::DeserializeOwned>(&self, raw: &[u8], r#type: TypeId) -> T;
+            |    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
             |}
             |
             |pub trait BodySerialization: BodySerializer + BodyDeserializer {}
@@ -1119,11 +993,11 @@ class RustIrEmitterTest {
             |pub trait PathSerialization: PathSerializer + PathDeserializer {}
             |
             |pub trait ParamSerializer {
-            |    fn serialize_param<T: serde::Serialize>(&self, value: &T, r#type: TypeId) -> Vec<String>;
+            |    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;
             |}
             |
             |pub trait ParamDeserializer {
-            |    fn deserialize_param<T: serde::de::DeserializeOwned>(&self, values: &[String], r#type: TypeId) -> T;
+            |    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
             |}
             |
             |pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
@@ -1166,15 +1040,6 @@ class RustIrEmitterTest {
             |    type Res;
             |    fn path_template(&self) -> &'static str;
             |    fn method(&self) -> Method;
-            |}
-            |
-            |pub fn null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-            |where
-            |    D: serde::Deserializer<'de>,
-            |    T: Default + serde::Deserialize<'de>,
-            |{
-            |    use serde::Deserialize;
-            |    Option::<T>::deserialize(deserializer).map(|opt| opt.unwrap_or_default())
             |}
             |
         """.trimMargin()
