@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import community.flock.wirespec.integration.jackson.java.WirespecSerialization;
 import community.flock.wirespec.integration.spring.java.web.WirespecResponseBodyAdvice;
+import community.flock.wirespec.integration.spring.shared.WirespecBeanFactoryInitializationAotProcessor;
 import community.flock.wirespec.java.Wirespec.Serialization;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,5 +19,10 @@ public class WirespecSerializationConfiguration {
     @Bean
     public Serialization wirespecSerialization() {
         return new WirespecSerialization(objectMapper);
+    }
+
+    @Bean
+    static WirespecBeanFactoryInitializationAotProcessor wirespecAotProcessor() {
+        return new WirespecBeanFactoryInitializationAotProcessor();
     }
 }

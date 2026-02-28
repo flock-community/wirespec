@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.spring.kotlin.configuration
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import community.flock.wirespec.integration.jackson.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.spring.kotlin.web.WirespecResponseBodyAdvice
+import community.flock.wirespec.integration.spring.shared.WirespecBeanFactoryInitializationAotProcessor
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import community.flock.wirespec.kotlin.serde.DefaultParamSerialization
 import org.springframework.context.annotation.Bean
@@ -18,6 +19,9 @@ open class WirespecSerializationConfiguration {
 
     @Bean
     open fun wirespecSerialization(): Serialization = WirespecSerialization(objectMapper)
+
+    @Bean
+    open fun wirespecAotProcessor() = WirespecBeanFactoryInitializationAotProcessor()
 
     companion object {
         val objectMapper = jacksonObjectMapper()
