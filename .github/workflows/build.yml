@@ -16,7 +16,7 @@ jobs:
 
   jvm-test:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +81,6 @@ jobs:
 
   site:
 
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -105,21 +104,10 @@ jobs:
             VERSION="latest"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      - name: Build VSCode extension
-        run: |
-          ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
-          cd src/ide/vscode && npm i && npm run build
-        env:
-          WIRESPEC_VERSION: ${{ steps.set_version.outputs.version }}
       - name: Build site
         run: cd src/site && make build
         env:
           WIRESPEC_VERSION: ${{ steps.set_version.outputs.version }}
-      - name: Archive vscode extension
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-vscode
-          path: src/ide/vscode/wirespec.vsix
       - name: Docs
         uses: actions/upload-artifact@v4
         with:
@@ -130,6 +118,41 @@ jobs:
         with:
           name: wirespec-playground
           path: src/site/playground/dist
+
+  vscode:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build VSCode extension
+        run: |
+          ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
+          cd src/ide/vscode && npm i && npm run build
+
+  intellij-plugin:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Build IntelliJ plugin
+        run: ./gradlew :src:ide:intellij-plugin:buildPlugin
 
   example:
 
@@ -162,6 +185,8 @@ jobs:
       - js-test
       - macos-native-test
       - site
+      - vscode
+      - intellij-plugin
       - example
 
     outputs:
