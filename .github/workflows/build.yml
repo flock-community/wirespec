@@ -16,7 +16,7 @@ jobs:
 
   jvm-test:
 
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
 
   linux-native-test:
 
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
