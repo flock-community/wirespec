@@ -8,7 +8,7 @@ import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
-import community.flock.wirespec.compiler.test.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
 class WirespecEmitterTest {
