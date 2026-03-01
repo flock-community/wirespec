@@ -55,10 +55,6 @@ mavenPlugin {
 // Workaround: gradlex maven-plugin-development 1.0.3 does not resolve sourceDirectories
 // for Kotlin Multiplatform upstream projects, causing Gradle 9 validation errors.
 // Since our Mojos don't extend base classes from upstream projects, we can safely clear this.
-// Additionally, the plugin only wires Java class/source directories for mojo scanning.
-// Since our Mojos are written in Kotlin, we must add the Kotlin output directories explicitly.
 tasks.named<org.gradlex.maven.plugin.development.task.GenerateMavenPluginDescriptorTask>("generateMavenPluginDescriptor") {
     upstreamProjects.set(emptyList())
-    classesDirs.from(sourceSets.main.map { it.kotlin.classesDirectory })
-    sourcesDirs.from(sourceSets.main.map { it.kotlin.sourceDirectories })
 }

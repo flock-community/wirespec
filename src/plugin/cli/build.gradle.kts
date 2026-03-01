@@ -93,7 +93,5 @@ fun KotlinJsTargetDsl.build() {
     binaries.executable()
 }
 
-// Skip JS tests: Clikt's ES modules have a circular dependency (clikt-core ↔ clikt-mordant)
-// that breaks prototype chain initialization. The npm bin entry point works around this,
-// but the test runner does not.
+// Skip JS tests until Mordant (Clikt transitive dependency) is compiled with Kotlin 2.3
 tasks.named("jsNodeTest") { enabled = false }

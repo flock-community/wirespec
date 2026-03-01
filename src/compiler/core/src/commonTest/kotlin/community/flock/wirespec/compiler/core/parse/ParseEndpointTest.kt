@@ -13,8 +13,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint.Segment.Literal
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.test.shouldBeRight
 import community.flock.wirespec.compiler.utils.NoLogger
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty

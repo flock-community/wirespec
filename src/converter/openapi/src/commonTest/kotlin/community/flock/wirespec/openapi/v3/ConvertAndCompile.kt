@@ -2,10 +2,10 @@ package community.flock.wirespec.openapi.v3
 
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.test.shouldBeRight
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.openapi.common.compile
-import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
