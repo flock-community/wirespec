@@ -28,6 +28,8 @@ jobs:
           cache: gradle
       - name: Run JVM tests
         run: ./gradlew jvmTest
+      - name: Run Linux native tests
+        run: ./gradlew linuxX64Test
 
   js-test:
 
@@ -62,7 +64,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run native tests
-        run: ./gradlew macosArm64Test macosX64Test linuxX64Test
+        run: ./gradlew macosArm64Test macosX64Test
       - name: Build CLI release executables
         if: github.event_name != 'pull_request'
         run: |
@@ -161,8 +163,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v4
         with:
           node-version: 20
