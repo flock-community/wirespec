@@ -141,14 +141,13 @@ open class ScalaIrEmitter(
                 }
                 matchingElements { ns: Namespace ->
                     if (ns.name == Name.of("Wirespec")) {
-                        val newElements = mutableListOf<Element>()
-                        for (element in ns.elements) {
+                        val newElements = ns.elements.flatMap { element ->
                             if (element is Interface && element.name.pascalCase() in setOf("Request", "Response")) {
                                 val nestedHeaders = element.elements.filterIsInstance<Interface>()
                                     .firstOrNull { it.name.pascalCase() == "Headers" }
                                 if (nestedHeaders != null) {
-                                    newElements.add(Namespace(element.name, listOf(nestedHeaders)))
-                                    newElements.add(
+                                    listOf(
+                                        Namespace(element.name, listOf(nestedHeaders)),
                                         element.copy(
                                             elements = element.elements.filter {
                                                 !(it is Interface && it.name.pascalCase() == "Headers")
@@ -161,10 +160,10 @@ open class ScalaIrEmitter(
                                         ),
                                     )
                                 } else {
-                                    newElements.add(element)
+                                    listOf(element)
                                 }
                             } else {
-                                newElements.add(element)
+                                listOf(element)
                             }
                         }
                         ns.copy(elements = newElements)
@@ -202,9 +201,7 @@ open class ScalaIrEmitter(
         .split(".", " ")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
         .joinToString("")
-        .asSequence()
-        .filter { it.isLetterOrDigit() || it in listOf('_') }
-        .joinToString("")
+        .filter { it.isLetterOrDigit() || it == '_' }
         .sanitizeFirstIsDigit()
         .let { if (this is FieldIdentifier) it.sanitizeKeywords() else it }
 
@@ -246,22 +243,21 @@ open class ScalaIrEmitter(
             (requestStruct.fields.isEmpty() && requestStruct.constructors.isEmpty())
     }
 
-    private fun Namespace.injectHandleFunction(): Namespace {
-        return transform {
-            matchingElements { iface: Interface ->
-                if (iface.name == Name.of("Handler")) {
-                    iface.copy(
-                        typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
-                    ).transform {
-                        matchingElements { fn: LanguageFunction ->
-                            fn.copy(
+    private fun Namespace.injectHandleFunction(): Namespace = transform {
+        matchingElements { iface: Interface ->
+            if (iface.name == Name.of("Handler")) {
+                iface.copy(
+                    typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
+                    elements = iface.elements.map { element ->
+                        if (element is LanguageFunction) {
+                            element.copy(
                                 isAsync = false,
-                                returnType = fn.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
+                                returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
                             )
-                        }
-                    }
-                } else iface
-            }
+                        } else element
+                    },
+                )
+            } else iface
         }
     }
 

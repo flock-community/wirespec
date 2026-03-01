@@ -111,9 +111,7 @@ open class TypeScriptIrEmitter : IrEmitter {
             )
         }
 
-    fun String.sanitizeSymbol() = asSequence()
-        .filter { it.isLetterOrDigit() || it in listOf('_') }
-        .joinToString("")
+    fun String.sanitizeSymbol() = filter { it.isLetterOrDigit() || it == '_' }
 
     fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
 
@@ -129,7 +127,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         // 1. Add obj receiver to bare FieldCalls that reference type fields
         // 2. Convert method-style validate calls to standalone function calls: x.validate() -> validateFoo(x)
         val tsTransformer = transformer {
-            statement { s, t ->
+            statementAndExpression { s, t ->
                 when {
                     s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
                         val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
@@ -138,17 +136,6 @@ open class TypeScriptIrEmitter : IrEmitter {
                     s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
                         FieldCall(receiver = VariableReference(Name.of("obj")), field = s.field)
                     else -> s.transformChildren(t)
-                }
-            }
-            expression { e, t ->
-                when {
-                    e is FunctionCall && e.name == Name.of("validate") && e.receiver != null && e.typeArguments.isNotEmpty() -> {
-                        val typeName = (e.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
-                        FunctionCall(name = Name.of("validate$typeName"), arguments = mapOf(Name.of("obj") to t.transformExpression(e.receiver!!)))
-                    }
-                    e is FieldCall && e.receiver == null && e.field.camelCase() in fieldNames ->
-                        FieldCall(receiver = VariableReference(Name.of("obj")), field = e.field)
-                    else -> e.transformChildren(t)
                 }
             }
         }

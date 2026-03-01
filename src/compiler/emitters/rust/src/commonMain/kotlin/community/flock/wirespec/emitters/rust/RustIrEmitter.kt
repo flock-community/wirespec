@@ -271,15 +271,15 @@ open class RustIrEmitter(
         .toSnakeCase()
 
     fun String.toSnakeCase(): String {
-        if (this.isEmpty()) return this
-        val result = StringBuilder()
-        for ((i, c) in this.withIndex()) {
-            if (c.isUpperCase() && i > 0 && this[i - 1].isLowerCase()) {
-                result.append('_')
+        if (isEmpty()) return this
+        return buildString {
+            for ((i, c) in this@toSnakeCase.withIndex()) {
+                if (c.isUpperCase() && i > 0 && this@toSnakeCase[i - 1].isLowerCase()) {
+                    append('_')
+                }
+                append(c.lowercaseChar())
             }
-            result.append(c.lowercaseChar())
         }
-        return result.toString()
     }
 
     fun String.sanitizeKeywords() = if (this in reservedKeywords) "r#$this" else this
@@ -293,7 +293,7 @@ open class RustIrEmitter(
                 if (name == "self" || name == "&self") param
                 else param.copy(name = param.name.toSnakeCaseName())
             }
-            statement { stmt, tr ->
+            statementAndExpression { stmt, tr ->
                 when (stmt) {
                     is FieldCall -> FieldCall(
                         receiver = stmt.receiver?.let { tr.transformExpression(it) },
@@ -308,21 +308,6 @@ open class RustIrEmitter(
                     else -> stmt.transformChildren(tr)
                 }
             }
-            expression { expr, tr ->
-                when (expr) {
-                    is FieldCall -> FieldCall(
-                        receiver = expr.receiver?.let { tr.transformExpression(it) },
-                        field = expr.field.toSnakeCaseName(),
-                    )
-                    is ConstructorStatement -> ConstructorStatement(
-                        type = tr.transformType(expr.type),
-                        namedArguments = expr.namedArguments
-                            .map { (k, v) -> k.toSnakeCaseName() to tr.transformExpression(v) }
-                            .toMap(),
-                    )
-                    else -> expr.transformChildren(tr)
-                }
-            }
         })
     }
 
@@ -331,18 +316,11 @@ open class RustIrEmitter(
             .joinToString("\n") { "use super::${it.value.toSnakeCase()}::${it.value};" }
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val addSelfReceiver = transformer {
-            statement { s, t ->
+            statementAndExpression { s, t ->
                 if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
                     FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
                 } else {
                     s.transformChildren(t)
-                }
-            }
-            expression { e, t ->
-                if (e is FieldCall && e.receiver == null && e.field.camelCase() in fieldNames) {
-                    FieldCall(receiver = VariableReference(Name.of("self")), field = e.field)
-                } else {
-                    e.transformChildren(t)
                 }
             }
         }
@@ -421,21 +399,17 @@ open class RustIrEmitter(
             elements = classElements,
             extends = converted.extends,
         )
-        val elements = mutableListOf<Element>()
-        if (imports.isNotEmpty()) elements.add(RawElement(imports))
-        elements.addAll(moduleElements)
-        elements.add(endpointClass)
+        val elements = buildList {
+            if (imports.isNotEmpty()) add(RawElement(imports))
+            addAll(moduleElements)
+            add(endpointClass)
+        }
         val file = LanguageFile(converted.name, elements)
 
         // Step 1b: Convert simple-identifier RawExpressions to VariableReference for proper snake_case
         val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
         val fixRawExprToVarRef = transformer {
-            expression { e, t ->
-                if (e is RawExpression && identifierPattern.matches(e.code) && !e.code.contains(".")) {
-                    VariableReference(Name.of(e.code))
-                } else e.transformChildren(t)
-            }
-            statement { s, t ->
+            statementAndExpression { s, t ->
                 if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
                     VariableReference(Name.of(s.code))
                 } else s.transformChildren(t)
@@ -458,7 +432,7 @@ open class RustIrEmitter(
                 val renamed = if (field.name == Name.of("statusCode")) field.copy(name = Name.of("status_code")) else field
                 renamed.transformChildren(t)
             }
-            statement { s, t ->
+            statementAndExpression { s, t ->
                 when {
                     s is FieldCall && s.field == Name.of("statusCode") ->
                         FieldCall(receiver = s.receiver?.let { t.transformExpression(it) }, field = Name.of("status_code"))
@@ -470,20 +444,6 @@ open class RustIrEmitter(
                                 .mapValues { t.transformExpression(it.value) },
                         )
                     else -> s.transformChildren(t)
-                }
-            }
-            expression { e, t ->
-                when {
-                    e is FieldCall && e.field == Name.of("statusCode") ->
-                        FieldCall(receiver = e.receiver?.let { t.transformExpression(it) }, field = Name.of("status_code"))
-                    e is ConstructorStatement && Name.of("statusCode") in e.namedArguments ->
-                        e.copy(
-                            type = t.transformType(e.type),
-                            namedArguments = e.namedArguments
-                                .mapKeys { if (it.key == Name.of("statusCode")) Name.of("status_code") else it.key }
-                                .mapValues { t.transformExpression(it.value) },
-                        )
-                    else -> e.transformChildren(t)
                 }
             }
         }
@@ -565,11 +525,7 @@ open class RustIrEmitter(
                         }
                     }
                     transformer {
-                        expression { e, t ->
-                            if (e is ConstructorStatement) transformConstructor(e, t) ?: e.transformChildren(t)
-                            else e.transformChildren(t)
-                        }
-                        statement { s, t ->
+                        statementAndExpression { s, t ->
                             if (s is ConstructorStatement) transformConstructor(s, t) ?: s.transformChildren(t)
                             else s.transformChildren(t)
                         }
@@ -622,27 +578,22 @@ open class RustIrEmitter(
 
     private fun flattenEndpointForRust(converted: Namespace): Pair<List<Element>, List<Element>> {
         val flattened = converted.flattenNestedStructs()
-        val moduleElements = mutableListOf<Element>()
-        val classElements = mutableListOf<Element>()
-        for (element in flattened.elements) {
-            when (element) {
-                is Struct -> moduleElements.add(element)
-                is LanguageUnion -> {
-                    if (element.name.pascalCase() == "Response") {
-                        // Flat Response: individual response structs as direct members
-                        val individualResponseNames = flattened.elements
-                            .filterIsInstance<Struct>()
-                            .map { it.name.pascalCase() }
-                            .filter { it.matches(Regex("Response(\\d+|Default)")) }
-                        val members = individualResponseNames.map { LanguageType.Custom(it) }
-                        moduleElements.add(element.copy(members = members))
-                    } else {
-                        moduleElements.add(element)
-                    }
+        val responsePattern = Regex("Response(\\d+|Default)")
+        val moduleElements = flattened.elements
+            .filter { it is Struct || it is LanguageUnion }
+            .map { element ->
+                if (element is LanguageUnion && element.name.pascalCase() == "Response") {
+                    val members = flattened.elements
+                        .filterIsInstance<Struct>()
+                        .map { it.name.pascalCase() }
+                        .filter { responsePattern.matches(it) }
+                        .map { LanguageType.Custom(it) }
+                    element.copy(members = members)
+                } else {
+                    element
                 }
-                else -> classElements.add(element)
             }
-        }
+        val classElements = flattened.elements.filter { it !is Struct && it !is LanguageUnion }
         return Pair(moduleElements, classElements)
     }
 

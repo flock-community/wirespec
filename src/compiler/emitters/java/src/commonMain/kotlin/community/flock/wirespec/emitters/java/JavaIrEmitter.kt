@@ -193,9 +193,7 @@ open class JavaIrEmitter(
         .split(".", " ", "-")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
         .joinToString("")
-        .asSequence()
-        .filter { it.isLetterOrDigit() || it in listOf('_') }
-        .joinToString("")
+        .filter { it.isLetterOrDigit() || it == '_' }
         .sanitizeFirstIsDigit()
 
     fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")

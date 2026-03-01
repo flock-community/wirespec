@@ -51,6 +51,13 @@ class TransformerBuilder @PublishedApi internal constructor() {
         transformCase = transform
     }
 
+    fun statementAndExpression(block: (Statement, Transformer) -> Statement) {
+        statement(block)
+        expression { e, t ->
+            (e as? Statement)?.let { block(it, t) } ?: e.transformChildren(t)
+        }
+    }
+
     @PublishedApi
     internal fun build(): Transformer = object : Transformer {
         override fun transformType(type: Type): Type = transformType?.invoke(type, this) ?: type.transformChildren(this)
@@ -311,6 +318,10 @@ class TransformScope<E : Element> @PublishedApi internal constructor(
 
     fun case(transform: (Case, Transformer) -> Case) {
         element = element.transform(transformer { case(transform) })
+    }
+
+    fun statementAndExpression(block: (Statement, Transformer) -> Statement) {
+        apply(transformer { statementAndExpression(block) })
     }
 }
 

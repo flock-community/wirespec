@@ -164,18 +164,11 @@ open class PythonIrEmitter(
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         // Add self receiver to bare FieldCalls that reference type fields
         val addSelfReceiver = transformer {
-            statement { s, t ->
+            statementAndExpression { s, t ->
                 if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
                     FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
                 } else {
                     s.transformChildren(t)
-                }
-            }
-            expression { e, t ->
-                if (e is FieldCall && e.receiver == null && e.field.camelCase() in fieldNames) {
-                    FieldCall(receiver = VariableReference(Name.of("self")), field = e.field)
-                } else {
-                    e.transformChildren(t)
                 }
             }
         }
@@ -257,23 +250,17 @@ open class PythonIrEmitter(
             .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
         val converted = endpoint.convert().findElement<Namespace>()!!
         val flattened = converted.flattenNestedStructs()
-        val moduleElements = mutableListOf<Element>()
-        val classElements = mutableListOf<Element>()
-        for (element in flattened.elements) {
-            when (element) {
-                is Struct, is LanguageUnion -> moduleElements.add(element)
-                else -> classElements.add(element)
-            }
-        }
+        val (moduleElements, classElements) = flattened.elements.partition { it is Struct || it is LanguageUnion }
         val endpointClass = Namespace(
             name = converted.name,
             elements = classElements,
             extends = converted.extends,
         )
-        val elements = mutableListOf<Element>()
-        if (imports.isNotEmpty()) elements.add(RawElement(imports))
-        elements.addAll(moduleElements)
-        elements.add(endpointClass)
+        val elements = buildList {
+            if (imports.isNotEmpty()) add(RawElement(imports))
+            addAll(moduleElements)
+            add(endpointClass)
+        }
         return LanguageFile(converted.name, elements)
     }
 

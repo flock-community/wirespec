@@ -167,9 +167,7 @@ open class KotlinIrEmitter(
         .split(".", " ")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
         .joinToString("")
-        .asSequence()
-        .filter { it.isLetterOrDigit() || it in listOf('_') }
-        .joinToString("")
+        .filter { it.isLetterOrDigit() || it == '_' }
         .sanitizeFirstIsDigit()
         .let { if (this is FieldIdentifier) it.sanitizeKeywords() else it }
 
@@ -205,14 +203,8 @@ open class KotlinIrEmitter(
         val companion = companionObject(endpoint)
 
         return transform {
-            matchingElements { iface: Interface ->
-                if (iface.name == Name.of("Handler")) {
-                    iface.transform {
-                        injectAfter { _: Interface -> listOf(companion) }
-                    }
-                } else {
-                    iface
-                }
+            injectAfter { iface: Interface ->
+                if (iface.name == Name.of("Handler")) listOf(companion) else emptyList()
             }
         }
     }
