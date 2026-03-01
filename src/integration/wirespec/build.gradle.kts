@@ -14,7 +14,6 @@ repositories {
 
 kotlin {
     jvm {
-        withJava()
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))

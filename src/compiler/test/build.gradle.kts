@@ -1,6 +1,7 @@
 plugins {
     id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
 }
 
@@ -21,7 +22,6 @@ kotlin {
         useEsModules()
     }
     jvm {
-        withJava()
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))

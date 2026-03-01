@@ -9,10 +9,10 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.compile
+import community.flock.wirespec.compiler.test.shouldBeRight
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe

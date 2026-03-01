@@ -19,7 +19,6 @@ kotlin {
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
-        withJava()
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))

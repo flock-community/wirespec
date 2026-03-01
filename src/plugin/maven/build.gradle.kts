@@ -51,3 +51,10 @@ mavenPlugin {
     description.set("Plugin to run wirespec compiler")
     goalPrefix.set("wirespec")
 }
+
+// Workaround: gradlex maven-plugin-development 1.0.3 does not resolve sourceDirectories
+// for Kotlin Multiplatform upstream projects, causing Gradle 9 validation errors.
+// Since our Mojos don't extend base classes from upstream projects, we can safely clear this.
+tasks.named<org.gradlex.maven.plugin.development.task.GenerateMavenPluginDescriptorTask>("generateMavenPluginDescriptor") {
+    upstreamProjects.set(emptyList())
+}

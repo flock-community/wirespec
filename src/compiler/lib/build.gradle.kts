@@ -16,7 +16,6 @@ kotlin {
         nodejs()
     }
     jvm {
-        withJava()
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
