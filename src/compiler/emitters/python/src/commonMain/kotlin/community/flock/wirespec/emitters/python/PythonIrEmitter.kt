@@ -29,8 +29,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Assignment
-import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
@@ -42,6 +40,7 @@ import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
@@ -257,7 +256,15 @@ open class PythonIrEmitter(
         val imports = endpoint.importReferences().distinctBy { it.value }
             .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
         val converted = endpoint.convert().findElement<Namespace>()!!
-        val (moduleElements, classElements) = flattenEndpointForPython(converted)
+        val flattened = converted.flattenNestedStructs()
+        val moduleElements = mutableListOf<Element>()
+        val classElements = mutableListOf<Element>()
+        for (element in flattened.elements) {
+            when (element) {
+                is Struct, is LanguageUnion -> moduleElements.add(element)
+                else -> classElements.add(element)
+            }
+        }
         val endpointClass = Namespace(
             name = converted.name,
             elements = classElements,
@@ -268,58 +275,6 @@ open class PythonIrEmitter(
         elements.addAll(moduleElements)
         elements.add(endpointClass)
         return LanguageFile(converted.name, elements)
-    }
-
-    private fun flattenEndpointForPython(converted: Namespace): Pair<List<Element>, List<Element>> {
-        val moduleElements = mutableListOf<Element>()
-        val classElements = mutableListOf<Element>()
-        for (element in converted.elements) {
-            when (element) {
-                is Struct -> {
-                    val nested = element.elements.filterIsInstance<Struct>()
-                    if (nested.isNotEmpty()) {
-                        val nestedNames = nested.map { it.name.pascalCase() }.toSet()
-                        for (nestedStruct in nested) {
-                            moduleElements.add(nestedStruct.copy(name = Name.of("${element.name.pascalCase()}${nestedStruct.name.pascalCase()}")))
-                        }
-                        moduleElements.add(qualifyNestedRefs(element, nestedNames))
-                    } else {
-                        moduleElements.add(element)
-                    }
-                }
-
-                is LanguageUnion -> moduleElements.add(element)
-                else -> classElements.add(element)
-            }
-        }
-        return Pair(moduleElements, classElements)
-    }
-
-    private fun qualifyNestedRefs(struct: Struct, nestedNames: Set<String>): Struct {
-        val qualifiedFields = struct.fields.map { field ->
-            val typeName = (field.type as? LanguageType.Custom)?.name
-            if (typeName != null && typeName in nestedNames) {
-                field.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName"))
-            } else field
-        }
-        val qualifiedConstructors = struct.constructors.map { c ->
-            c.copy(body = c.body.map { stmt ->
-                if (stmt is Assignment) {
-                    val value = stmt.value
-                    if (value is ConstructorStatement) {
-                        val typeName = (value.type as? LanguageType.Custom)?.name
-                        if (typeName != null && typeName in nestedNames) {
-                            Assignment(stmt.name, value.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName")))
-                        } else stmt
-                    } else stmt
-                } else stmt
-            })
-        }
-        return struct.copy(
-            fields = qualifiedFields,
-            constructors = qualifiedConstructors,
-            elements = struct.elements.filter { it !is Struct },
-        )
     }
 
     // endregion

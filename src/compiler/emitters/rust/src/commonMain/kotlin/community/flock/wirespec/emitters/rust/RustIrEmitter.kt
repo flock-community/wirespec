@@ -29,7 +29,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.Case
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
@@ -46,6 +45,7 @@ import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
@@ -621,33 +621,22 @@ open class RustIrEmitter(
     }
 
     private fun flattenEndpointForRust(converted: Namespace): Pair<List<Element>, List<Element>> {
+        val flattened = converted.flattenNestedStructs()
         val moduleElements = mutableListOf<Element>()
         val classElements = mutableListOf<Element>()
-        for (element in converted.elements) {
+        for (element in flattened.elements) {
             when (element) {
-                is Struct -> {
-                    val nested = element.elements.filterIsInstance<Struct>()
-                    if (nested.isNotEmpty()) {
-                        val nestedNames = nested.map { it.name.pascalCase() }.toSet()
-                        for (nestedStruct in nested) {
-                            moduleElements.add(nestedStruct.copy(name = Name.of("${element.name.pascalCase()}${nestedStruct.name.pascalCase()}")))
-                        }
-                        moduleElements.add(qualifyNestedRefs(element, nestedNames))
-                    } else {
-                        moduleElements.add(element)
-                    }
-                }
+                is Struct -> moduleElements.add(element)
                 is LanguageUnion -> {
                     if (element.name.pascalCase() == "Response") {
                         // Flat Response: individual response structs as direct members
-                        val individualResponseNames = converted.elements
+                        val individualResponseNames = flattened.elements
                             .filterIsInstance<Struct>()
                             .map { it.name.pascalCase() }
                             .filter { it.matches(Regex("Response(\\d+|Default)")) }
                         val members = individualResponseNames.map { LanguageType.Custom(it) }
                         moduleElements.add(element.copy(members = members))
                     } else {
-                        // Keep all grouping unions (Response2XX, Response4XX, ResponsePet, etc.) as standalone enums
                         moduleElements.add(element)
                     }
                 }
@@ -655,33 +644,6 @@ open class RustIrEmitter(
             }
         }
         return Pair(moduleElements, classElements)
-    }
-
-    private fun qualifyNestedRefs(struct: Struct, nestedNames: Set<String>): Struct {
-        val qualifiedFields = struct.fields.map { field ->
-            val typeName = (field.type as? LanguageType.Custom)?.name
-            if (typeName != null && typeName in nestedNames) {
-                field.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName"))
-            } else field
-        }
-        val qualifiedConstructors = struct.constructors.map { c ->
-            c.copy(body = c.body.map { stmt ->
-                if (stmt is Assignment) {
-                    val value = stmt.value
-                    if (value is ConstructorStatement) {
-                        val typeName = (value.type as? LanguageType.Custom)?.name
-                        if (typeName != null && typeName in nestedNames) {
-                            Assignment(stmt.name, value.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName")))
-                        } else stmt
-                    } else stmt
-                } else stmt
-            })
-        }
-        return struct.copy(
-            fields = qualifiedFields,
-            constructors = qualifiedConstructors,
-            elements = struct.elements.filter { it !is Struct },
-        )
     }
 
     override fun emit(channel: Channel): File =

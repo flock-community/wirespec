@@ -24,23 +24,15 @@ import community.flock.wirespec.ir.converter.classifyValidatableFields
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.converter.requestParameters
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Parameter
-import community.flock.wirespec.ir.core.Statement
-import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
@@ -196,14 +188,7 @@ open class TypeScriptIrEmitter : IrEmitter {
     override fun emit(refined: Refined): File {
         val converted = refined.convert()
         val constraintExpr = refined.reference.convertConstraint(VariableReference(Name.of("value")))
-        val validatorStr = function("_constraint") {
-            returnType(LanguageType.Boolean)
-            returns(constraintExpr)
-        }.generateTypeScript().lines()
-            .first { it.trimStart().startsWith("return ") }
-            .trimStart()
-            .removePrefix("return ")
-            .removeSuffix(";")
+        val validatorStr = TypeScriptGenerator.generateExpression(constraintExpr)
         return File(
             converted.name, listOf(
                 RawElement("export type ${converted.name.pascalCase()} = ${emitTypeScriptReference(refined.reference)};"),

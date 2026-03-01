@@ -18,7 +18,6 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
-import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -41,19 +40,17 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.findAll
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.generator.KotlinGenerator
-import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.ir.generator.generateKotlin
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
-import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Type as LanguageType
 
@@ -74,27 +71,63 @@ open class KotlinIrEmitter(
     override val extension = FileExtension.Kotlin
 
     override val shared = object : Shared {
-        val clientServer = """
-            |interface ServerEdge<Req : Request<*>, Res : Response<*>> {
-            |    fun from(request: RawRequest): Req
-            |    fun to(response: Res): RawResponse
-            |}
-            |interface ClientEdge<Req : Request<*>, Res : Response<*>> {
-            |    fun to(request: Req): RawRequest
-            |    fun from(response: RawResponse): Res
-            |}
-            |interface Client<Req : Request<*>, Res : Response<*>> {
-            |    val pathTemplate: String
-            |    val method: String
-            |    fun client(serialization: Serialization): ClientEdge<Req, Res>
-            |}
-            |interface Server<Req : Request<*>, Res : Response<*>> {
-            |    val pathTemplate: String
-            |    val method: String
-            |    fun server(serialization: Serialization): ServerEdge<Req, Res>
-            |}
-        """.trimMargin()
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
+
+        private val clientServer = buildList {
+            add(
+                `interface`("ServerEdge") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    function("from") {
+                        returnType(type("Req"))
+                        arg("request", type("RawRequest"))
+                    }
+                    function("to") {
+                        returnType(type("RawResponse"))
+                        arg("response", type("Res"))
+                    }
+                },
+            )
+            add(
+                `interface`("ClientEdge") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    function("to") {
+                        returnType(type("RawRequest"))
+                        arg("request", type("Req"))
+                    }
+                    function("from") {
+                        returnType(type("Res"))
+                        arg("response", type("RawResponse"))
+                    }
+                },
+            )
+            add(
+                `interface`("Client") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    field("pathTemplate", LanguageType.String)
+                    field("method", LanguageType.String)
+                    function("client") {
+                        returnType(type("ClientEdge", type("Req"), type("Res")))
+                        arg("serialization", type("Serialization"))
+                    }
+                },
+            )
+            add(
+                `interface`("Server") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    field("pathTemplate", LanguageType.String)
+                    field("method", LanguageType.String)
+                    function("server") {
+                        returnType(type("ServerEdge", type("Req"), type("Res")))
+                        arg("serialization", type("Serialization"))
+                    }
+                },
+            )
+        }
+
         override val source = AstShared(packageString)
             .convert()
             .transform {
@@ -103,7 +136,7 @@ open class KotlinIrEmitter(
                     file.copy(elements = packageElements + Import("kotlin.reflect", LanguageType.Custom("KType")) + rest)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) listOf(RawElement(clientServer))
+                    if (namespace.name == Name.of("Wirespec")) clientServer
                     else emptyList()
                 }
             }
@@ -170,16 +203,11 @@ open class KotlinIrEmitter(
 
     private fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace {
         val companion = companionObject(endpoint)
-        val rawHandleFunction = raw(emitHandleFunction(endpoint))
-        val targetFunctionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
 
         return transform {
             matchingElements { iface: Interface ->
                 if (iface.name == Name.of("Handler")) {
                     iface.transform {
-                        matchingElements { fn: LanguageFunction ->
-                            if (fn.name.camelCase() == targetFunctionName) rawHandleFunction else fn
-                        }
                         injectAfter { _: Interface -> listOf(companion) }
                     }
                 } else {
@@ -187,15 +215,6 @@ open class KotlinIrEmitter(
                 }
             }
         }
-    }
-
-    open fun emitHandleFunction(endpoint: Endpoint): String {
-        return endpoint.convert()
-            .findAll<Interface>().firstOrNull { it.name == Name.of("Handler") }
-            ?.findElement<LanguageFunction>()
-            ?.generateKotlin()
-            ?.let { it + "\n" }
-            ?: ""
     }
 
     fun companionObject(endpoint: Endpoint): RawElement {

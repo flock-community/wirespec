@@ -16,7 +16,6 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
-import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -30,9 +29,8 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.Constructor
-import community.flock.wirespec.ir.core.ConstructorStatement
+import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
@@ -40,10 +38,12 @@ import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.findAll
 import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.withLabelField
@@ -51,9 +51,9 @@ import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.generator.ScalaGenerator
 import community.flock.wirespec.ir.generator.generateScala
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
+import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
-import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Import as LanguageImport
 import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Type as LanguageType
@@ -76,113 +76,106 @@ open class ScalaIrEmitter(
 
     override val shared = object : Shared {
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.scala"
-        override val source = """
-            |package $packageString
-            |import scala.reflect.ClassTag
-            |object Wirespec {
-            |  trait Model {
-            |    def validate(): List[String]
-            |  }
-            |  trait Enum {
-            |    def label: String
-            |  }
-            |  trait Endpoint
-            |  trait Channel
-            |  trait Refined[T] {
-            |    def value: T
-            |    def validate(): Boolean
-            |  }
-            |  trait Path
-            |  trait Queries
-            |  trait Headers
-            |  trait Handler
-            |  enum Method {
-            |    case GET
-            |    case PUT
-            |    case POST
-            |    case DELETE
-            |    case OPTIONS
-            |    case HEAD
-            |    case PATCH
-            |    case TRACE
-            |  }
-            |  object Request {
-            |    trait Headers
-            |  }
-            |  trait Request[T] {
-            |    def path: Path
-            |    def method: Method
-            |    def queries: Queries
-            |    def headers: Request.Headers
-            |    def body: T
-            |  }
-            |  object Response {
-            |    trait Headers
-            |  }
-            |  trait Response[T] {
-            |    def status: Int
-            |    def headers: Response.Headers
-            |    def body: T
-            |  }
-            |  trait BodySerializer {
-            |    def serializeBody[T](t: T, `type`: scala.reflect.ClassTag[?]): Array[Byte]
-            |  }
-            |  trait BodyDeserializer {
-            |    def deserializeBody[T](raw: Array[Byte], `type`: scala.reflect.ClassTag[?]): T
-            |  }
-            |  trait BodySerialization extends BodySerializer with BodyDeserializer
-            |  trait PathSerializer {
-            |    def serializePath[T](t: T, `type`: scala.reflect.ClassTag[?]): String
-            |  }
-            |  trait PathDeserializer {
-            |    def deserializePath[T](raw: String, `type`: scala.reflect.ClassTag[?]): T
-            |  }
-            |  trait PathSerialization extends PathSerializer with PathDeserializer
-            |  trait ParamSerializer {
-            |    def serializeParam[T](value: T, `type`: scala.reflect.ClassTag[?]): List[String]
-            |  }
-            |  trait ParamDeserializer {
-            |    def deserializeParam[T](values: List[String], `type`: scala.reflect.ClassTag[?]): T
-            |  }
-            |  trait ParamSerialization extends ParamSerializer with ParamDeserializer
-            |  trait Serializer extends BodySerializer with PathSerializer with ParamSerializer
-            |  trait Deserializer extends BodyDeserializer with PathDeserializer with ParamDeserializer
-            |  trait Serialization extends Serializer with Deserializer
-            |  case class RawRequest(
-            |    val method: String,
-            |    val path: List[String],
-            |    val queries: Map[String, List[String]],
-            |    val headers: Map[String, List[String]],
-            |    val body: Option[Array[Byte]]
-            |  )
-            |  case class RawResponse(
-            |    val statusCode: Int,
-            |    val headers: Map[String, List[String]],
-            |    val body: Option[Array[Byte]]
-            |  )
-            |  trait Transportation {
-            |    def transport(request: RawRequest): RawResponse
-            |  }
-            |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
-            |    def from(request: RawRequest): Req
-            |    def to(response: Res): RawResponse
-            |  }
-            |  trait ClientEdge[Req <: Request[?], Res <: Response[?]] {
-            |    def to(request: Req): RawRequest
-            |    def from(response: RawResponse): Res
-            |  }
-            |  trait Client[Req <: Request[?], Res <: Response[?]] {
-            |    val pathTemplate: String
-            |    val method: String
-            |    def client(serialization: Serialization): ClientEdge[Req, Res]
-            |  }
-            |  trait Server[Req <: Request[?], Res <: Response[?]] {
-            |    val pathTemplate: String
-            |    val method: String
-            |    def server(serialization: Serialization): ServerEdge[Req, Res]
-            |  }
-            |}
-        """.trimMargin()
+
+        private val clientServer = buildList {
+            add(
+                `interface`("ServerEdge") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    function("from") {
+                        returnType(type("Req"))
+                        arg("request", type("RawRequest"))
+                    }
+                    function("to") {
+                        returnType(type("RawResponse"))
+                        arg("response", type("Res"))
+                    }
+                },
+            )
+            add(
+                `interface`("ClientEdge") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    function("to") {
+                        returnType(type("RawRequest"))
+                        arg("request", type("Req"))
+                    }
+                    function("from") {
+                        returnType(type("Res"))
+                        arg("response", type("RawResponse"))
+                    }
+                },
+            )
+            add(
+                `interface`("Client") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    field("pathTemplate", LanguageType.String)
+                    field("method", LanguageType.String)
+                    function("client") {
+                        returnType(type("ClientEdge", type("Req"), type("Res")))
+                        arg("serialization", type("Serialization"))
+                    }
+                },
+            )
+            add(
+                `interface`("Server") {
+                    typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                    typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                    field("pathTemplate", LanguageType.String)
+                    field("method", LanguageType.String)
+                    function("server") {
+                        returnType(type("ServerEdge", type("Req"), type("Res")))
+                        arg("serialization", type("Serialization"))
+                    }
+                },
+            )
+        }
+
+        override val source = AstShared(packageString)
+            .convert()
+            .transform {
+                matchingElements { file: LanguageFile ->
+                    val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
+                    file.copy(elements = packageElements + LanguageImport("scala.reflect", LanguageType.Custom("ClassTag")) + rest)
+                }
+                matchingElements { ns: Namespace ->
+                    if (ns.name == Name.of("Wirespec")) {
+                        val newElements = mutableListOf<Element>()
+                        for (element in ns.elements) {
+                            if (element is Interface && element.name.pascalCase() in setOf("Request", "Response")) {
+                                val nestedHeaders = element.elements.filterIsInstance<Interface>()
+                                    .firstOrNull { it.name.pascalCase() == "Headers" }
+                                if (nestedHeaders != null) {
+                                    newElements.add(Namespace(element.name, listOf(nestedHeaders)))
+                                    newElements.add(
+                                        element.copy(
+                                            elements = element.elements.filter {
+                                                !(it is Interface && it.name.pascalCase() == "Headers")
+                                            },
+                                            fields = element.fields.map { f ->
+                                                if (f.name.value() == "headers") {
+                                                    f.copy(type = LanguageType.Custom("${element.name.pascalCase()}.Headers"))
+                                                } else f
+                                            },
+                                        ),
+                                    )
+                                } else {
+                                    newElements.add(element)
+                                }
+                            } else {
+                                newElements.add(element)
+                            }
+                        }
+                        ns.copy(elements = newElements)
+                    } else ns
+                }
+                injectAfter { namespace: Namespace ->
+                    if (namespace.name == Name.of("Wirespec")) clientServer
+                    else emptyList()
+                }
+            }
+            .generateScala()
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
@@ -236,10 +229,10 @@ open class ScalaIrEmitter(
         val imports = endpoint.emitEndpointImports()
         val file = endpoint.convert()
         val endpointNamespace = file.findElement<Namespace>()!!
-        val flattened = flattenNestedStructs(endpointNamespace)
+        val flattened = endpointNamespace.flattenNestedStructs()
         val requestIsObject = isRequestObject(flattened)
         val body = flattened
-            .injectHandleFunction(endpoint, requestIsObject)
+            .injectHandleFunction()
             .withClientServerObjects(endpoint, requestIsObject)
 
         return if (imports.isNotEmpty()) LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
@@ -253,74 +246,23 @@ open class ScalaIrEmitter(
             (requestStruct.fields.isEmpty() && requestStruct.constructors.isEmpty())
     }
 
-    private fun flattenNestedStructs(namespace: Namespace): Namespace {
-        val newElements = mutableListOf<community.flock.wirespec.ir.core.Element>()
-        for (element in namespace.elements) {
-            when (element) {
-                is Struct -> {
-                    val nested = element.elements.filterIsInstance<Struct>()
-                    if (nested.isNotEmpty()) {
-                        val nestedNames = nested.map { it.name.pascalCase() }.toSet()
-                        for (nestedStruct in nested) {
-                            newElements.add(nestedStruct.copy(name = Name.of("${element.name.pascalCase()}${nestedStruct.name.pascalCase()}")))
-                        }
-                        newElements.add(qualifyNestedRefs(element, nestedNames))
-                    } else {
-                        newElements.add(element)
-                    }
-                }
-                else -> newElements.add(element)
-            }
-        }
-        return namespace.copy(elements = newElements)
-    }
-
-    private fun qualifyNestedRefs(struct: Struct, nestedNames: Set<String>): Struct {
-        val qualifiedFields = struct.fields.map { field ->
-            val typeName = (field.type as? LanguageType.Custom)?.name
-            if (typeName != null && typeName in nestedNames) {
-                field.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName"))
-            } else field
-        }
-        val qualifiedConstructors = struct.constructors.map { c ->
-            c.copy(body = c.body.map { stmt ->
-                if (stmt is Assignment) {
-                    val value = stmt.value
-                    if (value is ConstructorStatement) {
-                        val typeName = (value.type as? LanguageType.Custom)?.name
-                        if (typeName != null && typeName in nestedNames) {
-                            Assignment(stmt.name, value.copy(type = LanguageType.Custom("${struct.name.pascalCase()}$typeName")))
-                        } else stmt
-                    } else stmt
-                } else stmt
-            })
-        }
-        return struct.copy(
-            fields = qualifiedFields,
-            constructors = qualifiedConstructors,
-            elements = struct.elements.filter { it !is Struct },
-        )
-    }
-
-    private fun Namespace.injectHandleFunction(endpoint: Endpoint, requestIsObject: Boolean): Namespace {
-        val handlerRaw = raw(emitHandler(endpoint, requestIsObject))
-
+    private fun Namespace.injectHandleFunction(): Namespace {
         return transform {
             matchingElements { iface: Interface ->
-                if (iface.name == Name.of("Handler")) handlerRaw else iface
+                if (iface.name == Name.of("Handler")) {
+                    iface.copy(
+                        typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
+                    ).transform {
+                        matchingElements { fn: LanguageFunction ->
+                            fn.copy(
+                                isAsync = false,
+                                returnType = fn.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
+                            )
+                        }
+                    }
+                } else iface
             }
         }
-    }
-
-    open fun emitHandleFunction(endpoint: Endpoint, requestIsObject: Boolean): String {
-        val functionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
-        val requestType = if (requestIsObject) "Request.type" else "Request"
-        return "def $functionName(request: $requestType): F[Response[?]]\n"
-    }
-
-    open fun emitHandler(endpoint: Endpoint, requestIsObject: Boolean): String {
-        val handleFunction = emitHandleFunction(endpoint, requestIsObject)
-        return "trait Handler[F[_]] extends Wirespec.Handler {\n    $handleFunction}\n"
     }
 
     private fun Namespace.withClientServerObjects(endpoint: Endpoint, requestIsObject: Boolean): Namespace {

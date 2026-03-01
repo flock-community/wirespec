@@ -57,6 +57,9 @@ object TypeScriptGenerator : Generator {
         is File -> TypeScriptFileEmitter(element).emitFile()
         else -> TypeScriptFileEmitter(File(Name.of(""), listOf(element))).emitFile()
     }
+
+    fun generateExpression(expression: Expression): String =
+        TypeScriptFileEmitter(File(Name.of(""), emptyList())).renderExpression(expression)
 }
 
 private class TypeScriptFileEmitter(val file: File) {
@@ -74,6 +77,8 @@ private class TypeScriptFileEmitter(val file: File) {
         .toSet()
 
     fun emitFile(): String = file.elements.joinToString("") { it.emit(0) }.removeEmptyLines()
+
+    fun renderExpression(expression: Expression): String = expression.emit()
 
     private fun String.indentCode(level: Int): String = " ".repeat(level * 2) + this
 

@@ -865,20 +865,20 @@ class KotlinIrEmitterTest {
             |  interface Transportation {
             |      suspend fun transport(request: RawRequest): RawResponse
             |  }
-            |  interface ServerEdge<Req : Request<*>, Res : Response<*>> {
+            |  interface ServerEdge<Req: Request<*>, Res: Response<*>> {
             |      fun from(request: RawRequest): Req
             |      fun to(response: Res): RawResponse
             |  }
-            |  interface ClientEdge<Req : Request<*>, Res : Response<*>> {
+            |  interface ClientEdge<Req: Request<*>, Res: Response<*>> {
             |      fun to(request: Req): RawRequest
             |      fun from(response: RawResponse): Res
             |  }
-            |  interface Client<Req : Request<*>, Res : Response<*>> {
+            |  interface Client<Req: Request<*>, Res: Response<*>> {
             |      val pathTemplate: String
             |      val method: String
             |      fun client(serialization: Serialization): ClientEdge<Req, Res>
             |  }
-            |  interface Server<Req : Request<*>, Res : Response<*>> {
+            |  interface Server<Req: Request<*>, Res: Response<*>> {
             |      val pathTemplate: String
             |      val method: String
             |      fun server(serialization: Serialization): ServerEdge<Req, Res>

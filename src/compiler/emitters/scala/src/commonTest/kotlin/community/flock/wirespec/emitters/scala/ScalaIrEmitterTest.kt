@@ -796,107 +796,108 @@ class ScalaIrEmitterTest {
             |import scala.reflect.ClassTag
             |object Wirespec {
             |  trait Model {
-            |    def validate(): List[String]
+            |      def validate(): List[String]
             |  }
             |  trait Enum {
-            |    def label: String
+            |      def label: String
             |  }
             |  trait Endpoint
             |  trait Channel
             |  trait Refined[T] {
-            |    def value: T
-            |    def validate(): Boolean
+            |      def value: T
+            |      def validate(): Boolean
             |  }
             |  trait Path
             |  trait Queries
             |  trait Headers
             |  trait Handler
             |  enum Method {
-            |    case GET
-            |    case PUT
-            |    case POST
-            |    case DELETE
-            |    case OPTIONS
-            |    case HEAD
-            |    case PATCH
-            |    case TRACE
-            |  }
+            |      case GET
+            |      case PUT
+            |      case POST
+            |      case DELETE
+            |      case OPTIONS
+            |      case HEAD
+            |      case PATCH
+            |      case TRACE
+            |    }
             |  object Request {
-            |    trait Headers
+            |      trait Headers
             |  }
             |  trait Request[T] {
-            |    def path: Path
-            |    def method: Method
-            |    def queries: Queries
-            |    def headers: Request.Headers
-            |    def body: T
+            |      def path: Path
+            |      def method: Method
+            |      def queries: Queries
+            |      def headers: Request.Headers
+            |      def body: T
             |  }
             |  object Response {
-            |    trait Headers
+            |      trait Headers
             |  }
             |  trait Response[T] {
-            |    def status: Int
-            |    def headers: Response.Headers
-            |    def body: T
+            |      def status: Int
+            |      def headers: Response.Headers
+            |      def body: T
             |  }
             |  trait BodySerializer {
-            |    def serializeBody[T](t: T, `type`: scala.reflect.ClassTag[?]): Array[Byte]
+            |      def serializeBody[T](t: T, `type`: scala.reflect.ClassTag[?]): Array[Byte]
             |  }
             |  trait BodyDeserializer {
-            |    def deserializeBody[T](raw: Array[Byte], `type`: scala.reflect.ClassTag[?]): T
+            |      def deserializeBody[T](raw: Array[Byte], `type`: scala.reflect.ClassTag[?]): T
             |  }
             |  trait BodySerialization extends BodySerializer with BodyDeserializer
             |  trait PathSerializer {
-            |    def serializePath[T](t: T, `type`: scala.reflect.ClassTag[?]): String
+            |      def serializePath[T](t: T, `type`: scala.reflect.ClassTag[?]): String
             |  }
             |  trait PathDeserializer {
-            |    def deserializePath[T](raw: String, `type`: scala.reflect.ClassTag[?]): T
+            |      def deserializePath[T](raw: String, `type`: scala.reflect.ClassTag[?]): T
             |  }
             |  trait PathSerialization extends PathSerializer with PathDeserializer
             |  trait ParamSerializer {
-            |    def serializeParam[T](value: T, `type`: scala.reflect.ClassTag[?]): List[String]
+            |      def serializeParam[T](value: T, `type`: scala.reflect.ClassTag[?]): List[String]
             |  }
             |  trait ParamDeserializer {
-            |    def deserializeParam[T](values: List[String], `type`: scala.reflect.ClassTag[?]): T
+            |      def deserializeParam[T](values: List[String], `type`: scala.reflect.ClassTag[?]): T
             |  }
             |  trait ParamSerialization extends ParamSerializer with ParamDeserializer
             |  trait Serializer extends BodySerializer with PathSerializer with ParamSerializer
             |  trait Deserializer extends BodyDeserializer with PathDeserializer with ParamDeserializer
             |  trait Serialization extends Serializer with Deserializer
             |  case class RawRequest(
-            |    val method: String,
-            |    val path: List[String],
-            |    val queries: Map[String, List[String]],
-            |    val headers: Map[String, List[String]],
-            |    val body: Option[Array[Byte]]
-            |  )
+            |      val method: String,
+            |      val path: List[String],
+            |      val queries: Map[String, List[String]],
+            |      val headers: Map[String, List[String]],
+            |      val body: Option[Array[Byte]]
+            |    )
             |  case class RawResponse(
-            |    val statusCode: Int,
-            |    val headers: Map[String, List[String]],
-            |    val body: Option[Array[Byte]]
-            |  )
+            |      val statusCode: Int,
+            |      val headers: Map[String, List[String]],
+            |      val body: Option[Array[Byte]]
+            |    )
             |  trait Transportation {
-            |    def transport(request: RawRequest): RawResponse
+            |      def transport(request: RawRequest): RawResponse
             |  }
             |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
-            |    def from(request: RawRequest): Req
-            |    def to(response: Res): RawResponse
+            |      def from(request: RawRequest): Req
+            |      def to(response: Res): RawResponse
             |  }
             |  trait ClientEdge[Req <: Request[?], Res <: Response[?]] {
-            |    def to(request: Req): RawRequest
-            |    def from(response: RawResponse): Res
+            |      def to(request: Req): RawRequest
+            |      def from(response: RawResponse): Res
             |  }
             |  trait Client[Req <: Request[?], Res <: Response[?]] {
-            |    val pathTemplate: String
-            |    val method: String
-            |    def client(serialization: Serialization): ClientEdge[Req, Res]
+            |      def pathTemplate: String
+            |      def method: String
+            |      def client(serialization: Serialization): ClientEdge[Req, Res]
             |  }
             |  trait Server[Req <: Request[?], Res <: Response[?]] {
-            |    val pathTemplate: String
-            |    val method: String
-            |    def server(serialization: Serialization): ServerEdge[Req, Res]
+            |      def pathTemplate: String
+            |      def method: String
+            |      def server(serialization: Serialization): ServerEdge[Req, Res]
             |  }
             |}
+            |
         """.trimMargin()
 
         val emitter = ScalaIrEmitter()
