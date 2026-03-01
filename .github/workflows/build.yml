@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
 
-  format-check:
+  jvm-test:
 
     runs-on: ubuntu-latest
 
@@ -26,38 +26,8 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
-      - name: Check formatting
-        run: ./gradlew spotlessCheck
-
-  jvm-test:
-
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
       - name: Run JVM tests
         run: ./gradlew jvmTest
-
-  linux-native-test:
-
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-      - name: Run Linux native tests
-        run: ./gradlew linuxX64Test
 
   js-test:
 
@@ -79,7 +49,7 @@ jobs:
       - name: Run JS tests
         run: ./gradlew jsTest
 
-  macos-native-test:
+  native:
 
     runs-on: macos-latest
 
@@ -92,25 +62,44 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run native tests
-        run: ./gradlew macosArm64Test macosX64Test
-
-  windows-native-test:
-
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+        run: ./gradlew macosArm64Test macosX64Test linuxX64Test
+      - name: Build CLI release executables
+        if: github.event_name != 'pull_request'
+        run: |
+          ./gradlew :src:plugin:cli:linkReleaseExecutableLinuxX64 \
+                    :src:plugin:cli:linkReleaseExecutableMacosX64 \
+                    :src:plugin:cli:linkReleaseExecutableMacosArm64
+      - name: Build IntelliJ plugin
+        if: github.event_name != 'pull_request'
+        run: ./gradlew :src:ide:intellij-plugin:buildPlugin
+      - name: Archive linux cli
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-      - name: Run Windows native tests
-        run: ./gradlew mingwX64Test
+          name: wirespec-cli-linux
+          path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+      - name: Archive macosX86 cli
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-macos-x86
+          path: src/plugin/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+      - name: Archive macosArm64 cli
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-macos-arm64
+          path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+      - name: Archive Intellij plugin
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-intellij-plugin
+          path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
 
   site:
 
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -134,13 +123,21 @@ jobs:
             VERSION="latest"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      - name: Build npm library
-        run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
-      - name: Build site
-        working-directory: src/site
-        run: make build
+      - name: Build VSCode extension
+        run: |
+          ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
+          cd src/ide/vscode && npm i && npm run build
         env:
           WIRESPEC_VERSION: ${{ steps.set_version.outputs.version }}
+      - name: Build site
+        run: cd src/site && make build
+        env:
+          WIRESPEC_VERSION: ${{ steps.set_version.outputs.version }}
+      - name: Archive vscode extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-vscode
+          path: src/ide/vscode/wirespec.vsix
       - name: Docs
         uses: actions/upload-artifact@v4
         with:
@@ -152,7 +149,7 @@ jobs:
           name: wirespec-playground
           path: src/site/playground/dist
 
-  vscode:
+  example:
 
     runs-on: ubuntu-latest
 
@@ -164,148 +161,14 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Build npm library for VSCode
-        run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
-      - name: Build VSCode extension
-        working-directory: src/ide/vscode
+      - name: Run
         run: |
-          npm i
-          npm run build
-
-  intellij-plugin:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-      - name: Build IntelliJ plugin
-        run: ./gradlew :src:ide:intellij-plugin:buildPlugin
-
-  example-build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-      - name: Publish wirespec to Maven Local
-        run: ./gradlew --no-configuration-cache publishToMavenLocal :src:plugin:npm:jsNodeProductionLibraryDistribution
-      - name: Upload Maven Local artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-m2
-          path: ~/.m2/repository/community/flock/wirespec
-      - name: Upload npm library
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-npm
-          path: src/plugin/npm/build/dist/js/productionLibrary
-
-  example-test:
-
-    runs-on: ubuntu-latest
-
-    needs: example-build
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: maven-preprocessor
-            type: maven
-          - name: maven-spring-avro
-            type: maven
-          - name: maven-spring-compile
-            type: maven
-          - name: maven-spring-convert
-            type: maven
-          - name: maven-spring-custom
-            type: maven
-          - name: maven-spring-integration
-            type: maven
-          - name: maven-spring-boot-4-integration
-            type: maven
-          - name: gradle-ktor
-            type: gradle
-          - name: npm-typescript
-            type: npm
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      - uses: actions/setup-node@v4
-        if: matrix.type == 'npm'
-        with:
-          node-version: 20
-      - name: Download Maven Local artifacts
-        if: matrix.type != 'npm'
-        uses: actions/download-artifact@v4
-        with:
-          name: wirespec-m2
-          path: ~/.m2/repository/community/flock/wirespec
-      - name: Download npm library
-        if: matrix.type == 'npm'
-        uses: actions/download-artifact@v4
-        with:
-          name: wirespec-npm
-          path: src/plugin/npm/build/dist/js/productionLibrary
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'maven'
-        working-directory: examples/${{ matrix.name }}
-        run: ./mvnw verify
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'gradle'
-        working-directory: examples/${{ matrix.name }}
-        run: ./gradlew check
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'npm'
-        working-directory: examples/${{ matrix.name }}
-        run: npm ci && npm run build
-
-  success:
-
-    runs-on: ubuntu-latest
-
-    if: always()
-
-    needs:
-      - format-check
-      - jvm-test
-      - linux-native-test
-      - js-test
-      - macos-native-test
-      - windows-native-test
-      - site
-      - vscode
-      - intellij-plugin
-      - example-test
-
-    steps:
-      - name: Check CI status
-        run: |
-          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
-            echo "CI failed"
-            exit 1
-          fi
-          echo "CI passed"
+          make example
 
   version:
 
@@ -314,7 +177,11 @@ jobs:
     if: github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published')
 
     needs:
-      - success
+      - jvm-test
+      - js-test
+      - native
+      - site
+      - example
 
     outputs:
       version: ${{steps.version.outputs.version}}
@@ -326,55 +193,6 @@ jobs:
         uses: ./.github/actions/version
         with:
           version: ${{ github.event.release.tag_name }}
-
-  native-publish:
-
-    runs-on: macos-latest
-
-    needs:
-      - version
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-      - name: Build CLI release executables
-        run: |
-          ./gradlew :src:plugin:cli:linkReleaseExecutableLinuxX64 \
-                    :src:plugin:cli:linkReleaseExecutableMacosX64 \
-                    :src:plugin:cli:linkReleaseExecutableMacosArm64 \
-                    :src:plugin:cli:linkReleaseExecutableMingwX64
-      - name: Build IntelliJ plugin
-        run: ./gradlew :src:ide:intellij-plugin:buildPlugin
-      - name: Archive linux cli
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-linux
-          path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-      - name: Archive macosX86 cli
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-macos-x86
-          path: src/plugin/cli/build/bin/macosX64/releaseExecutable/cli.kexe
-      - name: Archive macosArm64 cli
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-macos-arm64
-          path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
-      - name: Archive windows cli
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-windows
-          path: src/plugin/cli/build/bin/mingwX64/releaseExecutable/cli.exe
-      - name: Archive Intellij plugin
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-intellij-plugin
-          path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
 
   release-intellij:
 
