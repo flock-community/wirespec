@@ -1,24 +1,24 @@
 .PHONY: *
 
 build:
-	(cd maven-preprocessor && ./mvnw verify) && \
-	(cd maven-spring-avro && ./mvnw verify) && \
-	(cd maven-spring-compile && ./mvnw verify) && \
-	(cd maven-spring-convert && ./mvnw verify) && \
-	(cd maven-spring-custom && ./mvnw verify) && \
-	(cd maven-spring-integration && ./mvnw verify) && \
-	(cd maven-spring-boot-4-integration && ./mvnw verify) && \
+	(cd maven-preprocessor && mvn verify) && \
+	(cd maven-spring-avro && mvn verify) && \
+	(cd maven-spring-compile && mvn verify) && \
+	(cd maven-spring-convert && mvn verify) && \
+	(cd maven-spring-custom && mvn verify) && \
+	(cd maven-spring-integration && mvn verify) && \
+	(cd maven-spring-boot-4-integration && mvn verify) && \
 	(cd gradle-ktor && ./gradlew check) && \
 	(cd npm-typescript && npm ci && npm run build)
 
 clean:
-	(cd maven-preprocessor && ./mvnw clean) && \
-	(cd maven-spring-avro && ./mvnw clean) && \
-	(cd maven-spring-compile && ./mvnw clean) && \
-	(cd maven-spring-convert && ./mvnw clean) && \
-	(cd maven-spring-custom && ./mvnw clean) && \
-	(cd maven-spring-integration && ./mvnw clean) && \
-	(cd maven-spring-boot-4-integration && ./mvnw clean) && \
+	(cd maven-preprocessor && mvn clean) && \
+	(cd maven-spring-avro && mvn clean) && \
+	(cd maven-spring-compile && mvn clean) && \
+	(cd maven-spring-convert && mvn clean) && \
+	(cd maven-spring-custom && mvn clean) && \
+	(cd maven-spring-integration && mvn clean) && \
+	(cd maven-spring-boot-4-integration && mvn clean) && \
 	(cd gradle-ktor && ./gradlew clean) && \
 	(cd npm-typescript && npm run clean)
 
@@ -27,11 +27,11 @@ format:
 	(cd npm-typescript && npm run format)
 
 yolo:
-	(cd maven-preprocessor && ./mvnw verify -DskipTests) && \
-	(cd maven-spring-avro && ./mvnw verify -DskipTests) && \
-	(cd maven-spring-compile && ./mvnw verify -DskipTests) && \
-	(cd maven-spring-convert && ./mvnw verify -DskipTests) && \
-	(cd maven-spring-custom && ./mvnw verify -DskipTests) && \
-	(cd maven-spring-integration && ./mvnw verify -DskipTests) && \
-	(cd maven-spring-boot-4-integration && ./mvnw verify -DskipTests) && \
+	(cd maven-preprocessor && mvn verify -DskipTests) && \
+	(cd maven-spring-avro && mvn verify -DskipTests) && \
+	(cd maven-spring-compile && mvn verify -DskipTests) && \
+	(cd maven-spring-convert && mvn verify -DskipTests) && \
+	(cd maven-spring-custom && mvn verify -DskipTests) && \
+	(cd maven-spring-integration && mvn verify -DskipTests) && \
+	(cd maven-spring-boot-4-integration && mvn verify -DskipTests) && \
 	(cd gradle-ktor && ./gradlew check -x test)
