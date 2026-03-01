@@ -96,4 +96,3 @@ fun KotlinJsTargetDsl.build() {
 // that breaks prototype chain initialization. The npm bin entry point works around this,
 // but the test runner does not.
 tasks.named("jsNodeTest") { enabled = false }
-

@@ -14,6 +14,21 @@ concurrency:
 
 jobs:
 
+  format-check:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Check formatting
+        run: ./gradlew spotlessCheck
+
   jvm-test:
 
     runs-on: macos-latest
@@ -160,6 +175,39 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: maven-preprocessor
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/maven-preprocessor && mvn verify
+          - name: maven-spring-avro
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/maven-spring-avro && mvn verify
+          - name: maven-spring-compile
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/maven-spring-compile && mvn verify
+          - name: maven-spring-convert
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/maven-spring-convert && mvn verify
+          - name: maven-spring-custom
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/maven-spring-custom && mvn verify
+          - name: maven-spring-integration
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/maven-spring-integration && mvn verify
+          - name: maven-spring-boot-4-integration
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/maven-spring-boot-4-integration && mvn verify
+          - name: gradle-ktor
+            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
+            run: cd examples/gradle-ktor && ./gradlew check
+          - name: npm-typescript
+            prepare: ./gradlew --no-configuration-cache :src:plugin:npm:jsNodeProductionLibraryDistribution
+            run: cd examples/npm-typescript && npm ci && npm run build
+            setup-node: true
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK
@@ -169,11 +217,13 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - uses: actions/setup-node@v4
+        if: matrix.setup-node
         with:
           node-version: 20
-      - name: Run
-        run: |
-          make example
+      - name: Prepare
+        run: ${{ matrix.prepare }}
+      - name: Run ${{ matrix.name }} example
+        run: ${{ matrix.run }}
 
   version:
 
@@ -182,6 +232,7 @@ jobs:
     if: github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published')
 
     needs:
+      - format-check
       - jvm-test
       - linux-native-test
       - js-test
