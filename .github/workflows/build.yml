@@ -104,6 +104,8 @@ jobs:
             VERSION="latest"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Build npm library
+        run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build site
         run: cd src/site && make build
         env:
