@@ -7,7 +7,7 @@ import kotlin.reflect.KType
 object DefaultSerialization {
 
     internal val primitiveTypesConversion = mapOf<KClass<*>, (String) -> Any>(
-        String::class to { s: String -> s },
+        String::class to { it },
         Int::class to String::toInt,
         Long::class to String::toLong,
         Double::class to String::toDouble,

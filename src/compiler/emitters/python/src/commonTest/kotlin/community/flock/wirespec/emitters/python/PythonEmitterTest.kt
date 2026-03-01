@@ -16,8 +16,8 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
-import community.flock.wirespec.compiler.test.shouldBeRight
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 

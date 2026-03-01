@@ -1,5 +1,5 @@
 [versions]
-arrow = "1.2.4"
+arrow = "2.2.1.1"
 clikt = "5.1.0"
 default = "0.0.0-SNAPSHOT"
 dokka = "1.9.20"
@@ -11,7 +11,6 @@ java = "17"
 junit_launcher = "1.11.3"
 kafka_avro = "7.7.1"
 kotest = "6.1.4"
-kotest_arrow = "1.4.0"
 ksp = "2.3.6"
 kotlin = "2.3.10"
 kotlin_compiler = "2.3"
@@ -70,7 +69,7 @@ spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.re
 [bundles]
 jackson = ["jackson_databind", "jackson_jdk8", "jackson_kotlin"]
 kotlin_test = ["kotlin_test_common", "kotlin_test_annotations_common", "kotlin_test_junit"]
-kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_json"]
+kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_json", "kotest_assertions_arrow"]
 maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
 [plugins]
