@@ -94,6 +94,21 @@ jobs:
       - name: Run native tests
         run: ./gradlew macosArm64Test macosX64Test
 
+  windows-native-test:
+
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Run Windows native tests
+        run: ./gradlew mingwX64Test
+
   site:
 
     runs-on: ubuntu-latest
@@ -238,6 +253,7 @@ jobs:
       - linux-native-test
       - js-test
       - macos-native-test
+      - windows-native-test
       - site
       - vscode
       - intellij-plugin
@@ -273,7 +289,8 @@ jobs:
         run: |
           ./gradlew :src:plugin:cli:linkReleaseExecutableLinuxX64 \
                     :src:plugin:cli:linkReleaseExecutableMacosX64 \
-                    :src:plugin:cli:linkReleaseExecutableMacosArm64
+                    :src:plugin:cli:linkReleaseExecutableMacosArm64 \
+                    :src:plugin:cli:linkReleaseExecutableMingwX64
       - name: Build IntelliJ plugin
         run: ./gradlew :src:ide:intellij-plugin:buildPlugin
       - name: Archive linux cli
@@ -291,6 +308,11 @@ jobs:
         with:
           name: wirespec-cli-macos-arm64
           path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+      - name: Archive windows cli
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-windows
+          path: src/plugin/cli/build/bin/mingwX64/releaseExecutable/cli.exe
       - name: Archive Intellij plugin
         uses: actions/upload-artifact@v4
         with:
@@ -376,11 +398,16 @@ jobs:
         with:
           name: wirespec-cli-linux
           path: artifacts/linuxX64
+      - uses: actions/download-artifact@v4
+        with:
+          name: wirespec-cli-windows
+          path: artifacts/mingwX64
       - run: |
           mkdir uploads
           cp artifacts/linuxX64/cli.kexe uploads/linuxX64.kexe
           cp artifacts/macosX64/cli.kexe uploads/macosX64.kexe
           cp artifacts/macosArm64/cli.kexe uploads/macosArm64.kexe
+          cp artifacts/mingwX64/cli.exe uploads/mingwX64.exe
       - name: Upload assets
         uses: softprops/action-gh-release@v1
         with:
@@ -388,6 +415,7 @@ jobs:
             uploads/linuxX64.kexe
             uploads/macosX64.kexe
             uploads/macosArm64.kexe
+            uploads/mingwX64.exe
 
   release-maven-central:
 

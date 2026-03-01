@@ -28,6 +28,7 @@ kotlin {
     macosX64 { build() }
     macosArm64 { build() }
     linuxX64 { build() }
+    mingwX64 { build() }
     js(IR) { build() }
     jvm {
         java {
