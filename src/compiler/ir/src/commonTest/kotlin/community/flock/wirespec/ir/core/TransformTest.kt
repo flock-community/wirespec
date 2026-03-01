@@ -602,7 +602,6 @@ class TransformTest {
             renameType("String", "Text")
         }
 
-        assertTrue(result is File)
         assertEquals(Name.of("test.ws"), result.name)
     }
 }

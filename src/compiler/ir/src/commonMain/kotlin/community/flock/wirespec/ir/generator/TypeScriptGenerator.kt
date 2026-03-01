@@ -58,8 +58,7 @@ object TypeScriptGenerator : Generator {
         else -> TypeScriptFileEmitter(File(Name.of(""), listOf(element))).emitFile()
     }
 
-    fun generateExpression(expression: Expression): String =
-        TypeScriptFileEmitter(File(Name.of(""), emptyList())).renderExpression(expression)
+    fun generateExpression(expression: Expression): String = TypeScriptFileEmitter(File(Name.of(""), emptyList())).renderExpression(expression)
 }
 
 private class TypeScriptFileEmitter(val file: File) {
