@@ -92,13 +92,25 @@ internal fun pythonSerializationDefs(): String = """
 internal fun rustSerializationDefs(): String = """
     |struct MockSer;
     |impl BodySerializer for MockSer {
-    |    fn serialize_body<T: serde::Serialize>(&self, t: &T, _type: std::any::TypeId) -> Vec<u8> {
-    |        serde_json::to_vec(t).unwrap()
+    |    fn serialize_body<T: 'static>(&self, t: &T, _type: std::any::TypeId) -> Vec<u8> {
+    |        let any: &dyn std::any::Any = t;
+    |        if let Some(v) = any.downcast_ref::<Vec<TodoDto>>() {
+    |            serde_json::to_vec(&v.iter().map(|td| serde_json::json!({"description": td.description})).collect::<Vec<serde_json::Value>>()).unwrap()
+    |        } else {
+    |            panic!("Unsupported body type for serialization: {:?}", _type)
+    |        }
     |    }
     |}
     |impl BodyDeserializer for MockSer {
-    |    fn deserialize_body<T: serde::de::DeserializeOwned>(&self, raw: &[u8], _type: std::any::TypeId) -> T {
-    |        serde_json::from_slice(raw).unwrap()
+    |    fn deserialize_body<T: 'static>(&self, raw: &[u8], _type: std::any::TypeId) -> T {
+    |        let boxed: Box<dyn std::any::Any> = if _type == std::any::TypeId::of::<Vec<TodoDto>>() {
+    |            let values: Vec<serde_json::Value> = serde_json::from_slice(raw).unwrap();
+    |            let todos: Vec<TodoDto> = values.iter().map(|v| TodoDto { description: v["description"].as_str().unwrap_or_default().to_string() }).collect();
+    |            Box::new(todos)
+    |        } else {
+    |            panic!("Unsupported body type for deserialization: {:?}", _type)
+    |        };
+    |        *boxed.downcast::<T>().unwrap()
     |    }
     |}
     |impl PathSerializer for MockSer {
@@ -108,10 +120,24 @@ internal fun rustSerializationDefs(): String = """
     |    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, _type: std::any::TypeId) -> T where T::Err: std::fmt::Debug { raw.parse().unwrap() }
     |}
     |impl ParamSerializer for MockSer {
-    |    fn serialize_param<T: serde::Serialize>(&self, value: &T, _type: std::any::TypeId) -> Vec<String> { vec![serde_json::to_string(value).unwrap()] }
+    |    fn serialize_param<T: 'static>(&self, value: &T, _type: std::any::TypeId) -> Vec<String> {
+    |        let any: &dyn std::any::Any = value;
+    |        if let Some(s) = any.downcast_ref::<String>() { vec![s.clone()] }
+    |        else if let Some(b) = any.downcast_ref::<bool>() { vec![b.to_string()] }
+    |        else { panic!("Unsupported param type for serialization: {:?}", _type) }
+    |    }
     |}
     |impl ParamDeserializer for MockSer {
-    |    fn deserialize_param<T: serde::de::DeserializeOwned>(&self, values: &[String], _type: std::any::TypeId) -> T { serde_json::from_str(&values[0]).unwrap() }
+    |    fn deserialize_param<T: 'static>(&self, values: &[String], _type: std::any::TypeId) -> T {
+    |        let boxed: Box<dyn std::any::Any> = if _type == std::any::TypeId::of::<String>() {
+    |            Box::new(values.first().cloned().unwrap_or_default())
+    |        } else if _type == std::any::TypeId::of::<bool>() {
+    |            Box::new(values.first().map(|v| v == "true").unwrap_or(false))
+    |        } else {
+    |            panic!("Unsupported param type for deserialization: {:?}", _type)
+    |        };
+    |        *boxed.downcast::<T>().unwrap()
+    |    }
     |}
     |impl BodySerialization for MockSer {}
     |impl PathSerialization for MockSer {}
