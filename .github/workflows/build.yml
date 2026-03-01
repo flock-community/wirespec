@@ -180,33 +180,23 @@ jobs:
       matrix:
         include:
           - name: maven-preprocessor
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/maven-preprocessor && mvn verify
+            type: maven
           - name: maven-spring-avro
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/maven-spring-avro && mvn verify
+            type: maven
           - name: maven-spring-compile
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/maven-spring-compile && mvn verify
+            type: maven
           - name: maven-spring-convert
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/maven-spring-convert && mvn verify
+            type: maven
           - name: maven-spring-custom
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/maven-spring-custom && mvn verify
+            type: maven
           - name: maven-spring-integration
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/maven-spring-integration && mvn verify
+            type: maven
           - name: maven-spring-boot-4-integration
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/maven-spring-boot-4-integration && mvn verify
+            type: maven
           - name: gradle-ktor
-            prepare: ./gradlew --no-configuration-cache publishToMavenLocal
-            run: cd examples/gradle-ktor && ./gradlew check
+            type: gradle
           - name: npm-typescript
-            prepare: ./gradlew --no-configuration-cache :src:plugin:npm:jsNodeProductionLibraryDistribution
-            run: cd examples/npm-typescript && npm ci && npm run build
-            setup-node: true
+            type: npm
 
     steps:
       - uses: actions/checkout@v4
@@ -217,13 +207,24 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - uses: actions/setup-node@v4
-        if: matrix.setup-node
+        if: matrix.type == 'npm'
         with:
           node-version: 20
-      - name: Prepare
-        run: ${{ matrix.prepare }}
       - name: Run ${{ matrix.name }} example
-        run: ${{ matrix.run }}
+        if: matrix.type == 'maven'
+        run: |
+          ./gradlew --no-configuration-cache publishToMavenLocal
+          cd examples/${{ matrix.name }} && mvn verify
+      - name: Run ${{ matrix.name }} example
+        if: matrix.type == 'gradle'
+        run: |
+          ./gradlew --no-configuration-cache publishToMavenLocal
+          cd examples/${{ matrix.name }} && ./gradlew check
+      - name: Run ${{ matrix.name }} example
+        if: matrix.type == 'npm'
+        run: |
+          ./gradlew --no-configuration-cache :src:plugin:npm:jsNodeProductionLibraryDistribution
+          cd examples/${{ matrix.name }} && npm ci && npm run build
 
   version:
 
