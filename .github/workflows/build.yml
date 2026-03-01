@@ -28,6 +28,19 @@ jobs:
           cache: gradle
       - name: Run JVM tests
         run: ./gradlew jvmTest
+
+  linux-native-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
       - name: Run Linux native tests
         run: ./gradlew linuxX64Test
 
@@ -178,6 +191,7 @@ jobs:
 
     needs:
       - jvm-test
+      - linux-native-test
       - js-test
       - native
       - site
