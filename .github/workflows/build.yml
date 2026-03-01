@@ -14,28 +14,107 @@ concurrency:
 
 jobs:
 
-  build:
+  jvm-test:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
-      - uses: actions/setup-node@v3
+      - name: Run JVM tests
+        run: ./gradlew jvmTest
+
+  js-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Copy JS test resources
+        run: ./gradlew copyTestResourcesForJs
+      - name: Run JS tests
+        run: ./gradlew jsTest
+
+  native:
+
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Run native tests
+        run: ./gradlew macosArm64Test macosX64Test linuxX64Test
+      - name: Build CLI release executables
+        if: github.event_name != 'pull_request'
+        run: |
+          ./gradlew :src:plugin:cli:linkReleaseExecutableLinuxX64 \
+                    :src:plugin:cli:linkReleaseExecutableMacosX64 \
+                    :src:plugin:cli:linkReleaseExecutableMacosArm64
+      - name: Build IntelliJ plugin
+        if: github.event_name != 'pull_request'
+        run: ./gradlew :src:ide:intellij-plugin:buildPlugin
+      - name: Archive linux cli
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-linux
+          path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+      - name: Archive macosX86 cli
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-macos-x86
+          path: src/plugin/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+      - name: Archive macosArm64 cli
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-macos-arm64
+          path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+      - name: Archive Intellij plugin
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-intellij-plugin
+          path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
+
+  site:
+
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Set version
         id: set_version
-        # Set an environment variable for the wirespec version used in src/site/docs
-        # If tag matches v<major>.<minor>.<revision>[-suffix], strip 'v' prefix
-        # Otherwise use 'latest'
         run: |
           REF_NAME="${{ github.ref_name }}"
           if [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
@@ -44,35 +123,21 @@ jobs:
             VERSION="latest"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      - name: Run
+      - name: Build VSCode extension
         run: |
-          export WIRESPEC_VERSION=${{ steps.set_version.outputs.version }}
-          make build
-      - name: Archive linux cli
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-linux
-          path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-      - name: Archive macosX86 cli
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-macos-x86
-          path: src/plugin/cli/build/bin/macosX64/releaseExecutable/cli.kexe
-      - name: Archive macosArm64 cli
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-macos-arm64
-          path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+          ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
+          cd src/ide/vscode && npm i && npm run build
+        env:
+          WIRESPEC_VERSION: ${{ steps.set_version.outputs.version }}
+      - name: Build site
+        run: cd src/site && make build
+        env:
+          WIRESPEC_VERSION: ${{ steps.set_version.outputs.version }}
       - name: Archive vscode extension
         uses: actions/upload-artifact@v4
         with:
           name: wirespec-vscode
           path: src/ide/vscode/wirespec.vsix
-      - name: Archive Intellij plugin
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-intellij-plugin
-          path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
       - name: Docs
         uses: actions/upload-artifact@v4
         with:
@@ -89,16 +154,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Run
@@ -112,14 +177,17 @@ jobs:
     if: github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published')
 
     needs:
-      - build
+      - jvm-test
+      - js-test
+      - native
+      - site
       - example
 
     outputs:
       version: ${{steps.version.outputs.version}}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: version
         name: Generate version
         uses: ./.github/actions/version
@@ -138,9 +206,9 @@ jobs:
       JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -161,16 +229,16 @@ jobs:
       VSCE_PAT: ${{ secrets.VSCODE_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Build lib
@@ -181,9 +249,9 @@ jobs:
         working-directory: ./src/ide/vscode
         run: |
           npm i
-          npm run build 
+          npm run build
           npm version $VERSION
-          npm run vscode:publish 
+          npm run vscode:publish
 
   release-cli:
 
@@ -234,9 +302,9 @@ jobs:
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -258,15 +326,15 @@ jobs:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
@@ -286,7 +354,7 @@ jobs:
       - version
 
     steps:
-      - uses: 'actions/checkout@v4'
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: wirespec-docs
@@ -311,16 +379,16 @@ jobs:
       - version
 
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: wirespec-playground
           path: src/site/playground/dist
-      - uses: "google-github-actions/auth@v2"
+      - uses: 'google-github-actions/auth@v2'
         with:
-          credentials_json: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-      - name: "Set up Cloud SDK"
-        uses: "google-github-actions/setup-gcloud@v2"
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
       - name: Publish Docker
         working-directory: ./src/site/playground
         run: |
@@ -328,4 +396,3 @@ jobs:
           docker buildx build --platform linux/amd64 -t europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground .
           docker push europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground
           gcloud run deploy wirespec-playground --image=europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground --region=europe-west4 --project=wirespec-421108
-          
