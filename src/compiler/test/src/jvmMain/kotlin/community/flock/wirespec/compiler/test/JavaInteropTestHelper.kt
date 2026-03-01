@@ -19,5 +19,6 @@ object JavaInteropTestHelper {
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
     @JvmStatic
-    fun emit(emitter: Emitter, ast: Root, logger: Logger): List<Emitted> = emitter.emit(ast, logger)
+    fun emit(emitter: Emitter, ast: Root, logger: Logger): List<Emitted> =
+        emitter.emit(ast, logger)
 }
