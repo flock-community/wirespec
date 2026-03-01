@@ -64,7 +64,7 @@ jobs:
       - name: Run JS tests
         run: ./gradlew jsTest
 
-  native:
+  macos-native-test:
 
     runs-on: macos-latest
 
@@ -78,39 +78,6 @@ jobs:
           cache: gradle
       - name: Run native tests
         run: ./gradlew macosArm64Test macosX64Test
-      - name: Build CLI release executables
-        if: github.event_name != 'pull_request'
-        run: |
-          ./gradlew :src:plugin:cli:linkReleaseExecutableLinuxX64 \
-                    :src:plugin:cli:linkReleaseExecutableMacosX64 \
-                    :src:plugin:cli:linkReleaseExecutableMacosArm64
-      - name: Build IntelliJ plugin
-        if: github.event_name != 'pull_request'
-        run: ./gradlew :src:ide:intellij-plugin:buildPlugin
-      - name: Archive linux cli
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-linux
-          path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-      - name: Archive macosX86 cli
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-macos-x86
-          path: src/plugin/cli/build/bin/macosX64/releaseExecutable/cli.kexe
-      - name: Archive macosArm64 cli
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-cli-macos-arm64
-          path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
-      - name: Archive Intellij plugin
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: wirespec-intellij-plugin
-          path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
 
   site:
 
@@ -193,7 +160,7 @@ jobs:
       - jvm-test
       - linux-native-test
       - js-test
-      - native
+      - macos-native-test
       - site
       - example
 
@@ -207,6 +174,49 @@ jobs:
         uses: ./.github/actions/version
         with:
           version: ${{ github.event.release.tag_name }}
+
+  native-publish:
+
+    runs-on: macos-latest
+
+    needs:
+      - version
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Build CLI release executables
+        run: |
+          ./gradlew :src:plugin:cli:linkReleaseExecutableLinuxX64 \
+                    :src:plugin:cli:linkReleaseExecutableMacosX64 \
+                    :src:plugin:cli:linkReleaseExecutableMacosArm64
+      - name: Build IntelliJ plugin
+        run: ./gradlew :src:ide:intellij-plugin:buildPlugin
+      - name: Archive linux cli
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-linux
+          path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+      - name: Archive macosX86 cli
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-macos-x86
+          path: src/plugin/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+      - name: Archive macosArm64 cli
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-cli-macos-arm64
+          path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+      - name: Archive Intellij plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-intellij-plugin
+          path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
 
   release-intellij:
 
@@ -272,7 +282,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs:
-      - version
+      - native-publish
 
     steps:
       - uses: actions/download-artifact@v4
