@@ -112,7 +112,7 @@ class RustIrEmitterTest {
         val rust = """
         |use super::super::wirespec::*;
         |use regex;
-        |pub trait Queue : Wirespec.Channel {
+        |pub trait Queue: Wirespec.Channel {
         |    fn invoke(message: String);
         |}
         |

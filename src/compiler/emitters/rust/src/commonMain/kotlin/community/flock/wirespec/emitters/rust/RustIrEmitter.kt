@@ -225,12 +225,6 @@ open class RustIrEmitter(
                     file.copy(elements = rustImports + namespace.elements)
                 }
 
-                // Replace interfaces that need Rust-specific syntax with RawElement
-                matchingElements { iface: Interface ->
-                    val name = iface.name.pascalCase()
-                    if (name in rawElementInterfaces) rustRawElement(name) else iface
-                }
-
                 // Replace Method enum with Rust-specific version (#[default] on GET, Default derive)
                 matchingElements { enum: LanguageEnum ->
                     if (enum.name == Name.of("Method")) {
@@ -282,15 +276,23 @@ open class RustIrEmitter(
                     }
                 }
 
-                // Insert RequestHeaders after Request, ResponseHeaders after Response,
-                // and Client/Server at the end
+                // Replace interfaces with Rust-specific RawElements, inject
+                // RequestHeaders/ResponseHeaders after Request/Response, and
+                // append Client/Server at the end — all in a single pass
                 matchingElements { file: LanguageFile ->
                     val newElements = buildList {
                         for (element in file.elements) {
-                            add(element)
-                            if (element is RawElement) {
-                                if (element.code.startsWith("pub trait Request<T>")) add(requestHeaders)
-                                if (element.code.startsWith("pub trait Response<T>")) add(responseHeaders)
+                            if (element is Interface) {
+                                val name = element.name.pascalCase()
+                                if (name in rawElementInterfaces) {
+                                    add(rustRawElement(name))
+                                    if (name == "Request") add(requestHeaders)
+                                    if (name == "Response") add(responseHeaders)
+                                } else {
+                                    add(element)
+                                }
+                            } else {
+                                add(element)
                             }
                         }
                         add(client)
@@ -323,8 +325,6 @@ open class RustIrEmitter(
                     element.generateRust().trimEnd('\n')
                 } + "\n"
             }
-            // Fix extends formatting: Rust generator uses " : " but Rust convention is ": "
-            .replace(Regex("""(pub trait \w+(?:<[^>]*>)?)\s:\s"""), "$1: ")
     }
 
     fun sort(definition: Definition) = when (definition) {

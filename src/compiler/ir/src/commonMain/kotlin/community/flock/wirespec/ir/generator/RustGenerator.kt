@@ -128,7 +128,7 @@ object RustGenerator : Generator {
     private fun Interface.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
-        val extStr = if (extends.isNotEmpty()) " : ${extends.joinToString(" + ") { it.emit() }}" else ""
+        val extStr = if (extends.isNotEmpty()) ": ${extends.joinToString(" + ") { it.emit() }}" else ""
         val fieldsContent = fields.joinToString("") { field ->
             "fn ${field.name.snakeCase().sanitize()}(&self) -> ${field.type.emit()};\n".indentCode(1)
         }
