@@ -247,58 +247,36 @@ open class RustIrEmitter(
                     } else enum
                 }
 
-                // Replace RawRequest/RawResponse structs (remove Default derive, rename status_code)
-                matchingElements { struct: Struct ->
-                    when (struct.name.pascalCase()) {
-                        "RawRequest" -> RawElement(
-                            """
-                            #[derive(Debug, Clone, PartialEq)]
-                            pub struct RawRequest {
-                                pub method: String,
-                                pub path: Vec<String>,
-                                pub queries: HashMap<String, Vec<String>>,
-                                pub headers: HashMap<String, Vec<String>>,
-                                pub body: Option<Vec<u8>>,
-                            }
-                            """.trimIndent()
-                        )
-                        "RawResponse" -> RawElement(
-                            """
-                            #[derive(Debug, Clone, PartialEq)]
-                            pub struct RawResponse {
-                                pub status_code: i32,
-                                pub headers: HashMap<String, Vec<String>>,
-                                pub body: Option<Vec<u8>>,
-                            }
-                            """.trimIndent()
-                        )
-                        else -> struct
-                    }
-                }
-
                 // Replace interfaces with Rust-specific RawElements, inject
                 // RequestHeaders/ResponseHeaders after Request/Response, and
                 // append Client/Server at the end — all in a single pass
                 matchingElements { file: LanguageFile ->
-                    val newElements = buildList {
-                        for (element in file.elements) {
-                            if (element is Interface) {
-                                val name = element.name.pascalCase()
-                                if (name in rawElementInterfaces) {
+                    val newElements = file.elements.flatMap { element ->
+                        if (element is Interface) {
+                            val name = element.name.pascalCase()
+                            if (name in rawElementInterfaces) {
+                                buildList {
                                     add(rustRawElement(name))
                                     if (name == "Request") add(requestHeaders)
                                     if (name == "Response") add(responseHeaders)
-                                } else {
-                                    add(element)
                                 }
                             } else {
-                                add(element)
+                                listOf(element)
                             }
+                        } else {
+                            listOf(element)
                         }
-                        add(client)
-                        add(server)
-                    }
+                    } + client + server
                     file.copy(elements = newElements)
+                }
+
+                // Inject derive macros as RawElements before structs
+                matchingElements { struct: Struct ->
+                    val derive = when (struct.name.pascalCase()) {
+                        "RawRequest", "RawResponse" -> "#[derive(Debug, Clone, PartialEq)]"
+                        else -> "#[derive(Debug, Clone, Default, PartialEq)]"
+                    }
+                    LanguageFile(struct.name, listOf(RawElement(derive), struct))
                 }
             }
 
@@ -338,7 +316,7 @@ open class RustIrEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
-        return super.emit(module.copy(statements = statements), logger).let {
+        return super.emit(module.copy(statements = statements), logger).let { files ->
             fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
             val modRs = File(
                 Name.of(packageName.toDir() + "mod"),
@@ -346,17 +324,17 @@ open class RustIrEmitter(
             )
             val modEndpoint = File(
                 Name.of(packageName.toDir() + "endpoint/" + "mod"),
-                listOf(RawElement(module.statements.filter { s -> s is Endpoint }.map { stmt -> emitMod(stmt) }.joinToString("\n")))
+                listOf(RawElement(module.statements.filterIsInstance<Endpoint>().joinToString("\n") { emitMod(it) }))
             )
             val modModel = File(
                 Name.of(packageName.toDir() + "model/" + "mod"),
-                listOf(RawElement(module.statements.filter { s -> s is Model }.map { stmt -> emitMod(stmt) }.joinToString("\n")))
+                listOf(RawElement(module.statements.filterIsInstance<Model>().joinToString("\n") { emitMod(it) }))
             )
             val shared = File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(shared.source)))
             if (emitShared.value)
-                it + modRs + modEndpoint + modModel + shared
+                files + modRs + modEndpoint + modModel + shared
             else
-                it + modRs
+                files + modRs
         }
     }
 
@@ -371,6 +349,8 @@ open class RustIrEmitter(
                 name = Name.of(subPackageName.toDir() + file.name.pascalCase().toSnakeCase()),
                 elements = listOf(RawElement(importHeader)) + file.elements
             )
+        }.transform {
+            injectBefore<Struct> { listOf(RawElement("#[derive(Debug, Clone, Default, PartialEq)]")) }
         }
     }
 
@@ -383,17 +363,7 @@ open class RustIrEmitter(
         .let { if (this is FieldIdentifier) it.sanitizeKeywords() else it }
         .toSnakeCase()
 
-    fun String.toSnakeCase(): String {
-        if (isEmpty()) return this
-        return buildString {
-            for ((i, c) in this@toSnakeCase.withIndex()) {
-                if (c.isUpperCase() && i > 0 && this@toSnakeCase[i - 1].isLowerCase()) {
-                    append('_')
-                }
-                append(c.lowercaseChar())
-            }
-        }
-    }
+    fun String.toSnakeCase(): String = Name.of(this).snakeCase()
 
     fun String.sanitizeKeywords() = if (this in reservedKeywords) "r#$this" else this
 
@@ -512,11 +482,9 @@ open class RustIrEmitter(
             elements = classElements,
             extends = converted.extends,
         )
-        val elements = buildList {
-            if (imports.isNotEmpty()) add(RawElement(imports))
-            addAll(moduleElements)
-            add(endpointClass)
-        }
+        val elements = listOfNotNull(
+            imports.takeIf { it.isNotEmpty() }?.let { RawElement(it) },
+        ) + moduleElements + endpointClass
         val file = LanguageFile(converted.name, elements)
 
         // Step 1b: Convert simple-identifier RawExpressions to VariableReference for proper snake_case
@@ -706,8 +674,8 @@ open class RustIrEmitter(
                     element
                 }
             }
-        val classElements = flattened.elements.filter { it !is Struct && it !is LanguageUnion }
-        return Pair(moduleElements, classElements)
+        val classElements = flattened.elements.filterNot { it is Struct || it is LanguageUnion }
+        return moduleElements to classElements
     }
 
     override fun emit(channel: Channel): File =
