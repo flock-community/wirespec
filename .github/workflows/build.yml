@@ -211,7 +211,7 @@ jobs:
           name: wirespec-npm
           path: src/plugin/npm/build/dist/js/productionLibrary
 
-  example:
+  example-test:
 
     runs-on: ubuntu-latest
 
@@ -273,6 +273,33 @@ jobs:
         if: matrix.type == 'npm'
         run: cd examples/${{ matrix.name }} && npm ci && npm run build
 
+  success:
+
+    runs-on: ubuntu-latest
+
+    if: always()
+
+    needs:
+      - format-check
+      - jvm-test
+      - linux-native-test
+      - js-test
+      - macos-native-test
+      - windows-native-test
+      - site
+      - vscode
+      - intellij-plugin
+      - example-test
+
+    steps:
+      - name: Check CI status
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "CI failed"
+            exit 1
+          fi
+          echo "CI passed"
+
   version:
 
     runs-on: ubuntu-latest
@@ -289,7 +316,7 @@ jobs:
       - site
       - vscode
       - intellij-plugin
-      - example
+      - example-test
 
     outputs:
       version: ${{steps.version.outputs.version}}
