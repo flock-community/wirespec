@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
+import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -46,6 +47,7 @@ import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.flattenNestedStructs
+import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
@@ -81,137 +83,248 @@ open class RustIrEmitter(
 
     override val shared = object : Shared {
         override val packageString = "shared"
-        override val source = """
-            |use std::any::TypeId;
-            |use std::collections::HashMap;
-            |
-            |pub trait Model {
-            |    fn validate(&self) -> Vec<String>;
-            |}
-            |
-            |pub trait Enum: Sized {
-            |    fn label(&self) -> &str;
-            |    fn from_label(s: &str) -> Option<Self>;
-            |}
-            |
-            |pub trait Endpoint {}
-            |
-            |pub trait Channel {}
-            |
-            |pub trait Refined<T> {
-            |    fn value(&self) -> &T;
-            |    fn validate(&self) -> bool;
-            |}
-            |
-            |pub trait Path {}
-            |
-            |pub trait Queries {}
-            |
-            |pub trait Headers {}
-            |
-            |pub trait Handler {}
-            |
-            |#[derive(Debug, Clone, Default, PartialEq)]
-            |pub enum Method {
-            |    #[default]
-            |    GET,
-            |    PUT,
-            |    POST,
-            |    DELETE,
-            |    OPTIONS,
-            |    HEAD,
-            |    PATCH,
-            |    TRACE,
-            |}
-            |
-            |pub trait Request<T> {
-            |    fn path(&self) -> &dyn Path;
-            |    fn method(&self) -> &Method;
-            |    fn queries(&self) -> &dyn Queries;
-            |    fn headers(&self) -> &dyn RequestHeaders;
-            |    fn body(&self) -> &T;
-            |}
-            |
-            |pub trait RequestHeaders: Headers {}
-            |
-            |pub trait Response<T> {
-            |    fn status(&self) -> i32;
-            |    fn headers(&self) -> &dyn ResponseHeaders;
-            |    fn body(&self) -> &T;
-            |}
-            |
-            |pub trait ResponseHeaders: Headers {}
-            |
-            |pub trait BodySerializer {
-            |    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
-            |}
-            |
-            |pub trait BodyDeserializer {
-            |    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
-            |}
-            |
-            |pub trait BodySerialization: BodySerializer + BodyDeserializer {}
-            |
-            |pub trait PathSerializer {
-            |    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;
-            |}
-            |
-            |pub trait PathDeserializer {
-            |    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;
-            |}
-            |
-            |pub trait PathSerialization: PathSerializer + PathDeserializer {}
-            |
-            |pub trait ParamSerializer {
-            |    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;
-            |}
-            |
-            |pub trait ParamDeserializer {
-            |    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
-            |}
-            |
-            |pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
-            |
-            |pub trait Serializer: BodySerializer + PathSerializer + ParamSerializer {}
-            |
-            |pub trait Deserializer: BodyDeserializer + PathDeserializer + ParamDeserializer {}
-            |
-            |pub trait Serialization: Serializer + Deserializer {}
-            |
-            |#[derive(Debug, Clone, PartialEq)]
-            |pub struct RawRequest {
-            |    pub method: String,
-            |    pub path: Vec<String>,
-            |    pub queries: HashMap<String, Vec<String>>,
-            |    pub headers: HashMap<String, Vec<String>>,
-            |    pub body: Option<Vec<u8>>,
-            |}
-            |
-            |#[derive(Debug, Clone, PartialEq)]
-            |pub struct RawResponse {
-            |    pub status_code: i32,
-            |    pub headers: HashMap<String, Vec<String>>,
-            |    pub body: Option<Vec<u8>>,
-            |}
-            |
-            |pub trait Transportation {
-            |    fn transport(&self, request: &RawRequest) -> RawResponse;
-            |}
-            |
-            |pub trait Client {
-            |    type Transport: Transportation;
-            |    type Ser: Serialization;
-            |    fn transport(&self) -> &Self::Transport;
-            |    fn serialization(&self) -> &Self::Ser;
-            |}
-            |
-            |pub trait Server {
-            |    type Req;
-            |    type Res;
-            |    fn path_template(&self) -> &'static str;
-            |    fn method(&self) -> Method;
-            |}
-            |""".trimMargin()
+
+        private val rustImports = listOf(
+            RawElement("use std::any::TypeId;\nuse std::collections::HashMap;"),
+        )
+
+        private val requestHeaders = `interface`("RequestHeaders") {
+            extends(LanguageType.Custom("Headers"))
+        }
+
+        private val responseHeaders = `interface`("ResponseHeaders") {
+            extends(LanguageType.Custom("Headers"))
+        }
+
+        private val client = RawElement(
+            """
+            pub trait Client {
+                type Transport: Transportation;
+                type Ser: Serialization;
+                fn transport(&self) -> &Self::Transport;
+                fn serialization(&self) -> &Self::Ser;
+            }
+            """.trimIndent()
+        )
+
+        private val server = RawElement(
+            """
+            pub trait Server {
+                type Req;
+                type Res;
+                fn path_template(&self) -> &'static str;
+                fn method(&self) -> Method;
+            }
+            """.trimIndent()
+        )
+
+        /** Names of interfaces that need Rust-specific RawElement replacements */
+        private val rawElementInterfaces = setOf(
+            "Enum", "Refined", "Request", "Response",
+            "BodySerializer", "BodyDeserializer",
+            "PathSerializer", "PathDeserializer",
+            "ParamSerializer", "ParamDeserializer",
+            "Transportation",
+        )
+
+        private fun rustRawElement(name: String): RawElement = when (name) {
+            "Enum" -> RawElement(
+                """
+                pub trait Enum: Sized {
+                    fn label(&self) -> &str;
+                    fn from_label(s: &str) -> Option<Self>;
+                }
+                """.trimIndent()
+            )
+            "Refined" -> RawElement(
+                """
+                pub trait Refined<T> {
+                    fn value(&self) -> &T;
+                    fn validate(&self) -> bool;
+                }
+                """.trimIndent()
+            )
+            "Request" -> RawElement(
+                """
+                pub trait Request<T> {
+                    fn path(&self) -> &dyn Path;
+                    fn method(&self) -> &Method;
+                    fn queries(&self) -> &dyn Queries;
+                    fn headers(&self) -> &dyn RequestHeaders;
+                    fn body(&self) -> &T;
+                }
+                """.trimIndent()
+            )
+            "Response" -> RawElement(
+                """
+                pub trait Response<T> {
+                    fn status(&self) -> i32;
+                    fn headers(&self) -> &dyn ResponseHeaders;
+                    fn body(&self) -> &T;
+                }
+                """.trimIndent()
+            )
+            "BodySerializer" -> RawElement(
+                """
+                pub trait BodySerializer {
+                    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+                }
+                """.trimIndent()
+            )
+            "BodyDeserializer" -> RawElement(
+                """
+                pub trait BodyDeserializer {
+                    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
+                }
+                """.trimIndent()
+            )
+            "PathSerializer" -> RawElement(
+                """
+                pub trait PathSerializer {
+                    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;
+                }
+                """.trimIndent()
+            )
+            "PathDeserializer" -> RawElement(
+                """
+                pub trait PathDeserializer {
+                    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;
+                }
+                """.trimIndent()
+            )
+            "ParamSerializer" -> RawElement(
+                """
+                pub trait ParamSerializer {
+                    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;
+                }
+                """.trimIndent()
+            )
+            "ParamDeserializer" -> RawElement(
+                """
+                pub trait ParamDeserializer {
+                    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
+                }
+                """.trimIndent()
+            )
+            "Transportation" -> RawElement(
+                """
+                pub trait Transportation {
+                    fn transport(&self, request: &RawRequest) -> RawResponse;
+                }
+                """.trimIndent()
+            )
+            else -> throw IllegalArgumentException("Unknown Rust raw element: $name")
+        }
+
+        private val wirespecFile = AstShared(packageString)
+            .convert()
+            .transform {
+                // Extract elements from Namespace("Wirespec") to top level, strip Package
+                matchingElements { file: LanguageFile ->
+                    val namespace = file.elements.filterIsInstance<Namespace>().first()
+                    file.copy(elements = rustImports + namespace.elements)
+                }
+
+                // Replace interfaces that need Rust-specific syntax with RawElement
+                matchingElements { iface: Interface ->
+                    val name = iface.name.pascalCase()
+                    if (name in rawElementInterfaces) rustRawElement(name) else iface
+                }
+
+                // Replace Method enum with Rust-specific version (#[default] on GET, Default derive)
+                matchingElements { enum: LanguageEnum ->
+                    if (enum.name == Name.of("Method")) {
+                        RawElement(
+                            """
+                            #[derive(Debug, Clone, Default, PartialEq)]
+                            pub enum Method {
+                                #[default]
+                                GET,
+                                PUT,
+                                POST,
+                                DELETE,
+                                OPTIONS,
+                                HEAD,
+                                PATCH,
+                                TRACE,
+                            }
+                            """.trimIndent()
+                        )
+                    } else enum
+                }
+
+                // Replace RawRequest/RawResponse structs (remove Default derive, rename status_code)
+                matchingElements { struct: Struct ->
+                    when (struct.name.pascalCase()) {
+                        "RawRequest" -> RawElement(
+                            """
+                            #[derive(Debug, Clone, PartialEq)]
+                            pub struct RawRequest {
+                                pub method: String,
+                                pub path: Vec<String>,
+                                pub queries: HashMap<String, Vec<String>>,
+                                pub headers: HashMap<String, Vec<String>>,
+                                pub body: Option<Vec<u8>>,
+                            }
+                            """.trimIndent()
+                        )
+                        "RawResponse" -> RawElement(
+                            """
+                            #[derive(Debug, Clone, PartialEq)]
+                            pub struct RawResponse {
+                                pub status_code: i32,
+                                pub headers: HashMap<String, Vec<String>>,
+                                pub body: Option<Vec<u8>>,
+                            }
+                            """.trimIndent()
+                        )
+                        else -> struct
+                    }
+                }
+
+                // Insert RequestHeaders after Request, ResponseHeaders after Response,
+                // and Client/Server at the end
+                matchingElements { file: LanguageFile ->
+                    val newElements = buildList {
+                        for (element in file.elements) {
+                            add(element)
+                            if (element is RawElement) {
+                                if (element.code.startsWith("pub trait Request<T>")) add(requestHeaders)
+                                if (element.code.startsWith("pub trait Response<T>")) add(responseHeaders)
+                            }
+                        }
+                        add(client)
+                        add(server)
+                    }
+                    file.copy(elements = newElements)
+                }
+            }
+
+        override val source: String = wirespecFile
+            .transform {
+                // Add &self parameter to functions inside interfaces (Rust trait methods need &self)
+                matchingElements { iface: Interface ->
+                    iface.transform {
+                        matchingElements { fn: LanguageFunction ->
+                            val hasSelf = fn.parameters.any { it.name.value() == "&self" || it.name.value() == "self" }
+                            if (!hasSelf) {
+                                fn.copy(
+                                    parameters = listOf(
+                                        community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))
+                                    ) + fn.parameters,
+                                )
+                            } else fn
+                        }
+                    }
+                }
+            }
+            .let { file ->
+                file.elements.joinToString("\n\n") { element ->
+                    element.generateRust().trimEnd('\n')
+                } + "\n"
+            }
+            // Fix extends formatting: Rust generator uses " : " but Rust convention is ": "
+            .replace(Regex("""(pub trait \w+(?:<[^>]*>)?)\s:\s"""), "$1: ")
     }
 
     fun sort(definition: Definition) = when (definition) {
