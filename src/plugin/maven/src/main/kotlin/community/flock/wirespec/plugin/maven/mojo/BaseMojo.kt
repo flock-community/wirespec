@@ -19,6 +19,7 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrEmitter
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -72,6 +73,12 @@ abstract class BaseMojo : AbstractMojo() {
     protected var strict: Boolean = true
 
     /**
+     * Specifies whether to output intermediate representation. Default 'false'.
+     */
+    @Parameter
+    protected var ir: Boolean = false
+
+    /**
      * Source directory. Default 'null'.
      */
     @Parameter
@@ -107,7 +114,7 @@ abstract class BaseMojo : AbstractMojo() {
 
     val emitters
         get() = languages
-            .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
+            .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
             .plus(emitter)
             .mapNotNull { it }
             .toNonEmptySetOrNull()

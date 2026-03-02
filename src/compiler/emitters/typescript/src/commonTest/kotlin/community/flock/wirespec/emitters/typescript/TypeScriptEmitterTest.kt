@@ -468,7 +468,7 @@ class TypeScriptEmitterTest {
             |
             |export type TestInt2 = number;
             |export const validateTestInt2 = (value: number): value is TestInt2 => {
-            |  return 3 < value && value < 1;
+            |  return 1 < value && value < 3;
             |}
             |
             |import {Wirespec} from '../Wirespec'

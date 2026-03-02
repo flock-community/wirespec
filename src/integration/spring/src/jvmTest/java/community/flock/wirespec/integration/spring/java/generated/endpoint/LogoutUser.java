@@ -28,7 +28,7 @@ public interface LogoutUser extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record ResponseDefault(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements ResponsedXX<Void>, ResponseVoid {

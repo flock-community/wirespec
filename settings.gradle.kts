@@ -26,7 +26,10 @@ include(
     "src:compiler:emitters:java",
     "src:compiler:emitters:typescript",
     "src:compiler:emitters:python",
+    "src:compiler:emitters:rust",
+    "src:compiler:emitters:scala",
     "src:compiler:emitters:wirespec",
+    "src:compiler:test-updater",
     "src:ide:intellij-plugin",
     "src:plugin:arguments",
     "src:plugin:cli",
@@ -41,4 +44,6 @@ include(
     "src:integration:wirespec",
     "src:integration:spring",
     "src:tools:generator",
+    "src:compiler:ir",
+    "src:verify",
 )
