@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 
 @Configuration
-@Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
+@Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class, WirespecNativeConfiguration::class)
 open class WirespecSerializationConfiguration {
 
     @Bean

@@ -239,6 +239,8 @@ jobs:
             type: maven
           - name: maven-spring-boot-4-integration
             type: maven
+          - name: maven-spring-native
+            type: native
           - name: gradle-ktor
             type: gradle
           - name: npm-typescript
@@ -247,10 +249,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK
+        if: matrix.type != 'native'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+      - name: Set up GraalVM
+        if: matrix.type == 'native'
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
       - uses: actions/setup-node@v4
         if: matrix.type == 'npm'
         with:
@@ -271,6 +280,9 @@ jobs:
         if: matrix.type == 'maven'
         working-directory: examples/${{ matrix.name }}
         run: ./mvnw verify
+      - name: Run ${{ matrix.name }} example
+        if: matrix.type == 'native'
+        run: cd examples/${{ matrix.name }} && mvn -Pnative verify
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'gradle'
         working-directory: examples/${{ matrix.name }}

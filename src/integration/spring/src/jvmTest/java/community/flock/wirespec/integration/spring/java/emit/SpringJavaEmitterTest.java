@@ -450,6 +450,50 @@ public class SpringJavaEmitterTest {
                           @Override
                           public String getValue() { return value; }
                         }
+                        """, """
+                        package community.flock.wirespec.spring.test;
+
+                        import community.flock.wirespec.spring.test.model.TodoId;
+                        import community.flock.wirespec.spring.test.model.RequestBodyParrot;
+                        import community.flock.wirespec.spring.test.model.TodoDto;
+                        import community.flock.wirespec.spring.test.model.TodoDtoPatch;
+                        import community.flock.wirespec.spring.test.model.Error;
+                        import community.flock.wirespec.spring.test.endpoint.RequestParrot;
+                        import community.flock.wirespec.spring.test.endpoint.GetTodos;
+                        import community.flock.wirespec.spring.test.endpoint.PatchTodos;
+
+                        import org.springframework.aot.hint.MemberCategory;
+                        import org.springframework.aot.hint.RuntimeHints;
+                        import org.springframework.aot.hint.RuntimeHintsRegistrar;
+                        import org.springframework.context.annotation.Configuration;
+                        import org.springframework.context.annotation.ImportRuntimeHints;
+
+                        @Configuration
+                        @ImportRuntimeHints(WirespecNativeHints.GeneratedHints.class)
+                        public class WirespecNativeHints {
+
+                          static class GeneratedHints implements RuntimeHintsRegistrar {
+                            @Override
+                            public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+                              var allMembers = MemberCategory.values();
+                              registerWithInnerClasses(hints, TodoId.class, allMembers);
+                              registerWithInnerClasses(hints, RequestBodyParrot.class, allMembers);
+                              registerWithInnerClasses(hints, TodoDto.class, allMembers);
+                              registerWithInnerClasses(hints, TodoDtoPatch.class, allMembers);
+                              registerWithInnerClasses(hints, Error.class, allMembers);
+                              registerWithInnerClasses(hints, RequestParrot.class, allMembers);
+                              registerWithInnerClasses(hints, GetTodos.class, allMembers);
+                              registerWithInnerClasses(hints, PatchTodos.class, allMembers);
+                            }
+
+                            private static void registerWithInnerClasses(RuntimeHints hints, Class<?> clazz, MemberCategory[] categories) {
+                              hints.reflection().registerType(clazz, categories);
+                              for (Class<?> inner : clazz.getDeclaredClasses()) {
+                                registerWithInnerClasses(hints, inner, categories);
+                              }
+                            }
+                          }
+                        }
                         """
         );
 
