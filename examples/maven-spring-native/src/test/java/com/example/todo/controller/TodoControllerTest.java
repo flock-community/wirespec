@@ -1,161 +1,125 @@
 package com.example.todo.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class TodoControllerTest {
 
 	@Autowired
-	private MockMvc mockMvc;
-
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private MockMvcTester mvc;
 
 	@Test
-	void getTodos_returnsList() throws Exception {
-		MvcResult result = mockMvc.perform(get("/api/todos"))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-		mockMvc.perform(asyncDispatch(result))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$").isArray());
+	void getTodos_returnsList() {
+		assertThat(mvc.get().uri("/api/todos").exchange())
+				.hasStatusOk()
+				.bodyJson()
+				.extractingPath("$")
+				.asArray()
+				.isNotEmpty();
 	}
 
 	@Test
-	void createTodo_returnsCreatedTodo() throws Exception {
-		MvcResult result = mockMvc.perform(post("/api/todos")
-						.contentType(APPLICATION_JSON_VALUE)
-						.content("""
-								{"title": "Buy groceries", "completed": false}
-								"""))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+	void createTodo_returnsCreatedTodo() {
+		var result = mvc.post().uri("/api/todos")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "Buy groceries", "completed": false}
+						""")
+				.exchange();
 
-		mockMvc.perform(asyncDispatch(result))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id", notNullValue()))
-				.andExpect(jsonPath("$.title", equalTo("Buy groceries")))
-				.andExpect(jsonPath("$.completed", equalTo(false)));
+		assertThat(result).hasStatusOk();
+		assertThat(result).bodyJson().extractingPath("$.id").isNotNull();
+		assertThat(result).bodyJson().extractingPath("$.title").isEqualTo("Buy groceries");
+		assertThat(result).bodyJson().extractingPath("$.completed").isEqualTo(false);
 	}
 
 	@Test
 	void getTodoById_returnsExistingTodo() throws Exception {
 		long id = createTodo("Read a book", false);
 
-		MvcResult getResult = mockMvc.perform(get("/api/todos/{id}", id))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+		var result = mvc.get().uri("/api/todos/{id}", id).exchange();
 
-		mockMvc.perform(asyncDispatch(getResult))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.title", equalTo("Read a book")))
-				.andExpect(jsonPath("$.completed", equalTo(false)));
+		assertThat(result).hasStatusOk();
+		assertThat(result).bodyJson().extractingPath("$.title").isEqualTo("Read a book");
+		assertThat(result).bodyJson().extractingPath("$.completed").isEqualTo(false);
 	}
 
 	@Test
-	void getTodoById_returnsNotFoundForMissingTodo() throws Exception {
-		MvcResult result = mockMvc.perform(get("/api/todos/{id}", 99999))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+	void getTodoById_returnsNotFoundForMissingTodo() {
+		var result = mvc.get().uri("/api/todos/{id}", 99999).exchange();
 
-		mockMvc.perform(asyncDispatch(result))
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.message", equalTo("Todo not found")));
+		assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
+		assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("Todo not found");
 	}
 
 	@Test
 	void updateTodo_updatesExistingTodo() throws Exception {
 		long id = createTodo("Exercise", false);
 
-		MvcResult updateResult = mockMvc.perform(put("/api/todos/{id}", id)
-						.contentType(APPLICATION_JSON_VALUE)
-						.content("""
-								{"title": "Exercise daily", "completed": true}
-								"""))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+		var result = mvc.put().uri("/api/todos/{id}", id)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "Exercise daily", "completed": true}
+						""")
+				.exchange();
 
-		mockMvc.perform(asyncDispatch(updateResult))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.title", equalTo("Exercise daily")))
-				.andExpect(jsonPath("$.completed", equalTo(true)));
+		assertThat(result).hasStatusOk();
+		assertThat(result).bodyJson().extractingPath("$.title").isEqualTo("Exercise daily");
+		assertThat(result).bodyJson().extractingPath("$.completed").isEqualTo(true);
 	}
 
 	@Test
-	void updateTodo_returnsNotFoundForMissingTodo() throws Exception {
-		MvcResult result = mockMvc.perform(put("/api/todos/{id}", 99999)
-						.contentType(APPLICATION_JSON_VALUE)
-						.content("""
-								{"title": "Nope", "completed": false}
-								"""))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+	void updateTodo_returnsNotFoundForMissingTodo() {
+		var result = mvc.put().uri("/api/todos/{id}", 99999)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "Nope", "completed": false}
+						""")
+				.exchange();
 
-		mockMvc.perform(asyncDispatch(result))
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.message", equalTo("Todo not found")));
+		assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
+		assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("Todo not found");
 	}
 
 	@Test
 	void deleteTodo_deletesExistingTodo() throws Exception {
 		long id = createTodo("Temporary task", false);
 
-		MvcResult deleteResult = mockMvc.perform(delete("/api/todos/{id}", id))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+		assertThat(mvc.delete().uri("/api/todos/{id}", id).exchange())
+				.hasStatus(HttpStatus.NO_CONTENT);
 
-		mockMvc.perform(asyncDispatch(deleteResult))
-				.andExpect(status().isNoContent());
-
-		MvcResult getResult = mockMvc.perform(get("/api/todos/{id}", id))
-				.andExpect(request().asyncStarted())
-				.andReturn();
-
-		mockMvc.perform(asyncDispatch(getResult))
-				.andExpect(status().isNotFound());
+		assertThat(mvc.get().uri("/api/todos/{id}", id).exchange())
+				.hasStatus(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
-	void deleteTodo_returnsNotFoundForMissingTodo() throws Exception {
-		MvcResult result = mockMvc.perform(delete("/api/todos/{id}", 99999))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+	void deleteTodo_returnsNotFoundForMissingTodo() {
+		var result = mvc.delete().uri("/api/todos/{id}", 99999).exchange();
 
-		mockMvc.perform(asyncDispatch(result))
-				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.message", equalTo("Todo not found")));
+		assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
+		assertThat(result).bodyJson().extractingPath("$.message").isEqualTo("Todo not found");
 	}
 
 	private long createTodo(String title, boolean completed) throws Exception {
-		MvcResult createResult = mockMvc.perform(post("/api/todos")
-						.contentType(APPLICATION_JSON_VALUE)
-						.content("""
-								{"title": "%s", "completed": %s}
-								""".formatted(title, completed)))
-				.andExpect(request().asyncStarted())
-				.andReturn();
+		var result = mvc.post().uri("/api/todos")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "%s", "completed": %s}
+						""".formatted(title, completed))
+				.exchange();
 
-		String body = mockMvc.perform(asyncDispatch(createResult))
-				.andExpect(status().isOk())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
-
-		JsonNode node = objectMapper.readTree(body);
-		return node.get("id").asLong();
+		assertThat(result).hasStatusOk();
+		String body = result.getResponse().getContentAsString();
+		return ((Number) JsonPath.parse(body).read("$.id")).longValue();
 	}
 }
