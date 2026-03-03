@@ -382,6 +382,50 @@ class FileController implements UploadFile.Handler {
 }
 ```
 
+## Native Images (GraalVM)
+
+Wirespec's Spring integration includes built-in support for GraalVM native images. When you compile your Wirespec
+definitions using the `SpringJavaEmitter`, a `WirespecNativeHints` class is automatically generated alongside your
+models and endpoints. This class registers all generated types for reflection, which is required for serialization
+and deserialization in a native image.
+
+### How it works
+
+The generated `WirespecNativeHints` class:
+
+- Implements Spring's `RuntimeHintsRegistrar` interface
+- Registers all generated model and endpoint classes (including inner classes) for reflection
+- Is annotated with `@Configuration` and `@ImportRuntimeHints`, so Spring picks it up automatically
+
+No additional configuration is required — the hints are generated and wired up as part of the normal compilation step.
+
+Additionally, the `spring-jvm` library includes a `WirespecNativeConfiguration` that registers core Wirespec types
+(`RawJsonBody`, `Wirespec.RawRequest`, `Wirespec.RawResponse`) for reflection, ensuring the framework internals also
+work in a native image.
+
+### Building a native image
+
+To build a native image with Maven, add the `native-maven-plugin` and use the `native` profile:
+
+```xml
+<plugin>
+    <groupId>org.graalvm.buildtools</groupId>
+    <artifactId>native-maven-plugin</artifactId>
+</plugin>
+```
+
+Then build and test with:
+
+```bash
+mvn -Pnative verify
+```
+
+:::tip
+A complete working example is available in the
+[maven-spring-native](https://github.com/flock-community/wirespec/tree/master/examples/maven-spring-native)
+example project.
+:::
+
 ## Conclusion
 
 This was a quick but comprehensive introduction to the Spring integration for Wirespec. As you might have noticed, the
