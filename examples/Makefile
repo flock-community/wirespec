@@ -9,7 +9,9 @@ build:
 	(cd maven-spring-integration && ./mvnw verify) && \
 	(cd maven-spring-boot-4-integration && ./mvnw verify) && \
 	(cd gradle-ktor && ./gradlew check) && \
-	(cd npm-typescript && npm ci && npm run build)
+	(cd npm-typescript && npm ci && npm run build) && \
+	(cd rust-petstore && bash gen.sh && cargo build) && \
+	(cd scala-zio && sbt compile)
 
 clean:
 	(cd maven-preprocessor && ./mvnw clean) && \

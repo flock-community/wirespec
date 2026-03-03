@@ -5,6 +5,5 @@ import kotlin.reflect.typeOf
 
 data class StringRefined(override val value: String): Wirespec.Refined<String> {
   override fun toString() = value.toString()
+  override fun validate() = true
 }
-
-fun StringRefined.validate() = true

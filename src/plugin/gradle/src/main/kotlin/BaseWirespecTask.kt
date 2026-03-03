@@ -16,6 +16,7 @@ import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrEmitter
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -58,6 +59,11 @@ abstract class BaseWirespecTask : DefaultTask() {
     @get:Option(option = "strict", description = "strict parsing mode")
     abstract val strict: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    @get:Option(option = "ir", description = "output intermediate representation")
+    abstract val ir: Property<Boolean>
+
     @Internal
     val wirespecLogger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)
@@ -88,7 +94,7 @@ abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun emitters() = languages.get()
-        .map { it.toEmitter(packageNameValue(), sharedValue()) }
+        .map { if (ir.getOrElse(false)) it.toIrEmitter(packageNameValue(), sharedValue()) else it.toEmitter(packageNameValue(), sharedValue()) }
         .plus(emitter())
         .mapNotNull { it }
         .toNonEmptySetOrNull()

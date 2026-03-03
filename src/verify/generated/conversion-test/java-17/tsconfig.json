@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "target": "ES2019",
+    "module": "CommonJS",
+    "moduleResolution": "node"
+  },
+  "include": ["./**/*.ts"]
+}

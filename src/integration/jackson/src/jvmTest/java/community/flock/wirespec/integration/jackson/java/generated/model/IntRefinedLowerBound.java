@@ -5,8 +5,8 @@ import community.flock.wirespec.java.Wirespec;
 public record IntRefinedLowerBound (Long value) implements Wirespec.Refined<Long> {
   @Override
   public String toString() { return value.toString(); }
-  public static boolean validate(IntRefinedLowerBound record) {
-    return -1 < record.value;
+  public boolean validate() {
+    return -1 < value;
   }
   @Override
   public Long value() { return value; }
