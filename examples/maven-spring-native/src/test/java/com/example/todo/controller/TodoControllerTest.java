@@ -22,8 +22,7 @@ class TodoControllerTest {
 	@Autowired
 	private MockMvc mockMvc;
 
-	@Autowired
-	private ObjectMapper objectMapper;
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Test
 	void getTodos_returnsList() throws Exception {
