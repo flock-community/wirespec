@@ -20,7 +20,7 @@ interface JavaEnumDefinitionEmitter: EnumDefinitionEmitter, JavaIdentifierEmitte
         |${Spacer(2)}return label;
         |${Spacer}}
         |${Spacer}@Override
-        |${Spacer}public String getLabel() {
+        |${Spacer}public String label() {
         |${Spacer(2)}return label;
         |${Spacer}}
         |}

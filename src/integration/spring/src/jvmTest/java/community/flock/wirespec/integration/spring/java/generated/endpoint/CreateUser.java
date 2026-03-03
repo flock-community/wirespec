@@ -28,7 +28,7 @@ public interface CreateUser extends Wirespec.Endpoint {
   sealed interface ResponseUser extends Response<User> {}
 
   record ResponseDefault(
-    int status,
+    Integer status,
     Headers headers,
     User body
   ) implements ResponsedXX<User>, ResponseUser {

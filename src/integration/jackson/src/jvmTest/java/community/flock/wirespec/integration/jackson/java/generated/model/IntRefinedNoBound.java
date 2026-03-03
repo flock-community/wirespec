@@ -5,9 +5,9 @@ import community.flock.wirespec.java.Wirespec;
 public record IntRefinedNoBound (Long value) implements Wirespec.Refined<Long> {
   @Override
   public String toString() { return value.toString(); }
-  public static boolean validate(IntRefinedNoBound record) {
+  public boolean validate() {
     return true;
   }
   @Override
-  public Long getValue() { return value; }
+  public Long value() { return value; }
 }

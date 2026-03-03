@@ -15,7 +15,7 @@ public enum PetStatus implements Wirespec.Enum {
     return label;
   }
   @Override
-  public String getLabel() {
+  public String label() {
     return label;
   }
 }

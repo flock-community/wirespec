@@ -32,7 +32,7 @@ public interface DeletePet extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record Response400(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements Response4XX<Void>, ResponseVoid {

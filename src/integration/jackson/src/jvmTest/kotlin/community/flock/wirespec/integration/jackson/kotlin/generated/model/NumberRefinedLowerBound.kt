@@ -5,6 +5,5 @@ import kotlin.reflect.typeOf
 
 data class NumberRefinedLowerBound(override val value: Double): Wirespec.Refined<Double> {
   override fun toString() = value.toString()
+  override fun validate() = -1.0 < value
 }
-
-fun NumberRefinedLowerBound.validate() = -1.0 < value

@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileFullEndpointTest {
+object CompileFullEndpointTest : Fixture {
 
-    val compiler =
+    override val source =
         // language=ws
         """
         |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String}
@@ -28,5 +28,7 @@ object CompileFullEndpointTest {
         |    code: Integer,
         |    description: String
         |}
-        """.trimMargin().let(::compile)
+        """.trimMargin()
+
+    override val compiler = source.let(::compile)
 }
