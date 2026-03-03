@@ -51,7 +51,7 @@ update:
 	npm install -g @vscode/vsce
 
 verify:
-	$(shell pwd)/scripts/verify.sh
+	./gradlew :src:verify:test -Pverify
 
 yolo:
 	$(shell pwd)/scripts/yolo.sh

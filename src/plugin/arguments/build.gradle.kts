@@ -43,6 +43,8 @@ kotlin {
                 api(project(":src:compiler:emitters:java"))
                 api(project(":src:compiler:emitters:typescript"))
                 api(project(":src:compiler:emitters:python"))
+                api(project(":src:compiler:emitters:rust"))
+                api(project(":src:compiler:emitters:scala"))
                 api(project(":src:compiler:emitters:wirespec"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
