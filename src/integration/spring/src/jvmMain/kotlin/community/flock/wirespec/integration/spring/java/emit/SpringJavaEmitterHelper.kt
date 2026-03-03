@@ -13,11 +13,10 @@ abstract class SpringJavaEmitterHelper(packageName: PackageName) : JavaEmitter(p
 
     abstract fun injectFiles(definitions: List<Definition>): List<Emitted>
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(ast, logger).let { results ->
-            injectFiles(ast.modules.flatMap { it.statements })
-                .takeIf { it.isNotEmpty() }
-                ?.let { results + it }
-                ?: results
-        }
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger).let { results ->
+        injectFiles(ast.modules.flatMap { it.statements })
+            .takeIf { it.isNotEmpty() }
+            ?.let { results + it }
+            ?: results
+    }
 }
