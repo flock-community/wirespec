@@ -1012,15 +1012,15 @@ class RustIrEmitterTest {
             |pub struct RawRequest {
             |    pub method: String,
             |    pub path: Vec<String>,
-            |    pub queries: HashMap<String, Vec<String>>,
-            |    pub headers: HashMap<String, Vec<String>>,
+            |    pub queries: std::collections::HashMap<String, Vec<String>>,
+            |    pub headers: std::collections::HashMap<String, Vec<String>>,
             |    pub body: Option<Vec<u8>>,
             |}
             |
             |#[derive(Debug, Clone, PartialEq)]
             |pub struct RawResponse {
             |    pub status_code: i32,
-            |    pub headers: HashMap<String, Vec<String>>,
+            |    pub headers: std::collections::HashMap<String, Vec<String>>,
             |    pub body: Option<Vec<u8>>,
             |}
             |

@@ -15,7 +15,6 @@ import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
-import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -38,6 +37,7 @@ import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Parameter
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
@@ -269,15 +269,18 @@ open class RustIrEmitter(
                     } + client + server
                     file.copy(elements = newElements)
                 }
-
-                // Inject derive macros as RawElements before structs
-                matchingElements { struct: Struct ->
-                    val derive = when (struct.name.pascalCase()) {
-                        "RawRequest", "RawResponse" -> "#[derive(Debug, Clone, PartialEq)]"
-                        else -> "#[derive(Debug, Clone, Default, PartialEq)]"
-                    }
-                    LanguageFile(struct.name, listOf(RawElement(derive), struct))
-                }
+            }
+            // Inject derive macros before structs (outside transform to avoid recursion)
+            .let { file ->
+                LanguageFile(file.name, file.elements.flatMap { element ->
+                    if (element is Struct) {
+                        val derive = when (element.name.pascalCase()) {
+                            "RawRequest", "RawResponse" -> "#[derive(Debug, Clone, PartialEq)]"
+                            else -> "#[derive(Debug, Clone, Default, PartialEq)]"
+                        }
+                        listOf(LanguageFile(element.name, listOf(RawElement(derive), element)))
+                    } else listOf(element)
+                })
             }
 
         override val source: String = wirespecFile
@@ -290,7 +293,7 @@ open class RustIrEmitter(
                             if (!hasSelf) {
                                 fn.copy(
                                     parameters = listOf(
-                                        community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))
+                                        Parameter(Name.of("&self"), LanguageType.Custom(""))
                                     ) + fn.parameters,
                                 )
                             } else fn
@@ -347,10 +350,11 @@ open class RustIrEmitter(
         return super.emit(definition, module, logger).let { file ->
             File(
                 name = Name.of(subPackageName.toDir() + file.name.pascalCase().toSnakeCase()),
-                elements = listOf(RawElement(importHeader)) + file.elements
+                elements = listOf(RawElement(importHeader)) + file.elements.flatMap { element ->
+                    if (element is Struct) listOf(RawElement("#[derive(Debug, Clone, Default, PartialEq)]"), element)
+                    else listOf(element)
+                }
             )
-        }.transform {
-            injectBefore<Struct> { listOf(RawElement("#[derive(Debug, Clone, Default, PartialEq)]")) }
         }
     }
 
@@ -368,6 +372,8 @@ open class RustIrEmitter(
     fun String.sanitizeKeywords() = if (this in reservedKeywords) "r#$this" else this
 
     private fun Name.toSnakeCaseName(): Name = Name.of(Name(parts).snakeCase().sanitizeKeywords())
+
+    // --- Reusable transform helpers ---
 
     private fun <T : Element> T.sanitizeNames(): T = transform {
         apply(transformer {
@@ -394,35 +400,52 @@ open class RustIrEmitter(
         })
     }
 
-    override fun emit(type: Type, module: Module): File {
-        val imports = type.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "use super::${it.value.toSnakeCase()}::${it.value};" }
-        val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
-        val addSelfReceiver = transformer {
+    private fun <T : Element> T.injectSelfReceiver(fieldNames: Set<String>): T {
+        val selfReceiver = transformer {
             statementAndExpression { s, t ->
                 if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
                     FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
-                } else {
-                    s.transformChildren(t)
-                }
+                } else s.transformChildren(t)
             }
         }
-        val file = type.convertWithValidation(module)
-            .transform {
-                matchingElements { fn: LanguageFunction ->
-                    if (fn.name == Name.of("validate")) {
-                        val transformedBody = fn.body.map { addSelfReceiver.transformStatement(it) }
-                        fn.copy(
-                            parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))),
-                            body = transformedBody,
-                        )
-                    } else fn
-                }
+        return transform {
+            matchingElements { fn: LanguageFunction ->
+                if (fn.name == Name.of("validate")) {
+                    fn.copy(
+                        parameters = listOf(Parameter(Name.of("&self"), LanguageType.Custom(""))),
+                        body = fn.body.map { selfReceiver.transformStatement(it) },
+                    )
+                } else fn
             }
-            .sanitizeNames()
-        return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
-        else file
+        }
     }
+
+    private fun <T : Element> T.stripWirespecPrefix(): T = transform {
+        matching<LanguageType.Custom> { type ->
+            if (type.name.startsWith("Wirespec.")) type.copy(name = type.name.removePrefix("Wirespec."))
+            else type
+        }
+    }
+
+    private fun File.prependImports(imports: String): File =
+        if (imports.isNotEmpty()) copy(elements = listOf(RawElement(imports)) + elements)
+        else this
+
+    private fun Type.buildModelImports(): String =
+        importReferences().distinctBy { it.value }
+            .joinToString("\n") { "use super::${it.value.toSnakeCase()}::${it.value};" }
+
+    private fun Endpoint.buildEndpointImports(): String =
+        importReferences().distinctBy { it.value }
+            .joinToString("\n") { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
+
+    // --- Per-definition emit methods ---
+
+    override fun emit(type: Type, module: Module): File =
+        type.convertWithValidation(module)
+            .injectSelfReceiver(type.shape.value.map { it.identifier.value }.toSet())
+            .sanitizeNames()
+            .prependImports(type.buildModelImports())
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
@@ -447,239 +470,217 @@ open class RustIrEmitter(
     override fun emit(union: Union): File =
         union.convert()
 
-    override fun emit(refined: Refined): File {
-        val file = refined.convert()
-        val constraintExpr = refined.reference.convertConstraint(FieldCall(VariableReference(Name.of("self")), Name.of("value")))
-        val validate = function("validate") {
+    override fun emit(refined: Refined): File =
+        refined.convert()
+            .transform {
+                matchingElements { s: Struct ->
+                    s.copy(elements = listOf(buildValidateFunction(refined), buildToStringFunction(refined)))
+                }
+            }
+
+    private fun buildValidateFunction(refined: Refined): LanguageFunction {
+        val constraintExpr = refined.reference.convertConstraint(
+            FieldCall(VariableReference(Name.of("self")), Name.of("value"))
+        )
+        return function("validate") {
             arg("&self", LanguageType.Custom(""))
             returnType(LanguageType.Boolean)
             returns(constraintExpr)
         }
-        val toStringExpr = when (refined.reference.type) {
+    }
+
+    private fun buildToStringFunction(refined: Refined): LanguageFunction {
+        val expr = when (refined.reference.type) {
             is Reference.Primitive.Type.String -> "self.value.clone()"
             else -> "format!(\"{}\", self.value)"
         }
-        val toString = function("to_string") {
+        return function("to_string") {
             arg("&self", LanguageType.Custom(""))
             returnType(LanguageType.String)
-            returns(RawExpression(toStringExpr))
+            returns(RawExpression(expr))
         }
-        return file
-            .transform {
-                matchingElements { s: Struct ->
-                    s.copy(elements = listOf(validate, toString))
-                }
-            }
     }
 
-    override fun emit(endpoint: Endpoint): File {
-        val imports = endpoint.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
-        val converted = endpoint.convert().findElement<Namespace>()!!
-        val (moduleElements, classElements) = flattenEndpointForRust(converted)
-        val endpointClass = Namespace(
-            name = converted.name,
-            elements = classElements,
-            extends = converted.extends,
-        )
-        val elements = listOfNotNull(
-            imports.takeIf { it.isNotEmpty() }?.let { RawElement(it) },
-        ) + moduleElements + endpointClass
-        val file = LanguageFile(converted.name, elements)
+    override fun emit(endpoint: Endpoint): File =
+        endpoint.convert()
+            .flattenForRust()
+            .stripWirespecPrefix()
+            .rustifyEndpoint(endpoint)
+            .sanitizeNames()
+            .prependImports(endpoint.buildEndpointImports())
 
-        // Step 1b: Convert simple-identifier RawExpressions to VariableReference for proper snake_case
+    override fun emit(channel: Channel): File =
+        channel.convert()
+
+    // --- Endpoint transform helpers ---
+
+    private fun File.flattenForRust(): File {
+        val namespace = findElement<Namespace>()!!
+        val flattened = namespace.flattenNestedStructs()
+        val responsePattern = RESPONSE_PATTERN
+
+        val moduleElements = flattened.elements
+            .filter { it is Struct || it is LanguageUnion }
+            .map { element ->
+                when {
+                    element is LanguageUnion && element.name.pascalCase() == "Response" -> {
+                        val members = flattened.elements
+                            .filterIsInstance<Struct>()
+                            .map { it.name.pascalCase() }
+                            .filter { responsePattern.matches(it) }
+                            .map { LanguageType.Custom(it) }
+                        element.copy(members = members, typeParameters = emptyList())
+                    }
+                    // Rust enums don't use type parameters for union variants
+                    element is LanguageUnion -> element.copy(typeParameters = emptyList())
+                    else -> element
+                }
+            }
+        val classElements = flattened.elements.filterNot { it is Struct || it is LanguageUnion }
+
+        return LanguageFile(
+            namespace.name,
+            moduleElements + Namespace(namespace.name, classElements, namespace.extends),
+        )
+    }
+
+    private fun fixRawExpressionIdentifiers(): Transformer {
         val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
-        val fixRawExprToVarRef = transformer {
+        return transformer {
             statementAndExpression { s, t ->
                 if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
                     VariableReference(Name.of(s.code))
                 } else s.transformChildren(t)
             }
         }
+    }
 
-        // Step 2: Strip "Wirespec." prefix from all Type.Custom names
-        val stripWirespecPrefix = transformer {
-            type { type, t ->
-                val transformed = if (type is LanguageType.Custom && type.name.startsWith("Wirespec.")) {
-                    type.copy(name = type.name.removePrefix("Wirespec."))
-                } else type
-                transformed.transformChildren(t)
-            }
-        }
-
-        // Step 5: Rename statusCode → status_code in fields, field calls, and constructor args
-        val renameStatusCode = transformer {
-            field { field, t ->
-                val renamed = if (field.name == Name.of("statusCode")) field.copy(name = Name.of("status_code")) else field
-                renamed.transformChildren(t)
-            }
-            statementAndExpression { s, t ->
-                when {
-                    s is FieldCall && s.field == Name.of("statusCode") ->
-                        FieldCall(receiver = s.receiver?.let { t.transformExpression(it) }, field = Name.of("status_code"))
-                    s is ConstructorStatement && Name.of("statusCode") in s.namedArguments ->
-                        s.copy(
-                            type = t.transformType(s.type),
-                            namedArguments = s.namedArguments
-                                .mapKeys { if (it.key == Name.of("statusCode")) Name.of("status_code") else it.key }
-                                .mapValues { t.transformExpression(it.value) },
-                        )
-                    else -> s.transformChildren(t)
-                }
-            }
-        }
-
-        return file
-            .transform {
-                apply(fixRawExprToVarRef)         // Step 1b: Fix raw identifier expressions
-                apply(stripWirespecPrefix)        // Step 2: Strip Wirespec. prefix from types
-                // Step 3: Remove self-referential Handler extends
-                matchingElements<Interface> { iface ->
-                    if (iface.name == Name.of("Handler")) iface.copy(extends = emptyList()) else iface
-                }
-                // Step 4a: Strip unused type parameters from Response unions
-                matchingElements<LanguageUnion> { union ->
-                    if (union.name.pascalCase().startsWith("Response")) union.copy(typeParameters = emptyList()) else union
-                }
-                // Step 4b: Strip generics from Response type references
-                matching<LanguageType.Custom> { type ->
-                    if (type.name.startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
-                }
-                apply(renameStatusCode)           // Step 5: Rename statusCode → status_code
-                // Step 6: Fix response Switch patterns (Response200 → Response::Response200)
-                apply(transformer {
-                    statement { s, t ->
-                        if (s is Switch && s.variable?.camelCase() == "r") {
-                            val responsePattern = Regex("Response(\\d+|Default)")
-                            val transformedCases = s.cases.map { case ->
-                                val typeName = (case.type as? LanguageType.Custom)?.name
-                                if (typeName != null && responsePattern.matches(typeName)) {
-                                    val varBinding = s.variable!!.snakeCase()
-                                    Case(
-                                        value = RawExpression("Response::$typeName($varBinding)"),
-                                        body = case.body.map { t.transformStatement(it) },
-                                        type = null,
-                                    )
-                                } else {
-                                    Case(
-                                        value = t.transformExpression(case.value),
-                                        body = case.body.map { t.transformStatement(it) },
-                                        type = case.type?.let { t.transformType(it) },
-                                    )
-                                }
-                            }
-                            s.copy(
-                                expression = t.transformExpression(s.expression),
-                                cases = transformedCases,
-                                default = null, // All enum variants are matched; unreachable default removed
+    private fun fixResponseSwitchPatterns(): Transformer {
+        val responsePattern = RESPONSE_PATTERN
+        return transformer {
+            statement { s, t ->
+                if (s is Switch && s.variable?.camelCase() == "r") {
+                    val transformedCases = s.cases.map { case ->
+                        val typeName = (case.type as? LanguageType.Custom)?.name
+                        if (typeName != null && responsePattern.matches(typeName)) {
+                            Case(
+                                value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
+                                body = case.body.map { t.transformStatement(it) },
+                                type = null,
                             )
                         } else {
-                            s.transformChildren(t)
+                            Case(
+                                value = t.transformExpression(case.value),
+                                body = case.body.map { t.transformStatement(it) },
+                                type = case.type?.let { t.transformType(it) },
+                            )
                         }
                     }
-                })
-                // Step 7c: Fix constructors → ::new() calls for Response and Request types
-                apply(run {
-                    val responsePattern = Regex("Response(\\d+|Default)")
-                    fun transformConstructor(cs: ConstructorStatement, t: Transformer): FunctionCall? {
-                        val typeName = (cs.type as? LanguageType.Custom)?.name
-                        return when {
-                            typeName != null && responsePattern.matches(typeName) -> {
-                                val transformedArgs = cs.namedArguments.mapValues { t.transformExpression(it.value) }
-                                val inner = FunctionCall(
+                    s.copy(
+                        expression = t.transformExpression(s.expression),
+                        cases = transformedCases,
+                        default = null,
+                    )
+                } else s.transformChildren(t)
+            }
+        }
+    }
+
+    private fun fixConstructorCalls(): Transformer {
+        val responsePattern = RESPONSE_PATTERN
+        return transformer {
+            statementAndExpression { s, t ->
+                if (s is ConstructorStatement) {
+                    val typeName = (s.type as? LanguageType.Custom)?.name
+                    val transformedArgs = s.namedArguments.mapValues { t.transformExpression(it.value) }
+                    when {
+                        typeName != null && responsePattern.matches(typeName) -> {
+                            FunctionCall(
+                                name = Name(listOf("Response::$typeName")),
+                                arguments = mapOf(Name.of("inner") to FunctionCall(
                                     name = Name(listOf("$typeName::new")),
                                     arguments = transformedArgs,
-                                )
-                                FunctionCall(
-                                    name = Name(listOf("Response::$typeName")),
-                                    arguments = mapOf(Name.of("inner") to inner),
-                                )
-                            }
-                            typeName == "Request" -> {
-                                val transformedArgs = cs.namedArguments.mapValues { t.transformExpression(it.value) }
-                                FunctionCall(
-                                    name = Name(listOf("Request::new")),
-                                    arguments = transformedArgs,
-                                )
-                            }
-                            else -> null
+                                )),
+                            )
                         }
+                        typeName == "Request" -> {
+                            FunctionCall(
+                                name = Name(listOf("Request::new")),
+                                arguments = transformedArgs,
+                            )
+                        }
+                        else -> s.transformChildren(t)
                     }
-                    transformer {
-                        statementAndExpression { s, t ->
-                            if (s is ConstructorStatement) transformConstructor(s, t) ?: s.transformChildren(t)
-                            else s.transformChildren(t)
-                        }
-                    }
-                })
-                // Step 8: Fix Serializer/Deserializer parameter types to &impl
-                parametersWhere(
-                    predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
-                    transform = { it.copy(type = LanguageType.Custom("&impl ${(it.type as LanguageType.Custom).name}")) },
-                )
-                // Step 9: Snake_case Handler method names and add &self receiver
-                matchingElements<Interface> { iface ->
-                    if (iface.name == Name.of("Handler")) {
-                        iface.transform {
-                            matchingElements { fn: LanguageFunction ->
-                                fn.copy(
-                                    name = Name.of(fn.name.snakeCase()),
-                                    parameters = listOf(community.flock.wirespec.ir.core.Parameter(Name.of("&self"), LanguageType.Custom(""))) + fn.parameters,
-                                )
-                            }
-                        }
-                    } else iface
-                }
-                // Step 10: Generate blanket Client impl for Handler
-                matchingElements<Namespace> { ns ->
-                    val handlerInterface = ns.elements.filterIsInstance<Interface>().firstOrNull { it.name == Name.of("Handler") }
-                    if (handlerInterface != null) {
-                        val method = handlerInterface.elements.filterIsInstance<LanguageFunction>().firstOrNull()
-                        if (method != null) {
-                            val methodName = method.name.snakeCase()
-                            val implCode = """
-                                impl<C: Client> Handler for C {
-                                    fn $methodName(&self, request: Request) -> Response {
-                                        let raw = to_raw_request(self.serialization(), request);
-                                        let resp = self.transport().transport(&raw);
-                                        from_raw_response(self.serialization(), resp)
-                                    }
-                                }
-                            """.trimIndent()
-                            ns.copy(elements = ns.elements + listOf(RawElement(implCode)))
-                        } else ns
-                    } else ns
-                }
-                // Step 11: Generate Api struct with Server impl and conversion methods
-                matchingElements<Namespace> { ns ->
-                    ns.copy(elements = ns.elements + listOf(RawElement(endpoint.generateApiStruct())))
-                }
+                } else s.transformChildren(t)
             }
+        }
     }
 
-    private fun flattenEndpointForRust(converted: Namespace): Pair<List<Element>, List<Element>> {
-        val flattened = converted.flattenNestedStructs()
-        val responsePattern = Regex("Response(\\d+|Default)")
-        val moduleElements = flattened.elements
-            .filter { it is Struct || it is LanguageUnion }
-            .map { element ->
-                if (element is LanguageUnion && element.name.pascalCase() == "Response") {
-                    val members = flattened.elements
-                        .filterIsInstance<Struct>()
-                        .map { it.name.pascalCase() }
-                        .filter { responsePattern.matches(it) }
-                        .map { LanguageType.Custom(it) }
-                    element.copy(members = members)
-                } else {
-                    element
-                }
-            }
-        val classElements = flattened.elements.filterNot { it is Struct || it is LanguageUnion }
-        return moduleElements to classElements
-    }
+    private fun File.rustifyEndpoint(endpoint: Endpoint): File = transform {
+        // Convert simple-identifier RawExpressions to VariableReference
+        apply(fixRawExpressionIdentifiers())
 
-    override fun emit(channel: Channel): File =
-        channel.convert()
+        // Remove Handler self-referential extends
+        matchingElements<Interface> { iface ->
+            if (iface.name == Name.of("Handler")) iface.copy(extends = emptyList()) else iface
+        }
+
+        // Strip generics from Response type references
+        matching<LanguageType.Custom> { type ->
+            if (type.name.startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
+        }
+
+        // Fix response Switch patterns (Response200 → Response::Response200)
+        apply(fixResponseSwitchPatterns())
+
+        // Convert ConstructorStatement → FunctionCall for Response/Request types
+        apply(fixConstructorCalls())
+
+        // Fix Serializer/Deserializer parameter types to &impl
+        parametersWhere(
+            predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
+            transform = { it.copy(type = LanguageType.Custom("&impl ${(it.type as LanguageType.Custom).name}")) },
+        )
+
+        // Snake_case Handler method names and add &self receiver
+        matchingElements<Interface> { iface ->
+            if (iface.name == Name.of("Handler")) {
+                iface.transform {
+                    matchingElements { fn: LanguageFunction ->
+                        fn.copy(
+                            name = Name.of(fn.name.snakeCase()),
+                            parameters = listOf(Parameter(Name.of("&self"), LanguageType.Custom(""))) + fn.parameters,
+                        )
+                    }
+                }
+            } else iface
+        }
+
+        // Generate blanket Client impl for Handler
+        matchingElements<Namespace> { ns ->
+            val handler = ns.elements.filterIsInstance<Interface>().firstOrNull { it.name == Name.of("Handler") }
+            if (handler != null) {
+                val method = handler.elements.filterIsInstance<LanguageFunction>().firstOrNull()
+                if (method != null) {
+                    val methodName = method.name.snakeCase()
+                    ns.copy(elements = ns.elements + listOf(RawElement("""
+                        impl<C: Client> Handler for C {
+                            fn $methodName(&self, request: Request) -> Response {
+                                let raw = to_raw_request(self.serialization(), request);
+                                let resp = self.transport().transport(&raw);
+                                from_raw_response(self.serialization(), resp)
+                            }
+                        }
+                    """.trimIndent())))
+                } else ns
+            } else ns
+        }
+
+        // Generate Api struct with Server impl
+        matchingElements<Namespace> { ns ->
+            ns.copy(elements = ns.elements + listOf(RawElement(endpoint.generateApiStruct())))
+        }
+    }
 
     private fun Endpoint.generateApiStruct(): String {
         val pathTemplate = path.joinToString("/") { segment ->
@@ -701,6 +702,7 @@ open class RustIrEmitter(
     }
 
     companion object : Keywords {
+        private val RESPONSE_PATTERN = Regex("Response(\\d+|Default)")
         override val reservedKeywords = setOf(
             "as", "break", "const", "continue", "crate",
             "else", "enum", "extern", "false", "fn",
