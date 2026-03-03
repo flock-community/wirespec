@@ -25,6 +25,7 @@ data object JavaShared : Shared {
         |${Spacer}interface Queries {}
         |${Spacer}interface Headers {}
         |${Spacer}interface Handler {}
+        |${Spacer}interface Call {}
         |${Spacer}interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}Req from(RawRequest request);
         |${Spacer(2)}RawResponse to(Res response);
