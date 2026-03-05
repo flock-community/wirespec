@@ -11,7 +11,6 @@
 	<groupId>com.example</groupId>
 	<artifactId>maven-spring-native</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>maven-spring-native</name>
 
 	<properties>
 		<java.version>21</java.version>
