@@ -1,19 +1,10 @@
 package community.flock.wirespec.integration.spring.java.emit;
 
-import arrow.core.Either;
-import arrow.core.NonEmptyList;
-import community.flock.wirespec.compiler.core.CompilerKt;
-import community.flock.wirespec.compiler.core.FileUri;
-import community.flock.wirespec.compiler.core.LanguageSpec;
-import community.flock.wirespec.compiler.core.ModuleContent;
-import community.flock.wirespec.compiler.core.ParseContext;
-import community.flock.wirespec.compiler.core.WirespecSpec;
 import community.flock.wirespec.compiler.core.emit.Emitted;
 import community.flock.wirespec.compiler.core.emit.PackageName;
 import community.flock.wirespec.compiler.core.parse.ast.Root;
-import community.flock.wirespec.compiler.utils.Logger;
+import community.flock.wirespec.compiler.test.JavaInteropTestHelper;
 import community.flock.wirespec.compiler.utils.LoggerKt;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -21,52 +12,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import static arrow.core.NonEmptyListKt.nonEmptyListOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SpringJavaEmitterTest {
-
-    private Root parse(String source) {
-        ParseContext context = new ParseContext() {
-            @Override
-            public @NotNull LanguageSpec getSpec() {
-                return WirespecSpec.INSTANCE;
-            }
-
-            @Override
-            public @NotNull Logger getLogger() {
-                return LoggerKt.getNoLogger();
-            }
-        };
-
-        final FileUri fileUri = new FileUri("");
-        NonEmptyList<ModuleContent> sourceList = nonEmptyListOf(new ModuleContent(fileUri, source));
-
-        Either result = CompilerKt.parse(context, sourceList);
-
-        if (result instanceof Either.Right) {
-            return (Root) ((Either.Right) result).getValue();
-        } else {
-            Either.Left left = (Either.Left) result;
-            throw new RuntimeException(left.getValue().toString());
-        }
-    }
 
     @Test
     public void shouldEmitTheFullWirespecAndAddAnnotationToTheHandlerMethod() throws IOException {
         Path path = Paths.get("src/jvmTest/resources/todo.ws");
         String text = Files.readString(path);
 
-        Root ast = parse(text);
+        Root ast = JavaInteropTestHelper.parse(text);
 
         SpringJavaEmitter emitter = new SpringJavaEmitter(new PackageName("community.flock.wirespec.spring.test", false));
 
-        NonEmptyList emittedNel = emitter.emit(ast, LoggerKt.getNoLogger());
-        List<Emitted> emittedList = (List<Emitted>) emittedNel;
+        List<Emitted> emittedList = JavaInteropTestHelper.emit(emitter, ast, LoggerKt.getNoLogger());
 
         List<String> actual = emittedList.stream()
                 .map(Emitted::getResult)

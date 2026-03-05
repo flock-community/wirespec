@@ -1,5 +1,6 @@
 package community.flock.wirespec.plugin.cli
 
+import com.github.ajalt.clikt.core.main
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.convert
 

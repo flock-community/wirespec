@@ -13,8 +13,11 @@ repositories {
 }
 
 kotlin {
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
+    }
     jvm {
-        withJava()
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
