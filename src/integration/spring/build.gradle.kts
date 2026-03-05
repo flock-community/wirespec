@@ -15,6 +15,9 @@ repositories {
 }
 
 kotlin {
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
+    }
     jvm {
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
