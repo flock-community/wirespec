@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
+import community.flock.wirespec.compiler.test.JavaInteropTestHelper
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
@@ -62,7 +63,7 @@ class GenerateTestClasses {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
         val ast =
             OpenAPIV3Parser.parse(ModuleContent(FileUri("src/jvmTest/resources/petstore.json"), petstoreFile), false)
-        val emittedJava = javaEmitter.emit(ast, noLogger)
+        val emittedJava = JavaInteropTestHelper.emit(javaEmitter, ast, noLogger)
 
         modules.forEach { javaOutputDir.resolve(it).mkdirs() }
         emittedJava

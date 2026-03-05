@@ -2,7 +2,6 @@
 
 package community.flock.wirespec.plugin.npm
 
-import arrow.core.curried
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
@@ -104,19 +103,19 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
             OpenAPIV2Emitter
                 .emitSwaggerObject(ast.modules.flatMap { it.statements }, noLogger)
                 .let(encode(OpenAPIV2Model.serializer()))
-                .let(::Emitted.curried()("openapi")::invoke)
+                .let { Emitted("openapi", it) }
                 .let { nonEmptyListOf(it) }
         Emitters.OPENAPI_V3 ->
             OpenAPIV3Emitter
                 .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null, noLogger)
                 .let(encode(OpenAPIV3Model.serializer()))
-                .let(::Emitted.curried()("openapi")::invoke)
+                .let { Emitted("openapi", it) }
                 .let { nonEmptyListOf(it) }
         Emitters.AVRO ->
             ast.modules
                 .map { ast -> AvroEmitter.emit(ast) }
                 .map { Json.encodeToString(it) }
-                .map(::Emitted.curried()("avro")::invoke)
+                .map { Emitted("avro", it) }
     }
         .map { it.produce() }
         .toTypedArray()

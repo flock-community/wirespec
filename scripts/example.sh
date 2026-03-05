@@ -10,6 +10,7 @@ case "$UNAME" in
 esac
 
 ./gradlew \
+  --no-configuration-cache \
   "publishToMavenLocal" \
   ":src:plugin:cli:${PLATFORM}Binaries" \
   "src:plugin:npm:jsNodeProductionLibraryDistribution" \

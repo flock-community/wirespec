@@ -1,6 +1,7 @@
 plugins {
     id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
 }
 
@@ -16,12 +17,12 @@ kotlin {
     macosX64()
     macosArm64()
     linuxX64()
+    mingwX64()
     js(IR) {
         nodejs()
         useEsModules()
     }
     jvm {
-        withJava()
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))

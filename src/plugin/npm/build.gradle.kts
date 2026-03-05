@@ -78,7 +78,7 @@ kotlin {
 
 val copyReadme = tasks.register<Copy>("copyReadme") {
     from(project.file("README.md"))
-    into(project.buildDir.resolve("dist/js/productionLibrary"))
+    into(project.layout.buildDirectory.dir("dist/js/productionLibrary"))
 }
 
 tasks.named("jsProcessResources") {
