@@ -137,7 +137,8 @@ jobs:
       - name: Build npm library
         run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build site
-        run: cd src/site && make build
+        working-directory: src/site
+        run: make build
         env:
           WIRESPEC_VERSION: ${{ steps.set_version.outputs.version }}
       - name: Docs
@@ -166,10 +167,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Build npm library for VSCode
+        run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build VSCode extension
+        working-directory: src/ide/vscode
         run: |
-          ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
-          cd src/ide/vscode && npm i && npm run build
+          npm i
+          npm run build
 
   intellij-plugin:
 
@@ -265,13 +269,16 @@ jobs:
           path: src/plugin/npm/build/dist/js/productionLibrary
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'maven'
-        run: cd examples/${{ matrix.name }} && ./mvnw verify
+        working-directory: examples/${{ matrix.name }}
+        run: ./mvnw verify
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'gradle'
-        run: cd examples/${{ matrix.name }} && ./gradlew check
+        working-directory: examples/${{ matrix.name }}
+        run: ./gradlew check
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'npm'
-        run: cd examples/${{ matrix.name }} && npm ci && npm run build
+        working-directory: examples/${{ matrix.name }}
+        run: npm ci && npm run build
 
   success:
 
