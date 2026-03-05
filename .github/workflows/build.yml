@@ -314,16 +314,7 @@ jobs:
     if: github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published')
 
     needs:
-      - format-check
-      - jvm-test
-      - linux-native-test
-      - js-test
-      - macos-native-test
-      - windows-native-test
-      - site
-      - vscode
-      - intellij-plugin
-      - example-test
+      - success
 
     outputs:
       version: ${{steps.version.outputs.version}}
