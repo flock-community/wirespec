@@ -265,7 +265,7 @@ jobs:
           path: src/plugin/npm/build/dist/js/productionLibrary
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'maven'
-        run: cd examples/${{ matrix.name }} && mvn verify
+        run: cd examples/${{ matrix.name }} && ./mvnw verify
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'gradle'
         run: cd examples/${{ matrix.name }} && ./gradlew check
