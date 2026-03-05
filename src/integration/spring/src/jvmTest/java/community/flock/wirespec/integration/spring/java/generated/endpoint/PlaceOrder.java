@@ -1,8 +1,14 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.Order;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.Order;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
 
 public interface PlaceOrder extends Wirespec.Endpoint {
   static class Path implements Wirespec.Path {}
@@ -55,10 +61,10 @@ public interface PlaceOrder extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("store", "order"),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Order.class, null)))
+        List.of("store", "order"),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Order.class, null)))
       );
     }
 
@@ -69,8 +75,8 @@ public interface PlaceOrder extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Order.class, null)))); }
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Order.class, null)))); }
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -85,7 +91,7 @@ public interface PlaceOrder extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/store/order")
-    java.util.concurrent.CompletableFuture<Response<?>> placeOrder(Request request);
+    CompletableFuture<Response<?>> placeOrder(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/store/order"; }

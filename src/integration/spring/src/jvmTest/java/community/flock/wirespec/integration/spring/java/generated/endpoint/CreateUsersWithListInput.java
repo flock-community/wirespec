@@ -1,8 +1,14 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.User;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.User;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
 
 public interface CreateUsersWithListInput extends Wirespec.Endpoint {
   static class Path implements Wirespec.Path {}
@@ -16,9 +22,9 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     Wirespec.Method method,
     Queries queries,
     RequestHeaders headers,
-    java.util.List<User> body
-  ) implements Wirespec.Request<java.util.List<User>> {
-    public Request(java.util.List<User> body) {
+    List<User> body
+  ) implements Wirespec.Request<List<User>> {
+    public Request(List<User> body) {
       this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(), body);
     }
   }
@@ -55,22 +61,22 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("user", "createWithList"),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(User.class, java.util.List.class)))
+        List.of("user", "createWithList"),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(User.class, List.class)))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        request.body().<java.util.List<User>>map(body -> serialization.deserializeBody(body, Wirespec.getType(User.class, java.util.List.class))).orElse(null)
+        request.body().<List<User>>map(body -> serialization.deserializeBody(body, Wirespec.getType(User.class, List.class))).orElse(null)
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(User.class, null)))); }
-      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(User.class, null)))); }
+      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -85,7 +91,7 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/user/createWithList")
-    java.util.concurrent.CompletableFuture<Response<?>> createUsersWithListInput(Request request);
+    CompletableFuture<Response<?>> createUsersWithListInput(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/user/createWithList"; }

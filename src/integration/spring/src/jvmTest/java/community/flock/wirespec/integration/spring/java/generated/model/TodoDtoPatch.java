@@ -2,8 +2,10 @@ package community.flock.wirespec.integration.spring.java.generated.model;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Optional;
+
 public record TodoDtoPatch (
-  java.util.Optional<String> name,
-  java.util.Optional<Boolean> done
+  Optional<String> name,
+  Optional<Boolean> done
 ) {
 };

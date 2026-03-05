@@ -2,6 +2,12 @@ package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 
 
 public interface GetInventory extends Wirespec.Endpoint {
@@ -25,14 +31,14 @@ public interface GetInventory extends Wirespec.Endpoint {
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface Response2XX<T> extends Response<T> {}
-  sealed interface ResponseMapStringInteger extends Response<java.util.Map<String, Integer>> {}
+  sealed interface ResponseMapStringInteger extends Response<Map<String, Integer>> {}
 
   record Response200(
     int status,
     Headers headers,
-    java.util.Map<String, Integer> body
-  ) implements Response2XX<java.util.Map<String, Integer>>, ResponseMapStringInteger {
-    public Response200(java.util.Map<String, Integer> body) {
+    Map<String, Integer> body
+  ) implements Response2XX<Map<String, Integer>>, ResponseMapStringInteger {
+    public Response200(Map<String, Integer> body) {
       this(200, new Headers(), body);
     }
     static class Headers implements Wirespec.Response.Headers {}
@@ -43,10 +49,10 @@ public interface GetInventory extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("store", "inventory"),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.empty()
+        List.of("store", "inventory"),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Optional.empty()
       );
     }
 
@@ -55,14 +61,14 @@ public interface GetInventory extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Integer.class, null)))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Integer.class, null)))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       if (response.statusCode() == 200) {
         return new Response200(
-          response.body().<java.util.Map<String, Integer>>map(body -> serialization.deserializeBody(body, Wirespec.getType(Integer.class, null))).orElse(null)
+          response.body().<Map<String, Integer>>map(body -> serialization.deserializeBody(body, Wirespec.getType(Integer.class, null))).orElse(null)
         );
       } else {
         throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
@@ -70,7 +76,7 @@ public interface GetInventory extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/store/inventory")
-    java.util.concurrent.CompletableFuture<Response<?>> getInventory(Request request);
+    CompletableFuture<Response<?>> getInventory(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/store/inventory"; }

@@ -1,15 +1,23 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.Error;
+import community.flock.wirespec.integration.spring.java.generated.model.TodoDto;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.TodoDto;
-import community.flock.wirespec.integration.spring.java.generated.model.Error;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
+
 
 public interface GetTodos extends Wirespec.Endpoint {
   static class Path implements Wirespec.Path {}
 
   public record Queries(
-    java.util.Optional<Boolean> done
+    Optional<Boolean> done
   ) implements Wirespec.Queries {}
 
   static class RequestHeaders implements Wirespec.Request.Headers {}
@@ -21,7 +29,7 @@ public interface GetTodos extends Wirespec.Endpoint {
     RequestHeaders headers,
     Void body
   ) implements Wirespec.Request<Void> {
-    public Request(java.util.Optional<Boolean> done) {
+    public Request(Optional<Boolean> done) {
       this(new Path(), Wirespec.Method.GET, new Queries(done), new RequestHeaders(), null);
     }
   }
@@ -29,15 +37,15 @@ public interface GetTodos extends Wirespec.Endpoint {
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface Response2XX<T> extends Response<T> {}
   sealed interface Response5XX<T> extends Response<T> {}
-  sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> {}
+  sealed interface ResponseListTodoDto extends Response<List<TodoDto>> {}
   sealed interface ResponseError extends Response<Error> {}
 
   record Response200(
     int status,
     Headers headers,
-    java.util.List<TodoDto> body
-  ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
-    public Response200(Long total, java.util.List<TodoDto> body) {
+    List<TodoDto> body
+  ) implements Response2XX<List<TodoDto>>, ResponseListTodoDto {
+    public Response200(Long total, List<TodoDto> body) {
       this(200, new Headers(total), body);
     }
     public record Headers(
@@ -60,30 +68,30 @@ public interface GetTodos extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("api", "todos"),
-        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, java.util.Optional.class)))),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.empty()
+        List.of("api", "todos"),
+        Map.ofEntries(Map.entry("done", serialization.serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, Optional.class)))),
+        Collections.emptyMap(),
+        Optional.empty()
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.<java.util.Optional<Boolean>>deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, java.util.Optional.class))
+        serialization.<Optional<Boolean>>deserializeParam(request.queries().getOrDefault("done", Collections.emptyList()), Wirespec.getType(Boolean.class, Optional.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("total", serialization.<Long>serializeParam(r.headers().total(), Wirespec.getType(Long.class, null)))), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, java.util.List.class)))); }
-      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Error.class, null)))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Map.ofEntries(Map.entry("total", serialization.<Long>serializeParam(r.headers().total(), Wirespec.getType(Long.class, null)))), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, List.class)))); }
+      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Error.class, null)))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-          serialization.<Long>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("total")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Long.class, null)),
-          response.body().<java.util.List<TodoDto>>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDto.class, java.util.List.class))).orElse(null)
+          serialization.<Long>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("total")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(Long.class, null)),
+          response.body().<List<TodoDto>>map(body -> serialization.deserializeBody(body, Wirespec.getType(TodoDto.class, List.class))).orElse(null)
         );
         case 500 -> new Response500(
           response.body().<Error>map(body -> serialization.deserializeBody(body, Wirespec.getType(Error.class, null))).orElse(null)
@@ -93,7 +101,7 @@ public interface GetTodos extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/api/todos")
-    java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
+    CompletableFuture<Response<?>> getTodos(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/api/todos"; }

@@ -1,9 +1,17 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.ApiResponse;
+import community.flock.wirespec.integration.spring.java.generated.model.UploadFileRequestBody;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.UploadFileRequestBody;
-import community.flock.wirespec.integration.spring.java.generated.model.ApiResponse;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
+
 
 public interface UploadFile extends Wirespec.Endpoint {
   public record Path(
@@ -11,7 +19,7 @@ public interface UploadFile extends Wirespec.Endpoint {
   ) implements Wirespec.Path {}
 
   public record Queries(
-    java.util.Optional<String> additionalMetadata
+    Optional<String> additionalMetadata
   ) implements Wirespec.Queries {}
 
   static class RequestHeaders implements Wirespec.Request.Headers {}
@@ -23,7 +31,7 @@ public interface UploadFile extends Wirespec.Endpoint {
     RequestHeaders headers,
     UploadFileRequestBody body
   ) implements Wirespec.Request<UploadFileRequestBody> {
-    public Request(Long petId, java.util.Optional<String> additionalMetadata, UploadFileRequestBody body) {
+    public Request(Long petId, Optional<String> additionalMetadata, UploadFileRequestBody body) {
       this(new Path(petId), Wirespec.Method.POST, new Queries(additionalMetadata), new RequestHeaders(), body);
     }
   }
@@ -48,23 +56,23 @@ public interface UploadFile extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null)), "uploadImage"),
-        java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.queries().additionalMetadata(), Wirespec.getType(String.class, java.util.Optional.class)))),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null)))
+        List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null)), "uploadImage"),
+        Map.ofEntries(Map.entry("additionalMetadata", serialization.serializeParam(request.queries().additionalMetadata(), Wirespec.getType(String.class, Optional.class)))),
+        Collections.emptyMap(),
+        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null)))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
-        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.<Optional<String>>deserializeParam(request.queries().getOrDefault("additionalMetadata", Collections.emptyList()), Wirespec.getType(String.class, Optional.class)),
         request.body().<UploadFileRequestBody>map(body -> serialization.deserializeBody(body, Wirespec.getType(UploadFileRequestBody.class, null))).orElse(null)
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null)))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null)))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -79,7 +87,7 @@ public interface UploadFile extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}/uploadImage")
-    java.util.concurrent.CompletableFuture<Response<?>> uploadFile(Request request);
+    CompletableFuture<Response<?>> uploadFile(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/pet/{petId}/uploadImage"; }

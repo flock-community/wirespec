@@ -49,14 +49,82 @@ open class JavaEmitter(
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
         super<LanguageEmitter>.emit(definition, module, logger).let {
             val subPackageName = packageName + definition
+            val (allImports, processedCode) = processJavaImports(it.result, module.needImports())
+            val importStatements = buildImportStatements(allImports)
             Emitted(
                 file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result =
                     """
                     |package $subPackageName;
-                    |${if (module.needImports()) import else ""}
-                    |${it.result}
+                    |
+                    |${importStatements.trim()}
+                    |
+                    |${processedCode.trim()}
+                    |
                     """.trimMargin().trimStart()
             )
         }
+
+    private fun processJavaImports(code: String, needsWirespecImport: Boolean): Pair<List<String>, String> {
+        // Extract existing imports from the code
+        val importPattern = Regex("""^\s*import\s+([^;]+);\n""", RegexOption.MULTILINE)
+        val existingImports = importPattern.findAll(code)
+            .map { it.groupValues[1].trim() }
+            .toMutableSet()
+
+        // Remove existing import statements from code
+        var processedCode = importPattern.replace(code, "")
+
+        // Add Wirespec import if needed
+        if (needsWirespecImport) {
+            existingImports.add("$DEFAULT_SHARED_PACKAGE_STRING.java.Wirespec")
+        }
+
+        // Pattern to match java.util.*, java.io.*, java.time.*, etc. including nested packages
+        // Matches: java.util.List, java.util.regex.Pattern, java.util.concurrent.CompletableFuture, etc.
+        // Does not match java.lang.* which is auto-imported
+        val javaFqnPattern = Regex("""java\.(util|io|time|math|net|nio)(\.[a-z]+)*\.[A-Z][a-zA-Z0-9]*""")
+
+        // Find all unique fully qualified names in the code
+        val javaImports = javaFqnPattern.findAll(processedCode)
+            .map { it.value }
+            .toSet()
+
+        // Add java imports to existing imports
+        existingImports.addAll(javaImports)
+
+        // Replace each FQN with its simple name
+        javaImports.forEach { fqn ->
+            val simpleName = fqn.substringAfterLast('.')
+            processedCode = processedCode.replace(fqn, simpleName)
+        }
+
+        // Sort imports according to project conventions:
+        // 1. custom/project imports (alphabetically)
+        // 2. blank line
+        // 3. java/javax imports (alphabetically)
+        val (standardImports, customImports) = existingImports
+            .sorted()
+            .partition { it.startsWith("java.") || it.startsWith("javax.") }
+
+        val sortedImports = buildList {
+            addAll(customImports)
+            if (standardImports.isNotEmpty() && customImports.isNotEmpty()) {
+                add("") // Blank line separator
+            }
+            addAll(standardImports)
+        }
+
+        return sortedImports to processedCode
+    }
+
+    private fun buildImportStatements(imports: List<String>): String {
+        return if (imports.isEmpty()) {
+            ""
+        } else {
+            imports.joinToString("\n") { import ->
+                if (import.isEmpty()) "" else "import $import;"
+            }
+        }
+    }
 }

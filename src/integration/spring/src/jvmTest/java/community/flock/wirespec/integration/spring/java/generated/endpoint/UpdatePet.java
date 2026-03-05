@@ -1,8 +1,14 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.Pet;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.Pet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
 
 public interface UpdatePet extends Wirespec.Endpoint {
   static class Path implements Wirespec.Path {}
@@ -75,10 +81,10 @@ public interface UpdatePet extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("pet"),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Pet.class, null)))
+        List.of("pet"),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(Pet.class, null)))
       );
     }
 
@@ -89,10 +95,10 @@ public interface UpdatePet extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null)))); }
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
-      if (response instanceof Response404 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null)))); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
+      if (response instanceof Response404 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -109,7 +115,7 @@ public interface UpdatePet extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.PutMapping("/pet")
-    java.util.concurrent.CompletableFuture<Response<?>> updatePet(Request request);
+    CompletableFuture<Response<?>> updatePet(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/pet"; }
