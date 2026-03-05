@@ -7,7 +7,6 @@ import community.flock.wirespec.generated.kotlin.endpoint.DeleteTodoById
 import community.flock.wirespec.generated.kotlin.endpoint.GetTodoById
 import community.flock.wirespec.generated.kotlin.endpoint.GetTodos
 import community.flock.wirespec.generated.kotlin.endpoint.PostTodo
-import community.flock.wirespec.generated.kotlin.model.validate
 
 private interface TodoApi :
     GetTodos.Handler,

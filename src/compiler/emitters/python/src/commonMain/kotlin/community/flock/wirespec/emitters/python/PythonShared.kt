@@ -27,6 +27,9 @@ data object PythonShared : Shared {
         |        class Handler(ABC):
         |            pass
         |
+        |        class Call(ABC):
+        |            pass
+        |
         |        class Convert(ABC, Generic[REQ, RES]):
         |            @staticmethod
         |            @abstractmethod

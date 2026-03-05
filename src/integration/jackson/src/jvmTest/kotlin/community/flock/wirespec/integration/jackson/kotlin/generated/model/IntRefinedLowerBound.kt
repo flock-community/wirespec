@@ -5,6 +5,5 @@ import kotlin.reflect.typeOf
 
 data class IntRefinedLowerBound(override val value: Long): Wirespec.Refined<Long> {
   override fun toString() = value.toString()
+  override fun validate() = -1 < value
 }
-
-fun IntRefinedLowerBound.validate() = -1 < value

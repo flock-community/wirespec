@@ -33,7 +33,7 @@ public interface LoginUser extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     String body
   ) implements Response2XX<String>, ResponseString {
@@ -46,7 +46,7 @@ public interface LoginUser extends Wirespec.Endpoint {
   ) implements Wirespec.Response.Headers {}
   }
   record Response400(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements Response4XX<Void>, ResponseVoid {
