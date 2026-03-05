@@ -367,6 +367,53 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
+            |package community.flock.wirespec.generated.endpoint;
+            |import community.flock.wirespec.java.Wirespec;
+            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.PotentialTodoDto;
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.model.Error;
+            |public record PutTodoClient (
+            |  Wirespec.Serialization serialization,
+            |  Wirespec.Transportation transportation
+            |) implements PutTodo.Call {
+            |  @Override
+            |  public java.util.concurrent.CompletableFuture<PutTodo.Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
+            |    final var request = new PutTodo.Request(
+            |      id,
+            |      done,
+            |      name,
+            |      token,
+            |      refreshToken,
+            |      body
+            |    );
+            |    final var rawRequest = PutTodo.toRawRequest(serialization(), request);
+            |    return transportation().transport(rawRequest).thenApply(rawResponse -> PutTodo.fromRawResponse(serialization(), rawResponse));
+            |  }
+            |};
+            |
+            |package community.flock.wirespec.generated.endpoint;
+            |import community.flock.wirespec.java.Wirespec;
+            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.PotentialTodoDto;
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.model.Error;
+            |import community.flock.wirespec.generated.endpoint.PutTodo;
+            |import community.flock.wirespec.generated.endpoint.PutTodoClient;
+            |public record Client (
+            |  Wirespec.Serialization serialization,
+            |  Wirespec.Transportation transportation
+            |) implements PutTodo.Call {
+            |  @Override
+            |  public java.util.concurrent.CompletableFuture<PutTodo.Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
+            |    return new PutTodoClient(
+            |      serialization(),
+            |      transportation()
+            |    ).putTodo(id, done, name, token, refreshToken, body);
+            |  }
+            |};
+            |
         """.trimMargin()
 
         CompileFullEndpointTest.compiler { JavaIrEmitter() } shouldBeRight java
@@ -538,6 +585,39 @@ class JavaIrEmitterTest {
             |  @Override
             |  public java.util.List<String> validate() {
             |    return java.util.List.<String>of();
+            |  }
+            |};
+            |
+            |package community.flock.wirespec.generated.endpoint;
+            |import community.flock.wirespec.java.Wirespec;
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |public record GetTodosClient (
+            |  Wirespec.Serialization serialization,
+            |  Wirespec.Transportation transportation
+            |) implements GetTodos.Call {
+            |  @Override
+            |  public java.util.concurrent.CompletableFuture<GetTodos.Response<?>> getTodos() {
+            |    final var request = new GetTodos.Request();
+            |    final var rawRequest = GetTodos.toRawRequest(serialization(), request);
+            |    return transportation().transport(rawRequest).thenApply(rawResponse -> GetTodos.fromRawResponse(serialization(), rawResponse));
+            |  }
+            |};
+            |
+            |package community.flock.wirespec.generated.endpoint;
+            |import community.flock.wirespec.java.Wirespec;
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.endpoint.GetTodos;
+            |import community.flock.wirespec.generated.endpoint.GetTodosClient;
+            |public record Client (
+            |  Wirespec.Serialization serialization,
+            |  Wirespec.Transportation transportation
+            |) implements GetTodos.Call {
+            |  @Override
+            |  public java.util.concurrent.CompletableFuture<GetTodos.Response<?>> getTodos() {
+            |    return new GetTodosClient(
+            |      serialization(),
+            |      transportation()
+            |    ).getTodos();
             |  }
             |};
             |

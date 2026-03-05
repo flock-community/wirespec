@@ -272,6 +272,109 @@ open class TypeScriptIrEmitter : IrEmitter {
         else File(Name.of(endpoint.identifier.sanitize()), listOf(body))
     }
 
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val endpointName = endpoint.identifier.value
+        val methodName = endpointName.replaceFirstChar { it.lowercase() }
+
+        val imports = endpoint.importReferences().distinctBy { it.value }
+            .joinToString("\n") { "import {type ${it.value}} from '../model'" }
+
+        val params = buildEndpointParams(endpoint)
+        val paramList = if (params.isNotEmpty()) {
+            params.joinToString(", ") { (name, type, nullable) ->
+                "${name.sanitizeKeywords()}: $type${if (nullable) " | undefined" else ""}"
+            }
+        } else ""
+
+        val requestArgs = if (params.isNotEmpty()) {
+            val args = params.joinToString(", ") { (name, _, _) -> name.sanitizeKeywords() }
+            "$endpointName.request({$args})"
+        } else {
+            "$endpointName.request()"
+        }
+
+        val code = buildString {
+            appendLine("export const ${methodName}Client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
+            appendLine("  $methodName: async ($paramList): Promise<$endpointName.Response<unknown>> => {")
+            appendLine("    const request: $endpointName.Request = $requestArgs;")
+            appendLine("    const rawRequest = $endpointName.toRawRequest(serialization, request);")
+            appendLine("    const rawResponse = await transportation.transport(rawRequest);")
+            appendLine("    return $endpointName.fromRawResponse(serialization, rawResponse);")
+            appendLine("  }")
+            append("})")
+        }
+
+        val elements = buildList {
+            add(RawElement("import {Wirespec} from '../Wirespec'"))
+            add(RawElement("import {$endpointName} from './$endpointName'"))
+            if (imports.isNotEmpty()) add(RawElement(imports))
+            add(RawElement(code))
+        }
+
+        return File(
+            Name.of("endpoint/${endpointName}Client"),
+            elements
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        logger.info("Emitting main Client for ${endpoints.size} endpoints")
+
+        val clientImports = endpoints.joinToString("\n") {
+            val methodName = it.identifier.value.replaceFirstChar { c -> c.lowercase() }
+            "import {${methodName}Client} from './${it.identifier.value}Client'"
+        }
+
+        val spreadEntries = endpoints.joinToString("\n") {
+            val methodName = it.identifier.value.replaceFirstChar { c -> c.lowercase() }
+            "  ...${methodName}Client(serialization, transportation),"
+        }
+
+        val code = buildString {
+            appendLine("export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
+            appendLine(spreadEntries)
+            append("})")
+        }
+
+        val elements = buildList {
+            add(RawElement("import {Wirespec} from '../Wirespec'"))
+            add(RawElement(clientImports))
+            add(RawElement(code))
+        }
+
+        return File(
+            Name.of("endpoint/Client"),
+            elements
+        )
+    }
+
+    private data class EndpointParam(val name: String, val type: String, val nullable: Boolean)
+
+    private fun sanitizeParamName(identifier: Identifier): String {
+        val parts = identifier.value.split(Regex("[.\\s-]+")).filter { it.isNotEmpty() }
+        val name = if (parts.size > 1) {
+            Name(parts).camelCase()
+        } else {
+            identifier.value
+        }
+        return name.sanitizeSymbol().sanitizeKeywords()
+    }
+
+    private fun buildEndpointParams(endpoint: Endpoint): List<EndpointParam> = buildList {
+        endpoint.path.filterIsInstance<Endpoint.Segment.Param>().forEach {
+            add(EndpointParam(sanitizeParamName(it.identifier), emitTypeScriptReference(it.reference.copy(isNullable = false)), it.reference.isNullable))
+        }
+        endpoint.queries.forEach {
+            add(EndpointParam(sanitizeParamName(it.identifier), emitTypeScriptReference(it.reference.copy(isNullable = false)), it.reference.isNullable))
+        }
+        endpoint.headers.forEach {
+            add(EndpointParam(sanitizeParamName(it.identifier), emitTypeScriptReference(it.reference.copy(isNullable = false)), it.reference.isNullable))
+        }
+        endpoint.requests.first().content?.let {
+            add(EndpointParam("body", emitTypeScriptReference(it.reference.copy(isNullable = false)), it.reference.isNullable))
+        }
+    }
+
     private fun Identifier.sanitize() = "\"${value}\""
     private fun emitTypeScriptReference(ref: Reference): String = when (ref) {
         is Reference.Dict -> "Record<string, ${emitTypeScriptReference(ref.reference)}>"

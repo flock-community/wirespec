@@ -314,6 +314,52 @@ class KotlinIrEmitterTest {
             |    emptyList<String>()
             |}
             |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |data class PutTodoClient(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) : PutTodo.Call {
+            |  override suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): PutTodo.Response<*> {
+            |    val request = PutTodo.Request(
+            |      id = id,
+            |      done = done,
+            |      name = name,
+            |      token = token,
+            |      refreshToken = refreshToken,
+            |      body = body
+            |    )
+            |    val rawRequest = PutTodo.toRawRequest(serialization, request)
+            |    val rawResponse = transportation.transport(rawRequest)
+            |    return PutTodo.fromRawResponse(serialization, rawResponse)
+            |  }
+            |}
+            |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |import community.flock.wirespec.generated.endpoint.PutTodo
+            |import community.flock.wirespec.generated.endpoint.PutTodoClient
+            |data class Client(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) : PutTodo.Call {
+            |  override suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): PutTodo.Response<*> =
+            |    PutTodoClient(
+            |      serialization = serialization,
+            |      transportation = transportation
+            |    ).putTodo(id, done, name, token, refreshToken, body)
+            |}
+            |
         """.trimMargin()
 
         CompileFullEndpointTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
@@ -448,6 +494,39 @@ class KotlinIrEmitterTest {
             |) : Wirespec.Model {
             |  override fun validate(): List<String> =
             |    emptyList<String>()
+            |}
+            |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |import community.flock.wirespec.generated.model.TodoDto
+            |data class GetTodosClient(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) : GetTodos.Call {
+            |  override suspend fun getTodos(): GetTodos.Response<*> {
+            |    val request = GetTodos.Request
+            |    val rawRequest = GetTodos.toRawRequest(serialization, request)
+            |    val rawResponse = transportation.transport(rawRequest)
+            |    return GetTodos.fromRawResponse(serialization, rawResponse)
+            |  }
+            |}
+            |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.endpoint.GetTodos
+            |import community.flock.wirespec.generated.endpoint.GetTodosClient
+            |data class Client(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) : GetTodos.Call {
+            |  override suspend fun getTodos(): GetTodos.Response<*> =
+            |    GetTodosClient(
+            |      serialization = serialization,
+            |      transportation = transportation
+            |    ).getTodos()
             |}
             |
         """.trimMargin()

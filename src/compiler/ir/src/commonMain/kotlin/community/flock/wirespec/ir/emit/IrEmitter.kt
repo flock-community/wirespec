@@ -14,6 +14,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.ir.converter.convertClient
+import community.flock.wirespec.ir.converter.convertEndpointClient
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.generator.Generator
 
@@ -23,16 +25,30 @@ interface IrEmitter : Emitter {
 
     val generator: Generator
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
-        .modules.flatMap { m ->
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
+        val moduleEmitted = ast.modules.flatMap { m ->
             logger.info("Emitting Nodes from ${m.fileUri.value} ")
             emit(m, logger)
-        }
-        .map { file -> Emitted(file.name.value() + "." + extension.value, generator.generate(file)) }
+        }.map { file -> Emitted(file.name.value() + "." + extension.value, generator.generate(file)) }
 
-    fun emit(module: Module, logger: Logger): NonEmptyList<File> = module
-        .statements
-        .map { emit(it, module, logger) }
+        val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
+        return if (allEndpoints.isNotEmpty()) {
+            val mainClient = emitClient(allEndpoints, logger)
+            moduleEmitted + Emitted(mainClient.name.value() + "." + extension.value, generator.generate(mainClient))
+        } else {
+            moduleEmitted
+        }
+    }
+
+    fun emit(module: Module, logger: Logger): NonEmptyList<File> {
+        val definitionFiles = module.statements.map { emit(it, module, logger) }
+        val endpoints = module.statements.toList().filterIsInstance<Endpoint>()
+        val clientFiles = endpoints.map { endpoint ->
+            logger.info("Emitting Client for endpoint ${endpoint.identifier.value}")
+            emitEndpointClient(endpoint)
+        }
+        return definitionFiles + clientFiles
+    }
 
     fun emit(definition: Definition, module: Module, logger: Logger): File = run {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
@@ -44,6 +60,13 @@ interface IrEmitter : Emitter {
             is Union -> emit(definition)
             is Channel -> emit(definition)
         }
+    }
+
+    fun emitEndpointClient(endpoint: Endpoint): File = endpoint.convertEndpointClient()
+
+    fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        logger.info("Emitting main Client for ${endpoints.size} endpoints")
+        return endpoints.convertClient()
     }
 
     fun emit(type: Type, module: Module): File

@@ -206,12 +206,34 @@ class PythonIrEmitterTest {
             |                raise Exception(('Cannot match response with status: ' + str(response.statusCode)))
             |    class Handler(Wirespec.Handler, ABC):
             |        @abstractmethod
-            |        async def PutTodo(self, request: Request) -> Response[Any]:
+            |        async def put_todo(self, request: Request) -> Response[Any]:
             |            ...
             |    class Call(Wirespec.Call, ABC):
             |        @abstractmethod
-            |        async def PutTodo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
+            |        async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
             |            ...
+            |
+            |from __future__ import annotations
+            |import re
+            |from abc import ABC, abstractmethod
+            |from dataclasses import dataclass
+            |from typing import Any, Generic, List, Optional
+            |import enum
+            |from ..wirespec import T, Wirespec, _raise
+            |from ..model.Token import Token
+            |from ..model.PotentialTodoDto import PotentialTodoDto
+            |from ..model.TodoDto import TodoDto
+            |from ..model.Error import Error
+            |from .PutTodo import *
+            |@dataclass
+            |class PutTodoClient(PutTodo.Call):
+            |    serialization: Wirespec.Serialization
+            |    transportation: Wirespec.Transportation
+            |    async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
+            |        request = Request(id=id, done=done, name=name, token=token, refreshToken=refreshToken, body=body)
+            |        rawRequest = PutTodo.toRawRequest(serialization=self.serialization, request=request)
+            |        rawResponse = await self.transportation.transport(rawRequest)
+            |        return PutTodo.fromRawResponse(serialization=self.serialization, response=rawResponse)
             |
             |from . import model
             |from . import endpoint
@@ -222,6 +244,26 @@ class PythonIrEmitterTest {
             |
             |
             |
+            |
+            |from __future__ import annotations
+            |import re
+            |from abc import ABC, abstractmethod
+            |from dataclasses import dataclass
+            |from typing import Any, Generic, List, Optional
+            |import enum
+            |from ..wirespec import T, Wirespec, _raise
+            |from ..model.Token import Token
+            |from ..model.PotentialTodoDto import PotentialTodoDto
+            |from ..model.TodoDto import TodoDto
+            |from ..model.Error import Error
+            |from .PutTodo import *
+            |from .PutTodoClient import PutTodoClient
+            |@dataclass
+            |class Client(PutTodo.Call):
+            |    serialization: Wirespec.Serialization
+            |    transportation: Wirespec.Transportation
+            |    async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
+            |        return await PutTodoClient(serialization=self.serialization, transportation=self.transportation).put_todo(id, done, name, token, refreshToken, body)
             |
         """.trimMargin()
 
@@ -384,12 +426,31 @@ class PythonIrEmitterTest {
             |                raise Exception(('Cannot match response with status: ' + str(response.statusCode)))
             |    class Handler(Wirespec.Handler, ABC):
             |        @abstractmethod
-            |        async def GetTodos(self, request: Request) -> Response[Any]:
+            |        async def get_todos(self, request: Request) -> Response[Any]:
             |            ...
             |    class Call(Wirespec.Call, ABC):
             |        @abstractmethod
-            |        async def GetTodos(self) -> Response[Any]:
+            |        async def get_todos(self) -> Response[Any]:
             |            ...
+            |
+            |from __future__ import annotations
+            |import re
+            |from abc import ABC, abstractmethod
+            |from dataclasses import dataclass
+            |from typing import Any, Generic, List, Optional
+            |import enum
+            |from ..wirespec import T, Wirespec, _raise
+            |from ..model.TodoDto import TodoDto
+            |from .GetTodos import *
+            |@dataclass
+            |class GetTodosClient(GetTodos.Call):
+            |    serialization: Wirespec.Serialization
+            |    transportation: Wirespec.Transportation
+            |    async def get_todos(self) -> Response[Any]:
+            |        request = Request()
+            |        rawRequest = GetTodos.toRawRequest(serialization=self.serialization, request=request)
+            |        rawResponse = await self.transportation.transport(rawRequest)
+            |        return GetTodos.fromRawResponse(serialization=self.serialization, response=rawResponse)
             |
             |from . import model
             |from . import endpoint
@@ -400,6 +461,23 @@ class PythonIrEmitterTest {
             |
             |
             |
+            |
+            |from __future__ import annotations
+            |import re
+            |from abc import ABC, abstractmethod
+            |from dataclasses import dataclass
+            |from typing import Any, Generic, List, Optional
+            |import enum
+            |from ..wirespec import T, Wirespec, _raise
+            |from ..model.TodoDto import TodoDto
+            |from .GetTodos import *
+            |from .GetTodosClient import GetTodosClient
+            |@dataclass
+            |class Client(GetTodos.Call):
+            |    serialization: Wirespec.Serialization
+            |    transportation: Wirespec.Transportation
+            |    async def get_todos(self) -> Response[Any]:
+            |        return await GetTodosClient(serialization=self.serialization, transportation=self.transportation).get_todos()
             |
         """.trimMargin()
 

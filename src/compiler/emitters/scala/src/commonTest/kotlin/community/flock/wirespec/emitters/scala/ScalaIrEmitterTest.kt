@@ -434,6 +434,39 @@ class ScalaIrEmitterTest {
             |    List.empty[String]
             |}
             |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.scala.Wirespec
+            |import scala.reflect.ClassTag
+            |import community.flock.wirespec.generated.model.TodoDto
+            |case class GetTodosClient(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) extends GetTodos.Call[[A] =>> A] {
+            |  override def getTodos(): GetTodos.Response[?] = {
+            |    val request = GetTodos.Request
+            |    val rawRequest = GetTodos.toRawRequest(serialization, request)
+            |    val rawResponse = transportation.transport(rawRequest)
+            |    GetTodos.fromRawResponse(serialization, rawResponse)
+            |  }
+            |}
+            |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.scala.Wirespec
+            |import scala.reflect.ClassTag
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.endpoint.GetTodos
+            |import community.flock.wirespec.generated.endpoint.GetTodosClient
+            |case class Client(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) extends GetTodos.Call[[A] =>> A] {
+            |  override def getTodos(): GetTodos.Response[?] =
+            |    new GetTodosClient(
+            |      serialization = serialization,
+            |      transportation = transportation
+            |    ).getTodos()
+            |}
+            |
         """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { ScalaIrEmitter() } shouldBeRight scala
@@ -642,6 +675,52 @@ class ScalaIrEmitterTest {
             |) extends Wirespec.Model {
             |  override def validate(): List[String] =
             |    List.empty[String]
+            |}
+            |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.scala.Wirespec
+            |import scala.reflect.ClassTag
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |case class PutTodoClient(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) extends PutTodo.Call[[A] =>> A] {
+            |  override def putTodo(id: String, done: Boolean, name: Option[String], token: Token, refreshToken: Option[Token], body: PotentialTodoDto): PutTodo.Response[?] = {
+            |    val request = new PutTodo.Request(
+            |      id = id,
+            |      done = done,
+            |      name = name,
+            |      token = token,
+            |      refreshToken = refreshToken,
+            |      body = body
+            |    )
+            |    val rawRequest = PutTodo.toRawRequest(serialization, request)
+            |    val rawResponse = transportation.transport(rawRequest)
+            |    PutTodo.fromRawResponse(serialization, rawResponse)
+            |  }
+            |}
+            |
+            |package community.flock.wirespec.generated.endpoint
+            |import community.flock.wirespec.scala.Wirespec
+            |import scala.reflect.ClassTag
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |import community.flock.wirespec.generated.endpoint.PutTodo
+            |import community.flock.wirespec.generated.endpoint.PutTodoClient
+            |case class Client(
+            |  val serialization: Wirespec.Serialization,
+            |  val transportation: Wirespec.Transportation
+            |) extends PutTodo.Call[[A] =>> A] {
+            |  override def putTodo(id: String, done: Boolean, name: Option[String], token: Token, refreshToken: Option[Token], body: PotentialTodoDto): PutTodo.Response[?] =
+            |    new PutTodoClient(
+            |      serialization = serialization,
+            |      transportation = transportation
+            |    ).putTodo(id, done, name, token, refreshToken, body)
             |}
             |
         """.trimMargin()

@@ -187,6 +187,27 @@ class TypeScriptIrEmitterTest {
             |  return [] as string[];
             |}
             |
+            |import {Wirespec} from '../Wirespec'
+            |import {PutTodo} from './PutTodo'
+            |import {type Token} from '../model'
+            |import {type PotentialTodoDto} from '../model'
+            |import {type TodoDto} from '../model'
+            |import {type Error} from '../model'
+            |export const putTodoClient = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+            |  putTodo: async (id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto): Promise<PutTodo.Response<unknown>> => {
+            |    const request: PutTodo.Request = PutTodo.request({id, done, name, token, refreshToken, body});
+            |    const rawRequest = PutTodo.toRawRequest(serialization, request);
+            |    const rawResponse = await transportation.transport(rawRequest);
+            |    return PutTodo.fromRawResponse(serialization, rawResponse);
+            |  }
+            |})
+            |
+            |import {Wirespec} from '../Wirespec'
+            |import {putTodoClient} from './PutTodoClient'
+            |export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+            |  ...putTodoClient(serialization, transportation),
+            |})
+            |
             |export {PutTodo} from './PutTodo'
             |export {PotentialTodoDto} from './PotentialTodoDto'
             |export {Token} from './Token'
@@ -317,6 +338,24 @@ class TypeScriptIrEmitterTest {
             |export function validateTodoDto(obj: TodoDto): string[] {
             |  return [] as string[];
             |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |import {GetTodos} from './GetTodos'
+            |import {type TodoDto} from '../model'
+            |export const getTodosClient = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+            |  getTodos: async (): Promise<GetTodos.Response<unknown>> => {
+            |    const request: GetTodos.Request = GetTodos.request();
+            |    const rawRequest = GetTodos.toRawRequest(serialization, request);
+            |    const rawResponse = await transportation.transport(rawRequest);
+            |    return GetTodos.fromRawResponse(serialization, rawResponse);
+            |  }
+            |})
+            |
+            |import {Wirespec} from '../Wirespec'
+            |import {getTodosClient} from './GetTodosClient'
+            |export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+            |  ...getTodosClient(serialization, transportation),
+            |})
             |
             |export {GetTodos} from './GetTodos'
             |export {TodoDto} from './TodoDto'

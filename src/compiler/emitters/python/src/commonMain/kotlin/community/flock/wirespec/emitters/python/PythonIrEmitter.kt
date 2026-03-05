@@ -33,8 +33,10 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Parameter
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
@@ -301,6 +303,130 @@ open class PythonIrEmitter(
         }
         return LanguageFile(converted.name, elements)
             .sanitizeNames()
+            .snakeCaseHandlerAndCallMethods()
+    }
+
+    private fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {
+        matchingElements { iface: Interface ->
+            if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
+                iface.copy(
+                    elements = iface.elements.map { element ->
+                        if (element is LanguageFunction) {
+                            element.copy(name = Name.of(element.name.snakeCase()))
+                        } else element
+                    },
+                )
+            } else iface
+        }
+    }
+
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val imports = endpoint.importReferences().distinctBy { it.value }
+            .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
+        val endpointImport = "from .${endpoint.identifier.value} import *"
+        val endpointName = endpoint.identifier.value
+
+        val file = super.emitEndpointClient(endpoint)
+            .sanitizeNames()
+            .addSelfReceiverToClientFields()
+            .snakeCaseClientFunctions()
+            .flattenEndpointTypeRefs(endpointName)
+
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = listOf(RawElement(import)) +
+                listOfNotNull(
+                    if (imports.isNotEmpty()) RawElement(imports) else null,
+                    RawElement(endpointImport),
+                ) +
+                file.elements
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+            .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
+        val endpointImports = endpoints.joinToString("\n") { "from .${it.identifier.value} import *" }
+        val clientImports = endpoints.joinToString("\n") { "from .${it.identifier.value}Client import ${it.identifier.value}Client" }
+        val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
+        val endpointNames = endpoints.map { it.identifier.value }
+
+        val file = super.emitClient(endpoints, logger)
+            .sanitizeNames()
+            .addSelfReceiverToClientFields()
+            .snakeCaseClientFunctions()
+            .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
+
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = listOf(RawElement(import)) +
+                (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
+                file.elements
+        )
+    }
+
+    private fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = transform {
+        type { type, _ ->
+            if (type is LanguageType.Custom && type.name.startsWith("$endpointName.")) {
+                val suffix = type.name.removePrefix("$endpointName.")
+                if (suffix == "Call" || suffix == "Handler") type
+                else type.copy(name = suffix)
+            } else type
+        }
+    }
+
+    private fun <T : Element> T.addSelfReceiverToClientFields(): T {
+        val struct = (this as? File)?.findElement<Struct>()
+        val fieldNames = struct?.fields?.map { it.name.value() }?.toSet() ?: emptySet()
+        if (fieldNames.isEmpty()) return this
+
+        return transform {
+            statementAndExpression { stmt, tr ->
+                when (stmt) {
+                    is FieldCall -> {
+                        if (stmt.receiver == null && stmt.field.value() in fieldNames) {
+                            FieldCall(receiver = VariableReference(Name.of("self")), field = stmt.field)
+                        } else {
+                            FieldCall(
+                                receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                                field = stmt.field,
+                            )
+                        }
+                    }
+                    else -> stmt.transformChildren(tr)
+                }
+            }
+        }
+    }
+
+    private fun <T : Element> T.snakeCaseClientFunctions(): T = transform {
+        matchingElements { func: LanguageFunction ->
+            func.copy(
+                name = Name.of(func.name.snakeCase()),
+                parameters = listOf(Parameter(Name.of("self"), LanguageType.Custom(""))) + func.parameters,
+            )
+        }
+        statementAndExpression { stmt, tr ->
+            when (stmt) {
+                is FunctionCall -> {
+                    val nameStr = stmt.name.value()
+                    val newName = if ("." in nameStr) {
+                        stmt.name
+                    } else {
+                        Name.of(Name.of(nameStr).snakeCase())
+                    }
+                    FunctionCall(
+                        name = newName,
+                        receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                        arguments = stmt.arguments.mapValues { (_, v) -> tr.transformExpression(v) },
+                        isAwait = stmt.receiver != null,
+                    )
+                }
+                else -> stmt.transformChildren(tr)
+            }
+        }
     }
 
     // endregion

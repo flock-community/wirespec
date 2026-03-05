@@ -211,6 +211,7 @@ data class FunctionCall(
     val typeArguments: List<Type> = emptyList(),
     val name: Name,
     val arguments: Map<Name, Expression> = emptyMap(),
+    val isAwait: Boolean = false,
 ) : Statement,
     Expression
 

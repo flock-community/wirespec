@@ -469,10 +469,41 @@ class RustIrEmitterTest {
         |    }
         |}
         |
+        |use super::super::wirespec::*;
+        |use super::get_todos;
+        |use super::super::model::todo_dto::TodoDto;
+        |pub struct GetTodosClient<'a, S: Serialization, T: Transportation> {
+        |    pub serialization: &'a S,
+        |    pub transportation: &'a T,
+        |}
+        |impl<'a, S: Serialization, T: Transportation> get_todos::GetTodos::Call for GetTodosClient<'a, S, T> {
+        |    async fn get_todos(&self) -> get_todos::Response {
+        |        let request = get_todos::Request::new();
+        |        let raw_request = get_todos::GetTodos::to_raw_request(self.serialization, request);
+        |        let raw_response = self.transportation.transport(&raw_request).await;
+        |        get_todos::GetTodos::from_raw_response(self.serialization, raw_response)
+        |    }
+        |}
+        |
         |#![allow(warnings)]
         |pub mod model;
         |pub mod endpoint;
         |pub mod wirespec;
+        |
+        |use super::super::wirespec::*;
+        |use super::super::model::todo_dto::TodoDto;
+        |use super::get_todos;
+        |use super::get_todos_client::GetTodosClient;
+        |pub struct Client<S: Serialization, T: Transportation> {
+        |    pub serialization: S,
+        |    pub transportation: T,
+        |}
+        |impl<S: Serialization, T: Transportation> get_todos::GetTodos::Call for Client<S, T> {
+        |    async fn get_todos(&self) -> get_todos::Response {
+        |        GetTodosClient { serialization: &self.serialization, transportation: &self.transportation }
+        |            .get_todos().await
+        |    }
+        |}
         |
         """.trimMargin()
 
@@ -713,10 +744,47 @@ class RustIrEmitterTest {
         |    }
         |}
         |
+        |use super::super::wirespec::*;
+        |use super::put_todo;
+        |use super::super::model::token::Token;
+        |use super::super::model::potential_todo_dto::PotentialTodoDto;
+        |use super::super::model::todo_dto::TodoDto;
+        |use super::super::model::error::Error;
+        |pub struct PutTodoClient<'a, S: Serialization, T: Transportation> {
+        |    pub serialization: &'a S,
+        |    pub transportation: &'a T,
+        |}
+        |impl<'a, S: Serialization, T: Transportation> put_todo::PutTodo::Call for PutTodoClient<'a, S, T> {
+        |    async fn put_todo(&self, id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> put_todo::Response {
+        |        let request = put_todo::Request::new(id, done, name, token, refresh_token, body);
+        |        let raw_request = put_todo::PutTodo::to_raw_request(self.serialization, request);
+        |        let raw_response = self.transportation.transport(&raw_request).await;
+        |        put_todo::PutTodo::from_raw_response(self.serialization, raw_response)
+        |    }
+        |}
+        |
         |#![allow(warnings)]
         |pub mod model;
         |pub mod endpoint;
         |pub mod wirespec;
+        |
+        |use super::super::wirespec::*;
+        |use super::super::model::token::Token;
+        |use super::super::model::potential_todo_dto::PotentialTodoDto;
+        |use super::super::model::todo_dto::TodoDto;
+        |use super::super::model::error::Error;
+        |use super::put_todo;
+        |use super::put_todo_client::PutTodoClient;
+        |pub struct Client<S: Serialization, T: Transportation> {
+        |    pub serialization: S,
+        |    pub transportation: T,
+        |}
+        |impl<S: Serialization, T: Transportation> put_todo::PutTodo::Call for Client<S, T> {
+        |    async fn put_todo(&self, id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> put_todo::Response {
+        |        PutTodoClient { serialization: &self.serialization, transportation: &self.transportation }
+        |            .put_todo(id, done, name, token, refresh_token, body).await
+        |    }
+        |}
         |
         """.trimMargin()
 

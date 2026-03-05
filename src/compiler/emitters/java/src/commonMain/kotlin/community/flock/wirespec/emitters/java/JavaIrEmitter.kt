@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertWithValidation
+import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
@@ -33,6 +34,7 @@ import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.ReturnStatement
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
@@ -190,6 +192,65 @@ open class JavaIrEmitter(
                         file.elements
             )
         }
+
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val imports = endpoint.emitImportElements()
+        val file = super.emitEndpointClient(endpoint).sanitizeNames()
+        val endpointName = endpoint.identifier.value
+
+        // Transform async function body to chain CompletableFuture.thenApply
+        val transformedFile = file.transform {
+            matchingElements { func: LanguageFunction ->
+                if (func.isAsync && func.body.size >= 2) {
+                    val transportAssign = func.body[func.body.size - 2]
+                    val returnStmt = func.body.last()
+                    if (transportAssign is Assignment && returnStmt is ReturnStatement) {
+                        val bodyPrefix = func.body.dropLast(2)
+                        func.copy(
+                            body = bodyPrefix + ReturnStatement(
+                                FunctionCall(
+                                    name = Name.of("thenApply"),
+                                    receiver = transportAssign.value,
+                                    arguments = mapOf(
+                                        Name.of("mapper") to RawExpression(
+                                            "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)"
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    } else func
+                } else func
+            }
+        }
+
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + transformedFile.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(subPackageName.value)) +
+                listOf(wirespecImport) +
+                imports +
+                transformedFile.elements
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+            .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
+            .map { import("${packageName.value}.model", it.value) }
+        val endpointImports = endpoints.map { import("${packageName.value}.endpoint", it.identifier.value) }
+        val clientImports = endpoints.map { import("${packageName.value}.endpoint", "${it.identifier.value}Client") }
+        val allImports = imports + endpointImports + clientImports
+        val file = super.emitClient(endpoints, logger).sanitizeNames()
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(subPackageName.value)) +
+                listOf(wirespecImport) +
+                allImports +
+                file.elements
+        )
+    }
 
     fun String.sanitizeSymbol() = this
         .split(".", " ", "-")

@@ -26,6 +26,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.ir.converter.requestParameters
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
@@ -321,13 +322,19 @@ open class RustIrEmitter(
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let { files ->
             fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
+            val endpoints = module.statements.filterIsInstance<Endpoint>()
+            val endpointMods = endpoints.joinToString("\n") { emitMod(it) }
+            val clientMods = endpoints.joinToString("\n") { endpoint ->
+                "pub mod ${(endpoint.identifier.value + "Client").toSnakeCase()};"
+            }
+            val mainClientMod = if (endpoints.isNotEmpty()) "\npub mod client;" else ""
             val modRs = File(
                 Name.of(packageName.toDir() + "mod"),
                 listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;\npub mod wirespec;"))
             )
             val modEndpoint = File(
                 Name.of(packageName.toDir() + "endpoint/" + "mod"),
-                listOf(RawElement(module.statements.filterIsInstance<Endpoint>().joinToString("\n") { emitMod(it) }))
+                listOf(RawElement(endpointMods + (if (clientMods.isNotEmpty()) "\n$clientMods" else "") + mainClientMod))
             )
             val modModel = File(
                 Name.of(packageName.toDir() + "model/" + "mod"),
@@ -511,6 +518,143 @@ open class RustIrEmitter(
 
     override fun emit(channel: Channel): File =
         channel.convert()
+
+    // --- Client generation ---
+
+    private fun LanguageType.toRustTypeString(): String = when (this) {
+        is LanguageType.String -> "String"
+        is LanguageType.Boolean -> "bool"
+        is LanguageType.Integer -> when (precision) {
+            community.flock.wirespec.ir.core.Precision.P32 -> "i32"
+            community.flock.wirespec.ir.core.Precision.P64 -> "i64"
+        }
+        is LanguageType.Number -> when (precision) {
+            community.flock.wirespec.ir.core.Precision.P32 -> "f32"
+            community.flock.wirespec.ir.core.Precision.P64 -> "f64"
+        }
+        is LanguageType.Bytes -> "Vec<u8>"
+        is LanguageType.Unit -> "()"
+        is LanguageType.Any -> "Box<dyn std::any::Any>"
+        is LanguageType.Array -> "Vec<${elementType.toRustTypeString()}>"
+        is LanguageType.Dict -> "std::collections::HashMap<${keyType.toRustTypeString()}, ${valueType.toRustTypeString()}>"
+        is LanguageType.Nullable -> "Option<${type.toRustTypeString()}>"
+        is LanguageType.Custom -> name
+        is LanguageType.Wildcard -> "_"
+        is LanguageType.Reflect -> "std::any::TypeId"
+    }
+
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val endpointName = endpoint.identifier.value
+        val endpointModuleName = endpointName.toSnakeCase()
+        val clientName = "${endpointName}Client"
+        val methodName = endpointName.toSnakeCase()
+        val params = endpoint.requestParameters()
+        val paramsStr = if (params.isNotEmpty()) {
+            ", " + params.joinToString(", ") { (name, type) ->
+                "${name.snakeCase().sanitizeKeywords()}: ${type.toRustTypeString()}"
+            }
+        } else ""
+        val requestArgs = if (params.isNotEmpty()) {
+            params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
+        } else ""
+        val requestConstruction = if (params.isNotEmpty()) {
+            "$endpointModuleName::Request::new($requestArgs)"
+        } else {
+            "$endpointModuleName::Request::new()"
+        }
+
+        val imports = endpoint.importReferences().distinctBy { it.value }
+            .joinToString("\n") { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
+        val namespacePath = "$endpointModuleName::$endpointName"
+        val code = buildList {
+            add("use super::super::wirespec::*;")
+            add("use super::$endpointModuleName;")
+            if (imports.isNotEmpty()) add(imports)
+            add("pub struct $clientName<'a, S: Serialization, T: Transportation> {")
+            add("    pub serialization: &'a S,")
+            add("    pub transportation: &'a T,")
+            add("}")
+            add("impl<'a, S: Serialization, T: Transportation> $namespacePath::Call for $clientName<'a, S, T> {")
+            add("    async fn $methodName(&self$paramsStr) -> $endpointModuleName::Response {")
+            add("        let request = $requestConstruction;")
+            add("        let raw_request = $namespacePath::to_raw_request(self.serialization, request);")
+            add("        let raw_response = self.transportation.transport(&raw_request).await;")
+            add("        $namespacePath::from_raw_response(self.serialization, raw_response)")
+            add("    }")
+            add("}")
+        }.joinToString("\n")
+
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + clientName.toSnakeCase()),
+            elements = listOf(RawElement(code)),
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        logger.info("Emitting main Client for ${endpoints.size} endpoints")
+
+        val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+            .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
+            .map { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
+
+        val useStatements = endpoints.flatMap { endpoint ->
+            val endpointModuleName = endpoint.identifier.value.toSnakeCase()
+            val clientModuleName = "${endpoint.identifier.value}Client".toSnakeCase()
+            listOf(
+                "use super::$endpointModuleName;",
+                "use super::${clientModuleName}::${endpoint.identifier.value}Client;",
+            )
+        }
+
+        val implBlocks = endpoints.flatMap { endpoint ->
+            val endpointName = endpoint.identifier.value
+            val endpointModuleName = endpointName.toSnakeCase()
+            val namespacePath = "$endpointModuleName::$endpointName"
+            val methodName = endpointName.toSnakeCase()
+            val params = endpoint.requestParameters()
+            val paramsStr = if (params.isNotEmpty()) {
+                ", " + params.joinToString(", ") { (name, type) ->
+                    "${name.snakeCase().sanitizeKeywords()}: ${type.toRustTypeString()}"
+                }
+            } else ""
+            val callArgs = if (params.isNotEmpty()) {
+                params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
+            } else ""
+            val delegateCall = if (callArgs.isNotEmpty()) {
+                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName($callArgs).await"
+            } else {
+                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName().await"
+            }
+
+            listOf(
+                "impl<S: Serialization, T: Transportation> $namespacePath::Call for Client<S, T> {",
+                "    async fn $methodName(&self$paramsStr) -> $endpointModuleName::Response {",
+                "        $delegateCall",
+                "    }",
+                "}",
+            )
+        }
+
+        val code = (
+            listOf("use super::super::wirespec::*;") +
+            modelImports +
+            useStatements +
+            listOf(
+                "pub struct Client<S: Serialization, T: Transportation> {",
+                "    pub serialization: S,",
+                "    pub transportation: T,",
+                "}",
+            ) +
+            implBlocks
+        ).joinToString("\n")
+
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + "client"),
+            elements = listOf(RawElement(code)),
+        )
+    }
 
     // --- Endpoint transform helpers ---
 

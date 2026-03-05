@@ -57,7 +57,7 @@ enum class VerifyImage {
                 .withDockerfileFromBuilder { builder ->
                     builder
                         .from("rust:1.83-slim")
-                        .run("cargo init /app && cd /app && cargo add regex serde --features serde/derive && cargo add serde_json")
+                        .run("cargo init /app && cd /app && cargo add regex serde --features serde/derive && cargo add serde_json && cargo add pollster")
                         .build()
                 }
                 .get()

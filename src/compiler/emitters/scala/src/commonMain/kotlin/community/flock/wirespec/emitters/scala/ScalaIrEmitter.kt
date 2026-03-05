@@ -200,6 +200,48 @@ open class ScalaIrEmitter(
             )
         }
 
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val imports = endpoint.emitEndpointImports()
+        val file = super.emitEndpointClient(endpoint).sanitizeNames().addIdentityTypeToCall()
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = listOf(LanguagePackage(subPackageName.value)) +
+                listOf(RawElement(import)) +
+                (if (imports.isNotEmpty()) listOf(RawElement(imports)) else emptyList()) +
+                file.elements
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+            .map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }
+        val endpointImports = endpoints.map { "import ${packageName.value}.endpoint.${it.identifier.value}" }.joinToString("\n") { it.trimStart() }
+        val clientImports = endpoints.map { "import ${packageName.value}.endpoint.${it.identifier.value}Client" }.joinToString("\n") { it.trimStart() }
+        val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
+        val file = super.emitClient(endpoints, logger).sanitizeNames().addIdentityTypeToCall()
+        val subPackageName = packageName + "endpoint"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = listOf(LanguagePackage(subPackageName.value)) +
+                listOf(RawElement(import)) +
+                (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
+                file.elements
+        )
+    }
+
+    private fun <T : Element> T.addIdentityTypeToCall(): T = transform {
+        matchingElements { struct: Struct ->
+            struct.copy(
+                interfaces = struct.interfaces.map { type ->
+                    if (type is LanguageType.Custom && type.name.endsWith(".Call")) {
+                        type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
+                    } else type
+                }
+            )
+        }
+    }
+
     fun Identifier.sanitize() = value
         .split(".", " ")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }

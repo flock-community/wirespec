@@ -309,11 +309,12 @@ object PythonGenerator : Generator {
             "$receiverStr${field.value()}\n".indentCode(indent)
         }
         is FunctionCall -> {
+            val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+                "$awaitPrefix${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
             } else {
-                "${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
+                "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
             }
         }
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
@@ -362,11 +363,12 @@ object PythonGenerator : Generator {
             "$receiverStr${field.value()}"
         }
         is FunctionCall -> {
+            val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
+                "$awaitPrefix${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             } else {
-                "${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})"
+                "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})"
             }
         }
         is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]"
