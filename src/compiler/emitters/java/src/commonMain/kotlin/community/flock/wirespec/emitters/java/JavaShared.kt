@@ -45,7 +45,7 @@ data object JavaShared : Shared {
         |$Spacer}
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path path(); Method method(); Queries queries(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
-        |${Spacer}interface Response<T> { int status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
+        |${Spacer}interface Response<T> { Integer status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
         |${Spacer}interface Serialization extends Serializer, Deserializer {}
         |${Spacer}interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {}
         |${Spacer}interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {}

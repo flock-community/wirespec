@@ -33,7 +33,7 @@ public interface UploadFile extends Wirespec.Endpoint {
   sealed interface ResponseApiResponse extends Response<ApiResponse> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     ApiResponse body
   ) implements Response2XX<ApiResponse>, ResponseApiResponse {

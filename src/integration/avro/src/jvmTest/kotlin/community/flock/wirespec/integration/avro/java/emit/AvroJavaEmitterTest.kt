@@ -162,7 +162,7 @@ class AvroJavaEmitterTest {
             |  sealed interface ResponseError extends Response<Error> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -172,7 +172,7 @@ class AvroJavaEmitterTest {
             |    static class Headers implements Wirespec.Response.Headers {}
             |  }
             |  record Response201(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -185,7 +185,7 @@ class AvroJavaEmitterTest {
             |  ) implements Wirespec.Response.Headers {}
             |  }
             |  record Response500(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    Error body
             |  ) implements Response5XX<Error>, ResponseError {
@@ -433,7 +433,7 @@ class AvroJavaEmitterTest {
             |  sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    java.util.List<TodoDto> body
             |  ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {

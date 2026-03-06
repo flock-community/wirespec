@@ -34,7 +34,7 @@ public interface Wirespec {
     }
     enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     interface Request<T> { Path path(); Method method(); Queries queries(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
-    interface Response<T> { int status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
+    interface Response<T> { Integer status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
     interface Serialization extends Serializer, Deserializer {}
     interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {}
     interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {}
