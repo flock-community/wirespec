@@ -14,15 +14,15 @@ public class DefaultPathSerializationTest {
     private final DefaultPathSerialization serde = new DefaultPathSerialization() {};
 
     record StringRefined(String value) implements Wirespec.Refined<String> {
-        @Override public String getValue() { return value; }
+        @Override public String value() { return value; }
     }
 
     record LongRefined(Long value) implements Wirespec.Refined<Long> {
-        @Override public Long getValue() { return value; }
+        @Override public Long value() { return value; }
     }
 
     record DoubleRefined(Double value) implements Wirespec.Refined<Double> {
-        @Override public Double getValue() { return value; }
+        @Override public Double value() { return value; }
     }
 
     @Test

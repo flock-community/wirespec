@@ -9,5 +9,5 @@ public record NumberRefinedLowerBound (Double value) implements Wirespec.Refined
     return -1.0 < record.value;
   }
   @Override
-  public Double getValue() { return value; }
+  public Double value() { return value; }
 }

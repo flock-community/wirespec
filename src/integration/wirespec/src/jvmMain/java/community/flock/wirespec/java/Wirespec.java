@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface Wirespec {
-    interface Enum { String getLabel(); }
+    interface Enum { String label(); }
     interface Endpoint {}
-    interface Refined<T> { T getValue(); }
+    interface Refined<T> { T value(); }
     interface Path {}
     interface Queries {}
     interface Headers {}

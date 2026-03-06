@@ -9,5 +9,5 @@ public record IntRefinedUpperBound (Long value) implements Wirespec.Refined<Long
     return record.value < 2;
   }
   @Override
-  public Long getValue() { return value; }
+  public Long value() { return value; }
 }

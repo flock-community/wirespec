@@ -9,5 +9,5 @@ public record StringRefinedRegex (String value) implements Wirespec.Refined<Stri
     return java.util.regex.Pattern.compile("^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$").matcher(record.value).find();
   }
   @Override
-  public String getValue() { return value; }
+  public String value() { return value; }
 }
