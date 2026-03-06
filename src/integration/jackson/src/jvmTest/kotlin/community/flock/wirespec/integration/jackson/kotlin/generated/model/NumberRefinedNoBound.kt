@@ -5,6 +5,5 @@ import kotlin.reflect.typeOf
 
 data class NumberRefinedNoBound(override val value: Double): Wirespec.Refined<Double> {
   override fun toString() = value.toString()
+  override fun validate() = true
 }
-
-fun NumberRefinedNoBound.validate() = true

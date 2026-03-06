@@ -5,7 +5,7 @@ import community.flock.wirespec.java.Wirespec;
 public record NumberRefinedNoBound (Double value) implements Wirespec.Refined<Double> {
   @Override
   public String toString() { return value.toString(); }
-  public static boolean validate(NumberRefinedNoBound record) {
+  public boolean validate() {
     return true;
   }
   @Override

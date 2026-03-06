@@ -56,7 +56,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
 }
 
 // Example of a custom emitter class
-class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin", noLogger) {
+class KotlinSerializableEmitter : KotlinIrEmitter("community.flock.wirespec.generated.kotlin", noLogger) {
 
     override fun emit(type: Type, ast: AST): String = """
         |@kotlinx.serialization.Serializable

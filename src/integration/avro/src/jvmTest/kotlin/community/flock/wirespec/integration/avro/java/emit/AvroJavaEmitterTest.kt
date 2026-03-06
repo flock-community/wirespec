@@ -616,8 +616,8 @@ class AvroJavaEmitterTest {
             |public record TodoId (String value) implements Wirespec.Refined<String> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TodoId record) {
-            |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
+            |  public boolean validate() {
+            |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(value).find();
             |  }
             |  @Override
             |  public String value() { return value; }
@@ -630,7 +630,7 @@ class AvroJavaEmitterTest {
             |public record TodoNoRegex (String value) implements Wirespec.Refined<String> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TodoNoRegex record) {
+            |  public boolean validate() {
             |    return true;
             |  }
             |  @Override
@@ -644,7 +644,7 @@ class AvroJavaEmitterTest {
             |public record TestInt (Long value) implements Wirespec.Refined<Long> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestInt record) {
+            |  public boolean validate() {
             |    return true;
             |  }
             |  @Override
@@ -658,7 +658,7 @@ class AvroJavaEmitterTest {
             |public record TestInt0 (Long value) implements Wirespec.Refined<Long> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestInt0 record) {
+            |  public boolean validate() {
             |    return true;
             |  }
             |  @Override
@@ -672,8 +672,8 @@ class AvroJavaEmitterTest {
             |public record TestInt1 (Long value) implements Wirespec.Refined<Long> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestInt1 record) {
-            |    return 0 < record.value;
+            |  public boolean validate() {
+            |    return 0 < value;
             |  }
             |  @Override
             |  public Long value() { return value; }
@@ -686,8 +686,8 @@ class AvroJavaEmitterTest {
             |public record TestInt2 (Long value) implements Wirespec.Refined<Long> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestInt2 record) {
-            |    return 3 < record.value && record.value < 1;
+            |  public boolean validate() {
+            |    return 1 < value && value < 3;
             |  }
             |  @Override
             |  public Long value() { return value; }
@@ -700,7 +700,7 @@ class AvroJavaEmitterTest {
             |public record TestNum (Double value) implements Wirespec.Refined<Double> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestNum record) {
+            |  public boolean validate() {
             |    return true;
             |  }
             |  @Override
@@ -714,7 +714,7 @@ class AvroJavaEmitterTest {
             |public record TestNum0 (Double value) implements Wirespec.Refined<Double> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestNum0 record) {
+            |  public boolean validate() {
             |    return true;
             |  }
             |  @Override
@@ -728,8 +728,8 @@ class AvroJavaEmitterTest {
             |public record TestNum1 (Double value) implements Wirespec.Refined<Double> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestNum1 record) {
-            |    return record.value < 0.5;
+            |  public boolean validate() {
+            |    return value < 0.5;
             |  }
             |  @Override
             |  public Double value() { return value; }
@@ -742,8 +742,8 @@ class AvroJavaEmitterTest {
             |public record TestNum2 (Double value) implements Wirespec.Refined<Double> {
             |  @Override
             |  public String toString() { return value.toString(); }
-            |  public static boolean validate(TestNum2 record) {
-            |    return -0.2 < record.value && record.value < 0.5;
+            |  public boolean validate() {
+            |    return -0.2 < value && value < 0.5;
             |  }
             |  @Override
             |  public Double value() { return value; }

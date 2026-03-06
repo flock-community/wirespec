@@ -11,7 +11,7 @@ interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, JavaTy
         |public record ${emit(refined.identifier)} (${refined.reference.emit()} value) implements Wirespec.Refined<${refined.reference.emit()}> {
         |${Spacer}@Override
         |${Spacer}public String toString() { return value.toString(); }
-        |${Spacer}public static boolean validate(${emit(refined.identifier)} record) {
+        |${Spacer}public boolean validate() {
         |${Spacer}${Spacer}${refined.emitValidator()}
         |${Spacer}}
         |${Spacer}@Override
