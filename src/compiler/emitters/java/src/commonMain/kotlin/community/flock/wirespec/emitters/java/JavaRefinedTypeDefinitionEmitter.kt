@@ -15,7 +15,7 @@ interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, JavaTy
         |${Spacer}${Spacer}${refined.emitValidator()}
         |${Spacer}}
         |${Spacer}@Override
-        |${Spacer}public ${refined.reference.emit()} getValue() { return value; }
+        |${Spacer}public ${refined.reference.emit()} value() { return value; }
         |}
         |
     """.trimMargin()

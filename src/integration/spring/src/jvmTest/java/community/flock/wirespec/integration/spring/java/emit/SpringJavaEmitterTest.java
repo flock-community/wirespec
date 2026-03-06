@@ -448,7 +448,7 @@ public class SpringJavaEmitterTest {
                             return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
                           }
                           @Override
-                          public String getValue() { return value; }
+                          public String value() { return value; }
                         }
                         """, """
                         package community.flock.wirespec.spring.test;

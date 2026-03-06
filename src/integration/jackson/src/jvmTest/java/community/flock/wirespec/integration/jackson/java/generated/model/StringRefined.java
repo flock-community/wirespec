@@ -9,5 +9,5 @@ public record StringRefined (String value) implements Wirespec.Refined<String> {
     return true;
   }
   @Override
-  public String getValue() { return value; }
+  public String value() { return value; }
 }
