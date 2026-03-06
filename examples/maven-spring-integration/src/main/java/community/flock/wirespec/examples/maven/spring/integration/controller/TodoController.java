@@ -50,7 +50,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
         var id = switch (request){
             case GetTodoById.Request req -> req.path().id();
         };
-        var res = new GetTodoById.Response200(service.store.get(parseInt(id.getValue())));
+        var res = new GetTodoById.Response200(service.store.get(parseInt(id.value())));
         return CompletableFuture.completedFuture(res);
     }
 
