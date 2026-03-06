@@ -171,7 +171,7 @@ class JavaEmitterTest {
             |  sealed interface ResponseError extends Response<Error> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -181,7 +181,7 @@ class JavaEmitterTest {
             |    static class Headers implements Wirespec.Response.Headers {}
             |  }
             |  record Response201(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -194,7 +194,7 @@ class JavaEmitterTest {
             |  ) implements Wirespec.Response.Headers {}
             |  }
             |  record Response500(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    Error body
             |  ) implements Response5XX<Error>, ResponseError {
@@ -401,7 +401,7 @@ class JavaEmitterTest {
             |  sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    java.util.List<TodoDto> body
             |  ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
@@ -673,7 +673,7 @@ class JavaEmitterTest {
             |  sealed interface ResponseTodoDto extends Response<TodoDto> {}
             |
             |  record Response200(
-            |    int status,
+            |    Integer status,
             |    Headers headers,
             |    TodoDto body
             |  ) implements Response2XX<TodoDto>, ResponseTodoDto {

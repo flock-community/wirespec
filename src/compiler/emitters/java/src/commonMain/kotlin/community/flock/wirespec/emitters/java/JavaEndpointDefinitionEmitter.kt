@@ -126,7 +126,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
 
     fun Endpoint.Response.emit() = """
         |${Spacer}record Response${status.firstToUpper()}(
-        |${Spacer(2)}int status,
+        |${Spacer(2)}Integer status,
         |${Spacer(2)}Headers headers,
         |${Spacer(2)}${content.emit()} body
         |${Spacer}) implements Response${status.first()}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {

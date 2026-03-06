@@ -74,7 +74,7 @@ public class SpringJavaEmitterTest {
                           sealed interface ResponseError extends Response<Error> {}
                         
                           record Response200(
-                            int status,
+                            Integer status,
                             Headers headers,
                             RequestBodyParrot body
                           ) implements Response2XX<RequestBodyParrot>, ResponseRequestBodyParrot {
@@ -89,7 +89,7 @@ public class SpringJavaEmitterTest {
                           ) implements Wirespec.Response.Headers {}
                           }
                           record Response500(
-                            int status,
+                            Integer status,
                             Headers headers,
                             Error body
                           ) implements Response5XX<Error>, ResponseError {
@@ -200,7 +200,7 @@ public class SpringJavaEmitterTest {
                           sealed interface ResponseError extends Response<Error> {}
                         
                           record Response200(
-                            int status,
+                            Integer status,
                             Headers headers,
                             java.util.List<TodoDto> body
                           ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
@@ -212,7 +212,7 @@ public class SpringJavaEmitterTest {
                           ) implements Wirespec.Response.Headers {}
                           }
                           record Response500(
-                            int status,
+                            Integer status,
                             Headers headers,
                             Error body
                           ) implements Response5XX<Error>, ResponseError {
@@ -317,7 +317,7 @@ public class SpringJavaEmitterTest {
                           sealed interface ResponseError extends Response<Error> {}
                         
                           record Response200(
-                            int status,
+                            Integer status,
                             Headers headers,
                             TodoDto body
                           ) implements Response2XX<TodoDto>, ResponseTodoDto {
@@ -327,7 +327,7 @@ public class SpringJavaEmitterTest {
                             static class Headers implements Wirespec.Response.Headers {}
                           }
                           record Response500(
-                            int status,
+                            Integer status,
                             Headers headers,
                             Error body
                           ) implements Response5XX<Error>, ResponseError {

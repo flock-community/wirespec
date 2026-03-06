@@ -30,7 +30,7 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
   sealed interface ResponseVoid extends Response<Void> {}
 
   record Response200(
-    int status,
+    Integer status,
     Headers headers,
     User body
   ) implements Response2XX<User>, ResponseUser {
@@ -40,7 +40,7 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     static class Headers implements Wirespec.Response.Headers {}
   }
   record ResponseDefault(
-    int status,
+    Integer status,
     Headers headers,
     Void body
   ) implements ResponsedXX<Void>, ResponseVoid {
