@@ -2,9 +2,11 @@ package community.flock.wirespec.integration.spring.java.generated.model;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Optional;
+
 public record ApiResponse (
-  java.util.Optional<Integer> code,
-  java.util.Optional<String> type,
-  java.util.Optional<String> message
+  Optional<Integer> code,
+  Optional<String> type,
+  Optional<String> message
 ) {
 };

@@ -2,14 +2,20 @@ package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 
 
 public interface LoginUser extends Wirespec.Endpoint {
   static class Path implements Wirespec.Path {}
 
   public record Queries(
-    java.util.Optional<String> username,
-    java.util.Optional<String> password
+    Optional<String> username,
+    Optional<String> password
   ) implements Wirespec.Queries {}
 
   static class RequestHeaders implements Wirespec.Request.Headers {}
@@ -21,7 +27,7 @@ public interface LoginUser extends Wirespec.Endpoint {
     RequestHeaders headers,
     Void body
   ) implements Wirespec.Request<Void> {
-    public Request(java.util.Optional<String> username, java.util.Optional<String> password) {
+    public Request(Optional<String> username, Optional<String> password) {
       this(new Path(), Wirespec.Method.GET, new Queries(username, password), new RequestHeaders(), null);
     }
   }
@@ -37,12 +43,12 @@ public interface LoginUser extends Wirespec.Endpoint {
     Headers headers,
     String body
   ) implements Response2XX<String>, ResponseString {
-    public Response200(java.util.Optional<Integer> XRateLimit, java.util.Optional<String> XExpiresAfter, String body) {
+    public Response200(Optional<Integer> XRateLimit, Optional<String> XExpiresAfter, String body) {
       this(200, new Headers(XRateLimit, XExpiresAfter), body);
     }
     public record Headers(
-    java.util.Optional<Integer> XRateLimit,
-    java.util.Optional<String> XExpiresAfter
+    Optional<Integer> XRateLimit,
+    Optional<String> XExpiresAfter
   ) implements Wirespec.Response.Headers {}
   }
   record Response400(
@@ -61,31 +67,31 @@ public interface LoginUser extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("user", "login"),
-        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries().username(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries().password(), Wirespec.getType(String.class, java.util.Optional.class)))),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.empty()
+        List.of("user", "login"),
+        Map.ofEntries(Map.entry("username", serialization.serializeParam(request.queries().username(), Wirespec.getType(String.class, Optional.class))), Map.entry("password", serialization.serializeParam(request.queries().password(), Wirespec.getType(String.class, Optional.class)))),
+        Collections.emptyMap(),
+        Optional.empty()
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("username", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("password", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
+        serialization.<Optional<String>>deserializeParam(request.queries().getOrDefault("username", Collections.emptyList()), Wirespec.getType(String.class, Optional.class)),
+        serialization.<Optional<String>>deserializeParam(request.queries().getOrDefault("password", Collections.emptyList()), Wirespec.getType(String.class, Optional.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.<java.util.Optional<String>>serializeParam(r.headers().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(String.class, null)))); }
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Map.ofEntries(Map.entry("X-Rate-Limit", serialization.<Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, Optional.class))), Map.entry("X-Expires-After", serialization.<Optional<String>>serializeParam(r.headers().XExpiresAfter(), Wirespec.getType(String.class, Optional.class)))), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(String.class, null)))); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-          serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Rate-Limit")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
-          serialization.<java.util.Optional<String>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Expires-After")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+          serialization.<Optional<Integer>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Rate-Limit")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(Integer.class, Optional.class)),
+          serialization.<Optional<String>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Expires-After")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(String.class, Optional.class)),
           response.body().<String>map(body -> serialization.deserializeBody(body, Wirespec.getType(String.class, null))).orElse(null)
         );
         case 400 -> new Response400();
@@ -94,7 +100,7 @@ public interface LoginUser extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/user/login")
-    java.util.concurrent.CompletableFuture<Response<?>> loginUser(Request request);
+    CompletableFuture<Response<?>> loginUser(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/user/login"; }

@@ -2,6 +2,12 @@ package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
 import community.flock.wirespec.java.Wirespec;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 
 
 public interface DeletePet extends Wirespec.Endpoint {
@@ -12,7 +18,7 @@ public interface DeletePet extends Wirespec.Endpoint {
   static class Queries implements Wirespec.Queries {}
 
   public record RequestHeaders(
-    java.util.Optional<String> api_key
+    Optional<String> api_key
   ) implements Wirespec.Request.Headers {}
 
   record Request (
@@ -22,7 +28,7 @@ public interface DeletePet extends Wirespec.Endpoint {
     RequestHeaders headers,
     Void body
   ) implements Wirespec.Request<Void> {
-    public Request(Long petId, java.util.Optional<String> api_key) {
+    public Request(Long petId, Optional<String> api_key) {
       this(new Path(petId), Wirespec.Method.DELETE, new Queries(), new RequestHeaders(api_key), null);
     }
   }
@@ -47,22 +53,22 @@ public interface DeletePet extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
-        java.util.Collections.emptyMap(),
-        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers().api_key(), Wirespec.getType(String.class, java.util.Optional.class)))),
-        java.util.Optional.empty()
+        List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
+        Collections.emptyMap(),
+        Map.ofEntries(Map.entry("api_key", serialization.serializeParam(request.headers().api_key(), Wirespec.getType(String.class, Optional.class)))),
+        Optional.empty()
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
-        serialization.<java.util.Optional<String>>deserializeParam(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("api_key")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
+        serialization.<Optional<String>>deserializeParam(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("api_key")).findFirst().map(Map.Entry::getValue).orElse(Collections.emptyList()), Wirespec.getType(String.class, Optional.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.empty()); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.empty()); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -75,7 +81,7 @@ public interface DeletePet extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.DeleteMapping("/pet/{petId}")
-    java.util.concurrent.CompletableFuture<Response<?>> deletePet(Request request);
+    CompletableFuture<Response<?>> deletePet(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/pet/{petId}"; }

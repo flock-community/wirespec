@@ -1,10 +1,18 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.integration.spring.java.generated.model.Error;
+import community.flock.wirespec.integration.spring.java.generated.model.TodoDto;
+import community.flock.wirespec.integration.spring.java.generated.model.TodoDtoPatch;
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.TodoDtoPatch;
-import community.flock.wirespec.integration.spring.java.generated.model.TodoDto;
-import community.flock.wirespec.integration.spring.java.generated.model.Error;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+
+
+
 
 public interface PatchTodos extends Wirespec.Endpoint {
   public record Path(
@@ -59,10 +67,10 @@ public interface PatchTodos extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("api", "todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(TodoDtoPatch.class, null)))
+        List.of("api", "todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Optional.ofNullable(serialization.serializeBody(request.body(), Wirespec.getType(TodoDtoPatch.class, null)))
       );
     }
 
@@ -74,8 +82,8 @@ public interface PatchTodos extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
-      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), java.util.Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Error.class, null)))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null)))); }
+      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), Collections.emptyMap(), Optional.ofNullable(serialization.serializeBody(r.body, Wirespec.getType(Error.class, null)))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
@@ -92,7 +100,7 @@ public interface PatchTodos extends Wirespec.Endpoint {
     }
 
     @org.springframework.web.bind.annotation.RequestMapping(value="/api/todos/{id}", method = org.springframework.web.bind.annotation.RequestMethod.PATCH)
-    java.util.concurrent.CompletableFuture<Response<?>> patchTodos(Request request);
+    CompletableFuture<Response<?>> patchTodos(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/api/todos/{id}"; }
