@@ -687,7 +687,7 @@ class AvroJavaEmitterTest {
             |  @Override
             |  public String toString() { return value.toString(); }
             |  public static boolean validate(TestInt2 record) {
-            |    return 3 < record.value && record.value < 1;
+            |    return 1 < record.value && record.value < 3;
             |  }
             |  @Override
             |  public Long value() { return value; }

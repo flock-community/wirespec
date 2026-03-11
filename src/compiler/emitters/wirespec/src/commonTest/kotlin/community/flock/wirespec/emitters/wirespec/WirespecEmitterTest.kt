@@ -97,7 +97,7 @@ class WirespecEmitterTest {
             |
             |type TestInt1 = Integer(0, null)
             |
-            |type TestInt2 = Integer(3, 1)
+            |type TestInt2 = Integer(1, 3)
             |
             |type TestNum = Number
             |

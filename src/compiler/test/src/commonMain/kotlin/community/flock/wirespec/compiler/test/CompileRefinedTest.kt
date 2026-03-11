@@ -11,7 +11,7 @@ object CompileRefinedTest {
         |type TestInt = Integer
         |type TestInt0 = Integer(_,_)
         |type TestInt1 = Integer(0,_)
-        |type TestInt2 = Integer(3,1)
+        |type TestInt2 = Integer(1,3)
         |
         |type TestNum = Number
         |type TestNum0 = Number(_,_)
