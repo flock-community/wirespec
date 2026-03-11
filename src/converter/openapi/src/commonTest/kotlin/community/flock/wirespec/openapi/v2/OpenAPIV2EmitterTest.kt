@@ -463,8 +463,8 @@ class OpenAPIV2EmitterTest {
                 |    "TestInt2": {
                 |      "type": "integer",
                 |      "format": "int32",
-                |      "minimum": 3.0,
-                |      "maximum": 1.0
+                |      "minimum": 1.0,
+                |      "maximum": 3.0
                 |    },
                 |    "TestNum": {
                 |      "type": "number",

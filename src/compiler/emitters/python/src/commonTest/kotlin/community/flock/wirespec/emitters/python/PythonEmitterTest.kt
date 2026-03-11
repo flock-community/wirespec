@@ -588,7 +588,7 @@ class PythonEmitterTest {
             |  value: int
             |
             |  def validate(self) -> bool:
-            |    return 3 < self.value and self.value < 1
+            |    return 1 < self.value and self.value < 3
             |
             |  def __str__(self) -> str:
             |    return str(self.value)

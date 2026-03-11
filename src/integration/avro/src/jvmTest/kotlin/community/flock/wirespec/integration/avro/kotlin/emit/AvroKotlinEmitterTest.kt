@@ -697,7 +697,7 @@ class AvroKotlinEmitterTest {
             |  override fun toString() = value.toString()
             |}
             |
-            |fun TestInt2.validate() = 3 < value && value < 1
+            |fun TestInt2.validate() = 1 < value && value < 3
             |
             |package packageName.model
             |
