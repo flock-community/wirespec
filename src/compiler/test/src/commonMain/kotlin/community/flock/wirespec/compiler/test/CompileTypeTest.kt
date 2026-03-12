@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileTypeTest {
+object CompileTypeTest : Fixture {
 
-    val compiler =
+    override val source =
         // language=ws
         """
         |type Request {
@@ -13,5 +13,7 @@ object CompileTypeTest {
         |  headers: { String },
         |  body: { String?[]? }?
         |}
-        """.trimMargin().let(::compile)
+        """.trimMargin()
+
+    override val compiler = source.let(::compile)
 }

@@ -1,10 +1,12 @@
 package community.flock.wirespec.compiler.test
 
-object CompileChannelTest {
+object CompileChannelTest : Fixture {
 
-    val compiler =
+    override val source =
         // language=ws
         """
         |channel Queue -> String
-        """.trimMargin().let(::compile)
+        """.trimMargin()
+
+    override val compiler = source.let(::compile)
 }
