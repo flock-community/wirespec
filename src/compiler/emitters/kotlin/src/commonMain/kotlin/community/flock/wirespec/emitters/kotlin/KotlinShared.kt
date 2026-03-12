@@ -20,7 +20,6 @@ data object KotlinShared : Shared {
         |${Spacer}interface Queries
         |${Spacer}interface Headers
         |${Spacer}interface Handler
-        |${Spacer}interface Call
         |${Spacer}interface ServerEdge<Req: Request<*>, Res: Response<*>> { 
         |${Spacer}fun from(request: RawRequest): Req  
         |${Spacer}fun to(response: Res): RawResponse
