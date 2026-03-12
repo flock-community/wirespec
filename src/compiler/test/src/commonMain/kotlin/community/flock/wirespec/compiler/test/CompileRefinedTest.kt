@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileRefinedTest {
+object CompileRefinedTest : Fixture {
 
-    val compiler =
+    override val source =
         // language=ws
         """
         |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
@@ -18,5 +18,7 @@ object CompileRefinedTest {
         |type TestNum1 = Number(_,0.5)
         |type TestNum2 = Number(-0.2,0.5)
         |
-        """.trimMargin().let(::compile)
+        """.trimMargin()
+
+    override val compiler = source.let(::compile)
 }
