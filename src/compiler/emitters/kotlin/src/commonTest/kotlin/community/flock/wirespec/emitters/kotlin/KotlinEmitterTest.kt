@@ -72,9 +72,8 @@ class KotlinEmitterTest {
             |
             |data class UUID(override val value: String): Wirespec.Refined<String> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = Regex(${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}).matches(value)
             |}
-            |
-            |fun UUID.validate() = Regex(${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}).matches(value)
             |
             """.trimMargin(),
         )
@@ -481,9 +480,8 @@ class KotlinEmitterTest {
             |
             |data class TodoId(override val value: String): Wirespec.Refined<String> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$""${'"'}).matches(value)
             |}
-            |
-            |fun TodoId.validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$""${'"'}).matches(value)
             |
             |package community.flock.wirespec.generated.model
             |
@@ -492,9 +490,8 @@ class KotlinEmitterTest {
             |
             |data class TodoNoRegex(override val value: String): Wirespec.Refined<String> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = true
             |}
-            |
-            |fun TodoNoRegex.validate() = true
             |
             |package community.flock.wirespec.generated.model
             |
@@ -503,9 +500,8 @@ class KotlinEmitterTest {
             |
             |data class TestInt(override val value: Long): Wirespec.Refined<Long> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = true
             |}
-            |
-            |fun TestInt.validate() = true
             |
             |package community.flock.wirespec.generated.model
             |
@@ -514,9 +510,8 @@ class KotlinEmitterTest {
             |
             |data class TestInt0(override val value: Long): Wirespec.Refined<Long> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = true
             |}
-            |
-            |fun TestInt0.validate() = true
             |
             |package community.flock.wirespec.generated.model
             |
@@ -525,9 +520,8 @@ class KotlinEmitterTest {
             |
             |data class TestInt1(override val value: Long): Wirespec.Refined<Long> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = 0 < value
             |}
-            |
-            |fun TestInt1.validate() = 0 < value
             |
             |package community.flock.wirespec.generated.model
             |
@@ -536,9 +530,8 @@ class KotlinEmitterTest {
             |
             |data class TestInt2(override val value: Long): Wirespec.Refined<Long> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = 1 < value && value < 3
             |}
-            |
-            |fun TestInt2.validate() = 1 < value && value < 3
             |
             |package community.flock.wirespec.generated.model
             |
@@ -547,9 +540,8 @@ class KotlinEmitterTest {
             |
             |data class TestNum(override val value: Double): Wirespec.Refined<Double> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = true
             |}
-            |
-            |fun TestNum.validate() = true
             |
             |package community.flock.wirespec.generated.model
             |
@@ -558,9 +550,8 @@ class KotlinEmitterTest {
             |
             |data class TestNum0(override val value: Double): Wirespec.Refined<Double> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = true
             |}
-            |
-            |fun TestNum0.validate() = true
             |
             |package community.flock.wirespec.generated.model
             |
@@ -569,9 +560,8 @@ class KotlinEmitterTest {
             |
             |data class TestNum1(override val value: Double): Wirespec.Refined<Double> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = value < 0.5
             |}
-            |
-            |fun TestNum1.validate() = value < 0.5
             |
             |package community.flock.wirespec.generated.model
             |
@@ -580,9 +570,8 @@ class KotlinEmitterTest {
             |
             |data class TestNum2(override val value: Double): Wirespec.Refined<Double> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = -0.2 < value && value < 0.5
             |}
-            |
-            |fun TestNum2.validate() = -0.2 < value && value < 0.5
             |
         """.trimMargin()
 
@@ -618,9 +607,8 @@ class KotlinEmitterTest {
             |
             |data class TodoId(override val value: String): Wirespec.Refined<String> {
             |  override fun toString() = value.toString()
+            |  override fun validate() = Regex(""${'"'}^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}""${'"'}).matches(value)
             |}
-            |
-            |fun TodoId.validate() = Regex(""${'"'}^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}""${'"'}).matches(value)
             |
             |package community.flock.wirespec.generated.endpoint
             |

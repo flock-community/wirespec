@@ -1,10 +1,11 @@
 package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.test.CompileChannelTest
-import community.flock.wirespec.compiler.test.CompileEndpointWithRefinedTypeTest
+import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
+import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
@@ -87,7 +88,7 @@ class WirespecEmitterTest {
     @Test
     fun compileRefinedTest() {
         val wirespec = """
-            |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
+            |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g)
             |
             |type TodoNoRegex = String
             |
@@ -110,24 +111,6 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileRefinedTest.compiler { WirespecEmitter() } shouldBeRight wirespec
-    }
-
-    @Test
-    fun compileEndpointWithRefinedTypeTest() {
-        val wirespec = """
-            |type TodoId = String(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}${'$'}/g)
-            |
-            |endpoint GetTodoById GET /todos/{id: TodoId} -> {
-            |  200 -> TodoDto
-            |}
-            |
-            |type TodoDto {
-            |  description: String
-            |}
-            |
-        """.trimMargin()
-
-        CompileEndpointWithRefinedTypeTest.compiler { WirespecEmitter() } shouldBeRight wirespec
     }
 
     @Test
@@ -169,5 +152,65 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileTypeTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileNestedTypeTest() {
+        val wirespec = """
+            |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})${'$'}/g)
+            |
+            |type Address {
+            |  street: String,
+            |  houseNumber: Integer,
+            |  postalCode: DutchPostalCode
+            |}
+            |
+            |type Person {
+            |  name: String,
+            |  address: Address,
+            |  tags: String[]
+            |}
+            |
+        """.trimMargin()
+
+        CompileNestedTypeTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileComplexModelTest() {
+        val wirespec = """
+            |type Email = String(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}/g)
+            |
+            |type PhoneNumber = String(/^\+[1-9]\d{1,14}${'$'}/g)
+            |
+            |type Tag = String(/^[a-z][a-z0-9-]{0,19}${'$'}/g)
+            |
+            |type EmployeeAge = Integer(18, 65)
+            |
+            |type ContactInfo {
+            |  email: Email,
+            |  phone: PhoneNumber?
+            |}
+            |
+            |type Employee {
+            |  name: String,
+            |  age: EmployeeAge,
+            |  contactInfo: ContactInfo,
+            |  tags: Tag[]
+            |}
+            |
+            |type Department {
+            |  name: String,
+            |  employees: Employee[]
+            |}
+            |
+            |type Company {
+            |  name: String,
+            |  departments: Department[]
+            |}
+            |
+        """.trimMargin()
+
+        CompileComplexModelTest.compiler { WirespecEmitter() } shouldBeRight wirespec
     }
 }
