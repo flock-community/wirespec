@@ -61,10 +61,10 @@ interface JavaTypeDefinitionEmitter: TypeDefinitionEmitter, IdentifierEmitter {
     }
 
     override fun Reference.Primitive.Type.Constraint.emit() = when(this){
-        is Reference.Primitive.Type.Constraint.RegExp -> """return java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
+        is Reference.Primitive.Type.Constraint.RegExp -> """return java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(value).find();"""
         is Reference.Primitive.Type.Constraint.Bound -> {
-            val minCheck = min?.let { "$it < record.value" }
-            val maxCheck = max?.let { "record.value < $it" }
+            val minCheck = min?.let { "$it < value" }
+            val maxCheck = max?.let { "value < $it" }
             val checks = listOfNotNull(minCheck, maxCheck).joinToString(" && ")
             """return ${if (checks.isEmpty()) "true" else checks};"""
         }

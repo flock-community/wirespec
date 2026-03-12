@@ -95,9 +95,15 @@ class DefaultPathSerializationTest {
         }
     }
 
-    data class StringRefined(override val value: String) : Wirespec.Refined<String>
-    data class LongRefined(override val value: Long) : Wirespec.Refined<Long>
-    data class DoubleRefined(override val value: Double) : Wirespec.Refined<Double>
+    data class StringRefined(override val value: String) : Wirespec.Refined<String> {
+        override fun validate() = true
+    }
+    data class LongRefined(override val value: Long) : Wirespec.Refined<Long> {
+        override fun validate() = true
+    }
+    data class DoubleRefined(override val value: Double) : Wirespec.Refined<Double> {
+        override fun validate() = true
+    }
 
     enum class StatusEnum(override val label: String) : Wirespec.Enum {
         ACTIVE("active"),

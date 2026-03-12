@@ -70,8 +70,8 @@ public record Name(String value) implements Wirespec.Refined {
         return value;
     }
 
-    public static boolean validate(Name record) {
-        return java.util.regex.Pattern.compile("^[0-9a-zA-Z]{1,50}$").matcher(record.value).find();
+    public boolean validate() {
+        return java.util.regex.Pattern.compile("^[0-9a-zA-Z]{1,50}$").matcher(value).find();
     }
 
     @Override
