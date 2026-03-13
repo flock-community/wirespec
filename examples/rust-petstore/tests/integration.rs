@@ -44,13 +44,15 @@ fn test_petstore_endpoints() {
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 
+    let rt = tokio::runtime::Runtime::new().unwrap();
+
     let api = ClientProxy {
         transport: ReqwestTransport::new(&format!("http://127.0.0.1:{}", port)),
         serialization: JsonSerialization,
     };
 
     // Test GetPetById: request pet ID 42 → expect 200 with id=42, name="Pet 42"
-    let resp = api.get_pet_by_id(get_pet_by_id::Request::new(42));
+    let resp = rt.block_on(api.get_pet_by_id(get_pet_by_id::Request::new(42)));
     match resp {
         get_pet_by_id::Response::Response200(r) => {
             assert_eq!(r.body.id, Some(42));
@@ -60,8 +62,9 @@ fn test_petstore_endpoints() {
     }
 
     // Test FindPetsByStatus: request status "available" → expect 200 with 1 pet named "Buddy"
-    let resp =
-        api.find_pets_by_status(find_pets_by_status::Request::new(vec!["available".into()]));
+    let resp = rt.block_on(
+        api.find_pets_by_status(find_pets_by_status::Request::new(vec!["available".into()])),
+    );
     match resp {
         find_pets_by_status::Response::Response200(r) => {
             assert_eq!(r.body.len(), 1);
@@ -79,7 +82,7 @@ fn test_petstore_endpoints() {
         tags: None,
         status: None,
     };
-    let resp = api.add_pet(add_pet::Request::new(pet));
+    let resp = rt.block_on(api.add_pet(add_pet::Request::new(pet)));
     match resp {
         add_pet::Response::Response405(_) => {}
     }
