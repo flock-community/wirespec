@@ -2,7 +2,10 @@ logging:
   level:
     root: info
 
+# Random, often unued port name
+server.port: 5317
+
 wirespec:
   spring:
     webclient:
-      base-url: http://localhost:8080
+      base-url: http://localhost:${server.port}
