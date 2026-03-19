@@ -400,6 +400,9 @@ open class RustIrEmitter(
             .map { import("super::super::model::${it.value.toSnakeCase()}", it.value) }
         val namespacePath = "$endpointModuleName::$endpointName"
         val code = buildList {
+            add("use super::super::wirespec::*;")
+            add("use super::super::endpoint::$endpointModuleName;")
+            if (imports.isNotEmpty()) add(imports)
             add("pub struct $clientName<'a, S: Serialization, T: Transportation> {")
             add("    pub serialization: &'a S,")
             add("    pub transportation: &'a T,")
@@ -435,14 +438,14 @@ open class RustIrEmitter(
 
         val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
             .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
-            .map { import("super::model::${it.value.toSnakeCase()}", it.value) }
+            .map { "use super::model::${it.value.toSnakeCase()}::${it.value};" }
 
         val endpointAndClientImports = endpoints.flatMap { endpoint ->
             val endpointModuleName = endpoint.identifier.value.toSnakeCase()
             val clientModuleName = "${endpoint.identifier.value}Client".toSnakeCase()
             listOf(
-                import("super::endpoint", endpointModuleName),
-                import(clientModuleName, "${endpoint.identifier.value}Client"),
+                "use super::endpoint::$endpointModuleName;",
+                "use ${clientModuleName}::${endpoint.identifier.value}Client;",
             )
         }
 
@@ -465,6 +468,10 @@ open class RustIrEmitter(
         }
 
         val code = (
+            listOf(modDeclarations) +
+            listOf("use super::wirespec::*;") +
+            modelImports +
+            useStatements +
             listOf(
                 "pub struct Client<S: Serialization, T: Transportation> {",
                 "    pub serialization: S,",
@@ -475,13 +482,7 @@ open class RustIrEmitter(
 
         return File(
             name = Name.of(packageName.toDir() + "client"),
-            elements = buildList {
-                add(RawElement(modDeclarations))
-                add(import("super::wirespec", "*"))
-                addAll(modelImports)
-                addAll(endpointAndClientImports)
-                add(RawElement(code))
-            },
+            elements = listOf(RawElement(code)),
         )
     }
 
