@@ -324,17 +324,14 @@ open class RustIrEmitter(
             fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
             val endpoints = module.statements.filterIsInstance<Endpoint>()
             val endpointMods = endpoints.joinToString("\n") { emitMod(it) }
-            val clientMods = endpoints.joinToString("\n") { endpoint ->
-                "pub mod ${(endpoint.identifier.value + "Client").toSnakeCase()};"
-            }
-            val mainClientMod = if (endpoints.isNotEmpty()) "\npub mod client;" else ""
+            val clientMod = if (endpoints.isNotEmpty()) "\npub mod client;" else ""
             val modRs = File(
                 Name.of(packageName.toDir() + "mod"),
-                listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;\npub mod wirespec;"))
+                listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;${clientMod}\npub mod wirespec;"))
             )
             val modEndpoint = File(
                 Name.of(packageName.toDir() + "endpoint/" + "mod"),
-                listOf(RawElement(endpointMods + (if (clientMods.isNotEmpty()) "\n$clientMods" else "") + mainClientMod))
+                listOf(RawElement(endpointMods))
             )
             val modModel = File(
                 Name.of(packageName.toDir() + "model/" + "mod"),
@@ -568,7 +565,7 @@ open class RustIrEmitter(
         val namespacePath = "$endpointModuleName::$endpointName"
         val code = buildList {
             add("use super::super::wirespec::*;")
-            add("use super::$endpointModuleName;")
+            add("use super::super::endpoint::$endpointModuleName;")
             if (imports.isNotEmpty()) add(imports)
             add("pub struct $clientName<'a, S: Serialization, T: Transportation> {")
             add("    pub serialization: &'a S,")
@@ -584,7 +581,7 @@ open class RustIrEmitter(
             add("}")
         }.joinToString("\n")
 
-        val subPackageName = packageName + "endpoint"
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + clientName.toSnakeCase()),
             elements = listOf(RawElement(code)),
@@ -594,16 +591,20 @@ open class RustIrEmitter(
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
 
+        val modDeclarations = endpoints.joinToString("\n") { endpoint ->
+            "pub mod ${(endpoint.identifier.value + "Client").toSnakeCase()};"
+        }
+
         val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
             .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
-            .map { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
+            .map { "use super::model::${it.value.toSnakeCase()}::${it.value};" }
 
         val useStatements = endpoints.flatMap { endpoint ->
             val endpointModuleName = endpoint.identifier.value.toSnakeCase()
             val clientModuleName = "${endpoint.identifier.value}Client".toSnakeCase()
             listOf(
-                "use super::$endpointModuleName;",
-                "use super::${clientModuleName}::${endpoint.identifier.value}Client;",
+                "use super::endpoint::$endpointModuleName;",
+                "use ${clientModuleName}::${endpoint.identifier.value}Client;",
             )
         }
 
@@ -637,7 +638,8 @@ open class RustIrEmitter(
         }
 
         val code = (
-            listOf("use super::super::wirespec::*;") +
+            listOf(modDeclarations) +
+            listOf("use super::wirespec::*;") +
             modelImports +
             useStatements +
             listOf(
@@ -649,9 +651,8 @@ open class RustIrEmitter(
             implBlocks
         ).joinToString("\n")
 
-        val subPackageName = packageName + "endpoint"
         return File(
-            name = Name.of(subPackageName.toDir() + "client"),
+            name = Name.of(packageName.toDir() + "client"),
             elements = listOf(RawElement(code)),
         )
     }
