@@ -470,7 +470,7 @@ class RustIrEmitterTest {
         |}
         |
         |use super::super::wirespec::*;
-        |use super::get_todos;
+        |use super::super::endpoint::get_todos;
         |use super::super::model::todo_dto::TodoDto;
         |pub struct GetTodosClient<'a, S: Serialization, T: Transportation> {
         |    pub serialization: &'a S,
@@ -488,12 +488,14 @@ class RustIrEmitterTest {
         |#![allow(warnings)]
         |pub mod model;
         |pub mod endpoint;
+        |pub mod client;
         |pub mod wirespec;
         |
-        |use super::super::wirespec::*;
-        |use super::super::model::todo_dto::TodoDto;
-        |use super::get_todos;
-        |use super::get_todos_client::GetTodosClient;
+        |pub mod get_todos_client;
+        |use super::wirespec::*;
+        |use super::model::todo_dto::TodoDto;
+        |use super::endpoint::get_todos;
+        |use get_todos_client::GetTodosClient;
         |pub struct Client<S: Serialization, T: Transportation> {
         |    pub serialization: S,
         |    pub transportation: T,
@@ -745,7 +747,7 @@ class RustIrEmitterTest {
         |}
         |
         |use super::super::wirespec::*;
-        |use super::put_todo;
+        |use super::super::endpoint::put_todo;
         |use super::super::model::token::Token;
         |use super::super::model::potential_todo_dto::PotentialTodoDto;
         |use super::super::model::todo_dto::TodoDto;
@@ -766,15 +768,17 @@ class RustIrEmitterTest {
         |#![allow(warnings)]
         |pub mod model;
         |pub mod endpoint;
+        |pub mod client;
         |pub mod wirespec;
         |
-        |use super::super::wirespec::*;
-        |use super::super::model::token::Token;
-        |use super::super::model::potential_todo_dto::PotentialTodoDto;
-        |use super::super::model::todo_dto::TodoDto;
-        |use super::super::model::error::Error;
-        |use super::put_todo;
-        |use super::put_todo_client::PutTodoClient;
+        |pub mod put_todo_client;
+        |use super::wirespec::*;
+        |use super::model::token::Token;
+        |use super::model::potential_todo_dto::PotentialTodoDto;
+        |use super::model::todo_dto::TodoDto;
+        |use super::model::error::Error;
+        |use super::endpoint::put_todo;
+        |use put_todo_client::PutTodoClient;
         |pub struct Client<S: Serialization, T: Transportation> {
         |    pub serialization: S,
         |    pub transportation: T,
