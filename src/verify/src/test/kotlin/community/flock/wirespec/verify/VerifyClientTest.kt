@@ -17,47 +17,7 @@ class VerifyClientTest : FunSpec({
             lang.start(name = "client-test", fixture = CompileMinimalEndpointTest)
 
             val testFile = file("EndpointClientTest") {
-                when (lang.emitter) {
-                    is JavaIrEmitter -> {
-                        import("community.flock.wirespec.java", "Wirespec")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodosClient")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                    }
-                    is KotlinIrEmitter -> {
-                        import("community.flock.wirespec.kotlin", "Wirespec")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodosClient")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                        import("kotlin.coroutines", "createCoroutine")
-                        import("kotlin.coroutines", "resume")
-                    }
-                    is TypeScriptIrEmitter -> {
-                        import("./Wirespec", "Wirespec")
-                        import("./endpoint/GetTodos", "GetTodos")
-                        import("./endpoint/GetTodosClient", "getTodosClient")
-                        import("./model/TodoDto", "TodoDto")
-                    }
-                    is PythonIrEmitter -> {
-                        raw("from community.flock.wirespec.generated.wirespec import Wirespec")
-                        raw("from community.flock.wirespec.generated.endpoint.GetTodosClient import GetTodosClient")
-                        raw("from community.flock.wirespec.generated.endpoint.GetTodos import Response200")
-                        raw("from community.flock.wirespec.generated.model.TodoDto import TodoDto")
-                        raw("import asyncio")
-                    }
-                    is ScalaIrEmitter -> {
-                        import("community.flock.wirespec.scala", "Wirespec")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodosClient")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                    }
-                    is RustIrEmitter -> {
-                        // Only import GetTodos (namespace) and TodoDto (model) via IR imports.
-                        // GetTodosClient is a plain struct, not a namespace — import it via raw use statement.
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                    }
-                }
+                endpointClientImports(lang, CompileMinimalEndpointTest)
 
                 if (lang.emitter is RustIrEmitter) {
                     raw(rustSerializationDefs())
@@ -142,47 +102,7 @@ class VerifyClientTest : FunSpec({
             lang.start(name = "client-test", fixture = CompileMinimalEndpointTest)
 
             val testFile = file("MainClientTest") {
-                when (lang.emitter) {
-                    is JavaIrEmitter -> {
-                        import("community.flock.wirespec.java", "Wirespec")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.endpoint", "Client")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                    }
-                    is KotlinIrEmitter -> {
-                        import("community.flock.wirespec.kotlin", "Wirespec")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.endpoint", "Client")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                        import("kotlin.coroutines", "createCoroutine")
-                        import("kotlin.coroutines", "resume")
-                    }
-                    is TypeScriptIrEmitter -> {
-                        import("./Wirespec", "Wirespec")
-                        import("./endpoint/GetTodos", "GetTodos")
-                        import("./endpoint/Client", "client")
-                        import("./model/TodoDto", "TodoDto")
-                    }
-                    is PythonIrEmitter -> {
-                        raw("from community.flock.wirespec.generated.wirespec import Wirespec")
-                        raw("from community.flock.wirespec.generated.endpoint.Client import Client")
-                        raw("from community.flock.wirespec.generated.endpoint.GetTodos import Response200")
-                        raw("from community.flock.wirespec.generated.model.TodoDto import TodoDto")
-                        raw("import asyncio")
-                    }
-                    is ScalaIrEmitter -> {
-                        import("community.flock.wirespec.scala", "Wirespec")
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.endpoint", "Client")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                    }
-                    is RustIrEmitter -> {
-                        // Only import GetTodos (namespace) and TodoDto (model) via IR imports.
-                        // Client is a plain struct, not a namespace — import it via raw use statement.
-                        import("community.flock.wirespec.generated.endpoint", "GetTodos")
-                        import("community.flock.wirespec.generated.model", "TodoDto")
-                    }
-                }
+                mainClientImports(lang, CompileMinimalEndpointTest)
 
                 if (lang.emitter is RustIrEmitter) {
                     raw(rustSerializationDefs())
