@@ -374,6 +374,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.PotentialTodoDto;
             |import community.flock.wirespec.generated.model.TodoDto;
             |import community.flock.wirespec.generated.model.Error;
+            |import community.flock.wirespec.generated.endpoint.PutTodo;
             |public record PutTodoClient (
             |  Wirespec.Serialization serialization,
             |  Wirespec.Transportation transportation
@@ -591,6 +592,7 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.client;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.endpoint.GetTodos;
             |public record GetTodosClient (
             |  Wirespec.Serialization serialization,
             |  Wirespec.Transportation transportation

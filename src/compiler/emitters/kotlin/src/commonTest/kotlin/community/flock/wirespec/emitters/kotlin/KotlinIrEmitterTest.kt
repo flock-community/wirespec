@@ -321,6 +321,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.generated.model.PotentialTodoDto
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.model.Error
+            |import community.flock.wirespec.generated.endpoint.PutTodo
             |data class PutTodoClient(
             |  val serialization: Wirespec.Serialization,
             |  val transportation: Wirespec.Transportation
@@ -500,6 +501,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.endpoint.GetTodos
             |data class GetTodosClient(
             |  val serialization: Wirespec.Serialization,
             |  val transportation: Wirespec.Transportation
