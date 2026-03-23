@@ -180,15 +180,12 @@ open class KotlinIrEmitter(
         val clientImports = endpoints.map { "import ${packageName.value}.client.${it.identifier.value}Client" }.joinToString("\n") { it.trimStart() }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
         val file = super.emitClient(endpoints, logger).sanitizeNames()
-        val subPackageName = packageName + "client"
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
-            elements = buildList {
-                add(LanguagePackage(packageName.value))
-                addAll(wirespecImports)
-                addAll(allImports)
-                addAll(file.elements)
-            }
+            elements = listOf(LanguagePackage(packageName.value)) +
+                listOf(RawElement(import)) +
+                (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
+                file.elements
         )
     }
 

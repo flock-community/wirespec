@@ -254,13 +254,13 @@ class PythonIrEmitterTest {
             |from dataclasses import dataclass
             |from typing import Any, Generic, List, Optional
             |import enum
-            |from ..wirespec import T, Wirespec, _raise
-            |from ..model.Token import Token
-            |from ..model.PotentialTodoDto import PotentialTodoDto
-            |from ..model.TodoDto import TodoDto
-            |from ..model.Error import Error
-            |from ..endpoint.PutTodo import *
-            |from .PutTodoClient import PutTodoClient
+            |from .wirespec import T, Wirespec, _raise
+            |from .model.Token import Token
+            |from .model.PotentialTodoDto import PotentialTodoDto
+            |from .model.TodoDto import TodoDto
+            |from .model.Error import Error
+            |from .endpoint.PutTodo import *
+            |from .client.PutTodoClient import PutTodoClient
             |@dataclass
             |class Client(PutTodo.Call):
             |    serialization: Wirespec.Serialization
@@ -472,10 +472,10 @@ class PythonIrEmitterTest {
             |from dataclasses import dataclass
             |from typing import Any, Generic, List, Optional
             |import enum
-            |from ..wirespec import T, Wirespec, _raise
-            |from ..model.TodoDto import TodoDto
-            |from ..endpoint.GetTodos import *
-            |from .GetTodosClient import GetTodosClient
+            |from .wirespec import T, Wirespec, _raise
+            |from .model.TodoDto import TodoDto
+            |from .endpoint.GetTodos import *
+            |from .client.GetTodosClient import GetTodosClient
             |@dataclass
             |class Client(GetTodos.Call):
             |    serialization: Wirespec.Serialization

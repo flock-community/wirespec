@@ -151,13 +151,64 @@ open class TypeScriptIrEmitter : IrEmitter {
                 }
         )
 
-    override fun emit(definition: Definition, module: Module, logger: Logger): File {
-        val file = super.emit(definition, module, logger)
-        val subPackageName = PackageName("") + definition
-        return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
-            elements = listOf(import("../Wirespec", "Wirespec")) + file.elements
-        )
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> = super.emit(module, logger).let {
+        it + File(Name.of("Wirespec"), listOf(RawElement(shared.source)))
+    }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): File =
+        super.emit(definition, module, logger).let { file ->
+            val subPackageName = PackageName("") + definition
+            File(
+                name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+                elements = listOf(RawElement("import {Wirespec} from '../Wirespec'\n")) + file.elements
+            )
+        }
+
+    fun String.sanitizeSymbol() = filter { it.isLetterOrDigit() || it == '_' }
+
+    fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
+
+    fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+
+    private fun Name.sanitizeCamelCase(): Name {
+        val sanitized = if (parts.size > 1) {
+            camelCase()
+        } else {
+            value().sanitizeSymbol()
+        }
+        return Name(listOf(sanitized))
+    }
+
+    private fun <T : Element> T.sanitizeNames(): T = transform {
+        fields { field ->
+            field.copy(name = field.name.sanitizeCamelCase())
+        }
+        parameters { param ->
+            param.copy(name = param.name.sanitizeCamelCase())
+        }
+        statementAndExpression { stmt, tr ->
+            when (stmt) {
+                is FieldCall -> FieldCall(
+                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                    field = stmt.field.sanitizeCamelCase(),
+                )
+                is VariableReference -> VariableReference(
+                    name = stmt.name.sanitizeCamelCase(),
+                )
+                is ConstructorStatement -> ConstructorStatement(
+                    type = tr.transformType(stmt.type),
+                    namedArguments = stmt.namedArguments.map { (key, value) ->
+                        key.sanitizeCamelCase() to tr.transformExpression(value)
+                    }.toMap(),
+                )
+                is Assignment -> Assignment(
+                    name = stmt.name.sanitizeCamelCase(),
+                    value = tr.transformExpression(stmt.value),
+                    isProperty = stmt.isProperty,
+                )
+                else -> stmt.transformChildren(tr)
+            }
+        }
     }
 
     override fun emit(type: AstType, module: Module): File {
@@ -166,8 +217,8 @@ open class TypeScriptIrEmitter : IrEmitter {
             .map { import("./${it.value}", it.value) }
         val validateImports = fieldValidations.map { it.typeName }.distinct()
             .filter { it != type.identifier.value }
-            .map { import("./$it", "validate$it") }
-        val allImports = typeImports + validateImports
+            .joinToString("\n") { "import {validate$it} from './$it'" }
+        val allImports = listOf(typeImports, validateImports).filter { it.isNotEmpty() }.joinToString("\n")
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
@@ -273,9 +324,9 @@ open class TypeScriptIrEmitter : IrEmitter {
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
 
-        val clientImports = endpoints.map {
-            val methodName = it.identifier.value.firstToLower()
-            import("./client/${it.identifier.value}Client", "${methodName}Client")
+        val clientImports = endpoints.joinToString("\n") {
+            val methodName = it.identifier.value.replaceFirstChar { c -> c.lowercase() }
+            "import {${methodName}Client} from './client/${it.identifier.value}Client'"
         }
 
         val spreadEntries = endpoints.joinToString("\n") {
@@ -283,14 +334,20 @@ open class TypeScriptIrEmitter : IrEmitter {
             "  ...${methodName}Client(serialization, transportation),"
         }
 
-        val code = """
-            |export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
-            |$spreadEntries
-            |})
-        """.trimMargin()
+        val code = buildString {
+            appendLine("export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
+            appendLine(spreadEntries)
+            append("})")
+        }
+
+        val elements = buildList {
+            add(RawElement("import {Wirespec} from './Wirespec'"))
+            add(RawElement(clientImports))
+            add(RawElement(code))
+        }
 
         return File(
-            Name.of("client/Client"),
+            Name.of("Client"),
             elements
         )
     }

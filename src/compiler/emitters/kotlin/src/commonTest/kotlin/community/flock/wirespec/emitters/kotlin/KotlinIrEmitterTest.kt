@@ -343,7 +343,7 @@ class KotlinIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.client
+            |package community.flock.wirespec.generated
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import community.flock.wirespec.generated.model.Token
@@ -516,7 +516,7 @@ class KotlinIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.client
+            |package community.flock.wirespec.generated
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import community.flock.wirespec.generated.model.TodoDto
