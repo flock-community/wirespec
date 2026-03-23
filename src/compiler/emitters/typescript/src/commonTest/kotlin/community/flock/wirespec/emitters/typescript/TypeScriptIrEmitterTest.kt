@@ -188,7 +188,7 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |import {Wirespec} from '../Wirespec'
-            |import {PutTodo} from './PutTodo'
+            |import {PutTodo} from '../endpoint/PutTodo'
             |import {type Token} from '../model'
             |import {type PotentialTodoDto} from '../model'
             |import {type TodoDto} from '../model'
@@ -340,7 +340,7 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |import {Wirespec} from '../Wirespec'
-            |import {GetTodos} from './GetTodos'
+            |import {GetTodos} from '../endpoint/GetTodos'
             |import {type TodoDto} from '../model'
             |export const getTodosClient = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
             |  getTodos: async (): Promise<GetTodos.Response<unknown>> => {

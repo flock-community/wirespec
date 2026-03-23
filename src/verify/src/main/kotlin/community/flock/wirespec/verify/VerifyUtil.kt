@@ -373,16 +373,16 @@ fun ContainerBuilder.endpointClientImports(lang: Language, fixture: Fixture) {
     val models = fixture.modelNames()
     clientImportsShared(lang, endpoints, models)
     when (lang.emitter) {
-        is JavaIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.endpoint", "${it}Client") }
-        is KotlinIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.endpoint", "${it}Client") }
+        is JavaIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
+        is KotlinIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
         is TypeScriptIrEmitter -> endpoints.forEach {
             val camel = Name.of(it).camelCase()
-            import("./endpoint/${it}Client", "${camel}Client")
+            import("./client/${it}Client", "${camel}Client")
         }
         is PythonIrEmitter -> endpoints.forEach {
-            raw("from community.flock.wirespec.generated.endpoint.${it}Client import ${it}Client")
+            raw("from community.flock.wirespec.generated.client.${it}Client import ${it}Client")
         }
-        is ScalaIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.endpoint", "${it}Client") }
+        is ScalaIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
         is RustIrEmitter -> {} // handled by run() use statements
     }
 }
@@ -392,11 +392,11 @@ fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture) {
     val models = fixture.modelNames()
     clientImportsShared(lang, endpoints, models)
     when (lang.emitter) {
-        is JavaIrEmitter -> import("community.flock.wirespec.generated.endpoint", "Client")
-        is KotlinIrEmitter -> import("community.flock.wirespec.generated.endpoint", "Client")
-        is TypeScriptIrEmitter -> import("./endpoint/Client", "client")
-        is PythonIrEmitter -> raw("from community.flock.wirespec.generated.endpoint.Client import Client")
-        is ScalaIrEmitter -> import("community.flock.wirespec.generated.endpoint", "Client")
+        is JavaIrEmitter -> import("community.flock.wirespec.generated.client", "Client")
+        is KotlinIrEmitter -> import("community.flock.wirespec.generated.client", "Client")
+        is TypeScriptIrEmitter -> import("./client/Client", "client")
+        is PythonIrEmitter -> raw("from community.flock.wirespec.generated.client.Client import Client")
+        is ScalaIrEmitter -> import("community.flock.wirespec.generated.client", "Client")
         is RustIrEmitter -> {} // handled by run() use statements
     }
 }

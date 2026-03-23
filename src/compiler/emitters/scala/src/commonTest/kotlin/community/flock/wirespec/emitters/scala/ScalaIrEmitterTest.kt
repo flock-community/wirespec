@@ -434,7 +434,7 @@ class ScalaIrEmitterTest {
             |    List.empty[String]
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.scala.Wirespec
             |import scala.reflect.ClassTag
             |import community.flock.wirespec.generated.model.TodoDto
@@ -450,12 +450,12 @@ class ScalaIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.scala.Wirespec
             |import scala.reflect.ClassTag
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.endpoint.GetTodos
-            |import community.flock.wirespec.generated.endpoint.GetTodosClient
+            |import community.flock.wirespec.generated.client.GetTodosClient
             |case class Client(
             |  val serialization: Wirespec.Serialization,
             |  val transportation: Wirespec.Transportation
@@ -677,7 +677,7 @@ class ScalaIrEmitterTest {
             |    List.empty[String]
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.scala.Wirespec
             |import scala.reflect.ClassTag
             |import community.flock.wirespec.generated.model.Token
@@ -703,7 +703,7 @@ class ScalaIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.scala.Wirespec
             |import scala.reflect.ClassTag
             |import community.flock.wirespec.generated.model.Token
@@ -711,7 +711,7 @@ class ScalaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.model.Error
             |import community.flock.wirespec.generated.endpoint.PutTodo
-            |import community.flock.wirespec.generated.endpoint.PutTodoClient
+            |import community.flock.wirespec.generated.client.PutTodoClient
             |case class Client(
             |  val serialization: Wirespec.Serialization,
             |  val transportation: Wirespec.Transportation

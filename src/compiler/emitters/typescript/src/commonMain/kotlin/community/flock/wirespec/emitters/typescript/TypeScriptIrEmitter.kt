@@ -306,13 +306,13 @@ open class TypeScriptIrEmitter : IrEmitter {
 
         val elements = buildList {
             add(RawElement("import {Wirespec} from '../Wirespec'"))
-            add(RawElement("import {$endpointName} from './$endpointName'"))
+            add(RawElement("import {$endpointName} from '../endpoint/$endpointName'"))
             if (imports.isNotEmpty()) add(RawElement(imports))
             add(RawElement(code))
         }
 
         return File(
-            Name.of("endpoint/${endpointName}Client"),
+            Name.of("client/${endpointName}Client"),
             elements
         )
     }
@@ -343,7 +343,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         }
 
         return File(
-            Name.of("endpoint/Client"),
+            Name.of("client/Client"),
             elements
         )
     }

@@ -314,7 +314,7 @@ class KotlinIrEmitterTest {
             |    emptyList<String>()
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import community.flock.wirespec.generated.model.Token
@@ -340,7 +340,7 @@ class KotlinIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import community.flock.wirespec.generated.model.Token
@@ -348,7 +348,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.model.Error
             |import community.flock.wirespec.generated.endpoint.PutTodo
-            |import community.flock.wirespec.generated.endpoint.PutTodoClient
+            |import community.flock.wirespec.generated.client.PutTodoClient
             |data class Client(
             |  val serialization: Wirespec.Serialization,
             |  val transportation: Wirespec.Transportation
@@ -496,7 +496,7 @@ class KotlinIrEmitterTest {
             |    emptyList<String>()
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import community.flock.wirespec.generated.model.TodoDto
@@ -512,12 +512,12 @@ class KotlinIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.endpoint
+            |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.endpoint.GetTodos
-            |import community.flock.wirespec.generated.endpoint.GetTodosClient
+            |import community.flock.wirespec.generated.client.GetTodosClient
             |data class Client(
             |  val serialization: Wirespec.Serialization,
             |  val transportation: Wirespec.Transportation

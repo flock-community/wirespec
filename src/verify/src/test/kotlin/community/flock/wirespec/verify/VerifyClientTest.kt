@@ -78,7 +78,7 @@ class VerifyClientTest : FunSpec({
                         }
                         is RustIrEmitter -> {
                             raw("""
-                                |use generated::endpoint::get_todos_client::GetTodosClient;
+                                |use generated::client::get_todos_client::GetTodosClient;
                                 |let endpoint_client = GetTodosClient { serialization: &serialization, transportation: &transportation };
                                 |let response = pollster::block_on(endpoint_client.get_todos());
                                 |match response {
@@ -163,7 +163,7 @@ class VerifyClientTest : FunSpec({
                         }
                         is RustIrEmitter -> {
                             raw("""
-                                |use generated::endpoint::client::Client;
+                                |use generated::client::Client;
                                 |let main_client = Client { serialization: MockSer, transportation: MockTransport { serialization: &serialization } };
                                 |let response = pollster::block_on(main_client.get_todos());
                                 |match response {
