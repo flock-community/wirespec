@@ -150,6 +150,7 @@ open class JavaIrEmitter(
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.emitImportElements()
+        val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
         val file = super.emitEndpointClient(endpoint).sanitizeNames()
         val endpointName = endpoint.identifier.value
 
@@ -185,6 +186,7 @@ open class JavaIrEmitter(
             elements = listOf(Package(subPackageName.value)) +
                 listOf(wirespecImport) +
                 imports +
+                listOf(endpointImport) +
                 transformedFile.elements
         )
     }
