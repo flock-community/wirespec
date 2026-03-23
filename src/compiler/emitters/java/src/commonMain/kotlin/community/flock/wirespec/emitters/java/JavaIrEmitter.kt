@@ -224,7 +224,7 @@ open class JavaIrEmitter(
             }
         }
 
-        val subPackageName = packageName + "endpoint"
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + transformedFile.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(subPackageName.value)) +
@@ -239,10 +239,10 @@ open class JavaIrEmitter(
             .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
             .map { import("${packageName.value}.model", it.value) }
         val endpointImports = endpoints.map { import("${packageName.value}.endpoint", it.identifier.value) }
-        val clientImports = endpoints.map { import("${packageName.value}.endpoint", "${it.identifier.value}Client") }
+        val clientImports = endpoints.map { import("${packageName.value}.client", "${it.identifier.value}Client") }
         val allImports = imports + endpointImports + clientImports
         val file = super.emitClient(endpoints, logger).sanitizeNames()
-        val subPackageName = packageName + "endpoint"
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(subPackageName.value)) +

@@ -224,7 +224,7 @@ class PythonIrEmitterTest {
             |from ..model.PotentialTodoDto import PotentialTodoDto
             |from ..model.TodoDto import TodoDto
             |from ..model.Error import Error
-            |from .PutTodo import *
+            |from ..endpoint.PutTodo import *
             |@dataclass
             |class PutTodoClient(PutTodo.Call):
             |    serialization: Wirespec.Serialization
@@ -237,6 +237,7 @@ class PythonIrEmitterTest {
             |
             |from . import model
             |from . import endpoint
+            |from . import client
             |from . import wirespec
             |
             |
@@ -256,7 +257,7 @@ class PythonIrEmitterTest {
             |from ..model.PotentialTodoDto import PotentialTodoDto
             |from ..model.TodoDto import TodoDto
             |from ..model.Error import Error
-            |from .PutTodo import *
+            |from ..endpoint.PutTodo import *
             |from .PutTodoClient import PutTodoClient
             |@dataclass
             |class Client(PutTodo.Call):
@@ -441,7 +442,7 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.TodoDto import TodoDto
-            |from .GetTodos import *
+            |from ..endpoint.GetTodos import *
             |@dataclass
             |class GetTodosClient(GetTodos.Call):
             |    serialization: Wirespec.Serialization
@@ -454,6 +455,7 @@ class PythonIrEmitterTest {
             |
             |from . import model
             |from . import endpoint
+            |from . import client
             |from . import wirespec
             |
             |
@@ -470,7 +472,7 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.TodoDto import TodoDto
-            |from .GetTodos import *
+            |from ..endpoint.GetTodos import *
             |from .GetTodosClient import GetTodosClient
             |@dataclass
             |class Client(GetTodos.Call):

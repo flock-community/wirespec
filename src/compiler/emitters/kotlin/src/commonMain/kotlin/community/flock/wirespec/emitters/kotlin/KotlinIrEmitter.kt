@@ -159,7 +159,7 @@ open class KotlinIrEmitter(
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.emitEndpointImports()
         val file = super.emitEndpointClient(endpoint).sanitizeNames()
-        val subPackageName = packageName + "endpoint"
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = listOf(LanguagePackage(subPackageName.value)) +
@@ -173,10 +173,10 @@ open class KotlinIrEmitter(
         val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
             .map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }
         val endpointImports = endpoints.map { "import ${packageName.value}.endpoint.${it.identifier.value}" }.joinToString("\n") { it.trimStart() }
-        val clientImports = endpoints.map { "import ${packageName.value}.endpoint.${it.identifier.value}Client" }.joinToString("\n") { it.trimStart() }
+        val clientImports = endpoints.map { "import ${packageName.value}.client.${it.identifier.value}Client" }.joinToString("\n") { it.trimStart() }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
         val file = super.emitClient(endpoints, logger).sanitizeNames()
-        val subPackageName = packageName + "endpoint"
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = listOf(LanguagePackage(subPackageName.value)) +

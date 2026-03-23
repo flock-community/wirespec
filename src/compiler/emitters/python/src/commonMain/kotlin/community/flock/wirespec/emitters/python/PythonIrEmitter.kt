@@ -116,9 +116,10 @@ open class PythonIrEmitter(
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let {
             fun emitInit(def: Definition) = "from .${def.identifier.sanitize()} import ${def.identifier.sanitize()}"
+            val hasEndpoints = module.statements.any { it is Endpoint }
             val init = File(
                 Name.of(packageName.toDir() + "__init__"),
-                listOf(RawElement("from . import model\nfrom . import endpoint\nfrom . import wirespec"))
+                listOf(RawElement("from . import model\nfrom . import endpoint" + (if (hasEndpoints) "\nfrom . import client" else "") + "\nfrom . import wirespec"))
             )
             val initEndpoint = File(
                 Name.of(packageName.toDir() + "endpoint/" + "__init__"),
@@ -128,6 +129,10 @@ open class PythonIrEmitter(
                 Name.of(packageName.toDir() + "model/" + "__init__"),
                 listOf(RawElement(module.statements.filter { it is Model }.map { stmt -> emitInit(stmt) }.joinToString("\n")))
             )
+            val initClient = if (hasEndpoints) listOf(File(
+                Name.of(packageName.toDir() + "client/" + "__init__"),
+                emptyList()
+            )) else emptyList()
             val shared = File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(shared.source)))
             val parentInits = packageName.value.split(".")
                 .dropLast(1)
@@ -135,7 +140,7 @@ open class PythonIrEmitter(
                 .drop(1)
                 .map { File(Name.of("$it/__init__"), emptyList()) }
             if (emitShared.value)
-                it + init + initEndpoint + initModel + shared + parentInits
+                it + init + initEndpoint + initModel + initClient + shared + parentInits
             else
                 it + init + parentInits
         }
@@ -323,7 +328,7 @@ open class PythonIrEmitter(
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.importReferences().distinctBy { it.value }
             .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
-        val endpointImport = "from .${endpoint.identifier.value} import *"
+        val endpointImport = "from ..endpoint.${endpoint.identifier.value} import *"
         val endpointName = endpoint.identifier.value
 
         val file = super.emitEndpointClient(endpoint)
@@ -332,7 +337,7 @@ open class PythonIrEmitter(
             .snakeCaseClientFunctions()
             .flattenEndpointTypeRefs(endpointName)
 
-        val subPackageName = packageName + "endpoint"
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = listOf(RawElement(import)) +
@@ -347,7 +352,7 @@ open class PythonIrEmitter(
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
             .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
-        val endpointImports = endpoints.joinToString("\n") { "from .${it.identifier.value} import *" }
+        val endpointImports = endpoints.joinToString("\n") { "from ..endpoint.${it.identifier.value} import *" }
         val clientImports = endpoints.joinToString("\n") { "from .${it.identifier.value}Client import ${it.identifier.value}Client" }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
         val endpointNames = endpoints.map { it.identifier.value }
@@ -358,7 +363,7 @@ open class PythonIrEmitter(
             .snakeCaseClientFunctions()
             .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
 
-        val subPackageName = packageName + "endpoint"
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = listOf(RawElement(import)) +

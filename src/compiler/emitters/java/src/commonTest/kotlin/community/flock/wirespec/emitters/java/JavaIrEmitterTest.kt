@@ -367,7 +367,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            |package community.flock.wirespec.generated.endpoint;
+            |package community.flock.wirespec.generated.client;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Token;
             |import community.flock.wirespec.generated.model.Token;
@@ -393,14 +393,14 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            |package community.flock.wirespec.generated.endpoint;
+            |package community.flock.wirespec.generated.client;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Token;
             |import community.flock.wirespec.generated.model.PotentialTodoDto;
             |import community.flock.wirespec.generated.model.TodoDto;
             |import community.flock.wirespec.generated.model.Error;
             |import community.flock.wirespec.generated.endpoint.PutTodo;
-            |import community.flock.wirespec.generated.endpoint.PutTodoClient;
+            |import community.flock.wirespec.generated.client.PutTodoClient;
             |public record Client (
             |  Wirespec.Serialization serialization,
             |  Wirespec.Transportation transportation
@@ -588,7 +588,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            |package community.flock.wirespec.generated.endpoint;
+            |package community.flock.wirespec.generated.client;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.TodoDto;
             |public record GetTodosClient (
@@ -603,11 +603,11 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            |package community.flock.wirespec.generated.endpoint;
+            |package community.flock.wirespec.generated.client;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.TodoDto;
             |import community.flock.wirespec.generated.endpoint.GetTodos;
-            |import community.flock.wirespec.generated.endpoint.GetTodosClient;
+            |import community.flock.wirespec.generated.client.GetTodosClient;
             |public record Client (
             |  Wirespec.Serialization serialization,
             |  Wirespec.Transportation transportation
