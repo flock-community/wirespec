@@ -202,8 +202,8 @@ class TypeScriptIrEmitterTest {
             |  }
             |})
             |
-            |import {Wirespec} from '../Wirespec'
-            |import {putTodoClient} from './PutTodoClient'
+            |import {Wirespec} from './Wirespec'
+            |import {putTodoClient} from './client/PutTodoClient'
             |export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
             |  ...putTodoClient(serialization, transportation),
             |})
@@ -351,8 +351,8 @@ class TypeScriptIrEmitterTest {
             |  }
             |})
             |
-            |import {Wirespec} from '../Wirespec'
-            |import {getTodosClient} from './GetTodosClient'
+            |import {Wirespec} from './Wirespec'
+            |import {getTodosClient} from './client/GetTodosClient'
             |export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
             |  ...getTodosClient(serialization, transportation),
             |})

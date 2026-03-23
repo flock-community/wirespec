@@ -222,10 +222,9 @@ open class ScalaIrEmitter(
         val clientImports = endpoints.map { "import ${packageName.value}.client.${it.identifier.value}Client" }.joinToString("\n") { it.trimStart() }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
         val file = super.emitClient(endpoints, logger).sanitizeNames().addIdentityTypeToCall()
-        val subPackageName = packageName + "client"
         return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
-            elements = listOf(LanguagePackage(subPackageName.value)) +
+            name = Name.of(packageName.toDir() + file.name.pascalCase()),
+            elements = listOf(LanguagePackage(packageName.value)) +
                 listOf(RawElement(import)) +
                 (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
                 file.elements

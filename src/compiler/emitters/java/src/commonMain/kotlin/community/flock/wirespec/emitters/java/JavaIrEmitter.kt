@@ -244,10 +244,9 @@ open class JavaIrEmitter(
         val clientImports = endpoints.map { import("${packageName.value}.client", "${it.identifier.value}Client") }
         val allImports = imports + endpointImports + clientImports
         val file = super.emitClient(endpoints, logger).sanitizeNames()
-        val subPackageName = packageName + "client"
         return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
-            elements = listOf(Package(subPackageName.value)) +
+            name = Name.of(packageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(packageName.value)) +
                 listOf(wirespecImport) +
                 allImports +
                 file.elements

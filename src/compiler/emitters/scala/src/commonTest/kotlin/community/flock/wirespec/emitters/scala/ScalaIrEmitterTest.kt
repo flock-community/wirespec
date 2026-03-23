@@ -451,7 +451,7 @@ class ScalaIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.client
+            |package community.flock.wirespec.generated
             |import community.flock.wirespec.scala.Wirespec
             |import scala.reflect.ClassTag
             |import community.flock.wirespec.generated.model.TodoDto
@@ -705,7 +705,7 @@ class ScalaIrEmitterTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated.client
+            |package community.flock.wirespec.generated
             |import community.flock.wirespec.scala.Wirespec
             |import scala.reflect.ClassTag
             |import community.flock.wirespec.generated.model.Token
