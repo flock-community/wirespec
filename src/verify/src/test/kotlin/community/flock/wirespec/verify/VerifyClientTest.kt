@@ -34,20 +34,64 @@ class VerifyClientTest : FunSpec({
                 main(isAsync = true, statics = {
                     raw(serializationCode(lang, CompileMinimalEndpointTest))
                     raw(transportationCode(lang))
-                }) {
-                    when {
-                        isTypeScript -> assign("endpointClient", functionCall("getTodosClient") {
-                            arg("serialization", VariableReference("serialization"))
-                            arg("transportation", VariableReference("transportation"))
-                        })
-                        isRust -> assign("endpointClient", construct(Type.Custom("GetTodosClient")) {
-                            arg("serialization", VariableReference("serialization").borrow())
-                            arg("transportation", VariableReference("transportation").borrow())
-                        })
-                        else -> assign("endpointClient", construct(Type.Custom("GetTodosClient")) {
-                            arg("serialization", VariableReference("serialization"))
-                            arg("transportation", VariableReference("transportation"))
-                        })
+
+                    when (lang.emitter) {
+                        is JavaIrEmitter -> {
+                            raw("GetTodosClient endpointClient = new GetTodosClient(serialization, transportation)")
+                            raw("GetTodos.Response<?> response = endpointClient.getTodos().join()")
+                            raw("""assert response instanceof GetTodos.Response200 : "Response should be 200"""")
+                            raw("""assert ((GetTodos.Response200) response).body().get(0).description().equals("test") : "Description should be test"""")
+                        }
+                        is KotlinIrEmitter -> {
+                            raw(kotlinRunSuspend())
+                            raw("""
+                                |runSuspend {
+                                |    val endpointClient = GetTodosClient(serialization = serialization, transportation = transportation)
+                                |    val response = endpointClient.getTodos()
+                                |    assert(response is GetTodos.Response200) { "Response should be 200" }
+                                |    assert((response as GetTodos.Response200).body[0].description == "test") { "Description should be test" }
+                                |}
+                            """.trimMargin())
+                        }
+                        is TypeScriptIrEmitter -> {
+                            raw("""
+                                |const endpointClient = getTodosClient(serialization, transportation);
+                                |(async () => {
+                                |    const response = await endpointClient.getTodos();
+                                |    if (response.status !== 200) throw new Error("Response should be 200");
+                                |    if ((response as any).body[0].description !== "test") throw new Error("Description should be test");
+                                |})();
+                            """.trimMargin())
+                        }
+                        is PythonIrEmitter -> {
+                            raw("async def async_main():")
+                            raw("    endpoint_client = GetTodosClient(serialization=serialization, transportation=transportation)")
+                            raw("    response = await endpoint_client.get_todos()")
+                            raw("    assert isinstance(response, Response200), \"Response should be 200\"")
+                            raw("    assert response.body[0].description == \"test\", \"Description should be test\"")
+                            raw("asyncio.run(async_main())")
+                        }
+                        is ScalaIrEmitter -> {
+                            raw("""
+                                |val endpointClient = GetTodosClient(serialization = serialization, transportation = transportation)
+                                |val response = endpointClient.getTodos()
+                                |assert(response.isInstanceOf[GetTodos.Response200], "Response should be 200")
+                                |assert(response.asInstanceOf[GetTodos.Response200].body.head.description == "test", "Description should be test")
+                            """.trimMargin())
+                        }
+                        is RustIrEmitter -> {
+                            raw("""
+                                |use generated::client::get_todos_client::GetTodosClient;
+                                |let endpoint_client = GetTodosClient { serialization: &serialization, transportation: &transportation };
+                                |let response = pollster::block_on(endpoint_client.get_todos());
+                                |match response {
+                                |    Response::Response200(r) => {
+                                |        assert_eq!(r.body[0].description, "test", "Description should be test");
+                                |    }
+                                |}
+                            """.trimMargin())
+                        }
+                        else -> error("Unknown emitter: ${lang.emitter::class.simpleName}")
                     }
 
                     val getTodosMethod = if (isPython) "get_todos" else "getTodos"
@@ -79,23 +123,64 @@ class VerifyClientTest : FunSpec({
                 main(isAsync = true, statics = {
                     raw(serializationCode(lang, CompileMinimalEndpointTest))
                     raw(transportationCode(lang))
-                }) {
-                    when {
-                        isTypeScript -> assign("mainClient", functionCall("client") {
-                            arg("serialization", VariableReference("serialization"))
-                            arg("transportation", VariableReference("transportation"))
-                        })
-                        isRust -> assign("mainClient", construct(Type.Custom("Client")) {
-                            arg("serialization", ConstructorStatement(Type.Custom("MockSer")))
-                            arg("transportation", ConstructorStatement(
-                                Type.Custom("MockTransport"),
-                                mapOf(Name.of("serialization") to VariableReference("serialization").borrow()),
-                            ))
-                        })
-                        else -> assign("mainClient", construct(Type.Custom("Client")) {
-                            arg("serialization", VariableReference("serialization"))
-                            arg("transportation", VariableReference("transportation"))
-                        })
+
+                    when (lang.emitter) {
+                        is JavaIrEmitter -> {
+                            raw("Client mainClient = new Client(serialization, transportation)")
+                            raw("GetTodos.Response<?> response = mainClient.getTodos().join()")
+                            raw("""assert response instanceof GetTodos.Response200 : "Response should be 200"""")
+                            raw("""assert ((GetTodos.Response200) response).body().get(0).description().equals("test") : "Description should be test"""")
+                        }
+                        is KotlinIrEmitter -> {
+                            raw(kotlinRunSuspend())
+                            raw("""
+                                |runSuspend {
+                                |    val mainClient = Client(serialization = serialization, transportation = transportation)
+                                |    val response = mainClient.getTodos()
+                                |    assert(response is GetTodos.Response200) { "Response should be 200" }
+                                |    assert((response as GetTodos.Response200).body[0].description == "test") { "Description should be test" }
+                                |}
+                            """.trimMargin())
+                        }
+                        is TypeScriptIrEmitter -> {
+                            raw("""
+                                |const mainClient = client(serialization, transportation);
+                                |(async () => {
+                                |    const response = await mainClient.getTodos();
+                                |    if (response.status !== 200) throw new Error("Response should be 200");
+                                |    if ((response as any).body[0].description !== "test") throw new Error("Description should be test");
+                                |})();
+                            """.trimMargin())
+                        }
+                        is PythonIrEmitter -> {
+                            raw("async def async_main():")
+                            raw("    main_client = Client(serialization=serialization, transportation=transportation)")
+                            raw("    response = await main_client.get_todos()")
+                            raw("    assert isinstance(response, Response200), \"Response should be 200\"")
+                            raw("    assert response.body[0].description == \"test\", \"Description should be test\"")
+                            raw("asyncio.run(async_main())")
+                        }
+                        is ScalaIrEmitter -> {
+                            raw("""
+                                |val mainClient = Client(serialization = serialization, transportation = transportation)
+                                |val response = mainClient.getTodos()
+                                |assert(response.isInstanceOf[GetTodos.Response200], "Response should be 200")
+                                |assert(response.asInstanceOf[GetTodos.Response200].body.head.description == "test", "Description should be test")
+                            """.trimMargin())
+                        }
+                        is RustIrEmitter -> {
+                            raw("""
+                                |use generated::client::Client;
+                                |let main_client = Client { serialization: MockSer, transportation: MockTransport { serialization: &serialization } };
+                                |let response = pollster::block_on(main_client.get_todos());
+                                |match response {
+                                |    Response::Response200(r) => {
+                                |        assert_eq!(r.body[0].description, "test", "Description should be test");
+                                |    }
+                                |}
+                            """.trimMargin())
+                        }
+                        else -> error("Unknown emitter: ${lang.emitter::class.simpleName}")
                     }
 
                     val getTodosMethod = if (isPython) "get_todos" else "getTodos"

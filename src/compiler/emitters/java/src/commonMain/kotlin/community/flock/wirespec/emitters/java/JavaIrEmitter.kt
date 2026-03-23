@@ -125,8 +125,107 @@ open class JavaIrEmitter(
                 }
             }
 
-        return if (emitShared.value) {
-            wirespecShared
+        override val source: String = wirespecFile.generateJava()
+    }
+
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
+        super.emit(module, logger).let {
+            if (emitShared.value) it + File(
+                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.java").toDir() + "Wirespec"),
+                listOf(RawElement(shared.source))
+            )
+            else it
+        }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): File =
+        super.emit(definition, module, logger).let { file ->
+            val subPackageName = packageName + definition
+            File(
+                name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+                elements = listOf(Package(subPackageName.value)) +
+                        (if (module.needImports()) listOf(wirespecImport) else emptyList()) +
+                        file.elements
+            )
+        }
+
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val imports = endpoint.emitImportElements()
+        val file = super.emitEndpointClient(endpoint).sanitizeNames()
+        val endpointName = endpoint.identifier.value
+
+        // Transform async function body to chain CompletableFuture.thenApply
+        val transformedFile = file.transform {
+            matchingElements { func: LanguageFunction ->
+                if (func.isAsync && func.body.size >= 2) {
+                    val transportAssign = func.body[func.body.size - 2]
+                    val returnStmt = func.body.last()
+                    if (transportAssign is Assignment && returnStmt is ReturnStatement) {
+                        val bodyPrefix = func.body.dropLast(2)
+                        func.copy(
+                            body = bodyPrefix + ReturnStatement(
+                                FunctionCall(
+                                    name = Name.of("thenApply"),
+                                    receiver = transportAssign.value,
+                                    arguments = mapOf(
+                                        Name.of("mapper") to RawExpression(
+                                            "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)"
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    } else func
+                } else func
+            }
+        }
+
+        val subPackageName = packageName + "client"
+        return File(
+            name = Name.of(subPackageName.toDir() + transformedFile.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(subPackageName.value)) +
+                listOf(wirespecImport) +
+                imports +
+                transformedFile.elements
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+            .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
+            .map { import("${packageName.value}.model", it.value) }
+        val endpointImports = endpoints.map { import("${packageName.value}.endpoint", it.identifier.value) }
+        val clientImports = endpoints.map { import("${packageName.value}.client", "${it.identifier.value}Client") }
+        val allImports = imports + endpointImports + clientImports
+        val file = super.emitClient(endpoints, logger).sanitizeNames()
+        val subPackageName = packageName + "client"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(subPackageName.value)) +
+                listOf(wirespecImport) +
+                allImports +
+                file.elements
+        )
+    }
+
+    fun String.sanitizeSymbol() = this
+        .split(".", " ", "-")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .filter { it.isLetterOrDigit() || it == '_' }
+        .sanitizeFirstIsDigit()
+
+    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
+        .joinToString("_")
+        .sanitizeFirstIsDigit()
+        .sanitizeKeywords()
+
+    fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
+
+    fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+
+    private fun Name.sanitizeCamelCase(): Name {
+        val sanitized = if (parts.size > 1) {
+            camelCase()
         } else {
             null
         }

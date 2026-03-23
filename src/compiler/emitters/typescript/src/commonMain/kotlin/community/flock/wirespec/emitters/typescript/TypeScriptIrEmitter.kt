@@ -239,25 +239,34 @@ open class TypeScriptIrEmitter : IrEmitter {
         val paramList = if (params.isNotEmpty()) "params: $endpointName.RequestParams" else ""
         val requestArgs = if (params.isNotEmpty()) "$endpointName.request(params)" else "$endpointName.request()"
 
-        val code = """
-            |export const ${methodName}Client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
-            |  $methodName: async ($paramList): Promise<$endpointName.Response<unknown>> => {
-            |    const request: $endpointName.Request = $requestArgs;
-            |    const rawRequest = $endpointName.toRawRequest(serialization, request);
-            |    const rawResponse = await transportation.transport(rawRequest);
-            |    return $endpointName.fromRawResponse(serialization, rawResponse);
-            |  }
-            |})
-        """.trimMargin()
+        val requestArgs = if (params.isNotEmpty()) {
+            val args = params.joinToString(", ") { (name, _, _) -> name.sanitizeKeywords() }
+            "$endpointName.request({$args})"
+        } else {
+            "$endpointName.request()"
+        }
+
+        val code = buildString {
+            appendLine("export const ${methodName}Client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
+            appendLine("  $methodName: async ($paramList): Promise<$endpointName.Response<unknown>> => {")
+            appendLine("    const request: $endpointName.Request = $requestArgs;")
+            appendLine("    const rawRequest = $endpointName.toRawRequest(serialization, request);")
+            appendLine("    const rawResponse = await transportation.transport(rawRequest);")
+            appendLine("    return $endpointName.fromRawResponse(serialization, rawResponse);")
+            appendLine("  }")
+            append("})")
+        }
+
+        val elements = buildList {
+            add(RawElement("import {Wirespec} from '../Wirespec'"))
+            add(RawElement("import {$endpointName} from '../endpoint/$endpointName'"))
+            if (imports.isNotEmpty()) add(RawElement(imports))
+            add(RawElement(code))
+        }
 
         return File(
             Name.of("client/${endpointName}Client"),
-            buildList {
-                add(import("../Wirespec", "Wirespec"))
-                add(import("../endpoint/$endpointName", endpointName))
-                addAll(imports)
-                add(RawElement(code))
-            }
+            elements
         )
     }
 
@@ -281,12 +290,8 @@ open class TypeScriptIrEmitter : IrEmitter {
         """.trimMargin()
 
         return File(
-            Name.of("Client"),
-            buildList {
-                add(import("./Wirespec", "Wirespec"))
-                addAll(clientImports)
-                add(RawElement(code))
-            }
+            Name.of("client/Client"),
+            elements
         )
     }
 

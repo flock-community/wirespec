@@ -159,9 +159,8 @@ open class KotlinIrEmitter(
         .prependImports(channel.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
-        val imports = endpoint.buildModelImports(packageName)
-        val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
-        val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig)
+        val imports = endpoint.emitEndpointImports()
+        val file = super.emitEndpointClient(endpoint).sanitizeNames()
         val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
@@ -177,13 +176,12 @@ open class KotlinIrEmitter(
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .map { import("${packageName.value}.model", it.value) }
-        val endpointImports = endpoints
-            .map { import("${packageName.value}.endpoint", it.identifier.value) }
-        val clientImports = endpoints
-            .map { import("${packageName.value}.client", "${it.identifier.value}Client") }
-        val allImports = imports + endpointImports + clientImports
-        val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig)
+            .map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }
+        val endpointImports = endpoints.map { "import ${packageName.value}.endpoint.${it.identifier.value}" }.joinToString("\n") { it.trimStart() }
+        val clientImports = endpoints.map { "import ${packageName.value}.client.${it.identifier.value}Client" }.joinToString("\n") { it.trimStart() }
+        val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
+        val file = super.emitClient(endpoints, logger).sanitizeNames()
+        val subPackageName = packageName + "client"
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
             elements = buildList {

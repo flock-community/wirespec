@@ -396,7 +396,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.client;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Token;
             |import community.flock.wirespec.generated.model.PotentialTodoDto;
@@ -607,7 +607,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.client;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.TodoDto;
             |import community.flock.wirespec.generated.endpoint.GetTodos;
