@@ -78,6 +78,20 @@ open class PythonIrEmitter(
         |
     """.trimMargin()
 
+    val rootImport = """
+        |from __future__ import annotations
+        |
+        |import re
+        |
+        |from abc import ABC, abstractmethod
+        |from dataclasses import dataclass
+        |from typing import Any, Generic, List, Optional
+        |import enum
+        |
+        |from .wirespec import T, Wirespec, _raise
+        |
+    """.trimMargin()
+
     override val extension = FileExtension.Python
 
     val sharedImport = """
@@ -351,9 +365,9 @@ open class PythonIrEmitter(
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
-        val endpointImports = endpoints.joinToString("\n") { "from ..endpoint.${it.identifier.value} import *" }
-        val clientImports = endpoints.joinToString("\n") { "from .${it.identifier.value}Client import ${it.identifier.value}Client" }
+            .joinToString("\n") { "from .model.${it.value} import ${it.value}" }
+        val endpointImports = endpoints.joinToString("\n") { "from .endpoint.${it.identifier.value} import *" }
+        val clientImports = endpoints.joinToString("\n") { "from .client.${it.identifier.value}Client import ${it.identifier.value}Client" }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
         val endpointNames = endpoints.map { it.identifier.value }
 
@@ -363,10 +377,9 @@ open class PythonIrEmitter(
             .snakeCaseClientFunctions()
             .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
 
-        val subPackageName = packageName + "client"
         return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
-            elements = listOf(RawElement(import)) +
+            name = Name.of(packageName.toDir() + file.name.pascalCase()),
+            elements = listOf(RawElement(rootImport)) +
                 (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
                 file.elements
         )

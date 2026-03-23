@@ -135,7 +135,7 @@ open class TypeScriptIrEmitter : IrEmitter {
             field.copy(name = field.name.sanitizeCamelCase())
         }
         parameters { param ->
-            param.copy(name = Name.of(param.name.camelCase().sanitizeSymbol()))
+            param.copy(name = param.name.sanitizeCamelCase())
         }
         statementAndExpression { stmt, tr ->
             when (stmt) {
@@ -167,6 +167,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         val typeImports = type.importReferences().distinctBy { it.value }
             .joinToString("\n") { "import {${it.value}} from './${it.value}'" }
         val validateImports = fieldValidations.map { it.typeName }.distinct()
+            .filter { it != type.identifier.value }
             .joinToString("\n") { "import {validate$it} from './$it'" }
         val allImports = listOf(typeImports, validateImports).filter { it.isNotEmpty() }.joinToString("\n")
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
@@ -322,7 +323,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
         val clientImports = endpoints.joinToString("\n") {
             val methodName = it.identifier.value.replaceFirstChar { c -> c.lowercase() }
-            "import {${methodName}Client} from './${it.identifier.value}Client'"
+            "import {${methodName}Client} from './client/${it.identifier.value}Client'"
         }
 
         val spreadEntries = endpoints.joinToString("\n") {
@@ -337,13 +338,13 @@ open class TypeScriptIrEmitter : IrEmitter {
         }
 
         val elements = buildList {
-            add(RawElement("import {Wirespec} from '../Wirespec'"))
+            add(RawElement("import {Wirespec} from './Wirespec'"))
             add(RawElement(clientImports))
             add(RawElement(code))
         }
 
         return File(
-            Name.of("client/Client"),
+            Name.of("Client"),
             elements
         )
     }

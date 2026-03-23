@@ -392,11 +392,11 @@ fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture) {
     val models = fixture.modelNames()
     clientImportsShared(lang, endpoints, models)
     when (lang.emitter) {
-        is JavaIrEmitter -> import("community.flock.wirespec.generated.client", "Client")
-        is KotlinIrEmitter -> import("community.flock.wirespec.generated.client", "Client")
-        is TypeScriptIrEmitter -> import("./client/Client", "client")
-        is PythonIrEmitter -> raw("from community.flock.wirespec.generated.client.Client import Client")
-        is ScalaIrEmitter -> import("community.flock.wirespec.generated.client", "Client")
+        is JavaIrEmitter -> import("community.flock.wirespec.generated", "Client")
+        is KotlinIrEmitter -> import("community.flock.wirespec.generated", "Client")
+        is TypeScriptIrEmitter -> import("./Client", "client")
+        is PythonIrEmitter -> raw("from community.flock.wirespec.generated.Client import Client")
+        is ScalaIrEmitter -> import("community.flock.wirespec.generated", "Client")
         is RustIrEmitter -> {} // handled by run() use statements
     }
 }
