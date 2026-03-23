@@ -158,13 +158,15 @@ open class KotlinIrEmitter(
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.emitEndpointImports()
+        val endpointImport = "import ${packageName.value}.endpoint.${endpoint.identifier.value}"
+        val allImports = listOf(imports, endpointImport).filter { it.isNotEmpty() }.joinToString("\n")
         val file = super.emitEndpointClient(endpoint).sanitizeNames()
         val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = listOf(LanguagePackage(subPackageName.value)) +
                 listOf(RawElement(import)) +
-                (if (imports.isNotEmpty()) listOf(RawElement(imports)) else emptyList()) +
+                (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
                 file.elements
         )
     }
