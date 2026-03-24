@@ -83,7 +83,8 @@ class Language(
                     "skipLibCheck": true,
                     "target": "ES2019",
                     "module": "CommonJS",
-                    "moduleResolution": "node"
+                    "moduleResolution": "node10",
+                    "ignoreDeprecations": "6.0"
                   },
                   "include": ["./**/*.ts"]
                 }
