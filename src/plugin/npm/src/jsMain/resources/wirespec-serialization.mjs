@@ -1,3 +1,6 @@
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
 export const wirespecSerialization = {
     deserialize(raw) {
         if (raw === undefined) {
@@ -13,5 +16,23 @@ export const wirespecSerialization = {
         }
 
         return JSON.stringify(type);
+    },
+    serializeBody(t, _type) {
+        return encoder.encode(JSON.stringify(t));
+    },
+    deserializeBody(raw, _type) {
+        return JSON.parse(decoder.decode(raw));
+    },
+    serializePath(t, _type) {
+        return String(t);
+    },
+    deserializePath(raw, _type) {
+        return raw;
+    },
+    serializeParam(value, _type) {
+        return Array.isArray(value) ? value.map(String) : [String(value)];
+    },
+    deserializeParam(values, _type) {
+        return values[0];
     },
 };
