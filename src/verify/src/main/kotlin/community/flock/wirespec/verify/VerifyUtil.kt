@@ -339,7 +339,8 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
         )
     }.distinct()
 
-    return copy(elements = newImports + elements.filter { it !is Import && it !is Main } + Main(transformedBody))
+    val existingMain = elements.filterIsInstance<Main>().firstOrNull()
+    return copy(elements = newImports + elements.filter { it !is Import && it !is Main } + Main(statics = existingMain?.statics.orEmpty(), body = transformedBody))
 }
 
 fun Fixture.definitions(): List<Definition> {
@@ -350,6 +351,7 @@ fun Fixture.definitions(): List<Definition> {
         .getOrNull() ?: return emptyList()
     return ast.modules.toList().flatMap { it.statements.toList() }
 }
+
 
 fun Fixture.endpointNames(): List<String> =
     definitions().filterIsInstance<Endpoint>().map { it.identifier.value }
@@ -393,7 +395,26 @@ fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture) {
     }
 }
 
+fun ContainerBuilder.endpointImports(lang: Language, fixture: Fixture) {
+    endpointImports(lang, fixture.endpointNames(), fixture.modelNames())
+}
+
 private fun ContainerBuilder.clientImportsShared(lang: Language, endpoints: List<String>, models: List<String>) {
+    endpointImports(lang, endpoints, models)
+    when (lang.emitter) {
+        is KotlinIrEmitter -> {
+            import("kotlin.coroutines", "createCoroutine")
+            import("kotlin.coroutines", "resume")
+        }
+        is PythonIrEmitter -> {
+            endpoints.forEach { raw("from community.flock.wirespec.generated.endpoint.$it import Response200") }
+            raw("import asyncio")
+        }
+        else -> {}
+    }
+}
+
+private fun ContainerBuilder.endpointImports(lang: Language, endpoints: List<String>, models: List<String>) {
     when (lang.emitter) {
         is JavaIrEmitter -> {
             import("community.flock.wirespec.java", "Wirespec")
@@ -402,10 +423,9 @@ private fun ContainerBuilder.clientImportsShared(lang: Language, endpoints: List
         }
         is KotlinIrEmitter -> {
             import("community.flock.wirespec.kotlin", "Wirespec")
+            import("kotlin.reflect", "typeOf")
             endpoints.forEach { import("community.flock.wirespec.generated.endpoint", it) }
             models.forEach { import("community.flock.wirespec.generated.model", it) }
-            import("kotlin.coroutines", "createCoroutine")
-            import("kotlin.coroutines", "resume")
         }
         is TypeScriptIrEmitter -> {
             import("./Wirespec", "Wirespec")
@@ -413,10 +433,9 @@ private fun ContainerBuilder.clientImportsShared(lang: Language, endpoints: List
             models.forEach { import("./model/$it", it) }
         }
         is PythonIrEmitter -> {
-            raw("from community.flock.wirespec.generated.wirespec import Wirespec")
-            endpoints.forEach { raw("from community.flock.wirespec.generated.endpoint.$it import Response200") }
-            models.forEach { raw("from community.flock.wirespec.generated.model.$it import $it") }
-            raw("import asyncio")
+            import("community.flock.wirespec.generated.wirespec", "Wirespec")
+            endpoints.forEach { import("community.flock.wirespec.generated.endpoint.$it", it) }
+            models.forEach { import("community.flock.wirespec.generated.model.$it", it) }
         }
         is ScalaIrEmitter -> {
             import("community.flock.wirespec.scala", "Wirespec")

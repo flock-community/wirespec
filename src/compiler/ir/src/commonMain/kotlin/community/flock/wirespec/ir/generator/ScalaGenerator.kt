@@ -35,6 +35,7 @@ import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Parameter
@@ -134,10 +135,9 @@ object ScalaGenerator : Generator {
         is Union -> emit(indent)
         is Enum -> emit(indent)
         is Main -> {
-            val fileName = parents.filterIsInstance<File>().firstOrNull()?.name?.pascalCase().orEmpty()
             val staticContent = statics.joinToString("") { it.emit(1, false, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            "object $fileName {\n$staticContent  def main(args: Array[String]): Unit = {\n$content  }\n}\n\n".indentCode(indent)
+            "object ${file.name.pascalCase()} {\n$staticContent  def main(args: Array[String]): Unit = {\n$content  }\n}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> "$code\n".indentCode(indent)

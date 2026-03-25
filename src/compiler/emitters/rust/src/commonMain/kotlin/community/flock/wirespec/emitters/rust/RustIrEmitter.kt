@@ -522,6 +522,7 @@ open class RustIrEmitter(
 
     companion object : Keywords {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
+        private val RESPONSE_PATTERN = Regex("Response(\\d+|Default)")
         override val reservedKeywords = setOf(
             "as", "break", "const", "continue", "crate",
             "else", "enum", "extern", "false", "fn",

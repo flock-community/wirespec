@@ -35,6 +35,7 @@ import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Parameter
@@ -86,8 +87,7 @@ object KotlinGenerator : Generator {
         is Main -> {
             val staticContent = statics.joinToString("") { it.emit(indent, false, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            val modifier = if (isAsync) "suspend " else ""
-            staticContent + "${modifier}fun main() {\n$content}\n\n".indentCode(indent)
+            "$staticContent${"fun main() {\n$content}\n\n".indentCode(indent)}"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> "$code\n".indentCode(indent)

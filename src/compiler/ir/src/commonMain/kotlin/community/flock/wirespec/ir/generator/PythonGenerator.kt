@@ -35,6 +35,7 @@ import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.PrintStatement
@@ -96,12 +97,10 @@ object PythonGenerator : Generator {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
-            val staticContent = statics.joinToString("") { it.emit(indent, parents, isStaticScope, qualifier) }
+            val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
             val content = body.joinToString("") { it.emit(indent + 1) }
-            val asyncPrefix = if (isAsync) "async " else ""
-            val runner = if (isAsync) "asyncio.run(main())" else "main()"
-            val defBlock = "${asyncPrefix}def main():\n$content\n".indentCode(indent)
-            val guard = "if __name__ == \"__main__\":\n${runner.indentCode(1)}\n".indentCode(indent)
+            val defBlock = "def main():\n$content\n".indentCode(indent)
+            val guard = "if __name__ == \"__main__\":\n${"main()".indentCode(1)}\n".indentCode(indent)
             "$staticContent$defBlock$guard"
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope, qualifier) }

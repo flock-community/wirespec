@@ -182,7 +182,7 @@ data class RawExpression(val code: String) : Statement
 
 // Main entry point - represents a language-specific main/entry point
 
-data class Main(val statics: List<Element> = emptyList(), val body: List<Statement>, val isAsync: Boolean = false) : Element
+data class Main(val statics: List<Element> = emptyList(), val body: List<Statement>) : Element
 
 // Raw element - allows injecting raw code as an Element
 data class RawElement(val code: String) : Element

@@ -35,6 +35,7 @@ import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Parameter
@@ -82,10 +83,10 @@ object JavaGenerator : Generator {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
-            val fileName = parents.filterIsInstance<File>().firstOrNull()?.name?.pascalCase().orEmpty()
             val staticContent = statics.joinToString("") { it.emit(1, true, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            "public class $fileName {\n$staticContent  public static void main(String[] args) {\n$content  }\n}\n"
+            "public class ${file.name.pascalCase()} {\n$staticContent" +
+                "  public static void main(String[] args) {\n$content  }\n}\n"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> code.indentCode(indent)
@@ -360,13 +361,34 @@ object JavaGenerator : Generator {
         is NullLiteral -> "null;\n".indentCode(indent)
         is NullableEmpty -> "java.util.Optional.empty();\n".indentCode(indent)
         is VariableReference -> "${name.camelCase().sanitize()};\n".indentCode(indent)
-        is FieldCall -> "${emit()};\n".indentCode(indent)
-        is FunctionCall -> "${emit()};\n".indentCode(indent)
-        is ArrayIndexCall -> "${emit()};\n".indentCode(indent)
-        is EnumReference -> "${emit()};\n".indentCode(indent)
-        is EnumValueCall -> "${emit()};\n".indentCode(indent)
-        is BinaryOp -> "${emit()};\n".indentCode(indent)
-        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        is FieldCall -> {
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr${field.value().sanitize()}();\n".indentCode(indent)
+        }
+        is FunctionCall -> {
+            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        }
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}.get(${index.emit()});\n".indentCode(indent)
+        } else {
+            "${receiver.emit()}.entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase(${index.emit()})).findFirst().map(java.util.Map.Entry::getValue).orElse(null);\n".indentCode(indent)
+        }
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()};\n".indentCode(indent)
+        is EnumValueCall -> "${expression.emit()}.name();\n".indentCode(indent)
+        is BinaryOp -> when {
+            operator == BinaryOp.Operator.EQUALS && right is NullLiteral -> "(${left.emit()} == null);\n".indentCode(indent)
+            operator == BinaryOp.Operator.NOT_EQUALS && right is NullLiteral -> "(${left.emit()} != null);\n".indentCode(indent)
+            operator == BinaryOp.Operator.EQUALS && left is NullLiteral -> "(null == ${right.emit()});\n".indentCode(indent)
+            operator == BinaryOp.Operator.NOT_EQUALS && left is NullLiteral -> "(null != ${right.emit()});\n".indentCode(indent)
+            operator == BinaryOp.Operator.EQUALS && isPrimitiveLiteral() -> "(${left.emit()} == ${right.emit()});\n".indentCode(indent)
+            operator == BinaryOp.Operator.NOT_EQUALS && isPrimitiveLiteral() -> "(${left.emit()} != ${right.emit()});\n".indentCode(indent)
+            operator == BinaryOp.Operator.EQUALS -> "(${left.emit()}.equals(${right.emit()}));\n".indentCode(indent)
+            operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}));\n".indentCode(indent)
+            else -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
+        }
+        is TypeDescriptor -> "${emitTypeDescriptor()};\n".indentCode(indent)
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -413,6 +435,11 @@ object JavaGenerator : Generator {
             val awaitSuffix = ".join()".takeIf { isAwait }.orEmpty()
             val args = arguments.values.joinToString(", ") { it.emit() }
             "$receiverStr$typeArgsStr${name.value().sanitize()}($args)$awaitSuffix"
+        }
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}.get(${index.emit()})"
+        } else {
+            "${receiver.emit()}.entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase(${index.emit()})).findFirst().map(java.util.Map.Entry::getValue).orElse(null)"
         }
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}.get(${index.emit()})"

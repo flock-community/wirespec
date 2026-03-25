@@ -35,6 +35,7 @@ import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Precision
@@ -77,13 +78,9 @@ object RustGenerator : Generator {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
-            val staticContent = statics.joinToString("") { it.emit(indent, parents, isStaticScope) }
+            val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope) }
             val content = body.joinToString("") { it.emit(1) }
-            if (isAsync) {
-                "${staticContent}fn main() {\n${"pollster::block_on(async {\n".indentCode(1)}$content${"});\n".indentCode(1)}}\n".indentCode(indent)
-            } else {
-                "${staticContent}fn main() {\n$content}\n".indentCode(indent)
-            }
+            "${staticContent}fn main() {\n$content}\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -282,6 +279,34 @@ object RustGenerator : Generator {
         is Type.Nullable -> "Option<${type.emit()}>"
         is Type.IntegerLiteral -> "i32"
         is Type.StringLiteral -> "String"
+    }
+
+    private val serializationMethodNames = setOf(
+        "serialize_path",
+        "serialize_param",
+        "serialize_body",
+        "deserialize_path",
+        "deserialize_param",
+        "deserialize_body",
+    )
+
+    private fun emitFunctionCallArgs(arguments: Map<Name, Expression>, name: Name): String {
+        val isSerialization = name.snakeCase() in serializationMethodNames
+        return arguments.values.mapIndexed { idx, arg ->
+            val emitted = arg.emit()
+            // Inside .map(|it| ...), `it` is already a reference — don't add `&`
+            val isAlreadyRef = arg is VariableReference && arg.name.value() == "it"
+            if (isSerialization && idx == 0 && !isAlreadyRef) "&$emitted" else emitted
+        }.joinToString(", ")
+    }
+
+    private fun emitFunctionCallArgsInlined(arguments: Map<Name, Expression>, name: Name, replacement: String): String {
+        val isSerialization = name.snakeCase() in serializationMethodNames
+        return arguments.values.mapIndexed { idx, arg ->
+            val emitted = arg.emitWithInlinedIt(replacement)
+            val isAlreadyRef = arg is VariableReference && arg.name.value() == "it"
+            if (isSerialization && idx == 0 && !isAlreadyRef) "&$emitted" else emitted
+        }.joinToString(", ")
     }
 
     private fun emitArrayIndex(receiver: Expression, index: Expression, caseSensitive: Boolean = true): String = when {

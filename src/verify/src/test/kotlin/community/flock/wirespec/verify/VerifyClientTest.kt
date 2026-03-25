@@ -31,9 +31,10 @@ class VerifyClientTest : FunSpec({
             val testFile = file("EndpointClientTest") {
                 endpointClientImports(lang, CompileMinimalEndpointTest)
 
-                main(isAsync = true, statics = {
+                main(statics = {
                     raw(serializationCode(lang, CompileMinimalEndpointTest))
                     raw(transportationCode(lang))
+                }) {
 
                     when (lang.emitter) {
                         is JavaIrEmitter -> {
@@ -120,9 +121,10 @@ class VerifyClientTest : FunSpec({
             val testFile = file("MainClientTest") {
                 mainClientImports(lang, CompileMinimalEndpointTest)
 
-                main(isAsync = true, statics = {
+                main(statics = {
                     raw(serializationCode(lang, CompileMinimalEndpointTest))
                     raw(transportationCode(lang))
+                }) {
 
                     when (lang.emitter) {
                         is JavaIrEmitter -> {
