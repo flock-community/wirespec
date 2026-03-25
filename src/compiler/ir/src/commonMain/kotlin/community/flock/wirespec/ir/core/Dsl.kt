@@ -175,7 +175,18 @@ class FileBuilder(private val name: Name) : ContainerBuilder {
         val builder = FunctionBuilder("main")
         builder.block()
         val fn = builder.build()
-        elements.add(Main(fn.body))
+        elements.add(Main(body = fn.body))
+    }
+
+    fun main(statics: ContainerBuilder.() -> Unit, block: FunctionBuilder.() -> Unit) {
+        val staticsBuilder = object : ContainerBuilder {
+            override val elements = mutableListOf<Element>()
+        }
+        staticsBuilder.statics()
+        val bodyBuilder = FunctionBuilder("main")
+        bodyBuilder.block()
+        val fn = bodyBuilder.build()
+        elements.add(Main(statics = staticsBuilder.elements, body = fn.body))
     }
 
     fun build(): File = File(name, elements)
@@ -745,7 +756,7 @@ fun main(block: FunctionBuilder.() -> Unit): Main {
     val builder = FunctionBuilder("main")
     builder.block()
     val fn = builder.build()
-    return Main(fn.body)
+    return Main(body = fn.body)
 }
 
 fun raw(code: String): RawElement = RawElement(code)

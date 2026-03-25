@@ -34,6 +34,7 @@ import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Parameter
@@ -170,8 +171,9 @@ ScalaEmitter(
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
+            val staticContent = statics.joinToString("") { it.emit(1, false, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            "object ${file.name.pascalCase()} {\n  def main(args: Array[String]): Unit = {\n$content  }\n}\n\n".indentCode(indent)
+            "object ${file.name.pascalCase()} {\n$staticContent  def main(args: Array[String]): Unit = {\n$content  }\n}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -523,6 +525,7 @@ ScalaEmitter(
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
+        is NullableGet -> "${emit()}\n".indentCode(indent)
         is Constraint.RegexMatch -> "${emit()}\n".indentCode(indent)
         is Constraint.BoundCheck -> "${emit()}\n".indentCode(indent)
         is NotExpression -> "!${expression.emit()}\n".indentCode(indent)
@@ -583,6 +586,7 @@ ScalaEmitter(
         is NullCheck -> "(${expression.emit()}.map(it => ${body.emit()})${alternative?.emit()?.let { ".getOrElse($it)" } ?: ""})"
         is NullableMap -> "(${expression.emit()}.map(it => ${body.emit()}).getOrElse(${alternative.emit()}))"
         is NullableOf -> "Some(${expression.emit()})"
+        is NullableGet -> "${expression.emit()}.get"
         is Constraint.RegexMatch -> "\"\"\"${pattern}\"\"\".r.findFirstIn(${value.emit()}).isDefined"
         is Constraint.BoundCheck -> {
             val checks = listOfNotNull(
@@ -665,7 +669,11 @@ ScalaEmitter(
 
     private fun ArrayIndexCall.emitArrayIndex(): String {
         val isMapAccess = index is Literal && (index as Literal).type == Type.String
-        return if (isMapAccess) "${receiver.emit()}.get(${index.emit()})" else "${receiver.emit()}(${index.emit()})"
+        return when {
+            !caseSensitive && isMapAccess -> "${receiver.emit()}.find(_._1.equalsIgnoreCase(${index.emit()})).map(_._2)"
+            isMapAccess -> "${receiver.emit()}.get(${index.emit()})"
+            else -> "${receiver.emit()}(${index.emit()})"
+        }
     }
 
     private fun TypeDescriptor.emitTypeDescriptor(): String = "scala.reflect.classTag[${type.emitGenerics()}]"

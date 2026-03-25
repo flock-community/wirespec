@@ -9,7 +9,7 @@ import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 
 internal fun transportationCode(lang: Language): String = when (lang.emitter) {
     is JavaIrEmitter -> """
-        |Wirespec.Transportation transportation = (Wirespec.RawRequest rawRequest) -> {
+        |static Wirespec.Transportation transportation = (Wirespec.RawRequest rawRequest) -> {
         |    assert rawRequest.method().equals("GET") : "Method should be GET";
         |    assert rawRequest.path().get(0).equals("todos") : "Path should start with todos";
         |    TodoDto todo = new TodoDto("test");
@@ -42,9 +42,36 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
         |}
     """.trimMargin()
 
-    is PythonIrEmitter -> "transportation = TestTransportation(serialization)"
+    is PythonIrEmitter -> """
+        |class TestTransportation(Wirespec.Transportation):
+        |    def __init__(self, serialization):
+        |        self.serialization = serialization
+        |    async def transport(self, request):
+        |        assert request.method == "GET", "Method should be GET"
+        |        assert request.path[0] == "todos", "Path should start with todos"
+        |        todo = TodoDto(description="test")
+        |        body = self.serialization.serializeBody([todo], "List[TodoDto]")
+        |        return Wirespec.RawResponse(statusCode=200, headers={}, body=body)
+        |transportation = TestTransportation(serialization)
+    """.trimMargin()
 
-    is RustIrEmitter -> "let transportation = MockTransport { serialization: &serialization }"
+    is RustIrEmitter -> """
+        |use generated::wirespec::Transportation;
+        |struct MockTransport<'a, S: Serialization> {
+        |    serialization: &'a S,
+        |}
+        |impl<'a, S: Serialization> Transportation for MockTransport<'a, S> {
+        |    async fn transport(&self, request: &RawRequest) -> RawResponse {
+        |        assert_eq!(request.method, "GET", "Method should be GET");
+        |        assert_eq!(request.path[0], "todos", "Path should start with todos");
+        |        let todo = TodoDto { description: "test".to_string() };
+        |        let body = self.serialization.serialize_body(&vec![todo], std::any::TypeId::of::<Vec<TodoDto>>());
+        |        RawResponse { status_code: 200, headers: std::collections::HashMap::new(), body: Some(body) }
+        |    }
+        |}
+        |#[allow(non_upper_case_globals)]
+        |static transportation: MockTransport<'static, MockSer> = MockTransport { serialization: &serialization };
+    """.trimMargin()
 
     is ScalaIrEmitter -> """
         |val transportation = new Wirespec.Transportation {
@@ -60,31 +87,3 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
 
     else -> error("Unknown emitter: ${lang.emitter::class.simpleName}")
 }
-
-internal fun pythonTransportationDefs(): String = """
-    |class TestTransportation(Wirespec.Transportation):
-    |    def __init__(self, serialization):
-    |        self.serialization = serialization
-    |    async def transport(self, request):
-    |        assert request.method == "GET", "Method should be GET"
-    |        assert request.path[0] == "todos", "Path should start with todos"
-    |        todo = TodoDto(description="test")
-    |        body = self.serialization.serializeBody([todo], "List[TodoDto]")
-    |        return Wirespec.RawResponse(statusCode=200, headers={}, body=body)
-""".trimMargin()
-
-internal fun rustTransportationDefs(): String = """
-    |use generated::wirespec::Transportation;
-    |struct MockTransport<'a, S: Serialization> {
-    |    serialization: &'a S,
-    |}
-    |impl<'a, S: Serialization> Transportation for MockTransport<'a, S> {
-    |    async fn transport(&self, request: &RawRequest) -> RawResponse {
-    |        assert_eq!(request.method, "GET", "Method should be GET");
-    |        assert_eq!(request.path[0], "todos", "Path should start with todos");
-    |        let todo = TodoDto { description: "test".to_string() };
-    |        let body = self.serialization.serialize_body(&vec![todo], std::any::TypeId::of::<Vec<TodoDto>>());
-    |        RawResponse { status_code: 200, headers: std::collections::HashMap::new(), body: Some(body) }
-    |    }
-    |}
-""".trimMargin()

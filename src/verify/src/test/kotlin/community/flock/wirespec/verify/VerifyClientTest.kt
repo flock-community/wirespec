@@ -19,18 +19,10 @@ class VerifyClientTest : FunSpec({
             val testFile = file("EndpointClientTest") {
                 endpointClientImports(lang, CompileMinimalEndpointTest)
 
-                if (lang.emitter is RustIrEmitter) {
-                    raw(rustSerializationDefs())
-                    raw(rustTransportationDefs())
-                }
-                if (lang.emitter is PythonIrEmitter) {
-                    raw(pythonSerializationDefs())
-                    raw(pythonTransportationDefs())
-                }
-
-                main {
-                    raw(serializationCode(lang))
+                main(statics = {
+                    raw(serializationCode(lang, CompileMinimalEndpointTest))
                     raw(transportationCode(lang))
+                }) {
 
                     when (lang.emitter) {
                         is JavaIrEmitter -> {
@@ -104,18 +96,10 @@ class VerifyClientTest : FunSpec({
             val testFile = file("MainClientTest") {
                 mainClientImports(lang, CompileMinimalEndpointTest)
 
-                if (lang.emitter is RustIrEmitter) {
-                    raw(rustSerializationDefs())
-                    raw(rustTransportationDefs())
-                }
-                if (lang.emitter is PythonIrEmitter) {
-                    raw(pythonSerializationDefs())
-                    raw(pythonTransportationDefs())
-                }
-
-                main {
-                    raw(serializationCode(lang))
+                main(statics = {
+                    raw(serializationCode(lang, CompileMinimalEndpointTest))
                     raw(transportationCode(lang))
+                }) {
 
                     when (lang.emitter) {
                         is JavaIrEmitter -> {

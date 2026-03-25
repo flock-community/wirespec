@@ -231,8 +231,8 @@ class JavaIrEmitterTest {
             |      serialization.<String>deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
             |      java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, null))).orElseThrow(() -> new IllegalStateException("Param done cannot be null")),
             |      java.util.Optional.ofNullable(request.queries().get("name")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, null))),
-            |      java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))).orElseThrow(() -> new IllegalStateException("Param token cannot be null")),
-            |      java.util.Optional.ofNullable(request.headers().get("Refresh-Token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))),
+            |      java.util.Optional.ofNullable(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))).orElseThrow(() -> new IllegalStateException("Param token cannot be null")),
+            |      java.util.Optional.ofNullable(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("Refresh-Token")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))),
             |      request.body().map(it -> serialization.<PotentialTodoDto>deserializeBody(it, Wirespec.getType(PotentialTodoDto.class, null))).orElseThrow(() -> new IllegalStateException("body is null"))
             |    );
             |  }
@@ -266,8 +266,8 @@ class JavaIrEmitterTest {
             |        }
             |        case 201 -> {
             |          return new Response201(
-            |            java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))).orElseThrow(() -> new IllegalStateException("Param token cannot be null")),
-            |            java.util.Optional.ofNullable(response.headers().get("refreshToken")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))),
+            |            java.util.Optional.ofNullable(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))).orElseThrow(() -> new IllegalStateException("Param token cannot be null")),
+            |            java.util.Optional.ofNullable(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("refreshToken")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))),
             |            response.body().map(it -> serialization.<TodoDto>deserializeBody(it, Wirespec.getType(TodoDto.class, null))).orElseThrow(() -> new IllegalStateException("body is null"))
             |          );
             |        }

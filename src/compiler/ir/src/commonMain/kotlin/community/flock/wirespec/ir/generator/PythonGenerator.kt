@@ -34,6 +34,7 @@ import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.PrintStatement
@@ -79,10 +80,11 @@ object PythonGenerator : Generator {
         is Union -> emit(indent, parents, allUnions = allUnions)
         is Enum -> emit(indent)
         is Main -> {
+            val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
             val content = body.joinToString("") { it.emit(indent + 1) }
             val defBlock = "def main():\n$content\n".indentCode(indent)
             val guard = "if __name__ == \"__main__\":\n${"main()".indentCode(1)}\n".indentCode(indent)
-            "$defBlock$guard"
+            "$staticContent$defBlock$guard"
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -273,7 +275,7 @@ object PythonGenerator : Generator {
         is LiteralMap -> "${emit()}\n".indentCode(indent)
         is Assignment -> "${name.camelCase()} = ${value.emit()}\n".indentCode(indent)
         is ErrorStatement -> "raise Exception(${message.emit()})\n".indentCode(indent)
-        is AssertStatement -> "assert ${expression.emit()}, '$message'\n".indentCode(indent)
+        is AssertStatement -> "assert ${expression.emit()}, '${message.replace("'", "\\'")}'\n".indentCode(indent)
         is Switch -> {
             val isPatternSwitch = cases.any { it.type != null }
             if (isPatternSwitch) {
@@ -317,7 +319,11 @@ object PythonGenerator : Generator {
                 "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
             }
         }
-        is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
+        } else {
+            "next((v for k, v in ${receiver.emit()}.items() if k.lower() == ${index.emit()}.lower()), None)\n".indentCode(indent)
+        }
         is EnumReference -> "${enumType.emit()}.${entry.value()}\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.value\n".indentCode(indent)
         is BinaryOp -> {
@@ -333,6 +339,7 @@ object PythonGenerator : Generator {
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
+        is NullableGet -> "${emit()}\n".indentCode(indent)
         is Constraint.RegexMatch -> "${emit()}\n".indentCode(indent)
         is Constraint.BoundCheck -> "${emit()}\n".indentCode(indent)
         is NotExpression -> "not ${expression.emit()}\n".indentCode(indent)
@@ -371,7 +378,11 @@ object PythonGenerator : Generator {
                 "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})"
             }
         }
-        is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]"
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}[${index.emit()}]"
+        } else {
+            "next((v for k, v in ${receiver.emit()}.items() if k.lower() == ${index.emit()}.lower()), None)"
+        }
         is EnumReference -> "${enumType.emit()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.value"
         is BinaryOp -> {
@@ -397,6 +408,7 @@ object PythonGenerator : Generator {
             "$bodyStr if $exprStr is not None else $altStr"
         }
         is NullableOf -> expression.emit()
+        is NullableGet -> expression.emit()
         is Constraint.RegexMatch -> "bool(re.match(r\"${rawValue}\", ${value.emit()}))"
         is Constraint.BoundCheck -> {
             val checks = listOfNotNull(
@@ -443,7 +455,11 @@ object PythonGenerator : Generator {
             val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
             "$receiverStr${field.value()}"
         }
-        is ArrayIndexCall -> "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
+        } else {
+            "next((v for k, v in ${receiver.emitWithInlinedIt(replacement)}.items() if k.lower() == ${index.emitWithInlinedIt(replacement)}.lower()), None)"
+        }
         is EnumValueCall -> "${expression.emitWithInlinedIt(replacement)}.value"
         is NotExpression -> "not ${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${thenExpr.emitWithInlinedIt(replacement)} if ${condition.emitWithInlinedIt(replacement)} else ${elseExpr.emitWithInlinedIt(replacement)})"

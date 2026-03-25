@@ -558,8 +558,8 @@ class ScalaIrEmitterTest {
             |      id = serialization.deserializePath[String](request.path(1), scala.reflect.classTag[String]),
             |      done = (request.queries.get("done").map(it => serialization.deserializeParam[Boolean](it, scala.reflect.classTag[Boolean])).getOrElse(throw new IllegalStateException("Param done cannot be null"))),
             |      name = (request.queries.get("name").map(it => serialization.deserializeParam[String](it, scala.reflect.classTag[String]))),
-            |      token = (request.headers.get("token").map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token])).getOrElse(throw new IllegalStateException("Param token cannot be null"))),
-            |      refreshToken = (request.headers.get("Refresh-Token").map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token]))),
+            |      token = (request.headers.find(_._1.equalsIgnoreCase("token")).map(_._2).map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token])).getOrElse(throw new IllegalStateException("Param token cannot be null"))),
+            |      refreshToken = (request.headers.find(_._1.equalsIgnoreCase("Refresh-Token")).map(_._2).map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token]))),
             |      body = (request.body.map(it => serialization.deserializeBody[PotentialTodoDto](it, scala.reflect.classTag[PotentialTodoDto])).getOrElse(throw new IllegalStateException("body is null")))
             |    )
             |  def toRawResponse(serialization: Wirespec.Serializer, response: Response[?]): Wirespec.RawResponse = {
@@ -597,8 +597,8 @@ class ScalaIrEmitterTest {
             |        }
             |        case 201 => {
             |          new Response201(
-            |            token = (response.headers.get("token").map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token])).getOrElse(throw new IllegalStateException("Param token cannot be null"))),
-            |            refreshToken = (response.headers.get("refreshToken").map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token]))),
+            |            token = (response.headers.find(_._1.equalsIgnoreCase("token")).map(_._2).map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token])).getOrElse(throw new IllegalStateException("Param token cannot be null"))),
+            |            refreshToken = (response.headers.find(_._1.equalsIgnoreCase("refreshToken")).map(_._2).map(it => serialization.deserializeParam[Token](it, scala.reflect.classTag[Token]))),
             |            body = (response.body.map(it => serialization.deserializeBody[TodoDto](it, scala.reflect.classTag[TodoDto])).getOrElse(throw new IllegalStateException("body is null")))
             |          )
             |        }

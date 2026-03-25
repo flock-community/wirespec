@@ -34,6 +34,7 @@ import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Parameter
@@ -118,8 +119,9 @@ private class KotlinEmitter(val file: File) {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
+            val staticContent = statics.joinToString("") { it.emit(indent, false, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            "fun main() {\n$content}\n\n".indentCode(indent)
+            "$staticContent${"fun main() {\n$content}\n\n".indentCode(indent)}"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -474,7 +476,11 @@ private class KotlinEmitter(val file: File) {
             }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         }
 
-        is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
+        } else {
+            "${receiver.emit()}.entries.find { it.key.equals(${index.emit()}, ignoreCase = true) }?.value\n".indentCode(indent)
+        }
 
         is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.name\n".indentCode(indent)
@@ -483,6 +489,7 @@ private class KotlinEmitter(val file: File) {
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
+        is NullableGet -> "${emit()}\n".indentCode(indent)
         is Constraint.RegexMatch -> "${emit()}\n".indentCode(indent)
         is Constraint.BoundCheck -> "${emit()}\n".indentCode(indent)
         is NotExpression -> "!${expression.emit()}\n".indentCode(indent)
@@ -541,7 +548,11 @@ private class KotlinEmitter(val file: File) {
             }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
 
-        is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]"
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}[${index.emit()}]"
+        } else {
+            "${receiver.emit()}.entries.find { it.key.equals(${index.emit()}, ignoreCase = true) }?.value"
+        }
 
         is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.name"
@@ -550,6 +561,7 @@ private class KotlinEmitter(val file: File) {
         is NullCheck -> "(${expression.emit()}?.let { ${body.emit()} }${alternative?.emit()?.let { " ?: $it" } ?: ""})"
         is NullableMap -> "(${expression.emit()}?.let { ${body.emit()} } ?: ${alternative.emit()})"
         is NullableOf -> expression.emit()
+        is NullableGet -> "${expression.emit()}!!"
         is Constraint.RegexMatch -> "Regex(\"\"\"${pattern}\"\"\").matches(${value.emit()})"
         is Constraint.BoundCheck -> {
             val checks = listOfNotNull(
