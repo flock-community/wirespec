@@ -72,18 +72,7 @@ class VerifyConversionTest : FunSpec({
                     }
                 }
 
-                // Rust/Python: struct/class definitions must be at module level, not inside fn main()/def main()
-                if (isRust) {
-                    raw(rustSerializationDefs())
-                }
-                if (isPython) {
-                    raw(pythonSerializationDefs())
-                }
-
-                main {
-                    // Serialization mock
-                    raw(serializationCode(lang))
-
+                main(statics = { raw(serializationCode(lang, CompileMinimalEndpointTest)) }) {
                     // toRawRequest
                     when {
                         isRust -> {
@@ -162,10 +151,7 @@ class VerifyConversionTest : FunSpec({
 
                     // fromRawResponse
                     when {
-                        isRust -> {
-                            raw("let from_raw_resp = from_raw_response(&serialization, raw_response)")
-                            raw("std::process::exit(0)")
-                        }
+                        isRust -> raw("let from_raw_resp = from_raw_response(&serialization, raw_response)")
                         isTypeScript -> raw("const fromRawResp = GetTodos.fromRawResponse(serialization, rawResponse)")
                         else -> assign("fromRawResp", functionCall("fromRawResponse", receiver = endpointRef) {
                             arg("serialization", VariableReference("serialization"))
