@@ -24,6 +24,7 @@ import community.flock.wirespec.ir.converter.classifyValidatableFields
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
+import community.flock.wirespec.ir.converter.requestParameters
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -265,7 +266,28 @@ open class TypeScriptIrEmitter : IrEmitter {
             |} as const
         """.trimMargin()
 
-        val endpointNamespace = endpoint.convert().sanitizeNames().findElement<Namespace>()!!
+        val hasRequestParams = endpoint.requestParameters().isNotEmpty()
+        val endpointNamespace = endpoint.convert().sanitizeNames()
+            .transform {
+                if (hasRequestParams) {
+                    matchingElements { iface: community.flock.wirespec.ir.core.Interface ->
+                        if (iface.name == Name.of("Call")) {
+                            iface.copy(
+                                elements = iface.elements.map { element ->
+                                    if (element is community.flock.wirespec.ir.core.Function) {
+                                        element.copy(
+                                            parameters = listOf(
+                                                Parameter(Name.of("params"), LanguageType.Custom("RequestParams"))
+                                            )
+                                        )
+                                    } else element
+                                }
+                            )
+                        } else iface
+                    }
+                }
+            }
+            .findElement<Namespace>()!!
         val body = endpointNamespace
             .transform { injectAfter { _: Namespace -> listOf(raw(api)) } }
 
@@ -282,14 +304,11 @@ open class TypeScriptIrEmitter : IrEmitter {
 
         val params = buildEndpointParams(endpoint)
         val paramList = if (params.isNotEmpty()) {
-            params.joinToString(", ") { (name, type, nullable) ->
-                "${name.sanitizeKeywords()}: $type${if (nullable) " | undefined" else ""}"
-            }
+            "params: $endpointName.RequestParams"
         } else ""
 
         val requestArgs = if (params.isNotEmpty()) {
-            val args = params.joinToString(", ") { (name, _, _) -> name.sanitizeKeywords() }
-            "$endpointName.request({$args})"
+            "$endpointName.request(params)"
         } else {
             "$endpointName.request()"
         }

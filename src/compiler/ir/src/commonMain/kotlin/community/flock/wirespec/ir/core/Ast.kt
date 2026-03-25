@@ -179,7 +179,7 @@ data class RawExpression(val code: String) : Statement
 
 // Main entry point - represents a language-specific main/entry point
 
-data class Main(val statics: List<Element> = emptyList(), val body: List<Statement>) : Element
+data class Main(val statics: List<Element> = emptyList(), val body: List<Statement>, val isAsync: Boolean = false) : Element
 
 // Raw element - allows injecting raw code as an Element
 data class RawElement(val code: String) : Element
@@ -336,6 +336,11 @@ data class FlatMapIndexed(
 
 // Concatenate multiple lists
 data class ListConcat(val lists: List<Expression>) :
+    Statement,
+    Expression
+
+// Borrow/reference - represents a reference to a value (e.g., &value in Rust, transparent in other languages)
+data class BorrowExpression(val expression: Expression) :
     Statement,
     Expression
 

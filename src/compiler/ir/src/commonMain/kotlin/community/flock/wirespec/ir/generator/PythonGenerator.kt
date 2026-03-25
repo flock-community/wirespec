@@ -33,8 +33,8 @@ import community.flock.wirespec.ir.core.NotExpression
 import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
-import community.flock.wirespec.ir.core.NullableMap
 import community.flock.wirespec.ir.core.NullableGet
+import community.flock.wirespec.ir.core.NullableMap
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.PrintStatement
