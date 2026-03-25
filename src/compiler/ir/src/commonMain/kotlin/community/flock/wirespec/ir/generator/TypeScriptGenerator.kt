@@ -34,6 +34,7 @@ import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Parameter
@@ -93,8 +94,9 @@ private class TypeScriptFileEmitter(val file: File) {
         is Union -> emit(indent)
         is Enum -> emit(indent)
         is Main -> {
+            val staticContent = statics.joinToString("") { it.emit(indent) }
             val content = body.joinToString("") { it.emit(indent + 1) }
-            "(async () => {\n$content${"})();".indentCode(indent)}\n".indentCode(indent)
+            "$staticContent${";(async () => {\n$content${"})();".indentCode(indent)}\n".indentCode(indent)}"
         }
         is File -> elements.joinToString("") { it.emit(indent) }
         is RawElement -> code.lines().joinToString("\n") { if (it.isEmpty()) it else it.indentCode(indent) } + "\n"
@@ -349,6 +351,7 @@ private class TypeScriptFileEmitter(val file: File) {
             is ArrayIndexCall -> ArrayIndexCall(
                 receiver = renameVariables(expr.receiver, renames),
                 index = renameVariables(expr.index, renames),
+                caseSensitive = expr.caseSensitive,
             ) as T
             is ConstructorStatement -> ConstructorStatement(
                 type = expr.type,
@@ -408,6 +411,9 @@ private class TypeScriptFileEmitter(val file: File) {
                 expression = renameVariables(expr.expression, renames),
             ) as T
             is NullableOf -> NullableOf(
+                expression = renameVariables(expr.expression, renames),
+            ) as T
+            is NullableGet -> NullableGet(
                 expression = renameVariables(expr.expression, renames),
             ) as T
             else -> expr
@@ -491,7 +497,7 @@ private class TypeScriptFileEmitter(val file: File) {
             }
         }
         is ErrorStatement -> "throw new Error(${message.emit()});\n".indentCode(indent)
-        is AssertStatement -> "if (!(${expression.emit()})) throw new Error('$message');\n".indentCode(indent)
+        is AssertStatement -> "if (!(${expression.emit()})) throw new Error('${message.replace("'", "\\'")}');\n".indentCode(indent)
         is Switch -> {
             val isPatternSwitch = cases.any { it.type != null }
             if (isPatternSwitch) {
@@ -541,7 +547,11 @@ private class TypeScriptFileEmitter(val file: File) {
                 "${name.value()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
             }
         }
-        is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}];\n".indentCode(indent)
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}[${index.emit()}];\n".indentCode(indent)
+        } else {
+            "Object.entries(${receiver.emit()}).find(([k]) => k.toLowerCase() === ${index.emit()}.toLowerCase())?.[1] ?? null;\n".indentCode(indent)
+        }
         is EnumReference -> "${enumType.emit()}.${entry.pascalCase()};\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()};\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()});\n".indentCode(indent)
@@ -549,6 +559,7 @@ private class TypeScriptFileEmitter(val file: File) {
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
+        is NullableGet -> "${emit()};\n".indentCode(indent)
         is Constraint.RegexMatch -> "${emit()};\n".indentCode(indent)
         is Constraint.BoundCheck -> "${emit()};\n".indentCode(indent)
         is NotExpression -> "!${expression.emit()};\n".indentCode(indent)
@@ -586,14 +597,21 @@ private class TypeScriptFileEmitter(val file: File) {
                 "${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             }
         }
-        is ArrayIndexCall -> "${receiver.emit()}[${index.emit()}]"
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}[${index.emit()}]"
+        } else {
+            "Object.entries(${receiver.emit()}).find(([k]) => k.toLowerCase() === ${index.emit()}.toLowerCase())?.[1]"
+        }
         is EnumReference -> "${enumType.emit()}.${entry.pascalCase()}"
         is EnumValueCall -> expression.emit()
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()})"
         is TypeDescriptor -> "\"${type.emit()}\""
         is NullCheck -> {
             val exprStr = expression.emit()
-            val bodyStr = body.emitWithInlinedIt(exprStr)
+            // When expression might be undefined (e.g. case-insensitive header lookup),
+            // add non-null assertion for the inlined replacement in the body
+            val bodyReplacement = if (expression is ArrayIndexCall && !(expression as ArrayIndexCall).caseSensitive) "$exprStr!" else exprStr
+            val bodyStr = body.emitWithInlinedIt(bodyReplacement)
             val altStr = alternative?.emit() ?: "undefined"
             "$exprStr != null ? $bodyStr : $altStr"
         }
@@ -604,6 +622,7 @@ private class TypeScriptFileEmitter(val file: File) {
             "$exprStr != null ? $bodyStr : $altStr"
         }
         is NullableOf -> expression.emit()
+        is NullableGet -> "${expression.emit()}!"
         is Constraint.RegexMatch -> "$rawValue.test(${value.emit()})"
         is Constraint.BoundCheck -> {
             val checks = listOfNotNull(
@@ -650,7 +669,11 @@ private class TypeScriptFileEmitter(val file: File) {
             val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
             "$receiverStr${field.value()}"
         }
-        is ArrayIndexCall -> "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
+        } else {
+            "Object.entries(${receiver.emitWithInlinedIt(replacement)}).find(([k]) => k.toLowerCase() === ${index.emitWithInlinedIt(replacement)}.toLowerCase())?.[1]"
+        }
         is EnumValueCall -> expression.emitWithInlinedIt(replacement)
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${condition.emitWithInlinedIt(replacement)} ? ${thenExpr.emitWithInlinedIt(replacement)} : ${elseExpr.emitWithInlinedIt(replacement)})"

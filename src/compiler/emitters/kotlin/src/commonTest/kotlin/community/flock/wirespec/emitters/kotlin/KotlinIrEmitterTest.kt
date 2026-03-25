@@ -198,8 +198,8 @@ class KotlinIrEmitterTest {
             |      id = serialization.deserializePath<String>(request.path[1], typeOf<String>()),
             |      done = (request.queries["done"]?.let { serialization.deserializeParam<Boolean>(it, typeOf<Boolean>()) } ?: error("Param done cannot be null")),
             |      name = (request.queries["name"]?.let { serialization.deserializeParam<String>(it, typeOf<String>()) }),
-            |      token = (request.headers["token"]?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) } ?: error("Param token cannot be null")),
-            |      refreshToken = (request.headers["Refresh-Token"]?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) }),
+            |      token = (request.headers.entries.find { it.key.equals("token", ignoreCase = true) }?.value?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) } ?: error("Param token cannot be null")),
+            |      refreshToken = (request.headers.entries.find { it.key.equals("Refresh-Token", ignoreCase = true) }?.value?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) }),
             |      body = (request.body?.let { serialization.deserializeBody<PotentialTodoDto>(it, typeOf<PotentialTodoDto>()) } ?: error("body is null"))
             |    )
             |  fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
@@ -237,8 +237,8 @@ class KotlinIrEmitterTest {
             |        }
             |        201 -> {
             |          return Response201(
-            |            token = (response.headers["token"]?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) } ?: error("Param token cannot be null")),
-            |            refreshToken = (response.headers["refreshToken"]?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) }),
+            |            token = (response.headers.entries.find { it.key.equals("token", ignoreCase = true) }?.value?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) } ?: error("Param token cannot be null")),
+            |            refreshToken = (response.headers.entries.find { it.key.equals("refreshToken", ignoreCase = true) }?.value?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) }),
             |            body = (response.body?.let { serialization.deserializeBody<TodoDto>(it, typeOf<TodoDto>()) } ?: error("body is null"))
             |          )
             |        }

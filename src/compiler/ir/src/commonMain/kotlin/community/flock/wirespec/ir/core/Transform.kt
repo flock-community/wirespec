@@ -124,7 +124,10 @@ fun Element.transformChildren(transformer: Transformer): Element = when (this) {
         constructors = constructors.map { transformer.transformConstructor(it) },
         elements = elements.map { transformer.transformElement(it) },
     )
-    is Main -> copy(body = body.map { transformer.transformStatement(it) })
+    is Main -> copy(
+        statics = statics.map { transformer.transformElement(it) },
+        body = body.map { transformer.transformStatement(it) },
+    )
     is RawElement -> this
 }
 
@@ -195,6 +198,7 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
         alternative = transformer.transformExpression(alternative),
     )
     is NullableOf -> copy(expression = transformer.transformExpression(expression))
+    is NullableGet -> copy(expression = transformer.transformExpression(expression))
     is Constraint.RegexMatch -> copy(value = transformer.transformExpression(value))
     is Constraint.BoundCheck -> copy(value = transformer.transformExpression(value))
     is NotExpression -> copy(expression = transformer.transformExpression(expression))

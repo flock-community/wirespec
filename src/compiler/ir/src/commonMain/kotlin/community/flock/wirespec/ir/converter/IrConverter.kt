@@ -704,6 +704,7 @@ fun EndpointWirespec.convert(): File {
                                     map = FieldCall(VariableReference(Name.of("request")), Name.of("headers")),
                                     fieldName = field.identifier.value,
                                     field = field,
+                                    caseSensitive = false,
                                 ),
                             )
                         }
@@ -805,6 +806,7 @@ fun EndpointWirespec.convert(): File {
                                                     map = FieldCall(VariableReference(Name.of("response")), Name.of("headers")),
                                                     fieldName = header.identifier.value,
                                                     field = header,
+                                                    caseSensitive = false,
                                                 ),
                                             )
                                         }
@@ -935,11 +937,13 @@ private fun deserializeParamExpression(
     map: Expression,
     fieldName: String,
     field: FieldWirespec,
+    caseSensitive: Boolean = true,
 ): Expression {
     val type = field.reference.copy(isNullable = false)
     val getCall = ArrayIndexCall(
         receiver = map,
         index = Literal(fieldName, Type.String),
+        caseSensitive = caseSensitive,
     )
     return NullCheck(
         expression = getCall,

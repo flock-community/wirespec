@@ -34,6 +34,7 @@ import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Parameter
@@ -150,8 +151,9 @@ private class JavaEmitter(val file: File) {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
+            val staticContent = statics.joinToString("") { it.emit(1, true, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            "public class ${file.name.pascalCase()} {\n" +
+            "public class ${file.name.pascalCase()} {\n$staticContent" +
                 "  public static void main(String[] args) {\n$content  }\n}\n"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
@@ -460,7 +462,11 @@ private class JavaEmitter(val file: File) {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
         }
-        is ArrayIndexCall -> "${receiver.emit()}.get(${index.emit()});\n".indentCode(indent)
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}.get(${index.emit()});\n".indentCode(indent)
+        } else {
+            "${receiver.emit()}.entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase(${index.emit()})).findFirst().map(java.util.Map.Entry::getValue).orElse(null);\n".indentCode(indent)
+        }
         is EnumReference -> "${enumType.emitGenerics()}.${entry.value()};\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.name();\n".indentCode(indent)
         is BinaryOp -> when {
@@ -478,6 +484,7 @@ private class JavaEmitter(val file: File) {
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
+        is NullableGet -> "${emit()};\n".indentCode(indent)
         is Constraint.RegexMatch -> "${emit()};\n".indentCode(indent)
         is Constraint.BoundCheck -> "${emit()};\n".indentCode(indent)
         is NotExpression -> "!${expression.emit()};\n".indentCode(indent)
@@ -529,7 +536,11 @@ private class JavaEmitter(val file: File) {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})"
         }
-        is ArrayIndexCall -> "${receiver.emit()}.get(${index.emit()})"
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}.get(${index.emit()})"
+        } else {
+            "${receiver.emit()}.entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase(${index.emit()})).findFirst().map(java.util.Map.Entry::getValue).orElse(null)"
+        }
         is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.name()"
         is BinaryOp -> when {
@@ -560,6 +571,7 @@ private class JavaEmitter(val file: File) {
             "${expression.emit()}.map(it -> ${body.emit()}).$orElse"
         }
         is NullableOf -> "java.util.Optional.of(${expression.emit()})"
+        is NullableGet -> "${expression.emit()}.get()"
         is Constraint.RegexMatch -> "java.util.regex.Pattern.compile(\"${pattern.replace("\\", "\\\\")}\").matcher(${value.emit()}).find()"
         is Constraint.BoundCheck -> {
             val checks = listOfNotNull(

@@ -34,6 +34,7 @@ import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableMap
+import community.flock.wirespec.ir.core.NullableGet
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Precision
@@ -87,8 +88,9 @@ object RustGenerator : Generator {
         is Union -> emit(indent, parents, allUnions = allUnions)
         is Enum -> emit(indent)
         is Main -> {
+            val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope) }
             val content = body.joinToString("") { it.emit(1) }
-            "fn main() {\n$content}\n".indentCode(indent)
+            "${staticContent}fn main() {\n$content}\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -328,7 +330,9 @@ object RustGenerator : Generator {
         }.joinToString(", ")
     }
 
-    private fun emitArrayIndex(receiver: Expression, index: Expression): String = when {
+    private fun emitArrayIndex(receiver: Expression, index: Expression, caseSensitive: Boolean = true): String = when {
+        !caseSensitive && index is Literal && index.type is Type.String ->
+            "${receiver.emit()}.iter().find(|(k, _)| k.eq_ignore_ascii_case(\"${index.value}\")).map(|(_, v)| v.clone())"
         index is Literal && index.type is Type.String -> "${receiver.emit()}.get(\"${index.value}\")"
         index is Literal && (index.type is Type.Integer || index.type is Type.Number) -> "${receiver.emit()}[${index.value}]"
         else -> "${receiver.emit()}[${index.emit()}]"
@@ -425,12 +429,12 @@ object RustGenerator : Generator {
                 "$funcName(${emitFunctionCallArgs(arguments, name)});\n".indentCode(indent)
             }
         }
-        is ArrayIndexCall -> "${emitArrayIndex(receiver, index)};\n".indentCode(indent)
+        is ArrayIndexCall -> "${emitArrayIndex(receiver, index, caseSensitive)};\n".indentCode(indent)
         is EnumReference -> "${enumType.emit()}::${entry.value()};\n".indentCode(indent)
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()});\n".indentCode(indent)
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>();\n".indentCode(indent)
-        is NullCheck, is NullableMap, is NullableOf,
+        is NullCheck, is NullableMap, is NullableOf, is NullableGet,
         is Constraint.RegexMatch, is Constraint.BoundCheck,
         is IfExpression, is MapExpression, is FlatMapIndexed,
         is ListConcat, is StringTemplate,
@@ -476,7 +480,7 @@ object RustGenerator : Generator {
                 "$funcName(${emitFunctionCallArgs(arguments, name)})"
             }
         }
-        is ArrayIndexCall -> emitArrayIndex(receiver, index)
+        is ArrayIndexCall -> emitArrayIndex(receiver, index, caseSensitive)
         is EnumReference -> "${enumType.emit()}::${entry.value()}"
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()})"
@@ -492,6 +496,7 @@ object RustGenerator : Generator {
             "$exprStr.as_ref().map(|it| $bodyStr)${emitUnwrap(alternative)}"
         }
         is NullableOf -> "Some(${expression.emit()})"
+        is NullableGet -> "${expression.emit()}.unwrap()"
         is Constraint.RegexMatch -> "regex::Regex::new(r\"$pattern\").unwrap().is_match(&${value.emit()})"
         is Constraint.BoundCheck -> listOfNotNull(
             min?.let { "$it <= ${value.emit()}" },
@@ -545,7 +550,9 @@ object RustGenerator : Generator {
             "$receiverStr${field.snakeCase().sanitize()}"
         }
         is ArrayIndexCall -> {
-            if (index is Literal && index.type is Type.String) {
+            if (!caseSensitive && index is Literal && index.type is Type.String) {
+                "${receiver.emitWithInlinedIt(replacement)}.iter().find(|(k, _)| k.eq_ignore_ascii_case(\"${(index as Literal).value}\")).map(|(_, v)| v.clone())"
+            } else if (index is Literal && index.type is Type.String) {
                 "${receiver.emitWithInlinedIt(replacement)}.get(\"${(index as Literal).value}\")"
             } else {
                 val idxStr = if (index is Literal && (index.type is Type.Integer || index.type is Type.Number)) {

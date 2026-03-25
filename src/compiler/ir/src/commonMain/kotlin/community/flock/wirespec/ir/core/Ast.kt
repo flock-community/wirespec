@@ -178,7 +178,8 @@ sealed interface Expression
 data class RawExpression(val code: String) : Statement
 
 // Main entry point - represents a language-specific main/entry point
-data class Main(val body: List<Statement>) : Element
+
+data class Main(val statics: List<Element> = emptyList(), val body: List<Statement>) : Element
 
 // Raw element - allows injecting raw code as an Element
 data class RawElement(val code: String) : Element
@@ -219,6 +220,7 @@ data class FunctionCall(
 data class ArrayIndexCall(
     val receiver: Expression,
     val index: Expression,
+    val caseSensitive: Boolean = true,
 ) : Statement,
     Expression
 
@@ -286,6 +288,11 @@ data class NullableMap(
     Expression
 
 data class NullableOf(
+    val expression: Expression,
+) : Statement,
+    Expression
+
+data class NullableGet(
     val expression: Expression,
 ) : Statement,
     Expression
