@@ -171,14 +171,14 @@ class FileBuilder(private val name: Name) : ContainerBuilder {
         elements.add(builder.build())
     }
 
-    fun main(block: FunctionBuilder.() -> Unit) {
+    fun main(isAsync: Boolean = false, block: FunctionBuilder.() -> Unit) {
         val builder = FunctionBuilder("main")
         builder.block()
         val fn = builder.build()
-        elements.add(Main(body = fn.body))
+        elements.add(Main(body = fn.body, isAsync = isAsync))
     }
 
-    fun main(statics: ContainerBuilder.() -> Unit, block: FunctionBuilder.() -> Unit) {
+    fun main(isAsync: Boolean = false, statics: ContainerBuilder.() -> Unit, block: FunctionBuilder.() -> Unit) {
         val staticsBuilder = object : ContainerBuilder {
             override val elements = mutableListOf<Element>()
         }
@@ -186,7 +186,7 @@ class FileBuilder(private val name: Name) : ContainerBuilder {
         val bodyBuilder = FunctionBuilder("main")
         bodyBuilder.block()
         val fn = bodyBuilder.build()
-        elements.add(Main(statics = staticsBuilder.elements, body = fn.body))
+        elements.add(Main(statics = staticsBuilder.elements, body = fn.body, isAsync = isAsync))
     }
 
     fun build(): File = File(name, elements)
@@ -348,8 +348,8 @@ class StructConstructorBuilder : BaseBuilder {
         return node
     }
 
-    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
-        val builder = FunctionCallBuilder(name, receiver, typeArguments)
+    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), isAwait: Boolean = false, block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
+        val builder = FunctionCallBuilder(name, receiver, typeArguments, isAwait)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -449,8 +449,8 @@ class FunctionBuilder(
         return node
     }
 
-    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
-        val builder = FunctionCallBuilder(name, receiver, typeArguments)
+    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), isAwait: Boolean = false, block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
+        val builder = FunctionCallBuilder(name, receiver, typeArguments, isAwait)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -543,8 +543,8 @@ class CaseBuilder(private val value: Expression) : BaseBuilder {
         body.add(Assignment(Name.of(name), value))
     }
 
-    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
-        val builder = FunctionCallBuilder(name, receiver, typeArguments)
+    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), isAwait: Boolean = false, block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
+        val builder = FunctionCallBuilder(name, receiver, typeArguments, isAwait)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -583,8 +583,12 @@ class CaseBuilder(private val value: Expression) : BaseBuilder {
 }
 
 @Dsl
-class FunctionCallBuilder(private val name: String, private val receiver: Expression? = null, private val typeArguments: List<Type> = emptyList()) : BaseBuilder {
+class FunctionCallBuilder(private val name: String, private val receiver: Expression? = null, private val typeArguments: List<Type> = emptyList(), private var isAwait: Boolean = false) : BaseBuilder {
     private val arguments = mutableMapOf<Name, Expression>()
+
+    fun await() {
+        isAwait = true
+    }
 
     fun arg(argName: String, value: Expression) {
         arguments[Name.of(argName)] = value
@@ -594,8 +598,8 @@ class FunctionCallBuilder(private val name: String, private val receiver: Expres
         arguments[argName] = value
     }
 
-    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
-        val builder = FunctionCallBuilder(name, receiver, typeArguments)
+    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), isAwait: Boolean = false, block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
+        val builder = FunctionCallBuilder(name, receiver, typeArguments, isAwait)
         builder.block()
         return builder.build()
     }
@@ -614,7 +618,7 @@ class FunctionCallBuilder(private val name: String, private val receiver: Expres
 
     fun nullCheck(expression: Expression, alternative: Expression, bodyExpr: Expression): NullCheck = NullCheck(expression, bodyExpr, alternative)
 
-    fun build(): FunctionCall = FunctionCall(receiver, typeArguments, Name.of(name), arguments)
+    fun build(): FunctionCall = FunctionCall(receiver, typeArguments, Name.of(name), arguments, isAwait)
 }
 
 @Dsl
@@ -629,8 +633,8 @@ class ConstructorBuilder(private val type: Type) : BaseBuilder {
         arguments[name] = value
     }
 
-    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
-        val builder = FunctionCallBuilder(name, receiver, typeArguments)
+    fun functionCall(name: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), isAwait: Boolean = false, block: FunctionCallBuilder.() -> Unit = {}): FunctionCall {
+        val builder = FunctionCallBuilder(name, receiver, typeArguments, isAwait)
         builder.block()
         return builder.build()
     }
@@ -752,11 +756,11 @@ fun import(path: String, type: Type.Custom): Import = Import(path, type)
 
 fun import(path: String, type: String): Import = Import(path, Type.Custom(type))
 
-fun main(block: FunctionBuilder.() -> Unit): Main {
+fun main(isAsync: Boolean = false, block: FunctionBuilder.() -> Unit): Main {
     val builder = FunctionBuilder("main")
     builder.block()
     val fn = builder.build()
-    return Main(body = fn.body)
+    return Main(body = fn.body, isAsync = isAsync)
 }
 
 fun raw(code: String): RawElement = RawElement(code)

@@ -132,7 +132,7 @@ class TypeScriptIrEmitterTest {
             |    putTodo(_request: Request): Promise<Response<unknown>>;
             |  }
             |  export interface Call extends Wirespec.Call {
-            |    putTodo(id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto): Promise<Response<unknown>>;
+            |    putTodo(params: RequestParams): Promise<Response<unknown>>;
             |  }
             |  export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    from: (it) => fromRawResponse(serialization, it),
@@ -194,8 +194,8 @@ class TypeScriptIrEmitterTest {
             |import {type TodoDto} from '../model'
             |import {type Error} from '../model'
             |export const putTodoClient = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
-            |  putTodo: async (id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto): Promise<PutTodo.Response<unknown>> => {
-            |    const request: PutTodo.Request = PutTodo.request({id, done, name, token, refreshToken, body});
+            |  putTodo: async (params: PutTodo.RequestParams): Promise<PutTodo.Response<unknown>> => {
+            |    const request: PutTodo.Request = PutTodo.request(params);
             |    const rawRequest = PutTodo.toRawRequest(serialization, request);
             |    const rawResponse = await transportation.transport(rawRequest);
             |    return PutTodo.fromRawResponse(serialization, rawResponse);
