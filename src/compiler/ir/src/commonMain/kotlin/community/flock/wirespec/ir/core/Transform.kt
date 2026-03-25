@@ -216,6 +216,7 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
         body = transformer.transformExpression(body),
     )
     is ListConcat -> copy(lists = lists.map { transformer.transformExpression(it) })
+    is BorrowExpression -> copy(expression = transformer.transformExpression(expression))
     is StringTemplate -> copy(
         parts = parts.map {
             when (it) {

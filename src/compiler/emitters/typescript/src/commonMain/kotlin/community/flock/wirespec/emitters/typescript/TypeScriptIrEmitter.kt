@@ -262,17 +262,33 @@ open class TypeScriptIrEmitter : IrEmitter {
         fun File.applyCallParamsIfNeeded(): File =
             if (hasRequestParams) bindCallToRequestParams() else this
 
-        return endpoint.convert()
-            .stripTrailingSpaceFromErrorMessage()
-            .transform { apply(transformPatternSwitchToValueSwitch()) }
-            .applyCallParamsIfNeeded()
-            .injectApiConst()
-            .copy(name = Name.of(endpoint.identifier.sanitize()))
-            .sanitizeNames(sanitizationConfig)
-            .let {
-                if (imports.isNotEmpty()) it.copy(elements = imports + it.elements)
-                else it
+        val hasRequestParams = endpoint.requestParameters().isNotEmpty()
+        val endpointNamespace = endpoint.convert().sanitizeNames()
+            .transform {
+                if (hasRequestParams) {
+                    matchingElements { iface: community.flock.wirespec.ir.core.Interface ->
+                        if (iface.name == Name.of("Call")) {
+                            iface.copy(
+                                elements = iface.elements.map { element ->
+                                    if (element is community.flock.wirespec.ir.core.Function) {
+                                        element.copy(
+                                            parameters = listOf(
+                                                Parameter(Name.of("params"), LanguageType.Custom("RequestParams"))
+                                            )
+                                        )
+                                    } else element
+                                }
+                            )
+                        } else iface
+                    }
+                }
             }
+            .findElement<Namespace>()!!
+        val body = endpointNamespace
+            .transform { injectAfter { _: Namespace -> listOf(raw(api)) } }
+
+        return if (imports.isNotEmpty()) File(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
+        else File(Name.of(endpoint.identifier.sanitize()), listOf(body))
     }
 
     override fun emit(channel: Channel): File =
@@ -287,12 +303,12 @@ open class TypeScriptIrEmitter : IrEmitter {
             .map { import("../model", it.value, isTypeOnly = true) }
 
         val params = buildEndpointParams(endpoint)
-        val paramList = if (params.isNotEmpty()) "params: $endpointName.RequestParams" else ""
-        val requestArgs = if (params.isNotEmpty()) "$endpointName.request(params)" else "$endpointName.request()"
+        val paramList = if (params.isNotEmpty()) {
+            "params: $endpointName.RequestParams"
+        } else ""
 
         val requestArgs = if (params.isNotEmpty()) {
-            val args = params.joinToString(", ") { (name, _, _) -> name.sanitizeKeywords() }
-            "$endpointName.request({$args})"
+            "$endpointName.request(params)"
         } else {
             "$endpointName.request()"
         }
