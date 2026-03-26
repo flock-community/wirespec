@@ -119,103 +119,75 @@ open class RustIrEmitter(
             """.trimIndent()
         )
 
-        /** Names of interfaces that need Rust-specific RawElement replacements */
-        private val rawElementInterfaces = setOf(
-            "Enum", "Refined", "Request", "Response",
-            "BodySerializer", "BodyDeserializer",
-            "PathSerializer", "PathDeserializer",
-            "ParamSerializer", "ParamDeserializer",
-            "Transportation",
+        // --- DSL-built trait replacements for converter-produced interfaces ---
+
+        private val enumTrait = `interface`("Enum") {
+            extends(LanguageType.Custom("Sized"))
+            function("label") {
+                arg("&self", LanguageType.Custom(""))
+                returnType(LanguageType.Custom("&str"))
+            }
+            function("from_label", isStatic = true) {
+                arg("s", LanguageType.Custom("&str"))
+                returnType(LanguageType.Custom("Option<Self>"))
+            }
+        }
+
+        private val refinedTrait = `interface`("Refined") {
+            typeParam(type("T"))
+            function("value") {
+                arg("&self", LanguageType.Custom(""))
+                returnType(type("T").borrow())
+            }
+            function("validate") {
+                arg("&self", LanguageType.Custom(""))
+                returnType(boolean)
+            }
+        }
+
+        private val requestTrait = `interface`("Request") {
+            typeParam(type("T"))
+            field("path", type("Path").borrowDyn())
+            field("method", type("Method").borrow())
+            field("queries", type("Queries").borrowDyn())
+            field("headers", type("RequestHeaders").borrowDyn())
+            field("body", type("T").borrow())
+        }
+
+        private val responseTrait = `interface`("Response") {
+            typeParam(type("T"))
+            field("status", integer32)
+            field("headers", type("ResponseHeaders").borrowDyn())
+            field("body", type("T").borrow())
+        }
+
+        // Serializer/Deserializer traits stay as RawElement because the RustGenerator
+        // does not render function-level type parameters (<T: 'static>, where clauses, etc.)
+        private val rawElementInterfaces = mapOf(
+            "BodySerializer" to RawElement("pub trait BodySerializer {\n    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;\n}"),
+            "BodyDeserializer" to RawElement("pub trait BodyDeserializer {\n    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;\n}"),
+            "PathSerializer" to RawElement("pub trait PathSerializer {\n    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;\n}"),
+            "PathDeserializer" to RawElement("pub trait PathDeserializer {\n    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;\n}"),
+            "ParamSerializer" to RawElement("pub trait ParamSerializer {\n    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;\n}"),
+            "ParamDeserializer" to RawElement("pub trait ParamDeserializer {\n    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;\n}"),
         )
 
-        private fun rustRawElement(name: String): RawElement = when (name) {
-            "Enum" -> RawElement(
-                """
-                pub trait Enum: Sized {
-                    fn label(&self) -> &str;
-                    fn from_label(s: &str) -> Option<Self>;
-                }
-                """.trimIndent()
-            )
-            "Refined" -> RawElement(
-                """
-                pub trait Refined<T> {
-                    fn value(&self) -> &T;
-                    fn validate(&self) -> bool;
-                }
-                """.trimIndent()
-            )
-            "Request" -> RawElement(
-                """
-                pub trait Request<T> {
-                    fn path(&self) -> &dyn Path;
-                    fn method(&self) -> &Method;
-                    fn queries(&self) -> &dyn Queries;
-                    fn headers(&self) -> &dyn RequestHeaders;
-                    fn body(&self) -> &T;
-                }
-                """.trimIndent()
-            )
-            "Response" -> RawElement(
-                """
-                pub trait Response<T> {
-                    fn status(&self) -> i32;
-                    fn headers(&self) -> &dyn ResponseHeaders;
-                    fn body(&self) -> &T;
-                }
-                """.trimIndent()
-            )
-            "BodySerializer" -> RawElement(
-                """
-                pub trait BodySerializer {
-                    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
-                }
-                """.trimIndent()
-            )
-            "BodyDeserializer" -> RawElement(
-                """
-                pub trait BodyDeserializer {
-                    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
-                }
-                """.trimIndent()
-            )
-            "PathSerializer" -> RawElement(
-                """
-                pub trait PathSerializer {
-                    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;
-                }
-                """.trimIndent()
-            )
-            "PathDeserializer" -> RawElement(
-                """
-                pub trait PathDeserializer {
-                    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;
-                }
-                """.trimIndent()
-            )
-            "ParamSerializer" -> RawElement(
-                """
-                pub trait ParamSerializer {
-                    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;
-                }
-                """.trimIndent()
-            )
-            "ParamDeserializer" -> RawElement(
-                """
-                pub trait ParamDeserializer {
-                    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
-                }
-                """.trimIndent()
-            )
-            "Transportation" -> RawElement(
-                """
-                pub trait Transportation {
-                    async fn transport(&self, request: &RawRequest) -> RawResponse;
-                }
-                """.trimIndent()
-            )
-            else -> throw IllegalArgumentException("Unknown Rust raw element: $name")
+        private val transportationTrait = `interface`("Transportation") {
+            asyncFunction("transport") {
+                arg("&self", LanguageType.Custom(""))
+                arg("request", type("RawRequest").borrow())
+                returnType(type("RawResponse"))
+            }
         }
+
+        /** Map of converter interface names to their DSL-built Rust replacements */
+        private val dslTraits = mapOf(
+            "Enum" to enumTrait,
+            "Refined" to refinedTrait,
+            "Request" to requestTrait,
+            "Response" to responseTrait,
+            "Transportation" to transportationTrait,
+        )
 
         private val wirespecFile = AstShared(packageString)
             .convert()
@@ -248,21 +220,21 @@ open class RustIrEmitter(
                     } else enum
                 }
 
-                // Replace interfaces with Rust-specific RawElements, inject
-                // RequestHeaders/ResponseHeaders after Request/Response, and
-                // append Client/Server at the end — all in a single pass
+                // Replace interfaces with Rust-specific DSL traits or RawElements,
+                // inject RequestHeaders/ResponseHeaders after Request/Response,
+                // and append Client/Server at the end — all in a single pass
                 matchingElements { file: LanguageFile ->
                     val newElements = file.elements.flatMap { element ->
                         if (element is Interface) {
                             val name = element.name.pascalCase()
-                            if (name in rawElementInterfaces) {
-                                buildList {
-                                    add(rustRawElement(name))
+                            when {
+                                name in dslTraits -> buildList {
+                                    add(dslTraits[name]!!)
                                     if (name == "Request") add(requestHeaders)
                                     if (name == "Response") add(responseHeaders)
                                 }
-                            } else {
-                                listOf(element)
+                                name in rawElementInterfaces -> listOf(rawElementInterfaces[name]!!)
+                                else -> listOf(element)
                             }
                         } else {
                             listOf(element)
@@ -291,12 +263,8 @@ open class RustIrEmitter(
                     iface.transform {
                         matchingElements { fn: LanguageFunction ->
                             val hasSelf = fn.parameters.any { it.name.value() == "&self" || it.name.value() == "self" }
-                            if (!hasSelf) {
-                                fn.copy(
-                                    parameters = listOf(
-                                        Parameter(Name.of("&self"), LanguageType.Custom(""))
-                                    ) + fn.parameters,
-                                )
+                            if (!hasSelf && !fn.isStatic) {
+                                fn.copy(parameters = listOf(selfParam) + fn.parameters)
                             } else fn
                         }
                     }
@@ -416,7 +384,7 @@ open class RustIrEmitter(
             matchingElements { fn: LanguageFunction ->
                 if (fn.name == Name.of("validate")) {
                     fn.copy(
-                        parameters = listOf(Parameter(Name.of("&self"), LanguageType.Custom(""))),
+                        parameters = listOf(selfParam),
                         body = fn.body.map { selfReceiver.transformStatement(it) },
                     )
                 } else fn
@@ -540,25 +508,26 @@ open class RustIrEmitter(
         is LanguageType.Reflect -> "std::any::TypeId"
     }
 
-    override fun emitEndpointClient(endpoint: Endpoint): File {
-        val endpointName = endpoint.identifier.value
-        val endpointModuleName = endpointName.toSnakeCase()
-        val clientName = "${endpointName}Client"
-        val methodName = endpointName.toSnakeCase()
-        val params = endpoint.requestParameters()
+    private fun Endpoint.buildClientParams(): Pair<String, String> {
+        val params = requestParameters()
         val paramsStr = if (params.isNotEmpty()) {
             ", " + params.joinToString(", ") { (name, type) ->
                 "${name.snakeCase().sanitizeKeywords()}: ${type.toRustTypeString()}"
             }
         } else ""
-        val requestArgs = if (params.isNotEmpty()) {
+        val argsStr = if (params.isNotEmpty()) {
             params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
         } else ""
-        val requestConstruction = if (params.isNotEmpty()) {
-            "$endpointModuleName::Request::new($requestArgs)"
-        } else {
-            "$endpointModuleName::Request::new()"
-        }
+        return paramsStr to argsStr
+    }
+
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val endpointName = endpoint.identifier.value
+        val endpointModuleName = endpointName.toSnakeCase()
+        val clientName = "${endpointName}Client"
+        val methodName = endpointName.toSnakeCase()
+        val (paramsStr, requestArgs) = endpoint.buildClientParams()
+        val requestConstruction = "$endpointModuleName::Request::new($requestArgs)"
 
         val imports = endpoint.importReferences().distinctBy { it.value }
             .joinToString("\n") { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
@@ -613,15 +582,7 @@ open class RustIrEmitter(
             val endpointModuleName = endpointName.toSnakeCase()
             val namespacePath = "$endpointModuleName::$endpointName"
             val methodName = endpointName.toSnakeCase()
-            val params = endpoint.requestParameters()
-            val paramsStr = if (params.isNotEmpty()) {
-                ", " + params.joinToString(", ") { (name, type) ->
-                    "${name.snakeCase().sanitizeKeywords()}: ${type.toRustTypeString()}"
-                }
-            } else ""
-            val callArgs = if (params.isNotEmpty()) {
-                params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
-            } else ""
+            val (paramsStr, callArgs) = endpoint.buildClientParams()
             val delegateCall = if (callArgs.isNotEmpty()) {
                 "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName($callArgs).await"
             } else {
@@ -784,7 +745,7 @@ open class RustIrEmitter(
         // Fix Serializer/Deserializer parameter types to &impl
         parametersWhere(
             predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
-            transform = { it.copy(type = LanguageType.Custom("&impl ${(it.type as LanguageType.Custom).name}")) },
+            transform = { it.copy(type = (it.type as LanguageType.Custom).borrowImpl()) },
         )
 
         // Snake_case Handler/Call method names and add &self receiver
@@ -794,7 +755,7 @@ open class RustIrEmitter(
                     matchingElements { fn: LanguageFunction ->
                         fn.copy(
                             name = Name.of(fn.name.snakeCase()),
-                            parameters = listOf(Parameter(Name.of("&self"), LanguageType.Custom(""))) + fn.parameters,
+                            parameters = listOf(selfParam) + fn.parameters,
                         )
                     }
                 }
@@ -848,6 +809,10 @@ open class RustIrEmitter(
 
     companion object : Keywords {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
+        fun LanguageType.Custom.borrow(): LanguageType.Custom = copy(name = "&$name")
+        fun LanguageType.Custom.borrowDyn(): LanguageType.Custom = copy(name = "&dyn $name")
+        fun LanguageType.Custom.borrowImpl(): LanguageType.Custom = copy(name = "&impl $name")
+        private val selfParam = Parameter(Name.of("&self"), LanguageType.Custom(""))
         private val RESPONSE_PATTERN = Regex("Response(\\d+|Default)")
         override val reservedKeywords = setOf(
             "as", "break", "const", "continue", "crate",
