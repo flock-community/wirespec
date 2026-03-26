@@ -32,7 +32,7 @@ export async function wirespecFetch(req, handler) {
 
 }
 
-export async function wirespecFetch(req, handler) {
+export async function wirespecFetchIr(req, handler) {
     const contentHeader = req.body ? { 'Content-Type': 'application/json' } : {};
     const body = req.body !== undefined ? req.body : undefined;
     const query = Object.entries(req.queries)
