@@ -339,11 +339,6 @@ data class ListConcat(val lists: List<Expression>) :
     Statement,
     Expression
 
-// Borrow/reference - represents a reference to a value (e.g., &value in Rust, transparent in other languages)
-data class BorrowExpression(val expression: Expression) :
-    Statement,
-    Expression
-
 // String interpolation
 data class StringTemplate(val parts: List<Part>) :
     Statement,
