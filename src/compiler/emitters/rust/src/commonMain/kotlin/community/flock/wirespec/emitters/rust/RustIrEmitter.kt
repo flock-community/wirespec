@@ -153,7 +153,9 @@ open class RustIrEmitter(
             """.trimIndent()
         )
 
-        val enumTrait = `interface`("Enum") {
+        // --- DSL-built trait replacements for converter-produced interfaces ---
+
+        private val enumTrait = `interface`("Enum") {
             extends(LanguageType.Custom("Sized"))
             function("label") {
                 arg("&self", LanguageType.Custom(""))
@@ -165,7 +167,7 @@ open class RustIrEmitter(
             }
         }
 
-        val refinedTrait = `interface`("Refined") {
+        private val refinedTrait = `interface`("Refined") {
             typeParam(type("T"))
             function("value") {
                 arg("&self", LanguageType.Custom(""))
@@ -177,7 +179,7 @@ open class RustIrEmitter(
             }
         }
 
-        val requestTrait = `interface`("Request") {
+        private val requestTrait = `interface`("Request") {
             typeParam(type("T"))
             field("path", type("Path").borrowDyn())
             field("method", type("Method").borrow())
@@ -186,14 +188,16 @@ open class RustIrEmitter(
             field("body", type("T").borrow())
         }
 
-        val responseTrait = `interface`("Response") {
+        private val responseTrait = `interface`("Response") {
             typeParam(type("T"))
             field("status", integer32)
             field("headers", type("ResponseHeaders").borrowDyn())
             field("body", type("T").borrow())
         }
 
-        val rawElementInterfaces = mapOf(
+        // Serializer/Deserializer traits stay as RawElement because the RustGenerator
+        // does not render function-level type parameters (<T: 'static>, where clauses, etc.)
+        private val rawElementInterfaces = mapOf(
             "BodySerializer" to RawElement("pub trait BodySerializer {\n    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;\n}"),
             "BodyDeserializer" to RawElement("pub trait BodyDeserializer {\n    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;\n}"),
             "PathSerializer" to RawElement("pub trait PathSerializer {\n    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;\n}"),
@@ -202,7 +206,7 @@ open class RustIrEmitter(
             "ParamDeserializer" to RawElement("pub trait ParamDeserializer {\n    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;\n}"),
         )
 
-        val transportationTrait = `interface`("Transportation") {
+        private val transportationTrait = `interface`("Transportation") {
             asyncFunction("transport") {
                 arg("&self", LanguageType.Custom(""))
                 arg("request", type("RawRequest").borrow())
@@ -210,7 +214,8 @@ open class RustIrEmitter(
             }
         }
 
-        val dslTraits = mapOf(
+        /** Map of converter interface names to their DSL-built Rust replacements */
+        private val dslTraits = mapOf(
             "Enum" to enumTrait,
             "Refined" to refinedTrait,
             "Request" to requestTrait,
@@ -218,7 +223,7 @@ open class RustIrEmitter(
             "Transportation" to transportationTrait,
         )
 
-        val wirespecFile = PackageName("shared")
+        private val wirespecFile = AstShared(packageString)
             .convert()
             .transform {
                 matchingElements { file: LanguageFile ->
@@ -245,15 +250,22 @@ open class RustIrEmitter(
                         )
                     } else enum
                 }
+
+                // Replace interfaces with Rust-specific DSL traits or RawElements,
+                // inject RequestHeaders/ResponseHeaders after Request/Response,
+                // and append Client/Server at the end — all in a single pass
                 matchingElements { file: LanguageFile ->
                     val newElements = file.elements.flatMap { element ->
-                        if (element !is Interface) return@flatMap listOf(element)
-                        val name = element.name.pascalCase()
-                        when {
-                            name in dslTraits -> buildList {
-                                add(dslTraits[name]!!)
-                                if (name == "Request") add(requestHeaders)
-                                if (name == "Response") add(responseHeaders)
+                        if (element is Interface) {
+                            val name = element.name.pascalCase()
+                            when {
+                                name in dslTraits -> buildList {
+                                    add(dslTraits[name]!!)
+                                    if (name == "Request") add(requestHeaders)
+                                    if (name == "Response") add(responseHeaders)
+                                }
+                                name in rawElementInterfaces -> listOf(rawElementInterfaces[name]!!)
+                                else -> listOf(element)
                             }
                             name in rawElementInterfaces -> listOf(rawElementInterfaces[name]!!)
                             else -> listOf(element)
@@ -280,8 +292,9 @@ open class RustIrEmitter(
                     iface.transform {
                         matchingElements { fn: LanguageFunction ->
                             val hasSelf = fn.parameters.any { it.name.value() == "&self" || it.name.value() == "self" }
-                            if (hasSelf || fn.isStatic) fn
-                            else fn.copy(parameters = listOf(rustSelfParam) + fn.parameters)
+                            if (!hasSelf && !fn.isStatic) {
+                                fn.copy(parameters = listOf(selfParam) + fn.parameters)
+                            } else fn
                         }
                     }
                 }
@@ -348,6 +361,47 @@ open class RustIrEmitter(
         )
     }
 
+    private fun <T : Element> T.injectSelfReceiver(fieldNames: Set<String>): T {
+        val selfReceiver = transformer {
+            statementAndExpression { s, t ->
+                if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
+                    FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
+                } else s.transformChildren(t)
+            }
+        }
+        return transform {
+            matchingElements { fn: LanguageFunction ->
+                if (fn.name == Name.of("validate")) {
+                    fn.copy(
+                        parameters = listOf(selfParam),
+                        body = fn.body.map { selfReceiver.transformStatement(it) },
+                    )
+                } else fn
+            }
+        }
+    }
+
+    private fun <T : Element> T.stripWirespecPrefix(): T = transform {
+        matching<LanguageType.Custom> { type ->
+            if (type.name.startsWith("Wirespec.")) type.copy(name = type.name.removePrefix("Wirespec."))
+            else type
+        }
+    }
+
+    private fun File.prependImports(imports: String): File =
+        if (imports.isNotEmpty()) copy(elements = listOf(RawElement(imports)) + elements)
+        else this
+
+    private fun Type.buildModelImports(): String =
+        importReferences().distinctBy { it.value }
+            .joinToString("\n") { "use super::${it.value.toSnakeCase()}::${it.value};" }
+
+    private fun Endpoint.buildEndpointImports(): String =
+        importReferences().distinctBy { it.value }
+            .joinToString("\n") { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
+
+    // --- Per-definition emit methods ---
+
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .injectSelfReceiverToValidate(
@@ -387,6 +441,43 @@ open class RustIrEmitter(
 
     override fun emit(channel: Channel): File =
         channel.convert()
+
+    // --- Client generation ---
+
+    private fun LanguageType.toRustTypeString(): String = when (this) {
+        is LanguageType.String -> "String"
+        is LanguageType.Boolean -> "bool"
+        is LanguageType.Integer -> when (precision) {
+            community.flock.wirespec.ir.core.Precision.P32 -> "i32"
+            community.flock.wirespec.ir.core.Precision.P64 -> "i64"
+        }
+        is LanguageType.Number -> when (precision) {
+            community.flock.wirespec.ir.core.Precision.P32 -> "f32"
+            community.flock.wirespec.ir.core.Precision.P64 -> "f64"
+        }
+        is LanguageType.Bytes -> "Vec<u8>"
+        is LanguageType.Unit -> "()"
+        is LanguageType.Any -> "Box<dyn std::any::Any>"
+        is LanguageType.Array -> "Vec<${elementType.toRustTypeString()}>"
+        is LanguageType.Dict -> "std::collections::HashMap<${keyType.toRustTypeString()}, ${valueType.toRustTypeString()}>"
+        is LanguageType.Nullable -> "Option<${type.toRustTypeString()}>"
+        is LanguageType.Custom -> name
+        is LanguageType.Wildcard -> "_"
+        is LanguageType.Reflect -> "std::any::TypeId"
+    }
+
+    private fun Endpoint.buildClientParams(): Pair<String, String> {
+        val params = requestParameters()
+        val paramsStr = if (params.isNotEmpty()) {
+            ", " + params.joinToString(", ") { (name, type) ->
+                "${name.snakeCase().sanitizeKeywords()}: ${type.toRustTypeString()}"
+            }
+        } else ""
+        val argsStr = if (params.isNotEmpty()) {
+            params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
+        } else ""
+        return paramsStr to argsStr
+    }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val endpointName = endpoint.identifier.value
@@ -455,8 +546,11 @@ open class RustIrEmitter(
             val namespacePath = "$endpointModuleName::$endpointName"
             val methodName = endpointName.toSnakeCase()
             val (paramsStr, callArgs) = endpoint.buildClientParams()
-            val delegateCall = "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n" +
-                "            .$methodName($callArgs).await"
+            val delegateCall = if (callArgs.isNotEmpty()) {
+                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName($callArgs).await"
+            } else {
+                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName().await"
+            }
 
             listOf(
                 "impl<S: Serialization, T: Transportation> $namespacePath::Call for Client<S, T> {",
@@ -517,11 +611,160 @@ open class RustIrEmitter(
         val paramsStr = if (params.isEmpty()) "" else ", " + params.joinToString(", ") { (name, type) ->
             "${name.snakeCase().sanitizeKeywords()}: ${with(RustTransform) { type.rustName() }}"
         }
-        return paramsStr to argsStr
+    }
+
+    private fun fixResponseSwitchPatterns(): Transformer {
+        val responsePattern = RESPONSE_PATTERN
+        return transformer {
+            statement { s, t ->
+                if (s is Switch && s.variable?.camelCase() == "r") {
+                    val transformedCases = s.cases.map { case ->
+                        val typeName = (case.type as? LanguageType.Custom)?.name
+                        if (typeName != null && responsePattern.matches(typeName)) {
+                            Case(
+                                value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
+                                body = case.body.map { t.transformStatement(it) },
+                                type = null,
+                            )
+                        } else {
+                            Case(
+                                value = t.transformExpression(case.value),
+                                body = case.body.map { t.transformStatement(it) },
+                                type = case.type?.let { t.transformType(it) },
+                            )
+                        }
+                    }
+                    s.copy(
+                        expression = t.transformExpression(s.expression),
+                        cases = transformedCases,
+                        default = null,
+                    )
+                } else s.transformChildren(t)
+            }
+        }
+    }
+
+    private fun fixConstructorCalls(): Transformer {
+        val responsePattern = RESPONSE_PATTERN
+        return transformer {
+            statementAndExpression { s, t ->
+                if (s is ConstructorStatement) {
+                    val typeName = (s.type as? LanguageType.Custom)?.name
+                    val transformedArgs = s.namedArguments.mapValues { t.transformExpression(it.value) }
+                    when {
+                        typeName != null && responsePattern.matches(typeName) -> {
+                            FunctionCall(
+                                name = Name(listOf("Response::$typeName")),
+                                arguments = mapOf(Name.of("inner") to FunctionCall(
+                                    name = Name(listOf("$typeName::new")),
+                                    arguments = transformedArgs,
+                                )),
+                            )
+                        }
+                        typeName == "Request" -> {
+                            FunctionCall(
+                                name = Name(listOf("Request::new")),
+                                arguments = transformedArgs,
+                            )
+                        }
+                        else -> s.transformChildren(t)
+                    }
+                } else s.transformChildren(t)
+            }
+        }
+    }
+
+    private fun File.rustifyEndpoint(endpoint: Endpoint): File = transform {
+        // Convert simple-identifier RawExpressions to VariableReference
+        apply(fixRawExpressionIdentifiers())
+
+        // Remove Handler/Call self-referential extends
+        matchingElements<Interface> { iface ->
+            if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) iface.copy(extends = emptyList()) else iface
+        }
+
+        // Strip generics from Response type references
+        matching<LanguageType.Custom> { type ->
+            if (type.name.startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
+        }
+
+        // Fix response Switch patterns (Response200 → Response::Response200)
+        apply(fixResponseSwitchPatterns())
+
+        // Convert ConstructorStatement → FunctionCall for Response/Request types
+        apply(fixConstructorCalls())
+
+        // Fix Serializer/Deserializer parameter types to &impl
+        parametersWhere(
+            predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
+            transform = { it.copy(type = (it.type as LanguageType.Custom).borrowImpl()) },
+        )
+
+        // Snake_case Handler/Call method names and add &self receiver
+        matchingElements<Interface> { iface ->
+            if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
+                iface.transform {
+                    matchingElements { fn: LanguageFunction ->
+                        fn.copy(
+                            name = Name.of(fn.name.snakeCase()),
+                            parameters = listOf(selfParam) + fn.parameters,
+                        )
+                    }
+                }
+            } else iface
+        }
+
+        // Generate blanket Client impl for Handler
+        matchingElements<Namespace> { ns ->
+            val handler = ns.elements.filterIsInstance<Interface>().firstOrNull { it.name == Name.of("Handler") }
+            if (handler != null) {
+                val method = handler.elements.filterIsInstance<LanguageFunction>().firstOrNull()
+                if (method != null) {
+                    val methodName = method.name.snakeCase()
+                    ns.copy(elements = ns.elements + listOf(RawElement("""
+                        impl<C: Client> Handler for C {
+                            async fn $methodName(&self, request: Request) -> Response {
+                                let raw = to_raw_request(self.serialization(), request);
+                                let resp = self.transport().transport(&raw).await;
+                                from_raw_response(self.serialization(), resp)
+                            }
+                        }
+                    """.trimIndent())))
+                } else ns
+            } else ns
+        }
+
+        // Generate Api struct with Server impl
+        matchingElements<Namespace> { ns ->
+            ns.copy(elements = ns.elements + listOf(RawElement(endpoint.generateApiStruct())))
+        }
+    }
+
+    private fun Endpoint.generateApiStruct(): String {
+        val pathTemplate = path.joinToString("/") { segment ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> segment.value
+                is Endpoint.Segment.Param -> "{${segment.identifier.value}}"
+            }
+        }.let { "/$it" }
+        val methodName = method.name
+        return """
+            pub struct Api;
+            impl Server for Api {
+                type Req = Request;
+                type Res = Response;
+                fn path_template(&self) -> &'static str { "$pathTemplate" }
+                fn method(&self) -> Method { Method::$methodName }
+            }
+        """.trimIndent()
     }
 
     companion object : Keywords {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
+        fun LanguageType.Custom.borrow(): LanguageType.Custom = copy(name = "&$name")
+        fun LanguageType.Custom.borrowDyn(): LanguageType.Custom = copy(name = "&dyn $name")
+        fun LanguageType.Custom.borrowImpl(): LanguageType.Custom = copy(name = "&impl $name")
+        private val selfParam = Parameter(Name.of("&self"), LanguageType.Custom(""))
         private val RESPONSE_PATTERN = Regex("Response(\\d+|Default)")
         override val reservedKeywords = setOf(
             "as", "break", "const", "continue", "crate",
