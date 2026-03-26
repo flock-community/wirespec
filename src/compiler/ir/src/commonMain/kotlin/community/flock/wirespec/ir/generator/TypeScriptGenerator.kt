@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -504,7 +505,7 @@ private class TypeScriptFileEmitter(val file: File) {
                 val varName = variable?.camelCase() ?: "r"
                 val casesStr = cases.joinToString("") { case ->
                     val typeName = (case.type as? Type.Custom)?.name
-                    val statusNum = typeName?.removePrefix("Response")?.toIntOrNull()
+                    val statusNum = typeName?.substringAfterLast(".")?.removePrefix("Response")?.toIntOrNull()
                     val caseLabel = statusNum?.toString() ?: case.value.emit()
                     val castLine = if (typeName != null) {
                         "const $varName = ${expression.emit()} as $typeName;\n".indentCode(indent + 2)
@@ -539,12 +540,14 @@ private class TypeScriptFileEmitter(val file: File) {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value()};\n".indentCode(indent)
         }
+        is BorrowExpression -> "${expression.emit()};\n".indentCode(indent)
         is FunctionCall -> {
+            val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+                "$awaitPrefix${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
             } else {
-                "${name.value()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+                "$awaitPrefix${name.value()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
             }
         }
         is ArrayIndexCall -> if (caseSensitive) {
@@ -589,12 +592,14 @@ private class TypeScriptFileEmitter(val file: File) {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value()}"
         }
+        is BorrowExpression -> expression.emit()
         is FunctionCall -> {
+            val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
             if (recv != null) {
-                "${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
+                "$awaitPrefix${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             } else {
-                "${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
+                "$awaitPrefix${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             }
         }
         is ArrayIndexCall -> if (caseSensitive) {
@@ -674,6 +679,7 @@ private class TypeScriptFileEmitter(val file: File) {
         } else {
             "Object.entries(${receiver.emitWithInlinedIt(replacement)}).find(([k]) => k.toLowerCase() === ${index.emitWithInlinedIt(replacement)}.toLowerCase())?.[1]"
         }
+        is BorrowExpression -> expression.emitWithInlinedIt(replacement)
         is EnumValueCall -> expression.emitWithInlinedIt(replacement)
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${condition.emitWithInlinedIt(replacement)} ? ${thenExpr.emitWithInlinedIt(replacement)} : ${elseExpr.emitWithInlinedIt(replacement)})"

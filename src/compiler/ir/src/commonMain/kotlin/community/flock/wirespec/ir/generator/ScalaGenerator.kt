@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -516,6 +517,8 @@ ScalaEmitter(
             "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         }
 
+        is BorrowExpression -> "${expression.emit()}\n".indentCode(indent)
+
         is ArrayIndexCall -> "${emitArrayIndex()}\n".indentCode(indent)
 
         is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}\n".indentCode(indent)
@@ -576,6 +579,8 @@ ScalaEmitter(
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
+
+        is BorrowExpression -> expression.emit()
 
         is ArrayIndexCall -> emitArrayIndex()
 
