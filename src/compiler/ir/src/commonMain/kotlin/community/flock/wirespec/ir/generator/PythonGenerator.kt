@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -82,8 +83,10 @@ object PythonGenerator : Generator {
         is Main -> {
             val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
             val content = body.joinToString("") { it.emit(indent + 1) }
-            val defBlock = "def main():\n$content\n".indentCode(indent)
-            val guard = "if __name__ == \"__main__\":\n${"main()".indentCode(1)}\n".indentCode(indent)
+            val asyncPrefix = if (isAsync) "async " else ""
+            val runner = if (isAsync) "asyncio.run(main())" else "main()"
+            val defBlock = "${asyncPrefix}def main():\n$content\n".indentCode(indent)
+            val guard = "if __name__ == \"__main__\":\n${runner.indentCode(1)}\n".indentCode(indent)
             "$staticContent$defBlock$guard"
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
@@ -319,6 +322,7 @@ object PythonGenerator : Generator {
                 "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
             }
         }
+        is BorrowExpression -> "${expression.emit()}\n".indentCode(indent)
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
         } else {
@@ -378,6 +382,7 @@ object PythonGenerator : Generator {
                 "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})"
             }
         }
+        is BorrowExpression -> expression.emit()
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}[${index.emit()}]"
         } else {

@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -460,8 +461,10 @@ private class JavaEmitter(val file: File) {
         is FunctionCall -> {
             val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+            val awaitSuffix = if (isAwait) ".join()" else ""
+            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
         }
+        is BorrowExpression -> "${expression.emit()};\n".indentCode(indent)
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}.get(${index.emit()});\n".indentCode(indent)
         } else {
@@ -534,8 +537,10 @@ private class JavaEmitter(val file: File) {
         is FunctionCall -> {
             val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})"
+            val awaitSuffix = if (isAwait) ".join()" else ""
+            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
         }
+        is BorrowExpression -> expression.emit()
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}.get(${index.emit()})"
         } else {

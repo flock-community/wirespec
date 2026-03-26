@@ -158,6 +158,7 @@ class Language(
                             "use generated::endpoint::${snakeName}::${typeName}::*;",
                         )
                         imp.path.contains("model") -> listOf("use generated::model::${snakeName}::${typeName};")
+                        imp.path.contains("client") -> listOf("use generated::client::${snakeName}::${typeName};")
                         else -> listOf("use generated::${snakeName}::${typeName};")
                     }
                 }.joinToString("\n")
@@ -386,7 +387,7 @@ fun ContainerBuilder.endpointClientImports(lang: Language, fixture: Fixture) {
             raw("from community.flock.wirespec.generated.client.${it}Client import ${it}Client")
         }
         is ScalaIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
-        is RustIrEmitter -> {} // handled by run() use statements
+        is RustIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
     }
 }
 
@@ -400,7 +401,7 @@ fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture) {
         is TypeScriptIrEmitter -> import("./Client", "client")
         is PythonIrEmitter -> raw("from community.flock.wirespec.generated.Client import Client")
         is ScalaIrEmitter -> import("community.flock.wirespec.generated", "Client")
-        is RustIrEmitter -> {} // handled by run() use statements
+        is RustIrEmitter -> import("community.flock.wirespec.generated", "Client")
     }
 }
 
