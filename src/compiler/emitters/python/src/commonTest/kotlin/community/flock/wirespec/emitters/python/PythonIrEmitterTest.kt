@@ -1091,7 +1091,7 @@ class PythonIrEmitterTest {
             |
         """.trimMargin()
 
-        val emitter = PythonIrEmitter(emitShared = EmitShared(true))
-        emitter.emitShared()?.elements?.filterIsInstance<RawElement>()?.joinToString("") { it.code } shouldBe expected
+        val emitter = PythonIrEmitter()
+        emitter.shared.source shouldBe expected
     }
 }

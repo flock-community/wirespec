@@ -4,7 +4,6 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -371,7 +370,6 @@ object JavaGenerator : Generator {
             val awaitSuffix = if (isAwait) ".join()" else ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
         }
-        is BorrowExpression -> "${expression.emit()};\n".indentCode(indent)
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}.get(${index.emit()});\n".indentCode(indent)
         } else {
@@ -437,7 +435,6 @@ object JavaGenerator : Generator {
             val awaitSuffix = if (isAwait) ".join()" else ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
         }
-        is BorrowExpression -> expression.emit()
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}.get(${index.emit()})"
         } else {

@@ -721,6 +721,6 @@ class TypeScriptIrEmitterTest {
         """.trimMargin()
 
         val emitter = TypeScriptIrEmitter()
-        emitter.emitShared()?.let(TypeScriptGenerator::generate) shouldBe expected
+        emitter.shared.source shouldBe expected
     }
 }

@@ -1217,8 +1217,8 @@ class JavaIrEmitterTest {
             |
         """.trimMargin()
 
-        val emitter = JavaIrEmitter(emitShared = EmitShared(true))
-        emitter.emitShared()?.let(JavaGenerator::generate) shouldBe expected
+        val emitter = JavaIrEmitter()
+        emitter.shared.source shouldBe expected
     }
 
     private fun EmitContext.emitFirst(node: Definition) = emitters.map {

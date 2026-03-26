@@ -6,7 +6,7 @@ import community.flock.wirespec.emitters.rust.RustIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.BorrowExpression
+import community.flock.wirespec.emitters.rust.RustIrEmitter.Companion.borrow
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionBuilder
@@ -41,8 +41,8 @@ class VerifyClientTest : FunSpec({
                             arg("transportation", VariableReference("transportation"))
                         })
                         isRust -> assign("endpointClient", construct(Type.Custom("GetTodosClient")) {
-                            arg("serialization", BorrowExpression(VariableReference("serialization")))
-                            arg("transportation", BorrowExpression(VariableReference("transportation")))
+                            arg("serialization", VariableReference("serialization").borrow())
+                            arg("transportation", VariableReference("transportation").borrow())
                         })
                         else -> assign("endpointClient", construct(Type.Custom("GetTodosClient")) {
                             arg("serialization", VariableReference("serialization"))
@@ -89,7 +89,7 @@ class VerifyClientTest : FunSpec({
                             arg("serialization", ConstructorStatement(Type.Custom("MockSer")))
                             arg("transportation", ConstructorStatement(
                                 Type.Custom("MockTransport"),
-                                mapOf(Name.of("serialization") to BorrowExpression(VariableReference("serialization"))),
+                                mapOf(Name.of("serialization") to VariableReference("serialization").borrow()),
                             ))
                         })
                         else -> assign("mainClient", construct(Type.Custom("Client")) {

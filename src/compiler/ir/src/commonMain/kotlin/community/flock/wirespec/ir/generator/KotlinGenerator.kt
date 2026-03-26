@@ -4,7 +4,6 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -341,8 +340,6 @@ object KotlinGenerator : Generator {
 
         is FunctionCall -> "${emit()}\n".indentCode(indent)
 
-        is BorrowExpression -> "${expression.emit()}\n".indentCode(indent)
-
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
         } else {
@@ -420,8 +417,6 @@ object KotlinGenerator : Generator {
             val args = arguments.values.joinToString(", ") { it.emit() }
             "$receiverStr${name.value().toKotlinStaticCall().sanitize()}$typeArgsStr($args)"
         }
-
-        is BorrowExpression -> expression.emit()
 
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}[${index.emit()}]"
