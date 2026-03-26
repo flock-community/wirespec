@@ -1090,6 +1090,6 @@ class PythonIrEmitterTest {
         """.trimMargin()
 
         val emitter = PythonIrEmitter()
-        emitter.shared!!.source shouldBe expected
+        emitter.shared.source shouldBe expected
     }
 }

@@ -4,7 +4,6 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -435,7 +434,6 @@ object RustGenerator : Generator {
                 "$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix;\n".indentCode(indent)
             }
         }
-        is BorrowExpression -> "&${expression.emit()};\n".indentCode(indent)
         is ArrayIndexCall -> "${emitArrayIndex(receiver, index, caseSensitive)};\n".indentCode(indent)
         is EnumReference -> "${enumType.emit()}::${entry.value()};\n".indentCode(indent)
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
@@ -488,7 +486,6 @@ object RustGenerator : Generator {
                 "$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix"
             }
         }
-        is BorrowExpression -> "&${expression.emit()}"
         is ArrayIndexCall -> emitArrayIndex(receiver, index, caseSensitive)
         is EnumReference -> "${enumType.emit()}::${entry.value()}"
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
@@ -555,7 +552,6 @@ object RustGenerator : Generator {
                 "$funcName(${emitFunctionCallArgsInlined(arguments, name, replacement)})$awaitSuffix"
             }
         }
-        is BorrowExpression -> "&${expression.emitWithInlinedIt(replacement)}"
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
             "$receiverStr${field.snakeCase().sanitize()}"

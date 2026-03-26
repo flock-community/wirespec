@@ -976,7 +976,7 @@ class KotlinIrEmitterTest {
         """.trimMargin()
 
         val emitter = KotlinIrEmitter()
-        emitter.shared!!.source shouldBe expected
+        emitter.shared.source shouldBe expected
     }
 
     private fun EmitContext.emitFirst(node: Definition) = emitters.map {

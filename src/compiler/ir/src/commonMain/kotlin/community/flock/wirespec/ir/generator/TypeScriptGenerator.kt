@@ -4,7 +4,6 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -540,7 +539,6 @@ private class TypeScriptFileEmitter(val file: File) {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value()};\n".indentCode(indent)
         }
-        is BorrowExpression -> "${expression.emit()};\n".indentCode(indent)
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
@@ -592,7 +590,6 @@ private class TypeScriptFileEmitter(val file: File) {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value()}"
         }
-        is BorrowExpression -> expression.emit()
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
@@ -679,7 +676,6 @@ private class TypeScriptFileEmitter(val file: File) {
         } else {
             "Object.entries(${receiver.emitWithInlinedIt(replacement)}).find(([k]) => k.toLowerCase() === ${index.emitWithInlinedIt(replacement)}.toLowerCase())?.[1]"
         }
-        is BorrowExpression -> expression.emitWithInlinedIt(replacement)
         is EnumValueCall -> expression.emitWithInlinedIt(replacement)
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${condition.emitWithInlinedIt(replacement)} ? ${thenExpr.emitWithInlinedIt(replacement)} : ${elseExpr.emitWithInlinedIt(replacement)})"
