@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -485,12 +486,29 @@ object TypeScriptGenerator : Generator {
         is ErrorStatement -> "throw new Error(${message.emit()});\n".indentCode(indent)
         is AssertStatement -> "if (!(${expression.emit()})) throw new Error('${message.replace("'", "\\'")}');\n".indentCode(indent)
         is Switch -> {
-            val isBlockStyle = cases.any { case -> case.body.any { it is Assignment } }
-            val casesStr = cases.joinToString("") { case ->
-                val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
-                if (isBlockStyle) {
-                    "case ${case.value.emit()}: {\n".indentCode(indent + 1) + bodyStr + "}\n".indentCode(indent + 1)
-                } else {
+            val isPatternSwitch = cases.any { it.type != null }
+            if (isPatternSwitch) {
+                val varName = variable?.camelCase() ?: "r"
+                val casesStr = cases.joinToString("") { case ->
+                    val typeName = (case.type as? Type.Custom)?.name
+                    val statusNum = typeName?.substringAfterLast(".")?.removePrefix("Response")?.toIntOrNull()
+                    val caseLabel = statusNum?.toString() ?: case.value.emit()
+                    val castLine = if (typeName != null) {
+                        "const $varName = ${expression.emit()} as $typeName;\n".indentCode(indent + 2)
+                    } else {
+                        ""
+                    }
+                    val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
+                    "case $caseLabel: {\n".indentCode(indent + 1) + castLine + bodyStr + "}\n".indentCode(indent + 1)
+                }
+                val defaultStr = default?.let {
+                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(indent + 2) }
+                    "default: {\n".indentCode(indent + 1) + bodyStr + "}\n".indentCode(indent + 1)
+                } ?: ""
+                "switch (${expression.emit()}.status) {\n".indentCode(indent) + casesStr + defaultStr + "}\n".indentCode(indent)
+            } else {
+                val casesStr = cases.joinToString("") { case ->
+                    val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
                     "case ${case.value.emit()}:\n$bodyStr${"break;\n".indentCode(indent + 2)}".indentCode(indent + 1)
                 }
             }
@@ -514,6 +532,7 @@ object TypeScriptGenerator : Generator {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value()};\n".indentCode(indent)
         }
+        is BorrowExpression -> "${expression.emit()};\n".indentCode(indent)
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
@@ -565,6 +584,7 @@ object TypeScriptGenerator : Generator {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value()}"
         }
+        is BorrowExpression -> expression.emit()
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
@@ -651,6 +671,7 @@ object TypeScriptGenerator : Generator {
         } else {
             "Object.entries(${receiver.emitWithInlinedIt(replacement)}).find(([k]) => k.toLowerCase() === ${index.emitWithInlinedIt(replacement)}.toLowerCase())?.[1]"
         }
+        is BorrowExpression -> expression.emitWithInlinedIt(replacement)
         is EnumValueCall -> expression.emitWithInlinedIt(replacement)
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${condition.emitWithInlinedIt(replacement)} ? ${thenExpr.emitWithInlinedIt(replacement)} : ${elseExpr.emitWithInlinedIt(replacement)})"

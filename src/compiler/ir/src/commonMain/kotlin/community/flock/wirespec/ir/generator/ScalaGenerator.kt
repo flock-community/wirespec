@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -427,8 +428,20 @@ object ScalaGenerator : Generator {
         is NullLiteral -> "null\n".indentCode(indent)
         is NullableEmpty -> "None\n".indentCode(indent)
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
-        is FieldCall -> "${emit()}\n".indentCode(indent)
-        is FunctionCall -> "${emit()}\n".indentCode(indent)
+        is FieldCall -> {
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr${field.value().sanitize()}\n".indentCode(indent)
+        }
+
+        is FunctionCall -> {
+            val typeArgsStr =
+                if (typeArguments.isNotEmpty() && name.value() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+        }
+
+        is BorrowExpression -> "${expression.emit()}\n".indentCode(indent)
+
         is ArrayIndexCall -> "${emitArrayIndex()}\n".indentCode(indent)
         is EnumReference -> "${emit()}\n".indentCode(indent)
         is EnumValueCall -> "${emit()}\n".indentCode(indent)
@@ -477,6 +490,8 @@ object ScalaGenerator : Generator {
             val args = arguments.values.joinToString(", ") { it.emit() }
             "$receiverStr${name.value().sanitize()}$typeArgsStr($args)"
         }
+
+        is BorrowExpression -> expression.emit()
 
         is ArrayIndexCall -> emitArrayIndex()
 

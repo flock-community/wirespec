@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.BorrowExpression
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -79,7 +80,11 @@ object RustGenerator : Generator {
         is Main -> {
             val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope) }
             val content = body.joinToString("") { it.emit(1) }
-            "${staticContent}fn main() {\n$content}\n".indentCode(indent)
+            if (isAsync) {
+                "${staticContent}fn main() {\n${"pollster::block_on(async {\n".indentCode(1)}$content${"});\n".indentCode(1)}}\n".indentCode(indent)
+            } else {
+                "${staticContent}fn main() {\n$content}\n".indentCode(indent)
+            }
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -403,11 +408,12 @@ object RustGenerator : Generator {
             val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             val awaitSuffix = if (isAwait) ".await" else ""
             if (recv != null) {
-                "${recv.emit()}.$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
+                "${recv.emit()}.$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix;\n".indentCode(indent)
             } else {
-                "$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
+                "$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix;\n".indentCode(indent)
             }
         }
+        is BorrowExpression -> "&${expression.emit()};\n".indentCode(indent)
         is ArrayIndexCall -> "${emitArrayIndex(receiver, index, caseSensitive)};\n".indentCode(indent)
         is EnumReference -> "${enumType.emit()}::${entry.value()};\n".indentCode(indent)
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
@@ -455,11 +461,12 @@ object RustGenerator : Generator {
             val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             val awaitSuffix = if (isAwait) ".await" else ""
             if (recv != null) {
-                "${recv.emit()}.$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
+                "${recv.emit()}.$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix"
             } else {
-                "$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
+                "$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix"
             }
         }
+        is BorrowExpression -> "&${expression.emit()}"
         is ArrayIndexCall -> emitArrayIndex(receiver, index, caseSensitive)
         is EnumReference -> "${enumType.emit()}::${entry.value()}"
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
@@ -521,11 +528,12 @@ object RustGenerator : Generator {
             val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             val awaitSuffix = if (isAwait) ".await" else ""
             if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.$funcName(${arguments.values.joinToString(", ") { it.emitWithInlinedIt(replacement) }})$awaitSuffix"
+                "${recv.emitWithInlinedIt(replacement)}.$funcName(${emitFunctionCallArgsInlined(arguments, name, replacement)})$awaitSuffix"
             } else {
-                "$funcName(${arguments.values.joinToString(", ") { it.emitWithInlinedIt(replacement) }})$awaitSuffix"
+                "$funcName(${emitFunctionCallArgsInlined(arguments, name, replacement)})$awaitSuffix"
             }
         }
+        is BorrowExpression -> "&${expression.emitWithInlinedIt(replacement)}"
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
             "$receiverStr${field.snakeCase().sanitize()}"
