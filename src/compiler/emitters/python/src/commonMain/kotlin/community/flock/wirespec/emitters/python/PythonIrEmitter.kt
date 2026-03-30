@@ -27,6 +27,8 @@ import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.RawElement
@@ -35,9 +37,6 @@ import community.flock.wirespec.ir.core.plus
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.emit.placeInModule
-import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.PythonGenerator
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.injectSelfReceiverToValidate
@@ -53,60 +52,7 @@ open class PythonIrEmitter(
 
     override val generator = PythonGenerator
 
-    val import = """
-        |from __future__ import annotations
-        |
-        |import re
-        |
-        |from abc import ABC, abstractmethod
-        |from dataclasses import dataclass
-        |from typing import Any, Generic, List, Optional
-        |import enum
-        |
-        |from ..wirespec import T, Wirespec, _raise
-        |
-    """.trimMargin()
-
-    val rootImport = """
-        |from __future__ import annotations
-        |
-        |import re
-        |
-        |from abc import ABC, abstractmethod
-        |from dataclasses import dataclass
-        |from typing import Any, Generic, List, Optional
-        |import enum
-        |
-        |from .wirespec import T, Wirespec, _raise
-        |
-    """.trimMargin()
-
     override val extension = FileExtension.Python
-
-    private val sanitizationConfig: SanitizationConfig by lazy {
-        SanitizationConfig(
-            reservedKeywords = reservedKeywords,
-            escapeKeyword = { "_$it" },
-            fieldNameCase = { name ->
-                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value()
-                Name(listOf(sanitized))
-            },
-            parameterNameCase = { name -> Name(listOf(name.camelCase())) },
-            sanitizeSymbol = { it },
-            extraStatementTransforms = { stmt, tr ->
-                when (stmt) {
-                    is ConstructorStatement -> ConstructorStatement(
-                        type = tr.transformType(stmt.type),
-                        namedArguments = stmt.namedArguments
-                            .map { (k, v) -> sanitizationConfig.sanitizeFieldName(k) to tr.transformExpression(v) }
-                            .toMap(),
-                    )
-
-                    else -> stmt.transformChildren(tr)
-                }
-            },
-        )
-    }
 
     private val sharedSource = """
         |from __future__ import annotations
@@ -125,36 +71,33 @@ open class PythonIrEmitter(
         |
     """.trimMargin()
 
-    override fun emitShared(): File? {
-
-        val source = PackageName("shared").convert()
-
-        return if (emitShared.value) {
-            File(
-                Name.of(packageName.toDir() + "wirespec"),
-                listOf(raw(sharedSource + PythonGenerator.generate(source)))
-            )
-        } else {
-            null
-        }
+    override val shared = object : Shared {
+        override val packageString = "shared"
+        override val source = sharedSource + AstShared(packageString).convert()
+            .generatePython()
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let {
-            fun emitInit(def: Definition) = "from .${def.identifier.sanitize()} import ${def.identifier.sanitize()}"
+            fun emitInitImport(def: Definition) = Import(".${def.identifier.sanitize()}", LanguageType.Custom(def.identifier.sanitize()))
             val hasEndpoints = module.statements.any { it is Endpoint }
+            val initElements: List<Element> = listOf(
+                Import(".", LanguageType.Custom("model")),
+                Import(".", LanguageType.Custom("endpoint")),
+            ) + (if (hasEndpoints) listOf(Import(".", LanguageType.Custom("client"))) else emptyList()) +
+                listOf(Import(".", LanguageType.Custom("wirespec")))
             val init = File(
                 Name.of(packageName.toDir() + "__init__"),
-                listOf(RawElement("from . import model\nfrom . import endpoint" + (if (hasEndpoints) "\nfrom . import client" else "") + "\nfrom . import wirespec"))
+                initElements
             )
             val initEndpoint = File(
                 Name.of(packageName.toDir() + "endpoint/" + "__init__"),
-                listOf(RawElement(module.statements.filter { it is Endpoint }.map { stmt -> emitInit(stmt) }.joinToString("\n")))
+                module.statements.filter { it is Endpoint }.map { stmt -> emitInitImport(stmt) }
             )
             val initModel = File(
                 Name.of(packageName.toDir() + "model/" + "__init__"),
-                listOf(RawElement(module.statements.filter { it is Model }.map { stmt -> emitInit(stmt) }.joinToString("\n")))
+                module.statements.filter { it is Model }.map { stmt -> emitInitImport(stmt) }
             )
             val initClient = if (hasEndpoints) listOf(File(
                 Name.of(packageName.toDir() + "client/" + "__init__"),
@@ -175,123 +118,60 @@ open class PythonIrEmitter(
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        return file
-            .prependImports(buildImports("..wirespec"))
-            .placeInModule(packageName = packageName, definition = definition)
+        val subPackageName = packageName + definition
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = buildImports("..wirespec") + file.elements
+        )
     }
 
     override fun emit(type: Type, module: Module): File {
         val typeImports = type.importReferences().distinctBy { it.value }
-            .map { import(".${it.value}", it.value) }
+            .map { Import(".${it.value}", LanguageType.Custom(it.value)) }
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
-        return type.convertWithValidation(module)
-            .injectSelfReceiverToValidate(fieldNames)
-            .sanitizeNames(sanitizationConfig)
-            .prependImports(typeImports.takeIf { it.isNotEmpty() })
+        val file = type.convertWithValidation(module)
+            .transform {
+                matchingElements { fn: LanguageFunction ->
+                    if (fn.name == Name.of("validate")) {
+                        fn.copy(
+                            parameters = listOf(Parameter(Name.of("self"), LanguageType.Custom(""))),
+                        ).transform {
+                            statementAndExpression { s, t ->
+                                if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
+                                    FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
+                                } else {
+                                    s.transformChildren(t)
+                                }
+                            }
+                        }
+                    } else fn
+                }
+            }
+            .sanitizeNames()
+        return if (typeImports.isNotEmpty()) file.copy(elements = typeImports + file.elements)
+        else file
     }
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .sanitizeEnumEntries(sanitizeEntry = { it.sanitizeEnum().sanitizeKeywords() })
-        .sanitizeNames(sanitizationConfig)
-
-    override fun emit(union: Union): File =
-        union.convert()
-            .sanitizeNames(sanitizationConfig)
-
-    override fun emit(refined: Refined): File = refined
-        .convert()
-        .replaceRefinedFunctions(refined)
-        .sanitizeNames(sanitizationConfig)
-
-    override fun emit(endpoint: Endpoint): File {
-        val endpointImports = endpoint.importReferences().distinctBy { it.value }
-            .map { import("..model.${it.value}", it.value) }
-        return endpoint.convert()
-            .splitEndpointStructsToModuleLevel()
-            .let { it.copy(elements = endpointImports + it.elements) }
-            .snakeCaseHandlerAndCallMethods()
-            .sanitizeNames(sanitizationConfig)
-    }
-
-    override fun emit(channel: Channel): File =
-        channel.convert()
-            .sanitizeNames(sanitizationConfig)
-
-    override fun emitEndpointClient(endpoint: Endpoint): File {
-        val modelImports = endpoint.importReferences().distinctBy { it.value }
-            .map { import("..model.${it.value}", it.value) }
-        val endpointImport = import("..endpoint.${endpoint.identifier.value}", "*")
-        val endpointName = endpoint.identifier.value
-
-        val file = super.emitEndpointClient(endpoint)
-            .sanitizeNames(sanitizationConfig)
-            .addSelfReceiverToClientFields()
-            .snakeCaseClientFunctions()
-            .flattenEndpointTypeRefs(endpointName)
-
-        val subPackageName = packageName + "client"
-        return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
-            elements = buildImports("..wirespec") +
-                    modelImports +
-                    listOf(endpointImport) +
-                    file.elements
-        )
-    }
-
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
-        val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .map { import(".model.${it.value}", it.value) }
-        val endpointImports = endpoints.map { import(".endpoint.${it.identifier.value}", "*") }
-        val clientImports =
-            endpoints.map { import(".client.${it.identifier.value}Client", "${it.identifier.value}Client") }
-        val allImports = modelImports + endpointImports + clientImports
-        val endpointNames = endpoints.map { it.identifier.value }
-
-        val file = super.emitClient(endpoints, logger)
-            .sanitizeNames(sanitizationConfig)
-            .addSelfReceiverToClientFields()
-            .snakeCaseClientFunctions()
-            .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
-
-        return File(
-            name = Name.of(packageName.toDir() + file.name.pascalCase()),
-            elements = buildImports(".wirespec") +
-                    allImports +
-                    file.elements
-        )
-    }
-
-    private fun Identifier.sanitize(): String = value
-        .split(".", " ")
-        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
-        .joinToString("")
-        .filter { it.isLetterOrDigit() || it == '_' }
-        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
-        .let { if (this is FieldIdentifier) it.sanitizeKeywords() else it }
-
-    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
-
-    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_")
-        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
-
-    // endregion
-
-    // region UnionDefinitionEmitter
+        .transform {
+            matchingElements { languageEnum: LanguageEnum ->
+                languageEnum.copy(
+                    entries = languageEnum.entries.map {
+                        LanguageEnum.Entry(Name.of(it.name.value().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.value()}\""))
+                    },
+                )
+            }
+        }
+        .sanitizeNames()
 
     override fun emit(union: Union): File =
         union.convert()
             .sanitizeNames()
 
-    // endregion
-
-    // region RefinedTypeDefinitionEmitter
-
     override fun emit(refined: Refined): File {
         val file = refined.convert()
         val struct = file.findElement<Struct>()!!
-        val validateFunction = struct.elements.filterIsInstance<LanguageFunction>().first { it.name == Name.of("validate") }
         val constraintExpr = refined.reference.convertConstraint(FieldCall(VariableReference(Name.of("self")), Name.of("value")))
         val validate = function("validate") {
             arg("self", LanguageType.Custom(""))
@@ -316,13 +196,9 @@ open class PythonIrEmitter(
             .sanitizeNames()
     }
 
-    // endregion
-
-    // region EndpointDefinitionEmitter
-
     override fun emit(endpoint: Endpoint): File {
-        val imports = endpoint.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
+        val endpointImports = endpoint.importReferences().distinctBy { it.value }
+            .map { Import("..model.${it.value}", LanguageType.Custom(it.value)) }
         val converted = endpoint.convert().findElement<Namespace>()!!
         val flattened = converted.flattenNestedStructs()
         val (moduleElements, classElements) = flattened.elements.partition { it is Struct || it is LanguageUnion }
@@ -331,15 +207,129 @@ open class PythonIrEmitter(
             elements = classElements,
             extends = converted.extends,
         )
-        val elements = buildList {
-            if (imports.isNotEmpty()) add(RawElement(imports))
+        return LanguageFile(converted.name, buildList {
+            addAll(endpointImports)
             addAll(moduleElements)
             add(endpointClass)
-        }
-        return LanguageFile(converted.name, elements)
+        })
             .sanitizeNames()
             .snakeCaseHandlerAndCallMethods()
     }
+
+    override fun emit(channel: Channel): File =
+        channel.convert()
+            .sanitizeNames()
+
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val modelImports = endpoint.importReferences().distinctBy { it.value }
+            .map { Import("..model.${it.value}", LanguageType.Custom(it.value)) }
+        val endpointImport = Import("..endpoint.${endpoint.identifier.value}", LanguageType.Custom("*"))
+        val endpointName = endpoint.identifier.value
+
+        val file = super.emitEndpointClient(endpoint)
+            .sanitizeNames()
+            .addSelfReceiverToClientFields()
+            .snakeCaseClientFunctions()
+            .flattenEndpointTypeRefs(endpointName)
+
+        val subPackageName = packageName + "client"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = buildImports("..wirespec") +
+                modelImports +
+                listOf(endpointImport) +
+                file.elements
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+            .map { Import(".model.${it.value}", LanguageType.Custom(it.value)) }
+        val endpointImports = endpoints.map { Import(".endpoint.${it.identifier.value}", LanguageType.Custom("*")) }
+        val clientImports = endpoints.map { Import(".client.${it.identifier.value}Client", LanguageType.Custom("${it.identifier.value}Client")) }
+        val allImports = modelImports + endpointImports + clientImports
+        val endpointNames = endpoints.map { it.identifier.value }
+
+        val file = super.emitClient(endpoints, logger)
+            .sanitizeNames()
+            .addSelfReceiverToClientFields()
+            .snakeCaseClientFunctions()
+            .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
+
+        return File(
+            name = Name.of(packageName.toDir() + file.name.pascalCase()),
+            elements = buildImports(".wirespec") +
+                allImports +
+                file.elements
+        )
+    }
+
+    private fun <T : Element> T.sanitizeNames(): T = transform {
+        fields { field ->
+            field.copy(name = field.name.sanitizeName())
+        }
+        parameters { param ->
+            param.copy(name = Name.of(param.name.camelCase().sanitizeKeywords()))
+        }
+        statementAndExpression { stmt, tr ->
+            when (stmt) {
+                is FieldCall -> FieldCall(
+                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                    field = stmt.field.sanitizeName(),
+                )
+                is ConstructorStatement -> ConstructorStatement(
+                    type = tr.transformType(stmt.type),
+                    namedArguments = stmt.namedArguments
+                        .map { (k, v) -> k.sanitizeName() to tr.transformExpression(v) }
+                        .toMap(),
+                )
+                else -> stmt.transformChildren(tr)
+            }
+        }
+    }
+
+    private fun Name.sanitizeName(): Name {
+        val sanitized = if (parts.size > 1) camelCase() else value()
+        return Name(listOf(sanitized.sanitizeKeywords()))
+    }
+
+    private fun Identifier.sanitize(): String = value
+        .split(".", " ")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .filter { it.isLetterOrDigit() || it == '_' }
+        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
+        .let { if (this is FieldIdentifier) it.sanitizeKeywords() else it }
+
+    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+
+    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_")
+        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
+
+    private fun sort(definition: Definition) = when (definition) {
+        is Enum -> 1
+        is Refined -> 2
+        is Type -> 3
+        is Union -> 4
+        is Endpoint -> 5
+        is Channel -> 6
+    }
+
+    private fun buildImports(wirespecPath: String): List<Element> = listOf(
+        Import("__future__", LanguageType.Custom("annotations")),
+        RawElement("import re"),
+        Import("abc", LanguageType.Custom("ABC")),
+        Import("abc", LanguageType.Custom("abstractmethod")),
+        Import("dataclasses", LanguageType.Custom("dataclass")),
+        Import("typing", LanguageType.Custom("Any")),
+        Import("typing", LanguageType.Custom("Generic")),
+        Import("typing", LanguageType.Custom("List")),
+        Import("typing", LanguageType.Custom("Optional")),
+        RawElement("import enum"),
+        Import(wirespecPath, LanguageType.Custom("T")),
+        Import(wirespecPath, LanguageType.Custom("Wirespec")),
+        Import(wirespecPath, LanguageType.Custom("_raise")),
+    )
 
     private fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {
         matchingElements { iface: Interface ->
@@ -353,52 +343,6 @@ open class PythonIrEmitter(
                 )
             } else iface
         }
-    }
-
-    override fun emitEndpointClient(endpoint: Endpoint): File {
-        val imports = endpoint.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "from ..model.${it.value} import ${it.value}" }
-        val endpointImport = "from ..endpoint.${endpoint.identifier.value} import *"
-        val endpointName = endpoint.identifier.value
-
-        val file = super.emitEndpointClient(endpoint)
-            .sanitizeNames()
-            .addSelfReceiverToClientFields()
-            .snakeCaseClientFunctions()
-            .flattenEndpointTypeRefs(endpointName)
-
-        val subPackageName = packageName + "client"
-        return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
-            elements = listOf(RawElement(import)) +
-                listOfNotNull(
-                    if (imports.isNotEmpty()) RawElement(imports) else null,
-                    RawElement(endpointImport),
-                ) +
-                file.elements
-        )
-    }
-
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
-        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .joinToString("\n") { "from .model.${it.value} import ${it.value}" }
-        val endpointImports = endpoints.joinToString("\n") { "from .endpoint.${it.identifier.value} import *" }
-        val clientImports = endpoints.joinToString("\n") { "from .client.${it.identifier.value}Client import ${it.identifier.value}Client" }
-        val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
-        val endpointNames = endpoints.map { it.identifier.value }
-
-        val file = super.emitClient(endpoints, logger)
-            .sanitizeNames()
-            .addSelfReceiverToClientFields()
-            .snakeCaseClientFunctions()
-            .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
-
-        return File(
-            name = Name.of(packageName.toDir() + file.name.pascalCase()),
-            elements = listOf(RawElement(rootImport)) +
-                (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
-                file.elements
-        )
     }
 
     private fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = transform {
@@ -446,11 +390,7 @@ open class PythonIrEmitter(
             when (stmt) {
                 is FunctionCall -> {
                     val nameStr = stmt.name.value()
-                    val newName = if ("." in nameStr) {
-                        stmt.name
-                    } else {
-                        Name.of(Name.of(nameStr).snakeCase())
-                    }
+                    val newName = if ("." in nameStr) stmt.name else Name.of(Name.of(nameStr).snakeCase())
                     FunctionCall(
                         name = newName,
                         receiver = stmt.receiver?.let { tr.transformExpression(it) },
@@ -462,16 +402,6 @@ open class PythonIrEmitter(
             }
         }
     }
-
-    // endregion
-
-    // region ChannelDefinitionEmitter
-
-    override fun emit(channel: Channel): File =
-        channel.convert()
-            .sanitizeNames()
-
-    // endregion
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

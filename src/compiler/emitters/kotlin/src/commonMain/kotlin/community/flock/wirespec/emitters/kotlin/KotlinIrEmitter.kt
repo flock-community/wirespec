@@ -62,131 +62,232 @@ open class KotlinIrEmitter(
 
     override val extension = FileExtension.Kotlin
 
-    private val wirespecImports = listOf(
-        import("$DEFAULT_SHARED_PACKAGE_STRING.kotlin", "Wirespec"),
-        import("kotlin.reflect", "typeOf"),
-    )
+    private val wirespecImport = """
+        |
+        |import $DEFAULT_SHARED_PACKAGE_STRING.kotlin.Wirespec
+        |import kotlin.reflect.typeOf
+        |
+    """.trimMargin()
 
-    private val sanitizationConfig: SanitizationConfig by lazy {
-        SanitizationConfig(
-            reservedKeywords = reservedKeywords,
-            escapeKeyword = { it.addBackticks() },
-            fieldNameCase = { name ->
-                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
-                Name(listOf(sanitized))
+    override val shared = object : Shared {
+        override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
+
+        private val clientServer = listOf(
+            `interface`("ServerEdge") {
+                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                function("from") {
+                    returnType(type("Req"))
+                    arg("request", type("RawRequest"))
+                }
+                function("to") {
+                    returnType(type("RawResponse"))
+                    arg("response", type("Res"))
+                }
             },
-            parameterNameCase = { name -> Name(listOf(name.camelCase().sanitizeSymbol())) },
-            sanitizeSymbol = { it.sanitizeSymbol() },
-            extraStatementTransforms = { stmt, tr ->
-                when {
-                    stmt is FunctionCall && stmt.name.value() == "validate" ->
-                        stmt.copy(typeArguments = emptyList()).transformChildren(tr)
-                    stmt is ConstructorStatement -> ConstructorStatement(
-                        type = tr.transformType(stmt.type),
-                        namedArguments = stmt.namedArguments.map { (name, expr) ->
-                            sanitizationConfig.sanitizeFieldName(name) to tr.transformExpression(expr)
-                        }.toMap(),
-                    )
-                    else -> stmt.transformChildren(tr)
+            `interface`("ClientEdge") {
+                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                function("to") {
+                    returnType(type("RawRequest"))
+                    arg("request", type("Req"))
+                }
+                function("from") {
+                    returnType(type("Res"))
+                    arg("response", type("RawResponse"))
+                }
+            },
+            `interface`("Client") {
+                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                field("pathTemplate", LanguageType.String)
+                field("method", LanguageType.String)
+                function("client") {
+                    returnType(type("ClientEdge", type("Req"), type("Res")))
+                    arg("serialization", type("Serialization"))
+                }
+            },
+            `interface`("Server") {
+                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
+                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
+                field("pathTemplate", LanguageType.String)
+                field("method", LanguageType.String)
+                function("server") {
+                    returnType(type("ServerEdge", type("Req"), type("Res")))
+                    arg("serialization", type("Serialization"))
+                }
+            },
+        )
+
+        override val source = AstShared(packageString)
+            .convert()
+            .transform {
+                matchingElements { file: LanguageFile ->
+                    val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
+                    file.copy(elements = packageElements + Import("kotlin.reflect", LanguageType.Custom("KType")) + rest)
                 }
             },
         )
     }
 
-    override fun emitShared(): File? {
-
-        val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.kotlin")
-
-        val clientServer = packageName.convertClientServer()
-
-        val wirespecShared = packageName.convert()
-            .transform {
-                matchingElements { file: File ->
-                    val (packageElements, rest) = file.elements.partition { it is Package }
-                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + rest)
-                }
-                injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
-                }
-            }
-
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
+        val files = super.emit(module, logger)
         return if (emitShared.value) {
-            wirespecShared
+            files + File(
+                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.kotlin").toDir() + "Wirespec"),
+                listOf(RawElement(shared.source))
+            )
         } else {
-            null
+            files
         }
     }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        return file
-            .prependImports(wirespecImports.takeIf { module.needImports() })
-            .placeInPackage(packageName = packageName, definition = definition)
+        val subPackageName = packageName + definition
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = buildList {
+                add(LanguagePackage(subPackageName.value))
+                if (module.needImports()) add(RawElement(wirespecImport))
+                addAll(file.elements)
+            }
+        )
     }
 
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
-            .sanitizeNames(sanitizationConfig)
-            .ensureEmptyStructHasConstructor()
+            .sanitizeNames()
+            .transform {
+                matchingElements { struct: Struct ->
+                    if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
+                    else struct
+                }
+            }
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .sanitizeNames(sanitizationConfig)
-        .injectEnumLabelField(sanitizeEntry = { it.sanitizeEnum() })
+        .sanitizeNames()
+        .transform {
+            matchingElements { languageEnum: LanguageEnum ->
+                languageEnum.withLabelField(
+                    sanitizeEntry = { it.sanitizeEnum() },
+                    labelFieldOverride = true,
+                    labelExpression = RawExpression("label"),
+                )
+            }
+        }
 
     override fun emit(union: Union): File = union
         .convert()
-        .sanitizeNames(sanitizationConfig)
+        .sanitizeNames()
 
     override fun emit(refined: Refined): File {
-        val file = refined.convert().sanitizeNames(sanitizationConfig)
-        val updatedStruct = file.findElement<Struct>()?.markMembersAsOverride()
-        return LanguageFile(Name.of(refined.identifier.sanitize()), listOfNotNull(updatedStruct))
+        val file = refined.convert().sanitizeNames()
+        val struct = file.findElement<Struct>()!!
+        val toStringExpr = when (refined.reference.type) {
+            is Reference.Primitive.Type.String -> "value"
+            else -> "value.toString()"
+        }
+        val updatedStruct = struct.copy(
+            fields = struct.fields.map { f -> f.copy(isOverride = true) },
+            elements = listOf(
+                function("toString", isOverride = true) {
+                    returnType(LanguageType.String)
+                    returns(RawExpression(toStringExpr))
+                },
+                function("validate", isOverride = true) {
+                    returnType(LanguageType.Boolean)
+                    returns(refined.reference.convertConstraint(VariableReference(Name.of("value"))))
+                },
+            ),
+        )
+        return LanguageFile(Name.of(refined.identifier.sanitize()), listOf(updatedStruct))
     }
 
     override fun emit(endpoint: Endpoint): File {
-        val imports = endpoint.buildModelImports(packageName)
-        val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
+        val imports = endpoint.buildImports()
+        val file = endpoint.convert().sanitizeNames()
+        val endpointNamespace = file.findElement<Namespace>()!!
         val body = endpointNamespace.injectCompanionObject(endpoint)
-        return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
-            .sanitizeNames(sanitizationConfig)
-            .prependImports(imports.takeIf { it.isNotEmpty() })
+        return if (imports.isNotEmpty()) {
+            LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
+        } else {
+            LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
+        }
     }
 
-    override fun emit(channel: Channel): File = channel
-        .convert()
-        .sanitizeNames(sanitizationConfig)
-        .prependImports(channel.buildModelImports(packageName).takeIf { it.isNotEmpty() })
+    override fun emit(channel: Channel): File {
+        val imports = channel.buildImports()
+        val file = channel.convert().sanitizeNames()
+        return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
+        else file
+    }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
-        val imports = endpoint.emitEndpointImports()
+        val imports = endpoint.buildImports()
         val endpointImport = "import ${packageName.value}.endpoint.${endpoint.identifier.value}"
         val allImports = listOf(imports, endpointImport).filter { it.isNotEmpty() }.joinToString("\n")
         val file = super.emitEndpointClient(endpoint).sanitizeNames()
         val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
-            elements = listOf(LanguagePackage(subPackageName.value)) +
-                listOf(RawElement(import)) +
-                (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
-                file.elements
+            elements = buildList {
+                add(LanguagePackage(subPackageName.value))
+                add(RawElement(wirespecImport))
+                if (allImports.isNotEmpty()) add(RawElement(allImports))
+                addAll(file.elements)
+            }
         )
     }
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }
-        val endpointImports = endpoints.map { "import ${packageName.value}.endpoint.${it.identifier.value}" }.joinToString("\n") { it.trimStart() }
-        val clientImports = endpoints.map { "import ${packageName.value}.client.${it.identifier.value}Client" }.joinToString("\n") { it.trimStart() }
+            .joinToString("\n") { "import ${packageName.value}.model.${it.value}" }
+        val endpointImports = endpoints
+            .joinToString("\n") { "import ${packageName.value}.endpoint.${it.identifier.value}" }
+        val clientImports = endpoints
+            .joinToString("\n") { "import ${packageName.value}.client.${it.identifier.value}Client" }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
         val file = super.emitClient(endpoints, logger).sanitizeNames()
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
-            elements = listOf(LanguagePackage(packageName.value)) +
-                listOf(RawElement(import)) +
-                (if (allImports.isNotEmpty()) listOf(RawElement(allImports)) else emptyList()) +
-                file.elements
+            elements = buildList {
+                add(LanguagePackage(packageName.value))
+                add(RawElement(wirespecImport))
+                if (allImports.isNotEmpty()) add(RawElement(allImports))
+                addAll(file.elements)
+            }
         )
+    }
+
+    private fun <T : Element> T.sanitizeNames(): T = transform {
+        fields { field ->
+            field.copy(name = field.name.sanitizeName())
+        }
+        parameters { param ->
+            param.copy(name = Name.of(param.name.camelCase().sanitizeSymbol().sanitizeKeywords()))
+        }
+        statementAndExpression { stmt, tr ->
+            when (stmt) {
+                is FieldCall -> FieldCall(
+                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                    field = stmt.field.sanitizeName(),
+                )
+                is ConstructorStatement -> ConstructorStatement(
+                    type = tr.transformType(stmt.type),
+                    namedArguments = stmt.namedArguments.map { (name, expr) ->
+                        name.sanitizeName() to tr.transformExpression(expr)
+                    }.toMap(),
+                )
+                else -> stmt.transformChildren(tr)
+            }
+        }
+    }
+
+    private fun Name.sanitizeName(): Name {
+        val sanitized = if (parts.size > 1) camelCase() else value().sanitizeSymbol()
+        return Name(listOf(sanitized.sanitizeKeywords()))
     }
 
     private fun Identifier.sanitize(): String = value
@@ -212,6 +313,40 @@ open class KotlinIrEmitter(
         .joinToString("_")
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
+
+    private fun Definition.buildImports() = importReferences()
+        .distinctBy { it.value }
+        .joinToString("\n") { "import ${packageName.value}.model.${it.value}" }
+
+    private fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace =
+        transform {
+            injectAfter { iface: Interface ->
+                if (iface.name == Name.of("Handler")) listOf(companionObject(endpoint)) else emptyList()
+            }
+        }
+
+    private fun companionObject(endpoint: Endpoint): RawElement {
+        val pathTemplate = "/" + endpoint.path.joinToString("/") {
+            when (it) {
+                is Endpoint.Segment.Literal -> it.value
+                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
+            }
+        }
+        return """
+            |companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+            |  override val pathTemplate = "$pathTemplate"
+            |  override val method = "${endpoint.method}"
+            |  override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+            |    override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+            |    override fun to(response: Response<*>) = toRawResponse(serialization, response)
+            |  }
+            |  override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+            |    override fun to(request: Request) = toRawRequest(serialization, request)
+            |    override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+            |  }
+            |}
+        """.trimMargin().let(::raw)
+    }
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

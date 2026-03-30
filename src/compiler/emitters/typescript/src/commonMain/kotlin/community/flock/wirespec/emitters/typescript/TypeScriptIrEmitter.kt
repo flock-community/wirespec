@@ -49,10 +49,6 @@ import community.flock.wirespec.ir.core.plus
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformer
-import community.flock.wirespec.ir.transformer.SanitizationConfig
-import community.flock.wirespec.ir.transformer.sanitizeFieldName
-import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
@@ -151,64 +147,16 @@ open class TypeScriptIrEmitter : IrEmitter {
                 }
         )
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> = super.emit(module, logger).let {
-        it + File(Name.of("Wirespec"), listOf(RawElement(shared.source)))
-    }
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
+        super.emit(module, logger) + File(Name.of("Wirespec"), listOf(RawElement(shared.source)))
 
-    override fun emit(definition: Definition, module: Module, logger: Logger): File =
-        super.emit(definition, module, logger).let { file ->
-            val subPackageName = PackageName("") + definition
-            File(
-                name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
-                elements = listOf(RawElement("import {Wirespec} from '../Wirespec'\n")) + file.elements
-            )
-        }
-
-    fun String.sanitizeSymbol() = filter { it.isLetterOrDigit() || it == '_' }
-
-    fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
-
-    fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
-
-    private fun Name.sanitizeCamelCase(): Name {
-        val sanitized = if (parts.size > 1) {
-            camelCase()
-        } else {
-            value().sanitizeSymbol()
-        }
-        return Name(listOf(sanitized))
-    }
-
-    private fun <T : Element> T.sanitizeNames(): T = transform {
-        fields { field ->
-            field.copy(name = field.name.sanitizeCamelCase())
-        }
-        parameters { param ->
-            param.copy(name = param.name.sanitizeCamelCase())
-        }
-        statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is FieldCall -> FieldCall(
-                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                    field = stmt.field.sanitizeCamelCase(),
-                )
-                is VariableReference -> VariableReference(
-                    name = stmt.name.sanitizeCamelCase(),
-                )
-                is ConstructorStatement -> ConstructorStatement(
-                    type = tr.transformType(stmt.type),
-                    namedArguments = stmt.namedArguments.map { (key, value) ->
-                        key.sanitizeCamelCase() to tr.transformExpression(value)
-                    }.toMap(),
-                )
-                is Assignment -> Assignment(
-                    name = stmt.name.sanitizeCamelCase(),
-                    value = tr.transformExpression(stmt.value),
-                    isProperty = stmt.isProperty,
-                )
-                else -> stmt.transformChildren(tr)
-            }
-        }
+    override fun emit(definition: Definition, module: Module, logger: Logger): File {
+        val file = super.emit(definition, module, logger)
+        val subPackageName = PackageName("") + definition
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(RawElement("import {Wirespec} from '../Wirespec'\n")) + file.elements
+        )
     }
 
     override fun emit(type: AstType, module: Module): File {
@@ -221,9 +169,30 @@ open class TypeScriptIrEmitter : IrEmitter {
         val allImports = listOf(typeImports, validateImports).filter { it.isNotEmpty() }.joinToString("\n")
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
-            .sanitizeNames(sanitizationConfig)
-            .renameValidateAndBindObjReceiver(type.identifier.value, fieldNames)
-        return if (allImports.isNotEmpty()) file.copy(elements = allImports + file.elements)
+            .sanitizeNames()
+            .transform {
+                matchingElements { fn: community.flock.wirespec.ir.core.Function ->
+                    if (fn.name == Name.of("validate")) {
+                        fn.copy(
+                            name = Name.of("validate${type.identifier.value}"),
+                            parameters = listOf(Parameter(Name.of("obj"), LanguageType.Custom(type.identifier.value))),
+                        ).transform {
+                            statementAndExpression { s, t ->
+                                when {
+                                    s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
+                                        val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
+                                        FunctionCall(name = Name.of("validate$typeName"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
+                                    }
+                                    s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
+                                        FieldCall(receiver = VariableReference(Name.of("obj")), field = s.field)
+                                    else -> s.transformChildren(t)
+                                }
+                            }
+                        }
+                    } else fn
+                }
+            }
+        return if (allImports.isNotEmpty()) file.copy(elements = listOf(RawElement(allImports)) + file.elements)
         else file
     }
 
@@ -256,8 +225,13 @@ open class TypeScriptIrEmitter : IrEmitter {
             .map { import("../model", it.value, isTypeOnly = true) }
         val hasRequestParams = endpoint.requestParameters().isNotEmpty()
 
-        fun File.injectApiConst(): File = transform {
-            injectAfter<Namespace> { listOf(buildApiConst(endpoint)) }
+        val apiName = endpoint.identifier.value.firstToLower()
+        val method = endpoint.method.name
+        val pathString = endpoint.path.joinToString("/") {
+            when (it) {
+                is Endpoint.Segment.Literal -> it.value
+                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
+            }
         }
         fun File.applyCallParamsIfNeeded(): File =
             if (hasRequestParams) bindCallToRequestParams() else this
@@ -293,7 +267,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emit(channel: Channel): File =
         channel.convert()
-            .sanitizeNames(sanitizationConfig)
+            .sanitizeNames()
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val endpointName = endpoint.identifier.value
@@ -303,15 +277,9 @@ open class TypeScriptIrEmitter : IrEmitter {
             .map { import("../model", it.value, isTypeOnly = true) }
 
         val params = buildEndpointParams(endpoint)
-        val paramList = if (params.isNotEmpty()) {
-            "params: $endpointName.RequestParams"
-        } else ""
+        val paramList = if (params.isNotEmpty()) "params: $endpointName.RequestParams" else ""
 
-        val requestArgs = if (params.isNotEmpty()) {
-            "$endpointName.request(params)"
-        } else {
-            "$endpointName.request()"
-        }
+        val requestArgs = if (params.isNotEmpty()) "$endpointName.request(params)" else "$endpointName.request()"
 
         val code = buildString {
             appendLine("export const ${methodName}Client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
@@ -324,16 +292,14 @@ open class TypeScriptIrEmitter : IrEmitter {
             append("})")
         }
 
-        val elements = buildList {
-            add(RawElement("import {Wirespec} from '../Wirespec'"))
-            add(RawElement("import {$endpointName} from '../endpoint/$endpointName'"))
-            if (imports.isNotEmpty()) add(RawElement(imports))
-            add(RawElement(code))
-        }
-
         return File(
             Name.of("client/${endpointName}Client"),
-            elements
+            buildList {
+                add(RawElement("import {Wirespec} from '../Wirespec'"))
+                add(RawElement("import {$endpointName} from '../endpoint/$endpointName'"))
+                if (imports.isNotEmpty()) add(RawElement(imports))
+                add(RawElement(code))
+            }
         )
     }
 
@@ -341,7 +307,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
 
         val clientImports = endpoints.joinToString("\n") {
-            val methodName = it.identifier.value.replaceFirstChar { c -> c.lowercase() }
+            val methodName = it.identifier.value.firstToLower()
             "import {${methodName}Client} from './client/${it.identifier.value}Client'"
         }
 
@@ -356,16 +322,51 @@ open class TypeScriptIrEmitter : IrEmitter {
             append("})")
         }
 
-        val elements = buildList {
-            add(RawElement("import {Wirespec} from './Wirespec'"))
-            add(RawElement(clientImports))
-            add(RawElement(code))
-        }
-
         return File(
             Name.of("Client"),
-            elements
+            listOf(
+                RawElement("import {Wirespec} from './Wirespec'"),
+                RawElement(clientImports),
+                RawElement(code),
+            )
         )
+    }
+
+    private fun <T : Element> T.sanitizeNames(): T = transform {
+        fields { field ->
+            field.copy(name = field.name.sanitizeName())
+        }
+        parameters { param ->
+            param.copy(name = param.name.sanitizeName())
+        }
+        statementAndExpression { stmt, tr ->
+            when (stmt) {
+                is FieldCall -> FieldCall(
+                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                    field = stmt.field.sanitizeName(),
+                )
+                is VariableReference -> VariableReference(
+                    name = stmt.name.sanitizeName(),
+                )
+                is ConstructorStatement -> ConstructorStatement(
+                    type = tr.transformType(stmt.type),
+                    namedArguments = stmt.namedArguments.map { (key, value) ->
+                        key.sanitizeName() to tr.transformExpression(value)
+                    }.toMap(),
+                )
+                is Assignment -> Assignment(
+                    name = stmt.name.sanitizeName(),
+                    value = tr.transformExpression(stmt.value),
+                    isProperty = stmt.isProperty,
+                )
+                else -> stmt.transformChildren(tr)
+            }
+        }
+    }
+
+    private fun Name.sanitizeName(): Name {
+        val sanitized = if (parts.size > 1) camelCase() else value().sanitizeSymbol()
+        return Name(listOf(sanitized))
     }
 
     private fun Identifier.sanitize() = "\"${value}\""
