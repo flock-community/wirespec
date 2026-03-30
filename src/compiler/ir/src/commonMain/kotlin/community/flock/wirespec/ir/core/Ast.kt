@@ -68,6 +68,8 @@ sealed interface Type {
     data class Dict(val keyType: Type, val valueType: Type) : Type
     data class Custom(val name: kotlin.String, val generics: List<Type> = emptyList()) : Type
     data class Nullable(val type: Type) : Type
+    data class IntegerLiteral(val value: Int) : Type
+    data class StringLiteral(val value: kotlin.String) : Type
 }
 
 sealed interface Element

@@ -304,6 +304,8 @@ object RustGenerator : Generator {
             }
         }
         is Type.Nullable -> "Option<${type.emit()}>"
+        is Type.IntegerLiteral -> "i32"
+        is Type.StringLiteral -> "String"
     }
 
     private val serializationMethodNames = setOf(

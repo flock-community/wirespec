@@ -81,7 +81,7 @@ fun Type.transformChildren(transformer: Transformer): Type = when (this) {
     )
     is Type.Custom -> copy(generics = generics.map { transformer.transformType(it) })
     is Type.Nullable -> copy(type = transformer.transformType(type))
-    is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect -> this
+    is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect, is Type.IntegerLiteral, is Type.StringLiteral -> this
 }
 
 fun Element.transformChildren(transformer: Transformer): Element = when (this) {

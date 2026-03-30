@@ -380,6 +380,8 @@ private class KotlinEmitter(val file: File) {
         is Type.Dict -> "Map"
         is Type.Custom -> name
         is Type.Nullable -> "${type.emitGenerics()}?"
+        is Type.IntegerLiteral -> "Int"
+        is Type.StringLiteral -> "String"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
