@@ -467,6 +467,8 @@ private class TypeScriptFileEmitter(val file: File) {
             }
         }
         is Type.Nullable -> "${type.emit()} | undefined"
+        is Type.IntegerLiteral -> value.toString()
+        is Type.StringLiteral -> "\"$value\""
     }
 
     private fun emitConstructorCall(type: Type, namedArguments: Map<Name, Expression>): String {

@@ -56,7 +56,7 @@ class TypeScriptIrEmitterTest {
             |  export type ResponseTodoDto = Response200 | Response201
             |  export type ResponseError = Response500
             |  export type Response200 = {
-            |    "status": number,
+            |    "status": 200,
             |    "headers": {},
             |    "body": TodoDto,
             |  }
@@ -67,7 +67,7 @@ class TypeScriptIrEmitterTest {
             |    body: params.body,
             |  })
             |  export type Response201 = {
-            |    "status": number,
+            |    "status": 201,
             |    "headers": {"token": Token, "refreshToken": Token | undefined},
             |    "body": TodoDto,
             |  }
@@ -78,7 +78,7 @@ class TypeScriptIrEmitterTest {
             |    body: params.body,
             |  })
             |  export type Response500 = {
-            |    "status": number,
+            |    "status": 500,
             |    "headers": {},
             |    "body": Error,
             |  }
@@ -272,7 +272,7 @@ class TypeScriptIrEmitterTest {
             |  export type Response2XX<T = unknown> = Response200
             |  export type ResponseListTodoDto = Response200
             |  export type Response200 = {
-            |    "status": number,
+            |    "status": 200,
             |    "headers": {},
             |    "body": TodoDto[],
             |  }

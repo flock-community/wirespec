@@ -553,7 +553,7 @@ fun EndpointWirespec.convert(): File {
                 val statusCode = response.status.toIntOrNull() ?: 0
                 val statusClassName = response.status.replaceFirstChar { it.uppercaseChar() }
                 struct("Response$statusClassName") {
-                    field("status", integer32, isOverride = true)
+                    field("status", Type.IntegerLiteral(statusCode), isOverride = true)
                     field("headers", type("Headers"), isOverride = true)
                     field("body", bodyType, isOverride = true)
                     struct("Headers") {
@@ -879,6 +879,8 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Boolean -> "Boolean"
     is Type.Bytes -> "Bytes"
     is Type.Dict -> "Map"
+    is Type.IntegerLiteral -> "Integer"
+    is Type.StringLiteral -> "String"
 }
 
 fun ReferenceWirespec.convert(): Type = when (this) {

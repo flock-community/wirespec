@@ -359,6 +359,8 @@ private class JavaEmitter(val file: File) {
         is Type.Dict -> "java.util.Map"
         is Type.Custom -> name
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
+        is Type.IntegerLiteral -> "Integer"
+        is Type.StringLiteral -> "String"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
