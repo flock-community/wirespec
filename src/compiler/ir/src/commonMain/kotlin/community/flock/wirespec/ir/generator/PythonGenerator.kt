@@ -59,27 +59,35 @@ object PythonGenerator : Generator {
 
     private fun String.indentCode(level: Int): String = " ".repeat(level * 4) + this
 
-    private fun File.emit(indent: Int): String = groupImports(elements).joinToString("") { it.emit(indent) }.compact()
+    private fun File.emit(indent: Int): String {
+        val allUnions = elements.flatMap { it.findAllUnions() }
+        return groupImports(elements).joinToString("") { it.emit(indent, allUnions = allUnions) }.removeEmptyLines()
+    }
 
-    private fun groupImports(elements: List<Element>): List<Element> = buildList {
+    private fun groupImports(elements: List<Element>): List<Element> {
+        val result = mutableListOf<Element>()
         var i = 0
         while (i < elements.size) {
             val element = elements[i]
-            if (element is Import && element.path != "." && element.path.isNotEmpty()) {
+            if (element is Import && element.path != ".") {
                 val path = element.path
                 val types = mutableListOf(element.type.name)
                 while (i + 1 < elements.size) {
-                    val next = elements[i + 1] as? Import ?: break
-                    if (next.path != path) break
-                    types.add(next.type.name)
-                    i++
+                    val next = elements[i + 1]
+                    if (next is Import && next.path == path) {
+                        types.add(next.type.name)
+                        i++
+                    } else {
+                        break
+                    }
                 }
-                add(RawElement("from $path import ${types.joinToString(", ")}"))
+                result.add(RawElement("from $path import ${types.joinToString(", ")}"))
             } else {
-                add(element)
+                result.add(element)
             }
             i++
         }
+        return result
     }
 
     private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false, qualifier: ((String) -> String)? = null): String = when (this) {
