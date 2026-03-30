@@ -502,7 +502,9 @@ object TypeScriptGenerator : Generator {
                 }
                 val defaultStr = default?.let {
                     val bodyStr = it.joinToString("") { stmt -> stmt.emit(indent + 2) }
-                    "default: {\n".indentCode(indent + 1) + bodyStr + "}\n".indentCode(indent + 1)
+                    "default: {\n".indentCode(indent + 1) +
+                        bodyStr.replace("${expression.emit()}.status", "(${expression.emit()} as any).status") +
+                        "}\n".indentCode(indent + 1)
                 } ?: ""
                 "switch (${expression.emit()}.status) {\n".indentCode(indent) + casesStr + defaultStr + "}\n".indentCode(indent)
             } else {
