@@ -27,21 +27,29 @@ import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.converter.requestParameters
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.Assignment
+import community.flock.wirespec.ir.core.BinaryOp
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.ErrorStatement
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Parameter
+import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.Type as LanguageType
+import community.flock.wirespec.ir.core.Case
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
+import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.core.transformer
 import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.ir.generator.generateTypeScript
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
@@ -207,6 +215,26 @@ open class TypeScriptIrEmitter : IrEmitter {
         val hasRequestParams = endpoint.requestParameters().isNotEmpty()
         val endpointNamespace = endpoint.convert().sanitizeNames()
             .transform {
+                statement { stmt, transformer ->
+                    when (stmt) {
+                        is Switch -> stmt.copy(
+                            default = stmt.default?.map { s ->
+                                if (s is ErrorStatement && s.message is BinaryOp) {
+                                    val binary = s.message as BinaryOp
+                                    val literal = binary.left as? Literal
+                                    if (literal != null) ErrorStatement(Literal(literal.value.toString().trimEnd(' '), literal.type))
+                                    else s
+                                } else s
+                            }
+                        ).transformChildren(transformer)
+                        else -> stmt.transformChildren(transformer)
+                    }
+                }
+            }
+            .transform {
+                apply(transformPatternSwitchToValueSwitch())
+            }
+            .transform {
                 if (hasRequestParams) {
                     matchingElements { iface: community.flock.wirespec.ir.core.Interface ->
                         if (iface.name == Name.of("Call")) {
@@ -298,6 +326,45 @@ open class TypeScriptIrEmitter : IrEmitter {
                 RawElement(code),
             )
         )
+    }
+
+    private fun transformPatternSwitchToValueSwitch(): Transformer = transformer {
+        statement { stmt, tr ->
+            if (stmt is Switch && stmt.cases.any { it.type != null }) {
+                val varName = stmt.variable?.camelCase() ?: "r"
+                val transformedCases = stmt.cases.map { case ->
+                    val typeName = (case.type as? LanguageType.Custom)?.name
+                    val statusNum = typeName
+                        ?.substringAfterLast(".")
+                        ?.removePrefix("Response")
+                        ?.toIntOrNull()
+                    if (statusNum != null && typeName != null) {
+                        val exprCode = TypeScriptGenerator.generateExpression(tr.transformExpression(stmt.expression))
+                        val castAssignment = Assignment(
+                            name = Name.of(varName),
+                            value = RawExpression("$exprCode as $typeName"),
+                            isProperty = false,
+                        )
+                        Case(
+                            value = Literal(statusNum, LanguageType.Integer()),
+                            body = listOf(castAssignment) + case.body.map { tr.transformStatement(it) },
+                            type = null,
+                        )
+                    } else {
+                        case.copy(body = case.body.map { tr.transformStatement(it) })
+                    }
+                }
+                Switch(
+                    expression = FieldCall(
+                        receiver = tr.transformExpression(stmt.expression),
+                        field = Name.of("status"),
+                    ),
+                    cases = transformedCases,
+                    default = stmt.default?.map { tr.transformStatement(it) },
+                    variable = null,
+                )
+            } else stmt.transformChildren(tr)
+        }
     }
 
     private fun <T : Element> T.sanitizeNames(): T = transform {
