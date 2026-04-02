@@ -733,6 +733,16 @@ open class RustIrEmitter(
             } else ns
         }
 
+        matchingElements<LanguageFile> { file ->
+            file.copy(elements = file.elements.flatMap { element ->
+                if (element is LanguageUnion && element.name.pascalCase() == "Response" && element.members.isNotEmpty()) {
+                    listOf(element) + element.members.map { member ->
+                        RawElement("impl From<${member.name}> for Response { fn from(value: ${member.name}) -> Self { Response::${member.name}(value) } }\n")
+                    }
+                } else listOf(element)
+            })
+        }
+
         matchingElements<Namespace> { ns ->
             ns.copy(elements = ns.elements + listOf(RawElement(endpoint.generateApiStruct())))
         }
