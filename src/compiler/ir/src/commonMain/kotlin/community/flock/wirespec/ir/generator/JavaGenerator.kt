@@ -460,7 +460,7 @@ private class JavaEmitter(val file: File) {
             "$receiverStr${field.value().sanitize()}();\n".indentCode(indent)
         }
         is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             val awaitSuffix = if (isAwait) ".join()" else ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
@@ -535,7 +535,7 @@ private class JavaEmitter(val file: File) {
             "$receiverStr${field.value().sanitize()}()"
         }
         is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             val awaitSuffix = if (isAwait) ".join()" else ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
@@ -616,7 +616,7 @@ private class JavaEmitter(val file: File) {
         is FunctionCall -> {
             val recv = receiver?.emitWithSubstitution(varName, replacement)
             val args = arguments.values.map { it.emitWithSubstitution(varName, replacement) }
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = recv?.let { "$it." } ?: ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${args.joinToString(", ")})"
         }

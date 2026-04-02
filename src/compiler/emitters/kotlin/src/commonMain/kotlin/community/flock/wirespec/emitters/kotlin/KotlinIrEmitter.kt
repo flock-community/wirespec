@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.HasPackageName
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall
+import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.emit.Keywords
@@ -283,6 +284,9 @@ open class KotlinIrEmitter(
                     receiver = stmt.receiver?.let { tr.transformExpression(it) },
                     field = stmt.field.sanitizeName(),
                 )
+                is FunctionCall -> if (stmt.name.value() == "validate") {
+                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+                } else stmt.transformChildren(tr)
                 is ConstructorStatement -> ConstructorStatement(
                     type = tr.transformType(stmt.type),
                     namedArguments = stmt.namedArguments.map { (name, expr) ->
