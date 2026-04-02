@@ -300,34 +300,6 @@ object RustGenerator : Generator {
         is Type.StringLiteral -> "String"
     }
 
-    private val serializationMethodNames = setOf(
-        "serialize_path",
-        "serialize_param",
-        "serialize_body",
-        "deserialize_path",
-        "deserialize_param",
-        "deserialize_body",
-    )
-
-    private fun emitFunctionCallArgs(arguments: Map<Name, Expression>, name: Name): String {
-        val isSerialization = name.snakeCase() in serializationMethodNames
-        return arguments.values.mapIndexed { idx, arg ->
-            val emitted = arg.emit()
-            // Inside .map(|it| ...), `it` is already a reference — don't add `&`
-            val isAlreadyRef = arg is VariableReference && arg.name.value() == "it"
-            if (isSerialization && idx == 0 && !isAlreadyRef) "&$emitted" else emitted
-        }.joinToString(", ")
-    }
-
-    private fun emitFunctionCallArgsInlined(arguments: Map<Name, Expression>, name: Name, replacement: String): String {
-        val isSerialization = name.snakeCase() in serializationMethodNames
-        return arguments.values.mapIndexed { idx, arg ->
-            val emitted = arg.emitWithInlinedIt(replacement)
-            val isAlreadyRef = arg is VariableReference && arg.name.value() == "it"
-            if (isSerialization && idx == 0 && !isAlreadyRef) "&$emitted" else emitted
-        }.joinToString(", ")
-    }
-
     private fun emitArrayIndex(receiver: Expression, index: Expression, caseSensitive: Boolean = true): String = when {
         !caseSensitive && index is Literal && index.type is Type.String ->
             "${receiver.emit()}.iter().find(|(k, _)| k.eq_ignore_ascii_case(\"${index.value}\")).map(|(_, v)| v.clone())"
@@ -423,9 +395,9 @@ object RustGenerator : Generator {
             val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             val awaitSuffix = if (isAwait) ".await" else ""
             if (recv != null) {
-                "${recv.emit()}.$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix;\n".indentCode(indent)
+                "${recv.emit()}.$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
             } else {
-                "$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix;\n".indentCode(indent)
+                "$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
             }
         }
         is ArrayIndexCall -> "${emitArrayIndex(receiver, index, caseSensitive)};\n".indentCode(indent)
@@ -475,9 +447,9 @@ object RustGenerator : Generator {
             val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             val awaitSuffix = if (isAwait) ".await" else ""
             if (recv != null) {
-                "${recv.emit()}.$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix"
+                "${recv.emit()}.$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
             } else {
-                "$funcName(${emitFunctionCallArgs(arguments, name)})$awaitSuffix"
+                "$funcName(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
             }
         }
         is ArrayIndexCall -> emitArrayIndex(receiver, index, caseSensitive)
@@ -541,9 +513,9 @@ object RustGenerator : Generator {
             val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
             val awaitSuffix = if (isAwait) ".await" else ""
             if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.$funcName(${emitFunctionCallArgsInlined(arguments, name, replacement)})$awaitSuffix"
+                "${recv.emitWithInlinedIt(replacement)}.$funcName(${arguments.values.joinToString(", ") { it.emitWithInlinedIt(replacement) }})$awaitSuffix"
             } else {
-                "$funcName(${emitFunctionCallArgsInlined(arguments, name, replacement)})$awaitSuffix"
+                "$funcName(${arguments.values.joinToString(", ") { it.emitWithInlinedIt(replacement) }})$awaitSuffix"
             }
         }
         is FieldCall -> {
