@@ -646,7 +646,7 @@ open class RustIrEmitter(
             "${receiver.toRawCode()}[$idx]"
         }
         is RawExpression -> code
-        else -> "unknown"
+        else -> error("Unsupported expression type in toRawCode: ${this::class.simpleName}")
     }
 
     private fun Expression.toBorrowedRaw(): RawExpression = RawExpression("&${toRawCode()}")
