@@ -69,14 +69,6 @@ object KotlinGenerator : Generator {
 }
 
 private class KotlinEmitter(val file: File) {
-    private val allUnions = file.elements.flatMap { it.findAllUnions() }
-
-    private fun Type.Custom.isInterface(): Boolean {
-        if (name.contains("Wirespec") || name.endsWith("Response")) return true
-        return file.elements.any {
-            (it is Interface && it.name.pascalCase() == this.name) || (it is Union && it.name.pascalCase() == this.name) || (it is Namespace && it.name.pascalCase() == this.name)
-        }
-    }
 
     fun emitFile(): String {
         val packages = file.elements.filterIsInstance<Package>()
@@ -91,15 +83,6 @@ private class KotlinEmitter(val file: File) {
     }
 
     private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
-
-    private fun Element.findAllUnions(): List<Union> = when (this) {
-        is Union -> listOf(this)
-        is Struct -> elements.flatMap { it.findAllUnions() }
-        is Namespace -> elements.flatMap { it.findAllUnions() }
-        is Interface -> elements.flatMap { it.findAllUnions() }
-        is Main -> emptyList()
-        else -> emptyList()
-    }
 
     private fun String.indentCode(level: Int): String {
         if (level <= 0) return this
@@ -212,9 +195,7 @@ private class KotlinEmitter(val file: File) {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val parentUnions = resolveParentUnions(parents)
-        val combinedInterfaces = parentUnions + interfaces.map { it.emitGenerics() }
-        val implStr = if (combinedInterfaces.isEmpty()) "" else " : ${combinedInterfaces.distinct().joinToString(", ")}"
+        val implStr = if (interfaces.isEmpty()) "" else " : ${interfaces.map { it.emitGenerics() }.distinct().joinToString(", ")}"
 
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitKotlin(fields, indent + 1) }
@@ -296,21 +277,6 @@ private class KotlinEmitter(val file: File) {
                 indent,
             )
         }
-    }
-
-    private fun Struct.resolveParentUnions(parents: List<Element>): List<String> {
-        val bodyType = fields.find { it.name.value() == "body" }?.type
-
-        fun Union.emitAsImplements(): String = if (typeParameters.isNotEmpty() && bodyType != null) {
-            "${name.pascalCase()}<${bodyType.emitGenerics()}>"
-        } else {
-            name.pascalCase()
-        }
-
-        return (
-            parents.filterIsInstance<Union>().map { it.emitAsImplements() } +
-                allUnions.filter { it.members.any { m -> m.name == this.name.pascalCase() } }.map { it.emitAsImplements() }
-            ).distinct()
     }
 
     private fun AstFunction.emit(indent: Int, parents: List<Element>): String {

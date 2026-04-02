@@ -799,9 +799,11 @@ class DslTest {
                 member("Error")
             }
             struct("Success") {
+                implements(type("Response"))
                 field("data", string)
             }
             struct("Error") {
+                implements(type("Response"))
                 field("message", string)
             }
         }
@@ -841,10 +843,11 @@ class DslTest {
             union("Response") {
                 member("Response2XX")
             }
-            union("Response2XX") {
+            union("Response2XX", extends = type("Response")) {
                 member("Response200")
             }
             struct("Response200") {
+                implements(type("Response2XX"))
                 field("body", string)
             }
         }
@@ -870,6 +873,8 @@ class DslTest {
                 member("SharedStruct")
             }
             struct("SharedStruct") {
+                implements(type("UnionA"))
+                implements(type("UnionB"))
                 field("id", string)
             }
         }

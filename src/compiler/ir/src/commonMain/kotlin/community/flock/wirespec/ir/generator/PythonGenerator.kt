@@ -60,8 +60,7 @@ object PythonGenerator : Generator {
     private fun String.indentCode(level: Int): String = " ".repeat(level * 4) + this
 
     private fun File.emit(indent: Int): String {
-        val allUnions = elements.flatMap { it.findAllUnions() }
-        return groupImports(elements).joinToString("") { it.emit(indent, allUnions = allUnions) }.removeEmptyLines()
+        return groupImports(elements).joinToString("") { it.emit(indent) }.removeEmptyLines()
     }
 
     private fun groupImports(elements: List<Element>): List<Element> {
@@ -92,21 +91,21 @@ object PythonGenerator : Generator {
 
     private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
 
-    private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList(), isStaticScope: Boolean = false, qualifier: ((String) -> String)? = null): String = when (this) {
+    private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false, qualifier: ((String) -> String)? = null): String = when (this) {
         is Package -> emit(indent)
         is Import -> emit(indent)
-        is Struct -> emit(indent, parents, allUnions = allUnions, qualifier = qualifier)
+        is Struct -> emit(indent, parents, qualifier = qualifier)
         is AstFunction -> {
             val isInClass = parents.any { it is Struct || it is Interface || it is Namespace }
             val isInInterface = parents.any { it is Interface }
             emit(indent, isInClass = isInClass, isStaticScope = isStaticScope, isInInterface = isInInterface, qualifier = qualifier)
         }
-        is Namespace -> emit(indent, parents, allUnions = allUnions)
-        is Interface -> emit(indent, parents, allUnions = allUnions, qualifier = qualifier)
-        is Union -> emit(indent, parents, allUnions = allUnions)
+        is Namespace -> emit(indent, parents)
+        is Interface -> emit(indent, parents, qualifier = qualifier)
+        is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
-            val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
+            val staticContent = statics.joinToString("") { it.emit(indent, parents, isStaticScope, qualifier) }
             val content = body.joinToString("") { it.emit(indent + 1) }
             val asyncPrefix = if (isAsync) "async " else ""
             val runner = if (isAsync) "asyncio.run(main())" else "main()"
@@ -114,28 +113,15 @@ object PythonGenerator : Generator {
             val guard = "if __name__ == \"__main__\":\n${runner.indentCode(1)}\n".indentCode(indent)
             "$staticContent$defBlock$guard"
         }
-        is File -> elements.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
+        is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope, qualifier) }
         is RawElement -> "$code\n".indentCode(indent)
-    }
-
-    private fun Element.findAllUnions(): List<Union> {
-        val result = mutableListOf<Union>()
-        if (this is Union) result.add(this)
-        when (this) {
-            is Struct -> result.addAll(elements.flatMap { it.findAllUnions() })
-            is Namespace -> result.addAll(elements.flatMap { it.findAllUnions() })
-            is Interface -> result.addAll(elements.flatMap { it.findAllUnions() })
-            is Main -> {}
-            else -> {}
-        }
-        return result
     }
 
     private fun Package.emit(indent: Int): String = "# package $path\n\n".indentCode(indent)
 
     private fun Import.emit(indent: Int): String = "from $path import ${type.name}\n".indentCode(indent)
 
-    private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
+    private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val p = mutableListOf<String>()
         extends?.let { p.add(it.emit()) }
 
@@ -147,12 +133,12 @@ object PythonGenerator : Generator {
         } else {
             null
         }
-        val elementsContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, allUnions = allUnions, isStaticScope = true, qualifier = nsQualifier) }
+        val elementsContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, isStaticScope = true, qualifier = nsQualifier) }
         val content = elementsContent.ifEmpty { "pass\n".indentCode(indent + 1) }
         return "class $nameStr$ext:\n$content\n".indentCode(indent)
     }
 
-    private fun Interface.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList(), qualifier: ((String) -> String)? = null): String {
+    private fun Interface.emit(indent: Int, parents: List<Element> = emptyList(), qualifier: ((String) -> String)? = null): String {
         val p = extends.map { it.emit() }.toMutableList()
         p.add("ABC")
         if (typeParameters.isNotEmpty()) {
@@ -168,12 +154,12 @@ object PythonGenerator : Generator {
         val fieldsContent = fields.joinToString("") { field ->
             "${field.name.value()}: ${field.type.emit(adjustedQualifier)}\n".indentCode(indent + 1)
         }
-        val elementsContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, allUnions = allUnions, isStaticScope = false, qualifier = adjustedQualifier) }
+        val elementsContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, isStaticScope = false, qualifier = adjustedQualifier) }
         val content = (fieldsContent + elementsContent).ifEmpty { "pass\n".indentCode(indent + 1) }
         return "class ${name.pascalCase()}$ext:\n$content\n".indentCode(indent)
     }
 
-    private fun Union.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
+    private fun Union.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val p = mutableListOf<String>()
         extends?.let { p.add(it.emit()) }
         parents.filterIsInstance<Union>().forEach { p.add(it.name.pascalCase()) }
@@ -198,14 +184,12 @@ object PythonGenerator : Generator {
         return "class ${name.pascalCase()}$ext:\n$entriesStr\n\n".indentCode(indent)
     }
 
-    private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList(), qualifier: ((String) -> String)? = null): String {
+    private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), qualifier: ((String) -> String)? = null): String {
         val p = mutableListOf<String>()
         interfaces.forEach { p.add(it.emit()) }
-        parents.filterIsInstance<Union>().forEach { p.add(it.name.pascalCase()) }
-        allUnions.filter { it.members.any { m -> m.name == this.name.pascalCase() } }.forEach { p.add(it.name.pascalCase()) }
 
         val ext = if (p.isEmpty()) "" else "(${p.distinct().joinToString(", ")})"
-        val nestedContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, allUnions = allUnions, isStaticScope = false, qualifier = qualifier) }
+        val nestedContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, isStaticScope = false, qualifier = qualifier) }
         val content = if (fields.isEmpty() && constructors.isEmpty()) {
             "pass\n".indentCode(indent + 1)
         } else {

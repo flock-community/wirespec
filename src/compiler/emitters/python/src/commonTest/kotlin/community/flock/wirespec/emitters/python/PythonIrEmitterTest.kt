@@ -131,7 +131,7 @@ class PythonIrEmitterTest {
             |class Response200Headers(Wirespec.Response.Headers):
             |    pass
             |@dataclass
-            |class Response200(Response2XX, ResponseTodoDto):
+            |class Response200(Response2XX[TodoDto], ResponseTodoDto):
             |    status: int
             |    headers: Response200Headers
             |    body: TodoDto
@@ -147,7 +147,7 @@ class PythonIrEmitterTest {
             |    token: Token
             |    refreshToken: Optional[Token]
             |@dataclass
-            |class Response201(Response2XX, ResponseTodoDto):
+            |class Response201(Response2XX[TodoDto], ResponseTodoDto):
             |    status: int
             |    headers: Response201Headers
             |    body: TodoDto
@@ -164,7 +164,7 @@ class PythonIrEmitterTest {
             |class Response500Headers(Wirespec.Response.Headers):
             |    pass
             |@dataclass
-            |class Response500(Response5XX, ResponseError):
+            |class Response500(Response5XX[Error], ResponseError):
             |    status: int
             |    headers: Response500Headers
             |    body: Error
@@ -393,7 +393,7 @@ class PythonIrEmitterTest {
             |class Response200Headers(Wirespec.Response.Headers):
             |    pass
             |@dataclass
-            |class Response200(Response2XX, ResponseListTodoDto):
+            |class Response200(Response2XX[list[TodoDto]], ResponseListTodoDto):
             |    status: int
             |    headers: Response200Headers
             |    body: list[TodoDto]
