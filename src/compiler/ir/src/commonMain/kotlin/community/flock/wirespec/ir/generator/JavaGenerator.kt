@@ -483,7 +483,7 @@ private class JavaEmitter(val file: File) {
             operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}));\n".indentCode(indent)
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
         }
-        is TypeDescriptor -> "${emitTypeDescriptor()};\n".indentCode(indent)
+        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -558,7 +558,7 @@ private class JavaEmitter(val file: File) {
             operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}))"
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
         }
-        is TypeDescriptor -> emitTypeDescriptor()
+        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
         is NullCheck -> {
             val orElse = when (val alt = alternative) {
                 is ErrorStatement -> ".orElseThrow(() -> new IllegalStateException(${alt.message.emit()}))"
@@ -665,23 +665,6 @@ private class JavaEmitter(val file: File) {
         else -> value.toString()
     }
 
-    private fun TypeDescriptor.emitTypeDescriptor(): String {
-        fun Type.findRoot(): Type = when (this) {
-            is Type.Nullable -> this.type.findRoot()
-            is Type.Array -> this.elementType.findRoot()
-            is Type.Dict -> this.valueType.findRoot()
-            else -> this
-        }
-        fun Type.emitRawContainer(): String? = when (this) {
-            is Type.Nullable -> "java.util.Optional"
-            is Type.Array -> "java.util.List"
-            is Type.Dict -> "java.util.Map"
-            else -> null
-        }
-        val rootType = type.findRoot().emit()
-        val containerType = type.emitRawContainer()?.let { "$it.class" } ?: "null"
-        return "Wirespec.getType($rootType.class, $containerType)"
-    }
 }
 
 private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "_$this" else this
