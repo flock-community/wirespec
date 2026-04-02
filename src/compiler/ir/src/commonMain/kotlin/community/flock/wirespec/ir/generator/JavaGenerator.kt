@@ -388,7 +388,7 @@ object JavaGenerator : Generator {
             operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}));\n".indentCode(indent)
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
         }
-        is TypeDescriptor -> "${emitTypeDescriptor()};\n".indentCode(indent)
+        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -559,6 +559,7 @@ object JavaGenerator : Generator {
         value is Long -> "${value}L"
         else -> value.toString()
     }
+
 }
 
 private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "_$this" else this
