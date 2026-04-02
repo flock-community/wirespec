@@ -338,7 +338,14 @@ object KotlinGenerator : Generator {
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
         is FieldCall -> "${emit()}\n".indentCode(indent)
 
-        is FunctionCall -> "${emit()}\n".indentCode(indent)
+        is FunctionCall -> {
+            val typeArgsStr =
+                if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr${
+                name.value().toKotlinStaticCall().sanitize()
+            }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+        }
 
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
@@ -412,10 +419,12 @@ object KotlinGenerator : Generator {
         }
 
         is FunctionCall -> {
-            val typeArgsStr = typeArguments.joinNonEmpty(", ", "<", ">") { it.emitGenerics() }
-            val receiverStr = receiver?.emit()?.plus(".").orEmpty()
-            val args = arguments.values.joinToString(", ") { it.emit() }
-            "$receiverStr${name.value().toKotlinStaticCall().sanitize()}$typeArgsStr($args)"
+            val typeArgsStr =
+                if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr${
+                name.value().toKotlinStaticCall().sanitize()
+            }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
 
         is ArrayIndexCall -> if (caseSensitive) {

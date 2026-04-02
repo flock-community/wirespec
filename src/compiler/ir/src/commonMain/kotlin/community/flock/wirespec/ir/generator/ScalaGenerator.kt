@@ -434,7 +434,7 @@ object ScalaGenerator : Generator {
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.value() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
+                if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         }
@@ -482,10 +482,10 @@ object ScalaGenerator : Generator {
         }
 
         is FunctionCall -> {
-            val typeArgsStr = typeArguments.joinNonEmpty(", ", "[", "]") { it.emitGenerics() }
-            val receiverStr = receiver?.emit()?.plus(".").orEmpty()
-            val args = arguments.values.joinToString(", ") { it.emit() }
-            "$receiverStr${name.value().sanitize()}$typeArgsStr($args)"
+            val typeArgsStr =
+                if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
 
         is ArrayIndexCall -> emitArrayIndex()

@@ -365,7 +365,7 @@ object JavaGenerator : Generator {
             "$receiverStr${field.value().sanitize()}();\n".indentCode(indent)
         }
         is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             val awaitSuffix = if (isAwait) ".join()" else ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
@@ -430,7 +430,7 @@ object JavaGenerator : Generator {
             "$receiverStr${field.value().sanitize()}()"
         }
         is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             val awaitSuffix = if (isAwait) ".join()" else ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"

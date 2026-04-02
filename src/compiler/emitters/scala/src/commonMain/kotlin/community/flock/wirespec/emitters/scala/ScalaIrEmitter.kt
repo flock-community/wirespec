@@ -290,6 +290,9 @@ open class ScalaIrEmitter(
                     receiver = stmt.receiver?.let { tr.transformExpression(it) },
                     field = stmt.field.sanitizeName(),
                 )
+                is FunctionCall -> if (stmt.name.value() == "validate") {
+                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+                } else stmt.transformChildren(tr)
                 is ConstructorStatement -> ConstructorStatement(
                     type = tr.transformType(stmt.type),
                     namedArguments = stmt.namedArguments.map { (name, expr) ->
