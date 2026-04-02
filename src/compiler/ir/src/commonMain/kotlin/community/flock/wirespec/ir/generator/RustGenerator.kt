@@ -154,15 +154,7 @@ object RustGenerator : Generator {
             "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName$typeParamsStr {}\n\n".indentCode(indent)
         }
 
-        val fromImpls = if (rustName == "Response" && members.isNotEmpty()) {
-            members.joinToString("\n") { member ->
-                "impl From<${member.name}> for Response { fn from(value: ${member.name}) -> Self { Response::${member.name}(value) } }"
-            } + "\n"
-        } else {
-            ""
-        }
-
-        return enumDef + fromImpls
+        return enumDef
     }
 
     private fun Enum.emit(indent: Int): String {
