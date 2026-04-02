@@ -501,39 +501,26 @@ private class TypeScriptFileEmitter(val file: File) {
         is ErrorStatement -> "throw new Error(${message.emit()});\n".indentCode(indent)
         is AssertStatement -> "if (!(${expression.emit()})) throw new Error('${message.replace("'", "\\'")}');\n".indentCode(indent)
         is Switch -> {
-            val isPatternSwitch = cases.any { it.type != null }
-            if (isPatternSwitch) {
-                val varName = variable?.camelCase() ?: "r"
-                val casesStr = cases.joinToString("") { case ->
-                    val typeName = (case.type as? Type.Custom)?.name
-                    val statusNum = typeName?.substringAfterLast(".")?.removePrefix("Response")?.toIntOrNull()
-                    val caseLabel = statusNum?.toString() ?: case.value.emit()
-                    val castLine = if (typeName != null) {
-                        "const $varName = ${expression.emit()} as $typeName;\n".indentCode(indent + 2)
-                    } else {
-                        ""
-                    }
-                    val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
-                    "case $caseLabel: {\n".indentCode(indent + 1) + castLine + bodyStr + "}\n".indentCode(indent + 1)
-                }
-                val defaultStr = default?.let {
-                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(indent + 2) }
-                    "default: {\n".indentCode(indent + 1) +
-                        bodyStr.replace("${expression.emit()}.status", "(${expression.emit()} as any).status") +
-                        "}\n".indentCode(indent + 1)
-                } ?: ""
-                "switch (${expression.emit()}.status) {\n".indentCode(indent) + casesStr + defaultStr + "}\n".indentCode(indent)
-            } else {
-                val casesStr = cases.joinToString("") { case ->
-                    val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
+            val isBlockStyle = cases.any { case -> case.body.any { it is Assignment } }
+            val casesStr = cases.joinToString("") { case ->
+                val bodyStr = case.body.joinToString("") { it.emit(indent + 2) }
+                if (isBlockStyle) {
+                    "case ${case.value.emit()}: {\n".indentCode(indent + 1) + bodyStr + "}\n".indentCode(indent + 1)
+                } else {
                     "case ${case.value.emit()}:\n$bodyStr${"break;\n".indentCode(indent + 2)}".indentCode(indent + 1)
                 }
-                val defaultStr = default?.let {
-                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(indent + 2) }
-                    "default:\n$bodyStr".indentCode(indent + 1)
-                } ?: ""
-                "${"switch (${expression.emit()}) {\n".indentCode(indent)}$casesStr$defaultStr${"}\n".indentCode(indent)}"
             }
+            val defaultStr = default?.let {
+                val bodyStr = it.joinToString("") { stmt -> stmt.emit(indent + 2) }
+                if (isBlockStyle) {
+                    "default: {\n".indentCode(indent + 1) +
+                        bodyStr +
+                        "}\n".indentCode(indent + 1)
+                } else {
+                    "default:\n$bodyStr".indentCode(indent + 1)
+                }
+            } ?: ""
+            "${"switch (${expression.emit()}) {\n".indentCode(indent)}$casesStr$defaultStr${"}\n".indentCode(indent)}"
         }
         is RawExpression -> "$code;\n".indentCode(indent)
         is NullLiteral -> "undefined;\n".indentCode(indent)
