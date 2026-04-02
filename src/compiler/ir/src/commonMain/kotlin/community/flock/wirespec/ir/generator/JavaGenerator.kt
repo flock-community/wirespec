@@ -627,7 +627,6 @@ private class JavaEmitter(val file: File) {
         value is Long -> "${value}L"
         else -> value.toString()
     }
-
 }
 
 private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "_$this" else this
