@@ -67,9 +67,7 @@ object RustGenerator : Generator {
         }
     }
 
-    private fun File.emit(indent: Int): String {
-        return elements.joinToString("") { it.emit(indent) }.removeEmptyLines()
-    }
+    private fun File.emit(indent: Int): String = elements.joinToString("") { it.emit(indent) }.removeEmptyLines()
 
     private fun String.removeEmptyLines(): String = lines().filterNot(String::isEmpty).joinToString("\n", postfix = "\n")
 

@@ -109,7 +109,7 @@ class TypeScriptIrEmitterTest {
             |        return { statusCode: r.status, headers: {}, body: serialization.serializeBody(r.body, "Error") };
             |      }
             |      default: {
-            |        throw new Error(('Cannot match response with status: ' + response.status));
+            |        throw new Error('Cannot match response with status:');
             |      }
             |    }
             |  }
@@ -125,7 +125,7 @@ class TypeScriptIrEmitterTest {
             |        return response500({"body": response.body != null ? serialization.deserializeBody(response.body, "Error") : (() => { throw new Error('body is null') })()});
             |        break;
             |      default:
-            |        throw new Error(('Cannot match response with status: ' + response.statusCode));
+            |        throw new Error('Cannot match response with status:');
             |    }
             |  }
             |  export interface Handler extends Wirespec.Handler {
@@ -295,7 +295,7 @@ class TypeScriptIrEmitterTest {
             |        return { statusCode: r.status, headers: {}, body: serialization.serializeBody(r.body, "TodoDto[]") };
             |      }
             |      default: {
-            |        throw new Error(('Cannot match response with status: ' + response.status));
+            |        throw new Error('Cannot match response with status:');
             |      }
             |    }
             |  }
@@ -305,7 +305,7 @@ class TypeScriptIrEmitterTest {
             |        return response200({"body": response.body != null ? serialization.deserializeBody(response.body, "TodoDto[]") : (() => { throw new Error('body is null') })()});
             |        break;
             |      default:
-            |        throw new Error(('Cannot match response with status: ' + response.statusCode));
+            |        throw new Error('Cannot match response with status:');
             |    }
             |  }
             |  export interface Handler extends Wirespec.Handler {
