@@ -26,7 +26,9 @@ class JavaStructTest {
             union("MyUnion") {
                 member("Empty")
             }
-            struct("Empty") {}
+            struct("Empty") {
+                implements(type("MyUnion"))
+            }
         }
 
         val output = JavaGenerator.generate(file)
@@ -111,6 +113,7 @@ class JavaStructTest {
                 member("MyRecord")
             }
             struct("MyRecord") {
+                implements(type("MyUnion"))
                 field("id", string)
             }
         }

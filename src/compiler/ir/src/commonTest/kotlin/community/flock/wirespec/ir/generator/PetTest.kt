@@ -62,15 +62,16 @@ class PetTest {
                     member("Response4XX")
                 }
 
-                union("Response2XX") {
+                union("Response2XX", extends = type("Response")) {
                     member("Response200")
                 }
 
-                union("Response4XX") {
+                union("Response4XX", extends = type("Response")) {
                     member("Response404")
                 }
 
                 struct("Response200") {
+                    implements(type("Response2XX"))
                     field("status", integer)
                     field("headers", type("Headers"))
                     field("body", list(type("Todo")))
@@ -86,6 +87,7 @@ class PetTest {
                 }
 
                 struct("Response404") {
+                    implements(type("Response4XX"))
                     field("status", integer)
                     field("headers", type("Headers"))
                     field("body", type("Error"))

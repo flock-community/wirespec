@@ -72,7 +72,6 @@ private class
 ScalaEmitter(
     val file: File,
 ) {
-    private val allUnions = file.elements.flatMap { it.findAllUnions() }
     private val objectNames = collectObjectNames(file.elements)
     private val primaryFieldNames = collectPrimaryFieldNames(file.elements)
 
@@ -121,15 +120,6 @@ ScalaEmitter(
         return argNames != primaryFields
     }
 
-    private fun Type.Custom.isInterface(): Boolean {
-        if (name.contains("Wirespec") || name.endsWith("Response")) return true
-        return file.elements.any {
-            (it is Interface && it.name.pascalCase() == this.name) ||
-                (it is Union && it.name.pascalCase() == this.name) ||
-                (it is Namespace && it.name.pascalCase() == this.name)
-        }
-    }
-
     fun emitFile(): String {
         val packages = file.elements.filterIsInstance<Package>()
         val imports = file.elements.filterIsInstance<Import>()
@@ -143,15 +133,6 @@ ScalaEmitter(
     }
 
     private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
-
-    private fun Element.findAllUnions(): List<Union> = when (this) {
-        is Union -> listOf(this)
-        is Struct -> elements.flatMap { it.findAllUnions() }
-        is Namespace -> elements.flatMap { it.findAllUnions() }
-        is Interface -> elements.flatMap { it.findAllUnions() }
-        is Main -> emptyList()
-        else -> emptyList()
-    }
 
     private fun String.indentCode(level: Int): String {
         if (level <= 0) return this
@@ -259,9 +240,7 @@ ScalaEmitter(
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val parentUnions = resolveParentUnions(parents)
-        val combinedInterfaces = parentUnions + interfaces.map { it.emitTypeAnnotation() }
-        val implStr = if (combinedInterfaces.isEmpty()) "" else " extends ${combinedInterfaces.distinct().joinToString(" with ")}"
+        val implStr = if (interfaces.isEmpty()) "" else " extends ${interfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
 
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
@@ -331,21 +310,6 @@ ScalaEmitter(
         }
 
         return "def this($params) = this(${constructorArgs.joinToString(", ")})\n".indentCode(indent)
-    }
-
-    private fun Struct.resolveParentUnions(parents: List<Element>): List<String> {
-        val bodyType = fields.find { it.name.value() == "body" }?.type
-
-        fun Union.emitAsImplements(): String = if (typeParameters.isNotEmpty() && bodyType != null) {
-            "${name.pascalCase()}[${bodyType.emitGenerics()}]"
-        } else {
-            name.pascalCase()
-        }
-
-        return (
-            parents.filterIsInstance<Union>().map { it.emitAsImplements() } +
-                allUnions.filter { it.members.any { m -> m.name == this.name.pascalCase() } }.map { it.emitAsImplements() }
-            ).distinct()
     }
 
     private fun AstFunction.emit(indent: Int, parents: List<Element>): String {

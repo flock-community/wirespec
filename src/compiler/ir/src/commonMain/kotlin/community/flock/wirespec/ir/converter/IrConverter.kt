@@ -552,7 +552,11 @@ fun EndpointWirespec.convert(): File {
                 val bodyType = response.content?.reference?.convert() ?: Type.Unit
                 val statusCode = response.status.toIntOrNull() ?: 0
                 val statusClassName = response.status.replaceFirstChar { it.uppercaseChar() }
+                val statusPrefix = response.status.first()
+                val contentTypeName = bodyType.toTypeName()
                 struct("Response$statusClassName") {
+                    implements(type("Response${statusPrefix}XX", bodyType))
+                    implements(type("Response$contentTypeName"))
                     field("status", Type.IntegerLiteral(statusCode), isOverride = true)
                     field("headers", type("Headers"), isOverride = true)
                     field("body", bodyType, isOverride = true)

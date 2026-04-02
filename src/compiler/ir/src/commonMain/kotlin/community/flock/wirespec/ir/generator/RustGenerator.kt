@@ -68,27 +68,26 @@ object RustGenerator : Generator {
     }
 
     private fun File.emit(indent: Int): String {
-        val allUnions = elements.flatMap { it.findAllUnions() }
-        return elements.joinToString("") { it.emit(indent, allUnions = allUnions) }.removeEmptyLines()
+        return elements.joinToString("") { it.emit(indent) }.removeEmptyLines()
     }
 
     private fun String.removeEmptyLines(): String = lines().filterNot(String::isEmpty).joinToString("\n", postfix = "\n")
 
-    private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList(), isStaticScope: Boolean = false): String = when (this) {
+    private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false): String = when (this) {
         is Package -> emit(indent)
         is Import -> emit(indent)
-        is Struct -> emit(indent, parents, allUnions = allUnions)
+        is Struct -> emit(indent, parents)
         is AstFunction -> {
             val isInClass = parents.any { it is Struct || it is Interface || it is Namespace }
             val isInInterface = parents.any { it is Interface }
             emit(indent, isInClass = isInClass, isStaticScope = isStaticScope, isInInterface = isInInterface)
         }
-        is Namespace -> emit(indent, parents, allUnions = allUnions)
-        is Interface -> emit(indent, parents, allUnions = allUnions)
-        is Union -> emit(indent, parents, allUnions = allUnions)
+        is Namespace -> emit(indent, parents)
+        is Interface -> emit(indent, parents)
+        is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
-            val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope) }
+            val staticContent = statics.joinToString("") { it.emit(indent, parents, isStaticScope) }
             val content = body.joinToString("") { it.emit(1) }
             if (isAsync) {
                 "${staticContent}fn main() {\n${"pollster::block_on(async {\n".indentCode(1)}$content${"});\n".indentCode(1)}}\n".indentCode(indent)
@@ -96,27 +95,17 @@ object RustGenerator : Generator {
                 "${staticContent}fn main() {\n$content}\n".indentCode(indent)
             }
         }
-        is File -> elements.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope) }
+        is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope) }
         is RawElement -> "$code\n".indentCode(indent)
-    }
-
-    private fun Element.findAllUnions(): List<Union> {
-        val children = when (this) {
-            is Struct -> elements
-            is Namespace -> elements
-            is Interface -> elements
-            else -> emptyList()
-        }
-        return listOfNotNull(this as? Union) + children.flatMap { it.findAllUnions() }
     }
 
     private fun Package.emit(indent: Int): String = "// package $path\n\n".indentCode(indent)
 
     private fun Import.emit(indent: Int): String = "use super::${Name.of(type.name).snakeCase()}::${type.name};\n".indentCode(indent)
 
-    private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
+    private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val hasComplexElements = elements.any { it is Interface || it is Union || it is Enum || it is Struct }
-        val content = elements.joinToString("") { it.emit(1, parents = parents + this, allUnions = allUnions, isStaticScope = !hasComplexElements) }
+        val content = elements.joinToString("") { it.emit(1, parents = parents + this, isStaticScope = !hasComplexElements) }
         val rustName = name.pascalCase()
         return when {
             content.isBlank() -> "pub struct $rustName;\n\n".indentCode(indent)
@@ -128,14 +117,14 @@ object RustGenerator : Generator {
         }
     }
 
-    private fun Interface.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
+    private fun Interface.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val extStr = if (extends.isNotEmpty()) ": ${extends.joinToString(" + ") { it.emit() }}" else ""
         val fieldsContent = fields.joinToString("") { field ->
             "fn ${field.name.snakeCase().sanitize()}(&self) -> ${field.type.emit()};\n".indentCode(1)
         }
-        val elementsContent = elements.joinToString("") { it.emit(1, parents = parents + this, allUnions = allUnions, isStaticScope = false) }
+        val elementsContent = elements.joinToString("") { it.emit(1, parents = parents + this, isStaticScope = false) }
         val content = fieldsContent + elementsContent
         return if (content.isEmpty()) {
             "pub trait $rustName$typeParamsStr$extStr {}\n\n".indentCode(indent)
@@ -144,7 +133,7 @@ object RustGenerator : Generator {
         }
     }
 
-    private fun Union.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
+    private fun Union.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val enumDef = if (members.isNotEmpty()) {
@@ -201,11 +190,11 @@ object RustGenerator : Generator {
         return enumDef + enumImpl
     }
 
-    private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String {
+    private fun Struct.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val rustName = name.pascalCase()
         val functions = elements.filterIsInstance<AstFunction>()
         val nonFunctions = elements.filterNot { it is AstFunction }
-        val nestedContent = nonFunctions.joinToString("") { it.emit(indent, parents = parents + this, allUnions = allUnions, isStaticScope = false) }
+        val nestedContent = nonFunctions.joinToString("") { it.emit(indent, parents = parents + this, isStaticScope = false) }
 
         val implBlock = if (functions.isNotEmpty()) {
             val fnsContent = functions.joinToString("") { it.emit(1, isInClass = true, isStaticScope = false, isInInterface = false) }
