@@ -654,6 +654,48 @@ open class RustIrEmitter(
         )
     }
 
+    private val serializationMethodNames = setOf(
+        "serialize_path", "serialize_param", "serialize_body",
+        "deserialize_path", "deserialize_param", "deserialize_body",
+    )
+
+    private fun Expression.toRawCode(): String = when (this) {
+        is VariableReference -> name.snakeCase().sanitizeKeywords()
+        is FieldCall -> {
+            val recv = receiver?.let { "${it.toRawCode()}." } ?: ""
+            "$recv${field.snakeCase().sanitizeKeywords()}"
+        }
+        is ArrayIndexCall -> {
+            val lit = index as? Literal
+            val idx = when {
+                lit != null && (lit.type is LanguageType.Integer || lit.type is LanguageType.Number) -> "${lit.value}"
+                lit != null && lit.type is LanguageType.String -> "\"${lit.value}\""
+                else -> index.toRawCode()
+            }
+            "${receiver.toRawCode()}[$idx]"
+        }
+        is RawExpression -> code
+        else -> "unknown"
+    }
+
+    private fun Expression.toBorrowedRaw(): RawExpression = RawExpression("&${toRawCode()}")
+
+    private fun borrowSerializationArgs(): Transformer = transformer {
+        statementAndExpression { s, t ->
+            if (s is FunctionCall && s.name.snakeCase() in serializationMethodNames) {
+                val newArgs = s.arguments.entries.mapIndexed { idx, (key, value) ->
+                    val transformed = t.transformExpression(value)
+                    if (idx == 0 && !(transformed is VariableReference && transformed.name.value() == "it")) {
+                        key to transformed.toBorrowedRaw()
+                    } else {
+                        key to transformed
+                    }
+                }.toMap()
+                s.copy(arguments = newArgs)
+            } else s.transformChildren(t)
+        }
+    }
+
     private fun fixResponseSwitchPatterns(): Transformer = transformer {
         statement { s, t ->
             if (s is Switch && s.variable?.camelCase() == "r") {
@@ -727,6 +769,7 @@ open class RustIrEmitter(
 
         apply(fixResponseSwitchPatterns())
         apply(fixConstructorCalls())
+        apply(borrowSerializationArgs())
 
         parametersWhere(
             predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
