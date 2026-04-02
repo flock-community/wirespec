@@ -60,8 +60,7 @@ object PythonGenerator : Generator {
     private fun String.indentCode(level: Int): String = " ".repeat(level * 4) + this
 
     private fun File.emit(indent: Int): String {
-        val allUnions = elements.flatMap { it.findAllUnions() }
-        return groupImports(elements).joinToString("") { it.emit(indent, allUnions = allUnions) }.removeEmptyLines()
+        return groupImports(elements).joinToString("") { it.emit(indent) }.removeEmptyLines()
     }
 
     private fun groupImports(elements: List<Element>): List<Element> {
@@ -90,6 +89,8 @@ object PythonGenerator : Generator {
         return result
     }
 
+    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
+
     private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false, qualifier: ((String) -> String)? = null): String = when (this) {
         is Package -> emit(indent)
         is Import -> emit(indent)
@@ -104,7 +105,7 @@ object PythonGenerator : Generator {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
-            val staticContent = statics.joinToString("") { it.emit(indent, parents, allUnions, isStaticScope, qualifier) }
+            val staticContent = statics.joinToString("") { it.emit(indent, parents, isStaticScope, qualifier) }
             val content = body.joinToString("") { it.emit(indent + 1) }
             val asyncPrefix = if (isAsync) "async " else ""
             val runner = if (isAsync) "asyncio.run(main())" else "main()"

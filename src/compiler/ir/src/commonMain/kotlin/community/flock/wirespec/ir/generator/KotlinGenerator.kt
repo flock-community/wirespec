@@ -56,9 +56,19 @@ import community.flock.wirespec.ir.core.Function as AstFunction
 
 object KotlinGenerator : Generator {
     override fun generate(element: Element): String = when (element) {
-        is File -> emitFile(element)
-        else -> emitFile(File(Name.of(""), listOf(element)))
+        is File -> {
+            val emitter = KotlinEmitter(element)
+            emitter.emitFile()
+        }
+
+        else -> {
+            val emitter = KotlinEmitter(File(Name.of(""), listOf(element)))
+            emitter.emitFile()
+        }
     }
+}
+
+private class KotlinEmitter(val file: File) {
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -72,7 +82,15 @@ object KotlinGenerator : Generator {
         }.compact()
     }
 
-    private fun String.indentCode(level: Int): String = indentLines(level)
+    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
+
+    private fun String.indentCode(level: Int): String {
+        if (level <= 0) return this
+        val prefix = " ".repeat(level * 2)
+        return this.lines().joinToString("\n") { line ->
+            if (line.isEmpty()) line else prefix + line
+        }
+    }
 
     private fun Element.emit(indent: Int, isStatic: Boolean = false, parents: List<Element>): String = when (this) {
         is Package -> emit(indent)
@@ -166,8 +184,8 @@ object KotlinGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val pascal = name.pascalCase()
-        val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
+        val implStr = if (interfaces.isEmpty()) "" else " : ${interfaces.map { it.emitGenerics() }.distinct().joinToString(", ")}"
+
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitKotlin(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
@@ -232,15 +250,23 @@ object KotlinGenerator : Generator {
         }
     }
 
-    private fun AstFunction.emit(indent: Int, @Suppress("UNUSED_PARAMETER") parents: List<Element>): String {
-        val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
-        val suspendPrefix = "suspend ".takeIf { isAsync }.orEmpty()
-        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", "> ") { it.emit() }
-        val rType = when {
-            isAsync -> returnType?.emitGenerics() ?: "Unit"
-            else -> returnType?.takeIf { it != Type.Unit }?.emitGenerics()
+    private fun AstFunction.emit(indent: Int, parents: List<Element>): String {
+        val lastParent = parents.lastOrNull()
+        val isInterface = lastParent is Interface
+
+        val overridePrefix = if (isOverride) "override " else ""
+        val suspendPrefix = if (isAsync) "suspend " else ""
+        val typeParamsStr = if (typeParameters.isNotEmpty()) {
+            "<${typeParameters.joinToString(", ") { it.emit() }}> "
+        } else {
+            ""
         }
-        val returnTypeStr = rType?.let { ": $it" }.orEmpty()
+        val rType = if (isAsync) {
+            returnType?.emitGenerics() ?: "Unit"
+        } else {
+            returnType?.takeIf { it != Type.Unit }?.emitGenerics()
+        }
+        val returnTypeStr = if (rType != null) ": $rType" else ""
         val params = parameters.joinToString(", ") { it.emit(0) }
         val signature = "$overridePrefix${suspendPrefix}fun $typeParamsStr${name.camelCase()}($params)$returnTypeStr"
 

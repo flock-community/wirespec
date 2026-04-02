@@ -64,6 +64,14 @@ object ScalaGenerator : Generator {
         primaryFieldNames = collectPrimaryFieldNames(file.elements)
         return emitFile(file)
     }
+}
+
+private class
+ScalaEmitter(
+    val file: File,
+) {
+    private val objectNames = collectObjectNames(file.elements)
+    private val primaryFieldNames = collectPrimaryFieldNames(file.elements)
 
     private fun collectObjectNames(elements: List<Element>): Set<String> {
         val names = mutableSetOf<String>()
@@ -110,19 +118,27 @@ object ScalaGenerator : Generator {
         return argNames != primaryFields
     }
 
-    private fun emitFile(file: File): String {
-        val (packages, rest) = file.elements.partition { it is Package }
-        val (imports, others) = rest.partition { it is Import }
-        return buildString {
-            packages.forEach { append((it as Package).emit(0)) }
-            append('\n')
-            imports.forEach { append((it as Import).emit(0)) }
-            append('\n')
-            others.forEach { append(it.emit(0, parents = listOf(file))) }
-        }.compact()
+    fun emitFile(): String {
+        val packages = file.elements.filterIsInstance<Package>()
+        val imports = file.elements.filterIsInstance<Import>()
+        val otherElements = file.elements.filter { it !is Package && it !is Import }
+
+        val packagesStr = packages.joinToString("") { it.emit(0) }
+        val importsStr = imports.joinToString("") { it.emit(0) }
+        val elementsStr = otherElements.joinToString("") { it.emit(0, parents = emptyList()) }
+
+        return "$packagesStr\n$importsStr\n$elementsStr".removeEmptyLines()
     }
 
-    private fun String.indentCode(level: Int): String = indentLines(level)
+    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
+
+    private fun String.indentCode(level: Int): String {
+        if (level <= 0) return this
+        val prefix = " ".repeat(level * 2)
+        return this.lines().joinToString("\n") { line ->
+            if (line.isEmpty()) line else prefix + line
+        }
+    }
 
     private fun Element.emit(indent: Int, isStatic: Boolean = false, parents: List<Element>): String = when (this) {
         is Package -> emit(indent)
@@ -214,8 +230,8 @@ object ScalaGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val pascal = name.pascalCase()
-        val implStr = interfaces.map { it.emitTypeAnnotation() }.distinct().joinNonEmpty(" with ", " extends ")
+        val implStr = if (interfaces.isEmpty()) "" else " extends ${interfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
+
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
@@ -284,9 +300,13 @@ object ScalaGenerator : Generator {
         return "def this($params) = $rhs\n".indentCode(indent)
     }
 
-    private fun AstFunction.emit(indent: Int): String {
-        val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
-        val typeParamsStr = typeParameters.joinNonEmpty(", ", "[", "]") { it.emit() }
+    private fun AstFunction.emit(indent: Int, parents: List<Element>): String {
+        val overridePrefix = if (isOverride) "override " else ""
+        val typeParamsStr = if (typeParameters.isNotEmpty()) {
+            "[${typeParameters.joinToString(", ") { it.emit() }}]"
+        } else {
+            ""
+        }
         val rType = returnType?.takeIf { it != Type.Unit }?.emitTypeAnnotation() ?: "Unit"
         val params = parameters.joinToString(", ") { it.emit(0) }
         val signature = "${overridePrefix}def ${name.camelCase()}$typeParamsStr($params): $rType"

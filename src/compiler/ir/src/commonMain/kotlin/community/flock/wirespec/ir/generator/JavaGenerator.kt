@@ -56,9 +56,18 @@ import community.flock.wirespec.ir.core.Function as AstFunction
 
 object JavaGenerator : Generator {
     override fun generate(element: Element): String = when (element) {
-        is File -> emitFile(element)
-        else -> emitFile(File(Name.of(""), listOf(element)))
+        is File -> {
+            val emitter = JavaEmitter(element)
+            emitter.emitFile()
+        }
+        else -> {
+            val emitter = JavaEmitter(File(Name.of(""), listOf(element)))
+            emitter.emitFile()
+        }
     }
+}
+
+private class JavaEmitter(val file: File) {
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -70,7 +79,15 @@ object JavaGenerator : Generator {
         }.compact()
     }
 
-    private fun String.indentCode(level: Int): String = indentLines(level)
+    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
+
+    private fun String.indentCode(level: Int): String {
+        if (level <= 0) return this
+        val prefix = " ".repeat(level * 2)
+        return this.lines().joinToString("\n") { line ->
+            if (line.isEmpty()) line else prefix + line
+        }
+    }
 
     private fun Element.emit(indent: Int, isStatic: Boolean = true, parents: List<Element>): String = when (this) {
         is Package -> emit(indent)
@@ -148,13 +165,11 @@ object JavaGenerator : Generator {
     private fun Union.emit(indent: Int, parents: List<Element>): String {
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val extendsName = extends?.name
-        val ext = (
-            listOfNotNull(extends?.emitGenerics()) +
-                parents.filterIsInstance<Union>().filter { it.name.pascalCase() != extendsName }.map { it.name.pascalCase() }
-            )
-            .distinct()
-        val extStr = ext.joinNonEmpty(", ", " extends ")
-        val permitsStr = members.joinNonEmpty(", ", " permits ") { it.name }
+        val ext = listOfNotNull(extends?.emitGenerics()) +
+            parents.filterIsInstance<Union>().filter { it.name.pascalCase() != extendsName }.map { it.name.pascalCase() }
+
+        val extStr = if (ext.isEmpty()) "" else " extends ${ext.distinct().joinToString(", ")}"
+        val permitsStr = if (members.isEmpty()) "" else " permits ${members.joinToString(", ") { it.name }}"
         return "public sealed interface ${name.pascalCase()}$typeParamsStr$extStr$permitsStr {}\n\n".indentCode(indent)
     }
 
@@ -185,7 +200,8 @@ object JavaGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " implements ")
+        val implStr = if (interfaces.isEmpty()) "" else " implements ${interfaces.map { it.emitGenerics() }.distinct().joinToString(", ")}"
+
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
         val typeModifier = when {
             indent == 0 -> "public record"
@@ -196,11 +212,8 @@ object JavaGenerator : Generator {
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
-        val paramsStr = if (fields.isEmpty()) {
-            " ()"
-        } else {
-            fields.joinToString(",\n", " (\n", "\n)") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
-        }
+        val params = fields.joinToString(",\n") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
+        val paramsStr = if (fields.isEmpty()) " ()" else " (\n$params\n)"
 
         return "$typeModifier ${name.pascalCase()}$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
     }
