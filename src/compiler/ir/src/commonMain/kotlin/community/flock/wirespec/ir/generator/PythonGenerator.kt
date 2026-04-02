@@ -59,9 +59,7 @@ object PythonGenerator : Generator {
 
     private fun String.indentCode(level: Int): String = " ".repeat(level * 4) + this
 
-    private fun File.emit(indent: Int): String {
-        return groupImports(elements).joinToString("") { it.emit(indent) }.removeEmptyLines()
-    }
+    private fun File.emit(indent: Int): String = groupImports(elements).joinToString("") { it.emit(indent) }.removeEmptyLines()
 
     private fun groupImports(elements: List<Element>): List<Element> {
         val result = mutableListOf<Element>()
