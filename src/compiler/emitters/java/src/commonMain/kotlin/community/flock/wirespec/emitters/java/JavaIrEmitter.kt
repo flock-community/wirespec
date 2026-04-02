@@ -343,6 +343,9 @@ open class JavaIrEmitter(
                     receiver = stmt.receiver?.let { tr.transformExpression(it) },
                     field = stmt.field.sanitizeName(),
                 )
+                is FunctionCall -> if (stmt.name.value() == "validate") {
+                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+                } else stmt.transformChildren(tr)
                 else -> stmt.transformChildren(tr)
             }
         }

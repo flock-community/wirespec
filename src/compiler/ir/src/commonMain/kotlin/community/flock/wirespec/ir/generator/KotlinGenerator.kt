@@ -472,7 +472,7 @@ private class KotlinEmitter(val file: File) {
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+                if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${
                 name.value().toKotlinStaticCall().sanitize()
@@ -544,7 +544,7 @@ private class KotlinEmitter(val file: File) {
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.value() != "validate") "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+                if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${
                 name.value().toKotlinStaticCall().sanitize()

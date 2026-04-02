@@ -513,7 +513,7 @@ ScalaEmitter(
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.value() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
+                if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         }
@@ -574,7 +574,7 @@ ScalaEmitter(
 
         is FunctionCall -> {
             val typeArgsStr =
-                if (typeArguments.isNotEmpty() && name.value() != "validate") "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
+                if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
             "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
