@@ -78,8 +78,8 @@ class IrConverterTest {
 
         val expected = file("MyEnum") {
             enum("MyEnum", Type.Custom("Wirespec.Enum")) {
-                entry("FOO")
-                entry("BAR")
+                entry("FOO", "\"FOO\"")
+                entry("BAR", "\"BAR\"")
             }
         }
 

@@ -408,7 +408,7 @@ fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation
 
 fun EnumWirespec.convert() = file(identifier.toName()) {
     enum(identifier.toName(), Type.Custom("Wirespec.Enum")) {
-        entries.forEach { entry(it) }
+        entries.forEach { entry(it, "\"$it\"") }
     }
 }
 
