@@ -66,6 +66,8 @@ open class JavaIrEmitter(
 
     override val extension = FileExtension.Java
 
+    override fun transformTestFile(file: File): File = file.transformTypeDescriptors()
+
     private val wirespecImport = import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec")
 
     override val shared = object : Shared {

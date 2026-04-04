@@ -75,4 +75,6 @@ interface IrEmitter : Emitter {
     fun emit(endpoint: Endpoint): File
     fun emit(union: Union): File
     fun emit(channel: Channel): File
+
+    fun transformTestFile(file: File): File = file
 }

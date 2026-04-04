@@ -76,6 +76,11 @@ open class RustIrEmitter(
 
     override val extension = FileExtension.Rust
 
+    override fun transformTestFile(file: File): File = file.transform {
+        apply(borrowSerializationArgs())
+        apply(fixResponseSwitchPatterns())
+    }
+
     private val modelImport = """
         |use super::super::wirespec::*;
         |use regex;
@@ -644,6 +649,18 @@ open class RustIrEmitter(
                 else -> index.toRawCode()
             }
             "${receiver.toRawCode()}[$idx]"
+        }
+        is ConstructorStatement -> {
+            val typeName = (type as? LanguageType.Custom)?.name ?: type.toString()
+            val args = namedArguments.entries.joinToString(", ") { "${it.key.snakeCase()}: ${it.value.toRawCode()}" }
+            if (args.isEmpty()) "$typeName {}" else "$typeName { $args }"
+        }
+        is Literal -> when {
+            type is LanguageType.String -> "String::from(\"$value\")"
+            type is LanguageType.Boolean -> "$value"
+            type is LanguageType.Integer -> "${value}"
+            type is LanguageType.Number -> "${value}"
+            else -> "$value"
         }
         is RawExpression -> code
         else -> error("Unsupported expression type in toRawCode: ${this::class.simpleName}")
