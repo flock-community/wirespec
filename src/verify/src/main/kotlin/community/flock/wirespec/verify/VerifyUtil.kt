@@ -94,13 +94,14 @@ class Language(
 
     fun generate(file: AstFile, outputDir: File) {
         val name = file.name.pascalCase()
+        val transformed = emitter.transformTestFile(file)
         val (fileName, content) = when (emitter) {
-            is JavaIrEmitter -> "${name}.java" to file.generateJava()
-            is KotlinIrEmitter -> "${name}.kt" to file.generateKotlin()
-            is PythonIrEmitter -> "${name}.py" to file.generatePython()
-            is RustIrEmitter -> "${name}.rs" to file.generateRust()
-            is ScalaIrEmitter -> "${name}.scala" to file.generateScala()
-            is TypeScriptIrEmitter -> "${name}.ts" to file.generateTypeScript()
+            is JavaIrEmitter -> "${name}.java" to transformed.generateJava()
+            is KotlinIrEmitter -> "${name}.kt" to transformed.generateKotlin()
+            is PythonIrEmitter -> "${name}.py" to transformed.generatePython()
+            is RustIrEmitter -> "${name}.rs" to transformed.generateRust()
+            is ScalaIrEmitter -> "${name}.scala" to transformed.generateScala()
+            is TypeScriptIrEmitter -> "${name}.ts" to transformed.generateTypeScript()
             else -> error("Unknown language: $name")
         }
         outputDir.resolve(fileName).writeText(content)
@@ -167,7 +168,8 @@ class Language(
                     "use generated::wirespec::{BodySerializer, BodyDeserializer, PathSerializer, PathDeserializer, ParamSerializer, ParamDeserializer, BodySerialization, PathSerialization, ParamSerialization, Serializer, Deserializer, Serialization, RawRequest, RawResponse, Method};"
                 } else ""
                 // Generate the test file content (which contains fn main())
-                val rustContent = resolved.generateRust()
+                val transformedRust = emitter.transformTestFile(resolved)
+                val rustContent = transformedRust.generateRust()
                 // Filter out the import lines that the generator produced (use super::...)
                 val filteredContent = rustContent.lines()
                     .filter { !it.startsWith("use super::") }

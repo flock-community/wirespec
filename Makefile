@@ -1,7 +1,7 @@
 .PHONY: *
 
 # The first command will be invoked with `make` only and should be `all`
-all: build image test example format
+all: build image test example format verify
 
 build: build-wirespec build-site
 

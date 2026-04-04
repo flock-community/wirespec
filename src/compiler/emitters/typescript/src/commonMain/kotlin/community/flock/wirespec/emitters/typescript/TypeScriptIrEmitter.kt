@@ -62,6 +62,10 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override val extension = FileExtension.TypeScript
 
+    override fun transformTestFile(file: File): File = file.transform {
+        apply(transformPatternSwitchToValueSwitch())
+    }
+
     override val shared = object : Shared {
         val api = """
           |export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
