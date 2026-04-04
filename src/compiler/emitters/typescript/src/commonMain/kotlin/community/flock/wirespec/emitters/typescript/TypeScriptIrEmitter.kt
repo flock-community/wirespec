@@ -61,50 +61,11 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override val extension = FileExtension.TypeScript
 
-    private val sanitizationConfig: SanitizationConfig by lazy {
-        SanitizationConfig(
-            reservedKeywords = reservedKeywords,
-            escapeKeyword = { "$it" },
-            fieldNameCase = { name ->
-                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
-                Name(listOf(sanitized))
-            },
-            parameterNameCase = { name ->
-                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
-                Name(listOf(sanitized))
-            },
-            sanitizeSymbol = { it.filter { ch -> ch.isLetterOrDigit() || ch == '_' } },
-            escapeFieldKeywords = false,
-            extraStatementTransforms = { stmt, tr ->
-                when (stmt) {
-                    is VariableReference -> VariableReference(
-                        name = sanitizationConfig.sanitizeFieldName(stmt.name),
-                    )
-                    is ConstructorStatement -> ConstructorStatement(
-                        type = tr.transformType(stmt.type),
-                        namedArguments = stmt.namedArguments.map { (key, value) ->
-                            sanitizationConfig.sanitizeFieldName(key) to tr.transformExpression(value)
-                        }.toMap(),
-                    )
-                    is Assignment -> Assignment(
-                        name = sanitizationConfig.sanitizeFieldName(stmt.name),
-                        value = tr.transformExpression(stmt.value),
-                        isProperty = stmt.isProperty,
-                    )
-                    else -> stmt.transformChildren(tr)
-                }
-            },
-        )
-    }
-
     override fun transformTestFile(file: File): File = file.transform {
         apply(transformPatternSwitchToValueSwitch())
     }
 
-    override fun emitShared(): File? {
-
-        val packageName = PackageName(DEFAULT_SHARED_PACKAGE_STRING)
-
+    override val shared = object : Shared {
         val api = """
           |export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
           |  to: (request: REQ) => RawRequest;
