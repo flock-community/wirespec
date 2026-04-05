@@ -220,13 +220,8 @@ open class JavaIrEmitter(
             matchingElements { s: Struct ->
                 s.copy(
                     interfaces = listOf(Type.Custom("Wirespec.Refined")),
-                    elements = listOf(
-                        function("toString", isOverride = true) {
-                            returnType(string)
-                            returns(FunctionCall(receiver = VariableReference(Name.of("value")), name = Name.of("toString")))
-                        },
-                    ) + s.elements.map { element ->
-                        if (element is LanguageFunction && element.name == Name.of("validate")) {
+                    elements = s.elements.map { element ->
+                        if (element is LanguageFunction) {
                             element.copy(isOverride = true)
                         } else element
                     } + listOf(

@@ -82,7 +82,7 @@ class JavaIrEmitterTest {
             |) implements Wirespec.Refined {
             |  @Override
             |  public String toString() {
-            |    return value.toString();
+            |    return value;
             |  }
             |  @Override
             |  public Boolean validate() {
@@ -638,7 +638,7 @@ class JavaIrEmitterTest {
             |) implements Wirespec.Refined {
             |  @Override
             |  public String toString() {
-            |    return value.toString();
+            |    return value;
             |  }
             |  @Override
             |  public Boolean validate() {
@@ -657,7 +657,7 @@ class JavaIrEmitterTest {
             |) implements Wirespec.Refined {
             |  @Override
             |  public String toString() {
-            |    return value.toString();
+            |    return value;
             |  }
             |  @Override
             |  public Boolean validate() {
@@ -902,7 +902,7 @@ class JavaIrEmitterTest {
             |) implements Wirespec.Refined {
             |  @Override
             |  public String toString() {
-            |    return value.toString();
+            |    return value;
             |  }
             |  @Override
             |  public Boolean validate() {
@@ -955,7 +955,7 @@ class JavaIrEmitterTest {
             |) implements Wirespec.Refined {
             |  @Override
             |  public String toString() {
-            |    return value.toString();
+            |    return value;
             |  }
             |  @Override
             |  public Boolean validate() {
@@ -974,7 +974,7 @@ class JavaIrEmitterTest {
             |) implements Wirespec.Refined {
             |  @Override
             |  public String toString() {
-            |    return value.toString();
+            |    return value;
             |  }
             |  @Override
             |  public Boolean validate() {
@@ -993,7 +993,7 @@ class JavaIrEmitterTest {
             |) implements Wirespec.Refined {
             |  @Override
             |  public String toString() {
-            |    return value.toString();
+            |    return value;
             |  }
             |  @Override
             |  public Boolean validate() {
