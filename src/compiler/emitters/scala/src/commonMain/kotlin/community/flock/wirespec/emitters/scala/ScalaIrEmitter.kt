@@ -21,13 +21,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
-import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -42,7 +40,6 @@ import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.TypeParameter
-import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
@@ -228,23 +225,22 @@ open class ScalaIrEmitter(
     override fun emit(refined: Refined): File {
         val file = refined.convert().sanitizeNames()
         val struct = file.findElement<Struct>()!!
-        val toStringExpr = when (refined.reference.type) {
-            is Reference.Primitive.Type.String -> "value"
-            else -> "value.toString"
-        }
         val updatedStruct = struct.copy(
             fields = struct.fields.map { f -> f.copy(isOverride = true) },
-            elements = listOf(
-                function("toString", isOverride = true) {
-                    returnType(LanguageType.String)
-                    returns(RawExpression(toStringExpr))
-                },
-                function("validate", isOverride = true) {
-                    returnType(LanguageType.Boolean)
-                    returns(refined.reference.convertConstraint(VariableReference(Name.of("value"))))
-                },
-            ),
-        )
+            elements = struct.elements.map { element ->
+                if (element is LanguageFunction) {
+                    element.copy(isOverride = true)
+                } else element
+            },
+        ).transform {
+            expression { expr, tr ->
+                when {
+                    expr is FunctionCall && expr.name.camelCase() == "toString" && expr.receiver != null ->
+                        FieldCall(receiver = expr.receiver?.let { tr.transformExpression(it) }, field = Name.of("toString"))
+                    else -> expr.transformChildren(tr)
+                }
+            }
+        }
         return LanguageFile(Name.of(refined.identifier.sanitize()), listOf(updatedStruct))
     }
 
