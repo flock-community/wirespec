@@ -329,7 +329,7 @@ open class RustIrEmitter(
             matchingElements { languageEnum: LanguageEnum ->
                 languageEnum.copy(
                     entries = languageEnum.entries.map {
-                        LanguageEnum.Entry(Name.of(it.name.value().sanitizeEnum().sanitizeKeywords()), listOf("\"${it.name.value()}\""))
+                        it.copy(name = Name.of(it.name.value().sanitizeEnum().sanitizeKeywords()))
                     },
                 )
             }
