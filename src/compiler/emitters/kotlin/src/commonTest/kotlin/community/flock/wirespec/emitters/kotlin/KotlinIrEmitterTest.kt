@@ -77,10 +77,10 @@ class KotlinIrEmitterTest {
             |data class UUID(
             |  override val value: String
             |) : Wirespec.Refined<String> {
-            |  override fun toString(): String =
-            |    value
             |  override fun validate(): Boolean =
             |    Regex(${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}).matches(value)
+            |  override fun toString(): String =
+            |    value
             |}
             |
             """.trimMargin(),
@@ -545,10 +545,10 @@ class KotlinIrEmitterTest {
             |data class TodoId(
             |  override val value: String
             |) : Wirespec.Refined<String> {
-            |  override fun toString(): String =
-            |    value
             |  override fun validate(): Boolean =
             |    Regex(${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}).matches(value)
+            |  override fun toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -557,10 +557,10 @@ class KotlinIrEmitterTest {
             |data class TodoNoRegex(
             |  override val value: String
             |) : Wirespec.Refined<String> {
-            |  override fun toString(): String =
-            |    value
             |  override fun validate(): Boolean =
             |    true
+            |  override fun toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -569,10 +569,10 @@ class KotlinIrEmitterTest {
             |data class TestInt(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    true
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -581,10 +581,10 @@ class KotlinIrEmitterTest {
             |data class TestInt0(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    true
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -593,10 +593,10 @@ class KotlinIrEmitterTest {
             |data class TestInt1(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    0 <= value
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -605,10 +605,10 @@ class KotlinIrEmitterTest {
             |data class TestInt2(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    1 <= value && value <= 3
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -617,10 +617,10 @@ class KotlinIrEmitterTest {
             |data class TestNum(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    true
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -629,10 +629,10 @@ class KotlinIrEmitterTest {
             |data class TestNum0(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    true
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -641,10 +641,10 @@ class KotlinIrEmitterTest {
             |data class TestNum1(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    value <= 0.5
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -653,10 +653,10 @@ class KotlinIrEmitterTest {
             |data class TestNum2(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    -0.2 <= value && value <= 0.5
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
         """.trimMargin()
@@ -731,10 +731,10 @@ class KotlinIrEmitterTest {
             |data class DutchPostalCode(
             |  override val value: String
             |) : Wirespec.Refined<String> {
-            |  override fun toString(): String =
-            |    value
             |  override fun validate(): Boolean =
             |    Regex(${"\"\"\""}^([0-9]{4}[A-Z]{2})${'$'}${"\"\"\""}).matches(value)
+            |  override fun toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -775,10 +775,10 @@ class KotlinIrEmitterTest {
             |data class Email(
             |  override val value: String
             |) : Wirespec.Refined<String> {
-            |  override fun toString(): String =
-            |    value
             |  override fun validate(): Boolean =
             |    Regex(${"\"\"\""}^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}${"\"\"\""}).matches(value)
+            |  override fun toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -787,10 +787,10 @@ class KotlinIrEmitterTest {
             |data class PhoneNumber(
             |  override val value: String
             |) : Wirespec.Refined<String> {
-            |  override fun toString(): String =
-            |    value
             |  override fun validate(): Boolean =
             |    Regex(${"\"\"\""}^\+[1-9]\d{1,14}${'$'}${"\"\"\""}).matches(value)
+            |  override fun toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -799,10 +799,10 @@ class KotlinIrEmitterTest {
             |data class Tag(
             |  override val value: String
             |) : Wirespec.Refined<String> {
-            |  override fun toString(): String =
-            |    value
             |  override fun validate(): Boolean =
             |    Regex(${"\"\"\""}^[a-z][a-z0-9-]{0,19}${'$'}${"\"\"\""}).matches(value)
+            |  override fun toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -811,10 +811,10 @@ class KotlinIrEmitterTest {
             |data class EmployeeAge(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
-            |  override fun toString(): String =
-            |    value.toString()
             |  override fun validate(): Boolean =
             |    18 <= value && value <= 65
+            |  override fun toString(): String =
+            |    value.toString()
             |}
             |
             |package community.flock.wirespec.generated.model
