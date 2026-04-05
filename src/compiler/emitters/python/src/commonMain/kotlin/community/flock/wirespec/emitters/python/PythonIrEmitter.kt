@@ -184,26 +184,37 @@ open class PythonIrEmitter(
     override fun emit(refined: Refined): File {
         val file = refined.convert()
         val struct = file.findElement<Struct>()!!
-        val constraintExpr = refined.reference.convertConstraint(FieldCall(VariableReference(Name.of("self")), Name.of("value")))
-        val validate = function("validate") {
-            arg("self", LanguageType.Custom(""))
-            returnType(LanguageType.Boolean)
-            returns(constraintExpr)
-        }
-        val toStringExpr = when (refined.reference.type) {
-            is Reference.Primitive.Type.String -> "self.value"
-            else -> "str(self.value)"
-        }
-        val toString = function("__str__") {
-            arg("self", LanguageType.Custom(""))
-            returnType(LanguageType.String)
-            returns(RawExpression(toStringExpr))
-        }
+        val updatedStruct = struct.copy(
+            elements = struct.elements.mapNotNull { element ->
+                when {
+                    element is LanguageFunction && element.name == Name.of("validate") -> {
+                        val constraintExpr = refined.reference.convertConstraint(
+                            FieldCall(VariableReference(Name.of("self")), Name.of("value"))
+                        )
+                        function("validate") {
+                            arg("self", LanguageType.Custom(""))
+                            returnType(LanguageType.Boolean)
+                            returns(constraintExpr)
+                        }
+                    }
+                    element is LanguageFunction && element.name == Name.of("toString") -> {
+                        val toStringExpr = when (refined.reference.type) {
+                            is Reference.Primitive.Type.String -> "self.value"
+                            else -> "str(self.value)"
+                        }
+                        function("__str__") {
+                            arg("self", LanguageType.Custom(""))
+                            returnType(LanguageType.String)
+                            returns(RawExpression(toStringExpr))
+                        }
+                    }
+                    else -> element
+                }
+            },
+        )
         return file
             .transform {
-                matchingElements { s: Struct ->
-                    s.copy(elements = listOf(validate, toString))
-                }
+                matchingElements { _: Struct -> updatedStruct }
             }
             .sanitizeNames()
     }
