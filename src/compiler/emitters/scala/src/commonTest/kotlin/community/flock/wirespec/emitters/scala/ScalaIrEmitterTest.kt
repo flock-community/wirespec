@@ -77,10 +77,10 @@ class ScalaIrEmitterTest {
             |case class UUID(
             |  override val value: String
             |) extends Wirespec.Refined[String] {
-            |  override def toString(): String =
-            |    value
             |  override def validate(): Boolean =
             |    ${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}.r.findFirstIn(value).isDefined
+            |  override def toString(): String =
+            |    value
             |}
             |
             """.trimMargin(),
@@ -169,10 +169,10 @@ class ScalaIrEmitterTest {
             |case class TodoId(
             |  override val value: String
             |) extends Wirespec.Refined[String] {
-            |  override def toString(): String =
-            |    value
             |  override def validate(): Boolean =
             |    ${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}.r.findFirstIn(value).isDefined
+            |  override def toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -181,10 +181,10 @@ class ScalaIrEmitterTest {
             |case class TodoNoRegex(
             |  override val value: String
             |) extends Wirespec.Refined[String] {
-            |  override def toString(): String =
-            |    value
             |  override def validate(): Boolean =
             |    true
+            |  override def toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -193,10 +193,10 @@ class ScalaIrEmitterTest {
             |case class TestInt(
             |  override val value: Long
             |) extends Wirespec.Refined[Long] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    true
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -205,10 +205,10 @@ class ScalaIrEmitterTest {
             |case class TestInt0(
             |  override val value: Long
             |) extends Wirespec.Refined[Long] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    true
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -217,10 +217,10 @@ class ScalaIrEmitterTest {
             |case class TestInt1(
             |  override val value: Long
             |) extends Wirespec.Refined[Long] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    0 <= value
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -229,10 +229,10 @@ class ScalaIrEmitterTest {
             |case class TestInt2(
             |  override val value: Long
             |) extends Wirespec.Refined[Long] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    1 <= value && value <= 3
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -241,10 +241,10 @@ class ScalaIrEmitterTest {
             |case class TestNum(
             |  override val value: Double
             |) extends Wirespec.Refined[Double] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    true
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -253,10 +253,10 @@ class ScalaIrEmitterTest {
             |case class TestNum0(
             |  override val value: Double
             |) extends Wirespec.Refined[Double] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    true
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -265,10 +265,10 @@ class ScalaIrEmitterTest {
             |case class TestNum1(
             |  override val value: Double
             |) extends Wirespec.Refined[Double] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    value <= 0.5
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -277,10 +277,10 @@ class ScalaIrEmitterTest {
             |case class TestNum2(
             |  override val value: Double
             |) extends Wirespec.Refined[Double] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    -0.2 <= value && value <= 0.5
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
         """.trimMargin()
@@ -739,10 +739,10 @@ class ScalaIrEmitterTest {
             |case class DutchPostalCode(
             |  override val value: String
             |) extends Wirespec.Refined[String] {
-            |  override def toString(): String =
-            |    value
             |  override def validate(): Boolean =
             |    ${"\"\"\""}^([0-9]{4}[A-Z]{2})${'$'}${"\"\"\""}.r.findFirstIn(value).isDefined
+            |  override def toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -783,10 +783,10 @@ class ScalaIrEmitterTest {
             |case class Email(
             |  override val value: String
             |) extends Wirespec.Refined[String] {
-            |  override def toString(): String =
-            |    value
             |  override def validate(): Boolean =
             |    ${"\"\"\""}^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}${"\"\"\""}.r.findFirstIn(value).isDefined
+            |  override def toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -795,10 +795,10 @@ class ScalaIrEmitterTest {
             |case class PhoneNumber(
             |  override val value: String
             |) extends Wirespec.Refined[String] {
-            |  override def toString(): String =
-            |    value
             |  override def validate(): Boolean =
             |    ${"\"\"\""}^\+[1-9]\d{1,14}${'$'}${"\"\"\""}.r.findFirstIn(value).isDefined
+            |  override def toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -807,10 +807,10 @@ class ScalaIrEmitterTest {
             |case class Tag(
             |  override val value: String
             |) extends Wirespec.Refined[String] {
-            |  override def toString(): String =
-            |    value
             |  override def validate(): Boolean =
             |    ${"\"\"\""}^[a-z][a-z0-9-]{0,19}${'$'}${"\"\"\""}.r.findFirstIn(value).isDefined
+            |  override def toString(): String =
+            |    value
             |}
             |
             |package community.flock.wirespec.generated.model
@@ -819,10 +819,10 @@ class ScalaIrEmitterTest {
             |case class EmployeeAge(
             |  override val value: Long
             |) extends Wirespec.Refined[Long] {
-            |  override def toString(): String =
-            |    value.toString
             |  override def validate(): Boolean =
             |    18 <= value && value <= 65
+            |  override def toString(): String =
+            |    value.toString
             |}
             |
             |package community.flock.wirespec.generated.model
