@@ -81,12 +81,12 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(value).find();
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value;
             |  }
             |  @Override
             |  public String value() {
@@ -637,12 +637,12 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(value).find();
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value;
             |  }
             |  @Override
             |  public String value() {
@@ -656,12 +656,12 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return true;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value;
             |  }
             |  @Override
             |  public String value() {
@@ -675,12 +675,12 @@ class JavaIrEmitterTest {
             |  Long value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return true;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Long value() {
@@ -694,12 +694,12 @@ class JavaIrEmitterTest {
             |  Long value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return true;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Long value() {
@@ -713,12 +713,12 @@ class JavaIrEmitterTest {
             |  Long value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return 0 <= value;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Long value() {
@@ -732,12 +732,12 @@ class JavaIrEmitterTest {
             |  Long value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return 1 <= value && value <= 3;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Long value() {
@@ -751,12 +751,12 @@ class JavaIrEmitterTest {
             |  Double value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return true;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Double value() {
@@ -770,12 +770,12 @@ class JavaIrEmitterTest {
             |  Double value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return true;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Double value() {
@@ -789,12 +789,12 @@ class JavaIrEmitterTest {
             |  Double value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return value <= 0.5;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Double value() {
@@ -808,12 +808,12 @@ class JavaIrEmitterTest {
             |  Double value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return -0.2 <= value && value <= 0.5;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Double value() {
@@ -901,12 +901,12 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^([0-9]{4}[A-Z]{2})${'$'}").matcher(value).find();
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value;
             |  }
             |  @Override
             |  public String value() {
@@ -954,12 +954,12 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}${'$'}").matcher(value).find();
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value;
             |  }
             |  @Override
             |  public String value() {
@@ -973,12 +973,12 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^\\+[1-9]\\d{1,14}${'$'}").matcher(value).find();
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value;
             |  }
             |  @Override
             |  public String value() {
@@ -992,12 +992,12 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[a-z][a-z0-9-]{0,19}${'$'}").matcher(value).find();
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value;
             |  }
             |  @Override
             |  public String value() {
@@ -1011,12 +1011,12 @@ class JavaIrEmitterTest {
             |  Long value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value.toString();
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return 18 <= value && value <= 65;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return value.toString();
             |  }
             |  @Override
             |  public Long value() {
