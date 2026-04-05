@@ -83,10 +83,6 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(value).find();
             |  }
@@ -643,10 +639,6 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(value).find();
             |  }
@@ -665,10 +657,6 @@ class JavaIrEmitterTest {
             |public record TodoNoRegex (
             |  String value
             |) implements Wirespec.Refined {
-            |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
             |  @Override
             |  public Boolean validate() {
             |    return true;
@@ -915,10 +903,6 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^([0-9]{4}[A-Z]{2})${'$'}").matcher(value).find();
             |  }
@@ -972,10 +956,6 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}${'$'}").matcher(value).find();
             |  }
@@ -995,10 +975,6 @@ class JavaIrEmitterTest {
             |  String value
             |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
-            |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^\\+[1-9]\\d{1,14}${'$'}").matcher(value).find();
             |  }
@@ -1017,10 +993,6 @@ class JavaIrEmitterTest {
             |public record Tag (
             |  String value
             |) implements Wirespec.Refined {
-            |  @Override
-            |  public String toString() {
-            |    return value;
-            |  }
             |  @Override
             |  public Boolean validate() {
             |    return java.util.regex.Pattern.compile("^[a-z][a-z0-9-]{0,19}${'$'}").matcher(value).find();
