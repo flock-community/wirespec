@@ -426,6 +426,18 @@ fun RefinedWirespec.convert() = file(identifier.toName()) {
             returnType(Type.Boolean)
             returns(reference.convertConstraint(VariableReference(Name.of("value"))))
         }
+        function("toString") {
+            returnType(Type.String)
+            returns(
+                if (reference.type is ReferenceWirespec.Primitive.Type.String)
+                    VariableReference(Name.of("value"))
+                else
+                    FunctionCall(
+                        receiver = VariableReference(Name.of("value")),
+                        name = Name.of("toString"),
+                    )
+            )
+        }
     }
 }
 

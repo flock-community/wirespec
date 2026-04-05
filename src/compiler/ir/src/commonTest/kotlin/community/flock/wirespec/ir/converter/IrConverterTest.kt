@@ -13,7 +13,9 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.LiteralList
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Precision
 import community.flock.wirespec.ir.core.Type
+import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.enum
 import community.flock.wirespec.ir.core.file
@@ -149,6 +151,47 @@ class IrConverterTest {
                             pattern = "^([0-9]{4}[A-Z]{2})\$",
                             rawValue = "/^([0-9]{4}[A-Z]{2})\$/g",
                             value = VariableReference(Name.of("value")),
+                        ),
+                    )
+                }
+                function("toString") {
+                    returnType(Type.String)
+                    returns(VariableReference(Name.of("value")))
+                }
+            }
+        }
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testRefinedIntegerConversion() {
+        val source = """
+            type Age = Integer(0, 150)
+        """.trimIndent()
+
+        val result = parse<AstRefined>(source).convert()
+
+        val expected = file("Age") {
+            struct("Age") {
+                implements(type("Wirespec.Refined", Type.Integer(Precision.P64)))
+                field("value", Type.Integer(Precision.P64))
+                function("validate") {
+                    returnType(Type.Boolean)
+                    returns(
+                        Constraint.BoundCheck(
+                            min = "0",
+                            max = "150",
+                            value = VariableReference(Name.of("value")),
+                        ),
+                    )
+                }
+                function("toString") {
+                    returnType(Type.String)
+                    returns(
+                        FunctionCall(
+                            receiver = VariableReference(Name.of("value")),
+                            name = Name.of("toString"),
                         ),
                     )
                 }
