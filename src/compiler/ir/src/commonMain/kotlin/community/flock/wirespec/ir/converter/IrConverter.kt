@@ -429,13 +429,14 @@ fun RefinedWirespec.convert() = file(identifier.toName()) {
         function("toString") {
             returnType(Type.String)
             returns(
-                if (reference.type is ReferenceWirespec.Primitive.Type.String)
+                if (reference.type is ReferenceWirespec.Primitive.Type.String) {
                     VariableReference(Name.of("value"))
-                else
+                } else {
                     FunctionCall(
                         receiver = VariableReference(Name.of("value")),
                         name = Name.of("toString"),
                     )
+                },
             )
         }
     }
