@@ -11,6 +11,7 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.emit.Keywords
@@ -195,22 +196,13 @@ open class KotlinIrEmitter(
     override fun emit(refined: Refined): File {
         val file = refined.convert().sanitizeNames()
         val struct = file.findElement<Struct>()!!
-        val toStringExpr = when (refined.reference.type) {
-            is Reference.Primitive.Type.String -> "value"
-            else -> "value.toString()"
-        }
         val updatedStruct = struct.copy(
             fields = struct.fields.map { f -> f.copy(isOverride = true) },
-            elements = listOf(
-                function("toString", isOverride = true) {
-                    returnType(LanguageType.String)
-                    returns(RawExpression(toStringExpr))
-                },
-                function("validate", isOverride = true) {
-                    returnType(LanguageType.Boolean)
-                    returns(refined.reference.convertConstraint(VariableReference(Name.of("value"))))
-                },
-            ),
+            elements = struct.elements.map { element ->
+                if (element is LanguageFunction) {
+                    element.copy(isOverride = true)
+                } else element
+            },
         )
         return LanguageFile(Name.of(refined.identifier.sanitize()), listOf(updatedStruct))
     }
