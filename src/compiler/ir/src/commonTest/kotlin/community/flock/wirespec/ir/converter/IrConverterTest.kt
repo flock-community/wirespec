@@ -16,6 +16,7 @@ import community.flock.wirespec.ir.core.LiteralList
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Precision
 import community.flock.wirespec.ir.core.Type
+import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.enum
 import community.flock.wirespec.ir.core.file
