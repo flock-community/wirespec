@@ -48,7 +48,14 @@ import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.withLabelField
+import community.flock.wirespec.ir.emit.AccessorStyle
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.emit.SanitizationConfig
+import community.flock.wirespec.ir.emit.buildClientServerInterfaces
+import community.flock.wirespec.ir.emit.sanitizeFieldName
+import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.emit.withSharedSource
+import community.flock.wirespec.ir.emit.wrapWithPackage
 import community.flock.wirespec.ir.generator.ScalaGenerator
 import community.flock.wirespec.ir.generator.generateScala
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
@@ -75,55 +82,37 @@ open class ScalaIrEmitter(
         |
     """.trimMargin()
 
-    override val shared = object : Shared {
-        override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.scala"
-
-        private val clientServer = listOf(
-            `interface`("ServerEdge") {
-                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
-                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
-                function("from") {
-                    returnType(type("Req"))
-                    arg("request", type("RawRequest"))
-                }
-                function("to") {
-                    returnType(type("RawResponse"))
-                    arg("response", type("Res"))
-                }
+    private val sanitizationConfig: SanitizationConfig by lazy {
+        SanitizationConfig(
+            reservedKeywords = reservedKeywords,
+            escapeKeyword = { it.addBackticks() },
+            fieldNameCase = { name ->
+                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
+                Name(listOf(sanitized))
             },
-            `interface`("ClientEdge") {
-                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
-                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
-                function("to") {
-                    returnType(type("RawRequest"))
-                    arg("request", type("Req"))
-                }
-                function("from") {
-                    returnType(type("Res"))
-                    arg("response", type("RawResponse"))
-                }
-            },
-            `interface`("Client") {
-                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
-                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
-                field("pathTemplate", LanguageType.String)
-                field("method", LanguageType.String)
-                function("client") {
-                    returnType(type("ClientEdge", type("Req"), type("Res")))
-                    arg("serialization", type("Serialization"))
-                }
-            },
-            `interface`("Server") {
-                typeParam(type("Req"), type("Request", LanguageType.Wildcard))
-                typeParam(type("Res"), type("Response", LanguageType.Wildcard))
-                field("pathTemplate", LanguageType.String)
-                field("method", LanguageType.String)
-                function("server") {
-                    returnType(type("ServerEdge", type("Req"), type("Res")))
-                    arg("serialization", type("Serialization"))
+            parameterNameCase = { name -> Name(listOf(name.camelCase().sanitizeSymbol())) },
+            sanitizeSymbol = { it.sanitizeSymbol() },
+            extraStatementTransforms = { stmt, tr ->
+                when (stmt) {
+                    is FunctionCall -> if (stmt.name.value() == "validate") {
+                        stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+                    } else stmt.transformChildren(tr)
+                    is ConstructorStatement -> ConstructorStatement(
+                        type = tr.transformType(stmt.type),
+                        namedArguments = stmt.namedArguments.map { (name, expr) ->
+                            sanitizationConfig.sanitizeFieldName(name) to tr.transformExpression(expr)
+                        }.toMap(),
+                    )
+                    else -> stmt.transformChildren(tr)
                 }
             },
         )
+    }
+
+    override val shared = object : Shared {
+        override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.scala"
+
+        private val clientServer = buildClientServerInterfaces(AccessorStyle.PROPERTIES)
 
         override val source = AstShared(packageString)
             .convert()
@@ -170,34 +159,27 @@ open class ScalaIrEmitter(
             .generateScala()
     }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
-        val files = super.emit(module, logger)
-        return if (emitShared.value) {
-            files + File(
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
+        super.emit(module, logger).withSharedSource(emitShared) {
+            File(
                 Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.scala").toDir() + "Wirespec"),
                 listOf(RawElement(shared.source))
             )
-        } else {
-            files
         }
-    }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        val subPackageName = packageName + definition
-        return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
-            elements = buildList {
-                add(LanguagePackage(subPackageName.value))
-                if (module.needImports()) add(RawElement(wirespecImport))
-                addAll(file.elements)
-            }
+        return file.wrapWithPackage(
+            packageName = packageName,
+            definition = definition,
+            wirespecImport = RawElement(wirespecImport),
+            needsImport = module.needImports(),
         )
     }
 
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
             .transform {
                 matchingElements { struct: Struct ->
                     if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
@@ -207,7 +189,7 @@ open class ScalaIrEmitter(
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
-        .sanitizeNames()
+        .sanitizeNames(sanitizationConfig)
         .transform {
             matchingElements { languageEnum: LanguageEnum ->
                 languageEnum.withLabelField(
@@ -220,10 +202,10 @@ open class ScalaIrEmitter(
 
     override fun emit(union: Union): File = union
         .convert()
-        .sanitizeNames()
+        .sanitizeNames(sanitizationConfig)
 
     override fun emit(refined: Refined): File {
-        val file = refined.convert().sanitizeNames()
+        val file = refined.convert().sanitizeNames(sanitizationConfig)
         val struct = file.findElement<Struct>()!!
         val updatedStruct = struct.copy(
             fields = struct.fields.map { f -> f.copy(isOverride = true) },
@@ -246,21 +228,22 @@ open class ScalaIrEmitter(
 
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
-        val file = endpoint.convert().sanitizeNames()
+        val file = endpoint.convert()
         val endpointNamespace = file.findElement<Namespace>()!!
         val flattened = endpointNamespace.flattenNestedStructs()
         val requestIsObject = isRequestObject(flattened)
         val body = flattened
             .injectHandleFunction()
-            .withClientServerObjects(endpoint, requestIsObject)
-
-        return if (imports.isNotEmpty()) LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
-        else LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
+            .let { ns -> buildClientServerObjects(endpoint, requestIsObject, ns) }
+        val sanitized = LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
+            .sanitizeNames(sanitizationConfig)
+        return if (imports.isNotEmpty()) sanitized.copy(elements = listOf(RawElement(imports)) + sanitized.elements)
+        else sanitized
     }
 
     override fun emit(channel: Channel): File {
         val imports = channel.buildImports()
-        val file = channel.convert().sanitizeNames()
+        val file = channel.convert().sanitizeNames(sanitizationConfig)
         return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
         else file
     }
@@ -269,7 +252,7 @@ open class ScalaIrEmitter(
         val imports = endpoint.buildImports()
         val endpointImport = "import ${packageName.value}.endpoint.${endpoint.identifier.value}"
         val allImports = listOf(imports, endpointImport).filter { it.isNotEmpty() }.joinToString("\n")
-        val file = super.emitEndpointClient(endpoint).sanitizeNames().addIdentityTypeToCall()
+        val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
         val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
@@ -290,7 +273,7 @@ open class ScalaIrEmitter(
         val clientImports = endpoints
             .joinToString("\n") { "import ${packageName.value}.client.${it.identifier.value}Client" }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
-        val file = super.emitClient(endpoints, logger).sanitizeNames().addIdentityTypeToCall()
+        val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
             elements = buildList {
@@ -300,38 +283,6 @@ open class ScalaIrEmitter(
                 addAll(file.elements)
             }
         )
-    }
-
-    private fun <T : Element> T.sanitizeNames(): T = transform {
-        fields { field ->
-            field.copy(name = field.name.sanitizeName())
-        }
-        parameters { param ->
-            param.copy(name = Name.of(param.name.camelCase().sanitizeSymbol().sanitizeKeywords()))
-        }
-        statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is FieldCall -> FieldCall(
-                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                    field = stmt.field.sanitizeName(),
-                )
-                is FunctionCall -> if (stmt.name.value() == "validate") {
-                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
-                } else stmt.transformChildren(tr)
-                is ConstructorStatement -> ConstructorStatement(
-                    type = tr.transformType(stmt.type),
-                    namedArguments = stmt.namedArguments.map { (name, expr) ->
-                        name.sanitizeName() to tr.transformExpression(expr)
-                    }.toMap(),
-                )
-                else -> stmt.transformChildren(tr)
-            }
-        }
-    }
-
-    private fun Name.sanitizeName(): Name {
-        val sanitized = if (parts.size > 1) camelCase() else value().sanitizeSymbol()
-        return Name(listOf(sanitized.sanitizeKeywords()))
     }
 
     private fun Identifier.sanitize(): String = value
@@ -399,7 +350,7 @@ open class ScalaIrEmitter(
         }
     }
 
-    private fun Namespace.withClientServerObjects(endpoint: Endpoint, requestIsObject: Boolean): Namespace {
+    private fun buildClientServerObjects(endpoint: Endpoint, requestIsObject: Boolean, namespace: Namespace): Namespace {
         val reqType = if (requestIsObject) "Request.type" else "Request"
         val pathTemplate = "/" + endpoint.path.joinToString("/") {
             when (it) {
@@ -431,7 +382,7 @@ open class ScalaIrEmitter(
             |}
             """.trimMargin()
         )
-        return copy(elements = elements + clientObject + serverObject)
+        return namespace.copy(elements = namespace.elements + clientObject + serverObject)
     }
 
     companion object : Keywords {
