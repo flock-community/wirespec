@@ -15,6 +15,7 @@ data class SanitizationConfig(
     val parameterNameCase: (Name) -> Name,
     val sanitizeSymbol: (String) -> String,
     val extraStatementTransforms: ((Statement, Transformer) -> Statement)? = null,
+    val escapeFieldKeywords: Boolean = true,
 )
 
 fun <T : Element> T.sanitizeNames(config: SanitizationConfig): T = transform {
@@ -43,6 +44,6 @@ fun <T : Element> T.sanitizeNames(config: SanitizationConfig): T = transform {
 fun SanitizationConfig.sanitizeFieldName(name: Name): Name {
     val cased = fieldNameCase(name)
     val sanitized = sanitizeSymbol(cased.value())
-    val escaped = if (sanitized in reservedKeywords) escapeKeyword(sanitized) else sanitized
+    val escaped = if (escapeFieldKeywords && sanitized in reservedKeywords) escapeKeyword(sanitized) else sanitized
     return Name(listOf(escaped))
 }
