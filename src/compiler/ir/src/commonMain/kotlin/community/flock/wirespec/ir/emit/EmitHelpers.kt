@@ -10,29 +10,35 @@ import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Package
 
-fun File.placeInPackage(
+fun File.wrapWithPackage(
     packageName: PackageName,
     definition: Definition,
+    wirespecImport: Element,
+    needsImport: Boolean,
+    nameTransform: (Name) -> String = { it.pascalCase() },
 ): File {
     val subPackageName = packageName + definition
     return File(
-        name = Name.of(subPackageName.toDir() + name.pascalCase()),
-        elements = listOf(Package(subPackageName.value)) + elements,
+        name = Name.of(subPackageName.toDir() + nameTransform(name)),
+        elements = buildList {
+            add(Package(subPackageName.value))
+            if (needsImport) add(wirespecImport)
+            addAll(elements)
+        }
     )
 }
 
-fun File.prependImports(imports: List<Element>?): File = if (imports == null) {
-    this
-} else {
-    copy(elements = imports + elements)
-}
-
-fun File.placeInModule(
+fun File.wrapWithModuleImport(
     packageName: PackageName,
     definition: Definition,
+    imports: List<Element>,
+    nameTransform: (Name) -> String = { it.pascalCase() },
 ): File {
     val subPackageName = packageName + definition
-    return copy(name = Name.of(subPackageName.toDir() + name.pascalCase()))
+    return File(
+        name = Name.of(subPackageName.toDir() + nameTransform(name)),
+        elements = imports + elements,
+    )
 }
 
 fun NonEmptyList<File>.withSharedSource(
