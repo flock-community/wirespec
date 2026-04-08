@@ -29,7 +29,6 @@ import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
 import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.ErrorStatement
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
@@ -50,6 +49,9 @@ import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.ir.emit.SanitizationConfig
+import community.flock.wirespec.ir.emit.sanitizeFieldName
+import community.flock.wirespec.ir.emit.sanitizeNames
 import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.ir.generator.generateTypeScript
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
@@ -61,6 +63,42 @@ open class TypeScriptIrEmitter : IrEmitter {
     override val generator = TypeScriptGenerator
 
     override val extension = FileExtension.TypeScript
+
+    private val sanitizationConfig: SanitizationConfig by lazy {
+        SanitizationConfig(
+            reservedKeywords = reservedKeywords,
+            escapeKeyword = { "_$it" },
+            fieldNameCase = { name ->
+                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
+                Name(listOf(sanitized))
+            },
+            parameterNameCase = { name ->
+                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
+                Name(listOf(sanitized))
+            },
+            sanitizeSymbol = { it.filter { ch -> ch.isLetterOrDigit() || ch == '_' } },
+            escapeFieldKeywords = false,
+            extraStatementTransforms = { stmt, tr ->
+                when (stmt) {
+                    is VariableReference -> VariableReference(
+                        name = sanitizationConfig.sanitizeFieldName(stmt.name),
+                    )
+                    is ConstructorStatement -> ConstructorStatement(
+                        type = tr.transformType(stmt.type),
+                        namedArguments = stmt.namedArguments.map { (key, value) ->
+                            sanitizationConfig.sanitizeFieldName(key) to tr.transformExpression(value)
+                        }.toMap(),
+                    )
+                    is Assignment -> Assignment(
+                        name = sanitizationConfig.sanitizeFieldName(stmt.name),
+                        value = tr.transformExpression(stmt.value),
+                        isProperty = stmt.isProperty,
+                    )
+                    else -> stmt.transformChildren(tr)
+                }
+            },
+        )
+    }
 
     override fun transformTestFile(file: File): File = file.transform {
         apply(transformPatternSwitchToValueSwitch())
@@ -135,7 +173,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         val allImports = listOf(typeImports, validateImports).filter { it.isNotEmpty() }.joinToString("\n")
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
             .transform {
                 matchingElements { fn: community.flock.wirespec.ir.core.Function ->
                     if (fn.name == Name.of("validate")) {
@@ -164,12 +202,12 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emit(enum: AstEnum, module: Module): File =
         enum.convert()
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
 
     override fun emit(union: Union): File {
         val imports = union.importReferences().distinctBy { it.value }
             .joinToString("\n") { "import {type ${it.value}} from '../model'" }
-        val file = union.convert().sanitizeNames()
+        val file = union.convert().sanitizeNames(sanitizationConfig)
         return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
         else file
     }
@@ -190,34 +228,8 @@ open class TypeScriptIrEmitter : IrEmitter {
         val imports = endpoint.importReferences().distinctBy { it.value }
             .joinToString("\n") { "import {type ${it.value}} from '../model'" }
 
-        val apiName = endpoint.identifier.value.firstToLower()
-        val method = endpoint.method.name
-        val pathString = endpoint.path.joinToString("/") {
-            when (it) {
-                is Endpoint.Segment.Literal -> it.value
-                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
-            }
-        }
-        val api = """
-            |export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
-            |  from: (it) => fromRawResponse(serialization, it),
-            |  to: (it) => toRawRequest(serialization, it)
-            |})
-            |export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
-            |  from: (it) => fromRawRequest(serialization, it),
-            |  to: (it) => toRawResponse(serialization, it)
-            |})
-            |export const api = {
-            |  name: "$apiName",
-            |  method: "$method",
-            |  path: "$pathString",
-            |  server,
-            |  client
-            |} as const
-        """.trimMargin()
-
         val hasRequestParams = endpoint.requestParameters().isNotEmpty()
-        val endpointNamespace = endpoint.convert().sanitizeNames()
+        val endpointNamespace = endpoint.convert()
             .transform {
                 statement { stmt, transformer ->
                     when (stmt) {
@@ -235,9 +247,7 @@ open class TypeScriptIrEmitter : IrEmitter {
                     }
                 }
             }
-            .transform {
-                apply(transformPatternSwitchToValueSwitch())
-            }
+            .transform { apply(transformPatternSwitchToValueSwitch()) }
             .transform {
                 if (hasRequestParams) {
                     matchingElements { iface: community.flock.wirespec.ir.core.Interface ->
@@ -259,15 +269,44 @@ open class TypeScriptIrEmitter : IrEmitter {
             }
             .findElement<Namespace>()!!
         val body = endpointNamespace
-            .transform { injectAfter { _: Namespace -> listOf(raw(api)) } }
+            .transform { injectAfter { _: Namespace -> listOf(buildApiConst(endpoint)) } }
+        val sanitized = File(Name.of(endpoint.identifier.sanitize()), listOf(body))
+            .sanitizeNames(sanitizationConfig)
+        return if (imports.isNotEmpty()) sanitized.copy(elements = listOf(RawElement(imports)) + sanitized.elements)
+        else sanitized
+    }
 
-        return if (imports.isNotEmpty()) File(Name.of(endpoint.identifier.sanitize()), listOf(RawElement(imports), body))
-        else File(Name.of(endpoint.identifier.sanitize()), listOf(body))
+    private fun buildApiConst(endpoint: Endpoint): RawElement {
+        val apiName = endpoint.identifier.value.firstToLower()
+        val method = endpoint.method.name
+        val pathString = endpoint.path.joinToString("/") {
+            when (it) {
+                is Endpoint.Segment.Literal -> it.value
+                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
+            }
+        }
+        return raw("""
+            |export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
+            |  from: (it) => fromRawResponse(serialization, it),
+            |  to: (it) => toRawRequest(serialization, it)
+            |})
+            |export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
+            |  from: (it) => fromRawRequest(serialization, it),
+            |  to: (it) => toRawResponse(serialization, it)
+            |})
+            |export const api = {
+            |  name: "$apiName",
+            |  method: "$method",
+            |  path: "$pathString",
+            |  server,
+            |  client
+            |} as const
+        """.trimMargin())
     }
 
     override fun emit(channel: Channel): File =
         channel.convert()
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val endpointName = endpoint.identifier.value
@@ -369,43 +408,6 @@ open class TypeScriptIrEmitter : IrEmitter {
                 )
             } else stmt.transformChildren(tr)
         }
-    }
-
-    private fun <T : Element> T.sanitizeNames(): T = transform {
-        fields { field ->
-            field.copy(name = field.name.sanitizeName())
-        }
-        parameters { param ->
-            param.copy(name = param.name.sanitizeName())
-        }
-        statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is FieldCall -> FieldCall(
-                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                    field = stmt.field.sanitizeName(),
-                )
-                is VariableReference -> VariableReference(
-                    name = stmt.name.sanitizeName(),
-                )
-                is ConstructorStatement -> ConstructorStatement(
-                    type = tr.transformType(stmt.type),
-                    namedArguments = stmt.namedArguments.map { (key, value) ->
-                        key.sanitizeName() to tr.transformExpression(value)
-                    }.toMap(),
-                )
-                is Assignment -> Assignment(
-                    name = stmt.name.sanitizeName(),
-                    value = tr.transformExpression(stmt.value),
-                    isProperty = stmt.isProperty,
-                )
-                else -> stmt.transformChildren(tr)
-            }
-        }
-    }
-
-    private fun Name.sanitizeName(): Name {
-        val sanitized = if (parts.size > 1) camelCase() else value().sanitizeSymbol()
-        return Name(listOf(sanitized))
     }
 
     private fun Identifier.sanitize() = "\"${value}\""
