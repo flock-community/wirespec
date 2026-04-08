@@ -25,7 +25,6 @@ import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Interface
@@ -49,7 +48,13 @@ import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.emit.AccessorStyle
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.emit.SanitizationConfig
+import community.flock.wirespec.ir.emit.buildClientServerInterfaces
+import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.emit.withSharedSource
+import community.flock.wirespec.ir.emit.wrapWithPackage
 import community.flock.wirespec.ir.generator.JavaGenerator
 import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
@@ -70,6 +75,23 @@ open class JavaIrEmitter(
 
     private val wirespecImport = import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec")
 
+    private val sanitizationConfig = SanitizationConfig(
+        reservedKeywords = reservedKeywords,
+        escapeKeyword = { "_$it" },
+        fieldNameCase = { name ->
+            if (name.parts.size > 1) Name(listOf(name.camelCase())) else name
+        },
+        parameterNameCase = { name -> Name(listOf(name.camelCase())) },
+        sanitizeSymbol = { it.sanitizeSymbol() },
+        extraStatementTransforms = { stmt, tr ->
+            when {
+                stmt is FunctionCall && stmt.name.value() == "validate" ->
+                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+                else -> stmt.transformChildren(tr)
+            }
+        },
+    )
+
     override val shared = object : Shared {
         override val packageString: String = "$DEFAULT_SHARED_PACKAGE_STRING.java"
 
@@ -82,59 +104,7 @@ open class JavaIrEmitter(
             import("java.util", "Map"),
         )
 
-        private val clientServer = listOf(
-            `interface`("ServerEdge") {
-                typeParam(type("Req"), type("Request", Type.Wildcard))
-                typeParam(type("Res"), type("Response", Type.Wildcard))
-                function("from") {
-                    returnType(type("Req"))
-                    arg("request", type("RawRequest"))
-                }
-                function("to") {
-                    returnType(type("RawResponse"))
-                    arg("response", type("Res"))
-                }
-            },
-            `interface`("ClientEdge") {
-                typeParam(type("Req"), type("Request", Type.Wildcard))
-                typeParam(type("Res"), type("Response", Type.Wildcard))
-                function("to") {
-                    returnType(type("RawRequest"))
-                    arg("request", type("Req"))
-                }
-                function("from") {
-                    returnType(type("Res"))
-                    arg("response", type("RawResponse"))
-                }
-            },
-            `interface`("Client") {
-                typeParam(type("Req"), type("Request", Type.Wildcard))
-                typeParam(type("Res"), type("Response", Type.Wildcard))
-                function("getPathTemplate") {
-                    returnType(string)
-                }
-                function("getMethod") {
-                    returnType(string)
-                }
-                function("getClient") {
-                    returnType(type("ClientEdge", type("Req"), type("Res")))
-                    arg("serialization", type("Serialization"))
-                }
-            },
-            `interface`("Server") {
-                typeParam(type("Req"), type("Request", Type.Wildcard))
-                typeParam(type("Res"), type("Response", Type.Wildcard))
-                function("getPathTemplate") {
-                    returnType(string)
-                }
-                function("getMethod") {
-                    returnType(string)
-                }
-                function("getServer") {
-                    returnType(type("ServerEdge", type("Req"), type("Res")))
-                    arg("serialization", type("Serialization"))
-                }
-            },
+        private val clientServer = buildClientServerInterfaces(AccessorStyle.GETTER_METHODS) + listOf(
             raw(
                 """
                 |public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
@@ -165,34 +135,28 @@ open class JavaIrEmitter(
         override val source: String = wirespecFile.generateJava()
     }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
-        val files = super.emit(module, logger)
-        return if (emitShared.value) {
-            files + File(
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
+        super.emit(module, logger).withSharedSource(emitShared) {
+            File(
                 Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.java").toDir() + "Wirespec"),
                 listOf(RawElement(shared.source))
             )
-        } else {
-            files
         }
-    }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        val subPackageName = packageName + definition
-        return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
-            elements = buildList {
-                add(Package(subPackageName.value))
-                if (module.needImports()) add(wirespecImport)
-                addAll(file.elements)
-            }
+        return file.wrapWithPackage(
+            packageName = packageName,
+            definition = definition,
+            wirespecImport = wirespecImport,
+            needsImport = module.needImports(),
+            nameTransform = { it.pascalCase().sanitizeSymbol() },
         )
     }
 
     override fun emit(type: AstType, module: Module): File =
         type.convertWithValidation(module)
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
@@ -209,11 +173,11 @@ open class JavaIrEmitter(
                 )
             }
         }
-        .sanitizeNames()
+        .sanitizeNames(sanitizationConfig)
 
     override fun emit(union: Union): File = union
         .convert()
-        .sanitizeNames()
+        .sanitizeNames(sanitizationConfig)
 
     override fun emit(refined: Refined): File = refined.convert()
         .transform {
@@ -233,14 +197,14 @@ open class JavaIrEmitter(
                 )
             }
         }
-        .sanitizeNames()
+        .sanitizeNames(sanitizationConfig)
 
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
         return endpoint.convert()
-            .sanitizeNames()
-            .transformTypeDescriptors()
             .injectHandleFunction(endpoint)
+            .transformTypeDescriptors()
+            .sanitizeNames(sanitizationConfig)
             .let { file ->
                 if (imports.isNotEmpty()) {
                     file.transform {
@@ -261,7 +225,7 @@ open class JavaIrEmitter(
             ""
         }
         return channel.convert()
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
             .transform {
                 matchingElements { it: Interface -> it.withFullyQualifiedPrefix(fullyQualifiedPrefix) }
                 matchingElements { file: File ->
@@ -274,7 +238,7 @@ open class JavaIrEmitter(
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
         val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
-        val file = super.emitEndpointClient(endpoint).sanitizeNames().transformTypeDescriptors()
+        val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig).transformTypeDescriptors()
         val endpointName = endpoint.identifier.value
 
         val transformedFile = file.transform {
@@ -320,7 +284,7 @@ open class JavaIrEmitter(
         val endpointImports = endpoints.map { import("${packageName.value}.endpoint", it.identifier.value) }
         val clientImports = endpoints.map { import("${packageName.value}.client", "${it.identifier.value}Client") }
         val allImports = imports + endpointImports + clientImports
-        val file = super.emitClient(endpoints, logger).sanitizeNames()
+        val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig)
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(packageName.value)) +
@@ -328,32 +292,6 @@ open class JavaIrEmitter(
                 allImports +
                 file.elements
         )
-    }
-
-    private fun <T : Element> T.sanitizeNames(): T = transform {
-        fields { field ->
-            field.copy(name = field.name.sanitizeName())
-        }
-        parameters { param ->
-            param.copy(name = Name.of(param.name.camelCase().sanitizeSymbol().sanitizeKeywords()))
-        }
-        statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is FieldCall -> FieldCall(
-                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                    field = stmt.field.sanitizeName(),
-                )
-                is FunctionCall -> if (stmt.name.value() == "validate") {
-                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
-                } else stmt.transformChildren(tr)
-                else -> stmt.transformChildren(tr)
-            }
-        }
-    }
-
-    private fun Name.sanitizeName(): Name {
-        val sanitized = if (parts.size > 1) camelCase() else value().sanitizeSymbol()
-        return Name(listOf(sanitized.sanitizeKeywords()))
     }
 
     private fun String.sanitizeSymbol(): String = this
