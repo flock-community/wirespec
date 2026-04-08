@@ -6,6 +6,10 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.emit.SanitizationConfig
+import community.flock.wirespec.ir.emit.sanitizeFieldName
+import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.emit.wrapWithModuleImport
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -14,7 +18,6 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
-import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -65,6 +68,30 @@ open class PythonIrEmitter(
     override val generator = PythonGenerator
 
     override val extension = FileExtension.Python
+
+    private val sanitizationConfig: SanitizationConfig by lazy {
+        SanitizationConfig(
+            reservedKeywords = reservedKeywords,
+            escapeKeyword = { "_$it" },
+            fieldNameCase = { name ->
+                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value()
+                Name(listOf(sanitized))
+            },
+            parameterNameCase = { name -> Name(listOf(name.camelCase())) },
+            sanitizeSymbol = { it },
+            extraStatementTransforms = { stmt, tr ->
+                when (stmt) {
+                    is ConstructorStatement -> ConstructorStatement(
+                        type = tr.transformType(stmt.type),
+                        namedArguments = stmt.namedArguments
+                            .map { (k, v) -> sanitizationConfig.sanitizeFieldName(k) to tr.transformExpression(v) }
+                            .toMap(),
+                    )
+                    else -> stmt.transformChildren(tr)
+                }
+            },
+        )
+    }
 
     private val sharedSource = """
         |from __future__ import annotations
@@ -130,10 +157,10 @@ open class PythonIrEmitter(
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        val subPackageName = packageName + definition
-        return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
-            elements = buildImports("..wirespec") + file.elements
+        return file.wrapWithModuleImport(
+            packageName = packageName,
+            definition = definition,
+            imports = buildImports("..wirespec"),
         )
     }
 
@@ -159,7 +186,7 @@ open class PythonIrEmitter(
                     } else fn
                 }
             }
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
         return if (typeImports.isNotEmpty()) file.copy(elements = typeImports + file.elements)
         else file
     }
@@ -175,11 +202,11 @@ open class PythonIrEmitter(
                 )
             }
         }
-        .sanitizeNames()
+        .sanitizeNames(sanitizationConfig)
 
     override fun emit(union: Union): File =
         union.convert()
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
 
     override fun emit(refined: Refined): File {
         val file = refined.convert()
@@ -216,7 +243,7 @@ open class PythonIrEmitter(
             .transform {
                 matchingElements { _: Struct -> updatedStruct }
             }
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
     }
 
     override fun emit(endpoint: Endpoint): File {
@@ -235,13 +262,13 @@ open class PythonIrEmitter(
             addAll(moduleElements)
             add(endpointClass)
         })
-            .sanitizeNames()
             .snakeCaseHandlerAndCallMethods()
+            .sanitizeNames(sanitizationConfig)
     }
 
     override fun emit(channel: Channel): File =
         channel.convert()
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val modelImports = endpoint.importReferences().distinctBy { it.value }
@@ -250,7 +277,7 @@ open class PythonIrEmitter(
         val endpointName = endpoint.identifier.value
 
         val file = super.emitEndpointClient(endpoint)
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
             .addSelfReceiverToClientFields()
             .snakeCaseClientFunctions()
             .flattenEndpointTypeRefs(endpointName)
@@ -274,7 +301,7 @@ open class PythonIrEmitter(
         val endpointNames = endpoints.map { it.identifier.value }
 
         val file = super.emitClient(endpoints, logger)
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
             .addSelfReceiverToClientFields()
             .snakeCaseClientFunctions()
             .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
@@ -285,35 +312,6 @@ open class PythonIrEmitter(
                 allImports +
                 file.elements
         )
-    }
-
-    private fun <T : Element> T.sanitizeNames(): T = transform {
-        fields { field ->
-            field.copy(name = field.name.sanitizeName())
-        }
-        parameters { param ->
-            param.copy(name = Name.of(param.name.camelCase().sanitizeKeywords()))
-        }
-        statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is FieldCall -> FieldCall(
-                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                    field = stmt.field.sanitizeName(),
-                )
-                is ConstructorStatement -> ConstructorStatement(
-                    type = tr.transformType(stmt.type),
-                    namedArguments = stmt.namedArguments
-                        .map { (k, v) -> k.sanitizeName() to tr.transformExpression(v) }
-                        .toMap(),
-                )
-                else -> stmt.transformChildren(tr)
-            }
-        }
-    }
-
-    private fun Name.sanitizeName(): Name {
-        val sanitized = if (parts.size > 1) camelCase() else value()
-        return Name(listOf(sanitized.sanitizeKeywords()))
     }
 
     private fun Identifier.sanitize(): String = value
