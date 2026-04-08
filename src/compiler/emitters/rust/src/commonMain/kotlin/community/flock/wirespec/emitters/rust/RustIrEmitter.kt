@@ -56,6 +56,9 @@ import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.ir.emit.SanitizationConfig
+import community.flock.wirespec.ir.emit.sanitizeFieldName
+import community.flock.wirespec.ir.emit.sanitizeNames
 import community.flock.wirespec.ir.generator.RustGenerator
 import community.flock.wirespec.ir.generator.generateRust
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
@@ -75,6 +78,32 @@ open class RustIrEmitter(
     override val generator = RustGenerator
 
     override val extension = FileExtension.Rust
+
+    private val sanitizationConfig: SanitizationConfig by lazy {
+        SanitizationConfig(
+            reservedKeywords = reservedKeywords - setOf("self", "Self"),
+            escapeKeyword = { "r#$it" },
+            escapeFieldKeywords = true,
+            fieldNameCase = { name -> Name.of(Name(name.parts).snakeCase()) },
+            parameterNameCase = { name ->
+                val value = name.value()
+                if (value == "self" || value == "&self") name
+                else Name.of(Name(name.parts).snakeCase())
+            },
+            sanitizeSymbol = { it },
+            extraStatementTransforms = { stmt, tr ->
+                when (stmt) {
+                    is ConstructorStatement -> ConstructorStatement(
+                        type = tr.transformType(stmt.type),
+                        namedArguments = stmt.namedArguments
+                            .map { (k, v) -> sanitizationConfig.sanitizeFieldName(k) to tr.transformExpression(v) }
+                            .toMap(),
+                    )
+                    else -> stmt.transformChildren(tr)
+                }
+            },
+        )
+    }
 
     override fun transformTestFile(file: File): File = file.transform {
         apply(borrowSerializationArgs())
@@ -320,7 +349,7 @@ open class RustIrEmitter(
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .injectSelfReceiver(type.shape.value.map { it.identifier.value }.toSet())
-            .sanitizeNames()
+            .sanitizeNames(sanitizationConfig)
             .prependImports(type.buildModelImports())
 
     override fun emit(enum: Enum, module: Module): File = enum
@@ -350,8 +379,34 @@ open class RustIrEmitter(
         endpoint.convert()
             .flattenForRust()
             .stripWirespecPrefix()
-            .rustifyEndpoint(endpoint)
-            .sanitizeNames()
+            .transform {
+                val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
+                statementAndExpression { s, t ->
+                    if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
+                        VariableReference(Name.of(s.code))
+                    } else s.transformChildren(t)
+                }
+            }
+            .stripHandlerExtends()
+            .stripResponseGenerics()
+            .transform { apply(fixResponseSwitchPatterns()) }
+            .transform { apply(fixConstructorCalls()) }
+            .transform { apply(borrowSerializationArgs()) }
+            .transform {
+                parametersWhere(
+                    predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
+                    transform = { it.copy(type = (it.type as LanguageType.Custom).borrowImpl()) },
+                )
+            }
+            .injectSelfToHandlerMethods()
+            .injectHandlerImplForClient(endpoint)
+            .injectResponseFromImpls()
+            .transform {
+                matchingElements<Namespace> { ns ->
+                    ns.copy(elements = ns.elements + listOf(buildApiStruct(endpoint)))
+                }
+            }
+            .sanitizeNames(sanitizationConfig)
             .prependImports(endpoint.buildEndpointImports())
 
     override fun emit(channel: Channel): File =
@@ -453,31 +508,6 @@ open class RustIrEmitter(
             elements = listOf(RawElement(code)),
         )
     }
-
-    private fun <T : Element> T.sanitizeNames(): T = transform {
-        parameter { param, _ ->
-            val name = param.name.value()
-            if (name == "self" || name == "&self") param
-            else param.copy(name = param.name.sanitizeName())
-        }
-        statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is FieldCall -> FieldCall(
-                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                    field = stmt.field.sanitizeName(),
-                )
-                is ConstructorStatement -> ConstructorStatement(
-                    type = tr.transformType(stmt.type),
-                    namedArguments = stmt.namedArguments
-                        .map { (k, v) -> k.sanitizeName() to tr.transformExpression(v) }
-                        .toMap(),
-                )
-                else -> stmt.transformChildren(tr)
-            }
-        }
-    }
-
-    private fun Name.sanitizeName(): Name = Name.of(Name(parts).snakeCase().sanitizeKeywords())
 
     private fun Identifier.sanitize(): String = value
         .split(".", " ")
@@ -739,31 +769,19 @@ open class RustIrEmitter(
         }
     }
 
-    private fun File.rustifyEndpoint(endpoint: Endpoint): File = transform {
-        val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
-        statementAndExpression { s, t ->
-            if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
-                VariableReference(Name.of(s.code))
-            } else s.transformChildren(t)
-        }
-
+    private fun <T : Element> T.stripHandlerExtends(): T = transform {
         matchingElements<Interface> { iface ->
             if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) iface.copy(extends = emptyList()) else iface
         }
+    }
 
+    private fun <T : Element> T.stripResponseGenerics(): T = transform {
         matching<LanguageType.Custom> { type ->
             if (type.name.startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
         }
+    }
 
-        apply(fixResponseSwitchPatterns())
-        apply(fixConstructorCalls())
-        apply(borrowSerializationArgs())
-
-        parametersWhere(
-            predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
-            transform = { it.copy(type = (it.type as LanguageType.Custom).borrowImpl()) },
-        )
-
+    private fun <T : Element> T.injectSelfToHandlerMethods(): T = transform {
         matchingElements<Interface> { iface ->
             if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
                 iface.transform {
@@ -776,7 +794,9 @@ open class RustIrEmitter(
                 }
             } else iface
         }
+    }
 
+    private fun <T : Element> T.injectHandlerImplForClient(endpoint: Endpoint): T = transform {
         matchingElements<Namespace> { ns ->
             val handler = ns.elements.filterIsInstance<Interface>().firstOrNull { it.name == Name.of("Handler") }
             if (handler != null) {
@@ -795,7 +815,9 @@ open class RustIrEmitter(
                 } else ns
             } else ns
         }
+    }
 
+    private fun <T : Element> T.injectResponseFromImpls(): T = transform {
         matchingElements<LanguageFile> { file ->
             file.copy(elements = file.elements.flatMap { element ->
                 if (element is LanguageUnion && element.name.pascalCase() == "Response" && element.members.isNotEmpty()) {
@@ -805,11 +827,9 @@ open class RustIrEmitter(
                 } else listOf(element)
             })
         }
-
-        matchingElements<Namespace> { ns ->
-            ns.copy(elements = ns.elements + listOf(RawElement(endpoint.generateApiStruct())))
-        }
     }
+
+    private fun buildApiStruct(endpoint: Endpoint): RawElement = RawElement(endpoint.generateApiStruct())
 
     private fun Endpoint.generateApiStruct(): String {
         val pathTemplate = path.joinToString("/") { segment ->
