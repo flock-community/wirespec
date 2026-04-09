@@ -24,7 +24,7 @@ fun File.wrapWithPackage(
             add(Package(subPackageName.value))
             if (needsImport) add(wirespecImport)
             addAll(elements)
-        }
+        },
     )
 }
 
