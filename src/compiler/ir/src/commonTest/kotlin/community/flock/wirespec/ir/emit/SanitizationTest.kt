@@ -92,8 +92,8 @@ class SanitizationTest {
                     FieldCall(
                         receiver = VariableReference(Name.of("obj")),
                         field = Name.of("field-name"),
-                    )
-                )
+                    ),
+                ),
             ),
         )
 
@@ -110,11 +110,11 @@ class SanitizationTest {
             extraStatementTransforms = { stmt, tr ->
                 when (stmt) {
                     is VariableReference -> VariableReference(
-                        name = Name(listOf(stmt.name.camelCase()))
+                        name = Name(listOf(stmt.name.camelCase())),
                     )
                     else -> stmt.transformChildren(tr)
                 }
-            }
+            },
         )
 
         val fn = Function(
