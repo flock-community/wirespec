@@ -583,7 +583,11 @@ jobs:
       - name: Publish
         working-directory: ./src/plugin/npm/build/dist/js/productionLibrary
         run: |
-          npm publish --access public
+          if [[ "$VERSION" == *"-RC."* ]]; then
+            npm publish --access public --tag rc
+          else
+            npm publish --access public
+          fi
 
   publish-docs:
 
