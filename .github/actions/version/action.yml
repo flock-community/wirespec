@@ -18,7 +18,6 @@ runs:
       name: Resolve version number
       shell: bash
       run: |
-        set -e
         TAG="${{ inputs.version }}"
         BRANCH="${{ inputs.branch }}"
 
