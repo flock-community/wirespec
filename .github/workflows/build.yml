@@ -368,11 +368,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: version
         name: Generate version
         uses: ./.github/actions/version
         with:
           version: ${{ github.event.release.tag_name }}
+          branch: ${{ github.event.release.target_commitish }}
 
   native-publish:
 
