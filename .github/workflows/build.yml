@@ -431,6 +431,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
+
     needs:
       - version
 
@@ -453,6 +455,8 @@ jobs:
   release-vscode:
 
     runs-on: ubuntu-latest
+
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
 
     needs:
       - version
@@ -593,6 +597,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
+
     needs:
       - version
 
@@ -617,6 +623,8 @@ jobs:
 
   publish-playground:
     runs-on: ubuntu-latest
+
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
 
     needs:
       - version
