@@ -21,9 +21,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
@@ -111,7 +113,20 @@ open class ScalaIrEmitter(
     override val shared = object : Shared {
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.scala"
 
-        private val clientServer = AstShared(packageString).convertClientServer()
+        private val clientServer = AstShared(packageString).convertClientServer().map { element ->
+            if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
+                element.copy(fields = element.fields + Field(
+                    name = Name.of("pathSegments"),
+                    type = LanguageType.Array(LanguageType.Custom("PathSegment")),
+                ))
+            } else element
+        }
+
+        private val pathSegmentElements: List<Element> = listOf(
+            RawElement("sealed trait PathSegment"),
+            RawElement("case class Literal(val value: String) extends PathSegment"),
+            RawElement("case class Param(val name: String, val `type`: ClassTag[?]) extends PathSegment"),
+        )
 
         override val source = AstShared(packageString)
             .convert()
@@ -151,7 +166,7 @@ open class ScalaIrEmitter(
                     } else ns
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) clientServer
+                    if (namespace.name == Name.of("Wirespec")) pathSegmentElements + clientServer
                     else emptyList()
                 }
             }
@@ -342,6 +357,35 @@ open class ScalaIrEmitter(
         }
     }
 
+    open fun emitHandleFunction(endpoint: Endpoint, requestIsObject: Boolean): String {
+        val functionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
+        val requestType = if (requestIsObject) "Request.type" else "Request"
+        return "def $functionName(request: $requestType): F[Response[?]]\n"
+    }
+
+    open fun emitHandler(endpoint: Endpoint, requestIsObject: Boolean): String {
+        val handleFunction = emitHandleFunction(endpoint, requestIsObject)
+        return "trait Handler[F[_]] extends Wirespec.Handler {\n    $handleFunction}\n"
+    }
+
+    private fun Reference.toScalaTypeName(): String {
+        val base = when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.String -> "String"
+                is Reference.Primitive.Type.Integer -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Int" else "Long"
+                is Reference.Primitive.Type.Number -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Float" else "Double"
+                Reference.Primitive.Type.Boolean -> "Boolean"
+                Reference.Primitive.Type.Bytes -> "Array[Byte]"
+            }
+            is Reference.Custom -> value
+            is Reference.Iterable -> "List[${reference.toScalaTypeName()}]"
+            is Reference.Dict -> "Map[String, ${reference.toScalaTypeName()}]"
+            is Reference.Any -> "Any"
+            is Reference.Unit -> "Unit"
+        }
+        return if (isNullable) "Option[$base]" else base
+    }
+
     private fun buildClientServerObjects(endpoint: Endpoint, requestIsObject: Boolean, namespace: Namespace): Namespace {
         val reqType = if (requestIsObject) "Request.type" else "Request"
         val pathTemplate = "/" + endpoint.path.joinToString("/") {
@@ -350,11 +394,18 @@ open class ScalaIrEmitter(
                 is Endpoint.Segment.Param -> "{${it.identifier.value}}"
             }
         }
+        val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> """Wirespec.Literal("${segment.value}")"""
+                is Endpoint.Segment.Param -> """Wirespec.Param("${segment.identifier.value}", scala.reflect.classTag[${segment.reference.toScalaTypeName()}])"""
+            }
+        }
         val clientObject = raw(
             """
             |object Client extends Wirespec.Client[$reqType, Response[?]] {
             |  override val pathTemplate: String = "$pathTemplate"
             |  override val method: String = "${endpoint.method}"
+            |  override val pathSegments: List[Wirespec.PathSegment] = List($pathSegmentsCode)
             |  override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[$reqType, Response[?]] = new Wirespec.ClientEdge[$reqType, Response[?]] {
             |    override def to(request: $reqType): Wirespec.RawRequest = toRawRequest(serialization, request)
             |    override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
@@ -367,6 +418,7 @@ open class ScalaIrEmitter(
             |object Server extends Wirespec.Server[$reqType, Response[?]] {
             |  override val pathTemplate: String = "$pathTemplate"
             |  override val method: String = "${endpoint.method}"
+            |  override val pathSegments: List[Wirespec.PathSegment] = List($pathSegmentsCode)
             |  override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[$reqType, Response[?]] = new Wirespec.ServerEdge[$reqType, Response[?]] {
             |    override def from(request: Wirespec.RawRequest): $reqType = fromRawRequest(serialization, request)
             |    override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
