@@ -10,12 +10,15 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type
 import community.flock.wirespec.compiler.utils.NoLogger
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 class GeneratorTest {
 
@@ -47,6 +50,28 @@ class GeneratorTest {
         |  firstname: Name,
         |  age: Integer,
         |  addresses: Address[]
+        |}
+        """.trimMargin()
+
+    private val endpointSrc = src +
+        // language=ws
+        """
+        |
+        |type NotFound {
+        |  message: String
+        |}
+        |
+        |endpoint GetPerson GET /person/{id: UUID} -> {
+        |  200 -> PersonA
+        |  404 -> NotFound
+        |}
+        |
+        |endpoint PostPerson POST PersonA /person -> {
+        |  201 -> PersonA
+        |}
+        |
+        |endpoint SearchPersons GET /persons ?{name: Name} #{auth: Name} -> {
+        |  200 -> PersonA
         |}
         """.trimMargin()
 
@@ -86,6 +111,77 @@ class GeneratorTest {
         val random = Random(0L)
         val res = ast.generate("Address[]", random)
         assertEquals(5, res.jsonArray.size)
+    }
+
+    @Test
+    fun generateRequestWithNoBody() {
+        val ast = parser(endpointSrc)
+        val random = Random(0L)
+        val request = ast.generateRequest("GetPerson", random)
+
+        assertEquals("GET", request["method"]!!.jsonPrimitive.content)
+        assertTrue(request["path"]!!.jsonObject.containsKey("id"))
+        assertTrue(request["queries"]!!.jsonObject.isEmpty())
+        assertTrue(request["headers"]!!.jsonObject.isEmpty())
+        assertEquals(JsonNull, request["body"])
+    }
+
+    @Test
+    fun generateRequestWithBody() {
+        val ast = parser(endpointSrc)
+        val random = Random(0L)
+        val request = ast.generateRequest("PostPerson", random)
+
+        assertEquals("POST", request["method"]!!.jsonPrimitive.content)
+        assertTrue(request["path"]!!.jsonObject.isEmpty())
+        assertTrue(request["body"]!!.jsonObject.containsKey("uuid"))
+        assertTrue(request["body"]!!.jsonObject.containsKey("firstname"))
+    }
+
+    @Test
+    fun generateRequestWithQueryAndHeader() {
+        val ast = parser(endpointSrc)
+        val random = Random(0L)
+        val request = ast.generateRequest("SearchPersons", random)
+
+        assertEquals("GET", request["method"]!!.jsonPrimitive.content)
+        assertTrue(request["queries"]!!.jsonObject.containsKey("name"))
+        assertTrue(request["headers"]!!.jsonObject.containsKey("auth"))
+        assertEquals(JsonNull, request["body"])
+    }
+
+    @Test
+    fun generateResponseWithSpecificStatus() {
+        val ast = parser(endpointSrc)
+        val random = Random(0L)
+        val response = ast.generateResponse("GetPerson", "200", random)
+
+        assertEquals(200, response["status"]!!.jsonPrimitive.content.toInt())
+        assertTrue(response["headers"]!!.jsonObject.isEmpty())
+        assertTrue(response["body"]!!.jsonObject.containsKey("uuid"))
+        assertTrue(response["body"]!!.jsonObject.containsKey("firstname"))
+        assertTrue(response["body"]!!.jsonObject.containsKey("age"))
+    }
+
+    @Test
+    fun generateResponseNotFound() {
+        val ast = parser(endpointSrc)
+        val random = Random(0L)
+        val response = ast.generateResponse("GetPerson", "404", random)
+
+        assertEquals(404, response["status"]!!.jsonPrimitive.content.toInt())
+        assertTrue(response["body"]!!.jsonObject.containsKey("message"))
+    }
+
+    @Test
+    fun generateResponsePicksRandomStatus() {
+        val ast = parser(endpointSrc)
+        // GetPerson has two responses: 200 and 404 — verify both can be picked
+        val statuses = (0..99).map { seed ->
+            ast.generateResponse("GetPerson", Random(seed.toLong()))["status"]!!.jsonPrimitive.content.toInt()
+        }.toSet()
+        assertTrue(statuses.contains(200))
+        assertTrue(statuses.contains(404))
     }
 
     private fun parser(source: String) = object : ParseContext, NoLogger {

@@ -28,9 +28,76 @@ fun AST.generate(type: String, random: Random = Random.Default): JsonElement = R
 
 fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement = generateReference(type, random)
 
+fun AST.generateRequest(endpointName: String, random: Random = Random.Default): JsonObject =
+    generateRequest(resolveEndpoint(endpointName), random)
+
+fun AST.generateRequest(endpoint: Endpoint, random: Random = Random.Default): JsonObject {
+    val pathParams = endpoint.path
+        .filterIsInstance<Endpoint.Segment.Param>()
+        .associate { it.identifier.value to generateReference(it.reference, random) }
+        .let(::JsonObject)
+
+    val queries = endpoint.queries
+        .associate { it.identifier.value to generateReference(it.reference, random) }
+        .let(::JsonObject)
+
+    val headers = endpoint.headers
+        .associate { it.identifier.value to generateReference(it.reference, random) }
+        .let(::JsonObject)
+
+    val body = endpoint.requests.firstOrNull()?.content
+        ?.let { generateReference(it.reference, random) }
+        ?: JsonNull
+
+    return JsonObject(
+        mapOf(
+            "path" to pathParams,
+            "method" to JsonPrimitive(endpoint.method.name),
+            "queries" to queries,
+            "headers" to headers,
+            "body" to body,
+        ),
+    )
+}
+
+fun AST.generateResponse(endpointName: String, random: Random = Random.Default): JsonObject =
+    generateResponse(resolveEndpoint(endpointName), random)
+
+fun AST.generateResponse(endpoint: Endpoint, random: Random = Random.Default): JsonObject =
+    generateResponse(endpoint, endpoint.responses[random.nextInt(endpoint.responses.size)].status, random)
+
+fun AST.generateResponse(endpointName: String, status: String, random: Random = Random.Default): JsonObject =
+    generateResponse(resolveEndpoint(endpointName), status, random)
+
+fun AST.generateResponse(endpoint: Endpoint, status: String, random: Random = Random.Default): JsonObject {
+    val response = endpoint.responses.find { it.status == status }
+        ?: error("Response with status $status not found in endpoint ${endpoint.identifier.value}")
+
+    val headers = response.headers
+        .associate { it.identifier.value to generateReference(it.reference, random) }
+        .let(::JsonObject)
+
+    val body = response.content
+        ?.let { generateReference(it.reference, random) }
+        ?: JsonNull
+
+    return JsonObject(
+        mapOf(
+            "status" to JsonPrimitive(response.status.toInt()),
+            "headers" to headers,
+            "body" to body,
+        ),
+    )
+}
+
 private fun AST.resolveReference(type: Reference) = modules.flatMap { it.statements }.toList()
     .find { it.identifier.value == type.value }
     ?: error("Definition not found in AST: $type")
+
+private fun AST.resolveEndpoint(name: String): Endpoint = modules.flatMap { it.statements }
+    .filterIsInstance<Endpoint>()
+    .find { it.identifier.value == name }
+    ?: error("Endpoint not found in AST: $name")
 
 private fun AST.generateIterator(def: Definition, random: Random): JsonElement = (0..random.nextInt(10))
     .map { generateObject(def, random) }
