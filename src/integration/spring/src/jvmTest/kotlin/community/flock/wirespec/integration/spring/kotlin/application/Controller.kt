@@ -66,6 +66,5 @@ class Controller(
         RanDoMQueRYParrot = request.queries.RanDoMQueRY,
     )
 
-    override suspend fun downloadReport(request: DownloadReport.Request): DownloadReport.Response<*> =
-        DownloadReport.Response200(byteArrayOf(0x50, 0x4B, 0x03, 0x04))
+    override suspend fun downloadReport(request: DownloadReport.Request): DownloadReport.Response<*> = DownloadReport.Response200(byteArrayOf(0x50, 0x4B, 0x03, 0x04))
 }

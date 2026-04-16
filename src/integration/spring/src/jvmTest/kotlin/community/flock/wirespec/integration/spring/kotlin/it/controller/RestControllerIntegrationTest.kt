@@ -113,6 +113,7 @@ class RestControllerIntegrationTest {
 
         assertContentEquals(service.files.first(), file.bytes)
     }
+
     @Test
     fun `binary response download`() {
         val expected = byteArrayOf(0x50, 0x4B, 0x03, 0x04)
