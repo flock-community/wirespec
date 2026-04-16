@@ -16,6 +16,7 @@ import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName, EmitShared(false)) {
     override fun emitHandleFunction(endpoint: Endpoint): String {
         val path = "/${endpoint.path.joinToString("/") { it.emit() }}"
+
         val annotation = when (endpoint.method) {
             Endpoint.Method.GET -> "@org.springframework.web.bind.annotation.GetMapping(\"${path}\")"
             Endpoint.Method.POST -> "@org.springframework.web.bind.annotation.PostMapping(\"${path}\")"

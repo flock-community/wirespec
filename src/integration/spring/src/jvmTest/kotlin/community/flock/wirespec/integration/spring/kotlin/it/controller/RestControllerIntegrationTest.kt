@@ -113,5 +113,17 @@ class RestControllerIntegrationTest {
 
         assertContentEquals(service.files.first(), file.bytes)
     }
+    @Test
+    fun `binary response download`() {
+        val expected = byteArrayOf(0x50, 0x4B, 0x03, 0x04)
+        mockMvc
+            .perform(get("/api/report"))
+            .asyncDispatch()
+            .andExpect(status().isOk())
+            .andExpect { result ->
+                assertContentEquals(expected, result.response.contentAsByteArray)
+            }
+    }
+
     fun ResultActions.asyncDispatch(): ResultActions = mockMvc.perform(asyncDispatch(this.andReturn()))
 }

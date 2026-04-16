@@ -37,3 +37,7 @@ endpoint PatchTodos PATCH TodoDtoPatch /api/todos/{id:String} -> {
     200 -> TodoDto
     500 -> Error
 }
+
+endpoint DownloadReport GET /api/report -> {
+    200 -> Bytes
+}

@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.spring.kotlin.application
 
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.AddPet
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.DeletePet
+import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.DownloadReport
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.FindPetsByTags
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.GetPetById
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.RequestParrot
@@ -19,7 +20,8 @@ class Controller(
     DeletePet.Handler,
     FindPetsByTags.Handler,
     UploadFile.Handler,
-    RequestParrot.Handler {
+    RequestParrot.Handler,
+    DownloadReport.Handler {
 
     override suspend fun addPet(request: AddPet.Request): AddPet.Response<*> {
         service.create(request.body)
@@ -63,4 +65,7 @@ class Controller(
         QueryParamParrot = request.queries.QueryParam,
         RanDoMQueRYParrot = request.queries.RanDoMQueRY,
     )
+
+    override suspend fun downloadReport(request: DownloadReport.Request): DownloadReport.Response<*> =
+        DownloadReport.Response200(byteArrayOf(0x50, 0x4B, 0x03, 0x04))
 }
