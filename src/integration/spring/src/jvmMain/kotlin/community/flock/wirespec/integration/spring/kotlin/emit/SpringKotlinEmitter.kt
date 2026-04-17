@@ -10,11 +10,13 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Model
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 
 class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName, EmitShared(false)) {
     override fun emitHandleFunction(endpoint: Endpoint): String {
+        endpoint.responses.forEach { it.validateStreaming() }
         val path = "/${endpoint.path.joinToString("/") { it.emit() }}"
         val annotation = when (endpoint.method) {
             Endpoint.Method.GET -> "@org.springframework.web.bind.annotation.GetMapping(\"${path}\")"
@@ -32,6 +34,22 @@ class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName,
             |
         """.trimMargin()
     }
+
+    override fun emitResponseBodyType(response: Endpoint.Response): String =
+        if (response.isStreaming()) RESOURCE_TYPE
+        else super.emitResponseBodyType(response)
+
+    override fun emitResponseSerializeBody(response: Endpoint.Response): String =
+        if (response.isStreaming()) "null"
+        else super.emitResponseSerializeBody(response)
+
+    override fun emitResponseDeserializeBody(response: Endpoint.Response): String =
+        if (response.isStreaming()) "org.springframework.core.io.ByteArrayResource(requireNotNull(response.body) { \"body is null\" })"
+        else super.emitResponseDeserializeBody(response)
+
+    override fun emitHandlerCompanionExtras(endpoint: Endpoint): String =
+        if (endpoint.responses.any { it.isStreaming() }) "${Spacer(3)}const val STREAMING = true"
+        else ""
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
         val results = super.emit(ast, logger)
@@ -98,5 +116,21 @@ class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName,
             |}
             |
         """.trimMargin()
+    }
+
+    private fun Endpoint.Response.validateStreaming() {
+        if (!isStreaming()) return
+        val ref = content?.reference
+        require(ref is Reference.Primitive && ref.type is Reference.Primitive.Type.Bytes) {
+            "@Streaming is only allowed on responses whose body is `Bytes`"
+        }
+    }
+
+    companion object {
+        private const val STREAMING_ANNOTATION = "Streaming"
+        private const val RESOURCE_TYPE = "org.springframework.core.io.Resource"
+
+        private fun Endpoint.Response.isStreaming(): Boolean =
+            annotations.any { it.name == STREAMING_ANNOTATION }
     }
 }

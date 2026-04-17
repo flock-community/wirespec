@@ -53,7 +53,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         |${Spacer(2)}}
         |
         |${Spacer(2)}${emitHandleFunction(endpoint)}
-        |${Spacer(2)}class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+        |${Spacer(2)}class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {${emitHandlersExtras(endpoint).let { if (it.isBlank()) "" else "\n$it" }}
         |${Spacer(3)}@Override public String getPathTemplate() { return "/${endpoint.path.joinToString("/") { it.emit() }}"; }
         |${Spacer(3)}@Override public String getMethod() { return "${endpoint.method}"; }
         |${Spacer(3)}@Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
@@ -76,6 +76,21 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
 
     open fun emitHandleFunction(endpoint: Endpoint) =
         "java.util.concurrent.CompletableFuture<Response<?>> ${emit(endpoint.identifier).firstToLower()}(Request request);"
+
+    open fun emitResponseBodyType(response: Endpoint.Response): String =
+        response.content?.reference?.emit() ?: "Void"
+
+    open fun emitResponseSerializeBody(response: Endpoint.Response): String =
+        if (response.content != null)
+            "java.util.Optional.ofNullable(serialization.serializeBody(r.body, ${response.content!!.reference.emitGetType()}))"
+        else "java.util.Optional.empty()"
+
+    open fun emitResponseDeserializeBody(response: Endpoint.Response): String =
+        if (response.content != null)
+            "response.body().<${emitResponseBodyType(response)}>map(body -> serialization.deserializeBody(body, ${response.content!!.reference.emitGetType()})).orElse(null)"
+        else "null"
+
+    open fun emitHandlersExtras(endpoint: Endpoint): String = ""
 
     private fun Reference?.emitGetType() = "Wirespec.getType(${emitRoot("Void")}.class, ${emitGetTypeRaw()})"
     private fun Reference?.emitGetTypeRaw() = when {
@@ -124,34 +139,33 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         content?.let { """${Spacer(4)}request.body().<${it.emit()}>map(body -> serialization.deserializeBody(body, ${it.reference.emitGetType()})).orElse(null)""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
-    fun Endpoint.Response.emit() = """
+    fun Endpoint.Response.emit(): String {
+        val bodyType = emitResponseBodyType(this)
+        return """
         |${Spacer}record Response${status.firstToUpper()}(
         |${Spacer(2)}Integer status,
         |${Spacer(2)}Headers headers,
-        |${Spacer(2)}${content.emit()} body
-        |${Spacer}) implements Response${status.first()}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
-        |${Spacer(2)}public Response${status.firstToUpper()}(${listOfNotNull(headers.joinToString { it.emit() }.orNull(), content?.let { "${it.emit()} body" }).joinToString()}) {
+        |${Spacer(2)}$bodyType body
+        |${Spacer}) implements Response${status.first()}XX<$bodyType>, Response${bodyType.concatGenerics()} {
+        |${Spacer(2)}public Response${status.firstToUpper()}(${listOfNotNull(headers.joinToString { it.emit() }.orNull(), content?.let { "$bodyType body" }).joinToString()}) {
         |${Spacer(3)}this(${status.fixStatus()}, ${
-        headers.joinToString { emit(it.identifier) }.let { "new Headers($it)" }
-    }, ${if (content == null) "null" else "body"});
+            headers.joinToString { emit(it.identifier) }.let { "new Headers($it)" }
+        }, ${if (content == null) "null" else "body"});
         |${Spacer(2)}}
         |${Spacer(1)}${headers.emitObject("Headers", "Wirespec.Response.Headers") { it.emit() }}
         |${Spacer}}
     """.trimMargin()
+    }
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
         headers.joinToString(",\n") {
             """${Spacer(5)}serialization.<${it.reference.emit()}>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("${it.identifier.value}")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), ${it.reference.emitGetType()})"""
         }.orNull(),
-        content?.let { """${Spacer(5)}response.body().<${it.emit()}>map(body -> serialization.deserializeBody(body, ${it.reference.emitGetType()})).orElse(null)""" }
+        content?.let { "${Spacer(5)}${emitResponseDeserializeBody(this)}" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(4)}" }
 
     private fun Endpoint.Response.emitSerialized(): String {
-        val body = if (content != null) {
-            "java.util.Optional.ofNullable(serialization.serializeBody(r.body, ${content!!.reference.emitGetType()}))"
-        } else {
-            "java.util.Optional.empty()"
-        }
+        val body = emitResponseSerializeBody(this)
         val headers =
             if (headers.isNotEmpty()) {
                 "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})"
@@ -222,7 +236,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
 
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctByStatus()
-        .map { it.content.emit() }
+        .map { emitResponseBodyType(it) }
         .distinct()
         .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} extends Response<$it> {}" }
 

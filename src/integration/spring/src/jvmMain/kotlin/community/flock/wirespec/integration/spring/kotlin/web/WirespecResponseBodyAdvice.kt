@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.spring.kotlin.web
 import community.flock.wirespec.integration.spring.shared.RawJsonBody
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.core.MethodParameter
+import org.springframework.core.io.Resource
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.http.converter.HttpMessageConverter
@@ -41,7 +42,15 @@ class WirespecResponseBodyAdvice(
                 val rawResponse = toResponse.invoke(instance, wirespecSerialization, body) as Wirespec.RawResponse
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
                 response.headers.putAll(rawResponse.headers)
-                if (rawResponse.body == null) {
+                val responseBody = body.body
+                if (responseBody is Resource) {
+                    if (!response.headers.containsKey("Content-Type")) {
+                        response.headers.set("Content-Type", MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    }
+                    responseBody.inputStream.use { it.copyTo(response.body) }
+                    response.body.flush()
+                    null
+                } else if (rawResponse.body == null) {
                     Unit
                 } else {
                     rawResponse.body?.let { RawJsonBody(it) }

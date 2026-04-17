@@ -54,7 +54,7 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
         |${Spacer(2)}${emitHandleFunction(endpoint)}
         |${Spacer(2)}companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
         |${Spacer(3)}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
-        |${Spacer(3)}override val method = "${endpoint.method}"
+        |${Spacer(3)}override val method = "${endpoint.method}"${emitHandlerCompanionExtras(endpoint).let { if (it.isBlank()) "" else "\n$it" }}
         |${Spacer(3)}override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         |${Spacer(4)}override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         |${Spacer(4)}override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -75,12 +75,25 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
         .joinToString("\n") { "${Spacer}sealed interface Response${it}XX<T: Any> : Response<T>" }
 
     private fun Endpoint.emitResponseInterfaces() = responses
-        .map { it.content.emit() }
+        .map { emitResponseBodyType(it) }
         .distinct()
         .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} : Response<$it>" }
 
     open fun emitHandleFunction(endpoint: Endpoint): String =
         "suspend fun ${emit(endpoint.identifier).firstToLower()}(request: Request): Response<*>"
+
+    open fun emitResponseBodyType(response: Endpoint.Response): String =
+        response.content?.reference?.emit()?.removeQuestionMark() ?: "Unit"
+
+    open fun emitResponseSerializeBody(response: Endpoint.Response): String =
+        if (response.content != null) "serialization.serializeBody(response.body, typeOf<${emitResponseBodyType(response)}>())"
+        else "null"
+
+    open fun emitResponseDeserializeBody(response: Endpoint.Response): String =
+        if (response.content != null) "serialization.deserializeBody(requireNotNull(response.body) { \"body is null\" }, typeOf<${emitResponseBodyType(response)}>())"
+        else "Unit"
+
+    open fun emitHandlerCompanionExtras(endpoint: Endpoint): String = ""
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
         |${Spacer}${emitConstructor(endpoint)}
@@ -120,8 +133,9 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
 
     fun Endpoint.Response.emit(): String {
         val responseHeaderFields = headers.joinToString(", ") { "val ${it.emit()}" }.let { if (it.isBlank()) "" else ", $it" }
+        val bodyType = emitResponseBodyType(this)
         return """
-            |${Spacer}data class Response$status(override val body: ${content.emit()}$responseHeaderFields) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
+            |${Spacer}data class Response$status(override val body: $bodyType$responseHeaderFields) : Response${status[0]}XX<$bodyType>, Response${bodyType.concatGenerics()} {
             |${Spacer(2)}override val status = ${status.fixStatus()}
             |${Spacer(2)}override val headers = ResponseHeaders${headers.joinToString { emit(it.identifier) }.brace()}
             |${headers.emitObject("ResponseHeaders", "Wirespec.Response.Headers", 2) { it.emit() }}
@@ -149,7 +163,7 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
         |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
         |${Spacer(4)}statusCode = response.status,
         |${Spacer(4)}headers = ${emitHeaders()},
-        |${Spacer(4)}body = ${if (content != null) emitBody(content) else "null"},
+        |${Spacer(4)}body = ${emitResponseSerializeBody(this)},
         |${Spacer(3)})
     """.trimMargin()
 
@@ -165,11 +179,7 @@ interface KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackag
 
     private fun Endpoint.Response.emitDeserialized() = listOfNotNull(
         "${Spacer(3)}$status -> Response$status(",
-        if (content != null) {
-            "${Spacer(4)}body = serialization.deserializeBody(requireNotNull(response.body) { \"body is null\" }, typeOf<${content.emit()}>()),"
-        } else {
-            "${Spacer(4)}body = Unit,"
-        },
+        "${Spacer(4)}body = ${emitResponseDeserializeBody(this)},",
         headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers", 4, caseSensitive = false) }
             .orNull(),
         "${Spacer(3)})"
