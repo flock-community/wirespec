@@ -35,21 +35,29 @@ class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName,
         """.trimMargin()
     }
 
-    override fun emitResponseBodyType(response: Endpoint.Response): String =
-        if (response.isStreaming()) RESOURCE_TYPE
-        else super.emitResponseBodyType(response)
+    override fun emitResponseBodyType(response: Endpoint.Response): String = if (response.isStreaming()) {
+        RESOURCE_TYPE
+    } else {
+        super.emitResponseBodyType(response)
+    }
 
-    override fun emitResponseSerializeBody(response: Endpoint.Response): String =
-        if (response.isStreaming()) "null"
-        else super.emitResponseSerializeBody(response)
+    override fun emitResponseSerializeBody(response: Endpoint.Response): String = if (response.isStreaming()) {
+        "null"
+    } else {
+        super.emitResponseSerializeBody(response)
+    }
 
-    override fun emitResponseDeserializeBody(response: Endpoint.Response): String =
-        if (response.isStreaming()) "org.springframework.core.io.ByteArrayResource(requireNotNull(response.body) { \"body is null\" })"
-        else super.emitResponseDeserializeBody(response)
+    override fun emitResponseDeserializeBody(response: Endpoint.Response): String = if (response.isStreaming()) {
+        "org.springframework.core.io.ByteArrayResource(requireNotNull(response.body) { \"body is null\" })"
+    } else {
+        super.emitResponseDeserializeBody(response)
+    }
 
-    override fun emitHandlerCompanionExtras(endpoint: Endpoint): String =
-        if (endpoint.responses.any { it.isStreaming() }) "${Spacer(3)}const val STREAMING = true"
-        else ""
+    override fun emitHandlerCompanionExtras(endpoint: Endpoint): String = if (endpoint.responses.any { it.isStreaming() }) {
+        "${Spacer(3)}const val STREAMING = true"
+    } else {
+        ""
+    }
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
         val results = super.emit(ast, logger)
@@ -130,7 +138,6 @@ class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName,
         private const val STREAMING_ANNOTATION = "Streaming"
         private const val RESOURCE_TYPE = "org.springframework.core.io.Resource"
 
-        private fun Endpoint.Response.isStreaming(): Boolean =
-            annotations.any { it.name == STREAMING_ANNOTATION }
+        private fun Endpoint.Response.isStreaming(): Boolean = annotations.any { it.name == STREAMING_ANNOTATION }
     }
 }

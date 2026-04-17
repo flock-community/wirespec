@@ -25,22 +25,30 @@ abstract class SpringJavaEmitterHelper(packageName: PackageName) : JavaEmitter(p
 
     override fun emitResponseBodyType(response: Endpoint.Response): String {
         response.validateStreaming()
-        return if (response.isStreaming()) RESOURCE_TYPE
-        else super.emitResponseBodyType(response)
+        return if (response.isStreaming()) {
+            RESOURCE_TYPE
+        } else {
+            super.emitResponseBodyType(response)
+        }
     }
 
-    override fun emitResponseSerializeBody(response: Endpoint.Response): String =
-        if (response.isStreaming()) "java.util.Optional.empty()"
-        else super.emitResponseSerializeBody(response)
+    override fun emitResponseSerializeBody(response: Endpoint.Response): String = if (response.isStreaming()) {
+        "java.util.Optional.empty()"
+    } else {
+        super.emitResponseSerializeBody(response)
+    }
 
-    override fun emitResponseDeserializeBody(response: Endpoint.Response): String =
-        if (response.isStreaming())
-            "response.body().<$RESOURCE_TYPE>map(body -> (org.springframework.core.io.Resource) new org.springframework.core.io.ByteArrayResource(body)).orElse(null)"
-        else super.emitResponseDeserializeBody(response)
+    override fun emitResponseDeserializeBody(response: Endpoint.Response): String = if (response.isStreaming()) {
+        "response.body().<$RESOURCE_TYPE>map(body -> (org.springframework.core.io.Resource) new org.springframework.core.io.ByteArrayResource(body)).orElse(null)"
+    } else {
+        super.emitResponseDeserializeBody(response)
+    }
 
-    override fun emitHandlersExtras(endpoint: Endpoint): String =
-        if (endpoint.responses.any { it.isStreaming() }) "${Spacer(3)}public static final boolean STREAMING = true;"
-        else ""
+    override fun emitHandlersExtras(endpoint: Endpoint): String = if (endpoint.responses.any { it.isStreaming() }) {
+        "${Spacer(3)}public static final boolean STREAMING = true;"
+    } else {
+        ""
+    }
 
     private fun Endpoint.Response.validateStreaming() {
         if (!isStreaming()) return
@@ -54,7 +62,6 @@ abstract class SpringJavaEmitterHelper(packageName: PackageName) : JavaEmitter(p
         private const val STREAMING_ANNOTATION = "Streaming"
         private const val RESOURCE_TYPE = "org.springframework.core.io.Resource"
 
-        private fun Endpoint.Response.isStreaming(): Boolean =
-            annotations.any { it.name == STREAMING_ANNOTATION }
+        private fun Endpoint.Response.isStreaming(): Boolean = annotations.any { it.name == STREAMING_ANNOTATION }
     }
 }
