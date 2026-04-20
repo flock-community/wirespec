@@ -14,9 +14,33 @@ This spec covers only the Client extraction. Subsequent features (e.g. Test, Sha
 
 ## Architecture
 
+### `IrExtension` base interface
+
+A new marker interface establishes the extension pattern for `IrEmitter`:
+
+```kotlin
+package community.flock.wirespec.ir.extensions
+
+interface IrExtension
+```
+
+`IrExtension` is intentionally empty — it exists to give all feature-scoped extensions (`ClientIrExtension` now; `TestIrExtension` and others later) a common supertype and a shared home in the `ir.extensions` package. It documents the pattern and lets `IrEmitter` reference "an extension" without coupling to a specific feature.
+
+`ClientIrExtension` extends it:
+
+```kotlin
+interface ClientIrExtension : IrExtension {
+    fun emitEndpointClient(endpoint: Endpoint): File
+    fun emitClient(endpoints: List<Endpoint>, logger: Logger): File
+    fun buildClientServerInterfaces(style: AccessorStyle): List<Element>
+}
+```
+
+Lives in `src/compiler/ir/src/commonMain/kotlin/community/flock/wirespec/ir/extensions/IrExtension.kt` (separate file from `ClientIrExtension.kt` because it's the general pattern, not a feature).
+
 ### Pluggable strategy
 
-`IrEmitter` no longer owns client emit logic. It gains a single abstract property:
+`IrEmitter` no longer owns client emit logic. It gains a single abstract property typed as the specific extension:
 
 ```kotlin
 interface IrEmitter : Emitter {
@@ -24,6 +48,8 @@ interface IrEmitter : Emitter {
     // ...
 }
 ```
+
+(The property is typed as `ClientIrExtension`, not `IrExtension`, so the orchestration can call the client-specific methods without casts. Future extensions follow the same shape: `val testExtension: TestIrExtension`, etc.)
 
 The `emit(ast, logger)` orchestration delegates:
 
@@ -77,7 +103,7 @@ Expected size: ~700–900 lines. This is intentional: a single file is the agree
 ```kotlin
 package community.flock.wirespec.ir.extensions
 
-interface ClientIrExtension {
+interface ClientIrExtension : IrExtension {
     fun emitEndpointClient(endpoint: Endpoint): File
     fun emitClient(endpoints: List<Endpoint>, logger: Logger): File
     fun buildClientServerInterfaces(style: AccessorStyle): List<Element>
@@ -149,6 +175,7 @@ That coverage is enough to catch regressions in language-specific packaging (imp
 
 ## Success criteria
 
+- `IrExtension` marker interface exists at `ir.extensions.IrExtension` and is extended by `ClientIrExtension`.
 - `IrEmitter` no longer declares `emitClient` or `emitEndpointClient`.
 - `IrConverter` no longer declares `convertClient` or `convertEndpointClient`.
 - `SharedBuilder` no longer declares `buildClientServerInterfaces` as a free function (or retains a thin delegate if needed during migration — removed by end of refactor).
