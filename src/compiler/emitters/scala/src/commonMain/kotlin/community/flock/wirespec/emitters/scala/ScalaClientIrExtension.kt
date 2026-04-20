@@ -75,7 +75,7 @@ class ScalaClientIrExtension(
         matchingElements { struct: Struct ->
             struct.copy(
                 interfaces = struct.interfaces.map { type ->
-                    if (type is LanguageType.Custom && type.name.endsWith(".Call")) {
+                    if (type is LanguageType.Custom && type.name.dotted().endsWith(".Call")) {
                         type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
                     } else {
                         type

@@ -2,7 +2,7 @@ package community.flock.wirespec.ir.core
 
 fun Struct.qualifyNestedRefs(nestedNames: Set<String>): Struct {
     val qualifiedFields = fields.map { field ->
-        val typeName = (field.type as? Type.Custom)?.name
+        val typeName = (field.type as? Type.Custom)?.name?.dotted()
         if (typeName != null && typeName in nestedNames) {
             field.copy(type = Type.Custom("${name.pascalCase()}$typeName"))
         } else {
@@ -15,7 +15,7 @@ fun Struct.qualifyNestedRefs(nestedNames: Set<String>): Struct {
                 if (stmt is Assignment) {
                     val value = stmt.value
                     if (value is ConstructorStatement) {
-                        val typeName = (value.type as? Type.Custom)?.name
+                        val typeName = (value.type as? Type.Custom)?.name?.dotted()
                         if (typeName != null && typeName in nestedNames) {
                             Assignment(stmt.name, value.copy(type = Type.Custom("${name.pascalCase()}$typeName")))
                         } else {

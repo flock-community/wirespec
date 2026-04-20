@@ -46,6 +46,7 @@ import community.flock.wirespec.ir.core.Statement
 import community.flock.wirespec.ir.core.StringTemplate
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Switch
+import community.flock.wirespec.ir.core.ThisExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
@@ -99,7 +100,7 @@ object RustGenerator : Generator {
 
     private fun Package.emit(indent: Int): String = "// package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "use super::${Name.of(type.name).snakeCase()}::${type.name};\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "use super::${Name.of(type.name.dotted()).snakeCase()}::${type.name.dotted()};\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val hasComplexElements = elements.any { it is Interface || it is Union || it is Enum || it is Struct }
@@ -135,7 +136,7 @@ object RustGenerator : Generator {
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val enumDef = if (members.isNotEmpty()) {
-            val variants = members.joinToString("\n") { "${it.name}(${it.name}),".indentCode(1) }
+            val variants = members.joinToString("\n") { "${it.name.dotted()}(${it.name.dotted()}),".indentCode(1) }
             "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName$typeParamsStr {\n$variants\n}\n\n".indentCode(indent)
         } else {
             "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName$typeParamsStr {}\n\n".indentCode(indent)
@@ -276,10 +277,11 @@ object RustGenerator : Generator {
         is Type.Array -> "Vec<${elementType.emit()}>"
         is Type.Dict -> "std::collections::HashMap<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
+            val rendered = name.dotted()
             if (generics.isEmpty()) {
-                name
+                rendered
             } else {
-                "$name<${generics.joinToString(", ") { it.emit() }}>"
+                "$rendered<${generics.joinToString(", ") { it.emit() }}>"
             }
         }
         is Type.Nullable -> "Option<${type.emit()}>"
@@ -372,6 +374,7 @@ object RustGenerator : Generator {
         }
         is RawExpression -> "$code;\n".indentCode(indent)
         is NullLiteral, is NullableEmpty -> "None;\n".indentCode(indent)
+        is ThisExpression -> "self;\n".indentCode(indent)
         is VariableReference -> "${name.snakeCase().sanitize()};\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
@@ -424,6 +427,7 @@ object RustGenerator : Generator {
         is LiteralMap -> emit()
         is RawExpression -> code
         is NullLiteral, is NullableEmpty -> "None"
+        is ThisExpression -> "self"
         is VariableReference -> name.snakeCase().sanitize()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""

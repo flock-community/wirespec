@@ -346,7 +346,7 @@ open class JavaIrEmitter(
                     predicate = { it.name == Name.of("message") },
                     transform = { param ->
                         when (val t = param.type) {
-                            is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
+                            is Type.Custom -> param.copy(type = t.copy(name = Name.fromDotted(prefix + t.name.dotted())))
                             else -> param
                         }
                     },

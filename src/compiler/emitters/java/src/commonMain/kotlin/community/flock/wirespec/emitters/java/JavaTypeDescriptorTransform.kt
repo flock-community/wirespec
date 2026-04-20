@@ -51,6 +51,6 @@ internal fun Type.toJavaName(): String = when (this) {
     Type.Bytes -> "byte[]"
     Type.Any -> "Object"
     Type.Unit -> "Void"
-    is Type.Custom -> name
+    is Type.Custom -> name.dotted()
     else -> "Object"
 }

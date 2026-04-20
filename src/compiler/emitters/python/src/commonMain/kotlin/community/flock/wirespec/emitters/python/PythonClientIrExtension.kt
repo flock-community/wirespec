@@ -84,12 +84,12 @@ class PythonClientIrExtension(
 
     private fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = transform {
         type { type, _ ->
-            if (type is LanguageType.Custom && type.name.startsWith("$endpointName.")) {
-                val suffix = type.name.removePrefix("$endpointName.")
+            if (type is LanguageType.Custom && type.name.dotted().startsWith("$endpointName.")) {
+                val suffix = type.name.dotted().removePrefix("$endpointName.")
                 if (suffix == "Call" || suffix == "Handler") {
                     type
                 } else {
-                    type.copy(name = suffix)
+                    type.copy(name = Name.fromDotted(suffix))
                 }
             } else {
                 type

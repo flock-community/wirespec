@@ -170,6 +170,7 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
     is RawExpression -> this
     is NullLiteral -> this
     is NullableEmpty -> this
+    is ThisExpression -> this
     is VariableReference -> this
     is FieldCall -> copy(receiver = receiver?.let { transformer.transformExpression(it) })
     is FunctionCall -> copy(
@@ -384,10 +385,10 @@ internal fun <T : Element> T.transformTypeByName(
     name: String,
     transform: (Type.Custom) -> Type,
 ): T = transformMatching { type: Type.Custom ->
-    if (type.name == name) transform(type) else type
+    if (type.name.dotted() == name) transform(type) else type
 }
 
-internal fun <T : Element> T.renameType(oldName: String, newName: String): T = transformTypeByName(oldName) { it.copy(name = newName) }
+internal fun <T : Element> T.renameType(oldName: String, newName: String): T = transformTypeByName(oldName) { it.copy(name = Name.fromDotted(newName)) }
 
 internal fun <T : Element> T.renameField(oldName: Name, newName: Name): T = transformFieldsWhere({ it.name == oldName }) { it.copy(name = newName) }
 
@@ -475,7 +476,7 @@ internal fun Element.collectTypes(): List<Type> = buildList {
 
 internal fun Element.collectCustomTypeNames(): Set<String> = buildSet {
     forEachType { type ->
-        if (type is Type.Custom) add(type.name)
+        if (type is Type.Custom) add(type.name.dotted())
     }
 }
 

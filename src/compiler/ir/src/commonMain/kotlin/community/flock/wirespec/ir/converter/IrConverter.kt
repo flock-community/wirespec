@@ -413,7 +413,7 @@ fun EnumWirespec.convert() = file(identifier.toName()) {
 
 fun UnionWirespec.convert() = file(identifier.toName()) {
     union(identifier.toName()) {
-        entries.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { member(it.name) }
+        entries.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { member(it.name.dotted()) }
     }
 }
 
@@ -886,7 +886,7 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Unit -> "Unit"
     is Type.Wildcard -> "Wildcard"
     is Type.Reflect -> "Type"
-    is Type.Custom -> name
+    is Type.Custom -> name.dotted()
     is Type.Array -> "List${elementType.toTypeName()}"
     is Type.Nullable -> "Optional${type.toTypeName()}"
     is Type.String -> "String"

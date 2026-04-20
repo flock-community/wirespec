@@ -46,6 +46,7 @@ import community.flock.wirespec.ir.core.Statement
 import community.flock.wirespec.ir.core.StringTemplate
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Switch
+import community.flock.wirespec.ir.core.ThisExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.Union
@@ -104,7 +105,7 @@ private class TypeScriptFileEmitter(val file: File) {
 
     private fun Package.emit(indent: Int): String = ""
 
-    private fun Import.emit(indent: Int): String = "import { ${type.name} } from '$path';\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "import { ${type.name.dotted()} } from '$path';\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int): String {
         val content = elements.joinToString("") { it.emit(indent + 1) }
@@ -151,7 +152,7 @@ private class TypeScriptFileEmitter(val file: File) {
             ""
         }
         return if (members.isNotEmpty()) {
-            "export type ${name.pascalCase()}$typeParamsStr = ${members.joinToString(" | ") { it.name }}\n".indentCode(indent)
+            "export type ${name.pascalCase()}$typeParamsStr = ${members.joinToString(" | ") { it.name.dotted() }}\n".indentCode(indent)
         } else {
             val extStr = extends?.let { " extends ${it.emit()}" } ?: ""
             "export interface ${name.pascalCase()}$typeParamsStr$extStr {}\n".indentCode(indent)
@@ -190,7 +191,7 @@ private class TypeScriptFileEmitter(val file: File) {
     }
 
     private fun Type.emitWithInlineStructs(inlineStructs: Map<String, Struct>): String = when (this) {
-        is Type.Custom -> inlineStructs[name]?.emitInline() ?: emit()
+        is Type.Custom -> inlineStructs[name.dotted()]?.emitInline() ?: emit()
         is Type.Nullable -> "${type.emitWithInlineStructs(inlineStructs)} | undefined"
         is Type.Array -> {
             val element = elementType.emitWithInlineStructs(inlineStructs)
@@ -426,8 +427,8 @@ private class TypeScriptFileEmitter(val file: File) {
 
     private fun Type.emitWithInlineInterfaces(inlineInterfaces: Map<String, Interface>): String = when {
         inlineInterfaces.isEmpty() -> emit()
-        this is Type.Custom && inlineInterfaces.containsKey(name) -> {
-            val nested = inlineInterfaces[name]!!
+        this is Type.Custom && inlineInterfaces.containsKey(name.dotted()) -> {
+            val nested = inlineInterfaces[name.dotted()]!!
             if (nested.elements.isEmpty() && nested.extends.isNotEmpty()) {
                 nested.extends.joinToString(" & ") { it.emit() }
             } else if (nested.elements.isEmpty()) {
@@ -460,10 +461,11 @@ private class TypeScriptFileEmitter(val file: File) {
         }
         is Type.Dict -> "Record<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
+            val rendered = name.dotted()
             if (generics.isEmpty()) {
-                name
+                rendered
             } else {
-                "$name<${generics.joinToString(", ") { it.emit() }}>"
+                "$rendered<${generics.joinToString(", ") { it.emit() }}>"
             }
         }
         is Type.Nullable -> "${type.emit()} | undefined"
@@ -472,7 +474,7 @@ private class TypeScriptFileEmitter(val file: File) {
     }
 
     private fun emitConstructorCall(type: Type, namedArguments: Map<Name, Expression>): String {
-        val typeName = (type as? Type.Custom)?.name
+        val typeName = (type as? Type.Custom)?.name?.dotted()
         if (typeName != null && typeName in structsWithConstructors) {
             val funcName = typeName.replaceFirstChar { it.lowercaseChar() }
             if (namedArguments.isEmpty()) return "$funcName()"
@@ -525,6 +527,7 @@ private class TypeScriptFileEmitter(val file: File) {
         is RawExpression -> "$code;\n".indentCode(indent)
         is NullLiteral -> "undefined;\n".indentCode(indent)
         is NullableEmpty -> "undefined;\n".indentCode(indent)
+        is ThisExpression -> "this;\n".indentCode(indent)
         is VariableReference -> "${name.camelCase()};\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
@@ -576,6 +579,7 @@ private class TypeScriptFileEmitter(val file: File) {
         is RawExpression -> code
         is NullLiteral -> "undefined"
         is NullableEmpty -> "undefined"
+        is ThisExpression -> "this"
         is VariableReference -> name.camelCase()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""

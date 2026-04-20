@@ -395,7 +395,7 @@ open class RustIrEmitter(
             .transform { apply(borrowSerializationArgs()) }
             .transform {
                 parametersWhere(
-                    predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
+                    predicate = { (it.type as? LanguageType.Custom)?.name?.dotted() in setOf("Serializer", "Deserializer") },
                     transform = { it.copy(type = (it.type as LanguageType.Custom).borrowImpl()) },
                 )
             }
@@ -478,7 +478,8 @@ open class RustIrEmitter(
 
     private fun <T : Element> T.stripWirespecPrefix(): T = transform {
         matching<LanguageType.Custom> { type ->
-            if (type.name.startsWith("Wirespec.")) type.copy(name = type.name.removePrefix("Wirespec."))
+            val rendered = type.name.dotted()
+            if (rendered.startsWith("Wirespec.")) type.copy(name = Name.fromDotted(rendered.removePrefix("Wirespec.")))
             else type
         }
     }
@@ -523,7 +524,7 @@ open class RustIrEmitter(
         is LanguageType.Array -> "Vec<${elementType.toRustTypeString()}>"
         is LanguageType.Dict -> "std::collections::HashMap<${keyType.toRustTypeString()}, ${valueType.toRustTypeString()}>"
         is LanguageType.Nullable -> "Option<${type.toRustTypeString()}>"
-        is LanguageType.Custom -> name
+        is LanguageType.Custom -> name.dotted()
         is LanguageType.Wildcard -> "_"
         is LanguageType.Reflect -> "std::any::TypeId"
         is LanguageType.IntegerLiteral -> "i32"
@@ -592,7 +593,7 @@ open class RustIrEmitter(
             "${receiver.toRawCode()}[$idx]"
         }
         is ConstructorStatement -> {
-            val typeName = (type as? LanguageType.Custom)?.name ?: type.toString()
+            val typeName = (type as? LanguageType.Custom)?.name?.dotted() ?: type.toString()
             val args = namedArguments.entries.joinToString(", ") { "${it.key.snakeCase()}: ${it.value.toRawCode()}" }
             if (args.isEmpty()) "$typeName {}" else "$typeName { $args }"
         }
@@ -629,7 +630,7 @@ open class RustIrEmitter(
         statement { s, t ->
             if (s is Switch && s.variable?.camelCase() == "r") {
                 val transformedCases = s.cases.map { case ->
-                    val typeName = (case.type as? LanguageType.Custom)?.name
+                    val typeName = (case.type as? LanguageType.Custom)?.name?.dotted()
                     if (typeName != null && RESPONSE_PATTERN.matches(typeName)) {
                         Case(
                             value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
@@ -656,7 +657,7 @@ open class RustIrEmitter(
     private fun fixConstructorCalls(): Transformer = transformer {
         statementAndExpression { s, t ->
             if (s is ConstructorStatement) {
-                val typeName = (s.type as? LanguageType.Custom)?.name
+                val typeName = (s.type as? LanguageType.Custom)?.name?.dotted()
                 val transformedArgs = s.namedArguments.mapValues { t.transformExpression(it.value) }
                 when {
                     typeName != null && RESPONSE_PATTERN.matches(typeName) -> {
@@ -688,7 +689,7 @@ open class RustIrEmitter(
 
     private fun <T : Element> T.stripResponseGenerics(): T = transform {
         matching<LanguageType.Custom> { type ->
-            if (type.name.startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
+            if (type.name.dotted().startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
         }
     }
 
@@ -733,7 +734,8 @@ open class RustIrEmitter(
             file.copy(elements = file.elements.flatMap { element ->
                 if (element is LanguageUnion && element.name.pascalCase() == "Response" && element.members.isNotEmpty()) {
                     listOf(element) + element.members.map { member ->
-                        RawElement("impl From<${member.name}> for Response { fn from(value: ${member.name}) -> Self { Response::${member.name}(value) } }\n")
+                        val memberName = member.name.dotted()
+                        RawElement("impl From<$memberName> for Response { fn from(value: $memberName) -> Self { Response::$memberName(value) } }\n")
                     }
                 } else listOf(element)
             })
@@ -763,9 +765,9 @@ open class RustIrEmitter(
 
     companion object : Keywords {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
-        fun LanguageType.Custom.borrow(): LanguageType.Custom = copy(name = "&$name")
-        fun LanguageType.Custom.borrowDyn(): LanguageType.Custom = copy(name = "&dyn $name")
-        fun LanguageType.Custom.borrowImpl(): LanguageType.Custom = copy(name = "&impl $name")
+        fun LanguageType.Custom.borrow(): LanguageType.Custom = copy(name = Name.fromDotted("&${name.dotted()}"))
+        fun LanguageType.Custom.borrowDyn(): LanguageType.Custom = copy(name = Name.fromDotted("&dyn ${name.dotted()}"))
+        fun LanguageType.Custom.borrowImpl(): LanguageType.Custom = copy(name = Name.fromDotted("&impl ${name.dotted()}"))
         override val reservedKeywords = setOf(
             "as", "break", "const", "continue", "crate",
             "else", "enum", "extern", "false", "fn",

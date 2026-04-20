@@ -47,6 +47,7 @@ import community.flock.wirespec.ir.core.Statement
 import community.flock.wirespec.ir.core.StringTemplate
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Switch
+import community.flock.wirespec.ir.core.ThisExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
@@ -143,7 +144,7 @@ private class JavaEmitter(val file: File) {
 
     private fun Package.emit(indent: Int): String = "package $path;\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "import $path.${type.name};\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "import $path.${type.name.dotted()};\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element>): String {
         val extStr = extends?.let { " extends ${it.emitGenerics()}" } ?: ""
@@ -171,12 +172,12 @@ private class JavaEmitter(val file: File) {
 
     private fun Union.emit(indent: Int, parents: List<Element>): String {
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
-        val extendsName = extends?.name
+        val extendsName = extends?.name?.dotted()
         val ext = listOfNotNull(extends?.emitGenerics()) +
             parents.filterIsInstance<Union>().filter { it.name.pascalCase() != extendsName }.map { it.name.pascalCase() }
 
         val extStr = if (ext.isEmpty()) "" else " extends ${ext.distinct().joinToString(", ")}"
-        val permitsStr = if (members.isEmpty()) "" else " permits ${members.joinToString(", ") { it.name }}"
+        val permitsStr = if (members.isEmpty()) "" else " permits ${members.joinToString(", ") { it.name.dotted() }}"
         return "public sealed interface ${name.pascalCase()}$typeParamsStr$extStr$permitsStr {}\n\n".indentCode(indent)
     }
 
@@ -320,7 +321,7 @@ private class JavaEmitter(val file: File) {
         Type.Reflect -> "Type"
         is Type.Array -> "java.util.List"
         is Type.Dict -> "java.util.Map"
-        is Type.Custom -> name
+        is Type.Custom -> name.dotted()
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
         is Type.IntegerLiteral -> "Integer"
         is Type.StringLiteral -> "String"
@@ -417,6 +418,7 @@ private class JavaEmitter(val file: File) {
         is RawExpression -> "$code;\n".indentCode(indent)
         is NullLiteral -> "null;\n".indentCode(indent)
         is NullableEmpty -> "java.util.Optional.empty();\n".indentCode(indent)
+        is ThisExpression -> "this;\n".indentCode(indent)
         is VariableReference -> "${name.camelCase().sanitize()};\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
@@ -492,6 +494,7 @@ private class JavaEmitter(val file: File) {
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "java.util.Optional.empty()"
+        is ThisExpression -> "this"
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""

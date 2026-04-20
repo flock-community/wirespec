@@ -185,7 +185,7 @@ open class TypeScriptIrEmitter : IrEmitter {
                             statementAndExpression { s, t ->
                                 when {
                                     s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
-                                        val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
+                                        val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name?.dotted() ?: ""
                                         FunctionCall(name = Name.of("validate$typeName"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
                                     }
                                     s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
@@ -320,7 +320,7 @@ open class TypeScriptIrEmitter : IrEmitter {
             if (stmt is Switch && stmt.cases.any { it.type != null }) {
                 val varName = stmt.variable?.camelCase() ?: "r"
                 val transformedCases = stmt.cases.map { case ->
-                    val typeName = (case.type as? LanguageType.Custom)?.name
+                    val typeName = (case.type as? LanguageType.Custom)?.name?.dotted()
                     val statusNum = typeName
                         ?.substringAfterLast(".")
                         ?.removePrefix("Response")

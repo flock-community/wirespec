@@ -47,6 +47,7 @@ import community.flock.wirespec.ir.core.Statement
 import community.flock.wirespec.ir.core.StringTemplate
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Switch
+import community.flock.wirespec.ir.core.ThisExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
@@ -113,7 +114,7 @@ private class KotlinEmitter(val file: File) {
 
     private fun Package.emit(indent: Int): String = "package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "import $path.${type.name}\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "import $path.${type.name.dotted()}\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element>): String {
         val extStr = extends?.let { " : ${it.emitGenerics()}" } ?: ""
@@ -344,7 +345,7 @@ private class KotlinEmitter(val file: File) {
         Type.Reflect -> "KType"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
-        is Type.Custom -> name
+        is Type.Custom -> name.dotted()
         is Type.Nullable -> "${type.emitGenerics()}?"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
@@ -430,6 +431,7 @@ private class KotlinEmitter(val file: File) {
         is RawExpression -> "$code\n".indentCode(indent)
         is NullLiteral -> "null\n".indentCode(indent)
         is NullableEmpty -> "null\n".indentCode(indent)
+        is ThisExpression -> "this\n".indentCode(indent)
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
@@ -502,6 +504,7 @@ private class KotlinEmitter(val file: File) {
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "null"
+        is ThisExpression -> "this"
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
