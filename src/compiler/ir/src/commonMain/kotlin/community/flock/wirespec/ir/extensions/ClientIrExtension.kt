@@ -10,6 +10,7 @@ import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.ThisExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
@@ -51,7 +52,7 @@ fun Endpoint.convertEndpointClient(): File {
                     FunctionCall(
                         name = Name(listOf("$endpointNameStr.toRawRequest")),
                         arguments = mapOf(
-                            Name.of("serialization") to FieldCall(field = Name.of("serialization")),
+                            Name.of("serialization") to FieldCall(receiver = ThisExpression, field = Name.of("serialization")),
                             Name.of("request") to VariableReference(Name.of("request")),
                         ),
                     ),
@@ -61,10 +62,11 @@ fun Endpoint.convertEndpointClient(): File {
                     "rawResponse",
                     FunctionCall(
                         name = Name.of("transport"),
-                        receiver = FieldCall(field = Name.of("transportation")),
+                        receiver = FieldCall(receiver = ThisExpression, field = Name.of("transportation")),
                         arguments = mapOf(
                             Name.of("request") to VariableReference(Name.of("rawRequest")),
                         ),
+                        isAwait = true,
                     ),
                 )
 
@@ -72,7 +74,7 @@ fun Endpoint.convertEndpointClient(): File {
                     FunctionCall(
                         name = Name(listOf("$endpointNameStr.fromRawResponse")),
                         arguments = mapOf(
-                            Name.of("serialization") to FieldCall(field = Name.of("serialization")),
+                            Name.of("serialization") to FieldCall(receiver = ThisExpression, field = Name.of("serialization")),
                             Name.of("response") to VariableReference(Name.of("rawResponse")),
                         ),
                     ),
@@ -107,8 +109,8 @@ fun List<Endpoint>.convertClient(): File {
                             receiver = ConstructorStatement(
                                 type = Type.Custom("${endpointNameStr}Client"),
                                 namedArguments = mapOf(
-                                    Name.of("serialization") to FieldCall(field = Name.of("serialization")),
-                                    Name.of("transportation") to FieldCall(field = Name.of("transportation")),
+                                    Name.of("serialization") to FieldCall(receiver = ThisExpression, field = Name.of("serialization")),
+                                    Name.of("transportation") to FieldCall(receiver = ThisExpression, field = Name.of("transportation")),
                                 ),
                             ),
                             arguments = endpoint.requestParameters().associate { (name, _) ->

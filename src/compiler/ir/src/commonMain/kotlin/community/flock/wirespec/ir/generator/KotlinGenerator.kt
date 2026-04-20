@@ -507,14 +507,14 @@ private class KotlinEmitter(val file: File) {
         is ThisExpression -> "this"
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value().sanitize()}"
         }
 
         is FunctionCall -> {
             val typeArgsStr =
                 if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             "$receiverStr${
                 name.value().toKotlinStaticCall().sanitize()
             }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"

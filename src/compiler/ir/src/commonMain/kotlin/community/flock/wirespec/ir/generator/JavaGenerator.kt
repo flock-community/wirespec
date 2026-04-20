@@ -287,9 +287,32 @@ private class JavaEmitter(val file: File) {
         return if (body.isEmpty()) {
             "$fullPrefix$typeParamsStr$rType ${name.camelCase()}($params);\n".indentCode(indent)
         } else {
-            val content = body.joinToString("") { it.emit(1) }
+            val effectiveBody = if (isAsync) body.collapseAwaitAssignReturn() else body
+            val content = effectiveBody.joinToString("") { it.emit(1) }
             "$fullPrefix$typeParamsStr$rType ${name.camelCase()}($params) {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
         }
+    }
+
+    // In an async function, the convertEndpointClient pattern produces:
+    //   <prefix>; val v = transport(...); return continuation(v)
+    // Java renders this as a CompletableFuture chain:
+    //   <prefix>; return transport(...).thenApply(v -> continuation(v))
+    private fun List<Statement>.collapseAwaitAssignReturn(): List<Statement> {
+        if (size < 2) return this
+        val last = last() as? ReturnStatement ?: return this
+        val prev = this[size - 2] as? Assignment ?: return this
+        // Strip isAwait — thenApply IS the async composition; .join() would block.
+        val awaitedExpr = (prev.value as? FunctionCall)?.copy(isAwait = false) ?: prev.value
+        val varName = prev.name
+        val continuation = last.expression.emitWithSubstitution(varName, varName.camelCase().sanitize())
+        val mapped = FunctionCall(
+            name = Name.of("thenApply"),
+            receiver = awaitedExpr,
+            arguments = mapOf(
+                Name.of("mapper") to RawExpression("${varName.camelCase().sanitize()} -> $continuation"),
+            ),
+        )
+        return dropLast(2) + ReturnStatement(mapped)
     }
 
     private fun Parameter.emit(indent: Int): String = "${type.emitGenerics()} ${name.camelCase().sanitize()}".indentCode(indent)
@@ -448,7 +471,7 @@ private class JavaEmitter(val file: File) {
             operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}));\n".indentCode(indent)
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
         }
-        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        is TypeDescriptor -> "${emitTypeDescriptor()};\n".indentCode(indent)
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -497,12 +520,12 @@ private class JavaEmitter(val file: File) {
         is ThisExpression -> "this"
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value().sanitize()}()"
         }
         is FunctionCall -> {
             val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             val awaitSuffix = if (isAwait) ".join()" else ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
         }
@@ -524,7 +547,7 @@ private class JavaEmitter(val file: File) {
             operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}))"
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
         }
-        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        is TypeDescriptor -> emitTypeDescriptor()
         is NullCheck -> {
             val orElse = when (val alt = alternative) {
                 is ErrorStatement -> ".orElseThrow(() -> new IllegalStateException(${alt.message.emit()}))"
@@ -578,16 +601,17 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun Expression.emitWithSubstitution(varName: Name, replacement: String): String = when (this) {
+        is ThisExpression -> ""
         is VariableReference -> if (name == varName) replacement else emit()
         is FunctionCall -> {
-            val recv = receiver?.emitWithSubstitution(varName, replacement)
+            val recv = receiver?.takeUnless { it is ThisExpression }?.emitWithSubstitution(varName, replacement)
             val args = arguments.values.map { it.emitWithSubstitution(varName, replacement) }
             val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
             val receiverStr = recv?.let { "$it." } ?: ""
             "$receiverStr$typeArgsStr${name.value().sanitize()}(${args.joinToString(", ")})"
         }
         is FieldCall -> {
-            val recv = receiver?.emitWithSubstitution(varName, replacement) ?: ""
+            val recv = receiver?.takeUnless { it is ThisExpression }?.emitWithSubstitution(varName, replacement) ?: ""
             val dot = if (recv.isNotEmpty()) "." else ""
             "$recv$dot${field.value().sanitize()}()"
         }
@@ -629,6 +653,46 @@ private class JavaEmitter(val file: File) {
         type is Type.String -> "\"$value\""
         value is Long -> "${value}L"
         else -> value.toString()
+    }
+
+    private fun TypeDescriptor.emitTypeDescriptor(): String {
+        val rootType = type.findRoot()
+        val containerStr = type.rawContainerClass()
+        val rootStr = "${rootType.toJavaName()}.class"
+        val containerArg = containerStr?.let { "$it.class" } ?: "null"
+        return "Wirespec.getType($rootStr, $containerArg)"
+    }
+
+    private fun Type.findRoot(): Type = when (this) {
+        is Type.Nullable -> type.findRoot()
+        is Type.Array -> elementType.findRoot()
+        is Type.Dict -> valueType.findRoot()
+        else -> this
+    }
+
+    private fun Type.rawContainerClass(): String? = when (this) {
+        is Type.Nullable -> "java.util.Optional"
+        is Type.Array -> "java.util.List"
+        is Type.Dict -> "java.util.Map"
+        else -> null
+    }
+
+    private fun Type.toJavaName(): String = when (this) {
+        is Type.Integer -> when (precision) {
+            Precision.P32 -> "Integer"
+            Precision.P64 -> "Long"
+        }
+        is Type.Number -> when (precision) {
+            Precision.P32 -> "Float"
+            Precision.P64 -> "Double"
+        }
+        Type.String -> "String"
+        Type.Boolean -> "Boolean"
+        Type.Bytes -> "byte[]"
+        Type.Any -> "Object"
+        Type.Unit -> "Void"
+        is Type.Custom -> name.dotted()
+        else -> "Object"
     }
 }
 

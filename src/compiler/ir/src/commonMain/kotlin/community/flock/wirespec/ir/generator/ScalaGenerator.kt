@@ -241,7 +241,14 @@ ScalaEmitter(
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val implStr = if (interfaces.isEmpty()) "" else " extends ${interfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
+        val effectiveInterfaces = interfaces.map { iface ->
+            if (iface.name.parts.lastOrNull() == "Call" && iface.generics.isEmpty()) {
+                iface.copy(generics = listOf(Type.Custom(Name("[A] =>> A"))))
+            } else {
+                iface
+            }
+        }
+        val implStr = if (effectiveInterfaces.isEmpty()) "" else " extends ${effectiveInterfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
 
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
@@ -536,14 +543,14 @@ ScalaEmitter(
         is ThisExpression -> "this"
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value().sanitize()}"
         }
 
         is FunctionCall -> {
             val typeArgsStr =
                 if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
 

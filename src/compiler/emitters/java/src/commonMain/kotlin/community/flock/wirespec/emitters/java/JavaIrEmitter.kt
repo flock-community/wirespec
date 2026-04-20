@@ -72,7 +72,7 @@ open class JavaIrEmitter(
 
     override val extension = FileExtension.Java
 
-    override fun transformTestFile(file: File): File = file.transformTypeDescriptors()
+    override fun transformTestFile(file: File): File = file
 
     private val wirespecImport = import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec")
 
@@ -204,7 +204,6 @@ open class JavaIrEmitter(
         val imports = endpoint.buildImports()
         return endpoint.convert()
             .injectHandleFunction(endpoint)
-            .transformTypeDescriptors()
             .sanitizeNames(sanitizationConfig)
             .let { file ->
                 if (imports.isNotEmpty()) {

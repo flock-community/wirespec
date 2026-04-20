@@ -41,7 +41,6 @@ class PythonClientIrExtension(
 
         val file = endpoint.convertEndpointClient()
             .sanitizeNames(sanitizationConfig)
-            .addSelfReceiverToClientFields()
             .snakeCaseClientFunctions()
             .flattenEndpointTypeRefs(endpointName)
 
@@ -68,7 +67,6 @@ class PythonClientIrExtension(
 
         val file = endpoints.convertClient()
             .sanitizeNames(sanitizationConfig)
-            .addSelfReceiverToClientFields()
             .snakeCaseClientFunctions()
             .let { f -> endpointNames.fold(f) { acc, name -> acc.flattenEndpointTypeRefs(name) } }
 

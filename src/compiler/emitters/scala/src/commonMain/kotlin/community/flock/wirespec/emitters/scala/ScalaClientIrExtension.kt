@@ -9,8 +9,6 @@ import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.emit.AccessorStyle
 import community.flock.wirespec.ir.emit.SanitizationConfig
 import community.flock.wirespec.ir.emit.sanitizeNames
@@ -18,7 +16,6 @@ import community.flock.wirespec.ir.extensions.ClientIrExtension
 import community.flock.wirespec.ir.extensions.convertClient
 import community.flock.wirespec.ir.extensions.convertEndpointClient
 import community.flock.wirespec.ir.core.Package as LanguagePackage
-import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.extensions.buildClientServerInterfaces as neutralBuildClientServerInterfaces
 
 class ScalaClientIrExtension(
@@ -31,7 +28,7 @@ class ScalaClientIrExtension(
         val imports = endpoint.buildImports()
         val endpointImport = "import ${packageName.value}.endpoint.${endpoint.identifier.value}"
         val allImports = listOf(imports, endpointImport).filter { it.isNotEmpty() }.joinToString("\n")
-        val file = endpoint.convertEndpointClient().sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
+        val file = endpoint.convertEndpointClient().sanitizeNames(sanitizationConfig)
         val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
@@ -53,7 +50,7 @@ class ScalaClientIrExtension(
         val clientImports = endpoints
             .joinToString("\n") { "import ${packageName.value}.client.${it.identifier.value}Client" }
         val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
-        val file = endpoints.convertClient().sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
+        val file = endpoints.convertClient().sanitizeNames(sanitizationConfig)
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
             elements = buildList {
@@ -70,18 +67,4 @@ class ScalaClientIrExtension(
     private fun Endpoint.buildImports() = importReferences()
         .distinctBy { it.value }
         .joinToString("\n") { "import ${packageName.value}.model.${it.value}" }
-
-    private fun <T : Element> T.addIdentityTypeToCall(): T = transform {
-        matchingElements { struct: Struct ->
-            struct.copy(
-                interfaces = struct.interfaces.map { type ->
-                    if (type is LanguageType.Custom && type.name.dotted().endsWith(".Call")) {
-                        type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
-                    } else {
-                        type
-                    }
-                },
-            )
-        }
-    }
 }
