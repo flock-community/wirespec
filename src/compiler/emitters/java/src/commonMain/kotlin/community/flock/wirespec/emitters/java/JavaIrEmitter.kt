@@ -51,10 +51,11 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.AccessorStyle
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.SanitizationConfig
-import community.flock.wirespec.ir.emit.buildClientServerInterfaces
 import community.flock.wirespec.ir.emit.sanitizeNames
 import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.emit.wrapWithPackage
+import community.flock.wirespec.ir.extensions.IrExtension
+import community.flock.wirespec.ir.extensions.buildClientServerInterfaces
 import community.flock.wirespec.ir.generator.JavaGenerator
 import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
@@ -71,7 +72,7 @@ open class JavaIrEmitter(
 
     override val extension = FileExtension.Java
 
-    override fun transformTestFile(file: File): File = file.transformTypeDescriptors()
+    override fun transformTestFile(file: File): File = file
 
     private val wirespecImport = import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec")
 
@@ -203,7 +204,6 @@ open class JavaIrEmitter(
         val imports = endpoint.buildImports()
         return endpoint.convert()
             .injectHandleFunction(endpoint)
-            .transformTypeDescriptors()
             .sanitizeNames(sanitizationConfig)
             .let { file ->
                 if (imports.isNotEmpty()) {
@@ -235,64 +235,13 @@ open class JavaIrEmitter(
             }
     }
 
-    override fun emitEndpointClient(endpoint: Endpoint): File {
-        val imports = endpoint.buildImports()
-        val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
-        val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig).transformTypeDescriptors()
-        val endpointName = endpoint.identifier.value
-
-        val transformedFile = file.transform {
-            matchingElements { func: LanguageFunction ->
-                if (func.isAsync && func.body.size >= 2) {
-                    val transportAssign = func.body[func.body.size - 2]
-                    val returnStmt = func.body.last()
-                    if (transportAssign is Assignment && returnStmt is ReturnStatement) {
-                        val bodyPrefix = func.body.dropLast(2)
-                        func.copy(
-                            body = bodyPrefix + ReturnStatement(
-                                FunctionCall(
-                                    name = Name.of("thenApply"),
-                                    receiver = transportAssign.value,
-                                    arguments = mapOf(
-                                        Name.of("mapper") to RawExpression(
-                                            "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)"
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    } else func
-                } else func
-            }
-        }
-
-        val subPackageName = packageName + "client"
-        return File(
-            name = Name.of(subPackageName.toDir() + transformedFile.name.pascalCase().sanitizeSymbol()),
-            elements = listOf(Package(subPackageName.value)) +
-                listOf(wirespecImport) +
-                imports +
-                listOf(endpointImport) +
-                transformedFile.elements
-        )
-    }
-
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
-        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
-            .map { import("${packageName.value}.model", it.value) }
-        val endpointImports = endpoints.map { import("${packageName.value}.endpoint", it.identifier.value) }
-        val clientImports = endpoints.map { import("${packageName.value}.client", "${it.identifier.value}Client") }
-        val allImports = imports + endpointImports + clientImports
-        val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig)
-        return File(
-            name = Name.of(packageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
-            elements = listOf(Package(packageName.value)) +
-                listOf(wirespecImport) +
-                allImports +
-                file.elements
-        )
-    }
+    override val extensions: List<IrExtension> = listOf(
+        JavaClientIrExtension(
+            packageName = packageName,
+            sanitizationConfig = sanitizationConfig,
+            wirespecImport = wirespecImport,
+        ),
+    )
 
     private fun String.sanitizeSymbol(): String = this
         .split(".", " ", "-")
@@ -396,7 +345,7 @@ open class JavaIrEmitter(
                     predicate = { it.name == Name.of("message") },
                     transform = { param ->
                         when (val t = param.type) {
-                            is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
+                            is Type.Custom -> param.copy(type = t.copy(name = Name.fromDotted(prefix + t.name.dotted())))
                             else -> param
                         }
                     },
@@ -405,47 +354,6 @@ open class JavaIrEmitter(
         } else {
             this
         }
-
-    private fun <T : Element> T.transformTypeDescriptors(): T = transform {
-        statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is TypeDescriptor -> {
-                    val rootType = stmt.type.findRoot()
-                    val containerStr = stmt.type.rawContainerClass()
-                    val rootStr = "${rootType.toJavaName()}.class"
-                    val containerArg = containerStr?.let { "$it.class" } ?: "null"
-                    RawExpression("Wirespec.getType($rootStr, $containerArg)")
-                }
-                else -> stmt.transformChildren(tr)
-            }
-        }
-    }
-
-    private fun Type.findRoot(): Type = when (this) {
-        is Type.Nullable -> type.findRoot()
-        is Type.Array -> elementType.findRoot()
-        is Type.Dict -> valueType.findRoot()
-        else -> this
-    }
-
-    private fun Type.rawContainerClass(): String? = when (this) {
-        is Type.Nullable -> "java.util.Optional"
-        is Type.Array -> "java.util.List"
-        is Type.Dict -> "java.util.Map"
-        else -> null
-    }
-
-    private fun Type.toJavaName(): String = when (this) {
-        is Type.Integer -> when (precision) { Precision.P32 -> "Integer"; Precision.P64 -> "Long" }
-        is Type.Number -> when (precision) { Precision.P32 -> "Float"; Precision.P64 -> "Double" }
-        Type.String -> "String"
-        Type.Boolean -> "Boolean"
-        Type.Bytes -> "byte[]"
-        Type.Any -> "Object"
-        Type.Unit -> "Void"
-        is Type.Custom -> name
-        else -> "Object"
-    }
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

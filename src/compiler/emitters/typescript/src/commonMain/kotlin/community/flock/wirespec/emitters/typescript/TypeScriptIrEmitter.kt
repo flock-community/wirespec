@@ -52,6 +52,7 @@ import community.flock.wirespec.ir.core.transformer
 import community.flock.wirespec.ir.emit.SanitizationConfig
 import community.flock.wirespec.ir.emit.sanitizeFieldName
 import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.extensions.IrExtension
 import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.ir.generator.generateTypeScript
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
@@ -184,7 +185,7 @@ open class TypeScriptIrEmitter : IrEmitter {
                             statementAndExpression { s, t ->
                                 when {
                                     s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
-                                        val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
+                                        val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name?.dotted() ?: ""
                                         FunctionCall(name = Name.of("validate$typeName"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
                                     }
                                     s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
@@ -308,75 +309,18 @@ open class TypeScriptIrEmitter : IrEmitter {
         channel.convert()
             .sanitizeNames(sanitizationConfig)
 
-    override fun emitEndpointClient(endpoint: Endpoint): File {
-        val endpointName = endpoint.identifier.value
-        val methodName = endpointName.firstToLower()
-
-        val imports = endpoint.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "import {type ${it.value}} from '../model'" }
-
-        val params = buildEndpointParams(endpoint)
-        val paramList = if (params.isNotEmpty()) "params: $endpointName.RequestParams" else ""
-
-        val requestArgs = if (params.isNotEmpty()) "$endpointName.request(params)" else "$endpointName.request()"
-
-        val code = buildString {
-            appendLine("export const ${methodName}Client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
-            appendLine("  $methodName: async ($paramList): Promise<$endpointName.Response<unknown>> => {")
-            appendLine("    const request: $endpointName.Request = $requestArgs;")
-            appendLine("    const rawRequest = $endpointName.toRawRequest(serialization, request);")
-            appendLine("    const rawResponse = await transportation.transport(rawRequest);")
-            appendLine("    return $endpointName.fromRawResponse(serialization, rawResponse);")
-            appendLine("  }")
-            append("})")
-        }
-
-        return File(
-            Name.of("client/${endpointName}Client"),
-            buildList {
-                add(RawElement("import {Wirespec} from '../Wirespec'"))
-                add(RawElement("import {$endpointName} from '../endpoint/$endpointName'"))
-                if (imports.isNotEmpty()) add(RawElement(imports))
-                add(RawElement(code))
-            }
-        )
-    }
-
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
-        logger.info("Emitting main Client for ${endpoints.size} endpoints")
-
-        val clientImports = endpoints.joinToString("\n") {
-            val methodName = it.identifier.value.firstToLower()
-            "import {${methodName}Client} from './client/${it.identifier.value}Client'"
-        }
-
-        val spreadEntries = endpoints.joinToString("\n") {
-            val methodName = it.identifier.value.firstToLower()
-            "  ...${methodName}Client(serialization, transportation),"
-        }
-
-        val code = buildString {
-            appendLine("export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
-            appendLine(spreadEntries)
-            append("})")
-        }
-
-        return File(
-            Name.of("Client"),
-            listOf(
-                RawElement("import {Wirespec} from './Wirespec'"),
-                RawElement(clientImports),
-                RawElement(code),
-            )
-        )
-    }
+    override val extensions: List<IrExtension> = listOf(
+        TypeScriptClientIrExtension(
+            hasEndpointParams = { buildEndpointParams(it).isNotEmpty() },
+        ),
+    )
 
     private fun transformPatternSwitchToValueSwitch(): Transformer = transformer {
         statement { stmt, tr ->
             if (stmt is Switch && stmt.cases.any { it.type != null }) {
                 val varName = stmt.variable?.camelCase() ?: "r"
                 val transformedCases = stmt.cases.map { case ->
-                    val typeName = (case.type as? LanguageType.Custom)?.name
+                    val typeName = (case.type as? LanguageType.Custom)?.name?.dotted()
                     val statusNum = typeName
                         ?.substringAfterLast(".")
                         ?.removePrefix("Response")

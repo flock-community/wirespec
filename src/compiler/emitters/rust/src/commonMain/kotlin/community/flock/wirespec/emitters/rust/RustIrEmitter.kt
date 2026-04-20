@@ -59,6 +59,7 @@ import community.flock.wirespec.ir.core.transformer
 import community.flock.wirespec.ir.emit.SanitizationConfig
 import community.flock.wirespec.ir.emit.sanitizeFieldName
 import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.extensions.IrExtension
 import community.flock.wirespec.ir.generator.RustGenerator
 import community.flock.wirespec.ir.generator.generateRust
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
@@ -394,7 +395,7 @@ open class RustIrEmitter(
             .transform { apply(borrowSerializationArgs()) }
             .transform {
                 parametersWhere(
-                    predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
+                    predicate = { (it.type as? LanguageType.Custom)?.name?.dotted() in setOf("Serializer", "Deserializer") },
                     transform = { it.copy(type = (it.type as LanguageType.Custom).borrowImpl()) },
                 )
             }
@@ -412,102 +413,12 @@ open class RustIrEmitter(
     override fun emit(channel: Channel): File =
         channel.convert()
 
-    override fun emitEndpointClient(endpoint: Endpoint): File {
-        val endpointName = endpoint.identifier.value
-        val endpointModuleName = endpointName.toSnakeCase()
-        val clientName = "${endpointName}Client"
-        val methodName = endpointName.toSnakeCase()
-        val (paramsStr, requestArgs) = endpoint.buildClientParams()
-        val requestConstruction = "$endpointModuleName::Request::new($requestArgs)"
-
-        val imports = endpoint.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
-        val namespacePath = "$endpointModuleName::$endpointName"
-        val code = buildList {
-            add("use super::super::wirespec::*;")
-            add("use super::super::endpoint::$endpointModuleName;")
-            if (imports.isNotEmpty()) add(imports)
-            add("pub struct $clientName<'a, S: Serialization, T: Transportation> {")
-            add("    pub serialization: &'a S,")
-            add("    pub transportation: &'a T,")
-            add("}")
-            add("impl<'a, S: Serialization, T: Transportation> $namespacePath::Call for $clientName<'a, S, T> {")
-            add("    async fn $methodName(&self$paramsStr) -> $endpointModuleName::Response {")
-            add("        let request = $requestConstruction;")
-            add("        let raw_request = $namespacePath::to_raw_request(self.serialization, request);")
-            add("        let raw_response = self.transportation.transport(&raw_request).await;")
-            add("        $namespacePath::from_raw_response(self.serialization, raw_response)")
-            add("    }")
-            add("}")
-        }.joinToString("\n")
-
-        val subPackageName = packageName + "client"
-        return File(
-            name = Name.of(subPackageName.toDir() + clientName.toSnakeCase()),
-            elements = listOf(RawElement(code)),
-        )
-    }
-
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
-        logger.info("Emitting main Client for ${endpoints.size} endpoints")
-
-        val modDeclarations = endpoints.joinToString("\n") { endpoint ->
-            "pub mod ${(endpoint.identifier.value + "Client").toSnakeCase()};"
-        }
-
-        val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
-            .map { "use super::model::${it.value.toSnakeCase()}::${it.value};" }
-
-        val useStatements = endpoints.flatMap { endpoint ->
-            val endpointModuleName = endpoint.identifier.value.toSnakeCase()
-            val clientModuleName = "${endpoint.identifier.value}Client".toSnakeCase()
-            listOf(
-                "use super::endpoint::$endpointModuleName;",
-                "use ${clientModuleName}::${endpoint.identifier.value}Client;",
-            )
-        }
-
-        val implBlocks = endpoints.flatMap { endpoint ->
-            val endpointName = endpoint.identifier.value
-            val endpointModuleName = endpointName.toSnakeCase()
-            val namespacePath = "$endpointModuleName::$endpointName"
-            val methodName = endpointName.toSnakeCase()
-            val (paramsStr, callArgs) = endpoint.buildClientParams()
-            val delegateCall = if (callArgs.isNotEmpty()) {
-                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName($callArgs).await"
-            } else {
-                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName().await"
-            }
-
-            listOf(
-                "impl<S: Serialization, T: Transportation> $namespacePath::Call for Client<S, T> {",
-                "    async fn $methodName(&self$paramsStr) -> $endpointModuleName::Response {",
-                "        $delegateCall",
-                "    }",
-                "}",
-            )
-        }
-
-        val code = (
-            listOf(modDeclarations) +
-            listOf("use super::wirespec::*;") +
-            modelImports +
-            useStatements +
-            listOf(
-                "pub struct Client<S: Serialization, T: Transportation> {",
-                "    pub serialization: S,",
-                "    pub transportation: T,",
-                "}",
-            ) +
-            implBlocks
-        ).joinToString("\n")
-
-        return File(
-            name = Name.of(packageName.toDir() + "client"),
-            elements = listOf(RawElement(code)),
-        )
-    }
+    override val extensions: List<IrExtension> = listOf(
+        RustClientIrExtension(
+            packageName = packageName,
+            buildClientParams = { it.buildClientParams() },
+        ),
+    )
 
     private fun Identifier.sanitize(): String = value
         .split(".", " ")
@@ -567,7 +478,8 @@ open class RustIrEmitter(
 
     private fun <T : Element> T.stripWirespecPrefix(): T = transform {
         matching<LanguageType.Custom> { type ->
-            if (type.name.startsWith("Wirespec.")) type.copy(name = type.name.removePrefix("Wirespec."))
+            val rendered = type.name.dotted()
+            if (rendered.startsWith("Wirespec.")) type.copy(name = Name.fromDotted(rendered.removePrefix("Wirespec.")))
             else type
         }
     }
@@ -612,7 +524,7 @@ open class RustIrEmitter(
         is LanguageType.Array -> "Vec<${elementType.toRustTypeString()}>"
         is LanguageType.Dict -> "std::collections::HashMap<${keyType.toRustTypeString()}, ${valueType.toRustTypeString()}>"
         is LanguageType.Nullable -> "Option<${type.toRustTypeString()}>"
-        is LanguageType.Custom -> name
+        is LanguageType.Custom -> name.dotted()
         is LanguageType.Wildcard -> "_"
         is LanguageType.Reflect -> "std::any::TypeId"
         is LanguageType.IntegerLiteral -> "i32"
@@ -681,7 +593,7 @@ open class RustIrEmitter(
             "${receiver.toRawCode()}[$idx]"
         }
         is ConstructorStatement -> {
-            val typeName = (type as? LanguageType.Custom)?.name ?: type.toString()
+            val typeName = (type as? LanguageType.Custom)?.name?.dotted() ?: type.toString()
             val args = namedArguments.entries.joinToString(", ") { "${it.key.snakeCase()}: ${it.value.toRawCode()}" }
             if (args.isEmpty()) "$typeName {}" else "$typeName { $args }"
         }
@@ -718,7 +630,7 @@ open class RustIrEmitter(
         statement { s, t ->
             if (s is Switch && s.variable?.camelCase() == "r") {
                 val transformedCases = s.cases.map { case ->
-                    val typeName = (case.type as? LanguageType.Custom)?.name
+                    val typeName = (case.type as? LanguageType.Custom)?.name?.dotted()
                     if (typeName != null && RESPONSE_PATTERN.matches(typeName)) {
                         Case(
                             value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
@@ -745,7 +657,7 @@ open class RustIrEmitter(
     private fun fixConstructorCalls(): Transformer = transformer {
         statementAndExpression { s, t ->
             if (s is ConstructorStatement) {
-                val typeName = (s.type as? LanguageType.Custom)?.name
+                val typeName = (s.type as? LanguageType.Custom)?.name?.dotted()
                 val transformedArgs = s.namedArguments.mapValues { t.transformExpression(it.value) }
                 when {
                     typeName != null && RESPONSE_PATTERN.matches(typeName) -> {
@@ -777,7 +689,7 @@ open class RustIrEmitter(
 
     private fun <T : Element> T.stripResponseGenerics(): T = transform {
         matching<LanguageType.Custom> { type ->
-            if (type.name.startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
+            if (type.name.dotted().startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
         }
     }
 
@@ -822,7 +734,8 @@ open class RustIrEmitter(
             file.copy(elements = file.elements.flatMap { element ->
                 if (element is LanguageUnion && element.name.pascalCase() == "Response" && element.members.isNotEmpty()) {
                     listOf(element) + element.members.map { member ->
-                        RawElement("impl From<${member.name}> for Response { fn from(value: ${member.name}) -> Self { Response::${member.name}(value) } }\n")
+                        val memberName = member.name.dotted()
+                        RawElement("impl From<$memberName> for Response { fn from(value: $memberName) -> Self { Response::$memberName(value) } }\n")
                     }
                 } else listOf(element)
             })
@@ -852,9 +765,9 @@ open class RustIrEmitter(
 
     companion object : Keywords {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
-        fun LanguageType.Custom.borrow(): LanguageType.Custom = copy(name = "&$name")
-        fun LanguageType.Custom.borrowDyn(): LanguageType.Custom = copy(name = "&dyn $name")
-        fun LanguageType.Custom.borrowImpl(): LanguageType.Custom = copy(name = "&impl $name")
+        fun LanguageType.Custom.borrow(): LanguageType.Custom = copy(name = Name.fromDotted("&${name.dotted()}"))
+        fun LanguageType.Custom.borrowDyn(): LanguageType.Custom = copy(name = Name.fromDotted("&dyn ${name.dotted()}"))
+        fun LanguageType.Custom.borrowImpl(): LanguageType.Custom = copy(name = Name.fromDotted("&impl ${name.dotted()}"))
         override val reservedKeywords = setOf(
             "as", "break", "const", "continue", "crate",
             "else", "enum", "extern", "false", "fn",

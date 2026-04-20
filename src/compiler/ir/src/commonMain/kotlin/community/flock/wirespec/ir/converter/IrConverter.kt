@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.EnumReference
 import community.flock.wirespec.ir.core.EnumValueCall
 import community.flock.wirespec.ir.core.ErrorStatement
@@ -204,7 +203,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
     }
 }
 
-private fun Identifier.toName(): Name = when (this) {
+internal fun Identifier.toName(): Name = when (this) {
     is FieldIdentifier -> {
         // Split on invalid identifier characters (dashes, dots, spaces) to produce word parts.
         // The emitter's transform phase is responsible for applying language-specific casing.
@@ -414,7 +413,7 @@ fun EnumWirespec.convert() = file(identifier.toName()) {
 
 fun UnionWirespec.convert() = file(identifier.toName()) {
     union(identifier.toName()) {
-        entries.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { member(it.name) }
+        entries.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { member(it.name.dotted()) }
     }
 }
 
@@ -887,7 +886,7 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Unit -> "Unit"
     is Type.Wildcard -> "Wildcard"
     is Type.Reflect -> "Type"
-    is Type.Custom -> name
+    is Type.Custom -> name.dotted()
     is Type.Array -> "List${elementType.toTypeName()}"
     is Type.Nullable -> "Optional${type.toTypeName()}"
     is Type.String -> "String"
@@ -1018,106 +1017,6 @@ private fun serializeParamExpression(
                 Name.of("type") to field.reference.toTypeDescriptor(),
             ),
         )
-    }
-}
-
-fun EndpointWirespec.convertEndpointClient(): File {
-    val endpointName = identifier.toName()
-    val endpointNameStr = endpointName.value()
-
-    return file(Name.of("${endpointNameStr}Client")) {
-        struct(Name.of("${endpointNameStr}Client")) {
-            field("serialization", Type.Custom("Wirespec.Serialization"))
-            field("transportation", Type.Custom("Wirespec.Transportation"))
-            implements(Type.Custom("$endpointNameStr.Call"))
-
-            asyncFunction(endpointName, isOverride = true) {
-                requestParameters().forEach { (name, type) -> arg(name, type) }
-                returnType(Type.Custom("$endpointNameStr.Response", listOf(Type.Wildcard)))
-
-                assign(
-                    "request",
-                    ConstructorStatement(
-                        type = Type.Custom("$endpointNameStr.Request"),
-                        namedArguments = requestParameters().associate { (name, _) ->
-                            name to VariableReference(name)
-                        },
-                    ),
-                )
-
-                assign(
-                    "rawRequest",
-                    FunctionCall(
-                        name = Name(listOf("$endpointNameStr.toRawRequest")),
-                        arguments = mapOf(
-                            Name.of("serialization") to FieldCall(field = Name.of("serialization")),
-                            Name.of("request") to VariableReference(Name.of("request")),
-                        ),
-                    ),
-                )
-
-                assign(
-                    "rawResponse",
-                    FunctionCall(
-                        name = Name.of("transport"),
-                        receiver = FieldCall(field = Name.of("transportation")),
-                        arguments = mapOf(
-                            Name.of("request") to VariableReference(Name.of("rawRequest")),
-                        ),
-                    ),
-                )
-
-                returns(
-                    FunctionCall(
-                        name = Name(listOf("$endpointNameStr.fromRawResponse")),
-                        arguments = mapOf(
-                            Name.of("serialization") to FieldCall(field = Name.of("serialization")),
-                            Name.of("response") to VariableReference(Name.of("rawResponse")),
-                        ),
-                    ),
-                )
-            }
-        }
-    }
-}
-
-fun List<EndpointWirespec>.convertClient(): File {
-    val endpoints = this
-    return file(Name.of("Client")) {
-        struct(Name.of("Client")) {
-            field("serialization", Type.Custom("Wirespec.Serialization"))
-            field("transportation", Type.Custom("Wirespec.Transportation"))
-
-            endpoints.forEach { endpoint ->
-                implements(Type.Custom("${endpoint.identifier.toName().value()}.Call"))
-            }
-
-            endpoints.forEach { endpoint ->
-                val endpointName = endpoint.identifier.toName()
-                val endpointNameStr = endpointName.value()
-
-                asyncFunction(endpointName, isOverride = true) {
-                    endpoint.requestParameters().forEach { (name, type) -> arg(name, type) }
-                    returnType(Type.Custom("$endpointNameStr.Response", listOf(Type.Wildcard)))
-
-                    returns(
-                        FunctionCall(
-                            name = Name(listOf(endpointName.camelCase())),
-                            receiver = ConstructorStatement(
-                                type = Type.Custom("${endpointNameStr}Client"),
-                                namedArguments = mapOf(
-                                    Name.of("serialization") to FieldCall(field = Name.of("serialization")),
-                                    Name.of("transportation") to FieldCall(field = Name.of("transportation")),
-                                ),
-                            ),
-                            arguments = endpoint.requestParameters().associate { (name, _) ->
-                                name to VariableReference(name)
-                            },
-                        ),
-                    )
-                }
-            }
-        }
     }
 }
 

@@ -39,11 +39,14 @@ data class Name(val parts: List<String>) {
         }
     }
 
+    fun dotted(): String = parts.joinToString(".")
+
     override fun toString(): String = camelCase()
 
     companion object {
         private val SPLIT_PATTERN = Regex("[A-Z]{2,}(?=[A-Z][a-z])|[A-Z]?[a-z0-9]+|[A-Z]+|[^a-zA-Z0-9]+")
         fun of(value: String): Name = Name(SPLIT_PATTERN.findAll(value).map { it.value }.toList())
+        fun fromDotted(value: String): Name = Name(value.split("."))
     }
 }
 
@@ -66,7 +69,9 @@ sealed interface Type {
     object Reflect : Type
     data class Array(val elementType: Type) : Type
     data class Dict(val keyType: Type, val valueType: Type) : Type
-    data class Custom(val name: kotlin.String, val generics: List<Type> = emptyList()) : Type
+    data class Custom(val name: Name, val generics: List<Type> = emptyList()) : Type {
+        constructor(name: kotlin.String, generics: List<Type> = emptyList()) : this(Name.fromDotted(name), generics)
+    }
     data class Nullable(val type: Type) : Type
     data class IntegerLiteral(val value: Int) : Type
     data class StringLiteral(val value: kotlin.String) : Type
@@ -188,6 +193,11 @@ data class RawElement(val code: String) : Element
 
 // Null literal - represents the null value
 data object NullLiteral : Statement, Expression
+
+// Implicit reference to the enclosing instance ("this" / "self").
+// Used as FieldCall.receiver / FunctionCall.receiver when accessing instance members.
+// receiver = null means "ambient symbol with no implicit receiver".
+data object ThisExpression : Statement, Expression
 
 // Nullable empty literal - represents the empty optional value (e.g., Optional.empty() in Java, null in Kotlin)
 data object NullableEmpty : Statement, Expression

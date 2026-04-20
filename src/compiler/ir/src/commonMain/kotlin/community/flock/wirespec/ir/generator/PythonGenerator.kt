@@ -45,6 +45,7 @@ import community.flock.wirespec.ir.core.Statement
 import community.flock.wirespec.ir.core.StringTemplate
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Switch
+import community.flock.wirespec.ir.core.ThisExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.Union
@@ -68,11 +69,11 @@ object PythonGenerator : Generator {
             val element = elements[i]
             if (element is Import && element.path != ".") {
                 val path = element.path
-                val types = mutableListOf(element.type.name)
+                val types = mutableListOf(element.type.name.dotted())
                 while (i + 1 < elements.size) {
                     val next = elements[i + 1]
                     if (next is Import && next.path == path) {
-                        types.add(next.type.name)
+                        types.add(next.type.name.dotted())
                         i++
                     } else {
                         break
@@ -117,7 +118,7 @@ object PythonGenerator : Generator {
 
     private fun Package.emit(indent: Int): String = "# package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "from $path import ${type.name}\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "from $path import ${type.name.dotted()}\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val p = mutableListOf<String>()
@@ -259,7 +260,7 @@ object PythonGenerator : Generator {
         is Type.Array -> "list[${elementType.emit(qualifier)}]"
         is Type.Dict -> "dict[${keyType.emit(qualifier)}, ${valueType.emit(qualifier)}]"
         is Type.Custom -> {
-            val qualifiedName = qualifier?.invoke(name) ?: name
+            val qualifiedName = qualifier?.invoke(name.dotted()) ?: name.dotted()
             if (generics.isEmpty()) {
                 qualifiedName
             } else {
@@ -317,6 +318,7 @@ object PythonGenerator : Generator {
         is RawExpression -> "$code\n".indentCode(indent)
         is NullLiteral -> "None\n".indentCode(indent)
         is NullableEmpty -> "None\n".indentCode(indent)
+        is ThisExpression -> "self\n".indentCode(indent)
         is VariableReference -> "${name.camelCase()}\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
@@ -376,6 +378,7 @@ object PythonGenerator : Generator {
         is RawExpression -> code
         is NullLiteral -> "None"
         is NullableEmpty -> "None"
+        is ThisExpression -> "self"
         is VariableReference -> name.camelCase()
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""

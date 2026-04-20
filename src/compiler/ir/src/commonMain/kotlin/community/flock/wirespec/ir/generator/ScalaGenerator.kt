@@ -47,6 +47,7 @@ import community.flock.wirespec.ir.core.Statement
 import community.flock.wirespec.ir.core.StringTemplate
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Switch
+import community.flock.wirespec.ir.core.ThisExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
@@ -93,7 +94,7 @@ ScalaEmitter(
         return names
     }
 
-    private fun Struct.isModelStruct(): Boolean = interfaces.any { it.name == "Wirespec.Model" }
+    private fun Struct.isModelStruct(): Boolean = interfaces.any { it.name.dotted() == "Wirespec.Model" }
 
     private fun collectPrimaryFieldNames(elements: List<Element>): Map<String, Set<String>> {
         val result = mutableMapOf<String, Set<String>>()
@@ -112,7 +113,7 @@ ScalaEmitter(
     }
 
     private fun ConstructorStatement.needsNew(): Boolean {
-        val typeName = (type as? Type.Custom)?.name ?: return false
+        val typeName = (type as? Type.Custom)?.name?.dotted() ?: return false
         if (namedArguments.isEmpty()) return false
         // Default to true for unknown types - `new CaseClass(args)` is always valid in Scala
         val primaryFields = primaryFieldNames[typeName] ?: return true
@@ -162,7 +163,7 @@ ScalaEmitter(
 
     private fun Package.emit(indent: Int): String = "package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "import $path.${type.name}\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "import $path.${type.name.dotted()}\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element>): String {
         val extStr = extends?.let { " extends ${it.emitTypeAnnotation()}" } ?: ""
@@ -240,7 +241,14 @@ ScalaEmitter(
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val implStr = if (interfaces.isEmpty()) "" else " extends ${interfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
+        val effectiveInterfaces = interfaces.map { iface ->
+            if (iface.name.parts.lastOrNull() == "Call" && iface.generics.isEmpty()) {
+                iface.copy(generics = listOf(Type.Custom(Name("[A] =>> A"))))
+            } else {
+                iface
+            }
+        }
+        val implStr = if (effectiveInterfaces.isEmpty()) "" else " extends ${effectiveInterfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
 
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
@@ -365,7 +373,7 @@ ScalaEmitter(
         Type.Reflect -> "scala.reflect.ClassTag[?]"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
-        is Type.Custom -> name
+        is Type.Custom -> name.dotted()
         is Type.Nullable -> "Option[${type.emitGenerics()}]"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
@@ -392,10 +400,11 @@ ScalaEmitter(
         is Type.Array -> "List[${elementType.emitTypeAnnotation()}]"
         is Type.Dict -> "Map[${keyType.emitTypeAnnotation()}, ${valueType.emitTypeAnnotation()}]"
         is Type.Custom -> {
+            val rendered = name.dotted()
             if (generics.isEmpty()) {
-                if (name in objectNames) "$name.type" else name
+                if (rendered in objectNames) "$rendered.type" else rendered
             } else {
-                "$name[${generics.joinToString(", ") { it.emitTypeAnnotation() }}]"
+                "$rendered[${generics.joinToString(", ") { it.emitTypeAnnotation() }}]"
             }
         }
         is Type.Nullable -> "Option[${type.emitTypeAnnotation()}]"
@@ -469,6 +478,7 @@ ScalaEmitter(
         is RawExpression -> "$code\n".indentCode(indent)
         is NullLiteral -> "null\n".indentCode(indent)
         is NullableEmpty -> "None\n".indentCode(indent)
+        is ThisExpression -> "this\n".indentCode(indent)
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
         is FieldCall -> {
             val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
@@ -530,16 +540,17 @@ ScalaEmitter(
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "None"
+        is ThisExpression -> "this"
         is VariableReference -> name.camelCase().sanitize()
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             "$receiverStr${field.value().sanitize()}"
         }
 
         is FunctionCall -> {
             val typeArgsStr =
                 if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            val receiverStr = receiver?.takeUnless { it is ThisExpression }?.let { "${it.emit()}." } ?: ""
             "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
 
