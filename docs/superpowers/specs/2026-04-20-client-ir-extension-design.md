@@ -40,33 +40,43 @@ Lives in `src/compiler/ir/src/commonMain/kotlin/community/flock/wirespec/ir/exte
 
 ### Pluggable strategy
 
-`IrEmitter` no longer owns client emit logic. It gains a single abstract property typed as the specific extension:
+`IrEmitter` no longer owns client emit logic. It gains a single abstract property that holds a list of extensions:
 
 ```kotlin
 interface IrEmitter : Emitter {
-    val clientExtension: ClientIrExtension
+    val extensions: List<IrExtension>
     // ...
 }
 ```
 
-(The property is typed as `ClientIrExtension`, not `IrExtension`, so the orchestration can call the client-specific methods without casts. Future extensions follow the same shape: `val testExtension: TestIrExtension`, etc.)
-
-The `emit(ast, logger)` orchestration delegates:
+Orchestration resolves the extension it needs by type. A small helper keeps call sites tidy:
 
 ```kotlin
-val mainClient = clientExtension.emitClient(allEndpoints, logger)
-val clientFiles = endpoints.map { clientExtension.emitEndpointClient(it) }
+inline fun <reified T : IrExtension> IrEmitter.extension(): T =
+    extensions.filterIsInstance<T>().singleOrNull()
+        ?: error("No ${T::class.simpleName} registered on this emitter")
 ```
 
-Each language emitter constructs a language-specific `ClientIrExtension` and exposes it:
+Client orchestration then looks like:
 
 ```kotlin
-override val clientExtension: ClientIrExtension = KotlinClientIrExtension(
-    packageName = packageName,
-    sanitizationConfig = sanitizationConfig,
-    wirespecImport = wirespecImport,
+val client = extension<ClientIrExtension>()
+val mainClient = client.emitClient(allEndpoints, logger)
+val clientFiles = endpoints.map { client.emitEndpointClient(it) }
+```
+
+Each language emitter registers its extensions once:
+
+```kotlin
+override val extensions: List<IrExtension> = listOf(
+    KotlinClientIrExtension(packageName, sanitizationConfig, wirespecImport),
+    // future: KotlinTestIrExtension(...), etc.
 )
 ```
+
+Trade-off: typing is less precise than a dedicated `val clientExtension: ClientIrExtension` slot — missing or duplicate extensions fail at runtime instead of compile time. The win is that adding a new feature-extension never touches `IrEmitter`'s interface: emitters opt in by appending to the list.
+
+The `emit(ast, logger)` orchestration resolves the extension by type (see "Pluggable strategy" below) and delegates to it. Each language emitter constructs a language-specific `ClientIrExtension` and registers it in its `extensions` list.
 
 ### Feature boundary
 
@@ -118,16 +128,17 @@ Each method is implemented by every per-language class. The neutral `convertEndp
 
 - Remove `fun emitEndpointClient(endpoint: Endpoint): File = endpoint.convertEndpointClient()`.
 - Remove `fun emitClient(endpoints: List<Endpoint>, logger: Logger): File { ... endpoints.convertClient() }`.
-- Add `val clientExtension: ClientIrExtension` (abstract).
-- Update `emit(ast, logger)` to call `clientExtension.emitClient(...)` and `clientExtension.emitEndpointClient(...)` instead of self-dispatched methods.
+- Add `val extensions: List<IrExtension>` (abstract).
+- Add the inline helper `extension<T>()` for typed lookup.
+- Update `emit(ast, logger)` to resolve `extension<ClientIrExtension>()` and call its `emitClient` / `emitEndpointClient` instead of self-dispatched methods.
 
 ### Language emitters (all six)
 
 - Remove the `override fun emitEndpointClient(...)` and `override fun emitClient(...)` method bodies.
 - Remove private helpers that are now owned by `ClientIrExtension` (e.g. `transformTypeDescriptors` in Java, `addIdentityTypeToCall` in Scala, `addSelfReceiverToClientFields`/`snakeCaseClientFunctions`/`flattenEndpointTypeRefs` in Python).
-- Add `override val clientExtension: ClientIrExtension = XxxClientIrExtension(...)` wired with the emitter's `packageName`, `sanitizationConfig`, and any language-specific constants.
+- Add `override val extensions: List<IrExtension> = listOf(XxxClientIrExtension(...))` wired with the emitter's `packageName`, `sanitizationConfig`, and any language-specific constants.
 - Change `sanitizationConfig` from `private val by lazy { ... }` to `internal val` (still lazy; only the visibility changes, and only within the emitter's module).
-- In `shared.source` construction, replace `buildClientServerInterfaces(AccessorStyle.PROPERTIES)` with `clientExtension.buildClientServerInterfaces(AccessorStyle.PROPERTIES)`.
+- In `shared.source` construction, replace `buildClientServerInterfaces(AccessorStyle.PROPERTIES)` with `extension<ClientIrExtension>().buildClientServerInterfaces(AccessorStyle.PROPERTIES)`.
 
 ### `IrConverter.kt`
 
@@ -163,20 +174,22 @@ That coverage is enough to catch regressions in language-specific packaging (imp
 
 ### Existing tests
 
-`VerifyUtil` integration tests (compile + run across all six languages) are unchanged. They exercise `emitter.emit(ast, logger)`, which continues to work because the orchestration simply delegates through `clientExtension`.
+`VerifyUtil` integration tests (compile + run across all six languages) are unchanged. They exercise `emitter.emit(ast, logger)`, which continues to work because the orchestration resolves the `ClientIrExtension` from the emitter's extensions list and delegates through it.
 
 ## Risks and trade-offs
 
 1. **File size.** `ClientIrExtension.kt` will be ~700–900 lines. Editing Java client code puts the cursor next to Python client code. Accepted deliberately in exchange for a single feature home.
 2. **Visibility change.** `sanitizationConfig` moves from `private` to `internal` on each language emitter. Module-local only; no public API change.
-3. **Atomic migration.** The `IrEmitter` interface change (removal of `emitClient`/`emitEndpointClient`, addition of abstract `clientExtension`) forces all six language emitters to migrate in the same commit. No partial state.
-4. **Shared helpers.** A few utilities (`importReferences`, naming helpers) are used by both client and non-client emitter code. They stay where they are — `ClientIrExtension` imports them. If a helper is used *only* by client code (e.g. Java's `transformTypeDescriptors`), it moves into the extension class.
-5. **Scope creep.** Only Client moves in this refactor. `TestIrExtension` (already stubbed) and any future extensions are deferred — but the `ir.extensions` package is explicitly established here so that pattern lands.
+3. **Atomic migration.** The `IrEmitter` interface change (removal of `emitClient`/`emitEndpointClient`, addition of abstract `extensions: List<IrExtension>`) forces all six language emitters to migrate in the same commit. No partial state.
+4. **Runtime vs. compile-time typing.** Resolving a `ClientIrExtension` from `List<IrExtension>` via `extension<T>()` fails at runtime if the extension is missing or duplicated (the helper throws with a clear message). A typed slot would have caught this at compile time. Accepted in exchange for letting future extensions land without touching `IrEmitter`'s interface.
+5. **Shared helpers.** A few utilities (`importReferences`, naming helpers) are used by both client and non-client emitter code. They stay where they are — `ClientIrExtension` imports them. If a helper is used *only* by client code (e.g. Java's `transformTypeDescriptors`), it moves into the extension class.
+6. **Scope creep.** Only Client moves in this refactor. `TestIrExtension` (already stubbed) and any future extensions are deferred — but the `ir.extensions` package is explicitly established here so that pattern lands.
 
 ## Success criteria
 
 - `IrExtension` marker interface exists at `ir.extensions.IrExtension` and is extended by `ClientIrExtension`.
-- `IrEmitter` no longer declares `emitClient` or `emitEndpointClient`.
+- `IrEmitter` exposes `val extensions: List<IrExtension>` and the inline `extension<T>()` lookup helper; it no longer declares `emitClient` or `emitEndpointClient`.
+- Each language emitter's `extensions` list contains exactly one `ClientIrExtension` instance.
 - `IrConverter` no longer declares `convertClient` or `convertEndpointClient`.
 - `SharedBuilder` no longer declares `buildClientServerInterfaces` as a free function (or retains a thin delegate if needed during migration — removed by end of refactor).
 - All six language emitters expose `override val clientExtension`, and the six client override method bodies are removed.
