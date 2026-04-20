@@ -90,23 +90,26 @@ After the refactor, nothing client-shaped lives outside `ClientIrExtension.kt`.
 
 ### File layout
 
-Single file: `src/compiler/ir/src/commonMain/kotlin/community/flock/wirespec/ir/extensions/ClientIrExtension.kt`.
+Neutral pieces in the `ir` module:
+`src/compiler/ir/src/commonMain/kotlin/community/flock/wirespec/ir/extensions/IrExtension.kt` — empty marker interface.
+`src/compiler/ir/src/commonMain/kotlin/community/flock/wirespec/ir/extensions/ClientIrExtension.kt` — the interface + language-neutral top-level `internal` helpers (`Endpoint.convertEndpointClient()`, `List<Endpoint>.convertClient()`, `buildClientServerInterfaces(style)`).
 
-Contents, in order:
+Per-language concrete classes live next to their respective emitters — one file per language:
+- `src/compiler/emitters/kotlin/.../KotlinClientIrExtension.kt`
+- `src/compiler/emitters/java/.../JavaClientIrExtension.kt`
+- `src/compiler/emitters/python/.../PythonClientIrExtension.kt`
+- `src/compiler/emitters/rust/.../RustClientIrExtension.kt`
+- `src/compiler/emitters/scala/.../ScalaClientIrExtension.kt`
+- `src/compiler/emitters/typescript/.../TypeScriptClientIrExtension.kt`
 
-1. Package + imports.
-2. The `ClientIrExtension` interface.
-3. Language-neutral top-level `internal` helpers: `Endpoint.convertEndpointClient()`, `List<Endpoint>.convertClient()`, and the neutral `buildClientServerInterfaces(style)` implementation.
-4. Six concrete classes: `KotlinClientIrExtension`, `JavaClientIrExtension`, `PythonClientIrExtension`, `RustClientIrExtension`, `ScalaClientIrExtension`, `TypeScriptClientIrExtension`.
+Rationale: per-language impls call emitter-private helpers (e.g. Java's `transformTypeDescriptors`, Rust's `toRustTypeString`). Those helpers are also used by non-client emit code; promoting them into the `ir` module would be scope creep. Keeping per-language classes in their emitter module preserves the existing module dependency direction (`emitters → ir`, never the reverse).
 
 Each concrete class:
-- Takes the state it needs via constructor parameters (e.g. `PackageName`, `SanitizationConfig`, a language-specific `wirespecImport` string).
-- Contains as `private` members the helpers that are only used by client code (e.g. Java's `transformTypeDescriptors`, Scala's `addIdentityTypeToCall`, Python's `addSelfReceiverToClientFields` / `snakeCaseClientFunctions` / `flattenEndpointTypeRefs`).
-- Delegates to top-level neutral helpers for AST→IR conversion.
+- Takes the state it needs via constructor parameters (e.g. `PackageName`, `SanitizationConfig`, a language-specific `wirespecImport` reference).
+- Contains as `private` members the helpers that are only used by client code (e.g. Scala's `addIdentityTypeToCall`, Python's `addSelfReceiverToClientFields` / `snakeCaseClientFunctions` / `flattenEndpointTypeRefs`, Rust's `buildClientParams`).
+- Delegates to top-level neutral helpers in `ir.extensions` for AST→IR conversion.
 
-Helpers shared with non-client emitter code (`Endpoint.importReferences`, `String.firstToUpper`, package-name utilities) stay where they are. The extension calls them the same way the emitter does.
-
-Expected size: ~700–900 lines. This is intentional: a single file is the agreed source of truth for the Client feature.
+Helpers shared with non-client emitter code (Java's `transformTypeDescriptors`, Rust's `toRustTypeString`, `Endpoint.importReferences`, etc.) stay as `internal` members on the emitter and are accessed from the extension via a back-reference: each extension takes a constructor param that exposes the helpers it needs (either the emitter instance itself, or specific lambdas).
 
 ## Interface
 
@@ -178,7 +181,7 @@ That coverage is enough to catch regressions in language-specific packaging (imp
 
 ## Risks and trade-offs
 
-1. **File size.** `ClientIrExtension.kt` will be ~700–900 lines. Editing Java client code puts the cursor next to Python client code. Accepted deliberately in exchange for a single feature home.
+1. **Per-language files live in the emitter modules.** The neutral `ClientIrExtension.kt` stays in `ir.extensions`, but the six concrete classes live in their respective emitter modules. Single-file-per-feature is preserved at the neutral level; per-language files are one-per-language, co-located with the emitter they extend.
 2. **Visibility change.** `sanitizationConfig` moves from `private` to `internal` on each language emitter. Module-local only; no public API change.
 3. **Atomic migration.** The `IrEmitter` interface change (removal of `emitClient`/`emitEndpointClient`, addition of abstract `extensions: List<IrExtension>`) forces all six language emitters to migrate in the same commit. No partial state.
 4. **Runtime vs. compile-time typing.** Resolving a `ClientIrExtension` from `List<IrExtension>` via `extension<T>()` fails at runtime if the extension is missing or duplicated (the helper throws with a clear message). A typed slot would have caught this at compile time. Accepted in exchange for letting future extensions land without touching `IrEmitter`'s interface.
