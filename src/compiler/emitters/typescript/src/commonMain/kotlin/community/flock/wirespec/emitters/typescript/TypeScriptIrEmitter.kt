@@ -46,6 +46,7 @@ import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
+import community.flock.wirespec.ir.core.plus
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
@@ -230,7 +231,7 @@ open class TypeScriptIrEmitter : IrEmitter {
             .map { import("../model", it.value, isTypeOnly = true) }
 
         val hasRequestParams = endpoint.requestParameters().isNotEmpty()
-        val endpointNamespace = endpoint.convert()
+        return endpoint.convert()
             .transform {
                 statement { stmt, transformer ->
                     when (stmt) {
@@ -268,13 +269,14 @@ open class TypeScriptIrEmitter : IrEmitter {
                     }
                 }
             }
-            .findElement<Namespace>()!!
-        val body = endpointNamespace
-            .transform { injectAfter { _: Namespace -> listOf(buildApiConst(endpoint)) } }
-        val sanitized = File(Name.of(endpoint.identifier.sanitize()), listOf(body))
+            .transform { injectAfter<Namespace>{listOf(buildApiConst(endpoint))}}
+            .copy(name = Name.of(endpoint.identifier.sanitize()))
             .sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) sanitized.copy(elements = imports + sanitized.elements)
-        else sanitized
+            .let {
+                if (imports.isNotEmpty()) it.copy(elements = imports + it.elements)
+                else it
+            }
+
     }
 
     private fun buildApiConst(endpoint: Endpoint): RawElement {
@@ -318,19 +320,18 @@ open class TypeScriptIrEmitter : IrEmitter {
 
         val params = buildEndpointParams(endpoint)
         val paramList = if (params.isNotEmpty()) "params: $endpointName.RequestParams" else ""
-
         val requestArgs = if (params.isNotEmpty()) "$endpointName.request(params)" else "$endpointName.request()"
 
-        val code = buildString {
-            appendLine("export const ${methodName}Client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
-            appendLine("  $methodName: async ($paramList): Promise<$endpointName.Response<unknown>> => {")
-            appendLine("    const request: $endpointName.Request = $requestArgs;")
-            appendLine("    const rawRequest = $endpointName.toRawRequest(serialization, request);")
-            appendLine("    const rawResponse = await transportation.transport(rawRequest);")
-            appendLine("    return $endpointName.fromRawResponse(serialization, rawResponse);")
-            appendLine("  }")
-            append("})")
-        }
+        val code = """
+            |export const ${methodName}Client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+            |  $methodName: async ($paramList): Promise<$endpointName.Response<unknown>> => {
+            |    const request: $endpointName.Request = $requestArgs;
+            |    const rawRequest = $endpointName.toRawRequest(serialization, request);
+            |    const rawResponse = await transportation.transport(rawRequest);
+            |    return $endpointName.fromRawResponse(serialization, rawResponse);
+            |  }
+            |})
+        """.trimMargin()
 
         return File(
             Name.of("client/${endpointName}Client"),
@@ -356,11 +357,11 @@ open class TypeScriptIrEmitter : IrEmitter {
             "  ...${methodName}Client(serialization, transportation),"
         }
 
-        val code = buildString {
-            appendLine("export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({")
-            appendLine(spreadEntries)
-            append("})")
-        }
+        val code = """
+            |export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+            |$spreadEntries
+            |})
+        """.trimMargin()
 
         return File(
             Name.of("Client"),
