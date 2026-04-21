@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MaxLineLength:PythonEndpointDefinitionEmitter.kt$PythonEndpointDefinitionEmitter$"""${Spacer(spaces)}${emit(identifier)} = serialization.deserialize_param(next((v for k, v in $type.$fields.items() if k.lower() == "${identifier.value.lowercase()}"), None), ${reference.emitType()})"""</ID>
+    <ID>TooManyFunctions:PythonEndpointDefinitionEmitter.kt$PythonEndpointDefinitionEmitter : EndpointDefinitionEmitterPythonTypeDefinitionEmitter</ID>
+  </CurrentIssues>
+</SmellBaseline>

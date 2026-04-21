@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:Lexer.kt$Lexer$override fun getTokenType()</ID>
+    <ID>CyclomaticComplexMethod:SyntaxHighlighter.kt$SyntaxHighlighter$override fun getTokenHighlights(tokenType: IElementType)</ID>
+    <ID>MaxLineLength:ChooseByNameContributor.kt$ChooseByNameContributor$override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array&lt;NavigationItem></ID>
+    <ID>MaxLineLength:Icons.kt$// Copyright 2000-2022 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.</ID>
+    <ID>MaxLineLength:JavaMethodCodeVisionProvider.kt$JavaMethodCodeVisionProvider$private</ID>
+    <ID>MaxLineLength:KotlinMethodCodeVisionProvider.kt$KotlinMethodCodeVisionProvider$private</ID>
+    <ID>MaxLineLength:Language.kt$// Copyright 2000-2022 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.</ID>
+    <ID>NestedBlockDepth:ChooseByNameContributor.kt$ChooseByNameContributor$fun getMap(project: Project): Map&lt;String, PsiElement></ID>
+    <ID>NestedBlockDepth:Reference.kt$Reference$override fun resolve(): PsiElement?</ID>
+    <ID>UnusedPrivateMember:Language.kt$Language$private fun readResolve(): Any</ID>
+  </CurrentIssues>
+</SmellBaseline>

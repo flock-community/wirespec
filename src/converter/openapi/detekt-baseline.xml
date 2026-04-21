@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String): List&lt;Definition&gt;</ID>
+    <ID>CyclomaticComplexMethod:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String)</ID>
+    <ID>CyclomaticComplexMethod:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable: Boolean): Reference</ID>
+    <ID>CyclomaticComplexMethod:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, isNullable: Boolean): Reference</ID>
+    <ID>CyclomaticComplexMethod:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String): List&lt;Definition&gt;</ID>
+    <ID>CyclomaticComplexMethod:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.parseEndpoints(): List&lt;Definition&gt;</ID>
+    <ID>CyclomaticComplexMethod:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.toReference( schema: OpenAPIV3Schema, isNullable: Boolean, name: String = "", ): Reference</ID>
+    <ID>CyclomaticComplexMethod:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.toReference(reference: OpenAPIV3Reference, isNullable: Boolean): Reference</ID>
+    <ID>ExplicitItLambdaParameter:OpenAPIV3Parser.kt${ index, it -&gt; when (it) { is OpenAPIV3Reference -&gt; emptyList() is OpenAPIV3Schema -&gt; flatten(it, className(name, index.toString())) } }</ID>
+    <ID>ExplicitItLambdaParameter:OpenAPIV3Parser.kt${ index, it -&gt; when (it) { is OpenAPIV3Reference -&gt; toReference(it, false) is OpenAPIV3Schema -&gt; toReference(it, false, className(name, index.toString())) } }</ID>
+    <ID>LongMethod:OpenAPIV2Emitter.kt$OpenAPIV2Emitter$private fun Statements.emitDefinitions(logger: Logger): Map&lt;String, OpenAPIV2Schema&gt;</ID>
+    <ID>LongMethod:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String): List&lt;Definition&gt;</ID>
+    <ID>LongMethod:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.parseEndpoints(): List&lt;Definition&gt;</ID>
+    <ID>LongMethod:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, isNullable: Boolean): Reference</ID>
+    <ID>LongMethod:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String): List&lt;Definition&gt;</ID>
+    <ID>LongMethod:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.parseEndpoints(): List&lt;Definition&gt;</ID>
+    <ID>MaxLineLength:OpenAPIV3Parser.kt$private</ID>
+    <ID>NestedBlockDepth:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String)</ID>
+    <ID>NestedBlockDepth:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable: Boolean): Reference</ID>
+    <ID>NestedBlockDepth:OpenAPIV2Parser.kt$private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, isNullable: Boolean): Reference</ID>
+    <ID>NestedBlockDepth:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String): List&lt;Definition&gt;</ID>
+    <ID>NestedBlockDepth:OpenAPIV3Parser.kt$private fun OpenAPIV3Model.toReference( schema: OpenAPIV3Schema, isNullable: Boolean, name: String = "", ): Reference</ID>
+    <ID>TooManyFunctions:OpenAPIV2Parser.kt$community.flock.wirespec.openapi.v2.OpenAPIV2Parser.kt</ID>
+    <ID>TooManyFunctions:OpenAPIV3Emitter.kt$OpenAPIV3Emitter : Emitter</ID>
+    <ID>TooManyFunctions:OpenAPIV3Parser.kt$community.flock.wirespec.openapi.v3.OpenAPIV3Parser.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

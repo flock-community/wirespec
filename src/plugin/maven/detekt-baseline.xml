@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>SpreadOperator:BaseMojo.kt$BaseMojo$(*args.toTypedArray())</ID>
+    <ID>SpreadOperator:JavaCompiler.kt$JavaCompiler$(*javaFiles.toTypedArray())</ID>
+    <ID>SpreadOperator:KotlinCompiler.kt$KotlinCompiler$(mavenLogStream, *args)</ID>
+    <ID>ThrowsCount:ConvertMojo.kt$ConvertMojo$private fun preProcess(input: String): String</ID>
+    <ID>TooGenericExceptionCaught:ConvertMojo.kt$ConvertMojo$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:BaseMojo.kt$BaseMojo$throw RuntimeException(string)</ID>
+    <ID>TooGenericExceptionThrown:CompileMojo.kt$CompileMojo$throw RuntimeException(it)</ID>
+    <ID>TooGenericExceptionThrown:ConvertMojo.kt$ConvertMojo$throw RuntimeException(it)</ID>
+  </CurrentIssues>
+</SmellBaseline>

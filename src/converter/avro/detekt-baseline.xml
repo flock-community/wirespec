@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:AvroEmitter.kt$AvroEmitter$fun Reference.emit(module: Module, hasEmitted: MutableList&lt;String&gt;): AvroModel.Type</ID>
+    <ID>SpreadOperator:AvroModel.kt$AvroModel.TypeList$(*type.toTypedArray())</ID>
+    <ID>SpreadOperator:AvroModel.kt$AvroModel.TypeListSerializer$( *element.map { input.json.decodeFromJsonElement(Type.serializer(), it) } .toTypedArray(), )</ID>
+  </CurrentIssues>
+</SmellBaseline>

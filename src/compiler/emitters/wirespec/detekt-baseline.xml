@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:WirespecTypeDefinitionEmitter.kt$WirespecTypeDefinitionEmitter$override fun Reference.emit(): String</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:KotlinTypeDefinitionEmitter.kt$KotlinTypeDefinitionEmitter$override fun Reference.emit(): String</ID>
+    <ID>MaxLineLength:KotlinEndpointDefinitionEmitter.kt$KotlinEndpointDefinitionEmitter$.</ID>
+    <ID>TooManyFunctions:KotlinEndpointDefinitionEmitter.kt$KotlinEndpointDefinitionEmitter : EndpointDefinitionEmitterHasPackageNameKotlinTypeDefinitionEmitter</ID>
+  </CurrentIssues>
+</SmellBaseline>
