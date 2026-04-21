@@ -8,14 +8,10 @@ import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 
-data class TokenizeOptions(
-    val removeWhitespace: Boolean = true,
-    val specifyTypes: Boolean = true,
-    val specifyFieldIdentifiers: Boolean = true,
-)
-
-fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
-    .let(optimize(options))
+fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> {
+    val initial = Token(type = StartOfProgram, value = "", coordinates = Coordinates())
+    return tokenize(source, nonEmptyListOf(initial)).let(optimize(options))
+}
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
@@ -68,12 +64,20 @@ private fun LanguageSpec.extractRegex(
     }
 }
 
-private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: Coordinates) = orderedMatchers
-    .firstNotNullOfOrNull { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, previousTokenCoordinates) }
+private fun LanguageSpec.extractToken(
+    source: String,
+    previousTokenCoordinates: Coordinates,
+) = orderedMatchers
+    .firstNotNullOfOrNull { (regex, tokenType) ->
+        regex.find(source)?.toToken(tokenType, previousTokenCoordinates)
+    }
     ?.let { it to source.removePrefix(it.value) }
     ?: Pair(endToken(previousTokenCoordinates), "")
 
-private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) = Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
+private fun MatchResult.toToken(
+    type: TokenType,
+    previousTokenCoordinates: Coordinates,
+) = Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
 
 private fun Token.nextToken(type: TokenType, value: String): Token = this.copy(
     type = type,
