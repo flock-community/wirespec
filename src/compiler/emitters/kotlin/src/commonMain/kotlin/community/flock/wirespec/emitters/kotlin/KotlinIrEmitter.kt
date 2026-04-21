@@ -152,11 +152,8 @@ open class KotlinIrEmitter(
         .sanitizeNames(sanitizationConfig)
         .transform {
             matchingElements { languageEnum: LanguageEnum ->
-                languageEnum.withLabelField(
-                    sanitizeEntry = { it.sanitizeEnum() },
-                    labelFieldOverride = true,
-                    labelExpression = RawExpression("label"),
-                )
+                languageEnum
+                    .withLabelField(sanitizeEntry = { it.sanitizeEnum() })
             }
         }
 

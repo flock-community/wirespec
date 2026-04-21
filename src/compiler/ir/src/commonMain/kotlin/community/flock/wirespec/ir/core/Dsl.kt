@@ -766,25 +766,22 @@ fun main(isAsync: Boolean = false, block: FunctionBuilder.() -> Unit): Main {
 fun raw(code: String): RawElement = RawElement(code)
 
 fun Enum.withLabelField(
-    sanitizeEntry: (String) -> String,
-    labelFieldOverride: Boolean = false,
-    labelExpression: Expression = VariableReference(Name.of("label")),
-    extraElements: List<Element> = emptyList(),
+    sanitizeEntry: (String) -> String
 ): Enum = copy(
     entries = entries.map {
         Enum.Entry(Name.of(sanitizeEntry(it.name.value())), it.values)
     },
-    fields = listOf(Field(Name.of("label"), Type.String, isOverride = labelFieldOverride)),
+    fields = listOf(Field(Name.of("label"), Type.String, isOverride = true)),
     constructors = listOf(
         Constructor(
             parameters = listOf(Parameter(Name.of("label"), Type.String)),
-            body = listOf(Assignment(Name.of("this.label"), labelExpression, true)),
+            body = listOf(Assignment(Name.of("this.label"), VariableReference(Name.of("label")), true)),
         ),
     ),
     elements = listOf(
         function("toString", isOverride = true) {
             returnType(Type.String)
-            returns(labelExpression)
+            returns(VariableReference(Name.of("label")))
         },
-    ) + extraElements,
+    ),
 )

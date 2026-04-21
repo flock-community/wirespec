@@ -78,7 +78,7 @@ sealed interface HasName : Element {
     val name: Name
 }
 
-interface HasElements {
+sealed interface HasElements {
     val elements: List<Element>
 }
 

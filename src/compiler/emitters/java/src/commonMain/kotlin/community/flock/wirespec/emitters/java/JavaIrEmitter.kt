@@ -43,21 +43,21 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.withLabelField
-import community.flock.wirespec.ir.core.`interface`
+import community.flock.wirespec.ir.core.plus
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.emit.placeInPackage
+import community.flock.wirespec.ir.emit.prependImports
+import community.flock.wirespec.ir.emit.withSharedSource
+import community.flock.wirespec.ir.generator.JavaGenerator
+import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.toGetterAccessors
-import community.flock.wirespec.ir.emit.withSharedSource
-import community.flock.wirespec.ir.emit.placeInPackage
-import community.flock.wirespec.ir.emit.prependImports
-import community.flock.wirespec.ir.generator.JavaGenerator
-import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
@@ -167,15 +167,14 @@ open class JavaIrEmitter(
         .convert()
         .transform {
             matchingElements { languageEnum: LanguageEnum ->
-                languageEnum.withLabelField(
-                    sanitizeEntry = { it.sanitizeEnum() },
-                    extraElements = listOf(
+                languageEnum
+                    .withLabelField(sanitizeEntry = { it.sanitizeEnum() })
+                    .plus(
                         function("label") {
                             returnType(Type.String)
                             returns(VariableReference(Name.of("label")))
-                        },
-                    ),
-                )
+                        }
+                    )
             }
         }
         .sanitizeNames(sanitizationConfig)
@@ -186,20 +185,22 @@ open class JavaIrEmitter(
 
     override fun emit(refined: Refined): File = refined.convert()
         .transform {
-            matchingElements { s: Struct ->
-                s.copy(
-                    interfaces = listOf(Type.Custom("Wirespec.Refined")),
-                    elements = s.elements.map { element ->
-                        if (element is LanguageFunction) {
-                            element.copy(isOverride = true)
-                        } else element
-                    } + listOf(
+            matchingElements { struct: Struct ->
+                struct
+                    .copy(
+                        interfaces = listOf(Type.Custom("Wirespec.Refined")),
+                        elements = struct.elements.map { element ->
+                            if (element is LanguageFunction) {
+                                element.copy(isOverride = true)
+                            } else element
+                        }
+                    )
+                    .plus(
                         function("value", isOverride = true) {
                             returnType(refined.reference.convert())
                             returns(VariableReference(Name.of("value")))
-                        },
-                    ),
-                )
+                        }
+                    )
             }
         }
         .sanitizeNames(sanitizationConfig)
@@ -441,8 +442,14 @@ open class JavaIrEmitter(
     }
 
     private fun Type.toJavaName(): String = when (this) {
-        is Type.Integer -> when (precision) { Precision.P32 -> "Integer"; Precision.P64 -> "Long" }
-        is Type.Number -> when (precision) { Precision.P32 -> "Float"; Precision.P64 -> "Double" }
+        is Type.Integer -> when (precision) {
+            Precision.P32 -> "Integer"; Precision.P64 -> "Long"
+        }
+
+        is Type.Number -> when (precision) {
+            Precision.P32 -> "Float"; Precision.P64 -> "Double"
+        }
+
         Type.String -> "String"
         Type.Boolean -> "Boolean"
         Type.Bytes -> "byte[]"
