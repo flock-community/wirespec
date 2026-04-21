@@ -6,4 +6,4 @@ build/
 .DS_Store
 .env
 *.iml
-.claude/settings.local.json
+.claude/
