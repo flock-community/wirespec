@@ -20,8 +20,7 @@ import com.intellij.psi.tree.IElementType
 
 class SyntaxHighlighter : SyntaxHighlighterBase() {
 
-    override fun getTokenHighlights(tokenType: IElementType) =
-        TOKEN_HIGHLIGHTS[tokenType]?.let(::arrayOf) ?: arrayOfNulls(0)
+    override fun getTokenHighlights(tokenType: IElementType) = TOKEN_HIGHLIGHTS[tokenType]?.let(::arrayOf) ?: arrayOfNulls(0)
 
     override fun getHighlightingLexer() = Lexer()
 
