@@ -6,9 +6,9 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.emit.SanitizationConfig
-import community.flock.wirespec.ir.emit.sanitizeFieldName
-import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.sanitizeFieldName
+import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.emit.placeInModule
 import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.emit.Keywords

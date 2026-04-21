@@ -42,11 +42,10 @@ import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.emit.AccessorStyle
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.emit.SanitizationConfig
-import community.flock.wirespec.ir.emit.buildClientServerInterfaces
-import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.sanitizeNames
+import community.flock.wirespec.ir.transformer.toGetterAccessors
 import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
@@ -99,7 +98,15 @@ open class JavaIrEmitter(
             import("java.util", "Map"),
         )
 
-        private val clientServer = buildClientServerInterfaces(AccessorStyle.GETTER_METHODS) + listOf(
+        private val clientServer = AstShared(packageString).convertClientServer().map {
+            it.toGetterAccessors { name ->
+                when (name.value()) {
+                    "client" -> Name.of("getClient")
+                    "server" -> Name.of("getServer")
+                    else -> null
+                }
+            }
+        } + listOf(
             raw(
                 """
                 |public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {

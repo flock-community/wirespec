@@ -10,12 +10,10 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.emit.AccessorStyle
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.emit.SanitizationConfig
-import community.flock.wirespec.ir.emit.buildClientServerInterfaces
-import community.flock.wirespec.ir.emit.sanitizeFieldName
-import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.sanitizeFieldName
+import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
@@ -37,6 +35,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
+import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Namespace
@@ -97,7 +96,7 @@ open class KotlinIrEmitter(
     override val shared = object : Shared {
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
 
-        private val clientServer = buildClientServerInterfaces(AccessorStyle.PROPERTIES)
+        private val clientServer = AstShared(packageString).convertClientServer()
 
         override val source = AstShared(packageString)
             .convert()
