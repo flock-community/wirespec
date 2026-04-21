@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
@@ -20,7 +21,7 @@ import com.intellij.psi.tree.IElementType
 
 class SyntaxHighlighter : SyntaxHighlighterBase() {
 
-    override fun getTokenHighlights(tokenType: IElementType) = TOKEN_HIGHLIGHTS[tokenType]?.let(::arrayOf) ?: arrayOfNulls(0)
+    override fun getTokenHighlights(tokenType: IElementType) = TOKEN_HIGHLIGHTS[tokenType]?.let { arrayOf<TextAttributesKey?>(it) } ?: arrayOfNulls(0)
 
     override fun getHighlightingLexer() = Lexer()
 
