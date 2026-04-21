@@ -163,8 +163,8 @@ open class KotlinIrEmitter(
 
     override fun emit(refined: Refined): File {
         val file = refined.convert().sanitizeNames(sanitizationConfig)
-        val struct = file.findElement<Struct>()!!
-        val updatedStruct = struct.copy(
+        val struct = file.findElement<Struct>()
+        val updatedStruct = struct?.copy(
             fields = struct.fields.map { f -> f.copy(isOverride = true) },
             elements = struct.elements.map { element ->
                 if (element is LanguageFunction) {
@@ -172,7 +172,7 @@ open class KotlinIrEmitter(
                 } else element
             },
         )
-        return LanguageFile(Name.of(refined.identifier.sanitize()), listOf(updatedStruct))
+        return LanguageFile(Name.of(refined.identifier.sanitize()), updatedStruct?.let { listOf(it) } ?: emptyList())
     }
 
     override fun emit(endpoint: Endpoint): File {
