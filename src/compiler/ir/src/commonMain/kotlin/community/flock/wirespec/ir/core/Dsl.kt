@@ -766,7 +766,7 @@ fun main(isAsync: Boolean = false, block: FunctionBuilder.() -> Unit): Main {
 fun raw(code: String): RawElement = RawElement(code)
 
 fun Enum.withLabelField(
-    sanitizeEntry: (String) -> String
+    sanitizeEntry: (String) -> String,
 ): Enum = copy(
     entries = entries.map {
         Enum.Entry(Name.of(sanitizeEntry(it.name.value())), it.values)
