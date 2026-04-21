@@ -35,12 +35,12 @@ interface BaseBuilder {
 interface ContainerBuilder : BaseBuilder {
     val elements: MutableList<Element>
 
-    fun import(path: String, type: Type.Custom) {
-        elements.add(Import(path, type))
+    fun import(path: String, type: Type.Custom, isTypeOnly: Boolean = false) {
+        elements.add(Import(path, type, isTypeOnly))
     }
 
-    fun import(path: String, type: String) {
-        elements.add(Import(path, Type.Custom(type)))
+    fun import(path: String, type: String, isTypeOnly: Boolean = false) {
+        elements.add(Import(path, Type.Custom(type), isTypeOnly))
     }
 
     fun raw(code: String) {
@@ -752,9 +752,9 @@ fun asyncFunction(name: Name, isStatic: Boolean = false, isOverride: Boolean = f
     return builder.build()
 }
 
-fun import(path: String, type: Type.Custom): Import = Import(path, type)
+fun import(path: String, type: Type.Custom, isTypeOnly: Boolean = false): Import = Import(path, type, isTypeOnly)
 
-fun import(path: String, type: String): Import = Import(path, Type.Custom(type))
+fun import(path: String, type: String, isTypeOnly: Boolean = false): Import = Import(path, Type.Custom(type), isTypeOnly)
 
 fun main(isAsync: Boolean = false, block: FunctionBuilder.() -> Unit): Main {
     val builder = FunctionBuilder("main")

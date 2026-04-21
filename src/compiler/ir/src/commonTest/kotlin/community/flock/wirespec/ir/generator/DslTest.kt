@@ -761,8 +761,8 @@ class DslTest {
         assertTrue(pythonCode.contains("from java.util import List"))
         assertTrue(pythonCode.contains("from com.example import Other"))
 
-        assertTrue(tsCode.contains("import { List } from 'java.util';"))
-        assertTrue(tsCode.contains("import { Other } from 'com.example';"))
+        assertTrue(tsCode.contains("import {List} from 'java.util'"))
+        assertTrue(tsCode.contains("import {Other} from 'com.example'"))
     }
 
     @Test

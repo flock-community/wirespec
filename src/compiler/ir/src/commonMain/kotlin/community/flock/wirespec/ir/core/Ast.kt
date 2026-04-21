@@ -95,6 +95,7 @@ data class Package(
 data class Import(
     val path: String,
     val type: Type.Custom,
+    val isTypeOnly: Boolean = false,
 ) : Element
 
 data class Struct(

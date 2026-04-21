@@ -99,7 +99,11 @@ object RustGenerator : Generator {
 
     private fun Package.emit(indent: Int): String = "// package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "use super::${Name.of(type.name).snakeCase()}::${type.name};\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = if (path.isEmpty()) {
+        "use ${type.name};\n".indentCode(indent)
+    } else {
+        "use $path::${type.name};\n".indentCode(indent)
+    }
 
     private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val hasComplexElements = elements.any { it is Interface || it is Union || it is Enum || it is Struct }

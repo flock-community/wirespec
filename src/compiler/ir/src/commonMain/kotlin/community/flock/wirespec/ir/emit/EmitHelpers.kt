@@ -13,7 +13,7 @@ import community.flock.wirespec.ir.core.Package
 fun File.wrapWithPackage(
     packageName: PackageName,
     definition: Definition,
-    wirespecImport: Element,
+    wirespecImports: List<Element>,
     needsImport: Boolean,
     nameTransform: (Name) -> String = { it.pascalCase() },
 ): File {
@@ -22,7 +22,7 @@ fun File.wrapWithPackage(
         name = Name.of(subPackageName.toDir() + nameTransform(name)),
         elements = buildList {
             add(Package(subPackageName.value))
-            if (needsImport) add(wirespecImport)
+            if (needsImport) addAll(wirespecImports)
             addAll(elements)
         },
     )

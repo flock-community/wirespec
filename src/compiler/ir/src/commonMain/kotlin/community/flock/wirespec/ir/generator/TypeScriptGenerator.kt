@@ -104,7 +104,10 @@ private class TypeScriptFileEmitter(val file: File) {
 
     private fun Package.emit(indent: Int): String = ""
 
-    private fun Import.emit(indent: Int): String = "import { ${type.name} } from '$path';\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String {
+        val prefix = if (isTypeOnly) "type " else ""
+        return "import {$prefix${type.name}} from '$path'\n".indentCode(indent)
+    }
 
     private fun Namespace.emit(indent: Int): String {
         val content = elements.joinToString("") { it.emit(indent + 1) }

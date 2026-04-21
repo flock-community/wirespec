@@ -43,6 +43,7 @@ import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
@@ -75,12 +76,10 @@ open class ScalaIrEmitter(
 
     override val extension = FileExtension.Scala
 
-    private val wirespecImport = """
-        |
-        |import $DEFAULT_SHARED_PACKAGE_STRING.scala.Wirespec
-        |import scala.reflect.ClassTag
-        |
-    """.trimMargin()
+    private val wirespecImports = listOf(
+        import("$DEFAULT_SHARED_PACKAGE_STRING.scala", "Wirespec"),
+        import("scala.reflect", "ClassTag"),
+    )
 
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
@@ -119,7 +118,7 @@ open class ScalaIrEmitter(
             .transform {
                 matchingElements { file: LanguageFile ->
                     val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
-                    file.copy(elements = packageElements + LanguageImport("scala.reflect", LanguageType.Custom("ClassTag")) + rest)
+                    file.copy(elements = packageElements + import("scala.reflect", "ClassTag") + rest)
                 }
                 matchingElements { ns: Namespace ->
                     if (ns.name == Name.of("Wirespec")) {
@@ -172,7 +171,7 @@ open class ScalaIrEmitter(
         return file.wrapWithPackage(
             packageName = packageName,
             definition = definition,
-            wirespecImport = RawElement(wirespecImport),
+            wirespecImports = wirespecImports,
             needsImport = module.needImports(),
         )
     }
@@ -237,29 +236,29 @@ open class ScalaIrEmitter(
             .let { ns -> buildClientServerObjects(endpoint, requestIsObject, ns) }
         val sanitized = LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) sanitized.copy(elements = listOf(RawElement(imports)) + sanitized.elements)
+        return if (imports.isNotEmpty()) sanitized.copy(elements = imports + sanitized.elements)
         else sanitized
     }
 
     override fun emit(channel: Channel): File {
         val imports = channel.buildImports()
         val file = channel.convert().sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
+        return if (imports.isNotEmpty()) file.copy(elements = imports + file.elements)
         else file
     }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
-        val endpointImport = "import ${packageName.value}.endpoint.${endpoint.identifier.value}"
-        val allImports = listOf(imports, endpointImport).filter { it.isNotEmpty() }.joinToString("\n")
+        val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
         val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
         val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = buildList {
                 add(LanguagePackage(subPackageName.value))
-                add(RawElement(wirespecImport))
-                if (allImports.isNotEmpty()) add(RawElement(allImports))
+                addAll(wirespecImports)
+                addAll(imports)
+                add(endpointImport)
                 addAll(file.elements)
             }
         )
@@ -267,19 +266,19 @@ open class ScalaIrEmitter(
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .joinToString("\n") { "import ${packageName.value}.model.${it.value}" }
+            .map { import("${packageName.value}.model", it.value) }
         val endpointImports = endpoints
-            .joinToString("\n") { "import ${packageName.value}.endpoint.${it.identifier.value}" }
+            .map { import("${packageName.value}.endpoint", it.identifier.value) }
         val clientImports = endpoints
-            .joinToString("\n") { "import ${packageName.value}.client.${it.identifier.value}Client" }
-        val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
+            .map { import("${packageName.value}.client", "${it.identifier.value}Client") }
+        val allImports = imports + endpointImports + clientImports
         val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
             elements = buildList {
                 add(LanguagePackage(packageName.value))
-                add(RawElement(wirespecImport))
-                if (allImports.isNotEmpty()) add(RawElement(allImports))
+                addAll(wirespecImports)
+                addAll(allImports)
                 addAll(file.elements)
             }
         )
@@ -309,9 +308,9 @@ open class ScalaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    private fun Definition.buildImports() = importReferences()
+    private fun Definition.buildImports(): List<LanguageImport> = importReferences()
         .distinctBy { it.value }
-        .joinToString("\n") { "import ${packageName.value}.model.${it.value}" }
+        .map { import("${packageName.value}.model", it.value) }
 
     private fun <T : Element> T.addIdentityTypeToCall(): T = transform {
         matchingElements { struct: Struct ->

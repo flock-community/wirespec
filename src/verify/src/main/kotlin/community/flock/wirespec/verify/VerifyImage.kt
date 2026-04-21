@@ -79,6 +79,18 @@ enum class VerifyImage {
                 }
                 .get()
         }
+    },
+    TYPESCRIPT {
+        override val image by lazy {
+            ImageFromDockerfile("wirespec-typescript-verify", false)
+                .withDockerfileFromBuilder { builder ->
+                    builder
+                        .from("node:20-slim")
+                        .run("npm install -g typescript tsx")
+                        .build()
+                }
+                .get()
+        }
     };
 
     abstract val image: String
