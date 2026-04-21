@@ -57,4 +57,8 @@ public class TodoService {
     public List<Todo> getStore() {
         return store;
     }
+
+    public Map<String, Object> getFiles() {
+        return files;
+    }
 }
