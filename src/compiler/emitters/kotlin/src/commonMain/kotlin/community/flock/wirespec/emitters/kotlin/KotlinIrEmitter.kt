@@ -48,6 +48,7 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
@@ -69,12 +70,10 @@ open class KotlinIrEmitter(
 
     override val extension = FileExtension.Kotlin
 
-    private val wirespecImport = """
-        |
-        |import $DEFAULT_SHARED_PACKAGE_STRING.kotlin.Wirespec
-        |import kotlin.reflect.typeOf
-        |
-    """.trimMargin()
+    private val wirespecImports = listOf(
+        import("$DEFAULT_SHARED_PACKAGE_STRING.kotlin", "Wirespec"),
+        import("kotlin.reflect", "typeOf"),
+    )
 
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
@@ -113,7 +112,7 @@ open class KotlinIrEmitter(
             .transform {
                 matchingElements { file: LanguageFile ->
                     val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
-                    file.copy(elements = packageElements + Import("kotlin.reflect", LanguageType.Custom("KType")) + rest)
+                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + rest)
                 }
                 injectAfter { namespace: Namespace ->
                     if (namespace.name == Name.of("Wirespec")) clientServer
@@ -136,7 +135,7 @@ open class KotlinIrEmitter(
         return file.wrapWithPackage(
             packageName = packageName,
             definition = definition,
-            wirespecImport = RawElement(wirespecImport),
+            wirespecImports = wirespecImports,
             needsImport = module.needImports(),
         )
     }
@@ -190,7 +189,7 @@ open class KotlinIrEmitter(
         val sanitized = LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
         return if (imports.isNotEmpty()) {
-            sanitized.copy(elements = listOf(RawElement(imports)) + sanitized.elements)
+            sanitized.copy(elements = imports + sanitized.elements)
         } else {
             sanitized
         }
@@ -199,22 +198,22 @@ open class KotlinIrEmitter(
     override fun emit(channel: Channel): File {
         val imports = channel.buildImports()
         val file = channel.convert().sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
+        return if (imports.isNotEmpty()) file.copy(elements = imports + file.elements)
         else file
     }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
-        val endpointImport = "import ${packageName.value}.endpoint.${endpoint.identifier.value}"
-        val allImports = listOf(imports, endpointImport).filter { it.isNotEmpty() }.joinToString("\n")
+        val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
         val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig)
         val subPackageName = packageName + "client"
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = buildList {
                 add(LanguagePackage(subPackageName.value))
-                add(RawElement(wirespecImport))
-                if (allImports.isNotEmpty()) add(RawElement(allImports))
+                addAll(wirespecImports)
+                addAll(imports)
+                add(endpointImport)
                 addAll(file.elements)
             }
         )
@@ -222,19 +221,19 @@ open class KotlinIrEmitter(
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .joinToString("\n") { "import ${packageName.value}.model.${it.value}" }
+            .map { import("${packageName.value}.model", it.value) }
         val endpointImports = endpoints
-            .joinToString("\n") { "import ${packageName.value}.endpoint.${it.identifier.value}" }
+            .map { import("${packageName.value}.endpoint", it.identifier.value) }
         val clientImports = endpoints
-            .joinToString("\n") { "import ${packageName.value}.client.${it.identifier.value}Client" }
-        val allImports = listOf(imports, endpointImports, clientImports).filter { it.isNotEmpty() }.joinToString("\n")
+            .map { import("${packageName.value}.client", "${it.identifier.value}Client") }
+        val allImports = imports + endpointImports + clientImports
         val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig)
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
             elements = buildList {
                 add(LanguagePackage(packageName.value))
-                add(RawElement(wirespecImport))
-                if (allImports.isNotEmpty()) add(RawElement(allImports))
+                addAll(wirespecImports)
+                addAll(allImports)
                 addAll(file.elements)
             }
         )
@@ -264,9 +263,9 @@ open class KotlinIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    private fun Definition.buildImports() = importReferences()
+    private fun Definition.buildImports(): List<Import> = importReferences()
         .distinctBy { it.value }
-        .joinToString("\n") { "import ${packageName.value}.model.${it.value}" }
+        .map { import("${packageName.value}.model", it.value) }
 
     private fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace =
         transform {

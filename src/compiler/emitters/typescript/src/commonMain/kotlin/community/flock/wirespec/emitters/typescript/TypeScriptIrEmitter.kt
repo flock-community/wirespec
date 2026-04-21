@@ -45,6 +45,7 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
@@ -159,18 +160,18 @@ open class TypeScriptIrEmitter : IrEmitter {
         val subPackageName = PackageName("") + definition
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
-            elements = listOf(RawElement("import {Wirespec} from '../Wirespec'\n")) + file.elements
+            elements = listOf(import("../Wirespec", "Wirespec")) + file.elements
         )
     }
 
     override fun emit(type: AstType, module: Module): File {
         val fieldValidations = type.classifyValidatableFields(module)
         val typeImports = type.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "import {${it.value}} from './${it.value}'" }
+            .map { import("./${it.value}", it.value) }
         val validateImports = fieldValidations.map { it.typeName }.distinct()
             .filter { it != type.identifier.value }
-            .joinToString("\n") { "import {validate$it} from './$it'" }
-        val allImports = listOf(typeImports, validateImports).filter { it.isNotEmpty() }.joinToString("\n")
+            .map { import("./$it", "validate$it") }
+        val allImports = typeImports + validateImports
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
@@ -196,7 +197,7 @@ open class TypeScriptIrEmitter : IrEmitter {
                     } else fn
                 }
             }
-        return if (allImports.isNotEmpty()) file.copy(elements = listOf(RawElement(allImports)) + file.elements)
+        return if (allImports.isNotEmpty()) file.copy(elements = allImports + file.elements)
         else file
     }
 
@@ -206,9 +207,9 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emit(union: Union): File {
         val imports = union.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "import {type ${it.value}} from '../model'" }
+            .map { import("../model", it.value, isTypeOnly = true) }
         val file = union.convert().sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) file.copy(elements = listOf(RawElement(imports)) + file.elements)
+        return if (imports.isNotEmpty()) file.copy(elements = imports + file.elements)
         else file
     }
 
@@ -226,7 +227,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "import {type ${it.value}} from '../model'" }
+            .map { import("../model", it.value, isTypeOnly = true) }
 
         val hasRequestParams = endpoint.requestParameters().isNotEmpty()
         val endpointNamespace = endpoint.convert()
@@ -272,7 +273,7 @@ open class TypeScriptIrEmitter : IrEmitter {
             .transform { injectAfter { _: Namespace -> listOf(buildApiConst(endpoint)) } }
         val sanitized = File(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) sanitized.copy(elements = listOf(RawElement(imports)) + sanitized.elements)
+        return if (imports.isNotEmpty()) sanitized.copy(elements = imports + sanitized.elements)
         else sanitized
     }
 
@@ -313,7 +314,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         val methodName = endpointName.firstToLower()
 
         val imports = endpoint.importReferences().distinctBy { it.value }
-            .joinToString("\n") { "import {type ${it.value}} from '../model'" }
+            .map { import("../model", it.value, isTypeOnly = true) }
 
         val params = buildEndpointParams(endpoint)
         val paramList = if (params.isNotEmpty()) "params: $endpointName.RequestParams" else ""
@@ -334,9 +335,9 @@ open class TypeScriptIrEmitter : IrEmitter {
         return File(
             Name.of("client/${endpointName}Client"),
             buildList {
-                add(RawElement("import {Wirespec} from '../Wirespec'"))
-                add(RawElement("import {$endpointName} from '../endpoint/$endpointName'"))
-                if (imports.isNotEmpty()) add(RawElement(imports))
+                add(import("../Wirespec", "Wirespec"))
+                add(import("../endpoint/$endpointName", endpointName))
+                addAll(imports)
                 add(RawElement(code))
             }
         )
@@ -345,9 +346,9 @@ open class TypeScriptIrEmitter : IrEmitter {
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
 
-        val clientImports = endpoints.joinToString("\n") {
+        val clientImports = endpoints.map {
             val methodName = it.identifier.value.firstToLower()
-            "import {${methodName}Client} from './client/${it.identifier.value}Client'"
+            import("./client/${it.identifier.value}Client", "${methodName}Client")
         }
 
         val spreadEntries = endpoints.joinToString("\n") {
@@ -363,11 +364,11 @@ open class TypeScriptIrEmitter : IrEmitter {
 
         return File(
             Name.of("Client"),
-            listOf(
-                RawElement("import {Wirespec} from './Wirespec'"),
-                RawElement(clientImports),
-                RawElement(code),
-            )
+            buildList {
+                add(import("./Wirespec", "Wirespec"))
+                addAll(clientImports)
+                add(RawElement(code))
+            }
         )
     }
 

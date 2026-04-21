@@ -9,7 +9,6 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.EmitShared
-import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -58,7 +57,7 @@ val languages = mapOf(
     "kotlin-1" to Language(KotlinIrEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_1.image }),
     "kotlin-2" to Language(KotlinIrEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_2.image }),
     "python" to Language(PythonIrEmitter(emitShared = EmitShared(true)), { VerifyImage.PYTHON.image }),
-    "typescript" to Language(TypeScriptIrEmitter(), { "node:20-slim" }),
+    "typescript" to Language(TypeScriptIrEmitter(), { VerifyImage.TYPESCRIPT.image }),
     "rust" to Language(RustIrEmitter(emitShared = EmitShared(true)), { VerifyImage.RUST.image }),
     "scala" to Language(ScalaIrEmitter(emitShared = EmitShared(true)), { VerifyImage.SCALA.image }),
 ).onEach { (name, lang) -> lang.name = name }
@@ -69,9 +68,18 @@ class Language(
 ) {
     lateinit var name: String
     override fun toString() = name
-    lateinit var container: GenericContainer<*>
-    private lateinit var outputDir: File
     private lateinit var fixture: Fixture
+
+    private val workspaceDir: File by lazy {
+        File(System.getProperty("buildDir"), "generated-workspace/${name.lowercase()}").apply { mkdirs() }
+    }
+
+    val container: GenericContainer<*> by lazy {
+        GenericContainer(image())
+            .withFileSystemBind(workspaceDir.absolutePath, "/app/gen", BindMode.READ_ONLY)
+            .withCommand("tail", "-f", "/dev/null")
+            .also { it.start() }
+    }
 
     private val tsExtraFiles: (File) -> Unit = { outputDir ->
         File(outputDir, "tsconfig.json").writeText(
@@ -107,21 +115,34 @@ class Language(
         outputDir.resolve(fileName).writeText(content)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun start(name: String, fixture: Fixture, extraFiles: (File) -> Unit = {}) {
         this.fixture = fixture
-        val (cont, dir) = compileAndVerify(
-            name = name,
-            emitter = emitter,
-            fixture = fixture,
-            language = this.name.lowercase(),
-            image = image(),
-            extraFiles = { dir ->
-                tsExtraFiles(dir)
-                extraFiles(dir)
-            },
+
+        val emitted = object : CompilationContext, NoLogger {
+            override val spec = WirespecSpec
+            override val emitters = nonEmptySetOf(emitter)
+        }.compile(nonEmptyListOf(ModuleContent(FileUri("N/A"), fixture.source)))
+
+        val files = emitted.fold(
+            { error -> throw AssertionError("Compilation failed: $error") },
+            { it }
         )
-        container = cont
-        outputDir = dir
+
+        // Clear the workspace contents (not the dir itself — its inode is bound to /app/gen
+        // in the container, and replacing it via delete+mkdirs breaks the mount on macOS FUSE).
+        workspaceDir.mkdirs()
+        workspaceDir.listFiles()?.forEach { it.deleteRecursively() }
+        files.forEach { file ->
+            val target = File(workspaceDir, file.file)
+            target.parentFile.mkdirs()
+            target.writeText(file.result)
+        }
+
+        tsExtraFiles(workspaceDir)
+        extraFiles(workspaceDir)
+
+        container
     }
 
     fun compile() {
@@ -131,7 +152,7 @@ class Language(
             is PythonIrEmitter -> "python -m mypy --disable-error-code=empty-body --disable-error-code=arg-type /app/gen/"
             is RustIrEmitter -> "rm -rf /app/src/generated && cp -r /app/gen/community/flock/wirespec/generated /app/src/generated && printf 'mod generated;\\nfn main() {}\\n' > /app/src/main.rs && cd /app && cargo build"
             is ScalaIrEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile --server=false"
-            is TypeScriptIrEmitter -> "npm install -g typescript && cd /app/gen && tsc --noEmit"
+            is TypeScriptIrEmitter -> "cd /app/gen && tsc --noEmit"
             else -> error("Unknown language: ${emitter::class.simpleName}")
         }
         exec(verifyCommand)
@@ -139,7 +160,7 @@ class Language(
 
     fun run(testFile: AstFile) {
         val resolved = if (emitter is TypeScriptIrEmitter) testFile.adaptForTypeScript(fixture) else testFile
-        generate(resolved, outputDir)
+        generate(resolved, workspaceDir)
         compile()
         val fileName = testFile.name.pascalCase()
         val runCommand: String = when (emitter) {
@@ -170,9 +191,15 @@ class Language(
                 // Generate the test file content (which contains fn main())
                 val transformedRust = emitter.transformTestFile(resolved)
                 val rustContent = transformedRust.generateRust()
-                // Filter out the import lines that the generator produced (use super::...)
+                // Filter out the Import lines the generator produced from Java-style paths
+                // (e.g. `use community.flock.wirespec.generated.model::X;`). These contain '.'
+                // in the first path segment and would be invalid Rust — run() regenerates
+                // them below with correct Rust module paths.
                 val filteredContent = rustContent.lines()
-                    .filter { !it.startsWith("use super::") }
+                    .filter { line ->
+                        !(line.startsWith("use ") &&
+                            line.removePrefix("use ").substringBefore("::").contains('.'))
+                    }
                     .joinToString("\n")
                 val mainRs = "mod generated;\n$useStatements\n$wirespecUse\n\n$filteredContent"
                 container.execInContainer("sh", "-c", "cat > /app/src/main.rs << 'RUSTEOF'\n$mainRs\nRUSTEOF")
@@ -180,7 +207,7 @@ class Language(
             }
 
             is ScalaIrEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --server=false --main-class ${fileName}"
-            is TypeScriptIrEmitter -> "npm install -g tsx && cd /app/gen && tsx ${fileName}.ts"
+            is TypeScriptIrEmitter -> "cd /app/gen && tsx ${fileName}.ts"
             else -> error("Unknown language: ${name}")
         }
         exec(runCommand)
@@ -202,45 +229,6 @@ class Language(
         }
         result.exitCode shouldBe 0
     }
-}
-
-fun compileAndVerify(
-    name: String,
-    emitter: Emitter,
-    fixture: Fixture,
-    language: String,
-    image: String,
-    extraFiles: (File) -> Unit = {},
-): Pair<GenericContainer<*>, File> {
-    val emitted = object : CompilationContext, NoLogger {
-        override val spec = WirespecSpec
-        override val emitters = nonEmptySetOf(emitter)
-    }.compile(nonEmptyListOf(ModuleContent(FileUri("N/A"), fixture.source)))
-
-    val files = emitted.fold(
-        { error -> throw AssertionError("Compilation failed: $error") },
-        { it }
-    )
-
-    val outputDir = File(System.getProperty("buildDir"), "generated/$name/$language")
-    outputDir.deleteRecursively()
-    outputDir.mkdirs()
-    print(outputDir.absolutePath)
-    files.forEach { file ->
-        val target = File(outputDir, file.file)
-        target.parentFile.mkdirs()
-        target.writeText(file.result)
-    }
-
-    extraFiles(outputDir)
-
-    val container = GenericContainer(image)
-        .withFileSystemBind(outputDir.absolutePath, "/app/gen", BindMode.READ_ONLY)
-        .withCommand("tail", "-f", "/dev/null")
-
-    container.start()
-
-    return container to outputDir
 }
 
 fun Fixture.refinedTypeNames(): Set<String> {

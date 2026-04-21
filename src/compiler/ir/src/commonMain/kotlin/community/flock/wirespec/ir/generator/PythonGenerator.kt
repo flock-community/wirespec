@@ -66,7 +66,7 @@ object PythonGenerator : Generator {
         var i = 0
         while (i < elements.size) {
             val element = elements[i]
-            if (element is Import && element.path != ".") {
+            if (element is Import && element.path != "." && element.path.isNotEmpty()) {
                 val path = element.path
                 val types = mutableListOf(element.type.name)
                 while (i + 1 < elements.size) {
@@ -117,7 +117,11 @@ object PythonGenerator : Generator {
 
     private fun Package.emit(indent: Int): String = "# package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "from $path import ${type.name}\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = if (path.isEmpty()) {
+        "import ${type.name}\n".indentCode(indent)
+    } else {
+        "from $path import ${type.name}\n".indentCode(indent)
+    }
 
     private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val p = mutableListOf<String>()
