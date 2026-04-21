@@ -62,6 +62,6 @@ object Serialization :
         kType: KType,
     ): T = when (kType) {
         String::class.createType() -> raw as T
-        else -> Json.decodeFromString(Json.serializersModule.serializer(kType), raw.toString()) as T
+        else -> Json.decodeFromString(Json.serializersModule.serializer(kType), raw.decodeToString()) as T
     }
 }

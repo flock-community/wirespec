@@ -13,7 +13,7 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class TodoService {
 
-    public List<Todo> store = new ArrayList<>();
+    private List<Todo> store = new ArrayList<>();
 
     public TodoService(){
         store.add(new Todo(UUID.randomUUID().toString(), "First todo", false));
