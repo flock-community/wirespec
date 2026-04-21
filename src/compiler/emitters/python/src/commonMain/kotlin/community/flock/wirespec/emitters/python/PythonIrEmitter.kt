@@ -33,13 +33,17 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.Namespace
+import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.flattenNestedStructs
+import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.plus
-import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.generator.PythonGenerator
@@ -109,13 +113,13 @@ open class PythonIrEmitter(
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let {
-            fun emitInitImport(def: Definition) = Import(".${def.identifier.sanitize()}", LanguageType.Custom(def.identifier.sanitize()))
+            fun emitInitImport(def: Definition) = import(".${def.identifier.sanitize()}", def.identifier.sanitize())
             val hasEndpoints = module.statements.any { it is Endpoint }
             val initElements: List<Element> = listOf(
-                Import(".", LanguageType.Custom("model")),
-                Import(".", LanguageType.Custom("endpoint")),
-            ) + (if (hasEndpoints) listOf(Import(".", LanguageType.Custom("client"))) else emptyList()) +
-                listOf(Import(".", LanguageType.Custom("wirespec")))
+                import(".", "model"),
+                import(".", "endpoint"),
+            ) + (if (hasEndpoints) listOf(import(".", "client")) else emptyList()) +
+                listOf(import(".", "wirespec"))
             val init = File(
                 Name.of(packageName.toDir() + "__init__"),
                 initElements
@@ -156,7 +160,7 @@ open class PythonIrEmitter(
 
     override fun emit(type: Type, module: Module): File {
         val typeImports = type.importReferences().distinctBy { it.value }
-            .map { Import(".${it.value}", LanguageType.Custom(it.value)) }
+            .map { import(".${it.value}", it.value) }
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
             .transform {
@@ -238,7 +242,7 @@ open class PythonIrEmitter(
 
     override fun emit(endpoint: Endpoint): File {
         val endpointImports = endpoint.importReferences().distinctBy { it.value }
-            .map { Import("..model.${it.value}", LanguageType.Custom(it.value)) }
+            .map { import("..model.${it.value}", it.value) }
         val converted = endpoint.convert().findElement<Namespace>()!!
         val flattened = converted.flattenNestedStructs()
         val (moduleElements, classElements) = flattened.elements.partition { it is Struct || it is LanguageUnion }
@@ -262,8 +266,8 @@ open class PythonIrEmitter(
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val modelImports = endpoint.importReferences().distinctBy { it.value }
-            .map { Import("..model.${it.value}", LanguageType.Custom(it.value)) }
-        val endpointImport = Import("..endpoint.${endpoint.identifier.value}", LanguageType.Custom("*"))
+            .map { import("..model.${it.value}", it.value) }
+        val endpointImport = import("..endpoint.${endpoint.identifier.value}", "*")
         val endpointName = endpoint.identifier.value
 
         val file = super.emitEndpointClient(endpoint)
@@ -284,9 +288,9 @@ open class PythonIrEmitter(
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .map { Import(".model.${it.value}", LanguageType.Custom(it.value)) }
-        val endpointImports = endpoints.map { Import(".endpoint.${it.identifier.value}", LanguageType.Custom("*")) }
-        val clientImports = endpoints.map { Import(".client.${it.identifier.value}Client", LanguageType.Custom("${it.identifier.value}Client")) }
+            .map { import(".model.${it.value}", it.value) }
+        val endpointImports = endpoints.map { import(".endpoint.${it.identifier.value}", "*") }
+        val clientImports = endpoints.map { import(".client.${it.identifier.value}Client", "${it.identifier.value}Client") }
         val allImports = modelImports + endpointImports + clientImports
         val endpointNames = endpoints.map { it.identifier.value }
 
@@ -327,19 +331,19 @@ open class PythonIrEmitter(
     }
 
     private fun buildImports(wirespecPath: String): List<Element> = listOf(
-        Import("__future__", LanguageType.Custom("annotations")),
-        RawElement("import re"),
-        Import("abc", LanguageType.Custom("ABC")),
-        Import("abc", LanguageType.Custom("abstractmethod")),
-        Import("dataclasses", LanguageType.Custom("dataclass")),
-        Import("typing", LanguageType.Custom("Any")),
-        Import("typing", LanguageType.Custom("Generic")),
-        Import("typing", LanguageType.Custom("List")),
-        Import("typing", LanguageType.Custom("Optional")),
-        RawElement("import enum"),
-        Import(wirespecPath, LanguageType.Custom("T")),
-        Import(wirespecPath, LanguageType.Custom("Wirespec")),
-        Import(wirespecPath, LanguageType.Custom("_raise")),
+        import("__future__", "annotations"),
+        import("", "re"),
+        import("abc", "ABC"),
+        import("abc", "abstractmethod"),
+        import("dataclasses", "dataclass"),
+        import("typing", "Any"),
+        import("typing", "Generic"),
+        import("typing", "List"),
+        import("typing", "Optional"),
+        import("", "enum"),
+        import(wirespecPath, "T"),
+        import(wirespecPath, "Wirespec"),
+        import(wirespecPath, "_raise"),
     )
 
     private fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {

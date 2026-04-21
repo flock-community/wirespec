@@ -107,7 +107,7 @@ object TypeScriptGenerator : Generator {
     private fun Package.emit(indent: Int): String = ""
 
     private fun Import.emit(indent: Int): String {
-        val prefix = "type ".takeIf { isTypeOnly }.orEmpty()
+        val prefix = if (isTypeOnly) "type " else ""
         return "import {$prefix${type.name}} from '$path'\n".indentCode(indent)
     }
 

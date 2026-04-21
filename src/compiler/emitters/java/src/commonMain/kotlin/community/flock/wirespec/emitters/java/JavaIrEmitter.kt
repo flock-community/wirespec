@@ -67,7 +67,7 @@ open class JavaIrEmitter(
 
     override fun transformTestFile(file: File): File = file.transformTypeDescriptors()
 
-    private val wirespecImport = import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec")
+    private val wirespecImports = listOf(import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec"))
 
     private val sanitizationConfig = SanitizationConfig(
         reservedKeywords = reservedKeywords,
@@ -142,7 +142,7 @@ open class JavaIrEmitter(
         return file.wrapWithPackage(
             packageName = packageName,
             definition = definition,
-            wirespecImport = wirespecImport,
+            wirespecImports = wirespecImports,
             needsImport = module.needImports(),
             nameTransform = { it.pascalCase().sanitizeSymbol() },
         )
@@ -264,7 +264,7 @@ open class JavaIrEmitter(
         return File(
             name = Name.of(subPackageName.toDir() + transformedFile.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(subPackageName.value)) +
-                listOf(wirespecImport) +
+                wirespecImports +
                 imports +
                 listOf(endpointImport) +
                 transformedFile.elements
@@ -282,7 +282,7 @@ open class JavaIrEmitter(
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(packageName.value)) +
-                listOf(wirespecImport) +
+                wirespecImports +
                 allImports +
                 file.elements
         )

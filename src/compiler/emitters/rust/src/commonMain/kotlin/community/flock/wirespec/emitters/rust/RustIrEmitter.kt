@@ -48,6 +48,7 @@ import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
+import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.function
@@ -107,25 +108,6 @@ open class RustIrEmitter(
         apply(fixResponseSwitchPatterns())
     }
 
-    private val modelImport = """
-        |use super::super::wirespec::*;
-        |use regex;
-        |
-    """.trimMargin()
-
-    private val endpointImport = """
-        |use super::super::wirespec::*;
-        |use regex;
-        |
-    """.trimMargin()
-
-    override val shared = object : Shared {
-        override val packageString = "shared"
-
-    override fun transformTestFile(file: File): File = file
-        .transform { apply(fixResponseSwitchPatterns()) }
-        .let(RustTransform::apply)
-
     private val modelImports = listOf(
         import("super::super::wirespec", "*"),
         import("", "regex"),
@@ -136,9 +118,10 @@ open class RustIrEmitter(
         import("", "regex"),
     )
 
-    override fun emitShared(): File? {
+    override val shared = object : Shared {
+        override val packageString = "shared"
 
-        val rustImports = listOf(
+        private val rustImports = listOf(
             import("std::any", "TypeId"),
             import("std::collections", "HashMap"),
         )
@@ -311,15 +294,22 @@ open class RustIrEmitter(
                 }
             }
             .let { file ->
-                val groups = file.elements.fold(mutableListOf<MutableList<Element>>()) { acc, element ->
-                    val isImport = element is community.flock.wirespec.ir.core.Import
-                    val lastGroupIsImports = acc.lastOrNull()?.firstOrNull() is community.flock.wirespec.ir.core.Import
-                    if (isImport && lastGroupIsImports) acc.last().add(element)
-                    else acc.add(mutableListOf(element))
-                    acc
+                val groups = mutableListOf<List<Element>>()
+                var current = mutableListOf<Element>()
+                for (element in file.elements) {
+                    if (element is community.flock.wirespec.ir.core.Import) {
+                        current.add(element)
+                    } else {
+                        if (current.isNotEmpty()) {
+                            groups.add(current)
+                            current = mutableListOf()
+                        }
+                        groups.add(listOf(element))
+                    }
                 }
+                if (current.isNotEmpty()) groups.add(current)
                 groups.joinToString("\n\n") { group ->
-                    group.joinToString("") { RustGenerator.generate(it) }.trimEnd('\n')
+                    group.joinToString("") { it.generateRust() }.trimEnd('\n')
                 } + "\n"
             }
 
@@ -358,7 +348,7 @@ open class RustIrEmitter(
         val file = super.emit(definition, module, logger)
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().toSnakeCase()),
-            elements = listOf(RawElement(importHeader)) + file.elements.flatMap { element ->
+            elements = importHeader + file.elements.flatMap { element ->
                 if (element is Struct) listOf(RawElement("#[derive(Debug, Clone, Default, PartialEq)]"), element)
                 else listOf(element)
             }
@@ -440,9 +430,6 @@ open class RustIrEmitter(
             .map { import("super::super::model::${it.value.toSnakeCase()}", it.value) }
         val namespacePath = "$endpointModuleName::$endpointName"
         val code = buildList {
-            add("use super::super::wirespec::*;")
-            add("use super::super::endpoint::$endpointModuleName;")
-            if (imports.isNotEmpty()) add(imports)
             add("pub struct $clientName<'a, S: Serialization, T: Transportation> {")
             add("    pub serialization: &'a S,")
             add("    pub transportation: &'a T,")
@@ -478,14 +465,14 @@ open class RustIrEmitter(
 
         val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
             .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
-            .map { "use super::model::${it.value.toSnakeCase()}::${it.value};" }
+            .map { import("super::model::${it.value.toSnakeCase()}", it.value) }
 
         val endpointAndClientImports = endpoints.flatMap { endpoint ->
             val endpointModuleName = endpoint.identifier.value.toSnakeCase()
             val clientModuleName = "${endpoint.identifier.value}Client".toSnakeCase()
             listOf(
-                "use super::endpoint::$endpointModuleName;",
-                "use ${clientModuleName}::${endpoint.identifier.value}Client;",
+                import("super::endpoint", endpointModuleName),
+                import(clientModuleName, "${endpoint.identifier.value}Client"),
             )
         }
 
@@ -511,10 +498,6 @@ open class RustIrEmitter(
         }
 
         val code = (
-            listOf(modDeclarations) +
-            listOf("use super::wirespec::*;") +
-            modelImports +
-            useStatements +
             listOf(
                 "pub struct Client<S: Serialization, T: Transportation> {",
                 "    pub serialization: S,",
@@ -525,7 +508,13 @@ open class RustIrEmitter(
 
         return File(
             name = Name.of(packageName.toDir() + "client"),
-            elements = listOf(RawElement(code)),
+            elements = buildList {
+                add(RawElement(modDeclarations))
+                add(import("super::wirespec", "*"))
+                addAll(modelImports)
+                addAll(endpointAndClientImports)
+                add(RawElement(code))
+            },
         )
     }
 
@@ -559,17 +548,17 @@ open class RustIrEmitter(
         is Channel -> 6
     }
 
-    private fun File.prependImports(imports: String): File =
-        if (imports.isNotEmpty()) copy(elements = listOf(RawElement(imports)) + elements)
+    private fun File.prependImports(imports: List<Element>): File =
+        if (imports.isNotEmpty()) copy(elements = imports + elements)
         else this
 
-    private fun Type.buildModelImports(): String =
+    private fun Type.buildModelImports(): List<Element> =
         importReferences().distinctBy { it.value }
-            .joinToString("\n") { "use super::${it.value.toSnakeCase()}::${it.value};" }
+            .map { import("super::${it.value.toSnakeCase()}", it.value) }
 
-    private fun Endpoint.buildEndpointImports(): String =
+    private fun Endpoint.buildEndpointImports(): List<Element> =
         importReferences().distinctBy { it.value }
-            .joinToString("\n") { "use super::super::model::${it.value.toSnakeCase()}::${it.value};" }
+            .map { import("super::super::model::${it.value.toSnakeCase()}", it.value) }
 
     private fun <T : Element> T.injectSelfReceiver(fieldNames: Set<String>): T = transform {
         matchingElements { fn: LanguageFunction ->

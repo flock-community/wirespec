@@ -66,7 +66,7 @@ object PythonGenerator : Generator {
         var i = 0
         while (i < elements.size) {
             val element = elements[i]
-            if (element is Import && element.path != ".") {
+            if (element is Import && element.path != "." && element.path.isNotEmpty()) {
                 val path = element.path
                 val types = mutableListOf(element.type.name)
                 while (i + 1 < elements.size) {

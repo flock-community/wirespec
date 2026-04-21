@@ -191,7 +191,10 @@ class Language(
                 // Generate the test file content (which contains fn main())
                 val transformedRust = emitter.transformTestFile(resolved)
                 val rustContent = transformedRust.generateRust()
-                // Filter out the import lines that the generator produced (use super::...)
+                // Filter out the Import lines the generator produced from Java-style paths
+                // (e.g. `use community.flock.wirespec.generated.model::X;`). These contain '.'
+                // in the first path segment and would be invalid Rust — run() regenerates
+                // them below with correct Rust module paths.
                 val filteredContent = rustContent.lines()
                     .filter { line ->
                         !(line.startsWith("use ") &&
