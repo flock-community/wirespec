@@ -53,4 +53,8 @@ public class TodoService {
     public void uploadFile(String name, Object file){
         files.put(name, file);
     }
+
+    public List<Todo> getStore() {
+        return store;
+    }
 }

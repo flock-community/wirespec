@@ -50,7 +50,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
         var id = switch (request){
             case GetTodoById.Request req -> req.path().id();
         };
-        var res = new GetTodoById.Response200(service.store.get(parseInt(id.value())));
+        var res = new GetTodoById.Response200(service.getStore().get(parseInt(id.value())));
         return CompletableFuture.completedFuture(res);
     }
 
@@ -61,7 +61,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
 
     @Override
     public CompletableFuture<GetTodos.Response<?>> getTodos(GetTodos.Request request) {
-        var res = new GetTodos.Response200(service.store);
+        var res = new GetTodos.Response200(service.getStore());
         return CompletableFuture.completedFuture(res);
     }
 

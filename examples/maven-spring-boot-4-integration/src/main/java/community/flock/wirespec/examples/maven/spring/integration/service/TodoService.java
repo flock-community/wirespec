@@ -49,4 +49,8 @@ public class TodoService {
                 })
                 .orElseThrow();
     }
+
+    public List<Todo> getStore() {
+        return store;
+    }
 }
