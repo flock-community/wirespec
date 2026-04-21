@@ -1,3 +1,7 @@
+// OpenAPI v2 covers a large spec surface; toReference/flatten intentionally
+// dispatch over many schema shapes in a single function for readability.
+@file:Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "LongMethod")
+
 package community.flock.wirespec.openapi.v2
 
 import arrow.core.NonEmptyList

@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // Embedded Java codegen templates stay on one line to preserve output fidelity.
+
 package community.flock.wirespec.emitters.java
 
 import community.flock.wirespec.compiler.core.concatGenerics

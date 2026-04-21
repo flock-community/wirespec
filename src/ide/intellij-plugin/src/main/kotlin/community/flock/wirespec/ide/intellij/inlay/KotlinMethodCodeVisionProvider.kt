@@ -56,9 +56,8 @@ class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
         ?.entries
         ?.joinToString("") { it.text }
 
-    private fun isWirespecHandler(psiClass: PsiClass): PsiClass? = if (InheritanceUtil.isInheritor(psiClass, "community.flock.wirespec.kotlin.Wirespec.Handler")) {
-        psiClass
-    } else {
-        null
+    private fun isWirespecHandler(psiClass: PsiClass): PsiClass? {
+        val handlerFqn = "community.flock.wirespec.kotlin.Wirespec.Handler"
+        return psiClass.takeIf { InheritanceUtil.isInheritor(it, handlerFqn) }
     }
 }

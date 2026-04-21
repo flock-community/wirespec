@@ -20,39 +20,43 @@ import com.intellij.psi.tree.IElementType
 
 class SyntaxHighlighter : SyntaxHighlighterBase() {
 
-    override fun getTokenHighlights(tokenType: IElementType) = when (tokenType) {
-        Types.COMMENT -> arrayOf(DOC_COMMENT_MARKUP)
-        Types.BRACKETS -> arrayOf(BRACKETS)
-        Types.LEFT_BRACKET -> arrayOf(BRACKETS)
-        Types.RIGHT_BRACKET -> arrayOf(BRACKETS)
-        Types.COLON -> arrayOf(SEMICOLON)
-        Types.COMMA -> arrayOf(COMMA)
-        Types.WIRESPEC_IDENTIFIER -> arrayOf(PARAMETER)
-        Types.TYPE_IDENTIFIER -> arrayOf(IDENTIFIER)
-        Types.WS_BOOLEAN -> arrayOf(KEYWORD)
-        Types.WS_INTEGER -> arrayOf(KEYWORD)
-        Types.WS_NUMBER -> arrayOf(KEYWORD)
-        Types.WS_STRING -> arrayOf(KEYWORD)
-        Types.UNIT -> arrayOf(KEYWORD)
-        Types.TYPE_DEF -> arrayOf(KEYWORD)
-        Types.ENDPOINT_DEF -> arrayOf(KEYWORD)
-        Types.CHANNEL_DEF -> arrayOf(KEYWORD)
-        Types.ENUM_DEF -> arrayOf(KEYWORD)
-        Types.LEFT_CURLY -> arrayOf(BRACKETS)
-        Types.RIGHT_CURLY -> arrayOf(BRACKETS)
-        Types.LEFT_PARENTHESES -> arrayOf(PARENTHESES)
-        Types.RIGHT_PARENTHESES -> arrayOf(PARENTHESES)
-        Types.QUESTION_MARK -> arrayOf(IDENTIFIER)
-        Types.REG_EXP -> arrayOf(STRING)
-        Types.UNDERSCORE -> arrayOf(LINE_COMMENT)
-        Types.ANNOTATION -> arrayOf(METADATA)
-        Types.LITERAL_STRING -> arrayOf(STRING)
-        Types.NUMBER -> arrayOf(NUMBER)
-        Types.INTEGER -> arrayOf(NUMBER)
-        else -> arrayOfNulls(0)
-    }
+    override fun getTokenHighlights(tokenType: IElementType) =
+        TOKEN_HIGHLIGHTS[tokenType]?.let(::arrayOf) ?: arrayOfNulls(0)
 
     override fun getHighlightingLexer() = Lexer()
+
+    companion object {
+        private val TOKEN_HIGHLIGHTS = mapOf(
+            Types.COMMENT to DOC_COMMENT_MARKUP,
+            Types.BRACKETS to BRACKETS,
+            Types.LEFT_BRACKET to BRACKETS,
+            Types.RIGHT_BRACKET to BRACKETS,
+            Types.COLON to SEMICOLON,
+            Types.COMMA to COMMA,
+            Types.WIRESPEC_IDENTIFIER to PARAMETER,
+            Types.TYPE_IDENTIFIER to IDENTIFIER,
+            Types.WS_BOOLEAN to KEYWORD,
+            Types.WS_INTEGER to KEYWORD,
+            Types.WS_NUMBER to KEYWORD,
+            Types.WS_STRING to KEYWORD,
+            Types.UNIT to KEYWORD,
+            Types.TYPE_DEF to KEYWORD,
+            Types.ENDPOINT_DEF to KEYWORD,
+            Types.CHANNEL_DEF to KEYWORD,
+            Types.ENUM_DEF to KEYWORD,
+            Types.LEFT_CURLY to BRACKETS,
+            Types.RIGHT_CURLY to BRACKETS,
+            Types.LEFT_PARENTHESES to PARENTHESES,
+            Types.RIGHT_PARENTHESES to PARENTHESES,
+            Types.QUESTION_MARK to IDENTIFIER,
+            Types.REG_EXP to STRING,
+            Types.UNDERSCORE to LINE_COMMENT,
+            Types.ANNOTATION to METADATA,
+            Types.LITERAL_STRING to STRING,
+            Types.NUMBER to NUMBER,
+            Types.INTEGER to NUMBER,
+        )
+    }
 }
 
 class SyntaxHighlighterFactory : SyntaxHighlighterFactory() {

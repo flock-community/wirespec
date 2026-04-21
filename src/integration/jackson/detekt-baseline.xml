@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>MaxLineLength:WirespecModuleKotlin.kt$KotlinReservedKeywordNamingStrategy$override fun nameForGetterMethod(config: MapperConfig&lt;*&gt;, method: AnnotatedMethod, defaultName: String): String</ID>
-    <ID>MaxLineLength:WirespecModuleKotlin.kt$KotlinReservedKeywordNamingStrategy$override fun nameForSetterMethod(config: MapperConfig&lt;*&gt;, method: AnnotatedMethod, defaultName: String): String</ID>
-  </CurrentIssues>
-</SmellBaseline>

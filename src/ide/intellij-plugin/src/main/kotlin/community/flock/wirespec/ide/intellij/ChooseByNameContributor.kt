@@ -17,24 +17,19 @@ class ChooseByNameContributor : IntellijChooseByNameContributor {
         val scope = GlobalSearchScope.allScope(project)
         val files = FileTypeIndex.getFiles(FileType, scope)
         val psiManager = PsiManager.getInstance(project)
-        val map = mutableMapOf<String, PsiElement>()
-
-        for (file in files) {
-            val psiFile = psiManager.findFile(file) ?: continue
-            if (psiFile is community.flock.wirespec.ide.intellij.File) {
-                val typeDefs = PsiTreeUtil.getChildrenOfType(psiFile, TypeDefElement::class.java).orEmpty()
-                for (typeDef in typeDefs) {
-                    val customType = PsiTreeUtil.findChildOfType(typeDef, CustomTypeElementDef::class.java)
-                    if (customType != null) {
-                        map[customType.text] = customType
-                    }
-                }
-            }
-        }
-        return map
+        return files
+            .mapNotNull { psiManager.findFile(it) as? community.flock.wirespec.ide.intellij.File }
+            .flatMap { PsiTreeUtil.getChildrenOfType(it, TypeDefElement::class.java).orEmpty().toList() }
+            .mapNotNull { PsiTreeUtil.findChildOfType(it, CustomTypeElementDef::class.java) }
+            .associateBy { it.text }
     }
 
     override fun getNames(project: Project, includeNonProjectItems: Boolean) = getMap(project).keys.toTypedArray()
 
-    override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> = listOfNotNull((getMap(project)[name]) as NavigationItem).toTypedArray()
+    override fun getItemsByName(
+        name: String,
+        pattern: String,
+        project: Project,
+        includeNonProjectItems: Boolean,
+    ): Array<NavigationItem> = listOfNotNull(getMap(project)[name] as NavigationItem).toTypedArray()
 }

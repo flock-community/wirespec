@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>EmptyDefaultConstructor:TypeScriptEmitter.kt$TypeScriptEmitter$()</ID>
-    <ID>MaxLineLength:TypeScriptEndpointDefinitionEmitter.kt$TypeScriptEndpointDefinitionEmitter$"${emit(identifier)}: serialization.deserialize(Object.entries(it.$fields).find(([key]) =&gt; key.toLowerCase() === ${emit(identifier.lowercase())})?.[1])"</ID>
-    <ID>TooManyFunctions:TypeScriptEndpointDefinitionEmitter.kt$TypeScriptEndpointDefinitionEmitter : EndpointDefinitionEmitterTypeScriptTypeDefinitionEmitter</ID>
-  </CurrentIssues>
-</SmellBaseline>

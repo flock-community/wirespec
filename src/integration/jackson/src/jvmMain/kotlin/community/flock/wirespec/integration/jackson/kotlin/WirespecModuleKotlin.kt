@@ -152,9 +152,17 @@ private class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
     private val translate = translator(KotlinIdentifierEmitter)
 
-    override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String = defaultName.translateIfDataClass(method.declaringClass.kotlin)
+    override fun nameForGetterMethod(
+        config: MapperConfig<*>,
+        method: AnnotatedMethod,
+        defaultName: String,
+    ): String = defaultName.translateIfDataClass(method.declaringClass.kotlin)
 
-    override fun nameForSetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String = defaultName.translateIfDataClass(method.declaringClass.kotlin)
+    override fun nameForSetterMethod(
+        config: MapperConfig<*>,
+        method: AnnotatedMethod,
+        defaultName: String,
+    ): String = defaultName.translateIfDataClass(method.declaringClass.kotlin)
 
     override fun nameForConstructorParameter(
         config: MapperConfig<*>,

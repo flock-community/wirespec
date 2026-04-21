@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // Embedded Kotlin codegen templates stay on one line to preserve output fidelity.
+
 package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.concatGenerics

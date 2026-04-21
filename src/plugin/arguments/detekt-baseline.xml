@@ -1,7 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>ExplicitItLambdaParameter:Utils.kt${ index, it -&gt; val prefix = if (index &lt; paths.size - 1) "├── " else "└── " logger.info(" $prefix " + it.first.name.value + "." + it.first.extension.value) }</ID>
-  </CurrentIssues>
-</SmellBaseline>
