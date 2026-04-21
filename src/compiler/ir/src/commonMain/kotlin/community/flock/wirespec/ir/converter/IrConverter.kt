@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.BinaryOp
 import community.flock.wirespec.ir.core.ConstructorStatement
+import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.EnumReference
 import community.flock.wirespec.ir.core.EnumValueCall
 import community.flock.wirespec.ir.core.ErrorStatement
@@ -34,6 +35,7 @@ import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec
@@ -203,6 +205,53 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
         }
     }
 }
+
+fun SharedWirespec.convertClientServer(): List<Element> = listOf(
+    `interface`("ServerEdge") {
+        typeParam(type("Req"), type("Request", Type.Wildcard))
+        typeParam(type("Res"), type("Response", Type.Wildcard))
+        function("from") {
+            returnType(type("Req"))
+            arg("request", type("RawRequest"))
+        }
+        function("to") {
+            returnType(type("RawResponse"))
+            arg("response", type("Res"))
+        }
+    },
+    `interface`("ClientEdge") {
+        typeParam(type("Req"), type("Request", Type.Wildcard))
+        typeParam(type("Res"), type("Response", Type.Wildcard))
+        function("to") {
+            returnType(type("RawRequest"))
+            arg("request", type("Req"))
+        }
+        function("from") {
+            returnType(type("Res"))
+            arg("response", type("RawResponse"))
+        }
+    },
+    `interface`("Client") {
+        typeParam(type("Req"), type("Request", Type.Wildcard))
+        typeParam(type("Res"), type("Response", Type.Wildcard))
+        field("pathTemplate", Type.String)
+        field("method", Type.String)
+        function("client") {
+            returnType(type("ClientEdge", type("Req"), type("Res")))
+            arg("serialization", type("Serialization"))
+        }
+    },
+    `interface`("Server") {
+        typeParam(type("Req"), type("Request", Type.Wildcard))
+        typeParam(type("Res"), type("Response", Type.Wildcard))
+        field("pathTemplate", Type.String)
+        field("method", Type.String)
+        function("server") {
+            returnType(type("ServerEdge", type("Req"), type("Res")))
+            arg("serialization", type("Serialization"))
+        }
+    },
+)
 
 private fun Identifier.toName(): Name = when (this) {
     is FieldIdentifier -> {

@@ -1,4 +1,4 @@
-package community.flock.wirespec.ir.emit
+package community.flock.wirespec.ir.transformer
 
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall

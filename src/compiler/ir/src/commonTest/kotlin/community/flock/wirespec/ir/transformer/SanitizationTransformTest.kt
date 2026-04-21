@@ -1,4 +1,4 @@
-package community.flock.wirespec.ir.emit
+package community.flock.wirespec.ir.transformer
 
 import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.FieldCall
@@ -13,7 +13,7 @@ import community.flock.wirespec.ir.core.transformChildren
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class SanitizationTest {
+class SanitizationTransformTest {
 
     private val javaLikeConfig = SanitizationConfig(
         reservedKeywords = setOf("class", "return", "import"),
