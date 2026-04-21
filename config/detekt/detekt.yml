@@ -1,0 +1,33 @@
+# Detekt configuration overlayed on top of detekt's default ruleset.
+# Only declare rules/properties here when they differ from the defaults.
+# See: https://detekt.dev/docs/introduction/configurations
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
+  TooManyFunctions:
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    thresholdInInterfaces: 20
+    thresholdInObjects: 20
+    thresholdInEnums: 20
+
+style:
+  MagicNumber:
+    active: false
+  ReturnCount:
+    max: 4
+  MaxLineLength:
+    maxLineLength: 160
+  WildcardImport:
+    active: true
+    excludeImports:
+      - "java.util.*"

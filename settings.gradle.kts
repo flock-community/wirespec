@@ -3,6 +3,7 @@ rootProject.name = "wirespec"
 pluginManagement {
     includeBuild("gradle/plugins/publish-sonatype")
     includeBuild("gradle/plugins/spotless")
+    includeBuild("gradle/plugins/detekt")
     repositories {
         mavenLocal()
         gradlePluginPortal()

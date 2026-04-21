@@ -1,5 +1,6 @@
 plugins {
     id("module.spotless")
+    id("module.detekt")
     alias(libs.plugins.kotlin.multiplatform)
 }
 
