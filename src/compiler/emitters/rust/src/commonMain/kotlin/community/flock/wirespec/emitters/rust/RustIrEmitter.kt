@@ -57,9 +57,9 @@ import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
-import community.flock.wirespec.ir.emit.SanitizationConfig
-import community.flock.wirespec.ir.emit.sanitizeFieldName
-import community.flock.wirespec.ir.emit.sanitizeNames
+import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.sanitizeFieldName
+import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.generator.RustGenerator
 import community.flock.wirespec.ir.generator.generateRust
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
