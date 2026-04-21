@@ -56,7 +56,8 @@ import community.flock.wirespec.ir.emit.buildClientServerInterfaces
 import community.flock.wirespec.ir.emit.sanitizeFieldName
 import community.flock.wirespec.ir.emit.sanitizeNames
 import community.flock.wirespec.ir.emit.withSharedSource
-import community.flock.wirespec.ir.emit.wrapWithPackage
+import community.flock.wirespec.ir.emit.placeInPackage
+import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.ScalaGenerator
 import community.flock.wirespec.ir.generator.generateScala
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
@@ -168,12 +169,9 @@ open class ScalaIrEmitter(
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        return file.wrapWithPackage(
-            packageName = packageName,
-            definition = definition,
-            wirespecImports = wirespecImports,
-            needsImport = module.needImports(),
-        )
+        return file
+            .prependImports(wirespecImports.takeIf { module.needImports() })
+            .placeInPackage(packageName = packageName, definition = definition)
     }
 
     override fun emit(type: Type, module: Module): File =

@@ -54,7 +54,8 @@ import community.flock.wirespec.ir.emit.SanitizationConfig
 import community.flock.wirespec.ir.emit.buildClientServerInterfaces
 import community.flock.wirespec.ir.emit.sanitizeNames
 import community.flock.wirespec.ir.emit.withSharedSource
-import community.flock.wirespec.ir.emit.wrapWithPackage
+import community.flock.wirespec.ir.emit.placeInPackage
+import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.JavaGenerator
 import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
@@ -145,13 +146,9 @@ open class JavaIrEmitter(
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        return file.wrapWithPackage(
-            packageName = packageName,
-            definition = definition,
-            wirespecImports = wirespecImports,
-            needsImport = module.needImports(),
-            nameTransform = { it.pascalCase().sanitizeSymbol() },
-        )
+        return file.copy(name = Name.of(file.name.pascalCase().sanitizeSymbol()))
+            .prependImports(wirespecImports.takeIf { module.needImports() })
+            .placeInPackage(packageName = packageName, definition = definition)
     }
 
     override fun emit(type: AstType, module: Module): File =

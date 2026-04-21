@@ -113,7 +113,7 @@ class RustIrEmitterTest {
         |use super::super::wirespec::*;
         |use regex;
         |pub trait Queue: Wirespec.Channel {
-        |    fn invoke(message: String);
+        |    fn invoke(message: &str);
         |}
         |
         |#![allow(warnings)]

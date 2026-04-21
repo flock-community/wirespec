@@ -106,10 +106,9 @@ open class RustIrEmitter(
         )
     }
 
-    override fun transformTestFile(file: File): File = file.transform {
-        apply(borrowSerializationArgs())
-        apply(fixResponseSwitchPatterns())
-    }
+    override fun transformTestFile(file: File): File = file
+        .transform { apply(fixResponseSwitchPatterns()) }
+        .let(RustTransform::apply)
 
     private val modelImports = listOf(
         import("super::super::wirespec", "*"),
@@ -282,6 +281,7 @@ open class RustIrEmitter(
                     } else listOf(element)
                 })
             }
+            .let(RustTransform::apply)
 
         override val source: String = wirespecFile
             .transform {
@@ -350,7 +350,7 @@ open class RustIrEmitter(
             is Endpoint -> endpointImports
             else -> modelImports
         }
-        val file = super.emit(definition, module, logger)
+        val file = super.emit(definition, module, logger).let(RustTransform::apply)
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().toSnakeCase()),
             elements = importHeader + file.elements.flatMap { element ->
@@ -406,13 +406,6 @@ open class RustIrEmitter(
             .stripResponseGenerics()
             .transform { apply(fixResponseSwitchPatterns()) }
             .transform { apply(fixConstructorCalls()) }
-            .transform { apply(borrowSerializationArgs()) }
-            .transform {
-                parametersWhere(
-                    predicate = { (it.type as? LanguageType.Custom)?.name in setOf("Serializer", "Deserializer") },
-                    transform = { it.copy(type = (it.type as LanguageType.Custom).borrowImpl()) },
-                )
-            }
             .injectSelfToHandlerMethods()
             .injectHandlerImplForClient(endpoint)
             .injectResponseFromImpls()
@@ -613,35 +606,11 @@ open class RustIrEmitter(
         }
     }
 
-    private fun LanguageType.toRustTypeString(): String = when (this) {
-        is LanguageType.String -> "String"
-        is LanguageType.Boolean -> "bool"
-        is LanguageType.Integer -> when (precision) {
-            community.flock.wirespec.ir.core.Precision.P32 -> "i32"
-            community.flock.wirespec.ir.core.Precision.P64 -> "i64"
-        }
-        is LanguageType.Number -> when (precision) {
-            community.flock.wirespec.ir.core.Precision.P32 -> "f32"
-            community.flock.wirespec.ir.core.Precision.P64 -> "f64"
-        }
-        is LanguageType.Bytes -> "Vec<u8>"
-        is LanguageType.Unit -> "()"
-        is LanguageType.Any -> "Box<dyn std::any::Any>"
-        is LanguageType.Array -> "Vec<${elementType.toRustTypeString()}>"
-        is LanguageType.Dict -> "std::collections::HashMap<${keyType.toRustTypeString()}, ${valueType.toRustTypeString()}>"
-        is LanguageType.Nullable -> "Option<${type.toRustTypeString()}>"
-        is LanguageType.Custom -> name
-        is LanguageType.Wildcard -> "_"
-        is LanguageType.Reflect -> "std::any::TypeId"
-        is LanguageType.IntegerLiteral -> "i32"
-        is LanguageType.StringLiteral -> "String"
-    }
-
     private fun Endpoint.buildClientParams(): Pair<String, String> {
         val params = requestParameters()
         val paramsStr = if (params.isNotEmpty()) {
             ", " + params.joinToString(", ") { (name, type) ->
-                "${name.snakeCase().sanitizeKeywords()}: ${type.toRustTypeString()}"
+                "${name.snakeCase().sanitizeKeywords()}: ${with(RustTransform) { type.rustName() }}"
             }
         } else ""
         val argsStr = if (params.isNotEmpty()) {
@@ -676,60 +645,6 @@ open class RustIrEmitter(
             namespace.name,
             moduleElements + Namespace(namespace.name, classElements, namespace.extends),
         )
-    }
-
-    private val serializationMethodNames = setOf(
-        "serialize_path", "serialize_param", "serialize_body",
-        "deserialize_path", "deserialize_param", "deserialize_body",
-    )
-
-    private fun Expression.toRawCode(): String = when (this) {
-        is VariableReference -> name.snakeCase().sanitizeKeywords()
-        is FieldCall -> {
-            val recv = receiver?.let { "${it.toRawCode()}." } ?: ""
-            "$recv${field.snakeCase().sanitizeKeywords()}"
-        }
-        is ArrayIndexCall -> {
-            val lit = index as? Literal
-            val idx = when {
-                lit != null && (lit.type is LanguageType.Integer || lit.type is LanguageType.Number) -> "${lit.value}"
-                lit != null && lit.type is LanguageType.String -> "\"${lit.value}\""
-                else -> index.toRawCode()
-            }
-            "${receiver.toRawCode()}[$idx]"
-        }
-        is ConstructorStatement -> {
-            val typeName = (type as? LanguageType.Custom)?.name ?: type.toString()
-            val args = namedArguments.entries.joinToString(", ") { "${it.key.snakeCase()}: ${it.value.toRawCode()}" }
-            if (args.isEmpty()) "$typeName {}" else "$typeName { $args }"
-        }
-        is Literal -> when {
-            type is LanguageType.String -> "String::from(\"$value\")"
-            type is LanguageType.Boolean -> "$value"
-            type is LanguageType.Integer -> "${value}"
-            type is LanguageType.Number -> "${value}"
-            else -> "$value"
-        }
-        is RawExpression -> code
-        else -> error("Unsupported expression type in toRawCode: ${this::class.simpleName}")
-    }
-
-    private fun Expression.toBorrowedRaw(): RawExpression = RawExpression("&${toRawCode()}")
-
-    private fun borrowSerializationArgs(): Transformer = transformer {
-        statementAndExpression { s, t ->
-            if (s is FunctionCall && s.name.snakeCase() in serializationMethodNames) {
-                val newArgs = s.arguments.entries.mapIndexed { idx, (key, value) ->
-                    val transformed = t.transformExpression(value)
-                    if (idx == 0 && !(transformed is VariableReference && transformed.name.value() == "it")) {
-                        key to transformed.toBorrowedRaw()
-                    } else {
-                        key to transformed
-                    }
-                }.toMap()
-                s.copy(arguments = newArgs)
-            } else s.transformChildren(t)
-        }
     }
 
     private fun fixResponseSwitchPatterns(): Transformer = transformer {
@@ -870,9 +785,6 @@ open class RustIrEmitter(
 
     companion object : Keywords {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
-        fun LanguageType.Custom.borrow(): LanguageType.Custom = copy(name = "&$name")
-        fun LanguageType.Custom.borrowDyn(): LanguageType.Custom = copy(name = "&dyn $name")
-        fun LanguageType.Custom.borrowImpl(): LanguageType.Custom = copy(name = "&impl $name")
         override val reservedKeywords = setOf(
             "as", "break", "const", "continue", "crate",
             "else", "enum", "extern", "false", "fn",

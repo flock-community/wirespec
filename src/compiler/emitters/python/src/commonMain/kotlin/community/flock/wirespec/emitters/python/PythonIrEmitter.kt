@@ -9,7 +9,8 @@ import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.SanitizationConfig
 import community.flock.wirespec.ir.emit.sanitizeFieldName
 import community.flock.wirespec.ir.emit.sanitizeNames
-import community.flock.wirespec.ir.emit.wrapWithModuleImport
+import community.flock.wirespec.ir.emit.placeInModule
+import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -157,11 +158,9 @@ open class PythonIrEmitter(
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        return file.wrapWithModuleImport(
-            packageName = packageName,
-            definition = definition,
-            imports = buildImports("..wirespec"),
-        )
+        return file
+            .prependImports(buildImports("..wirespec"))
+            .placeInModule(packageName = packageName, definition = definition)
     }
 
     override fun emit(type: Type, module: Module): File {

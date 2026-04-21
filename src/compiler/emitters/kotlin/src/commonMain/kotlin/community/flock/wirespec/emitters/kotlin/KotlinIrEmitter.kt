@@ -18,7 +18,8 @@ import community.flock.wirespec.ir.emit.buildClientServerInterfaces
 import community.flock.wirespec.ir.emit.sanitizeFieldName
 import community.flock.wirespec.ir.emit.sanitizeNames
 import community.flock.wirespec.ir.emit.withSharedSource
-import community.flock.wirespec.ir.emit.wrapWithPackage
+import community.flock.wirespec.ir.emit.placeInPackage
+import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.needImports
@@ -132,12 +133,9 @@ open class KotlinIrEmitter(
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
-        return file.wrapWithPackage(
-            packageName = packageName,
-            definition = definition,
-            wirespecImports = wirespecImports,
-            needsImport = module.needImports(),
-        )
+        return file
+            .prependImports(wirespecImports.takeIf { module.needImports() })
+            .placeInPackage(packageName = packageName, definition = definition)
     }
 
     override fun emit(type: Type, module: Module): File =
