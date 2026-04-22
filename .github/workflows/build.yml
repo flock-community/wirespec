@@ -388,8 +388,8 @@ jobs:
         name: Generate version
         uses: ./.github/actions/version
         with:
-          version: ${{ github.event.release.tag_name }}
-          branch: ${{ github.event.release.target_commitish }}
+          version: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.base_version) || github.event.release.tag_name }}
+          branch: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || github.event.release.target_commitish }}
 
   native-publish:
 
