@@ -7,10 +7,16 @@ on:
     branches:
   release:
     types: [ "created" ]
+  workflow_dispatch:
+    inputs:
+      base_version:
+        description: 'Base version (e.g. 0.18.0) — RC.N suffix is auto-computed'
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'release' }}
 
 jobs:
 
@@ -358,7 +364,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published')
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published'))
 
     needs:
       - success
@@ -367,6 +375,11 @@ jobs:
       version: ${{steps.version.outputs.version}}
 
     steps:
+      - name: Guard against master dispatch
+        if: github.event_name == 'workflow_dispatch' && github.ref_name == 'master'
+        run: |
+          echo "::error::Manual RC publish is not allowed from master; cut a GitHub release to publish a stable version."
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -374,8 +387,8 @@ jobs:
         name: Generate version
         uses: ./.github/actions/version
         with:
-          version: ${{ github.event.release.tag_name }}
-          branch: ${{ github.event.release.target_commitish }}
+          version: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.base_version) || github.event.release.tag_name }}
+          branch: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || github.event.release.target_commitish }}
 
   native-publish:
 
@@ -493,6 +506,8 @@ jobs:
   release-cli:
 
     runs-on: ubuntu-latest
+
+    if: github.event_name == 'release'
 
     needs:
       - native-publish
