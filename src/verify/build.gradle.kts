@@ -14,10 +14,11 @@ kotlin {
     jvmToolchain(libs.versions.java.get().toInt())
 }
 
+val verifyEnabled = providers.gradleProperty("verify").isPresent
 tasks.test {
     useJUnitPlatform()
     systemProperty("buildDir", layout.buildDirectory.get().asFile.absolutePath)
-    onlyIf { project.hasProperty("verify") }
+    enabled = verifyEnabled
 }
 
 dependencies {
