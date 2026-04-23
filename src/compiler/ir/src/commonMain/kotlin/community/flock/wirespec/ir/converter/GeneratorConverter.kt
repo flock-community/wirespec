@@ -12,6 +12,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
+import community.flock.wirespec.ir.core.MapExpression
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.RawExpression
@@ -163,14 +164,56 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
                 Name.of("generator") to VariableReference(Name.of("generator")),
             ),
         )
-        is ReferenceWirespec.Iterable -> generatorCallExpression(
-            typeName,
-            fieldNameStr,
-            ConstructorStatement(
-                type = Type.Custom("Wirespec.GeneratorFieldArray"),
-                namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
-            ),
-        )
+        is ReferenceWirespec.Iterable -> {
+            // Emit iteration: (0 until generator.generate(path + "field", Type::class, GeneratorFieldArray(...))).map { i -> <element-expr> }
+            // The outer callback returns the element count; for each index i we call the
+            // element generator and build `path + "field" + i.toString()`.
+            val countCall = generatorCallExpression(
+                typeName,
+                fieldNameStr,
+                ConstructorStatement(
+                    type = Type.Custom("Wirespec.GeneratorFieldArray"),
+                    namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
+                ),
+            )
+            val indexedPath = BinaryOp(
+                pathPlus(fieldNameStr),
+                BinaryOp.Operator.PLUS,
+                FunctionCall(
+                    receiver = VariableReference(Name.of("i")),
+                    name = Name.of("toString"),
+                ),
+            )
+            val elementExpr: Expression = when (val inner = ref.reference) {
+                is ReferenceWirespec.Custom -> FunctionCall(
+                    receiver = RawExpression("${inner.value}Generator"),
+                    name = Name.of("generate"),
+                    arguments = mapOf(
+                        Name.of("path") to indexedPath,
+                        Name.of("generator") to VariableReference(Name.of("generator")),
+                    ),
+                )
+                is ReferenceWirespec.Primitive -> FunctionCall(
+                    receiver = VariableReference(Name.of("generator")),
+                    name = Name.of("generate"),
+                    arguments = mapOf(
+                        Name.of("path") to indexedPath,
+                        Name.of("type") to ClassReference(Type.Custom(typeName)),
+                        Name.of("field") to inner.toFieldDescriptor(),
+                    ),
+                )
+                else -> NullLiteral
+            }
+            MapExpression(
+                receiver = BinaryOp(
+                    Literal(0L, Type.Integer()),
+                    BinaryOp.Operator.UNTIL,
+                    countCall,
+                ),
+                variable = Name.of("i"),
+                body = elementExpr,
+            )
+        }
         is ReferenceWirespec.Dict -> generatorCallExpression(
             typeName,
             fieldNameStr,

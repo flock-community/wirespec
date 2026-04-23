@@ -248,7 +248,7 @@ data class BinaryOp(
     val right: Expression,
 ) : Statement,
     Expression {
-    enum class Operator { PLUS, EQUALS, NOT_EQUALS }
+    enum class Operator { PLUS, EQUALS, NOT_EQUALS, UNTIL }
 }
 
 // Type descriptor - represents a runtime type descriptor for serialization

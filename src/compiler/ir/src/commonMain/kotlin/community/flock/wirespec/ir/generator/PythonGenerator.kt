@@ -371,6 +371,7 @@ object PythonGenerator : Generator {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in Python")
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -443,7 +444,14 @@ object PythonGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Python")
         is NotExpression -> "not ${expression.emit()}"
         is IfExpression -> "(${thenExpr.emit()} if ${condition.emit()} else ${elseExpr.emit()})"
-        is MapExpression -> "[${body.emit()} for ${variable.camelCase()} in ${receiver.emit()}]"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emit()
+            } else {
+                "[${body.emit()} for ${variable.camelCase()} in ${receiver.emit()}]"
+            }
+        }
         is FlatMapIndexed -> "[item for ${indexVar.camelCase()}, ${elementVar.camelCase()} in enumerate(${receiver.emit()}) for item in ${body.emit()}]"
         is ListConcat -> when {
             lists.isEmpty() -> "[]"
@@ -481,7 +489,14 @@ object PythonGenerator : Generator {
         is EnumValueCall -> "${expression.emitWithInlinedIt(replacement)}.value"
         is NotExpression -> "not ${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${thenExpr.emitWithInlinedIt(replacement)} if ${condition.emitWithInlinedIt(replacement)} else ${elseExpr.emitWithInlinedIt(replacement)})"
-        is MapExpression -> "[${body.emitWithInlinedIt(replacement)} for ${variable.camelCase()} in ${receiver.emitWithInlinedIt(replacement)}]"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emitWithInlinedIt(replacement)
+            } else {
+                "[${body.emitWithInlinedIt(replacement)} for ${variable.camelCase()} in ${receiver.emitWithInlinedIt(replacement)}]"
+            }
+        }
         is FlatMapIndexed -> "[item for ${indexVar.camelCase()}, ${elementVar.camelCase()} in enumerate(${receiver.emitWithInlinedIt(replacement)}) for item in ${body.emitWithInlinedIt(replacement)}]"
         is ListConcat -> lists.joinToString(" + ") { it.emitWithInlinedIt(replacement) }
         is StringTemplate -> "f\"${parts.joinToString("") {

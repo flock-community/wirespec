@@ -402,6 +402,7 @@ private class KotlinEmitter(val file: File) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> "until"
     }
 
     private fun Switch.emitWhen(caseIndent: Int): String {
