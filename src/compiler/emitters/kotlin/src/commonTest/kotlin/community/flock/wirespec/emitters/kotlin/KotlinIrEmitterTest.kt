@@ -76,6 +76,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class UUID(
             |  override val value: String
             |) : Wirespec.Refined<String> {
@@ -99,6 +100,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |enum class TodoStatus (override val label: String): Wirespec.Enum {
             |  OPEN("OPEN"),
             |  IN_PROGRESS("IN_PROGRESS"),
@@ -121,6 +123,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.endpoint
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |import community.flock.wirespec.generated.model.Token
             |import community.flock.wirespec.generated.model.PotentialTodoDto
             |import community.flock.wirespec.generated.model.TodoDto
@@ -275,6 +278,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class PotentialTodoDto(
             |  val name: String,
             |  val done: Boolean
@@ -286,6 +290,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Token(
             |  val iss: String
             |) : Wirespec.Model {
@@ -296,6 +301,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TodoDto(
             |  val id: String,
             |  val name: String,
@@ -308,6 +314,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Error(
             |  val code: Long,
             |  val description: String
@@ -319,6 +326,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |import community.flock.wirespec.generated.model.Token
             |import community.flock.wirespec.generated.model.PotentialTodoDto
             |import community.flock.wirespec.generated.model.TodoDto
@@ -346,6 +354,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |import community.flock.wirespec.generated.model.Token
             |import community.flock.wirespec.generated.model.PotentialTodoDto
             |import community.flock.wirespec.generated.model.TodoDto
@@ -387,6 +396,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |enum class MyAwesomeEnum (override val label: String): Wirespec.Enum {
             |  ONE("ONE"),
             |  Two("Two"),
@@ -413,6 +423,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.endpoint
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |import community.flock.wirespec.generated.model.TodoDto
             |object GetTodos : Wirespec.Endpoint {
             |  object Path : Wirespec.Path
@@ -492,6 +503,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TodoDto(
             |  val description: String
             |) : Wirespec.Model {
@@ -502,6 +514,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.client
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.endpoint.GetTodos
             |data class GetTodosClient(
@@ -519,6 +532,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.endpoint.GetTodos
             |import community.flock.wirespec.generated.client.GetTodosClient
@@ -544,6 +558,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TodoId(
             |  override val value: String
             |) : Wirespec.Refined<String> {
@@ -556,6 +571,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TodoNoRegex(
             |  override val value: String
             |) : Wirespec.Refined<String> {
@@ -568,6 +584,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestInt(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
@@ -580,6 +597,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestInt0(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
@@ -592,6 +610,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestInt1(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
@@ -604,6 +623,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestInt2(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
@@ -616,6 +636,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestNum(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
@@ -628,6 +649,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestNum0(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
@@ -640,6 +662,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestNum1(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
@@ -652,6 +675,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class TestNum2(
             |  override val value: Double
             |) : Wirespec.Refined<Double> {
@@ -730,6 +754,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class DutchPostalCode(
             |  override val value: String
             |) : Wirespec.Refined<String> {
@@ -742,6 +767,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Address(
             |  val street: String,
             |  val houseNumber: Long,
@@ -754,6 +780,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Person(
             |  val name: String,
             |  val address: Address,
@@ -774,6 +801,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Email(
             |  override val value: String
             |) : Wirespec.Refined<String> {
@@ -786,6 +814,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class PhoneNumber(
             |  override val value: String
             |) : Wirespec.Refined<String> {
@@ -798,6 +827,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Tag(
             |  override val value: String
             |) : Wirespec.Refined<String> {
@@ -810,6 +840,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class EmployeeAge(
             |  override val value: Long
             |) : Wirespec.Refined<Long> {
@@ -822,6 +853,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class ContactInfo(
             |  val email: Email,
             |  val phone: PhoneNumber?
@@ -833,6 +865,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Employee(
             |  val name: String,
             |  val age: EmployeeAge,
@@ -846,6 +879,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Department(
             |  val name: String,
             |  val employees: List<Employee>
@@ -857,6 +891,7 @@ class KotlinIrEmitterTest {
             |package community.flock.wirespec.generated.model
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
+            |import kotlin.reflect.KClass
             |data class Company(
             |  val name: String,
             |  val departments: List<Department>
@@ -875,6 +910,7 @@ class KotlinIrEmitterTest {
         val expected = """
             |package community.flock.wirespec.kotlin
             |import kotlin.reflect.KType
+            |import kotlin.reflect.KClass
             |object Wirespec {
             |  interface Model {
             |      fun validate(): List<String>
@@ -917,24 +953,24 @@ class KotlinIrEmitterTest {
             |      interface Headers
             |  }
             |  interface BodySerializer {
-            |      fun <T: Any> serializeBody(t: T, type: KType): ByteArray
+            |      fun <T: Any> serializeBody(t: T, type: KClass<*>): ByteArray
             |  }
             |  interface BodyDeserializer {
-            |      fun <T: Any> deserializeBody(raw: ByteArray, type: KType): T
+            |      fun <T: Any> deserializeBody(raw: ByteArray, type: KClass<*>): T
             |  }
             |  interface BodySerialization : BodySerializer, BodyDeserializer
             |  interface PathSerializer {
-            |      fun <T: Any> serializePath(t: T, type: KType): String
+            |      fun <T: Any> serializePath(t: T, type: KClass<*>): String
             |  }
             |  interface PathDeserializer {
-            |      fun <T: Any> deserializePath(raw: String, type: KType): T
+            |      fun <T: Any> deserializePath(raw: String, type: KClass<*>): T
             |  }
             |  interface PathSerialization : PathSerializer, PathDeserializer
             |  interface ParamSerializer {
-            |      fun <T: Any> serializeParam(value: T, type: KType): List<String>
+            |      fun <T: Any> serializeParam(value: T, type: KClass<*>): List<String>
             |  }
             |  interface ParamDeserializer {
-            |      fun <T: Any> deserializeParam(values: List<String>, type: KType): T
+            |      fun <T: Any> deserializeParam(values: List<String>, type: KClass<*>): T
             |  }
             |  interface ParamSerialization : ParamSerializer, ParamDeserializer
             |  interface Serializer : BodySerializer, PathSerializer, ParamSerializer
@@ -954,6 +990,39 @@ class KotlinIrEmitterTest {
             |    )
             |  interface Transportation {
             |      suspend fun transport(request: RawRequest): RawResponse
+            |  }
+            |  sealed interface GeneratorField<T: Any?>
+            |  data class GeneratorFieldString(
+            |      val regex: String?
+            |    ) : GeneratorField<String>
+            |  data class GeneratorFieldInteger(
+            |      val min: Long?,
+            |      val max: Long?
+            |    ) : GeneratorField<Long>
+            |  data class GeneratorFieldNumber(
+            |      val min: Double?,
+            |      val max: Double?
+            |    ) : GeneratorField<Double>
+            |  object GeneratorFieldBoolean : GeneratorField<Boolean>
+            |  object GeneratorFieldBytes : GeneratorField<ByteArray>
+            |  data class GeneratorFieldEnum(
+            |      val values: List<String>
+            |    ) : GeneratorField<String>
+            |  data class GeneratorFieldUnion(
+            |      val variants: List<String>
+            |    ) : GeneratorField<String>
+            |  data class GeneratorFieldArray(
+            |      val inner: GeneratorField<*>?
+            |    ) : GeneratorField<Int>
+            |  data class GeneratorFieldNullable(
+            |      val inner: GeneratorField<*>?
+            |    ) : GeneratorField<Boolean>
+            |  data class GeneratorFieldDict(
+            |      val key: GeneratorField<*>?,
+            |      val value: GeneratorField<*>?
+            |    ) : GeneratorField<Int>
+            |  interface Generator {
+            |      fun <T: Any?> generate(path: List<String>, type: KClass<*>, field: GeneratorField<T>): T
             |  }
             |  interface ServerEdge<Req: Request<*>, Res: Response<*>> {
             |      fun from(request: RawRequest): Req
