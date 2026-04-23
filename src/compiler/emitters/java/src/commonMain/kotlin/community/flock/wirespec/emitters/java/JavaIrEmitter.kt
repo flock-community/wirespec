@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.Element
@@ -157,6 +158,20 @@ open class JavaIrEmitter(
         return file.copy(name = Name.of(file.name.pascalCase().sanitizeSymbol()))
             .prependImports(wirespecImports.takeIf { module.needImports() })
             .placeInPackage(packageName = packageName, definition = definition)
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is AstType -> definition.convertToGenerator()
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }
+        return generatorFile
+            .sanitizeNames(sanitizationConfig)
+            .prependImports(wirespecImports)
+            .placeInPackage(packageName = packageName, subPackage = "generator")
     }
 
     override fun emit(type: AstType, module: Module): File =
