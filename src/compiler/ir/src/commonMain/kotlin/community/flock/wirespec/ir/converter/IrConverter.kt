@@ -235,7 +235,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             field("variants", list(string))
         }
         struct("GeneratorFieldArray") {
-            implements(type("GeneratorField", integer64))
+            implements(type("GeneratorField", integer))
             field("inner", type("GeneratorField", Type.Wildcard).nullable())
         }
         struct("GeneratorFieldNullable") {
@@ -243,7 +243,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             field("inner", type("GeneratorField", Type.Wildcard).nullable())
         }
         struct("GeneratorFieldDict") {
-            implements(type("GeneratorField", integer64))
+            implements(type("GeneratorField", integer))
             field("key", type("GeneratorField", Type.Wildcard).nullable())
             field("value", type("GeneratorField", Type.Wildcard).nullable())
         }
