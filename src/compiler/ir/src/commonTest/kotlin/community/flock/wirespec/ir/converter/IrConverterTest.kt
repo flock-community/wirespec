@@ -9,12 +9,17 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Shared
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.ir.core.Constraint
+import community.flock.wirespec.ir.core.Function
 import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.LiteralList
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Precision
+import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.enum
@@ -23,6 +28,7 @@ import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.union
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.fail
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 import community.flock.wirespec.compiler.core.parse.ast.Refined as AstRefined
@@ -199,5 +205,39 @@ class IrConverterTest {
         }
 
         assertEquals(expected, result)
+    }
+
+    @Test
+    fun testSharedContainsGeneratorField() {
+        val file = Shared("com.example").convert()
+        val wirespecNamespace = file.elements
+            .filterIsInstance<Namespace>()
+            .first { it.name == Name.of("Wirespec") }
+        val interfaces = wirespecNamespace.elements
+            .filterIsInstance<Interface>()
+        val structs = wirespecNamespace.elements
+            .filterIsInstance<Struct>()
+
+        val generatorField = interfaces.first { it.name == Name.of("GeneratorField") }
+        assertTrue(generatorField.isSealed, "GeneratorField should be sealed")
+
+        val generator = interfaces.first { it.name == Name.of("Generator") }
+        val generateFn = generator.elements
+            .filterIsInstance<Function>()
+            .first { it.name == Name.of("generate") }
+        assertEquals(3, generateFn.parameters.size, "generate() should take path, type, and field")
+        assertEquals(Type.Reflect, generateFn.parameters[1].type, "second param must be Type.Reflect")
+
+        val expectedVariants = setOf(
+            "GeneratorFieldString", "GeneratorFieldInteger", "GeneratorFieldNumber",
+            "GeneratorFieldBoolean", "GeneratorFieldBytes", "GeneratorFieldEnum",
+            "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
+            "GeneratorFieldDict",
+        )
+        val actualVariants = structs.map { it.name.value() }.toSet()
+        assertTrue(
+            expectedVariants.all { it in actualVariants },
+            "Missing variants: ${expectedVariants - actualVariants}",
+        )
     }
 }
