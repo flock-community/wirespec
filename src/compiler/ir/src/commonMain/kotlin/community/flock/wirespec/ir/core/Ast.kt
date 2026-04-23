@@ -266,6 +266,7 @@ data class ConstructorStatement(val type: Type, val namedArguments: Map<Name, Ex
 data class Literal(val value: Any, val type: Type) :
     Statement,
     Expression
+data class ClassReference(val type: Type) : Expression
 data class LiteralList(val values: List<Expression>, val type: Type) :
     Statement,
     Expression

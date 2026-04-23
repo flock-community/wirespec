@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -576,6 +577,7 @@ private class TypeScriptFileEmitter(val file: File) {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> TODO("ClassReference emission not yet implemented")
         is RawExpression -> code
         is NullLiteral -> "undefined"
         is NullableEmpty -> "undefined"

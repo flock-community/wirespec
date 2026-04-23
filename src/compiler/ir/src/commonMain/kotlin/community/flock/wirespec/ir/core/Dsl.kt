@@ -29,6 +29,9 @@ interface BaseBuilder {
     fun literal(value: Boolean) = Literal(value, Type.Boolean)
     fun literal(value: Float) = Literal(value, Type.Number(Precision.P32))
     fun literal(value: Double) = Literal(value, Type.Number(Precision.P64))
+
+    fun classRef(type: Type): ClassReference = ClassReference(type)
+    fun classRef(typeName: String): ClassReference = ClassReference(Type.Custom(typeName))
 }
 
 @Dsl
