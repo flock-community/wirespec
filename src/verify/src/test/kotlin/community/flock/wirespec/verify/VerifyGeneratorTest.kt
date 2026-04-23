@@ -18,13 +18,6 @@ import io.kotest.core.spec.style.FunSpec
  *
  * SCOPE: Kotlin only. Other languages are deferred because their Generator converters
  * have known output issues (Rust dotted names, Scala unreachable-throw in unions, etc.).
- *
- * BLOCKED: This test is currently ignored because the Kotlin GeneratorConverter pipeline
- * emits per-model `*Generator.kt` files that do not import their corresponding model type
- * from `community.flock.wirespec.generated.model`, so `kotlinc` fails with
- * "unresolved reference 'Person'" (and for every other generated type) before the test
- * body can run. The same blocker affects VerifyRefinedTest on this branch. See the report
- * attached to this commit for the exact converter fixes required.
  */
 class VerifyGeneratorTest : FunSpec({
 
@@ -32,9 +25,7 @@ class VerifyGeneratorTest : FunSpec({
     languages.values
         .filter { it.emitter is KotlinIrEmitter }
         .forEach { lang ->
-            // xtest = ignored test in kotest; keeps the scaffolding compiled and runnable
-            // once the converter blocker is resolved, but does not report a failure today.
-            xtest("generator produces populated Person - $lang") {
+            test("generator produces populated Person - $lang") {
                 val testFile = file("GeneratorSmokeTest") {
                     import("community.flock.wirespec.kotlin", "Wirespec")
                     import("community.flock.wirespec.generated.model", "Person")
