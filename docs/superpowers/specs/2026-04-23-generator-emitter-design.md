@@ -81,7 +81,7 @@ Parameters:
 
 ```kotlin
 // Kotlin
-val callback = object : Wirespec.Generator {
+val generator = object : Wirespec.Generator {
     override fun <T> generate(path, type, field): T = when (type) {
         Address::class -> …
         Person::class -> …
@@ -102,7 +102,7 @@ match type:
 
 (TypeScript uses `if (type === Address) { … } else if (type === Person) …`; Rust uses `if type == TypeId::of::<Address>() { … }`.)
 
-The callback is named `generator` at the call site, but the **parameter name** inside generated functions is `callback` to avoid visually overloading the word "generator" in function bodies. (The parameter name is emitted by `GeneratorConverter` and is purely cosmetic.)
+The parameter name inside generated functions is `generator` (matching the interface name).
 
 ## `GeneratorConverter.kt` — IR → generator-function IR
 
@@ -132,12 +132,12 @@ type Address { street: String, number: Integer, postalCode: UUID }
 Emitted:
 ```kotlin
 object AddressGenerator {
-    fun generate(path: List<String>, callback: Wirespec.Generator): Address = Address(
-        street = callback.generate(path + "street", Address::class,
+    fun generate(path: List<String>, generator: Wirespec.Generator): Address = Address(
+        street = generator.generate(path + "street", Address::class,
             Wirespec.GeneratorFieldString(regex = null)),
-        number = callback.generate(path + "number", Address::class,
+        number = generator.generate(path + "number", Address::class,
             Wirespec.GeneratorFieldInteger(min = null, max = null)),
-        postalCode = UUIDGenerator.generate(path + "postalCode", callback),
+        postalCode = UUIDGenerator.generate(path + "postalCode", generator),
     )
 }
 ```
@@ -145,28 +145,28 @@ object AddressGenerator {
 In the pseudocode below, `<typeRef>` stands for the enclosing definition's class reference (e.g. `Address::class` when generating a field of `Address` in Kotlin, `Address.class` in Java, etc.).
 
 Field handling by `Reference`:
-- **Primitive** → `callback.generate(path + fieldName, <typeRef>, <Primitive-to-XxxField>)`.
-- **Custom** → `{FieldTypeName}Generator.generate(path + fieldName, callback)` — recursive composition.
+- **Primitive** → `generator.generate(path + fieldName, <typeRef>, <Primitive-to-XxxField>)`.
+- **Custom** → `{FieldTypeName}Generator.generate(path + fieldName, generator)` — recursive composition.
 - **Iterable** →
   ```kotlin
-  val count = callback.generate(path + fieldName, <typeRef>,
+  val count = generator.generate(path + fieldName, <typeRef>,
       Wirespec.GeneratorFieldArray(inner = <innerDesc>))
   val values = (0 until count).map { i ->
-      <recurse-on-inner>(path + fieldName + i.toString(), callback)
+      <recurse-on-inner>(path + fieldName + i.toString(), generator)
   }
   ```
 - **Dict** →
   ```kotlin
-  val count = callback.generate(path + fieldName, <typeRef>,
+  val count = generator.generate(path + fieldName, <typeRef>,
       Wirespec.GeneratorFieldDict(key = <keyDesc>, value = <valueDesc>))
   val entries = (0 until count).associate { i ->
-      <keyGen>(path + fieldName + "key$i", callback) to
-      <valueGen>(path + fieldName + "value$i", callback)
+      <keyGen>(path + fieldName + "key$i", generator) to
+      <valueGen>(path + fieldName + "value$i", generator)
   }
   ```
 - **Nullable reference** (any of the above with `isNullable = true`) → wrap the value production:
   ```kotlin
-  val isNull = callback.generate(path + fieldName, <typeRef>,
+  val isNull = generator.generate(path + fieldName, <typeRef>,
       Wirespec.GeneratorFieldNullable(inner = <nonNullableDesc>))
   val value = if (isNull) null else <non-nullable-production>
   ```
@@ -186,8 +186,8 @@ type UUID /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/g
 Emitted:
 ```kotlin
 object UUIDGenerator {
-    fun generate(path: List<String>, callback: Wirespec.Generator): UUID = UUID(
-        value = callback.generate(path + "value", UUID::class,
+    fun generate(path: List<String>, generator: Wirespec.Generator): UUID = UUID(
+        value = generator.generate(path + "value", UUID::class,
             Wirespec.GeneratorFieldString(regex = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")),
     )
 }
@@ -199,8 +199,8 @@ Integer/Number refined types emit `GeneratorFieldInteger(min, max)` / `Generator
 
 ```kotlin
 object ColorGenerator {
-    fun generate(path: List<String>, callback: Wirespec.Generator): Color = Color(
-        label = callback.generate(path + "value", Color::class,
+    fun generate(path: List<String>, generator: Wirespec.Generator): Color = Color(
+        label = generator.generate(path + "value", Color::class,
             Wirespec.GeneratorFieldEnum(values = listOf("RED", "GREEN", "BLUE"))),
     )
 }
@@ -212,13 +212,13 @@ Assumes each language's enum emission produces a `label: String` constructor par
 
 ```kotlin
 object ShapeGenerator {
-    fun generate(path: List<String>, callback: Wirespec.Generator): Shape {
-        val variant = callback.generate(path + "variant", Shape::class,
+    fun generate(path: List<String>, generator: Wirespec.Generator): Shape {
+        val variant = generator.generate(path + "variant", Shape::class,
             Wirespec.GeneratorFieldUnion(variants = listOf("Circle", "Square", "Triangle")))
         return when (variant) {
-            "Circle" -> CircleGenerator.generate(path + "Circle", callback)
-            "Square" -> SquareGenerator.generate(path + "Square", callback)
-            "Triangle" -> TriangleGenerator.generate(path + "Triangle", callback)
+            "Circle" -> CircleGenerator.generate(path + "Circle", generator)
+            "Square" -> SquareGenerator.generate(path + "Square", generator)
+            "Triangle" -> TriangleGenerator.generate(path + "Triangle", generator)
             else -> error("Unknown variant: $variant")
         }
     }
@@ -326,7 +326,7 @@ Expected-output strings are stored inline using `trimMargin` multiline strings (
 **Test programs** (`src/verify/src/test/kotlin/.../VerifyGeneratorTest.kt`, built via IR DSL and compiled per language through Docker):
 
 1. Implement `Wirespec.Generator` with a deterministic callback that dispatches on the class-reference argument (`when (type) { Address::class -> … }` in Kotlin, `if (type == Address.class) …` in Java, etc.) and returns fixed values per type + field combination.
-2. Call `PersonGenerator.generate(listOf("Person"), callback)`.
+2. Call `PersonGenerator.generate(listOf("Person"), generator)`.
 3. Assert the returned `Person` has the expected scalar field values, the nested `Address` populated correctly, the correct number of `addresses`, the nullable field populated/null consistent with the callback, and that `UUID` / `Color` / `Shape` satisfy their respective constraints.
 
 Runs parameterized across Java, Kotlin, TypeScript, Python, Scala, Rust via existing verify infrastructure.
