@@ -92,12 +92,15 @@ class VerifyGeneratorTest : FunSpec({
                             "Person.name should be populated by the generator",
                         )
 
-                        // Integer fields return 42L.
+                        // Integer fields return 42L. Use a raw "42L" literal so the Kotlin
+                        // generator emits the Long suffix (Type.Integer() defaults to P32
+                        // and would emit plain `42`, which fails `person.age == 42` when
+                        // `age` is typed as Long).
                         assertThat(
                             BinaryOp(
                                 FieldCall(VariableReference(Name.of("person")), Name.of("age")),
                                 BinaryOp.Operator.EQUALS,
-                                Literal(42L, Type.Integer()),
+                                RawExpression("42L"),
                             ),
                             "Person.age should be populated by the generator",
                         )
