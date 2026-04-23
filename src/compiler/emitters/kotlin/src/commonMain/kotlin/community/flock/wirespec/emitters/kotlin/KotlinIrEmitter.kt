@@ -39,9 +39,13 @@ import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.Import
+import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.raw
@@ -134,9 +138,18 @@ open class KotlinIrEmitter(
             is Union -> definition.convertToGenerator()
             else -> return null
         }
-        return generatorFile
-            .sanitizeNames(sanitizationConfig)
-            .prependImports(wirespecImports)
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val modelImports = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .map { import("${packageName.value}.model", it) }
+            .toList()
+        return sanitized
+            .prependImports(wirespecImports + modelImports)
             .placeInPackage(packageName = packageName, subPackage = "generator")
     }
 
