@@ -427,7 +427,7 @@ object RustGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
-        is ClassReference -> TODO("ClassReference emission not yet implemented")
+        is ClassReference -> "std::any::TypeId::of::<${type.emit()}>()"
         is RawExpression -> code
         is NullLiteral, is NullableEmpty -> "None"
         is VariableReference -> name.snakeCase().sanitize()

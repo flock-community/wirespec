@@ -490,7 +490,7 @@ private class JavaEmitter(val file: File) {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
-        is ClassReference -> TODO("ClassReference emission not yet implemented")
+        is ClassReference -> "${type.emitGenerics()}.class"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "java.util.Optional.empty()"

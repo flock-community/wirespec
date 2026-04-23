@@ -342,7 +342,7 @@ private class KotlinEmitter(val file: File) {
         Type.Boolean -> "Boolean"
         Type.Unit -> "Unit"
         Type.Wildcard -> "*"
-        Type.Reflect -> "KType"
+        Type.Reflect -> "KClass<*>"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
         is Type.Custom -> name
@@ -500,7 +500,7 @@ private class KotlinEmitter(val file: File) {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
-        is ClassReference -> TODO("ClassReference emission not yet implemented")
+        is ClassReference -> "${type.emitGenerics()}::class"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "null"

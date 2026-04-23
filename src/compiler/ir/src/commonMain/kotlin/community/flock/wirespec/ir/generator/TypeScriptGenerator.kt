@@ -577,7 +577,7 @@ private class TypeScriptFileEmitter(val file: File) {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
-        is ClassReference -> TODO("ClassReference emission not yet implemented")
+        is ClassReference -> type.emit()
         is RawExpression -> code
         is NullLiteral -> "undefined"
         is NullableEmpty -> "undefined"

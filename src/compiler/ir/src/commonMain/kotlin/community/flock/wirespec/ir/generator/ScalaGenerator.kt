@@ -528,7 +528,7 @@ ScalaEmitter(
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
-        is ClassReference -> TODO("ClassReference emission not yet implemented")
+        is ClassReference -> "classOf[${type.emitGenerics()}]"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "None"
