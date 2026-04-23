@@ -1184,6 +1184,50 @@ class JavaIrEmitterTest {
             |  public interface Transportation {
             |    public java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request);
             |  }
+            |  public sealed interface GeneratorField<T extends java.util.Optional<Object>> {
+            |  }
+            |  public static record GeneratorFieldString (
+            |    java.util.Optional<String> regex
+            |  ) implements GeneratorField<String> {
+            |  };
+            |  public static record GeneratorFieldInteger (
+            |    java.util.Optional<Long> min,
+            |    java.util.Optional<Long> max
+            |  ) implements GeneratorField<Long> {
+            |  };
+            |  public static record GeneratorFieldNumber (
+            |    java.util.Optional<Double> min,
+            |    java.util.Optional<Double> max
+            |  ) implements GeneratorField<Double> {
+            |  };
+            |  public static record GeneratorFieldBoolean () implements GeneratorField<Boolean> {
+            |  };
+            |  public static record GeneratorFieldBytes () implements GeneratorField<byte[]> {
+            |  };
+            |  public static record GeneratorFieldEnum (
+            |    java.util.List<String> values
+            |  ) implements GeneratorField<String> {
+            |  };
+            |  public static record GeneratorFieldUnion (
+            |    java.util.List<String> variants
+            |  ) implements GeneratorField<String> {
+            |  };
+            |  public static record GeneratorFieldArray (
+            |    java.util.Optional<GeneratorField<?>> inner
+            |  ) implements GeneratorField<Integer> {
+            |  };
+            |  public static record GeneratorFieldNullable (
+            |    java.util.Optional<GeneratorField<?>> inner
+            |  ) implements GeneratorField<Boolean> {
+            |  };
+            |  public static record GeneratorFieldDict (
+            |    java.util.Optional<GeneratorField<?>> key,
+            |    java.util.Optional<GeneratorField<?>> value
+            |  ) implements GeneratorField<Integer> {
+            |  };
+            |  public interface Generator {
+            |    public <T extends java.util.Optional<Object>> T generate(java.util.List<String> path, Type type, GeneratorField<T> field);
+            |  }
             |  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
             |    public Req from(RawRequest request);
             |    public RawResponse to(Res response);
