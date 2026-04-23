@@ -1108,6 +1108,61 @@ class RustIrEmitterTest {
             |    async fn transport(&self, request: &RawRequest) -> RawResponse;
             |}
             |
+            |pub trait GeneratorField<T: Option<Box<dyn std::any::Any>>> {}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldString {
+            |    pub regex: Option<String>,
+            |}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldInteger {
+            |    pub min: Option<i64>,
+            |    pub max: Option<i64>,
+            |}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldNumber {
+            |    pub min: Option<f64>,
+            |    pub max: Option<f64>,
+            |}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldBoolean;
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldBytes;
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldEnum {
+            |    pub values: Vec<String>,
+            |}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldUnion {
+            |    pub variants: Vec<String>,
+            |}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldArray {
+            |    pub inner: Option<GeneratorField<_>>,
+            |}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldNullable {
+            |    pub inner: Option<GeneratorField<_>>,
+            |}
+            |
+            |#[derive(Debug, Clone, Default, PartialEq)]
+            |pub struct GeneratorFieldDict {
+            |    pub key: Option<GeneratorField<_>>,
+            |    pub value: Option<GeneratorField<_>>,
+            |}
+            |
+            |pub trait Generator {
+            |    fn generate(&self, path: Vec<String>, r#type: std::any::TypeId, field: GeneratorField<T>) -> T;
+            |}
+            |
             |pub trait Client {
             |    type Transport: Transportation;
             |    type Ser: Serialization;
