@@ -362,6 +362,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
             |object PotentialTodoDtoGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): PotentialTodoDto =
             |    PotentialTodoDto(
@@ -374,6 +375,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Token
             |object TokenGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Token =
             |    Token(iss = generator.generate((path + "iss"), Token::class, Wirespec.GeneratorFieldString(regex = null)))
@@ -383,6 +385,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TodoDto
             |object TodoDtoGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TodoDto =
             |    TodoDto(
@@ -396,6 +399,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Error
             |object ErrorGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Error =
             |    Error(
@@ -472,9 +476,10 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.MyAwesomeEnum
             |object MyAwesomeEnumGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): MyAwesomeEnum =
-            |    MyAwesomeEnum(label = generator.generate((path + "value"), MyAwesomeEnum::class, Wirespec.GeneratorFieldEnum(values = listOf("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"))))
+            |    MyAwesomeEnum.valueOf(generator.generate((path + "value"), MyAwesomeEnum::class, Wirespec.GeneratorFieldEnum(values = listOf("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"))))
             |}
             |
         """.trimMargin()
@@ -598,6 +603,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TodoDto
             |object TodoDtoGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TodoDto =
             |    TodoDto(description = generator.generate((path + "description"), TodoDto::class, Wirespec.GeneratorFieldString(regex = null)))
@@ -763,6 +769,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TodoId
             |object TodoIdGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TodoId =
             |    TodoId(value = generator.generate((path + "value"), TodoId::class, Wirespec.GeneratorFieldString(regex = "^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}")))
@@ -772,6 +779,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TodoNoRegex
             |object TodoNoRegexGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TodoNoRegex =
             |    TodoNoRegex(value = generator.generate((path + "value"), TodoNoRegex::class, Wirespec.GeneratorFieldString(regex = null)))
@@ -781,6 +789,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestInt
             |object TestIntGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestInt =
             |    TestInt(value = generator.generate((path + "value"), TestInt::class, Wirespec.GeneratorFieldInteger(
@@ -793,6 +802,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestInt0
             |object TestInt0Generator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestInt0 =
             |    TestInt0(value = generator.generate((path + "value"), TestInt0::class, Wirespec.GeneratorFieldInteger(
@@ -805,6 +815,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestInt1
             |object TestInt1Generator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestInt1 =
             |    TestInt1(value = generator.generate((path + "value"), TestInt1::class, Wirespec.GeneratorFieldInteger(
@@ -817,6 +828,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestInt2
             |object TestInt2Generator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestInt2 =
             |    TestInt2(value = generator.generate((path + "value"), TestInt2::class, Wirespec.GeneratorFieldInteger(
@@ -829,6 +841,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestNum
             |object TestNumGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestNum =
             |    TestNum(value = generator.generate((path + "value"), TestNum::class, Wirespec.GeneratorFieldNumber(
@@ -841,6 +854,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestNum0
             |object TestNum0Generator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestNum0 =
             |    TestNum0(value = generator.generate((path + "value"), TestNum0::class, Wirespec.GeneratorFieldNumber(
@@ -853,6 +867,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestNum1
             |object TestNum1Generator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestNum1 =
             |    TestNum1(value = generator.generate((path + "value"), TestNum1::class, Wirespec.GeneratorFieldNumber(
@@ -865,6 +880,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.TestNum2
             |object TestNum2Generator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): TestNum2 =
             |    TestNum2(value = generator.generate((path + "value"), TestNum2::class, Wirespec.GeneratorFieldNumber(
@@ -914,6 +930,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.UserAccount
             |object UserAccountGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): UserAccount {
             |    val variant = generator.generate((path + "variant"), UserAccount::class, Wirespec.GeneratorFieldUnion(variants = listOf("UserAccountPassword", "UserAccountToken")))
@@ -933,6 +950,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.UserAccountPassword
             |object UserAccountPasswordGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): UserAccountPassword =
             |    UserAccountPassword(
@@ -945,6 +963,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.UserAccountToken
             |object UserAccountTokenGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): UserAccountToken =
             |    UserAccountToken(token = generator.generate((path + "token"), UserAccountToken::class, Wirespec.GeneratorFieldString(regex = null)))
@@ -954,6 +973,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.User
             |object UserGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): User =
             |    User(
@@ -987,6 +1007,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Request
             |object RequestGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Request =
             |    Request(
@@ -1059,6 +1080,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.DutchPostalCode
             |object DutchPostalCodeGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): DutchPostalCode =
             |    DutchPostalCode(value = generator.generate((path + "value"), DutchPostalCode::class, Wirespec.GeneratorFieldString(regex = "^([0-9]{4}[A-Z]{2})${'$'}")))
@@ -1068,6 +1090,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Address
             |object AddressGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Address =
             |    Address(
@@ -1084,6 +1107,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Person
             |object PersonGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Person =
             |    Person(
@@ -1207,6 +1231,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Email
             |object EmailGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Email =
             |    Email(value = generator.generate((path + "value"), Email::class, Wirespec.GeneratorFieldString(regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}")))
@@ -1216,6 +1241,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.PhoneNumber
             |object PhoneNumberGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): PhoneNumber =
             |    PhoneNumber(value = generator.generate((path + "value"), PhoneNumber::class, Wirespec.GeneratorFieldString(regex = "^\+[1-9]\d{1,14}${'$'}")))
@@ -1225,6 +1251,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Tag
             |object TagGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Tag =
             |    Tag(value = generator.generate((path + "value"), Tag::class, Wirespec.GeneratorFieldString(regex = "^[a-z][a-z0-9-]{0,19}${'$'}")))
@@ -1234,6 +1261,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.EmployeeAge
             |object EmployeeAgeGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): EmployeeAge =
             |    EmployeeAge(value = generator.generate((path + "value"), EmployeeAge::class, Wirespec.GeneratorFieldInteger(
@@ -1246,6 +1274,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.ContactInfo
             |object ContactInfoGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): ContactInfo =
             |    ContactInfo(
@@ -1258,6 +1287,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Employee
             |object EmployeeGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Employee =
             |    Employee(
@@ -1272,6 +1302,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Department
             |object DepartmentGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Department =
             |    Department(
@@ -1284,6 +1315,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Company
             |object CompanyGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Company =
             |    Company(
@@ -1503,6 +1535,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Address
             |object AddressGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Address =
             |    Address(
@@ -1533,9 +1566,10 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Color
             |object ColorGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Color =
-            |    Color(label = generator.generate((path + "value"), Color::class, Wirespec.GeneratorFieldEnum(values = listOf("RED", "GREEN", "BLUE"))))
+            |    Color.valueOf(generator.generate((path + "value"), Color::class, Wirespec.GeneratorFieldEnum(values = listOf("RED", "GREEN", "BLUE"))))
             |}
             |
         """.trimMargin()
@@ -1560,6 +1594,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Shape
             |object ShapeGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Shape {
             |    val variant = generator.generate((path + "variant"), Shape::class, Wirespec.GeneratorFieldUnion(variants = listOf("Circle", "Square")))
@@ -1599,6 +1634,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.UUID
             |object UUIDGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): UUID =
             |    UUID(value = generator.generate((path + "value"), UUID::class, Wirespec.GeneratorFieldString(regex = "^[0-9a-f]{8}${'$'}")))
@@ -1638,6 +1674,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Inventory
             |object InventoryGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Inventory =
             |    Inventory(items = generator.generate((path + "items"), Inventory::class, Wirespec.GeneratorFieldArray(inner = Wirespec.GeneratorFieldInteger(
@@ -1680,6 +1717,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Lookup
             |object LookupGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Lookup =
             |    Lookup(entries = generator.generate((path + "entries"), Lookup::class, Wirespec.GeneratorFieldDict(
@@ -1722,6 +1760,7 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |import kotlin.reflect.KClass
+            |import community.flock.wirespec.generated.model.Person
             |object PersonGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Person =
             |    Person(nickname = if (generator.generate((path + "nickname"), Person::class, Wirespec.GeneratorFieldNullable(inner = Wirespec.GeneratorFieldString(regex = null)))) null else generator.generate((path + "nickname"), Person::class, Wirespec.GeneratorFieldString(regex = null)))

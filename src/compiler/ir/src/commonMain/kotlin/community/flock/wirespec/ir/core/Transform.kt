@@ -474,7 +474,7 @@ internal fun Element.collectTypes(): List<Type> = buildList {
     forEachType { add(it) }
 }
 
-internal fun Element.collectCustomTypeNames(): Set<String> = buildSet {
+fun Element.collectCustomTypeNames(): Set<String> = buildSet {
     forEachType { type ->
         if (type is Type.Custom) add(type.name)
     }
