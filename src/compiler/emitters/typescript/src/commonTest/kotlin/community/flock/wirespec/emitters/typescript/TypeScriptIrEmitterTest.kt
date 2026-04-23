@@ -700,7 +700,7 @@ class TypeScriptIrEmitterTest {
             |  export interface Transportation {
             |    transport(request: RawRequest): Promise<RawResponse>;
             |  }
-            |  export interface GeneratorField<T extends any | undefined> {}
+            |  export interface GeneratorField<T> {}
             |  export type GeneratorFieldString = {
             |    "regex": string | undefined,
             |  }
@@ -731,7 +731,7 @@ class TypeScriptIrEmitterTest {
             |    "value": GeneratorField<unknown> | undefined,
             |  }
             |  export interface Generator {
-            |    generate<T extends any | undefined>(path: string[], type: Type, field: GeneratorField<T>): T;
+            |    generate<T>(path: string[], type: Type, field: GeneratorField<T>): T;
             |  }
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
             |    to: (request: REQ) => RawRequest;

@@ -1108,7 +1108,7 @@ class RustIrEmitterTest {
             |    async fn transport(&self, request: &RawRequest) -> RawResponse;
             |}
             |
-            |pub trait GeneratorField<T: Option<Box<dyn std::any::Any>>> {}
+            |pub trait GeneratorField<T> {}
             |
             |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldString {

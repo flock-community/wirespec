@@ -989,7 +989,7 @@ class KotlinIrEmitterTest {
             |  interface Transportation {
             |      suspend fun transport(request: RawRequest): RawResponse
             |  }
-            |  sealed interface GeneratorField<T: Any?>
+            |  sealed interface GeneratorField<T: Any>
             |  data class GeneratorFieldString(
             |      val regex: String?
             |    ) : GeneratorField<String>
@@ -1020,7 +1020,7 @@ class KotlinIrEmitterTest {
             |      val value: GeneratorField<*>?
             |    ) : GeneratorField<Int>
             |  interface Generator {
-            |      fun <T: Any?> generate(path: List<String>, type: KClass<*>, field: GeneratorField<T>): T
+            |      fun <T: Any> generate(path: List<String>, type: KClass<*>, field: GeneratorField<T>): T
             |  }
             |  interface ServerEdge<Req: Request<*>, Res: Response<*>> {
             |      fun from(request: RawRequest): Req

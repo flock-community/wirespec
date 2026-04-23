@@ -966,7 +966,7 @@ class ScalaIrEmitterTest {
             |  trait Transportation {
             |      def transport(request: RawRequest): RawResponse
             |  }
-            |  sealed trait GeneratorField[T <: Option[Any]]
+            |  sealed trait GeneratorField[T]
             |  case class GeneratorFieldString(
             |      val regex: Option[String]
             |    ) extends GeneratorField[String]
@@ -997,7 +997,7 @@ class ScalaIrEmitterTest {
             |      val value: Option[GeneratorField[?]]
             |    ) extends GeneratorField[Int]
             |  trait Generator {
-            |      def generate[T <: Option[Any]](path: List[String], `type`: scala.reflect.ClassTag[?], field: GeneratorField[T]): T
+            |      def generate[T](path: List[String], `type`: scala.reflect.ClassTag[?], field: GeneratorField[T]): T
             |  }
             |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
             |      def from(request: RawRequest): Req

@@ -1184,7 +1184,7 @@ class JavaIrEmitterTest {
             |  public interface Transportation {
             |    public java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request);
             |  }
-            |  public sealed interface GeneratorField<T extends java.util.Optional<Object>> {
+            |  public sealed interface GeneratorField<T> {
             |  }
             |  public static record GeneratorFieldString (
             |    java.util.Optional<String> regex
@@ -1226,7 +1226,7 @@ class JavaIrEmitterTest {
             |  ) implements GeneratorField<Integer> {
             |  };
             |  public interface Generator {
-            |    public <T extends java.util.Optional<Object>> T generate(java.util.List<String> path, Type type, GeneratorField<T> field);
+            |    public <T> T generate(java.util.List<String> path, Type type, GeneratorField<T> field);
             |  }
             |  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
             |    public Req from(RawRequest request);

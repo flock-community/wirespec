@@ -204,7 +204,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             }
         }
         `interface`("GeneratorField", isSealed = true) {
-            typeParam(type("T"), Type.Nullable(Type.Any))
+            typeParam(type("T"))
         }
         struct("GeneratorFieldString") {
             implements(type("GeneratorField", string))
@@ -249,7 +249,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
         }
         `interface`("Generator") {
             function("generate") {
-                typeParam(type("T"), Type.Nullable(Type.Any))
+                typeParam(type("T"))
                 returnType(type("T"))
                 arg("path", list(string))
                 arg("type", reflect)
