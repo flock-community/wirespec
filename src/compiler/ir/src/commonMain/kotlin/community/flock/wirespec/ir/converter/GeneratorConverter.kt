@@ -20,6 +20,7 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
+import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 
 internal fun Identifier.toGeneratorName(): Name = when (this) {
@@ -190,6 +191,37 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
         )
     } else {
         nonNullExpr
+    }
+}
+
+fun RefinedWirespec.convertToGenerator(): File {
+    val generatorName = identifier.toGeneratorName()
+    val typeName = identifier.value
+
+    return file(generatorName) {
+        namespace(generatorName) {
+            function("generate") {
+                arg("path", list(string))
+                arg("generator", type("Wirespec.Generator"))
+                returnType(type(typeName))
+                returns(
+                    ConstructorStatement(
+                        type = Type.Custom(typeName),
+                        namedArguments = mapOf(
+                            Name.of("value") to FunctionCall(
+                                receiver = VariableReference(Name.of("generator")),
+                                name = Name.of("generate"),
+                                arguments = mapOf(
+                                    Name.of("path") to pathPlus("value"),
+                                    Name.of("type") to ClassReference(Type.Custom(typeName)),
+                                    Name.of("field") to reference.toFieldDescriptor(),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            }
+        }
     }
 }
 
