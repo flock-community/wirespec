@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.requestParameters
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Case
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -357,6 +358,22 @@ open class RustIrEmitter(
                 if (element is Struct) listOf(RawElement("#[derive(Debug, Clone, Default, PartialEq)]"), element)
                 else listOf(element)
             }
+        )
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is Type -> definition.convertToGenerator()
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }.sanitizeNames(sanitizationConfig)
+
+        val subPackageName = packageName + "generator"
+        return File(
+            name = Name.of(subPackageName.toDir() + generatorFile.name.pascalCase().toSnakeCase()),
+            elements = modelImports + generatorFile.elements,
         )
     }
 

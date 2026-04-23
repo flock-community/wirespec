@@ -1,5 +1,18 @@
 package community.flock.wirespec.emitters.rust
 
+import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
@@ -9,6 +22,7 @@ import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -67,6 +81,15 @@ class RustIrEmitterTest {
         |    }
         |}
         |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct MyAwesomeEnumGenerator;
+        |impl MyAwesomeEnumGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> MyAwesomeEnum {
+        |        return MyAwesomeEnum { label: generator.generate((path + String::from("value")), std::any::TypeId::of::<MyAwesomeEnum>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")] }) };
+        |    }
+        |}
+        |
         |#![allow(warnings)]
         |pub mod model;
         |pub mod endpoint;
@@ -94,6 +117,15 @@ class RustIrEmitterTest {
         |impl Request {
         |    pub fn validate(&self) -> Vec<String> {
         |        return Vec::<String>::new();
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct RequestGenerator;
+        |impl RequestGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Request {
+        |        return Request { r#type: generator.generate((path + String::from("type")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None }), url: generator.generate((path + String::from("url")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None }), body_type: if generator.generate((path + String::from("BODY_TYPE")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldNullable { inner: Wirespec.GeneratorFieldString { regex: None } }) { None } else { generator.generate((path + String::from("BODY_TYPE")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None }) }, params: generator.generate((path + String::from("params")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldArray { inner: Wirespec.GeneratorFieldString { regex: None } }), headers: generator.generate((path + String::from("headers")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldDict { key: None, value: Wirespec.GeneratorFieldString { regex: None } }), body: if generator.generate((path + String::from("body")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldNullable { inner: Wirespec.GeneratorFieldDict { key: None, value: None } }) { None } else { generator.generate((path + String::from("body")), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldDict { key: None, value: None }) } };
         |    }
         |}
         |
@@ -279,6 +311,96 @@ class RustIrEmitterTest {
         |    }
         |}
         |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TodoIdGenerator;
+        |impl TodoIdGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TodoId {
+        |        return TodoId { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TodoId>(), Wirespec.GeneratorFieldString { regex: String::from("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}") }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TodoNoRegexGenerator;
+        |impl TodoNoRegexGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TodoNoRegex {
+        |        return TodoNoRegex { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TodoNoRegex>(), Wirespec.GeneratorFieldString { regex: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestIntGenerator;
+        |impl TestIntGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestInt {
+        |        return TestInt { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestInt>(), Wirespec.GeneratorFieldInteger { min: None, max: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestInt0Generator;
+        |impl TestInt0Generator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestInt0 {
+        |        return TestInt0 { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestInt0>(), Wirespec.GeneratorFieldInteger { min: None, max: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestInt1Generator;
+        |impl TestInt1Generator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestInt1 {
+        |        return TestInt1 { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestInt1>(), Wirespec.GeneratorFieldInteger { min: 0_i32, max: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestInt2Generator;
+        |impl TestInt2Generator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestInt2 {
+        |        return TestInt2 { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestInt2>(), Wirespec.GeneratorFieldInteger { min: 1_i32, max: 3_i32 }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestNumGenerator;
+        |impl TestNumGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestNum {
+        |        return TestNum { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestNum>(), Wirespec.GeneratorFieldNumber { min: None, max: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestNum0Generator;
+        |impl TestNum0Generator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestNum0 {
+        |        return TestNum0 { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestNum0>(), Wirespec.GeneratorFieldNumber { min: None, max: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestNum1Generator;
+        |impl TestNum1Generator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestNum1 {
+        |        return TestNum1 { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestNum1>(), Wirespec.GeneratorFieldNumber { min: None, max: 0.5_f64 }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TestNum2Generator;
+        |impl TestNum2Generator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TestNum2 {
+        |        return TestNum2 { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<TestNum2>(), Wirespec.GeneratorFieldNumber { min: -0.2_f64, max: 0.5_f64 }) };
+        |    }
+        |}
+        |
         |#![allow(warnings)]
         |pub mod model;
         |pub mod endpoint;
@@ -337,6 +459,51 @@ class RustIrEmitterTest {
         |pub enum UserAccount {
         |    UserAccountPassword(UserAccountPassword),
         |    UserAccountToken(UserAccountToken),
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct UserAccountPasswordGenerator;
+        |impl UserAccountPasswordGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> UserAccountPassword {
+        |        return UserAccountPassword { username: generator.generate((path + String::from("username")), std::any::TypeId::of::<UserAccountPassword>(), Wirespec.GeneratorFieldString { regex: None }), password: generator.generate((path + String::from("password")), std::any::TypeId::of::<UserAccountPassword>(), Wirespec.GeneratorFieldString { regex: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct UserAccountTokenGenerator;
+        |impl UserAccountTokenGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> UserAccountToken {
+        |        return UserAccountToken { token: generator.generate((path + String::from("token")), std::any::TypeId::of::<UserAccountToken>(), Wirespec.GeneratorFieldString { regex: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct UserGenerator;
+        |impl UserGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> User {
+        |        return User { username: generator.generate((path + String::from("username")), std::any::TypeId::of::<User>(), Wirespec.GeneratorFieldString { regex: None }), account: UserAccountGenerator.generate((path + String::from("account")), generator) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct UserAccountGenerator;
+        |impl UserAccountGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> UserAccount {
+        |        let variant = generator.generate((path + String::from("variant")), std::any::TypeId::of::<UserAccount>(), Wirespec.GeneratorFieldUnion { variants: vec![String::from("UserAccountPassword"), String::from("UserAccountToken")] });
+        |        match variant {
+        |            String::from("UserAccountPassword") => {
+        |                return UserAccountPasswordGenerator.generate((path + String::from("UserAccountPassword")), generator);
+        |            }
+        |            String::from("UserAccountToken") => {
+        |                return UserAccountTokenGenerator.generate((path + String::from("UserAccountToken")), generator);
+        |            }
+        |        }
+        |        panic!("Unknown variant");
+        |    }
         |}
         |
         |#![allow(warnings)]
@@ -482,6 +649,15 @@ class RustIrEmitterTest {
         |        let raw_request = get_todos::GetTodos::to_raw_request(self.serialization, request);
         |        let raw_response = self.transportation.transport(&raw_request).await;
         |        get_todos::GetTodos::from_raw_response(self.serialization, raw_response)
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TodoDtoGenerator;
+        |impl TodoDtoGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TodoDto {
+        |        return TodoDto { description: generator.generate((path + String::from("description")), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldString { regex: None }) };
         |    }
         |}
         |
@@ -765,6 +941,42 @@ class RustIrEmitterTest {
         |    }
         |}
         |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct PotentialTodoDtoGenerator;
+        |impl PotentialTodoDtoGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> PotentialTodoDto {
+        |        return PotentialTodoDto { name: generator.generate((path + String::from("name")), std::any::TypeId::of::<PotentialTodoDto>(), Wirespec.GeneratorFieldString { regex: None }), done: generator.generate((path + String::from("done")), std::any::TypeId::of::<PotentialTodoDto>(), Wirespec.GeneratorFieldBoolean {}) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TokenGenerator;
+        |impl TokenGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Token {
+        |        return Token { iss: generator.generate((path + String::from("iss")), std::any::TypeId::of::<Token>(), Wirespec.GeneratorFieldString { regex: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TodoDtoGenerator;
+        |impl TodoDtoGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> TodoDto {
+        |        return TodoDto { id: generator.generate((path + String::from("id")), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldString { regex: None }), name: generator.generate((path + String::from("name")), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldString { regex: None }), done: generator.generate((path + String::from("done")), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldBoolean {}) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct ErrorGenerator;
+        |impl ErrorGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Error {
+        |        return Error { code: generator.generate((path + String::from("code")), std::any::TypeId::of::<Error>(), Wirespec.GeneratorFieldInteger { min: None, max: None }), description: generator.generate((path + String::from("description")), std::any::TypeId::of::<Error>(), Wirespec.GeneratorFieldString { regex: None }) };
+        |    }
+        |}
+        |
         |#![allow(warnings)]
         |pub mod model;
         |pub mod endpoint;
@@ -840,6 +1052,33 @@ class RustIrEmitterTest {
         |impl Person {
         |    pub fn validate(&self) -> Vec<String> {
         |        return self.address.validate().iter().map(|e| format!("address.{}", e)).collect::<Vec<_>>();
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct DutchPostalCodeGenerator;
+        |impl DutchPostalCodeGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> DutchPostalCode {
+        |        return DutchPostalCode { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<DutchPostalCode>(), Wirespec.GeneratorFieldString { regex: String::from("^([0-9]{4}[A-Z]{2})${'$'}") }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct AddressGenerator;
+        |impl AddressGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Address {
+        |        return Address { street: generator.generate((path + String::from("street")), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldString { regex: None }), house_number: generator.generate((path + String::from("houseNumber")), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldInteger { min: None, max: None }), postal_code: DutchPostalCodeGenerator.generate((path + String::from("postalCode")), generator) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct PersonGenerator;
+        |impl PersonGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Person {
+        |        return Person { name: generator.generate((path + String::from("name")), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldString { regex: None }), address: AddressGenerator.generate((path + String::from("address")), generator), tags: generator.generate((path + String::from("tags")), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldArray { inner: Wirespec.GeneratorFieldString { regex: None } }) };
         |    }
         |}
         |
@@ -974,6 +1213,78 @@ class RustIrEmitterTest {
         |impl Company {
         |    pub fn validate(&self) -> Vec<String> {
         |        return self.departments.iter().enumerate().flat_map(|(i, el)| el.validate().iter().map(|e| format!("departments[{}].{}", i, e)).collect::<Vec<_>>()).collect::<Vec<_>>();
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct EmailGenerator;
+        |impl EmailGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Email {
+        |        return Email { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<Email>(), Wirespec.GeneratorFieldString { regex: String::from("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}") }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct PhoneNumberGenerator;
+        |impl PhoneNumberGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> PhoneNumber {
+        |        return PhoneNumber { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<PhoneNumber>(), Wirespec.GeneratorFieldString { regex: String::from("^\+[1-9]\d{1,14}${'$'}") }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct TagGenerator;
+        |impl TagGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Tag {
+        |        return Tag { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<Tag>(), Wirespec.GeneratorFieldString { regex: String::from("^[a-z][a-z0-9-]{0,19}${'$'}") }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct EmployeeAgeGenerator;
+        |impl EmployeeAgeGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> EmployeeAge {
+        |        return EmployeeAge { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<EmployeeAge>(), Wirespec.GeneratorFieldInteger { min: 18_i32, max: 65_i32 }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct ContactInfoGenerator;
+        |impl ContactInfoGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> ContactInfo {
+        |        return ContactInfo { email: EmailGenerator.generate((path + String::from("email")), generator), phone: if generator.generate((path + String::from("phone")), std::any::TypeId::of::<ContactInfo>(), Wirespec.GeneratorFieldNullable { inner: None }) { None } else { PhoneNumberGenerator.generate((path + String::from("phone")), generator) } };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct EmployeeGenerator;
+        |impl EmployeeGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Employee {
+        |        return Employee { name: generator.generate((path + String::from("name")), std::any::TypeId::of::<Employee>(), Wirespec.GeneratorFieldString { regex: None }), age: EmployeeAgeGenerator.generate((path + String::from("age")), generator), contact_info: ContactInfoGenerator.generate((path + String::from("contactInfo")), generator), tags: generator.generate((path + String::from("tags")), std::any::TypeId::of::<Employee>(), Wirespec.GeneratorFieldArray { inner: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct DepartmentGenerator;
+        |impl DepartmentGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Department {
+        |        return Department { name: generator.generate((path + String::from("name")), std::any::TypeId::of::<Department>(), Wirespec.GeneratorFieldString { regex: None }), employees: generator.generate((path + String::from("employees")), std::any::TypeId::of::<Department>(), Wirespec.GeneratorFieldArray { inner: None }) };
+        |    }
+        |}
+        |
+        |use super::super::wirespec::*;
+        |use regex;
+        |pub struct CompanyGenerator;
+        |impl CompanyGenerator {
+        |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Company {
+        |        return Company { name: generator.generate((path + String::from("name")), std::any::TypeId::of::<Company>(), Wirespec.GeneratorFieldString { regex: None }), departments: generator.generate((path + String::from("departments")), std::any::TypeId::of::<Company>(), Wirespec.GeneratorFieldArray { inner: None }) };
         |    }
         |}
         |
@@ -1181,5 +1492,267 @@ class RustIrEmitterTest {
 
         val emitter = RustIrEmitter()
         emitter.shared.source shouldBe expected
+    }
+
+    private fun emitGeneratorSource(node: Definition, fileNameSubstring: String): String {
+        val emitter = RustIrEmitter()
+        val ast = AST(
+            nonEmptyListOf(
+                Module(
+                    FileUri(""),
+                    nonEmptyListOf(node),
+                ),
+            ),
+        )
+        val emitted = emitter.emit(ast, noLogger)
+        val match = emitted.toList().first { it.file.contains(fileNameSubstring) }
+        return match.result
+    }
+
+    @Test
+    fun testEmitGeneratorForType() {
+        val address = Type(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Address"),
+            shape = Type.Shape(
+                value = listOf(
+                    Field(
+                        identifier = FieldIdentifier("street"),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(null),
+                            isNullable = false,
+                        ),
+                    ),
+                    Field(
+                        identifier = FieldIdentifier("number"),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.Integer(constraint = null),
+                            isNullable = false,
+                        ),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        )
+
+        val expected = """
+            |use super::super::wirespec::*;
+            |use regex;
+            |pub struct AddressGenerator;
+            |impl AddressGenerator {
+            |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Address {
+            |        return Address { street: generator.generate((path + String::from("street")), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldString { regex: None }), number: generator.generate((path + String::from("number")), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldInteger { min: None, max: None }) };
+            |    }
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(address, "address_generator") shouldBe expected
+    }
+
+    @Test
+    fun testEmitGeneratorForEnum() {
+        val color = Enum(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Color"),
+            entries = setOf("RED", "GREEN", "BLUE"),
+        )
+
+        val expected = """
+            |use super::super::wirespec::*;
+            |use regex;
+            |pub struct ColorGenerator;
+            |impl ColorGenerator {
+            |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Color {
+            |        return Color { label: generator.generate((path + String::from("value")), std::any::TypeId::of::<Color>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("RED"), String::from("GREEN"), String::from("BLUE")] }) };
+            |    }
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(color, "color_generator") shouldBe expected
+    }
+
+    @Test
+    fun testEmitGeneratorForUnion() {
+        val shape = Union(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Shape"),
+            entries = setOf(
+                Reference.Custom(value = "Circle", isNullable = false),
+                Reference.Custom(value = "Square", isNullable = false),
+            ),
+        )
+
+        val expected = """
+            |use super::super::wirespec::*;
+            |use regex;
+            |pub struct ShapeGenerator;
+            |impl ShapeGenerator {
+            |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Shape {
+            |        let variant = generator.generate((path + String::from("variant")), std::any::TypeId::of::<Shape>(), Wirespec.GeneratorFieldUnion { variants: vec![String::from("Circle"), String::from("Square")] });
+            |        match variant {
+            |            String::from("Circle") => {
+            |                return CircleGenerator.generate((path + String::from("Circle")), generator);
+            |            }
+            |            String::from("Square") => {
+            |                return SquareGenerator.generate((path + String::from("Square")), generator);
+            |            }
+            |        }
+            |        panic!("Unknown variant");
+            |    }
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(shape, "shape_generator") shouldBe expected
+    }
+
+    @Test
+    fun testEmitGeneratorForRefined() {
+        val uuid = Refined(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("UUID"),
+            reference = Reference.Primitive(
+                type = Reference.Primitive.Type.String(
+                    Reference.Primitive.Type.Constraint.RegExp("/^[0-9a-f]{8}${'$'}/g"),
+                ),
+                isNullable = false,
+            ),
+        )
+
+        val expected = """
+            |use super::super::wirespec::*;
+            |use regex;
+            |pub struct UUIDGenerator;
+            |impl UUIDGenerator {
+            |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> UUID {
+            |        return UUID { value: generator.generate((path + String::from("value")), std::any::TypeId::of::<UUID>(), Wirespec.GeneratorFieldString { regex: String::from("^[0-9a-f]{8}${'$'}") }) };
+            |    }
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(uuid, "uuid_generator") shouldBe expected
+    }
+
+    @Test
+    fun testEmitGeneratorForArrayField() {
+        val inventory = Type(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Inventory"),
+            shape = Type.Shape(
+                value = listOf(
+                    Field(
+                        identifier = FieldIdentifier("items"),
+                        annotations = emptyList(),
+                        reference = Reference.Iterable(
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.Integer(constraint = null),
+                                isNullable = false,
+                            ),
+                            isNullable = false,
+                        ),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        )
+
+        val expected = """
+            |use super::super::wirespec::*;
+            |use regex;
+            |pub struct InventoryGenerator;
+            |impl InventoryGenerator {
+            |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Inventory {
+            |        return Inventory { items: generator.generate((path + String::from("items")), std::any::TypeId::of::<Inventory>(), Wirespec.GeneratorFieldArray { inner: Wirespec.GeneratorFieldInteger { min: None, max: None } }) };
+            |    }
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(inventory, "inventory_generator") shouldBe expected
+    }
+
+    @Test
+    fun testEmitGeneratorForDictField() {
+        val lookup = Type(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Lookup"),
+            shape = Type.Shape(
+                value = listOf(
+                    Field(
+                        identifier = FieldIdentifier("entries"),
+                        annotations = emptyList(),
+                        reference = Reference.Dict(
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.Integer(constraint = null),
+                                isNullable = false,
+                            ),
+                            isNullable = false,
+                        ),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        )
+
+        val expected = """
+            |use super::super::wirespec::*;
+            |use regex;
+            |pub struct LookupGenerator;
+            |impl LookupGenerator {
+            |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Lookup {
+            |        return Lookup { entries: generator.generate((path + String::from("entries")), std::any::TypeId::of::<Lookup>(), Wirespec.GeneratorFieldDict { key: None, value: Wirespec.GeneratorFieldInteger { min: None, max: None } }) };
+            |    }
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(lookup, "lookup_generator") shouldBe expected
+    }
+
+    @Test
+    fun testEmitGeneratorForNullableField() {
+        val person = Type(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Person"),
+            shape = Type.Shape(
+                value = listOf(
+                    Field(
+                        identifier = FieldIdentifier("nickname"),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(null),
+                            isNullable = true,
+                        ),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        )
+
+        val expected = """
+            |use super::super::wirespec::*;
+            |use regex;
+            |pub struct PersonGenerator;
+            |impl PersonGenerator {
+            |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Person {
+            |        return Person { nickname: if generator.generate((path + String::from("nickname")), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldNullable { inner: Wirespec.GeneratorFieldString { regex: None } }) { None } else { generator.generate((path + String::from("nickname")), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldString { regex: None }) } };
+            |    }
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(person, "person_generator") shouldBe expected
     }
 }
