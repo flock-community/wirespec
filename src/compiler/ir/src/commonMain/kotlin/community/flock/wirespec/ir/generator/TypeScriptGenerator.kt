@@ -570,6 +570,7 @@ private class TypeScriptFileEmitter(val file: File) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "==="
         BinaryOp.Operator.NOT_EQUALS -> "!=="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in TypeScript")
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -637,7 +638,14 @@ private class TypeScriptFileEmitter(val file: File) {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in TypeScript")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "(${condition.emit()} ? ${thenExpr.emit()} : ${elseExpr.emit()})"
-        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()})"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emit()
+            } else {
+                "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()})"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emit()}.flatMap((${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emit()})"
         is ListConcat -> when {
             lists.isEmpty() -> "[] as string[]"
@@ -675,7 +683,14 @@ private class TypeScriptFileEmitter(val file: File) {
         is EnumValueCall -> expression.emitWithInlinedIt(replacement)
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${condition.emitWithInlinedIt(replacement)} ? ${thenExpr.emitWithInlinedIt(replacement)} : ${elseExpr.emitWithInlinedIt(replacement)})"
-        is MapExpression -> "${receiver.emitWithInlinedIt(replacement)}.map(${variable.camelCase()} => ${body.emitWithInlinedIt(replacement)})"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emitWithInlinedIt(replacement)
+            } else {
+                "${receiver.emitWithInlinedIt(replacement)}.map(${variable.camelCase()} => ${body.emitWithInlinedIt(replacement)})"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emitWithInlinedIt(replacement)}.flatMap((${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emitWithInlinedIt(replacement)})"
         is ListConcat -> "[${lists.joinToString(", ") { "...${it.emitWithInlinedIt(replacement)}" }}]"
         is StringTemplate -> "`${parts.joinToString("") {

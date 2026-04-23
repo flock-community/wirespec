@@ -1014,7 +1014,7 @@ class KotlinIrEmitterTest {
             |      type = generator.generate((path + "type"), Request::class, Wirespec.GeneratorFieldString(regex = null)),
             |      url = generator.generate((path + "url"), Request::class, Wirespec.GeneratorFieldString(regex = null)),
             |      BODY_TYPE = if (generator.generate((path + "BODY_TYPE"), Request::class, Wirespec.GeneratorFieldNullable(inner = Wirespec.GeneratorFieldString(regex = null)))) null else generator.generate((path + "BODY_TYPE"), Request::class, Wirespec.GeneratorFieldString(regex = null)),
-            |      params = generator.generate((path + "params"), Request::class, Wirespec.GeneratorFieldArray(inner = Wirespec.GeneratorFieldString(regex = null))),
+            |      params = (0 until generator.generate((path + "params"), Request::class, Wirespec.GeneratorFieldArray(inner = Wirespec.GeneratorFieldString(regex = null)))).map { i -> generator.generate(((path + "params") + i.toString()), Request::class, Wirespec.GeneratorFieldString(regex = null)) },
             |      headers = generator.generate((path + "headers"), Request::class, Wirespec.GeneratorFieldDict(
             |        key = null,
             |        value = Wirespec.GeneratorFieldString(regex = null)
@@ -1113,7 +1113,7 @@ class KotlinIrEmitterTest {
             |    Person(
             |      name = generator.generate((path + "name"), Person::class, Wirespec.GeneratorFieldString(regex = null)),
             |      address = AddressGenerator.generate((path + "address"), generator),
-            |      tags = generator.generate((path + "tags"), Person::class, Wirespec.GeneratorFieldArray(inner = Wirespec.GeneratorFieldString(regex = null)))
+            |      tags = (0 until generator.generate((path + "tags"), Person::class, Wirespec.GeneratorFieldArray(inner = Wirespec.GeneratorFieldString(regex = null)))).map { i -> generator.generate(((path + "tags") + i.toString()), Person::class, Wirespec.GeneratorFieldString(regex = null)) }
             |    )
             |}
             |
@@ -1294,7 +1294,7 @@ class KotlinIrEmitterTest {
             |      name = generator.generate((path + "name"), Employee::class, Wirespec.GeneratorFieldString(regex = null)),
             |      age = EmployeeAgeGenerator.generate((path + "age"), generator),
             |      contactInfo = ContactInfoGenerator.generate((path + "contactInfo"), generator),
-            |      tags = generator.generate((path + "tags"), Employee::class, Wirespec.GeneratorFieldArray(inner = null))
+            |      tags = (0 until generator.generate((path + "tags"), Employee::class, Wirespec.GeneratorFieldArray(inner = null))).map { i -> TagGenerator.generate(((path + "tags") + i.toString()), generator) }
             |    )
             |}
             |
@@ -1307,7 +1307,7 @@ class KotlinIrEmitterTest {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Department =
             |    Department(
             |      name = generator.generate((path + "name"), Department::class, Wirespec.GeneratorFieldString(regex = null)),
-            |      employees = generator.generate((path + "employees"), Department::class, Wirespec.GeneratorFieldArray(inner = null))
+            |      employees = (0 until generator.generate((path + "employees"), Department::class, Wirespec.GeneratorFieldArray(inner = null))).map { i -> EmployeeGenerator.generate(((path + "employees") + i.toString()), generator) }
             |    )
             |}
             |
@@ -1320,7 +1320,7 @@ class KotlinIrEmitterTest {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Company =
             |    Company(
             |      name = generator.generate((path + "name"), Company::class, Wirespec.GeneratorFieldString(regex = null)),
-            |      departments = generator.generate((path + "departments"), Company::class, Wirespec.GeneratorFieldArray(inner = null))
+            |      departments = (0 until generator.generate((path + "departments"), Company::class, Wirespec.GeneratorFieldArray(inner = null))).map { i -> DepartmentGenerator.generate(((path + "departments") + i.toString()), generator) }
             |    )
             |}
             |
@@ -1677,10 +1677,13 @@ class KotlinIrEmitterTest {
             |import community.flock.wirespec.generated.model.Inventory
             |object InventoryGenerator {
             |  fun generate(path: List<String>, generator: Wirespec.Generator): Inventory =
-            |    Inventory(items = generator.generate((path + "items"), Inventory::class, Wirespec.GeneratorFieldArray(inner = Wirespec.GeneratorFieldInteger(
+            |    Inventory(items = (0 until generator.generate((path + "items"), Inventory::class, Wirespec.GeneratorFieldArray(inner = Wirespec.GeneratorFieldInteger(
             |      min = null,
             |      max = null
-            |    ))))
+            |    )))).map { i -> generator.generate(((path + "items") + i.toString()), Inventory::class, Wirespec.GeneratorFieldInteger(
+            |      min = null,
+            |      max = null
+            |    )) })
             |}
             |
         """.trimMargin()

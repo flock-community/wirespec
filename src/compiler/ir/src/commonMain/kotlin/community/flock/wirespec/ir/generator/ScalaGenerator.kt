@@ -507,6 +507,7 @@ ScalaEmitter(
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> "until"
     }
 
     private fun Expression.emit(): String = when (this) {

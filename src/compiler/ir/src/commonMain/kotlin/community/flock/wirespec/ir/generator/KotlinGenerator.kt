@@ -474,6 +474,7 @@ private class KotlinEmitter(val file: File) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> "until"
     }
 
     private fun String.toKotlinStaticCall(): String = when (this) {

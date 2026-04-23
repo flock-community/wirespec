@@ -147,7 +147,7 @@ class ScalaIrEmitterTest {
             |      `type` = generator.generate((path + "type"), classOf[Request], new Wirespec.GeneratorFieldString(regex = null)),
             |      url = generator.generate((path + "url"), classOf[Request], new Wirespec.GeneratorFieldString(regex = null)),
             |      BODY_TYPE = if (generator.generate((path + "BODY_TYPE"), classOf[Request], new Wirespec.GeneratorFieldNullable(inner = new Wirespec.GeneratorFieldString(regex = null)))) null else generator.generate((path + "BODY_TYPE"), classOf[Request], new Wirespec.GeneratorFieldString(regex = null)),
-            |      params = generator.generate((path + "params"), classOf[Request], new Wirespec.GeneratorFieldArray(inner = new Wirespec.GeneratorFieldString(regex = null))),
+            |      params = (0 until generator.generate((path + "params"), classOf[Request], new Wirespec.GeneratorFieldArray(inner = new Wirespec.GeneratorFieldString(regex = null)))).map(i => generator.generate(((path + "params") + i.toString()), classOf[Request], new Wirespec.GeneratorFieldString(regex = null))),
             |      headers = generator.generate((path + "headers"), classOf[Request], new Wirespec.GeneratorFieldDict(
             |        key = null,
             |        value = new Wirespec.GeneratorFieldString(regex = null)
@@ -1046,7 +1046,7 @@ class ScalaIrEmitterTest {
             |    new Person(
             |      name = generator.generate((path + "name"), classOf[Person], new Wirespec.GeneratorFieldString(regex = null)),
             |      address = AddressGenerator.generate((path + "address"), generator),
-            |      tags = generator.generate((path + "tags"), classOf[Person], new Wirespec.GeneratorFieldArray(inner = new Wirespec.GeneratorFieldString(regex = null)))
+            |      tags = (0 until generator.generate((path + "tags"), classOf[Person], new Wirespec.GeneratorFieldArray(inner = new Wirespec.GeneratorFieldString(regex = null)))).map(i => generator.generate(((path + "tags") + i.toString()), classOf[Person], new Wirespec.GeneratorFieldString(regex = null)))
             |    )
             |}
             |
@@ -1207,7 +1207,7 @@ class ScalaIrEmitterTest {
             |      name = generator.generate((path + "name"), classOf[Employee], new Wirespec.GeneratorFieldString(regex = null)),
             |      age = EmployeeAgeGenerator.generate((path + "age"), generator),
             |      contactInfo = ContactInfoGenerator.generate((path + "contactInfo"), generator),
-            |      tags = generator.generate((path + "tags"), classOf[Employee], new Wirespec.GeneratorFieldArray(inner = null))
+            |      tags = (0 until generator.generate((path + "tags"), classOf[Employee], new Wirespec.GeneratorFieldArray(inner = null))).map(i => TagGenerator.generate(((path + "tags") + i.toString()), generator))
             |    )
             |}
             |
@@ -1218,7 +1218,7 @@ class ScalaIrEmitterTest {
             |  def generate(path: List[String], generator: Wirespec.Generator): Department =
             |    new Department(
             |      name = generator.generate((path + "name"), classOf[Department], new Wirespec.GeneratorFieldString(regex = null)),
-            |      employees = generator.generate((path + "employees"), classOf[Department], new Wirespec.GeneratorFieldArray(inner = null))
+            |      employees = (0 until generator.generate((path + "employees"), classOf[Department], new Wirespec.GeneratorFieldArray(inner = null))).map(i => EmployeeGenerator.generate(((path + "employees") + i.toString()), generator))
             |    )
             |}
             |
@@ -1229,7 +1229,7 @@ class ScalaIrEmitterTest {
             |  def generate(path: List[String], generator: Wirespec.Generator): Company =
             |    new Company(
             |      name = generator.generate((path + "name"), classOf[Company], new Wirespec.GeneratorFieldString(regex = null)),
-            |      departments = generator.generate((path + "departments"), classOf[Company], new Wirespec.GeneratorFieldArray(inner = null))
+            |      departments = (0 until generator.generate((path + "departments"), classOf[Company], new Wirespec.GeneratorFieldArray(inner = null))).map(i => DepartmentGenerator.generate(((path + "departments") + i.toString()), generator))
             |    )
             |}
             |
@@ -1580,7 +1580,10 @@ class ScalaIrEmitterTest {
             |import scala.reflect.ClassTag
             |object InventoryGenerator {
             |  def generate(path: List[String], generator: Wirespec.Generator): Inventory =
-            |    new Inventory(items = generator.generate((path + "items"), classOf[Inventory], new Wirespec.GeneratorFieldArray(inner = new Wirespec.GeneratorFieldInteger(
+            |    new Inventory(items = (0 until generator.generate((path + "items"), classOf[Inventory], new Wirespec.GeneratorFieldArray(inner = new Wirespec.GeneratorFieldInteger(
+            |      min = null,
+            |      max = null
+            |    )))).map(i => generator.generate(((path + "items") + i.toString()), classOf[Inventory], new Wirespec.GeneratorFieldInteger(
             |      min = null,
             |      max = null
             |    ))))

@@ -466,6 +466,7 @@ private class JavaEmitter(val file: File) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in Java")
     }
 
     private fun BinaryOp.isPrimitiveLiteral(): Boolean = left is Literal &&
@@ -557,7 +558,18 @@ private class JavaEmitter(val file: File) {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Java")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "(${condition.emit()} ? ${thenExpr.emit()} : ${elseExpr.emit()})"
-        is MapExpression -> "${receiver.emit()}.stream().map(${variable.camelCase()} -> ${body.emit()}).toList()"
+        is MapExpression -> {
+            // Non-Kotlin languages don't support (0 until N).map { ... } semantics yet.
+            // When the receiver is a synthetic UNTIL range (emitted by the generator converter
+            // for iterable fields), fall back to the element-count call alone to preserve the
+            // pre-existing broken-but-parseable snapshot output until proper iteration is added.
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emit()
+            } else {
+                "${receiver.emit()}.stream().map(${variable.camelCase()} -> ${body.emit()}).toList()"
+            }
+        }
         is FlatMapIndexed -> {
             val recv = receiver.emit()
             val bodyWithSubstitution = body.emitWithSubstitution(elementVar, "$recv.get(${indexVar.camelCase()})")
