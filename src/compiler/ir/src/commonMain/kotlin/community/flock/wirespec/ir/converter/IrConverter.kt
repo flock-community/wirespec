@@ -203,6 +203,59 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 arg("request", type("RawRequest"))
             }
         }
+        `interface`("GeneratorField", isSealed = true) {
+            typeParam(type("T"), Type.Nullable(Type.Any))
+        }
+        struct("GeneratorFieldString") {
+            implements(type("GeneratorField", string))
+            field("regex", string.nullable())
+        }
+        struct("GeneratorFieldInteger") {
+            implements(type("GeneratorField", integer64))
+            field("min", integer64.nullable())
+            field("max", integer64.nullable())
+        }
+        struct("GeneratorFieldNumber") {
+            implements(type("GeneratorField", number64))
+            field("min", number64.nullable())
+            field("max", number64.nullable())
+        }
+        struct("GeneratorFieldBoolean") {
+            implements(type("GeneratorField", boolean))
+        }
+        struct("GeneratorFieldBytes") {
+            implements(type("GeneratorField", bytes))
+        }
+        struct("GeneratorFieldEnum") {
+            implements(type("GeneratorField", string))
+            field("values", list(string))
+        }
+        struct("GeneratorFieldUnion") {
+            implements(type("GeneratorField", string))
+            field("variants", list(string))
+        }
+        struct("GeneratorFieldArray") {
+            implements(type("GeneratorField", integer64))
+            field("inner", type("GeneratorField", Type.Wildcard).nullable())
+        }
+        struct("GeneratorFieldNullable") {
+            implements(type("GeneratorField", boolean))
+            field("inner", type("GeneratorField", Type.Wildcard).nullable())
+        }
+        struct("GeneratorFieldDict") {
+            implements(type("GeneratorField", integer64))
+            field("key", type("GeneratorField", Type.Wildcard).nullable())
+            field("value", type("GeneratorField", Type.Wildcard).nullable())
+        }
+        `interface`("Generator") {
+            function("generate") {
+                typeParam(type("T"), Type.Nullable(Type.Any))
+                returnType(type("T"))
+                arg("path", list(string))
+                arg("type", reflect)
+                arg("field", type("GeneratorField", type("T")))
+            }
+        }
     }
 }
 
