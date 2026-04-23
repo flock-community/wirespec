@@ -238,9 +238,10 @@ fun EnumWirespec.convertToGenerator(): File {
                 arg("generator", type("Wirespec.Generator"))
                 returnType(type(typeName))
                 returns(
-                    ConstructorStatement(
-                        type = Type.Custom(typeName),
-                        namedArguments = mapOf(
+                    FunctionCall(
+                        receiver = RawExpression(typeName),
+                        name = Name.of("valueOf"),
+                        arguments = mapOf(
                             Name.of("label") to FunctionCall(
                                 receiver = VariableReference(Name.of("generator")),
                                 name = Name.of("generate"),

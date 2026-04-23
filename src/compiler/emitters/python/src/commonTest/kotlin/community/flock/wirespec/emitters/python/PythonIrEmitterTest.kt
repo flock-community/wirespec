@@ -394,7 +394,7 @@ class PythonIrEmitterTest {
             |class MyAwesomeEnumGenerator:
             |    @staticmethod
             |    def generate(path: list[str], generator: Wirespec.Generator) -> MyAwesomeEnum:
-            |        return MyAwesomeEnum(label=generator.generate((str(path) + 'value'), MyAwesomeEnum, Wirespec.GeneratorFieldEnum(values=['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'])))
+            |        return MyAwesomeEnum.valueOf(generator.generate((str(path) + 'value'), MyAwesomeEnum, Wirespec.GeneratorFieldEnum(values=['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'])))
             |
             |from . import model
             |from . import endpoint
@@ -1618,7 +1618,7 @@ class PythonIrEmitterTest {
             |class ColorGenerator:
             |    @staticmethod
             |    def generate(path: list[str], generator: Wirespec.Generator) -> Color:
-            |        return Color(label=generator.generate((str(path) + 'value'), Color, Wirespec.GeneratorFieldEnum(values=['RED', 'GREEN', 'BLUE'])))
+            |        return Color.valueOf(generator.generate((str(path) + 'value'), Color, Wirespec.GeneratorFieldEnum(values=['RED', 'GREEN', 'BLUE'])))
             |
         """.trimMargin()
 

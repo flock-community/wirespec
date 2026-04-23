@@ -520,7 +520,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.java.Wirespec;
             |public interface MyAwesomeEnumGenerator {
             |  public static MyAwesomeEnum generate(java.util.List<String> path, Wirespec.Generator generator) {
-            |    return new MyAwesomeEnum(generator.generate((path + "value"), MyAwesomeEnum.class, new Wirespec.GeneratorFieldEnum(java.util.List.of("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"))));
+            |    return MyAwesomeEnum.valueOf(generator.generate((path + "value"), MyAwesomeEnum.class, new Wirespec.GeneratorFieldEnum(java.util.List.of("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"))));
             |  }
             |}
             |
@@ -1714,7 +1714,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.java.Wirespec;
             |public interface ColorGenerator {
             |  public static Color generate(java.util.List<String> path, Wirespec.Generator generator) {
-            |    return new Color(generator.generate((path + "value"), Color.class, new Wirespec.GeneratorFieldEnum(java.util.List.of("RED", "GREEN", "BLUE"))));
+            |    return Color.valueOf(generator.generate((path + "value"), Color.class, new Wirespec.GeneratorFieldEnum(java.util.List.of("RED", "GREEN", "BLUE"))));
             |  }
             |}
             |

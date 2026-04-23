@@ -193,7 +193,7 @@ class ScalaIrEmitterTest {
             |import scala.reflect.ClassTag
             |object MyAwesomeEnumGenerator {
             |  def generate(path: List[String], generator: Wirespec.Generator): MyAwesomeEnum =
-            |    new MyAwesomeEnum(label = generator.generate((path + "value"), classOf[MyAwesomeEnum], new Wirespec.GeneratorFieldEnum(values = List("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"))))
+            |    MyAwesomeEnum.valueOf(generator.generate((path + "value"), classOf[MyAwesomeEnum], new Wirespec.GeneratorFieldEnum(values = List("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"))))
             |}
             |
         """.trimMargin()
@@ -1478,7 +1478,7 @@ class ScalaIrEmitterTest {
             |import scala.reflect.ClassTag
             |object ColorGenerator {
             |  def generate(path: List[String], generator: Wirespec.Generator): Color =
-            |    new Color(label = generator.generate((path + "value"), classOf[Color], new Wirespec.GeneratorFieldEnum(values = List("RED", "GREEN", "BLUE"))))
+            |    Color.valueOf(generator.generate((path + "value"), classOf[Color], new Wirespec.GeneratorFieldEnum(values = List("RED", "GREEN", "BLUE"))))
             |}
             |
         """.trimMargin()

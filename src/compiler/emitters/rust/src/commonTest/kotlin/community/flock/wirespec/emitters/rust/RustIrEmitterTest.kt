@@ -86,7 +86,7 @@ class RustIrEmitterTest {
         |pub struct MyAwesomeEnumGenerator;
         |impl MyAwesomeEnumGenerator {
         |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> MyAwesomeEnum {
-        |        return MyAwesomeEnum { label: generator.generate((path + String::from("value")), std::any::TypeId::of::<MyAwesomeEnum>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")] }) };
+        |        return MyAwesomeEnum.value_of(generator.generate((path + String::from("value")), std::any::TypeId::of::<MyAwesomeEnum>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")] }));
         |    }
         |}
         |
@@ -1568,7 +1568,7 @@ class RustIrEmitterTest {
             |pub struct ColorGenerator;
             |impl ColorGenerator {
             |    pub fn generate(path: Vec<String>, generator: Wirespec.Generator) -> Color {
-            |        return Color { label: generator.generate((path + String::from("value")), std::any::TypeId::of::<Color>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("RED"), String::from("GREEN"), String::from("BLUE")] }) };
+            |        return Color.value_of(generator.generate((path + String::from("value")), std::any::TypeId::of::<Color>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("RED"), String::from("GREEN"), String::from("BLUE")] }));
             |    }
             |}
             |
