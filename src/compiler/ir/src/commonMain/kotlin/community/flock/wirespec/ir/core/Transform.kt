@@ -227,6 +227,7 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
 }
 
 fun Expression.transformChildren(transformer: Transformer): Expression = when (this) {
+    is ClassReference -> copy(type = transformer.transformType(type))
     is RawExpression -> this
     is Statement -> transformChildren(transformer) as Expression
 }
