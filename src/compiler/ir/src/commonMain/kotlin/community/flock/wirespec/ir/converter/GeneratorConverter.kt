@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
+import community.flock.wirespec.compiler.core.parse.ast.Union as UnionWirespec
 
 internal fun Identifier.toGeneratorName(): Name = when (this) {
     is FieldIdentifier -> {
@@ -259,6 +260,63 @@ fun EnumWirespec.convertToGenerator(): File {
                         ),
                     ),
                 )
+            }
+        }
+    }
+}
+
+fun UnionWirespec.convertToGenerator(): File {
+    val generatorName = identifier.toGeneratorName()
+    val typeName = identifier.value
+    val variantNames = entries.filterIsInstance<ReferenceWirespec.Custom>().map { it.value }
+
+    return file(generatorName) {
+        namespace(generatorName) {
+            function("generate") {
+                arg("path", list(string))
+                arg("generator", type("Wirespec.Generator"))
+                returnType(type(typeName))
+                assign(
+                    "variant",
+                    FunctionCall(
+                        receiver = VariableReference(Name.of("generator")),
+                        name = Name.of("generate"),
+                        arguments = mapOf(
+                            Name.of("path") to pathPlus("variant"),
+                            Name.of("type") to ClassReference(Type.Custom(typeName)),
+                            Name.of("field") to ConstructorStatement(
+                                type = Type.Custom("Wirespec.GeneratorFieldUnion"),
+                                namedArguments = mapOf(
+                                    Name.of("variants") to LiteralList(
+                                        values = variantNames.map { Literal(it, Type.String) },
+                                        type = Type.String,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+                switch(VariableReference(Name.of("variant"))) {
+                    for (variantName in variantNames) {
+                        case(Literal(variantName, Type.String)) {
+                            returns(
+                                FunctionCall(
+                                    receiver = RawExpression("${variantName}Generator"),
+                                    name = Name.of("generate"),
+                                    arguments = mapOf(
+                                        Name.of("path") to BinaryOp(
+                                            VariableReference(Name.of("path")),
+                                            BinaryOp.Operator.PLUS,
+                                            Literal(variantName, Type.String),
+                                        ),
+                                        Name.of("generator") to VariableReference(Name.of("generator")),
+                                    ),
+                                )
+                            )
+                        }
+                    }
+                }
+                error(Literal("Unknown variant", Type.String))
             }
         }
     }
