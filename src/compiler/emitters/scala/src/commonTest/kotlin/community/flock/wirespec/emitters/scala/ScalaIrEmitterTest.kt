@@ -966,6 +966,39 @@ class ScalaIrEmitterTest {
             |  trait Transportation {
             |      def transport(request: RawRequest): RawResponse
             |  }
+            |  sealed trait GeneratorField[T <: Option[Any]]
+            |  case class GeneratorFieldString(
+            |      val regex: Option[String]
+            |    ) extends GeneratorField[String]
+            |  case class GeneratorFieldInteger(
+            |      val min: Option[Long],
+            |      val max: Option[Long]
+            |    ) extends GeneratorField[Long]
+            |  case class GeneratorFieldNumber(
+            |      val min: Option[Double],
+            |      val max: Option[Double]
+            |    ) extends GeneratorField[Double]
+            |  object GeneratorFieldBoolean extends GeneratorField[Boolean]
+            |  object GeneratorFieldBytes extends GeneratorField[Array[Byte]]
+            |  case class GeneratorFieldEnum(
+            |      val values: List[String]
+            |    ) extends GeneratorField[String]
+            |  case class GeneratorFieldUnion(
+            |      val variants: List[String]
+            |    ) extends GeneratorField[String]
+            |  case class GeneratorFieldArray(
+            |      val inner: Option[GeneratorField[?]]
+            |    ) extends GeneratorField[Int]
+            |  case class GeneratorFieldNullable(
+            |      val inner: Option[GeneratorField[?]]
+            |    ) extends GeneratorField[Boolean]
+            |  case class GeneratorFieldDict(
+            |      val key: Option[GeneratorField[?]],
+            |      val value: Option[GeneratorField[?]]
+            |    ) extends GeneratorField[Int]
+            |  trait Generator {
+            |      def generate[T <: Option[Any]](path: List[String], `type`: scala.reflect.ClassTag[?], field: GeneratorField[T]): T
+            |  }
             |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
             |      def from(request: RawRequest): Req
             |      def to(response: Res): RawResponse
