@@ -64,6 +64,7 @@ open class KotlinIrEmitter(
     private val wirespecImports = listOf(
         import("$DEFAULT_SHARED_PACKAGE_STRING.kotlin", "Wirespec"),
         import("kotlin.reflect", "typeOf"),
+        import("kotlin.reflect", "KClass"),
     )
 
     private val sanitizationConfig: SanitizationConfig by lazy {
@@ -103,7 +104,7 @@ open class KotlinIrEmitter(
             .transform {
                 matchingElements { file: LanguageFile ->
                     val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
-                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + rest)
+                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + import("kotlin.reflect", "KClass") + rest)
                 }
             },
         )
