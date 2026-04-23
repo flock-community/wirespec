@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -47,8 +48,16 @@ interface IrEmitter : Emitter {
             logger.info("Emitting Client for endpoint ${endpoint.identifier.value}")
             emitEndpointClient(endpoint)
         }
-        return definitionFiles + clientFiles
+        val generatorFiles = module.statements.toList()
+            .filterIsInstance<Model>()
+            .mapNotNull { model ->
+                logger.info("Emitting Generator for ${model::class.simpleName} ${model.identifier.value}")
+                emitGenerator(model, module)
+            }
+        return definitionFiles + clientFiles + generatorFiles
     }
+
+    fun emitGenerator(definition: Definition, module: Module): File? = null
 
     fun emit(definition: Definition, module: Module, logger: Logger): File = run {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
