@@ -26,30 +26,30 @@ Two additions to `SharedWirespec.convert()` in `src/compiler/ir/src/commonMain/k
 ```text
 Wirespec
 ├── GeneratorField<T>                        (sealed interface)
-├── StringField(regex)                       : GeneratorField<String>
-├── IntegerField(min, max)                   : GeneratorField<Long>
-├── NumberField(min, max)                    : GeneratorField<Double>
-├── BooleanField                             : GeneratorField<Boolean>
-├── BytesField                               : GeneratorField<ByteArray>
-├── EnumField(values)                        : GeneratorField<String>
-├── UnionField(variants)                     : GeneratorField<String>
-├── ArrayField(inner: GeneratorField<*>)     : GeneratorField<Int>
-├── NullableField(inner: GeneratorField<*>)  : GeneratorField<Boolean>
-├── DictField(key: GeneratorField<*>,
+├── GeneratorFieldString(regex)                       : GeneratorField<String>
+├── GeneratorFieldInteger(min, max)                   : GeneratorField<Long>
+├── GeneratorFieldNumber(min, max)                    : GeneratorField<Double>
+├── GeneratorFieldBoolean                             : GeneratorField<Boolean>
+├── GeneratorFieldBytes                               : GeneratorField<ByteArray>
+├── GeneratorFieldEnum(values)                        : GeneratorField<String>
+├── GeneratorFieldUnion(variants)                     : GeneratorField<String>
+├── GeneratorFieldArray(inner: GeneratorField<*>)     : GeneratorField<Int>
+├── GeneratorFieldNullable(inner: GeneratorField<*>)  : GeneratorField<Boolean>
+├── GeneratorFieldDict(key: GeneratorField<*>,
 │             value: GeneratorField<*>)      : GeneratorField<Int>
 └── Generator                                (interface)
 ```
 
 Field constraints map directly from the parser AST's refinement bounds:
-- `StringField.regex` — nullable. Populated from `Primitive.Type.String` constraint (regex body with delimiters stripped), or from `Refined`'s regex bound.
-- `IntegerField.min / .max` — nullable `Long`. Populated from `Primitive.Type.Integer` constraint, or from `Refined`'s integer bound.
-- `NumberField.min / .max` — nullable `Double`. Populated from `Primitive.Type.Number` constraint, or from `Refined`'s number bound.
-- `BooleanField`, `BytesField` — no fields.
-- `EnumField.values` — `List<String>`, entries of the enum.
-- `UnionField.variants` — `List<String>`, names of union members.
-- `ArrayField.inner: GeneratorField<*>?` — descriptor of the element type. **Populated** when the element is a primitive/refined/enum/union; `null` when it is a custom type (the generator will recurse into the sub-generator; the callback cannot descriptor-inspect custom-type internals). Callback returns element **count** (`Int`).
-- `NullableField.inner: GeneratorField<*>?` — descriptor of the wrapped (non-nullable) type. Same populated/`null` convention as `ArrayField.inner`. Callback returns **is-null?** (`Boolean`); when `true`, the generator short-circuits to `null` without invoking the inner.
-- `DictField.key: GeneratorField<*>?, DictField.value: GeneratorField<*>?` — descriptors of the key and value types. Same populated/`null` convention as `ArrayField.inner`. Callback returns **entry count** (`Int`).
+- `GeneratorFieldString.regex` — nullable. Populated from `Primitive.Type.String` constraint (regex body with delimiters stripped), or from `Refined`'s regex bound.
+- `GeneratorFieldInteger.min / .max` — nullable `Long`. Populated from `Primitive.Type.Integer` constraint, or from `Refined`'s integer bound.
+- `GeneratorFieldNumber.min / .max` — nullable `Double`. Populated from `Primitive.Type.Number` constraint, or from `Refined`'s number bound.
+- `GeneratorFieldBoolean`, `GeneratorFieldBytes` — no fields.
+- `GeneratorFieldEnum.values` — `List<String>`, entries of the enum.
+- `GeneratorFieldUnion.variants` — `List<String>`, names of union members.
+- `GeneratorFieldArray.inner: GeneratorField<*>?` — descriptor of the element type. **Populated** when the element is a primitive/refined/enum/union; `null` when it is a custom type (the generator will recurse into the sub-generator; the callback cannot descriptor-inspect custom-type internals). Callback returns element **count** (`Int`).
+- `GeneratorFieldNullable.inner: GeneratorField<*>?` — descriptor of the wrapped (non-nullable) type. Same populated/`null` convention as `GeneratorFieldArray.inner`. Callback returns **is-null?** (`Boolean`); when `true`, the generator short-circuits to `null` without invoking the inner.
+- `GeneratorFieldDict.key: GeneratorField<*>?, GeneratorFieldDict.value: GeneratorField<*>?` — descriptors of the key and value types. Same populated/`null` convention as `GeneratorFieldArray.inner`. Callback returns **entry count** (`Int`).
 
 This "count/flag" semantics for `Array`/`Nullable`/`Dict` keeps the callback to a pure leaf-decision mapping; the generator owns all structural iteration.
 
@@ -97,9 +97,9 @@ Emitted:
 object AddressGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): Address = Address(
         street = callback.generate(path + "street",
-            Wirespec.StringField(regex = null)),
+            Wirespec.GeneratorFieldString(regex = null)),
         number = callback.generate(path + "number",
-            Wirespec.IntegerField(min = null, max = null)),
+            Wirespec.GeneratorFieldInteger(min = null, max = null)),
         postalCode = UUIDGenerator.generate(path + "postalCode", callback),
     )
 }
@@ -110,7 +110,7 @@ Field handling by `Reference`:
 - **Custom** → `{FieldTypeName}Generator.generate(path + fieldName, callback)` — recursive composition.
 - **Iterable** →
   ```kotlin
-  val count = callback.generate(path + fieldName, Wirespec.ArrayField(inner = <innerDesc>))
+  val count = callback.generate(path + fieldName, Wirespec.GeneratorFieldArray(inner = <innerDesc>))
   val values = (0 until count).map { i ->
       <recurse-on-inner>(path + fieldName + i.toString(), callback)
   }
@@ -118,7 +118,7 @@ Field handling by `Reference`:
 - **Dict** →
   ```kotlin
   val count = callback.generate(path + fieldName,
-      Wirespec.DictField(key = <keyDesc>, value = <valueDesc>))
+      Wirespec.GeneratorFieldDict(key = <keyDesc>, value = <valueDesc>))
   val entries = (0 until count).associate { i ->
       <keyGen>(path + fieldName + "key$i", callback) to
       <valueGen>(path + fieldName + "value$i", callback)
@@ -127,7 +127,7 @@ Field handling by `Reference`:
 - **Nullable reference** (any of the above with `isNullable = true`) → wrap the value production:
   ```kotlin
   val isNull = callback.generate(path + fieldName,
-      Wirespec.NullableField(inner = <nonNullableDesc>))
+      Wirespec.GeneratorFieldNullable(inner = <nonNullableDesc>))
   val value = if (isNull) null else <non-nullable-production>
   ```
 
@@ -148,12 +148,12 @@ Emitted:
 object UUIDGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): UUID = UUID(
         value = callback.generate(path + "value",
-            Wirespec.StringField(regex = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")),
+            Wirespec.GeneratorFieldString(regex = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")),
     )
 }
 ```
 
-Integer/Number refined types emit `IntegerField(min, max)` / `NumberField(min, max)` with bounds from the refinement constraint.
+Integer/Number refined types emit `GeneratorFieldInteger(min, max)` / `GeneratorFieldNumber(min, max)` with bounds from the refinement constraint.
 
 #### Enum
 
@@ -161,7 +161,7 @@ Integer/Number refined types emit `IntegerField(min, max)` / `NumberField(min, m
 object ColorGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): Color = Color(
         label = callback.generate(path + "value",
-            Wirespec.EnumField(values = listOf("RED", "GREEN", "BLUE"))),
+            Wirespec.GeneratorFieldEnum(values = listOf("RED", "GREEN", "BLUE"))),
     )
 }
 ```
@@ -174,7 +174,7 @@ Assumes each language's enum emission produces a `label: String` constructor par
 object ShapeGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): Shape {
         val variant = callback.generate(path + "variant",
-            Wirespec.UnionField(variants = listOf("Circle", "Square", "Triangle")))
+            Wirespec.GeneratorFieldUnion(variants = listOf("Circle", "Square", "Triangle")))
         return when (variant) {
             "Circle" -> CircleGenerator.generate(path + "Circle", callback)
             "Square" -> SquareGenerator.generate(path + "Square", callback)
@@ -264,7 +264,7 @@ Full coverage across all three levels, all six languages (strategy T1).
 
 `src/compiler/ir/src/commonTest/kotlin/community/flock/wirespec/ir/converter/`:
 
-- **`IrConverterTest.testSharedContainsGeneratorField`** — asserts `GeneratorField` interface exists and that ten sibling structs (`StringField`, `IntegerField`, `NumberField`, `BooleanField`, `BytesField`, `EnumField`, `UnionField`, `ArrayField`, `NullableField`, `DictField`) exist at the same level.
+- **`IrConverterTest.testSharedContainsGeneratorField`** — asserts `GeneratorField` interface exists and that ten sibling structs (`GeneratorFieldString`, `GeneratorFieldInteger`, `GeneratorFieldNumber`, `GeneratorFieldBoolean`, `GeneratorFieldBytes`, `GeneratorFieldEnum`, `GeneratorFieldUnion`, `GeneratorFieldArray`, `GeneratorFieldNullable`, `GeneratorFieldDict`) exist at the same level.
 - **`GeneratorConverterTest`** — for each of Type, Enum, Union, Refined, and for Type variants exercising array, dict, nullable-primitive, and nullable-custom fields, assert the produced IR `File` matches the expected function body structure (`Function` signature, `Switch` cases for Union, `ConstructorStatement`'s `namedArguments` for Type, etc.).
 
 ### Level 2 — Per-emitter snapshot tests
@@ -273,7 +273,7 @@ Each emitter's existing `…IrEmitterTest` gets:
 
 1. Updated shared-runtime assertion to include the ten `GeneratorField` variants and the `Generator` interface.
 2. New `testEmitGeneratorForType`, `testEmitGeneratorForEnum`, `testEmitGeneratorForUnion`, `testEmitGeneratorForRefined` methods asserting the generated source string for a fixed fixture.
-3. New `testEmitGeneratorForArrayField`, `testEmitGeneratorForDictField`, `testEmitGeneratorForNullableField` methods covering the structural-iteration cases.
+3. New `testEmitGeneratorForGeneratorFieldArray`, `testEmitGeneratorForGeneratorFieldDict`, `testEmitGeneratorForGeneratorFieldNullable` methods covering the structural-iteration cases.
 
 Expected-output strings are stored inline using `trimMargin` multiline strings (existing convention in each `…IrEmitterTest`).
 
@@ -295,7 +295,7 @@ Four phases, each independently green-buildable:
 
 1. **Shared runtime.** Add the `GeneratorField` sealed hierarchy and `Generator` interface to `SharedWirespec.convert()`. Update `IrConverterTest.testSharedContainsGeneratorField`. Update each language's existing `…IrEmitterTest` shared-runtime fixture to include the new block. No per-language generator code changes expected (flat siblings need no generator updates).
 2. **`GeneratorConverter`.** Add the four `convertToGenerator()` overloads + helpers. Add `GeneratorConverterTest` covering all definition kinds and field-type combinations.
-3. **`emitGenerator` hook + per-emitter wiring.** Add `subPackage: String` overloads to `EmitHelpers`. Add `emitGenerator` to `IrEmitter`. Override in each of the six language emitters. Add per-emitter snapshot tests (`testEmitGeneratorForType/Enum/Union/Refined/ArrayField/DictField/NullableField`).
+3. **`emitGenerator` hook + per-emitter wiring.** Add `subPackage: String` overloads to `EmitHelpers`. Add `emitGenerator` to `IrEmitter`. Override in each of the six language emitters. Add per-emitter snapshot tests (`testEmitGeneratorForType/Enum/Union/Refined/GeneratorFieldArray/GeneratorFieldDict/GeneratorFieldNullable`).
 4. **Docker verify.** Add `CompileGeneratorTest` fixture and `VerifyGeneratorTest` parameterized across all six languages.
 
 ## Out of Scope
