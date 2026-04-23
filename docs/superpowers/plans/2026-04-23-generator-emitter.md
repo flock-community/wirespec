@@ -244,7 +244,7 @@ Open `IrConverter.kt`. Inside the `namespace("Wirespec") { … }` block (starts 
             field("variants", list(string))
         }
         struct("GeneratorFieldArray") {
-            implements(type("GeneratorField", integer64))
+            implements(type("GeneratorField", integer))
             field("inner", type("GeneratorField", Type.Wildcard).nullable())
         }
         struct("GeneratorFieldNullable") {
@@ -252,7 +252,7 @@ Open `IrConverter.kt`. Inside the `namespace("Wirespec") { … }` block (starts 
             field("inner", type("GeneratorField", Type.Wildcard).nullable())
         }
         struct("GeneratorFieldDict") {
-            implements(type("GeneratorField", integer64))
+            implements(type("GeneratorField", integer))
             field("key", type("GeneratorField", Type.Wildcard).nullable())
             field("value", type("GeneratorField", Type.Wildcard).nullable())
         }
