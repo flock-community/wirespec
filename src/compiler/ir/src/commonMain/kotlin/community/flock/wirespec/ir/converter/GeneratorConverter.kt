@@ -11,12 +11,14 @@ import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Literal
+import community.flock.wirespec.ir.core.LiteralList
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 
@@ -188,5 +190,44 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
         )
     } else {
         nonNullExpr
+    }
+}
+
+fun EnumWirespec.convertToGenerator(): File {
+    val generatorName = identifier.toGeneratorName()
+    val typeName = identifier.value
+
+    return file(generatorName) {
+        namespace(generatorName) {
+            function("generate") {
+                arg("path", list(string))
+                arg("generator", type("Wirespec.Generator"))
+                returnType(type(typeName))
+                returns(
+                    ConstructorStatement(
+                        type = Type.Custom(typeName),
+                        namedArguments = mapOf(
+                            Name.of("label") to FunctionCall(
+                                receiver = VariableReference(Name.of("generator")),
+                                name = Name.of("generate"),
+                                arguments = mapOf(
+                                    Name.of("path") to pathPlus("value"),
+                                    Name.of("type") to ClassReference(Type.Custom(typeName)),
+                                    Name.of("field") to ConstructorStatement(
+                                        type = Type.Custom("Wirespec.GeneratorFieldEnum"),
+                                        namedArguments = mapOf(
+                                            Name.of("values") to LiteralList(
+                                                values = entries.map { Literal(it, Type.String) },
+                                                type = Type.String,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            }
+        }
     }
 }
