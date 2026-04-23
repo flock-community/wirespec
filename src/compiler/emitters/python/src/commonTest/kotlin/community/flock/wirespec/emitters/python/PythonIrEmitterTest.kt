@@ -1086,6 +1086,45 @@ class PythonIrEmitterTest {
             |        @abstractmethod
             |        async def transport(self, request: Wirespec.RawRequest) -> Wirespec.RawResponse:
             |            ...
+            |    class GeneratorField(ABC, Generic[T]):
+            |        pass
+            |    @dataclass
+            |    class GeneratorFieldString(GeneratorField[str]):
+            |        regex: Optional[str]
+            |    @dataclass
+            |    class GeneratorFieldInteger(GeneratorField[int]):
+            |        min: Optional[int]
+            |        max: Optional[int]
+            |    @dataclass
+            |    class GeneratorFieldNumber(GeneratorField[float]):
+            |        min: Optional[float]
+            |        max: Optional[float]
+            |    @dataclass
+            |    class GeneratorFieldBoolean(GeneratorField[bool]):
+            |        pass
+            |    @dataclass
+            |    class GeneratorFieldBytes(GeneratorField[bytes]):
+            |        pass
+            |    @dataclass
+            |    class GeneratorFieldEnum(GeneratorField[str]):
+            |        values: list[str]
+            |    @dataclass
+            |    class GeneratorFieldUnion(GeneratorField[str]):
+            |        variants: list[str]
+            |    @dataclass
+            |    class GeneratorFieldArray(GeneratorField[int]):
+            |        inner: Optional[Wirespec.GeneratorField[Any]]
+            |    @dataclass
+            |    class GeneratorFieldNullable(GeneratorField[bool]):
+            |        inner: Optional[Wirespec.GeneratorField[Any]]
+            |    @dataclass
+            |    class GeneratorFieldDict(GeneratorField[int]):
+            |        key: Optional[Wirespec.GeneratorField[Any]]
+            |        value: Optional[Wirespec.GeneratorField[Any]]
+            |    class Generator(ABC):
+            |        @abstractmethod
+            |        def generate(self, path: list[str], type: type[T], field: Wirespec.GeneratorField[T]) -> T:
+            |            ...
             |
         """.trimMargin()
 
