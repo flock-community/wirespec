@@ -57,12 +57,13 @@ This "count/flag" semantics for `Array`/`Nullable`/`Dict` keeps the callback to 
 
 ```kotlin
 interface Generator {
-    fun <T> generate(path: List<String>, field: GeneratorField<T>): T
+    fun <T> generate(path: List<String>, type: String, field: GeneratorField<T>): T
 }
 ```
 
 Parameters:
 - `path: List<String>` — segments accumulated as the generator recurses, e.g. `["Person", "addresses", "0", "street"]`.
+- `type: String` — the name of the Wirespec definition that immediately owns this field. For a `street` field inside `Address`, `type` is `"Address"`; for a field inside `Person`, `type` is `"Person"`. For a `Refined` wrapper's inner value, `type` is the refined name (e.g. `"UUID"`). For an `Enum`'s label, `type` is the enum name. For a `Union`'s variant pick, `type` is the union name; after dispatching into a chosen variant, `type` becomes that variant's name. Lets the callback produce values appropriate for the enclosing model without having to parse `path`.
 - `field: GeneratorField<T>` — describes what value is needed, with constraints. The generic `T` is inferred; no casts required in callback bodies.
 
 The callback is named `generator` at the call site, but the **parameter name** inside generated functions is `callback` to avoid visually overloading the word "generator" in function bodies. (The parameter name is emitted by `GeneratorConverter` and is purely cosmetic.)
@@ -96,28 +97,31 @@ Emitted:
 ```kotlin
 object AddressGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): Address = Address(
-        street = callback.generate(path + "street",
+        street = callback.generate(path + "street", "Address",
             Wirespec.GeneratorFieldString(regex = null)),
-        number = callback.generate(path + "number",
+        number = callback.generate(path + "number", "Address",
             Wirespec.GeneratorFieldInteger(min = null, max = null)),
         postalCode = UUIDGenerator.generate(path + "postalCode", callback),
     )
 }
 ```
 
+In the pseudocode below, `<typeName>` stands for the enclosing definition's name (e.g. `"Address"` when generating a field of `Address`).
+
 Field handling by `Reference`:
-- **Primitive** → `callback.generate(path + fieldName, <Primitive-to-XxxField>)`.
+- **Primitive** → `callback.generate(path + fieldName, <typeName>, <Primitive-to-XxxField>)`.
 - **Custom** → `{FieldTypeName}Generator.generate(path + fieldName, callback)` — recursive composition.
 - **Iterable** →
   ```kotlin
-  val count = callback.generate(path + fieldName, Wirespec.GeneratorFieldArray(inner = <innerDesc>))
+  val count = callback.generate(path + fieldName, <typeName>,
+      Wirespec.GeneratorFieldArray(inner = <innerDesc>))
   val values = (0 until count).map { i ->
       <recurse-on-inner>(path + fieldName + i.toString(), callback)
   }
   ```
 - **Dict** →
   ```kotlin
-  val count = callback.generate(path + fieldName,
+  val count = callback.generate(path + fieldName, <typeName>,
       Wirespec.GeneratorFieldDict(key = <keyDesc>, value = <valueDesc>))
   val entries = (0 until count).associate { i ->
       <keyGen>(path + fieldName + "key$i", callback) to
@@ -126,7 +130,7 @@ Field handling by `Reference`:
   ```
 - **Nullable reference** (any of the above with `isNullable = true`) → wrap the value production:
   ```kotlin
-  val isNull = callback.generate(path + fieldName,
+  val isNull = callback.generate(path + fieldName, <typeName>,
       Wirespec.GeneratorFieldNullable(inner = <nonNullableDesc>))
   val value = if (isNull) null else <non-nullable-production>
   ```
@@ -147,7 +151,7 @@ Emitted:
 ```kotlin
 object UUIDGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): UUID = UUID(
-        value = callback.generate(path + "value",
+        value = callback.generate(path + "value", "UUID",
             Wirespec.GeneratorFieldString(regex = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")),
     )
 }
@@ -160,7 +164,7 @@ Integer/Number refined types emit `GeneratorFieldInteger(min, max)` / `Generator
 ```kotlin
 object ColorGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): Color = Color(
-        label = callback.generate(path + "value",
+        label = callback.generate(path + "value", "Color",
             Wirespec.GeneratorFieldEnum(values = listOf("RED", "GREEN", "BLUE"))),
     )
 }
@@ -173,7 +177,7 @@ Assumes each language's enum emission produces a `label: String` constructor par
 ```kotlin
 object ShapeGenerator {
     fun generate(path: List<String>, callback: Wirespec.Generator): Shape {
-        val variant = callback.generate(path + "variant",
+        val variant = callback.generate(path + "variant", "Shape",
             Wirespec.GeneratorFieldUnion(variants = listOf("Circle", "Square", "Triangle")))
         return when (variant) {
             "Circle" -> CircleGenerator.generate(path + "Circle", callback)
