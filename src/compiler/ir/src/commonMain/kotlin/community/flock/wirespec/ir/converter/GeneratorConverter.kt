@@ -9,6 +9,7 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.NullLiteral
@@ -121,34 +122,71 @@ fun TypeWirespec.convertToGenerator(): File {
     }
 }
 
-private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameStr: String): Expression = when (val ref = this) {
-    is ReferenceWirespec.Primitive -> generatorCallExpression(typeName, fieldNameStr, ref.toFieldDescriptor())
-    is ReferenceWirespec.Custom -> FunctionCall(
-        receiver = RawExpression("${ref.value}Generator"),
-        name = Name.of("generate"),
-        arguments = mapOf(
-            Name.of("path") to pathPlus(fieldNameStr),
-            Name.of("generator") to VariableReference(Name.of("generator")),
-        ),
-    )
-    is ReferenceWirespec.Iterable -> generatorCallExpression(
+private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameStr: String): Expression {
+    val nullableCheck: Expression = generatorCallExpression(
         typeName,
         fieldNameStr,
         ConstructorStatement(
-            type = Type.Custom("Wirespec.GeneratorFieldArray"),
-            namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
-        ),
-    )
-    is ReferenceWirespec.Dict -> generatorCallExpression(
-        typeName,
-        fieldNameStr,
-        ConstructorStatement(
-            type = Type.Custom("Wirespec.GeneratorFieldDict"),
+            type = Type.Custom("Wirespec.GeneratorFieldNullable"),
             namedArguments = mapOf(
-                Name.of("key") to NullLiteral,
-                Name.of("value") to ref.reference.toFieldDescriptorOrNull(),
+                Name.of("inner") to when (val ref = this) {
+                    is ReferenceWirespec.Primitive -> ref.toFieldDescriptor()
+                    is ReferenceWirespec.Iterable -> ConstructorStatement(
+                        type = Type.Custom("Wirespec.GeneratorFieldArray"),
+                        namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
+                    )
+                    is ReferenceWirespec.Dict -> ConstructorStatement(
+                        type = Type.Custom("Wirespec.GeneratorFieldDict"),
+                        namedArguments = mapOf(
+                            Name.of("key") to NullLiteral,
+                            Name.of("value") to ref.reference.toFieldDescriptorOrNull(),
+                        ),
+                    )
+                    is ReferenceWirespec.Custom, is ReferenceWirespec.Any, is ReferenceWirespec.Unit -> NullLiteral
+                },
             ),
         ),
     )
-    is ReferenceWirespec.Any, is ReferenceWirespec.Unit -> NullLiteral
+
+    val nonNullExpr: Expression = when (val ref = this) {
+        is ReferenceWirespec.Primitive -> generatorCallExpression(typeName, fieldNameStr, ref.toFieldDescriptor())
+        is ReferenceWirespec.Custom -> FunctionCall(
+            receiver = RawExpression("${ref.value}Generator"),
+            name = Name.of("generate"),
+            arguments = mapOf(
+                Name.of("path") to pathPlus(fieldNameStr),
+                Name.of("generator") to VariableReference(Name.of("generator")),
+            ),
+        )
+        is ReferenceWirespec.Iterable -> generatorCallExpression(
+            typeName,
+            fieldNameStr,
+            ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldArray"),
+                namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
+            ),
+        )
+        is ReferenceWirespec.Dict -> generatorCallExpression(
+            typeName,
+            fieldNameStr,
+            ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldDict"),
+                namedArguments = mapOf(
+                    Name.of("key") to NullLiteral,
+                    Name.of("value") to ref.reference.toFieldDescriptorOrNull(),
+                ),
+            ),
+        )
+        is ReferenceWirespec.Any, is ReferenceWirespec.Unit -> NullLiteral
+    }
+
+    return if (this.isNullable) {
+        IfExpression(
+            condition = nullableCheck,
+            thenExpr = NullLiteral,
+            elseExpr = nonNullExpr,
+        )
+    } else {
+        nonNullExpr
+    }
 }
