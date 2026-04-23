@@ -700,6 +700,39 @@ class TypeScriptIrEmitterTest {
             |  export interface Transportation {
             |    transport(request: RawRequest): Promise<RawResponse>;
             |  }
+            |  export interface GeneratorField<T extends any | undefined> {}
+            |  export type GeneratorFieldString = {
+            |    "regex": string | undefined,
+            |  }
+            |  export type GeneratorFieldInteger = {
+            |    "min": number | undefined,
+            |    "max": number | undefined,
+            |  }
+            |  export type GeneratorFieldNumber = {
+            |    "min": number | undefined,
+            |    "max": number | undefined,
+            |  }
+            |  export type GeneratorFieldBoolean = {}
+            |  export type GeneratorFieldBytes = {}
+            |  export type GeneratorFieldEnum = {
+            |    "values": string[],
+            |  }
+            |  export type GeneratorFieldUnion = {
+            |    "variants": string[],
+            |  }
+            |  export type GeneratorFieldArray = {
+            |    "inner": GeneratorField<unknown> | undefined,
+            |  }
+            |  export type GeneratorFieldNullable = {
+            |    "inner": GeneratorField<unknown> | undefined,
+            |  }
+            |  export type GeneratorFieldDict = {
+            |    "key": GeneratorField<unknown> | undefined,
+            |    "value": GeneratorField<unknown> | undefined,
+            |  }
+            |  export interface Generator {
+            |    generate<T extends any | undefined>(path: string[], type: Type, field: GeneratorField<T>): T;
+            |  }
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
             |    to: (request: REQ) => RawRequest;
             |    from: (response: RawResponse) => RES
