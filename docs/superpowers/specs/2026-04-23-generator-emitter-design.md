@@ -2,18 +2,12 @@
 
 **Date:** 2026-04-23
 **Status:** Design approved
-**Supersedes:** `2026-04-13-model-generator-emitter-design.md`, `2026-04-14-generator-to-arbitrary-rename-design.md`, `2026-04-15-arbitrary-field-nesting-design.md` (and their implementation plans)
 
 ## Context
 
 The current `src/tools/generator/Generator.kt` produces JSON test data at runtime by walking the parser AST. This design replaces that approach with **generated source code** — for every Wirespec model definition (`Type`, `Enum`, `Union`, `Refined`) the compiler emits a type-safe generator function that delegates leaf-value production to a user-supplied pure callback.
 
 Because the feature is built on the existing IR DSL, all six target languages (Java, Kotlin, TypeScript, Python, Scala, Rust) get generator code "for free" through the shared IR → Transform → CodeGenerator pipeline.
-
-This spec combines three prior designs into a single fresh-build plan:
-- The original generator emitter design.
-- The `Generator → Arbitrary` rename is **not** applied. Names stay `Generator` throughout.
-- The `GeneratorField` nesting proposal is **not** applied. Variants remain flat siblings.
 
 ## Goal
 
