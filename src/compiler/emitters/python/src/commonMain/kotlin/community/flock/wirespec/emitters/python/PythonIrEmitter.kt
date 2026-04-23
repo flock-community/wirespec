@@ -32,6 +32,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
@@ -161,6 +162,20 @@ open class PythonIrEmitter(
         return file
             .prependImports(buildImports("..wirespec"))
             .placeInModule(packageName = packageName, definition = definition)
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is Type -> definition.convertToGenerator()
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }
+        return generatorFile
+            .sanitizeNames(sanitizationConfig)
+            .prependImports(buildImports("..wirespec"))
+            .placeInModule(packageName = packageName, subPackage = "generator")
     }
 
     override fun emit(type: Type, module: Module): File {
