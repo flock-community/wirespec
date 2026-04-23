@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.classifyValidatableFields
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.converter.requestParameters
 import community.flock.wirespec.compiler.core.emit.Keywords
@@ -162,6 +163,22 @@ open class TypeScriptIrEmitter : IrEmitter {
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(import("../Wirespec", "Wirespec")) + file.elements
+        )
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is AstType -> definition.convertToGenerator()
+            is AstEnum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }.sanitizeNames(sanitizationConfig)
+
+        val subPackageName = PackageName("") + "generator"
+        return File(
+            name = Name.of(subPackageName.toDir() + generatorFile.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(import("../Wirespec", "Wirespec")) + generatorFile.elements,
         )
     }
 
