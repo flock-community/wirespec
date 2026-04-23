@@ -30,7 +30,7 @@ class VerifyGeneratorTest : FunSpec({
                     import("community.flock.wirespec.kotlin", "Wirespec")
                     import("community.flock.wirespec.generated.model", "Person")
                     import("community.flock.wirespec.generated.generator", "PersonGenerator")
-                    import("kotlin.reflect", "KClass")
+                    import("kotlin.reflect", "KType")
 
                     main(statics = {
                         // A deterministic Generator that returns a predictable value
@@ -42,7 +42,7 @@ class VerifyGeneratorTest : FunSpec({
                             """
                             |val generator = object : Wirespec.Generator {
                             |    @Suppress("UNCHECKED_CAST")
-                            |    override fun <T : Any> generate(path: List<String>, type: KClass<*>, field: Wirespec.GeneratorField<T>): T {
+                            |    override fun <T : Any> generate(path: List<String>, type: KType, field: Wirespec.GeneratorField<T>): T {
                             |        return when (field) {
                             |            is Wirespec.GeneratorFieldString -> "test-string" as T
                             |            is Wirespec.GeneratorFieldInteger -> 42L as T
