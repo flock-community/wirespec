@@ -283,7 +283,7 @@ class TypeScriptIrEmitterTest {
             |import {Wirespec} from '../Wirespec'
             |export namespace MyAwesomeEnumGenerator {
             |  export function generate(path: string[], generator: Wirespec.Generator): MyAwesomeEnum {
-            |    return { label: generator.generate((path + 'value'), MyAwesomeEnum, { values: ['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'] }) };
+            |    return MyAwesomeEnum.valueOf(generator.generate((path + 'value'), MyAwesomeEnum, { values: ['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'] }));
             |  }
             |}
             |
@@ -1073,7 +1073,7 @@ class TypeScriptIrEmitterTest {
             |import {Wirespec} from '../Wirespec'
             |export namespace ColorGenerator {
             |  export function generate(path: string[], generator: Wirespec.Generator): Color {
-            |    return { label: generator.generate((path + 'value'), Color, { values: ['RED', 'GREEN', 'BLUE'] }) };
+            |    return Color.valueOf(generator.generate((path + 'value'), Color, { values: ['RED', 'GREEN', 'BLUE'] }));
             |  }
             |}
             |
