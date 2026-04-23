@@ -39,12 +39,11 @@ internal fun FieldIdentifier.toFieldName(): Name {
     return Name(parts)
 }
 
-internal fun pathPlus(segment: String): BinaryOp =
-    BinaryOp(
-        VariableReference(Name.of("path")),
-        BinaryOp.Operator.PLUS,
-        Literal(segment, Type.String),
-    )
+internal fun pathPlus(segment: String): BinaryOp = BinaryOp(
+    VariableReference(Name.of("path")),
+    BinaryOp.Operator.PLUS,
+    Literal(segment, Type.String),
+)
 
 internal fun ReferenceWirespec.Primitive.toFieldDescriptor(): Expression = when (val t = type) {
     is ReferenceWirespec.Primitive.Type.String -> {
@@ -57,7 +56,9 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(): Expression = when 
                         constraint.value.split("/").drop(1).dropLast(1).joinToString("/"),
                         Type.String,
                     )
-                } else NullLiteral,
+                } else {
+                    NullLiteral
+                },
             ),
         )
     }
@@ -311,7 +312,7 @@ fun UnionWirespec.convertToGenerator(): File {
                                         ),
                                         Name.of("generator") to VariableReference(Name.of("generator")),
                                     ),
-                                )
+                                ),
                             )
                         }
                     }
