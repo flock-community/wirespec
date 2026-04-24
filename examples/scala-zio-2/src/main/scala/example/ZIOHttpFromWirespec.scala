@@ -48,7 +48,9 @@ object ZIOHttpFromWirespec {
       val edge = server.server(serialization)
       val codec = server.pathSegments.foldLeft(PathCodec.empty: PathCodec[Unit]) {
         case (acc, Wirespec.Literal(v))     => acc / v
-        case (acc, Wirespec.Param(name, _)) => acc / PathCodec.string(name).transform(_ => ())(_ => ???)
+        // Reverse direction (_ => "") is never called in server-side routing; ZIO HTTP only
+        // uses the forward direction (String => Unit) to match incoming path segments.
+        case (acc, Wirespec.Param(name, _)) => acc / PathCodec.string(name).transform(_ => ())(_ => "")
       }
       (Method.fromString(server.method) / codec) -> handler { (req: Request) => processRequest(edge, f, req) }
 }

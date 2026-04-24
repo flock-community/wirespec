@@ -1,6 +1,6 @@
 package example
 
-import community.flock.wirespec.generated.endpoint.{GetTodoById, GetTodos, PostTodo}
+import community.flock.wirespec.generated.endpoint.{DeleteTodoById, GetTodoById, GetTodos, PostTodo}
 import community.flock.wirespec.scala.Wirespec
 import example.ZIOHttpFromWirespec.*
 import zio.*
@@ -8,7 +8,10 @@ import zio.http.*
 
 object TodoRoutes:
   def routes(serialization: Wirespec.Serialization): Routes[
-    GetTodos.Handler[Task] & PostTodo.Handler[Task] & GetTodoById.Handler[Task],
+    GetTodos.Handler[Task]
+      & PostTodo.Handler[Task]
+      & GetTodoById.Handler[Task]
+      & DeleteTodoById.Handler[Task],
     Throwable
   ] =
     Routes(
@@ -20,5 +23,8 @@ object TodoRoutes:
       },
       GetTodoById.Server.toRoute(serialization) { req =>
         ZIO.serviceWithZIO[GetTodoById.Handler[Task]](_.getTodoById(req))
+      },
+      DeleteTodoById.Server.toRoute(serialization) { req =>
+        ZIO.serviceWithZIO[DeleteTodoById.Handler[Task]](_.deleteTodoById(req))
       },
     )
