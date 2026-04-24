@@ -967,12 +967,12 @@ class ScalaIrEmitterTest {
             |      val headers: Map[String, List[String]],
             |      val body: Option[Array[Byte]]
             |    )
-            |  sealed trait PathSegment
-            |  case class Literal(val value: String) extends PathSegment
-            |  case class Param(val name: String, val `type`: ClassTag[?]) extends PathSegment
             |  trait Transportation {
             |      def transport(request: RawRequest): RawResponse
             |  }
+            |  sealed trait PathSegment
+            |  case class Literal(val value: String) extends PathSegment
+            |  case class Param(val name: String, val `type`: ClassTag[?]) extends PathSegment
             |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
             |      def from(request: RawRequest): Req
             |      def to(response: Res): RawResponse
