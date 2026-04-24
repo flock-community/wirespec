@@ -32,6 +32,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -40,6 +41,8 @@ import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Constructor
+import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
@@ -105,17 +108,30 @@ open class KotlinIrEmitter(
     override val shared = object : Shared {
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
 
-        private val clientServer = AstShared(packageString).convertClientServer()
+        private val pathSegmentElements: List<Element> = listOf(
+            RawElement("sealed interface PathSegment"),
+            RawElement("data class Literal(val value: String) : PathSegment"),
+            RawElement("data class Param(val name: String, val type: KType) : PathSegment"),
+        )
+
+        private val clientServer = AstShared(packageString).convertClientServer().map { element ->
+            if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
+                element.copy(fields = element.fields + Field(
+                    name = Name.of("pathSegments"),
+                    type = LanguageType.Array(LanguageType.Custom("PathSegment")),
+                ))
+            } else element
+        }
 
         override val source = AstShared(packageString)
             .convert()
             .transform {
                 matchingElements { file: LanguageFile ->
                     val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
-                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + rest)
+                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + import("kotlin.reflect", "typeOf") + rest)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) clientServer
+                    if (namespace.name == Name.of("Wirespec")) pathSegmentElements + clientServer
                     else emptyList()
                 }
             }
@@ -268,6 +284,24 @@ open class KotlinIrEmitter(
             }
         }
 
+    private fun Reference.toKotlinTypeName(): String {
+        val base = when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.String -> "String"
+                is Reference.Primitive.Type.Integer -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Int" else "Long"
+                is Reference.Primitive.Type.Number -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Float" else "Double"
+                Reference.Primitive.Type.Boolean -> "Boolean"
+                Reference.Primitive.Type.Bytes -> "ByteArray"
+            }
+            is Reference.Custom -> value
+            is Reference.Iterable -> "List<${reference.toKotlinTypeName()}>"
+            is Reference.Dict -> "Map<String, ${reference.toKotlinTypeName()}>"
+            is Reference.Any -> "Any"
+            is Reference.Unit -> "Unit"
+        }
+        return if (isNullable) "$base?" else base
+    }
+
     private fun buildCompanionObject(endpoint: Endpoint): RawElement {
         val pathTemplate = "/" + endpoint.path.joinToString("/") {
             when (it) {
@@ -275,10 +309,17 @@ open class KotlinIrEmitter(
                 is Endpoint.Segment.Param -> "{${it.identifier.value}}"
             }
         }
+        val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> """Wirespec.Literal("${segment.value}")"""
+                is Endpoint.Segment.Param -> """Wirespec.Param("${segment.identifier.value}", typeOf<${segment.reference.toKotlinTypeName()}>())"""
+            }
+        }
         return """
             |companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
             |  override val pathTemplate = "$pathTemplate"
             |  override val method = "${endpoint.method}"
+            |  override val pathSegments: List<Wirespec.PathSegment> = listOf($pathSegmentsCode)
             |  override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
             |    override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
             |    override fun to(response: Response<*>) = toRawResponse(serialization, response)
