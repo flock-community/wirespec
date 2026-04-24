@@ -12,7 +12,7 @@ object TodoRoutes:
       & PostTodo.Handler[Task]
       & GetTodoById.Handler[Task]
       & DeleteTodoById.Handler[Task],
-    Throwable
+    Response
   ] =
     Routes(
       GetTodos.Server.toRoute(serialization) { req =>
@@ -27,4 +27,4 @@ object TodoRoutes:
       DeleteTodoById.Server.toRoute(serialization) { req =>
         ZIO.serviceWithZIO[DeleteTodoById.Handler[Task]](_.deleteTodoById(req))
       },
-    )
+    ).handleError(e => Response.internalServerError(e.getMessage))
