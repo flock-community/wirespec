@@ -1,4 +1,4 @@
-package example
+package example.adapter.http
 
 import community.flock.wirespec.scala.Wirespec
 import community.flock.wirespec.generated.model.*
@@ -56,7 +56,6 @@ object JsonSerialization extends Wirespec.Serialization {
   override def serializeBody[T](t: T, `type`: ClassTag[?]): Array[Byte] =
     t match
       case list: List[?] =>
-        // Peek at the element type since ClassTag erases List's type parameter
         val elementClass = list.headOption.map(_.getClass).getOrElse(classOf[Nothing])
         val encoder = listEncoders.getOrElse(elementClass,
           if (list.isEmpty) return "[]".getBytes("UTF-8")

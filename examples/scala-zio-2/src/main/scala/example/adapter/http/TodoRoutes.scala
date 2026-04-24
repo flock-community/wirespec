@@ -1,8 +1,8 @@
-package example
+package example.adapter.http
 
 import community.flock.wirespec.generated.endpoint.{DeleteTodoById, GetTodoById, GetTodos, PostTodo}
 import community.flock.wirespec.scala.Wirespec
-import example.ZIOHttpFromWirespec.*
+import example.adapter.http.ZIOHttpFromWirespec.*
 import zio.*
 import zio.http.*
 
