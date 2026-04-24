@@ -41,14 +41,15 @@ object ZIOHttpFromWirespec {
 
   extension [Req <: Wirespec.Request[?], Res <: Wirespec.Response[?]](server: Wirespec.Server[Req, Res])
     def toRoute[R](
-      serialization: Wirespec.Serialization
-    )(
       f: Req => ZIO[R, Throwable, Res]
-    ): Route[R, Throwable] =
-      val edge = server.server(serialization)
+    ): Route[R & Wirespec.Serialization, Throwable] =
       val codec = server.pathSegments.foldLeft(PathCodec.empty: PathCodec[Unit]) {
         case (acc, Wirespec.Literal(v))     => acc / v
         case (acc, Wirespec.Param(name, _)) => acc / PathCodec.string(name).transform(_ => ())(_ => "")
       }
-      (Method.fromString(server.method) / codec) -> handler { (req: Request) => processRequest(edge, f, req) }
+      (Method.fromString(server.method) / codec) -> handler { (req: Request) =>
+        ZIO.service[Wirespec.Serialization].flatMap { serialization =>
+          processRequest(server.server(serialization), f, req)
+        }
+      }
 }

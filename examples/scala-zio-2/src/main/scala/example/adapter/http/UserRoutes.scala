@@ -7,12 +7,12 @@ import zio.*
 import zio.http.*
 
 object UserRoutes:
-  def routes(serialization: Wirespec.Serialization): Routes[
-    GetUsers.Handler[Task],
+  def routes: Routes[
+    Wirespec.Serialization & GetUsers.Handler[Task],
     Response
   ] =
     Routes(
-      GetUsers.Server.toRoute(serialization) { req =>
+      GetUsers.Server.toRoute { req =>
         ZIO.serviceWithZIO[GetUsers.Handler[Task]](_.getUsers(req))
       },
     ).handleError(e => Response.internalServerError(e.getMessage))

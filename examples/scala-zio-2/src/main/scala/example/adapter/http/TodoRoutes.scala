@@ -7,24 +7,25 @@ import zio.*
 import zio.http.*
 
 object TodoRoutes:
-  def routes(serialization: Wirespec.Serialization): Routes[
-    GetTodos.Handler[Task]
+  def routes: Routes[
+    Wirespec.Serialization
+      & GetTodos.Handler[Task]
       & PostTodo.Handler[Task]
       & GetTodoById.Handler[Task]
       & DeleteTodoById.Handler[Task],
     Response
   ] =
     Routes(
-      GetTodos.Server.toRoute(serialization) { req =>
+      GetTodos.Server.toRoute { req =>
         ZIO.serviceWithZIO[GetTodos.Handler[Task]](_.getTodos(req))
       },
-      PostTodo.Server.toRoute(serialization) { req =>
+      PostTodo.Server.toRoute { req =>
         ZIO.serviceWithZIO[PostTodo.Handler[Task]](_.postTodo(req))
       },
-      GetTodoById.Server.toRoute(serialization) { req =>
+      GetTodoById.Server.toRoute { req =>
         ZIO.serviceWithZIO[GetTodoById.Handler[Task]](_.getTodoById(req))
       },
-      DeleteTodoById.Server.toRoute(serialization) { req =>
+      DeleteTodoById.Server.toRoute { req =>
         ZIO.serviceWithZIO[DeleteTodoById.Handler[Task]](_.deleteTodoById(req))
       },
     ).handleError(e => Response.internalServerError(e.getMessage))
