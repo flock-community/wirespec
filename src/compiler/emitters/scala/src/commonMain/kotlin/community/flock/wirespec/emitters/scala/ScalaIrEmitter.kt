@@ -357,17 +357,6 @@ open class ScalaIrEmitter(
         }
     }
 
-    open fun emitHandleFunction(endpoint: Endpoint, requestIsObject: Boolean): String {
-        val functionName = endpoint.identifier.value.replaceFirstChar { it.lowercase() }
-        val requestType = if (requestIsObject) "Request.type" else "Request"
-        return "def $functionName(request: $requestType): F[Response[?]]\n"
-    }
-
-    open fun emitHandler(endpoint: Endpoint, requestIsObject: Boolean): String {
-        val handleFunction = emitHandleFunction(endpoint, requestIsObject)
-        return "trait Handler[F[_]] extends Wirespec.Handler {\n    $handleFunction}\n"
-    }
-
     private fun Reference.toScalaTypeName(): String {
         val base = when (this) {
             is Reference.Primitive -> when (val t = type) {
