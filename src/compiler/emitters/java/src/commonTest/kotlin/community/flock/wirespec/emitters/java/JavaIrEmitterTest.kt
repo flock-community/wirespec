@@ -291,6 +291,10 @@ class JavaIrEmitterTest {
             |        return "PUT";
             |      }
             |      @Override
+            |      public List<Wirespec.PathSegment> getPathSegments() {
+            |        return List.of(new Wirespec.Literal("todos"), new Wirespec.Param("id", String.class));
+            |      }
+            |      @Override
             |      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
             |        return new Wirespec.ServerEdge<>() {
             |        @Override public Request from(Wirespec.RawRequest request) {
@@ -548,6 +552,10 @@ class JavaIrEmitterTest {
             |      @Override
             |      public String getMethod() {
             |        return "GET";
+            |      }
+            |      @Override
+            |      public List<Wirespec.PathSegment> getPathSegments() {
+            |        return List.of(new Wirespec.Literal("todos"));
             |      }
             |      @Override
             |      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
@@ -1184,7 +1192,9 @@ class JavaIrEmitterTest {
             |  public interface Transportation {
             |    public java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request);
             |  }
-            |  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
+            |  sealed interface PathSegment permits Wirespec.Literal, Wirespec.Param {}
+            |  record Literal(String value) implements Wirespec.PathSegment {}
+            |  record Param(String name, Class<?> type) implements Wirespec.PathSegment {}  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
             |    public Req from(RawRequest request);
             |    public RawResponse to(Res response);
             |  }
@@ -1195,11 +1205,13 @@ class JavaIrEmitterTest {
             |  public interface Client<Req extends Request<?>, Res extends Response<?>> {
             |    public String getPathTemplate();
             |    public String getMethod();
+            |    public List<Wirespec.PathSegment> getPathSegments();
             |    public ClientEdge<Req, Res> getClient(Serialization serialization);
             |  }
             |  public interface Server<Req extends Request<?>, Res extends Response<?>> {
             |    public String getPathTemplate();
             |    public String getMethod();
+            |    public List<Wirespec.PathSegment> getPathSegments();
             |    public ServerEdge<Req, Res> getServer(Serialization serialization);
             |  }
             |  public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
