@@ -35,6 +35,7 @@ import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
@@ -111,9 +112,29 @@ open class PythonIrEmitter(
         |
     """.trimMargin()
 
+    private val pathSegmentStructs: List<Element> = listOf(
+        Struct(
+            name = Name.of("Literal"),
+            fields = listOf(Field(Name.of("value"), LanguageType.String)),
+        ),
+        Struct(
+            name = Name.of("Param"),
+            fields = listOf(
+                Field(Name.of("name"), LanguageType.String),
+                Field(Name.of("type"), LanguageType.Custom("Type", listOf(LanguageType.Any))),
+            ),
+        ),
+    )
+
     override val shared = object : Shared {
         override val packageString = "shared"
         override val source = sharedSource + AstShared(packageString).convert()
+            .transform {
+                injectAfter { namespace: Namespace ->
+                    if (namespace.name == Name.of("Wirespec")) pathSegmentStructs
+                    else emptyList()
+                }
+            }
             .generatePython()
     }
 
@@ -251,9 +272,15 @@ open class PythonIrEmitter(
         val converted = endpoint.convert().findElement<Namespace>()!!
         val flattened = converted.flattenNestedStructs()
         val (moduleElements, classElements) = flattened.elements.partition { it is Struct || it is LanguageUnion }
+        val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> """Wirespec.Literal("${segment.value}")"""
+                is Endpoint.Segment.Param -> """Wirespec.Param("${segment.identifier.value}", ${segment.reference.toPythonTypeName()})"""
+            }
+        }
         val endpointClass = Namespace(
             name = converted.name,
-            elements = classElements,
+            elements = listOf(RawElement("path_segments = [$pathSegmentsCode]")) + classElements,
             extends = converted.extends,
         )
         return LanguageFile(converted.name, buildList {
@@ -263,6 +290,21 @@ open class PythonIrEmitter(
         })
             .snakeCaseHandlerAndCallMethods()
             .sanitizeNames(sanitizationConfig)
+    }
+
+    private fun Reference.toPythonTypeName(): String = when (this) {
+        is Reference.Primitive -> when (type) {
+            is Reference.Primitive.Type.String -> "str"
+            is Reference.Primitive.Type.Integer -> "int"
+            is Reference.Primitive.Type.Number -> "float"
+            is Reference.Primitive.Type.Boolean -> "bool"
+            is Reference.Primitive.Type.Bytes -> "bytes"
+        }
+        is Reference.Custom -> value
+        is Reference.Iterable -> "list[${reference.toPythonTypeName()}]"
+        is Reference.Dict -> "dict[str, ${reference.toPythonTypeName()}]"
+        is Reference.Any -> "Any"
+        is Reference.Unit -> "None"
     }
 
     override fun emit(channel: Channel): File =

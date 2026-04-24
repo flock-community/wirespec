@@ -176,6 +176,7 @@ class PythonIrEmitterTest {
             |        self.headers = Response500Headers()
             |        self.body = body
             |class PutTodo(Wirespec.Endpoint):
+            |    path_segments = [Wirespec.Literal("todos"), Wirespec.Param("id", str)]
             |    @staticmethod
             |    def toRawRequest(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
             |        return Wirespec.RawRequest(method=request.method.value, path=['todos', serialization.serializePath(request.path.id, str)], queries={'done': serialization.serializeParam(request.queries.done, bool), 'name': serialization.serializeParam(request.queries.name, str) if request.queries.name is not None else []}, headers={'token': serialization.serializeParam(request.headers.token, Token), 'Refresh-Token': serialization.serializeParam(request.headers.refreshToken, Token) if request.headers.refreshToken is not None else []}, body=serialization.serializeBody(request.body, PotentialTodoDto))
@@ -405,6 +406,7 @@ class PythonIrEmitterTest {
             |        self.headers = Response200Headers()
             |        self.body = body
             |class GetTodos(Wirespec.Endpoint):
+            |    path_segments = [Wirespec.Literal("todos")]
             |    @staticmethod
             |    def toRawRequest(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
             |        return Wirespec.RawRequest(method=request.method.value, path=['todos'], queries={}, headers={}, body=None)
@@ -1086,6 +1088,13 @@ class PythonIrEmitterTest {
             |        @abstractmethod
             |        async def transport(self, request: Wirespec.RawRequest) -> Wirespec.RawResponse:
             |            ...
+            |    @dataclass
+            |    class Literal:
+            |        value: str
+            |    @dataclass
+            |    class Param:
+            |        name: str
+            |        type: Type[Any]
             |
         """.trimMargin()
 
