@@ -146,6 +146,7 @@ class TypeScriptIrEmitterTest {
             |    name: "putTodo",
             |    method: "PUT",
             |    path: "todos/{id}",
+            |    pathSegments: [{ kind: "Literal", value: "todos" }, { kind: "Param", name: "id", type: "string" }],
             |    server,
             |    client
             |  } as const
@@ -326,6 +327,7 @@ class TypeScriptIrEmitterTest {
             |    name: "getTodos",
             |    method: "GET",
             |    path: "todos",
+            |    pathSegments: [{ kind: "Literal", value: "todos" }],
             |    server,
             |    client
             |  } as const
@@ -700,6 +702,9 @@ class TypeScriptIrEmitterTest {
             |  export interface Transportation {
             |    transport(request: RawRequest): Promise<RawResponse>;
             |  }
+            |  export type Literal = { kind: "Literal"; value: string }
+            |  export type Param = { kind: "Param"; name: string; type: string }
+            |  export type PathSegment = Literal | Param
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
             |    to: (request: REQ) => RawRequest;
             |    from: (response: RawResponse) => RES
@@ -712,6 +717,7 @@ class TypeScriptIrEmitterTest {
             |    name: string;
             |    method: Method,
             |    path: string,
+            |    pathSegments: PathSegment[],
             |    client: Client<REQ, RES>;
             |    server: Server<REQ, RES>
             |  }

@@ -108,6 +108,9 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override val shared = object : Shared {
         val api = """
+          |export type Literal = { kind: "Literal"; value: string }
+          |export type Param = { kind: "Param"; name: string; type: string }
+          |export type PathSegment = Literal | Param
           |export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
           |  to: (request: REQ) => RawRequest;
           |  from: (response: RawResponse) => RES
@@ -120,6 +123,7 @@ open class TypeScriptIrEmitter : IrEmitter {
           |  name: string;
           |  method: Method,
           |  path: string,
+          |  pathSegments: PathSegment[],
           |  client: Client<REQ, RES>;
           |  server: Server<REQ, RES>
           |}
@@ -288,6 +292,12 @@ open class TypeScriptIrEmitter : IrEmitter {
                 is Endpoint.Segment.Param -> "{${it.identifier.value}}"
             }
         }
+        val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> """{ kind: "Literal", value: "${segment.value}" }"""
+                is Endpoint.Segment.Param -> """{ kind: "Param", name: "${segment.identifier.value}", type: "${segment.reference.toTypeScriptTypeName()}" }"""
+            }
+        }
         return raw("""
             |export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |  from: (it) => fromRawResponse(serialization, it),
@@ -301,10 +311,26 @@ open class TypeScriptIrEmitter : IrEmitter {
             |  name: "$apiName",
             |  method: "$method",
             |  path: "$pathString",
+            |  pathSegments: [$pathSegmentsCode],
             |  server,
             |  client
             |} as const
         """.trimMargin())
+    }
+
+    private fun Reference.toTypeScriptTypeName(): String = when (this) {
+        is Reference.Primitive -> when (type) {
+            is Reference.Primitive.Type.String -> "string"
+            is Reference.Primitive.Type.Integer -> "number"
+            is Reference.Primitive.Type.Number -> "number"
+            is Reference.Primitive.Type.Boolean -> "boolean"
+            is Reference.Primitive.Type.Bytes -> "ArrayBuffer"
+        }
+        is Reference.Custom -> value
+        is Reference.Iterable -> "${reference.toTypeScriptTypeName()}[]"
+        is Reference.Dict -> "Record<string, ${reference.toTypeScriptTypeName()}>"
+        is Reference.Any -> "any"
+        is Reference.Unit -> "undefined"
     }
 
     override fun emit(channel: Channel): File =
