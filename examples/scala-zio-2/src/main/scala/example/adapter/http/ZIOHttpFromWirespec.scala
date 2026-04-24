@@ -13,7 +13,11 @@ object ZIOHttpFromWirespec {
         method = request.method.name,
         path = request.url.path.encode.stripPrefix("/").split("/").filter(_.nonEmpty).toList,
         queries = request.url.queryParams.map.view.mapValues(_.toList).toMap,
-        headers = request.headers.map(h => h.headerName -> List(h.renderedValue)).toMap,
+        headers = request.headers
+          .groupMap(_.headerName)(_.renderedValue)
+          .view
+          .mapValues(_.toList)
+          .toMap,
         body = if (bodyBytes.nonEmpty) Some(bodyBytes) else None
       )
     }
