@@ -32,8 +32,17 @@ jvm:
 local:
 	$(shell pwd)/scripts/local.sh
 
+# Fast build: JVM + JS only (no klib/native), no tests, then run examples without
+# their own tests. Use this for tight local iteration. Native artifacts can be
+# produced by adding `-Pwirespec.enableNative=true` to the gradle command.
+quick:
+	./gradlew --no-configuration-cache -x test \
+		publishToMavenLocal \
+		:src:plugin:npm:jsNodeProductionLibraryDistribution && \
+	(cd examples && make yolo)
+
 publish:
-	./gradlew publish
+	./gradlew -Pwirespec.enableNative=true publish
 
 test:
 	$(shell pwd)/scripts/test.sh

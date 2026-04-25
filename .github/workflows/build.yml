@@ -57,7 +57,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run Linux native tests
-        run: ./gradlew linuxX64Test
+        run: ./gradlew -Pwirespec.enableNative=true linuxX64Test
 
   js-test:
 
@@ -92,7 +92,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run native tests
-        run: ./gradlew macosArm64Test macosX64Test
+        run: ./gradlew -Pwirespec.enableNative=true macosArm64Test macosX64Test
 
   windows-native-test:
 
@@ -107,7 +107,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run Windows native tests
-        run: ./gradlew mingwX64Test
+        run: ./gradlew -Pwirespec.enableNative=true mingwX64Test
 
   site:
 
@@ -356,7 +356,8 @@ jobs:
           cache: gradle
       - name: Build CLI release executables
         run: |
-          ./gradlew :src:plugin:cli:linkReleaseExecutableLinuxX64 \
+          ./gradlew -Pwirespec.enableNative=true \
+                    :src:plugin:cli:linkReleaseExecutableLinuxX64 \
                     :src:plugin:cli:linkReleaseExecutableMacosX64 \
                     :src:plugin:cli:linkReleaseExecutableMacosArm64 \
                     :src:plugin:cli:linkReleaseExecutableMingwX64
@@ -512,7 +513,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -Dorg.gradle.parallel=false
+          ./gradlew -Pwirespec.enableNative=true publishToSonatype closeAndReleaseSonatypeStagingRepository -Dorg.gradle.parallel=false
 
   release-lib-npm:
 
