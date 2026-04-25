@@ -10,6 +10,6 @@ enum class FileExtension(override val value: String) : Value<String> {
     Wirespec("ws"),
     JSON("json"),
     YAML("yaml"),
-    Avro("avsc"),
+    AvroJson("avsc"),
     AvroIdl("avdl"),
 }
