@@ -73,17 +73,19 @@ internal class AvroIdlTokenizer(private val source: String) {
         advance()
         advance()
         advance()
-        val sb = StringBuilder()
+        val contentStart = pos
+        var contentEnd = pos
         while (pos < source.length) {
             if (source[pos] == '*' && peek(1) == '/') {
+                contentEnd = pos
                 advance()
                 advance()
                 break
             }
-            sb.append(source[pos])
+            contentEnd = pos + 1
             advance()
         }
-        val cleaned = sb.toString()
+        val cleaned = source.substring(contentStart, contentEnd)
             .lines()
             .joinToString("\n") { it.trim().removePrefix("*").trim() }
             .trim()
@@ -94,62 +96,57 @@ internal class AvroIdlTokenizer(private val source: String) {
         val startLine = line
         val startColumn = column
         advance()
-        val sb = StringBuilder()
+        var value = ""
         while (pos < source.length && source[pos] != '"') {
             if (source[pos] == '\\' && pos + 1 < source.length) {
                 advance()
-                when (val esc = source[pos]) {
-                    'n' -> sb.append('\n')
-                    't' -> sb.append('\t')
-                    'r' -> sb.append('\r')
-                    '"' -> sb.append('"')
-                    '\\' -> sb.append('\\')
-                    else -> sb.append(esc)
+                value += when (val esc = source[pos]) {
+                    'n' -> "\n"
+                    't' -> "\t"
+                    'r' -> "\r"
+                    '"' -> "\""
+                    '\\' -> "\\"
+                    else -> "$esc"
                 }
                 advance()
             } else {
-                sb.append(source[pos])
+                value += source[pos]
                 advance()
             }
         }
         if (pos < source.length) advance()
-        return AvroIdlToken.StringLiteral(sb.toString(), startLine, startColumn)
+        return AvroIdlToken.StringLiteral(value, startLine, startColumn)
     }
 
     private fun readIdentifier(): AvroIdlToken.Identifier {
         val startLine = line
         val startColumn = column
-        val sb = StringBuilder()
+        val start = pos
         while (pos < source.length) {
             val c = source[pos]
             if (c.isLetterOrDigit() || c == '_' || c == '.') {
-                sb.append(c)
                 advance()
             } else {
                 break
             }
         }
-        return AvroIdlToken.Identifier(sb.toString(), startLine, startColumn)
+        return AvroIdlToken.Identifier(source.substring(start, pos), startLine, startColumn)
     }
 
     private fun readNumber(): AvroIdlToken.NumberLiteral {
         val startLine = line
         val startColumn = column
-        val sb = StringBuilder()
-        if (source[pos] == '-') {
-            sb.append('-')
-            advance()
-        }
+        val start = pos
+        if (source[pos] == '-') advance()
         while (pos < source.length) {
             val c = source[pos]
             if (c.isDigit() || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-') {
-                sb.append(c)
                 advance()
             } else {
                 break
             }
         }
-        return AvroIdlToken.NumberLiteral(sb.toString(), startLine, startColumn)
+        return AvroIdlToken.NumberLiteral(source.substring(start, pos), startLine, startColumn)
     }
 
     companion object {

@@ -138,7 +138,7 @@ object AvroIdlParser : Parser {
         }
 
         private fun readMatchedBlock(open: Char, close: Char): String {
-            val sb = StringBuilder()
+            var result = ""
             var depth = 0
             while (pos < tokens.size) {
                 val t = tokens[pos]
@@ -146,26 +146,26 @@ object AvroIdlParser : Parser {
                     when (t.value) {
                         open -> {
                             depth++
-                            sb.append(open)
+                            result += open
                             advance()
                         }
                         close -> {
                             depth--
-                            sb.append(close)
+                            result += close
                             advance()
-                            if (depth == 0) return sb.toString()
+                            if (depth == 0) return result
                         }
                         else -> {
-                            sb.append(t.value)
+                            result += t.value
                             advance()
                         }
                     }
                 } else {
-                    when (t) {
-                        is AvroIdlToken.Identifier -> sb.append(t.value)
-                        is AvroIdlToken.NumberLiteral -> sb.append(t.value)
-                        is AvroIdlToken.StringLiteral -> sb.append('"').append(t.value).append('"')
-                        else -> {}
+                    result += when (t) {
+                        is AvroIdlToken.Identifier -> t.value
+                        is AvroIdlToken.NumberLiteral -> t.value
+                        is AvroIdlToken.StringLiteral -> "\"${t.value}\""
+                        else -> ""
                     }
                     advance()
                 }
