@@ -6,14 +6,14 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
-import community.flock.wirespec.converter.avro.AvroEmitter
+import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroModel
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 object Utils {
 
-    fun emitAvroSchema(packageName: PackageName, type: Definition, module: Module) = AvroEmitter
+    fun emitAvroSchema(packageName: PackageName, type: Definition, module: Module) = AvroJsonEmitter
         .emit(module)
         .map {
             when (it) {

@@ -21,8 +21,8 @@ import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.converter.avro.AvroEmitter
-import community.flock.wirespec.converter.avro.AvroParser
+import community.flock.wirespec.converter.avro.AvroJsonEmitter
+import community.flock.wirespec.converter.avro.AvroJsonParser
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.java.JavaShared
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
@@ -85,7 +85,7 @@ fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyLis
 fun convert(source: String, converters: Converters, strict: Boolean = false) = when (converters) {
     Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
     Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
-    Converters.AVRO -> AvroParser.parse(ModuleContent(FileUri(""), source), strict).produce()
+    Converters.AVRO -> AvroJsonParser.parse(ModuleContent(FileUri(""), source), strict).produce()
 }
 
 @JsExport
@@ -137,7 +137,7 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
 
         Emitters.AVRO ->
             ast.modules
-                .map { ast -> AvroEmitter.emit(ast) }
+                .map { ast -> AvroJsonEmitter.emit(ast) }
                 .map { Json.encodeToString(it) }
                 .map { Emitted("avro", it) }
     }
