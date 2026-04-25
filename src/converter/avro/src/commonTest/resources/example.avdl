@@ -1,0 +1,46 @@
+@namespace("com.example.avro")
+protocol UserProtocol {
+
+    enum OAuthStatus {
+        PENDING, ACTIVE, DENIED, EXPIRED, REVOKED
+    }
+
+    enum ToDoStatus {
+        HIDDEN, ACTIONABLE, DONE, ARCHIVED, DELETED
+    }
+
+    record EmailAddress {
+        string address;
+        boolean verified;
+        long dateAdded;
+        union { null, long } dateBounced;
+    }
+
+    record TwitterAccount {
+        OAuthStatus status;
+        long userId;
+        string screenName;
+        string oauthToken;
+        union { null, string } oauthTokenSecret;
+        long dateAuthorized;
+    }
+
+    record ToDoItem {
+        ToDoStatus status;
+        string title;
+        union { null, string } description;
+        union { null, long } snoozeDate;
+        array<ToDoItem> subItems;
+    }
+
+    /** Top-level user record */
+    record User {
+        int id;
+        string username;
+        string passwordHash;
+        long signupDate;
+        array<EmailAddress> emailAddresses;
+        array<TwitterAccount> twitterAccounts;
+        array<ToDoItem> toDoItems;
+    }
+}

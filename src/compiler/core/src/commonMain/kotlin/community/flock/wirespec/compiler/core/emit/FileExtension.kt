@@ -11,4 +11,5 @@ enum class FileExtension(override val value: String) : Value<String> {
     JSON("json"),
     YAML("yaml"),
     Avro("avsc"),
+    AvroIdl("avdl"),
 }
