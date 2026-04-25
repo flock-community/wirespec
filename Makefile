@@ -9,7 +9,7 @@ build-site:
 	(cd src/site && make build)
 
 build-wirespec:
-	./gradlew build && (cd src/ide/vscode && npm i && npm run build)
+	./gradlew -Pwirespec.enableNative=true build && (cd src/ide/vscode && npm i && npm run build)
 
 clean:
 	$(shell pwd)/scripts/clean.sh
