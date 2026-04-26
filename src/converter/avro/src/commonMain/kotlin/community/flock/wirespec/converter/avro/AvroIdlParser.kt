@@ -60,7 +60,6 @@ object AvroIdlParser : Parser {
         private fun parseDeclaration(): List<AvroModel.Type> {
             val doc = consumeDoc()
             while (peekSymbol('@')) parseAnnotation()
-            consumeDoc().let { if (doc == null && it != null) Unit }
             val keyword = peekIdentifierName()
             return when (keyword) {
                 "record", "error" -> listOf(parseRecord(doc))
@@ -99,10 +98,11 @@ object AvroIdlParser : Parser {
             while (peekSymbol('@')) parseAnnotation()
             val type = parseType()
             val name = expectIdentifier()
-            var default: String? = null
-            if (peekSymbol('=')) {
+            val default = if (peekSymbol('=')) {
                 advance()
-                default = parseDefaultValue()
+                parseDefaultValue()
+            } else {
+                null
             }
             expectSymbol(';')
             return AvroModel.Field(
@@ -138,37 +138,23 @@ object AvroIdlParser : Parser {
         }
 
         private fun readMatchedBlock(open: Char, close: Char): String {
-            var result = ""
+            val parts = mutableListOf<String>()
             var depth = 0
             while (pos < tokens.size) {
-                val t = tokens[pos]
-                if (t is AvroIdlToken.Symbol) {
-                    when (t.value) {
-                        open -> {
-                            depth++
-                            result += open
-                            advance()
-                        }
-                        close -> {
-                            depth--
-                            result += close
-                            advance()
-                            if (depth == 0) return result
-                        }
-                        else -> {
-                            result += t.value
-                            advance()
-                        }
+                val part = when (val t = tokens[pos]) {
+                    is AvroIdlToken.Symbol -> {
+                        if (t.value == open) depth++
+                        if (t.value == close) depth--
+                        "${t.value}"
                     }
-                } else {
-                    result += when (t) {
-                        is AvroIdlToken.Identifier -> t.value
-                        is AvroIdlToken.NumberLiteral -> t.value
-                        is AvroIdlToken.StringLiteral -> "\"${t.value}\""
-                        else -> ""
-                    }
-                    advance()
+                    is AvroIdlToken.Identifier -> t.value
+                    is AvroIdlToken.NumberLiteral -> t.value
+                    is AvroIdlToken.StringLiteral -> "\"${t.value}\""
+                    is AvroIdlToken.DocComment -> ""
                 }
+                parts += part
+                advance()
+                if (depth == 0 && part == "$close") return parts.joinToString("")
             }
             error("Unmatched bracket")
         }
@@ -198,48 +184,42 @@ object AvroIdlParser : Parser {
 
         private fun parseSingleType(): AvroModel.Type {
             val token = peekToken() ?: error("Expected type")
-            return when {
-                token is AvroIdlToken.Identifier -> when (token.value) {
-                    "array" -> {
+            if (token !is AvroIdlToken.Identifier) error("Unexpected token while parsing type: $token")
+            return when (token.value) {
+                "array" -> {
+                    advance()
+                    expectSymbol('<')
+                    val inner = parseSingleType()
+                    consumeOptionalNullable()
+                    expectSymbol('>')
+                    AvroModel.ArrayType(type = "array", items = inner)
+                }
+                "map" -> {
+                    advance()
+                    expectSymbol('<')
+                    val inner = parseSingleType()
+                    consumeOptionalNullable()
+                    expectSymbol('>')
+                    AvroModel.MapType(type = "map", values = inner)
+                }
+                "union" -> {
+                    advance()
+                    expectSymbol('{')
+                    val types = mutableListOf<AvroModel.Type>()
+                    types.add(parseSingleType())
+                    consumeOptionalNullable()
+                    while (peekSymbol(',')) {
                         advance()
-                        expectSymbol('<')
-                        val inner = parseSingleType()
-                        consumeOptionalNullable()
-                        expectSymbol('>')
-                        AvroModel.ArrayType(type = "array", items = inner)
-                    }
-                    "map" -> {
-                        advance()
-                        expectSymbol('<')
-                        val inner = parseSingleType()
-                        consumeOptionalNullable()
-                        expectSymbol('>')
-                        AvroModel.MapType(type = "map", values = inner)
-                    }
-                    "union" -> {
-                        advance()
-                        expectSymbol('{')
-                        val types = mutableListOf<AvroModel.Type>()
                         types.add(parseSingleType())
                         consumeOptionalNullable()
-                        while (peekSymbol(',')) {
-                            advance()
-                            types.add(parseSingleType())
-                            consumeOptionalNullable()
-                        }
-                        expectSymbol('}')
-                        AvroModel.UnionType(name = "", type = AvroModel.TypeList(types))
                     }
-                    "null", "boolean", "int", "long", "float", "double", "bytes", "string" -> {
-                        advance()
-                        AvroModel.SimpleType(token.value)
-                    }
-                    else -> {
-                        advance()
-                        AvroModel.SimpleType(token.value)
-                    }
+                    expectSymbol('}')
+                    AvroModel.UnionType(name = "", type = AvroModel.TypeList(types))
                 }
-                else -> error("Unexpected token while parsing type: $token")
+                else -> {
+                    advance()
+                    AvroModel.SimpleType(token.value)
+                }
             }
         }
 
@@ -312,11 +292,12 @@ object AvroIdlParser : Parser {
 
         private fun consumeDoc(): String? {
             var last: String? = null
-            while (peekToken() is AvroIdlToken.DocComment) {
-                last = (peekToken() as AvroIdlToken.DocComment).value
+            while (true) {
+                val token = peekToken()
+                if (token !is AvroIdlToken.DocComment) return last
+                last = token.value
                 advance()
             }
-            return last
         }
 
         private fun peekToken(): AvroIdlToken? = if (pos < tokens.size) tokens[pos] else null

@@ -1,14 +1,11 @@
 package community.flock.wirespec.converter.avro
 
 internal sealed interface AvroIdlToken {
-    val line: Int
-    val column: Int
-
-    data class Identifier(val value: String, override val line: Int, override val column: Int) : AvroIdlToken
-    data class StringLiteral(val value: String, override val line: Int, override val column: Int) : AvroIdlToken
-    data class NumberLiteral(val value: String, override val line: Int, override val column: Int) : AvroIdlToken
-    data class DocComment(val value: String, override val line: Int, override val column: Int) : AvroIdlToken
-    data class Symbol(val value: Char, override val line: Int, override val column: Int) : AvroIdlToken
+    data class Identifier(val value: String) : AvroIdlToken
+    data class StringLiteral(val value: String) : AvroIdlToken
+    data class NumberLiteral(val value: String) : AvroIdlToken
+    data class DocComment(val value: String) : AvroIdlToken
+    data class Symbol(val value: Char) : AvroIdlToken
 }
 
 internal class AvroIdlTokenizer(private val source: String) {
@@ -29,7 +26,7 @@ internal class AvroIdlTokenizer(private val source: String) {
                 c.isLetter() || c == '_' -> tokens.add(readIdentifier())
                 c.isDigit() || (c == '-' && peek(1)?.isDigit() == true) -> tokens.add(readNumber())
                 c in SYMBOL_CHARS -> {
-                    tokens.add(AvroIdlToken.Symbol(c, line, column))
+                    tokens.add(AvroIdlToken.Symbol(c))
                     advance()
                 }
                 else -> error("Unexpected character '$c' at line $line column $column")
@@ -68,8 +65,6 @@ internal class AvroIdlTokenizer(private val source: String) {
     }
 
     private fun readDocComment(): AvroIdlToken.DocComment {
-        val startLine = line
-        val startColumn = column
         advance()
         advance()
         advance()
@@ -89,18 +84,16 @@ internal class AvroIdlTokenizer(private val source: String) {
             .lines()
             .joinToString("\n") { it.trim().removePrefix("*").trim() }
             .trim()
-        return AvroIdlToken.DocComment(cleaned, startLine, startColumn)
+        return AvroIdlToken.DocComment(cleaned)
     }
 
     private fun readStringLiteral(): AvroIdlToken.StringLiteral {
-        val startLine = line
-        val startColumn = column
         advance()
-        var value = ""
+        val parts = mutableListOf<String>()
         while (pos < source.length && source[pos] != '"') {
             if (source[pos] == '\\' && pos + 1 < source.length) {
                 advance()
-                value += when (val esc = source[pos]) {
+                parts += when (val esc = source[pos]) {
                     'n' -> "\n"
                     't' -> "\t"
                     'r' -> "\r"
@@ -110,17 +103,15 @@ internal class AvroIdlTokenizer(private val source: String) {
                 }
                 advance()
             } else {
-                value += source[pos]
+                parts += "${source[pos]}"
                 advance()
             }
         }
         if (pos < source.length) advance()
-        return AvroIdlToken.StringLiteral(value, startLine, startColumn)
+        return AvroIdlToken.StringLiteral(parts.joinToString(""))
     }
 
     private fun readIdentifier(): AvroIdlToken.Identifier {
-        val startLine = line
-        val startColumn = column
         val start = pos
         while (pos < source.length) {
             val c = source[pos]
@@ -130,12 +121,10 @@ internal class AvroIdlTokenizer(private val source: String) {
                 break
             }
         }
-        return AvroIdlToken.Identifier(source.substring(start, pos), startLine, startColumn)
+        return AvroIdlToken.Identifier(source.substring(start, pos))
     }
 
     private fun readNumber(): AvroIdlToken.NumberLiteral {
-        val startLine = line
-        val startColumn = column
         val start = pos
         if (source[pos] == '-') advance()
         while (pos < source.length) {
@@ -146,7 +135,7 @@ internal class AvroIdlTokenizer(private val source: String) {
                 break
             }
         }
-        return AvroIdlToken.NumberLiteral(source.substring(start, pos), startLine, startColumn)
+        return AvroIdlToken.NumberLiteral(source.substring(start, pos))
     }
 
     companion object {
