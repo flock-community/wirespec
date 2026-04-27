@@ -7,6 +7,9 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV3
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Boolean
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Header
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3HeaderOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Link
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3LinkOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Links
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Operation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Parameter
@@ -26,6 +29,7 @@ import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -41,8 +45,10 @@ import community.flock.wirespec.openapi.common.flatMapRequests
 import community.flock.wirespec.openapi.common.flatMapResponses
 import community.flock.wirespec.openapi.common.getReference
 import community.flock.wirespec.openapi.common.isParam
+import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.jsonDefault
 import community.flock.wirespec.openapi.common.parseOpenApi
+import community.flock.wirespec.openapi.common.toAnnotation
 import community.flock.wirespec.openapi.common.resolveEndpointNameCollisions
 import community.flock.wirespec.openapi.common.sanitize
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
@@ -50,6 +56,9 @@ import community.flock.wirespec.openapi.common.toDict
 import community.flock.wirespec.openapi.common.toIterable
 import community.flock.wirespec.openapi.common.toName
 import community.flock.wirespec.openapi.common.toOperationList
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 object OpenAPIV3Parser : Parser {
 
@@ -111,7 +120,8 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths
                         if (response.content.isNullOrEmpty()) {
                             listOf(
                                 Endpoint.Response(
-                                    annotations = response.description.toDescriptionAnnotationList(),
+                                    annotations = response.description.toDescriptionAnnotationList()
+                                        + toLinkAnnotationList(response.links),
                                     status = status.value,
                                     headers = response.headers?.map { entry ->
                                         toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
@@ -123,7 +133,8 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths
                             response.content?.map { (contentType, media) ->
                                 val isNullable = media.schema?.let { resolve(it) }?.nullable ?: false
                                 Endpoint.Response(
-                                    annotations = response.description.toDescriptionAnnotationList(),
+                                    annotations = response.description.toDescriptionAnnotationList()
+                                        + toLinkAnnotationList(response.links),
                                     status = status.value,
                                     headers = response.headers?.map { entry ->
                                         toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
@@ -355,6 +366,37 @@ private fun OpenAPIV3Model.resolve(responseOrOpenAPIV3Reference: OpenAPIV3Respon
     is OpenAPIV3Response -> responseOrOpenAPIV3Reference
     is OpenAPIV3Reference -> resolveOpenAPIV3Response(responseOrOpenAPIV3Reference).second
 }
+
+private fun OpenAPIV3Model.resolveOpenAPIV3Link(reference: OpenAPIV3Reference): OpenAPIV3Link = components?.links
+    ?.get(reference.getReference())
+    ?.let {
+        when (it) {
+            is OpenAPIV3Link -> it
+            is OpenAPIV3Reference -> resolveOpenAPIV3Link(it)
+        }
+    }
+    ?: error("Cannot resolve link ref: ${reference.ref}")
+
+private fun OpenAPIV3Model.resolve(linkOrReference: OpenAPIV3LinkOrReference): OpenAPIV3Link = when (linkOrReference) {
+    is OpenAPIV3Link -> linkOrReference
+    is OpenAPIV3Reference -> resolveOpenAPIV3Link(linkOrReference)
+}
+
+private fun OpenAPIV3Model.toLinkAnnotationList(links: OpenAPIV3Links?): List<Annotation> = links?.entries
+    ?.map { entry -> resolve(entry.value).toLinkInfo(entry.key).toAnnotation() }
+    .orEmpty()
+
+private fun OpenAPIV3Link.toLinkInfo(name: String): LinkInfo = LinkInfo(
+    name = name,
+    operationId = operationId,
+    operationRef = operationRef,
+    parameters = parameters.orEmpty().mapValues { it.value.asLinkExpression() },
+    requestBody = requestBody?.asLinkExpression(),
+    description = description,
+    serverUrl = server?.url,
+)
+
+private fun JsonElement.asLinkExpression(): String = (this as? JsonPrimitive)?.contentOrNull ?: toString()
 
 private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String): List<Definition> = when {
     schemaObject.additionalProperties.exists() -> when (schemaObject.additionalProperties) {
