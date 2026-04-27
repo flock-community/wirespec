@@ -1584,4 +1584,47 @@ class OpenAPIV3ParserTest {
         val endpoint = definitions.find { it is Endpoint }.shouldBeInstanceOf<Endpoint>()
         endpoint.identifier.value shouldBe "PetEndpoint"
     }
+
+    @Test
+    fun links() {
+        val path = Path("src/commonTest/resources/v3/links.json")
+        val json = SystemFileSystem.source(path).buffered().readString()
+
+        val openApi = OpenAPIV3.decodeFromString(json)
+        val ast = openApi.parse().shouldNotBeNull()
+
+        val createUser = ast.find { (it as? Endpoint)?.identifier?.value == "CreateUser" }
+            .shouldBeInstanceOf<Endpoint>()
+        val created = createUser.responses.single { it.status == "201" }
+
+        val expectedGetLink = Annotation(
+            name = "Link",
+            parameters = listOf(
+                Annotation.Parameter("default", Annotation.Value.Single("GetUser")),
+                Annotation.Parameter("operationId", Annotation.Value.Single("GetUserById")),
+                Annotation.Parameter(
+                    "parameters",
+                    Annotation.Value.Dict(
+                        listOf(Annotation.Parameter("id", Annotation.Value.Single("\$response.body#/id"))),
+                    ),
+                ),
+                Annotation.Parameter("description", Annotation.Value.Single("Fetch the just-created user")),
+            ),
+        )
+        val expectedDeleteLink = Annotation(
+            name = "Link",
+            parameters = listOf(
+                Annotation.Parameter("default", Annotation.Value.Single("DeleteUser")),
+                Annotation.Parameter("operationId", Annotation.Value.Single("DeleteUser")),
+                Annotation.Parameter(
+                    "parameters",
+                    Annotation.Value.Dict(
+                        listOf(Annotation.Parameter("id", Annotation.Value.Single("\$response.body#/id"))),
+                    ),
+                ),
+            ),
+        )
+        created.annotations shouldContain expectedGetLink
+        created.annotations shouldContain expectedDeleteLink
+    }
 }
