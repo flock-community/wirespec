@@ -1454,24 +1454,24 @@ class RustIrEmitterTest {
             |    pub variants: Vec<String>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
+            |#[derive(Debug, Default)]
             |pub struct GeneratorFieldArray {
-            |    pub inner: Option<GeneratorField<_>>,
+            |    pub inner: Option<Box<dyn std::any::Any>>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
+            |#[derive(Debug, Default)]
             |pub struct GeneratorFieldNullable {
-            |    pub inner: Option<GeneratorField<_>>,
+            |    pub inner: Option<Box<dyn std::any::Any>>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
+            |#[derive(Debug, Default)]
             |pub struct GeneratorFieldDict {
-            |    pub key: Option<GeneratorField<_>>,
-            |    pub value: Option<GeneratorField<_>>,
+            |    pub key: Option<Box<dyn std::any::Any>>,
+            |    pub value: Option<Box<dyn std::any::Any>>,
             |}
             |
             |pub trait Generator {
-            |    fn generate(&self, path: Vec<String>, r#type: std::any::TypeId, field: GeneratorField<T>) -> T;
+            |    fn generate<T>(&self, path: Vec<String>, r#type: std::any::TypeId, field: impl GeneratorField<T>) -> T;
             |}
             |
             |pub trait Client {

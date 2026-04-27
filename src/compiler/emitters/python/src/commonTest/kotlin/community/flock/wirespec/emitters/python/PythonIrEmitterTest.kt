@@ -1527,7 +1527,7 @@ class PythonIrEmitterTest {
             |        value: Optional[Wirespec.GeneratorField[Any]]
             |    class Generator(ABC):
             |        @abstractmethod
-            |        def generate(self, path: list[str], type: type[T], field: Wirespec.GeneratorField[T]) -> T:
+            |        def generate(self, path: list[str], type: type[Any], field: Wirespec.GeneratorField[T]) -> T:
             |            ...
             |
         """.trimMargin()

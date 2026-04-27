@@ -561,7 +561,7 @@ object TypeScriptGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
-        is ClassReference -> type.emit()
+        is ClassReference -> "\"${type.emit()}\""
         is RawExpression -> code
         is NullLiteral -> "undefined"
         is NullableEmpty -> "undefined"
