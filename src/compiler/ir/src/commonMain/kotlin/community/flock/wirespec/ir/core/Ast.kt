@@ -258,6 +258,13 @@ data class TypeDescriptor(val type: Type) :
     Statement,
     Expression
 
+// Type cast - asserts the static type of `expression` as `targetType`.
+// Kotlin/Scala emit an unchecked cast (`x as T` / `x.asInstanceOf[T]`); Java emits `((T) x)`;
+// Rust emits `x as T`; TypeScript emits `x as T`; Python passes through (no static cast).
+data class Cast(val expression: Expression, val targetType: Type) :
+    Statement,
+    Expression
+
 data class PrintStatement(val expression: Expression) : Statement
 data class ReturnStatement(val expression: Expression) : Statement
 data class ConstructorStatement(val type: Type, val namedArguments: Map<Name, Expression> = emptyMap()) :

@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
 import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
@@ -533,6 +534,7 @@ object TypeScriptGenerator : Generator {
         is EnumValueCall -> "${expression.emit()};\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()});\n".indentCode(indent)
         is TypeDescriptor -> "\"${type.emit()}\";\n".indentCode(indent)
+        is Cast -> "(${expression.emit()} as ${targetType.emit()});\n".indentCode(indent)
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -586,6 +588,7 @@ object TypeScriptGenerator : Generator {
         is EnumValueCall -> expression.emit()
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()})"
         is TypeDescriptor -> "\"${type.emit()}\""
+        is Cast -> "(${expression.emit()} as ${targetType.emit()})"
         is NullCheck -> {
             val exprStr = expression.emit()
             // When expression might be undefined (e.g. case-insensitive header lookup),
