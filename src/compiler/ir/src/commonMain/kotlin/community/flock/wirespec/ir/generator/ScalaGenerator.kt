@@ -531,7 +531,7 @@ ScalaEmitter(
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
-        is ClassReference -> "classOf[${type.emitGenerics()}]"
+        is ClassReference -> "scala.reflect.classTag[${type.emitGenerics()}]"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "None"
@@ -601,7 +601,7 @@ ScalaEmitter(
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Scala")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "if (${condition.emit()}) ${thenExpr.emit()} else ${elseExpr.emit()}"
-        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()})"
+        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()}).toList"
         is FlatMapIndexed -> "${receiver.emit()}.zipWithIndex.flatMap { case (${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emit()} }"
         is ListConcat -> when {
             lists.isEmpty() -> "List.empty[String]"
@@ -634,9 +634,20 @@ ScalaEmitter(
     }
 
     private fun Literal.emit(): String = when (type) {
-        Type.String -> "\"$value\""
+        Type.String -> "\"${value.toString().escapeScalaString()}\""
         is Type.Integer -> if (type.precision == Precision.P64) "${value}L" else value.toString()
         else -> value.toString()
+    }
+
+    private fun String.escapeScalaString(): String = buildString {
+        for (c in this@escapeScalaString) when (c) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(c)
+        }
     }
 
     private fun ArrayIndexCall.emitArrayIndex(): String {

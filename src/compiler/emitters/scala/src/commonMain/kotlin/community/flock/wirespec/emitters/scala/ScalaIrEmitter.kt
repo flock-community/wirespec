@@ -42,6 +42,7 @@ import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.TypeParameter
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
@@ -182,9 +183,20 @@ open class ScalaIrEmitter(
             is Union -> definition.convertToGenerator()
             else -> return null
         }
-        return generatorFile
-            .sanitizeNames(sanitizationConfig)
-            .prependImports(wirespecImports)
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val customNames = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .toList()
+        val modelImports = customNames
+            .filterNot { it.endsWith("Generator") }
+            .map { import("${packageName.value}.model", it) }
+        return sanitized
+            .prependImports(wirespecImports + modelImports)
             .placeInPackage(packageName = packageName, subPackage = "generator")
     }
 

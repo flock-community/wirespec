@@ -45,6 +45,7 @@ import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Transformer
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.plus
@@ -170,15 +171,45 @@ open class TypeScriptIrEmitter : IrEmitter {
         val generatorFile = when (definition) {
             is AstType -> definition.convertToGenerator()
             is AstEnum -> definition.convertToGenerator()
-            is Refined -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator().transform {
+                expression { expr, t ->
+                    if (expr is ConstructorStatement && expr.type == LanguageType.Custom(definition.identifier.value)) {
+                        expr.namedArguments[Name.of("value")] ?: expr
+                    } else expr.transformChildren(t)
+                }
+            }
             is Union -> definition.convertToGenerator()
             else -> return null
         }.sanitizeNames(sanitizationConfig)
 
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val customNames = generatorFile.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .toList()
+        val generatorRefs = mutableSetOf<String>()
+        generatorFile.transform {
+            expression { expr, t ->
+                if (expr is RawExpression && expr.code.endsWith("Generator") && expr.code != generatorOwnName) {
+                    generatorRefs.add(expr.code)
+                }
+                expr.transformChildren(t)
+            }
+        }
+        val generatorImports = (customNames.filter { it.endsWith("Generator") } + generatorRefs)
+            .distinct()
+            .map { import("./$it", it) }
+        val modelImports = customNames
+            .filterNot { it.endsWith("Generator") }
+            .map { import("../model/$it", it) }
+
         val subPackageName = PackageName("") + "generator"
         return File(
             name = Name.of(subPackageName.toDir() + generatorFile.name.pascalCase().sanitizeSymbol()),
-            elements = listOf(import("../Wirespec", "Wirespec")) + generatorFile.elements,
+            elements = listOf(import("../Wirespec", "Wirespec")) + modelImports + generatorImports + generatorFile.elements,
         )
     }
 

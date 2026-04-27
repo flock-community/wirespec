@@ -242,16 +242,17 @@ object RustGenerator : Generator {
             val paramName = it.name.value()
             if (paramName == "self" || paramName == "&self") paramName else "${it.name.snakeCase().sanitize()}: ${it.type.emit()}"
         }
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.emit() }}>"
         val rType = returnType?.takeIf { it != Type.Unit }?.emit()
         val returnTypeStr = if (rType != null) " -> $rType" else ""
         val prefix = if (isInInterface && body.isEmpty()) "" else "pub "
         val asyncPrefix = if (isAsync) "async " else ""
         val content = if (body.isEmpty()) {
-            return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr;\n".indentCode(indent)
+            return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}$typeParamsStr($params)$returnTypeStr;\n".indentCode(indent)
         } else {
             body.joinToString("") { it.emit(1) }
         }
-        return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr {\n$content}\n\n".indentCode(indent)
+        return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}$typeParamsStr($params)$returnTypeStr {\n$content}\n\n".indentCode(indent)
     }
 
     private fun TypeParameter.emit(): String {
@@ -284,6 +285,8 @@ object RustGenerator : Generator {
         is Type.Custom -> {
             if (generics.isEmpty()) {
                 name
+            } else if (generics.any { it == Type.Wildcard || (it is Type.Custom && it.name == "_") }) {
+                "Box<dyn std::any::Any>"
             } else {
                 "$name<${generics.joinToString(", ") { it.emit() }}>"
             }

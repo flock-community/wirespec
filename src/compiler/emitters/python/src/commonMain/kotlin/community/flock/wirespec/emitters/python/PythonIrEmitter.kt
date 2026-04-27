@@ -47,6 +47,7 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
@@ -115,6 +116,23 @@ open class PythonIrEmitter(
     override val shared = object : Shared {
         override val packageString = "shared"
         override val source = sharedSource + AstShared(packageString).convert()
+            .transform {
+                matchingElements { iface: Interface ->
+                    if (iface.name == Name.of("Generator")) {
+                        iface.transform {
+                            matchingElements { fn: LanguageFunction ->
+                                if (fn.name == Name.of("generate")) {
+                                    fn.copy(parameters = fn.parameters.map { param ->
+                                        if (param.name == Name.of("type")) {
+                                            param.copy(type = LanguageType.Custom("type", listOf(LanguageType.Any)))
+                                        } else param
+                                    })
+                                } else fn
+                            }
+                        }
+                    } else iface
+                }
+            }
             .generatePython()
     }
 
@@ -172,9 +190,32 @@ open class PythonIrEmitter(
             is Union -> definition.convertToGenerator()
             else -> return null
         }
-        return generatorFile
-            .sanitizeNames(sanitizationConfig)
-            .prependImports(buildImports("..wirespec"))
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val customNames = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .toList()
+        val generatorRefs = mutableSetOf<String>()
+        sanitized.transform {
+            expression { expr, t ->
+                if (expr is RawExpression && expr.code.endsWith("Generator") && expr.code != generatorOwnName) {
+                    generatorRefs.add(expr.code)
+                }
+                expr.transformChildren(t)
+            }
+        }
+        val generatorImports = (customNames.filter { it.endsWith("Generator") } + generatorRefs)
+            .distinct()
+            .map { import(".$it", it) }
+        val modelImports = customNames
+            .filterNot { it.endsWith("Generator") }
+            .map { import("..model.$it", it) }
+        return sanitized
+            .prependImports(buildImports("..wirespec") + modelImports + generatorImports)
             .placeInModule(packageName = packageName, subPackage = "generator")
     }
 

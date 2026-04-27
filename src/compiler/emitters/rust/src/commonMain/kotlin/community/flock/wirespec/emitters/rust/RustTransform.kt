@@ -28,6 +28,7 @@ import community.flock.wirespec.ir.core.transformer
 internal fun Type.Custom.borrow(): Type.Custom = copy(name = "&$name")
 internal fun Type.Custom.borrowDyn(): Type.Custom = copy(name = "&dyn $name")
 internal fun Type.Custom.borrowImpl(): Type.Custom = copy(name = "&impl $name")
+internal fun Type.Custom.ownedImpl(): Type.Custom = copy(name = "impl $name")
 
 /**
  * Post-convert Rustification pass.
@@ -127,6 +128,7 @@ object RustTransform {
         is Type.Custom -> when {
             type.isAlreadyBorrowed() -> type
             type.isSerializerLike() -> type.borrowImpl()
+            type.isGeneratorFieldTrait() -> type.ownedImpl()
             else -> type
         }
         else -> type
@@ -255,6 +257,8 @@ object RustTransform {
     internal fun Type.isAlreadyBorrowed(): Boolean = this is Type.Custom && (name.startsWith("&") || name.startsWith("&dyn ") || name.startsWith("&impl ") || name.startsWith("&mut "))
 
     internal fun Type.Custom.isSerializerLike(): Boolean = name == "Serializer" || name == "Deserializer"
+
+    internal fun Type.Custom.isGeneratorFieldTrait(): Boolean = name == "GeneratorField"
 
     /** `Copy`-like leaves that don't need borrowing in parameter positions. */
     internal fun Type.Custom.isCopyLike(): Boolean = name in copyLikeCustomNames
