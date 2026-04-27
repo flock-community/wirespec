@@ -10,12 +10,16 @@ import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
+import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
 import community.flock.wirespec.ir.core.MapExpression
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.NullLiteral
+import community.flock.wirespec.ir.core.NullableEmpty
+import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.StringTemplate
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
@@ -40,10 +44,14 @@ internal fun FieldIdentifier.toFieldName(): Name {
     return Name(parts)
 }
 
-internal fun pathPlus(segment: String): BinaryOp = BinaryOp(
-    VariableReference(Name.of("path")),
-    BinaryOp.Operator.PLUS,
-    Literal(segment, Type.String),
+// List-append: use ListConcat so Java emits `Stream.concat(...)` instead of a
+// bogus `path + "segment"` (which Kotlin accepts but Java evaluates as
+// List.toString() + String).
+internal fun pathPlus(segment: String): Expression = ListConcat(
+    listOf(
+        VariableReference(Name.of("path")),
+        LiteralList(listOf(Literal(segment, Type.String)), Type.String),
+    ),
 )
 
 internal fun ReferenceWirespec.Primitive.toFieldDescriptor(): Expression = when (val t = type) {
@@ -52,13 +60,17 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(): Expression = when 
         ConstructorStatement(
             type = Type.Custom("Wirespec.GeneratorFieldString"),
             namedArguments = mapOf(
+                // Optional<String> in Java, String? in Kotlin — NullableEmpty/NullableOf
+                // are the portable wrappers.
                 Name.of("regex") to if (constraint != null) {
-                    Literal(
-                        constraint.value.split("/").drop(1).dropLast(1).joinToString("/"),
-                        Type.String,
+                    NullableOf(
+                        Literal(
+                            constraint.value.split("/").drop(1).dropLast(1).joinToString("/"),
+                            Type.String,
+                        ),
                     )
                 } else {
-                    NullLiteral
+                    NullableEmpty
                 },
             ),
         )
@@ -66,15 +78,15 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(): Expression = when 
     is ReferenceWirespec.Primitive.Type.Integer -> ConstructorStatement(
         type = Type.Custom("Wirespec.GeneratorFieldInteger"),
         namedArguments = mapOf(
-            Name.of("min") to (t.constraint?.min?.let { Literal(it.toLong(), Type.Integer()) } ?: NullLiteral),
-            Name.of("max") to (t.constraint?.max?.let { Literal(it.toLong(), Type.Integer()) } ?: NullLiteral),
+            Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toLong(), Type.Integer())) } ?: NullableEmpty),
+            Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toLong(), Type.Integer())) } ?: NullableEmpty),
         ),
     )
     is ReferenceWirespec.Primitive.Type.Number -> ConstructorStatement(
         type = Type.Custom("Wirespec.GeneratorFieldNumber"),
         namedArguments = mapOf(
-            Name.of("min") to (t.constraint?.min?.let { Literal(it.toDouble(), Type.Number()) } ?: NullLiteral),
-            Name.of("max") to (t.constraint?.max?.let { Literal(it.toDouble(), Type.Number()) } ?: NullLiteral),
+            Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toDouble(), Type.Number())) } ?: NullableEmpty),
+            Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toDouble(), Type.Number())) } ?: NullableEmpty),
         ),
     )
     ReferenceWirespec.Primitive.Type.Boolean -> ConstructorStatement(
@@ -85,9 +97,12 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(): Expression = when 
     )
 }
 
+// Produces an Optional<GeneratorField<?>>-shaped value: NullableOf(desc) when
+// primitive, NullableEmpty otherwise. In Kotlin this round-trips to a
+// `GeneratorField<*>?`; in Java it becomes `Optional<GeneratorField<?>>`.
 internal fun ReferenceWirespec.toFieldDescriptorOrNull(): Expression = when (this) {
-    is ReferenceWirespec.Primitive -> toFieldDescriptor()
-    else -> NullLiteral
+    is ReferenceWirespec.Primitive -> NullableOf(toFieldDescriptor())
+    else -> NullableEmpty
 }
 
 internal fun generatorCallExpression(
@@ -135,20 +150,26 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
         ConstructorStatement(
             type = Type.Custom("Wirespec.GeneratorFieldNullable"),
             namedArguments = mapOf(
+                // `inner` is Optional<GeneratorField<?>> in Java — wrap non-empty
+                // values with NullableOf so Java emits Optional.of(...).
                 Name.of("inner") to when (val ref = this) {
-                    is ReferenceWirespec.Primitive -> ref.toFieldDescriptor()
-                    is ReferenceWirespec.Iterable -> ConstructorStatement(
-                        type = Type.Custom("Wirespec.GeneratorFieldArray"),
-                        namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
-                    )
-                    is ReferenceWirespec.Dict -> ConstructorStatement(
-                        type = Type.Custom("Wirespec.GeneratorFieldDict"),
-                        namedArguments = mapOf(
-                            Name.of("key") to NullLiteral,
-                            Name.of("value") to ref.reference.toFieldDescriptorOrNull(),
+                    is ReferenceWirespec.Primitive -> NullableOf(ref.toFieldDescriptor())
+                    is ReferenceWirespec.Iterable -> NullableOf(
+                        ConstructorStatement(
+                            type = Type.Custom("Wirespec.GeneratorFieldArray"),
+                            namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
                         ),
                     )
-                    is ReferenceWirespec.Custom, is ReferenceWirespec.Any, is ReferenceWirespec.Unit -> NullLiteral
+                    is ReferenceWirespec.Dict -> NullableOf(
+                        ConstructorStatement(
+                            type = Type.Custom("Wirespec.GeneratorFieldDict"),
+                            namedArguments = mapOf(
+                                Name.of("key") to NullableEmpty,
+                                Name.of("value") to ref.reference.toFieldDescriptorOrNull(),
+                            ),
+                        ),
+                    )
+                    is ReferenceWirespec.Custom, is ReferenceWirespec.Any, is ReferenceWirespec.Unit -> NullableEmpty
                 },
             ),
         ),
@@ -176,12 +197,23 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
                     namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
                 ),
             )
-            val indexedPath = BinaryOp(
-                pathPlus(fieldNameStr),
-                BinaryOp.Operator.PLUS,
-                FunctionCall(
-                    receiver = VariableReference(Name.of("i")),
-                    name = Name.of("toString"),
+            // Stringify the index portably: `i.toString()` compiles in Kotlin
+            // but not in Java (primitive int has no method invocation). A
+            // StringTemplate with an empty text part + expr yields `"${i}"` in
+            // Kotlin and `"" + i` in Java, both producing a String.
+            val indexAsString = StringTemplate(
+                listOf(
+                    StringTemplate.Part.Text(""),
+                    StringTemplate.Part.Expr(VariableReference(Name.of("i"))),
+                ),
+            )
+            val indexedPath = ListConcat(
+                listOf(
+                    VariableReference(Name.of("path")),
+                    LiteralList(
+                        listOf(Literal(fieldNameStr, Type.String), indexAsString),
+                        Type.String,
+                    ),
                 ),
             )
             val elementExpr: Expression = when (val inner = ref.reference) {
@@ -206,7 +238,8 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
             }
             MapExpression(
                 receiver = BinaryOp(
-                    Literal(0L, Type.Integer()),
+                    // int 0, not Long: Java's IntStream.range takes ints.
+                    Literal(0, Type.Integer()),
                     BinaryOp.Operator.UNTIL,
                     countCall,
                 ),
@@ -220,7 +253,7 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
             ConstructorStatement(
                 type = Type.Custom("Wirespec.GeneratorFieldDict"),
                 namedArguments = mapOf(
-                    Name.of("key") to NullLiteral,
+                    Name.of("key") to NullableEmpty,
                     Name.of("value") to ref.reference.toFieldDescriptorOrNull(),
                 ),
             ),
@@ -229,10 +262,12 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
     }
 
     return if (this.isNullable) {
+        // Nullable model fields are `T?` in Kotlin but `Optional<T>` in Java.
+        // Wrap both branches so each language emits the correct container type.
         IfExpression(
             condition = nullableCheck,
-            thenExpr = NullLiteral,
-            elseExpr = nonNullExpr,
+            thenExpr = NullableEmpty,
+            elseExpr = NullableOf(nonNullExpr),
         )
     } else {
         nonNullExpr
@@ -349,11 +384,7 @@ fun UnionWirespec.convertToGenerator(): File {
                                     receiver = RawExpression("${variantName}Generator"),
                                     name = Name.of("generate"),
                                     arguments = mapOf(
-                                        Name.of("path") to BinaryOp(
-                                            VariableReference(Name.of("path")),
-                                            BinaryOp.Operator.PLUS,
-                                            Literal(variantName, Type.String),
-                                        ),
+                                        Name.of("path") to pathPlus(variantName),
                                         Name.of("generator") to VariableReference(Name.of("generator")),
                                     ),
                                 ),

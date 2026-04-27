@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
 import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
@@ -489,6 +490,7 @@ ScalaEmitter(
         is EnumValueCall -> "${expression.emit()}.toString\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toScala()} ${right.emit()})\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()}.asInstanceOf[${targetType.emitGenerics()}]\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -552,6 +554,7 @@ ScalaEmitter(
         is EnumValueCall -> "${expression.emit()}.toString"
         is BinaryOp -> "(${left.emit()} ${operator.toScala()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()
+        is Cast -> "${expression.emit()}.asInstanceOf[${targetType.emitGenerics()}]"
         is NullCheck -> "(${expression.emit()}.map(it => ${body.emit()})${alternative?.emit()?.let { ".getOrElse($it)" } ?: ""})"
         is NullableMap -> "(${expression.emit()}.map(it => ${body.emit()}).getOrElse(${alternative.emit()}))"
         is NullableOf -> "Some(${expression.emit()})"

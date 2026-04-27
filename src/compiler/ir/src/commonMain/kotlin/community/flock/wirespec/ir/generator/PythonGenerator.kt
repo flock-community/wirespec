@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
 import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
@@ -353,6 +354,7 @@ object PythonGenerator : Generator {
             }
         }
         is TypeDescriptor -> "${type.emit()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()}\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -414,6 +416,7 @@ object PythonGenerator : Generator {
             }
         }
         is TypeDescriptor -> type.emit()
+        is Cast -> expression.emit()
         is NullCheck -> {
             val exprStr = expression.emit()
             val bodyStr = body.emitWithInlinedIt(exprStr)

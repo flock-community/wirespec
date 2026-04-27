@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
 import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
@@ -397,6 +398,7 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()});\n".indentCode(indent)
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>();\n".indentCode(indent)
+        is Cast -> "(${expression.emit()} as ${targetType.emit()});\n".indentCode(indent)
         is NullCheck, is NullableMap, is NullableOf, is NullableGet,
         is Constraint.RegexMatch, is Constraint.BoundCheck,
         is IfExpression, is MapExpression, is FlatMapIndexed,
@@ -451,6 +453,7 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()})"
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>()"
+        is Cast -> "(${expression.emit()} as ${targetType.emit()})"
         is NullCheck -> {
             val exprStr = expression.emit()
             val bodyStr = body.emit()

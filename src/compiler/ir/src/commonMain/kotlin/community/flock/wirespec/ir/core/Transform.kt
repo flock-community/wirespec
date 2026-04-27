@@ -187,6 +187,10 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
         right = transformer.transformExpression(right),
     )
     is TypeDescriptor -> copy(type = transformer.transformType(type))
+    is Cast -> copy(
+        expression = transformer.transformExpression(expression),
+        targetType = transformer.transformType(targetType),
+    )
     is NullCheck -> copy(
         expression = transformer.transformExpression(expression),
         body = transformer.transformExpression(body),

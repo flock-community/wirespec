@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
 import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
@@ -343,7 +344,13 @@ private class JavaEmitter(val file: File) {
 
     private fun Statement.emit(indent: Int, isInsideConstructor: Boolean = false): String = when (this) {
         is PrintStatement -> "System.out.println(${expression.emit()});\n".indentCode(indent)
-        is ReturnStatement -> "return ${expression.emit()};\n".indentCode(indent)
+        is ReturnStatement -> when (val expr = expression) {
+            // Java has no switch-expression with type patterns; rewrite each
+            // branch's terminal expression into `return X` so the existing
+            // if/else-if/instanceof Switch emit handles it.
+            is Switch -> expr.rewriteAsReturnChain().emit(indent)
+            else -> "return ${expression.emit()};\n".indentCode(indent)
+        }
         is ConstructorStatement -> {
             if (type == Type.Unit) {
                 "null;\n".indentCode(indent)
@@ -393,7 +400,11 @@ private class JavaEmitter(val file: File) {
                 val casesStr = cases.mapIndexed { index, case ->
                     val bodyStr = case.body.joinToString("") { it.emit(1) }
                     val typeStr = case.type?.emitGenerics() ?: "Object"
-                    val varName = variable?.camelCase() ?: "_"
+                    // Java reserves `_` as an identifier, so fall back to a
+                    // synthesized name when no pattern variable is supplied.
+                    // Callers that need to use the narrowed binding inside case
+                    // bodies must set Switch.variable and reference it there.
+                    val varName = variable?.camelCase() ?: "__matched"
                     val prefix = if (index == 0) "if" else " else if"
                     "$prefix (${expression.emit()} instanceof $typeStr $varName) {\n$bodyStr}"
                 }.joinToString("")
@@ -448,6 +459,9 @@ private class JavaEmitter(val file: File) {
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
         }
         is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        // Route primitive expressions through Object: Java won't auto-box
+        // during an unchecked cast to a type parameter T.
+        is Cast -> "((${targetType.emitGenerics()}) (Object) ${expression.emit()});\n".indentCode(indent)
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -525,6 +539,7 @@ private class JavaEmitter(val file: File) {
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
         }
         is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        is Cast -> "((${targetType.emitGenerics()}) (Object) ${expression.emit()})"
         is NullCheck -> {
             val orElse = when (val alt = alternative) {
                 is ErrorStatement -> ".orElseThrow(() -> new IllegalStateException(${alt.message.emit()}))"
@@ -559,13 +574,11 @@ private class JavaEmitter(val file: File) {
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "(${condition.emit()} ? ${thenExpr.emit()} : ${elseExpr.emit()})"
         is MapExpression -> {
-            // Non-Kotlin languages don't support (0 until N).map { ... } semantics yet.
-            // When the receiver is a synthetic UNTIL range (emitted by the generator converter
-            // for iterable fields), fall back to the element-count call alone to preserve the
-            // pre-existing broken-but-parseable snapshot output until proper iteration is added.
+            // `(0 until N).map { i -> ... }` from the generator converter becomes
+            // `IntStream.range(0, N).mapToObj(i -> ...).toList()` in Java.
             val recv = receiver
             if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
-                recv.right.emit()
+                "java.util.stream.IntStream.range(${recv.left.emit()}, ${recv.right.emit()}).mapToObj(${variable.camelCase()} -> ${body.emit()}).toList()"
             } else {
                 "${receiver.emit()}.stream().map(${variable.camelCase()} -> ${body.emit()}).toList()"
             }
@@ -640,6 +653,20 @@ private class JavaEmitter(val file: File) {
         type is Type.String -> "\"$value\""
         value is Long -> "${value}L"
         else -> value.toString()
+    }
+
+    private fun Switch.rewriteAsReturnChain(): Switch = copy(
+        cases = cases.map { it.copy(body = it.body.asReturn()) },
+        default = default?.asReturn() ?: listOf(
+            ErrorStatement(Literal("switch expression must be exhaustive", Type.String)),
+        ),
+    )
+
+    private fun List<Statement>.asReturn(): List<Statement> {
+        if (isEmpty()) return this
+        val last = last()
+        if (last is ReturnStatement) return this
+        return dropLast(1) + ReturnStatement(last as Expression)
     }
 }
 

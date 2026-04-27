@@ -32,6 +32,9 @@ interface BaseBuilder {
 
     fun classRef(type: Type): ClassReference = ClassReference(type)
     fun classRef(typeName: String): ClassReference = ClassReference(Type.Custom(typeName))
+
+    fun cast(expression: Expression, targetType: Type): Cast = Cast(expression, targetType)
+    fun cast(expression: Expression, targetTypeName: String): Cast = Cast(expression, Type.Custom(targetTypeName))
 }
 
 @Dsl

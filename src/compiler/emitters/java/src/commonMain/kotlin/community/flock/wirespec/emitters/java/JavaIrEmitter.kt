@@ -28,6 +28,8 @@ import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.collectCustomTypeNames
+import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
@@ -168,9 +170,18 @@ open class JavaIrEmitter(
             is Union -> definition.convertToGenerator()
             else -> return null
         }
-        return generatorFile
-            .sanitizeNames(sanitizationConfig)
-            .prependImports(wirespecImports)
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val modelImports = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .map { import("${packageName.value}.model", it) }
+            .toList()
+        return sanitized
+            .prependImports(wirespecImports + modelImports)
             .placeInPackage(packageName = packageName, subPackage = "generator")
     }
 

@@ -4,6 +4,7 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
 import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
@@ -456,6 +457,7 @@ private class KotlinEmitter(val file: File) {
         is EnumValueCall -> "${expression.emit()}.name\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()} as ${targetType.emitGenerics()}\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -530,6 +532,7 @@ private class KotlinEmitter(val file: File) {
         is EnumValueCall -> "${expression.emit()}.name"
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()
+        is Cast -> "${expression.emit()} as ${targetType.emitGenerics()}"
         is NullCheck -> "(${expression.emit()}?.let { ${body.emit()} }${alternative?.emit()?.let { " ?: $it" } ?: ""})"
         is NullableMap -> "(${expression.emit()}?.let { ${body.emit()} } ?: ${alternative.emit()})"
         is NullableOf -> expression.emit()
@@ -608,8 +611,9 @@ private class KotlinEmitter(val file: File) {
         return "mapOf($map)"
     }
 
-    private fun Literal.emit(): String = when (type) {
+    private fun Literal.emit(): String = when (val t = type) {
         Type.String -> "\"$value\""
+        is Type.Integer -> if (t.precision == Precision.P64) "${value}L" else value.toString()
         else -> value.toString()
     }
 
