@@ -40,17 +40,17 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.className
 import community.flock.wirespec.openapi.common.flatMapRequests
 import community.flock.wirespec.openapi.common.flatMapResponses
 import community.flock.wirespec.openapi.common.getReference
 import community.flock.wirespec.openapi.common.isParam
-import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.jsonDefault
 import community.flock.wirespec.openapi.common.parseOpenApi
-import community.flock.wirespec.openapi.common.toAnnotation
 import community.flock.wirespec.openapi.common.resolveEndpointNameCollisions
 import community.flock.wirespec.openapi.common.sanitize
+import community.flock.wirespec.openapi.common.toAnnotation
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.common.toDict
 import community.flock.wirespec.openapi.common.toIterable
@@ -120,8 +120,8 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths
                         if (response.content.isNullOrEmpty()) {
                             listOf(
                                 Endpoint.Response(
-                                    annotations = response.description.toDescriptionAnnotationList()
-                                        + toLinkAnnotationList(response.links),
+                                    annotations = response.description.toDescriptionAnnotationList() +
+                                        toLinkAnnotationList(response.links),
                                     status = status.value,
                                     headers = response.headers?.map { entry ->
                                         toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
@@ -133,8 +133,8 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths
                             response.content?.map { (contentType, media) ->
                                 val isNullable = media.schema?.let { resolve(it) }?.nullable ?: false
                                 Endpoint.Response(
-                                    annotations = response.description.toDescriptionAnnotationList()
-                                        + toLinkAnnotationList(response.links),
+                                    annotations = response.description.toDescriptionAnnotationList() +
+                                        toLinkAnnotationList(response.links),
                                     status = status.value,
                                     headers = response.headers?.map { entry ->
                                         toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
