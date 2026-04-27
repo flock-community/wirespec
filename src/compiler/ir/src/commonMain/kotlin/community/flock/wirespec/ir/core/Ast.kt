@@ -248,13 +248,20 @@ data class BinaryOp(
     val right: Expression,
 ) : Statement,
     Expression {
-    enum class Operator { PLUS, EQUALS, NOT_EQUALS }
+    enum class Operator { PLUS, EQUALS, NOT_EQUALS, UNTIL }
 }
 
 // Type descriptor - represents a runtime type descriptor for serialization
 // In Java this emits Wirespec.getType(Type.class, Container.class)
 // In other languages it may emit different type descriptor patterns
 data class TypeDescriptor(val type: Type) :
+    Statement,
+    Expression
+
+// Type cast - asserts the static type of `expression` as `targetType`.
+// Kotlin/Scala emit an unchecked cast (`x as T` / `x.asInstanceOf[T]`); Java emits `((T) x)`;
+// Rust emits `x as T`; TypeScript emits `x as T`; Python passes through (no static cast).
+data class Cast(val expression: Expression, val targetType: Type) :
     Statement,
     Expression
 
@@ -266,6 +273,7 @@ data class ConstructorStatement(val type: Type, val namedArguments: Map<Name, Ex
 data class Literal(val value: Any, val type: Type) :
     Statement,
     Expression
+data class ClassReference(val type: Type) : Expression
 data class LiteralList(val values: List<Expression>, val type: Type) :
     Statement,
     Expression

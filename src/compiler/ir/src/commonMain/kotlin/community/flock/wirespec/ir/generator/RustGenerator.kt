@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -240,16 +242,17 @@ object RustGenerator : Generator {
             val paramName = it.name.value()
             if (paramName == "self" || paramName == "&self") paramName else "${it.name.snakeCase().sanitize()}: ${it.type.emit()}"
         }
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.emit() }}>"
         val rType = returnType?.takeIf { it != Type.Unit }?.emit()
         val returnTypeStr = if (rType != null) " -> $rType" else ""
         val prefix = if (isInInterface && body.isEmpty()) "" else "pub "
         val asyncPrefix = if (isAsync) "async " else ""
         val content = if (body.isEmpty()) {
-            return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr;\n".indentCode(indent)
+            return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}$typeParamsStr($params)$returnTypeStr;\n".indentCode(indent)
         } else {
             body.joinToString("") { it.emit(1) }
         }
-        return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr {\n$content}\n\n".indentCode(indent)
+        return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}$typeParamsStr($params)$returnTypeStr {\n$content}\n\n".indentCode(indent)
     }
 
     private fun TypeParameter.emit(): String {
@@ -282,6 +285,8 @@ object RustGenerator : Generator {
         is Type.Custom -> {
             if (generics.isEmpty()) {
                 name
+            } else if (generics.any { it == Type.Wildcard || (it is Type.Custom && it.name == "_") }) {
+                "Box<dyn std::any::Any>"
             } else {
                 "$name<${generics.joinToString(", ") { it.emit() }}>"
             }
@@ -396,6 +401,7 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()});\n".indentCode(indent)
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>();\n".indentCode(indent)
+        is Cast -> "(${expression.emit()} as ${targetType.emit()});\n".indentCode(indent)
         is NullCheck, is NullableMap, is NullableOf, is NullableGet,
         is Constraint.RegexMatch, is Constraint.BoundCheck,
         is IfExpression, is MapExpression, is FlatMapIndexed,
@@ -408,6 +414,7 @@ object RustGenerator : Generator {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in Rust")
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -426,6 +433,7 @@ object RustGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "std::any::TypeId::of::<${type.emit()}>()"
         is RawExpression -> code
         is NullLiteral, is NullableEmpty -> "None"
         is VariableReference -> name.snakeCase().sanitize()
@@ -448,6 +456,7 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()})"
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>()"
+        is Cast -> "(${expression.emit()} as ${targetType.emit()})"
         is NullCheck -> {
             val exprStr = expression.emit()
             val bodyStr = body.emit()
@@ -473,7 +482,14 @@ object RustGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Rust")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "if ${condition.emit()} { ${thenExpr.emit()} } else { ${elseExpr.emit()} }"
-        is MapExpression -> "${receiver.emit()}.iter().map(|${variable.snakeCase()}| ${body.emit()}).collect::<Vec<_>>()"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emit()
+            } else {
+                "${receiver.emit()}.iter().map(|${variable.snakeCase()}| ${body.emit()}).collect::<Vec<_>>()"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emit()}.iter().enumerate().flat_map(|(${indexVar.snakeCase()}, ${elementVar.snakeCase()})| ${body.emit()}).collect::<Vec<_>>()"
         is ListConcat -> when {
             lists.isEmpty() -> "vec![]"
@@ -530,7 +546,14 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emitWithInlinedIt(replacement)})"
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "if ${condition.emitWithInlinedIt(replacement)} { ${thenExpr.emitWithInlinedIt(replacement)} } else { ${elseExpr.emitWithInlinedIt(replacement)} }"
-        is MapExpression -> "${receiver.emitWithInlinedIt(replacement)}.iter().map(|${variable.snakeCase()}| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emitWithInlinedIt(replacement)
+            } else {
+                "${receiver.emitWithInlinedIt(replacement)}.iter().map(|${variable.snakeCase()}| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emitWithInlinedIt(replacement)}.iter().enumerate().flat_map(|(${indexVar.snakeCase()}, ${elementVar.snakeCase()})| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
         is ListConcat -> when {
             lists.isEmpty() -> "vec![]"

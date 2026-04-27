@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.requestParameters
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Case
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -49,6 +50,7 @@ import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.import
@@ -273,8 +275,9 @@ open class RustIrEmitter(
             .let { file ->
                 LanguageFile(file.name, file.elements.flatMap { element ->
                     if (element is Struct) {
-                        val derive = when (element.name.pascalCase()) {
-                            "RawRequest", "RawResponse" -> "#[derive(Debug, Clone, PartialEq)]"
+                        val derive = when {
+                            element.fields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"
+                            element.name.pascalCase() in setOf("RawRequest", "RawResponse") -> "#[derive(Debug, Clone, PartialEq)]"
                             else -> "#[derive(Debug, Clone, Default, PartialEq)]"
                         }
                         listOf(LanguageFile(element.name, listOf(RawElement(derive), element)))
@@ -357,6 +360,46 @@ open class RustIrEmitter(
                 if (element is Struct) listOf(RawElement("#[derive(Debug, Clone, Default, PartialEq)]"), element)
                 else listOf(element)
             }
+        )
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is Type -> definition.convertToGenerator()
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }.sanitizeNames(sanitizationConfig)
+
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val customNames = generatorFile.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .toList()
+        val generatorRefs = mutableSetOf<String>()
+        generatorFile.transform {
+            expression { expr, t ->
+                if (expr is RawExpression && expr.code.endsWith("Generator") && expr.code != generatorOwnName) {
+                    generatorRefs.add(expr.code)
+                }
+                expr.transformChildren(t)
+            }
+        }
+        val generatorImports = (customNames.filter { it.endsWith("Generator") } + generatorRefs)
+            .distinct()
+            .map { import("super::${it.toSnakeCase()}", it) }
+        val typeImports = customNames
+            .filterNot { it.endsWith("Generator") }
+            .map { import("super::super::model::${it.toSnakeCase()}", it) }
+
+        val subPackageName = packageName + "generator"
+        return File(
+            name = Name.of(subPackageName.toDir() + generatorFile.name.pascalCase().toSnakeCase()),
+            elements = modelImports + typeImports + generatorImports + generatorFile.elements,
         )
     }
 
@@ -553,6 +596,15 @@ open class RustIrEmitter(
     private fun File.prependImports(imports: List<Element>): File =
         if (imports.isNotEmpty()) copy(elements = imports + elements)
         else this
+
+    private fun containsWildcard(type: LanguageType): Boolean = when (type) {
+        LanguageType.Wildcard -> true
+        is LanguageType.Custom -> type.generics.any { containsWildcard(it) }
+        is LanguageType.Nullable -> containsWildcard(type.type)
+        is LanguageType.Array -> containsWildcard(type.elementType)
+        is LanguageType.Dict -> containsWildcard(type.keyType) || containsWildcard(type.valueType)
+        else -> false
+    }
 
     private fun Type.buildModelImports(): List<Element> =
         importReferences().distinctBy { it.value }

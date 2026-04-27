@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -455,6 +457,7 @@ private class KotlinEmitter(val file: File) {
         is EnumValueCall -> "${expression.emit()}.name\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()} as ${targetType.emitGenerics()}\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -473,6 +476,7 @@ private class KotlinEmitter(val file: File) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> "until"
     }
 
     private fun String.toKotlinStaticCall(): String = when (this) {
@@ -499,6 +503,7 @@ private class KotlinEmitter(val file: File) {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "typeOf<${type.emitGenerics()}>()"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "null"
@@ -527,6 +532,7 @@ private class KotlinEmitter(val file: File) {
         is EnumValueCall -> "${expression.emit()}.name"
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()
+        is Cast -> "${expression.emit()} as ${targetType.emitGenerics()}"
         is NullCheck -> "(${expression.emit()}?.let { ${body.emit()} }${alternative?.emit()?.let { " ?: $it" } ?: ""})"
         is NullableMap -> "(${expression.emit()}?.let { ${body.emit()} } ?: ${alternative.emit()})"
         is NullableOf -> expression.emit()
@@ -605,9 +611,22 @@ private class KotlinEmitter(val file: File) {
         return "mapOf($map)"
     }
 
-    private fun Literal.emit(): String = when (type) {
-        Type.String -> "\"$value\""
+    private fun Literal.emit(): String = when (val t = type) {
+        Type.String -> "\"${value.toString().escapeKotlinString()}\""
+        is Type.Integer -> if (t.precision == Precision.P64) "${value}L" else value.toString()
         else -> value.toString()
+    }
+
+    private fun String.escapeKotlinString(): String = buildString {
+        for (c in this@escapeKotlinString) when (c) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '$' -> append("\\$")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(c)
+        }
     }
 
     private fun TypeDescriptor.emitTypeDescriptor(): String = "typeOf<${type.emitGenerics()}>()"

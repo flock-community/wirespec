@@ -187,6 +187,10 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
         right = transformer.transformExpression(right),
     )
     is TypeDescriptor -> copy(type = transformer.transformType(type))
+    is Cast -> copy(
+        expression = transformer.transformExpression(expression),
+        targetType = transformer.transformType(targetType),
+    )
     is NullCheck -> copy(
         expression = transformer.transformExpression(expression),
         body = transformer.transformExpression(body),
@@ -227,6 +231,7 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
 }
 
 fun Expression.transformChildren(transformer: Transformer): Expression = when (this) {
+    is ClassReference -> copy(type = transformer.transformType(type))
     is RawExpression -> this
     is Statement -> transformChildren(transformer) as Expression
 }
@@ -473,7 +478,7 @@ internal fun Element.collectTypes(): List<Type> = buildList {
     forEachType { add(it) }
 }
 
-internal fun Element.collectCustomTypeNames(): Set<String> = buildSet {
+fun Element.collectCustomTypeNames(): Set<String> = buildSet {
     forEachType { type ->
         if (type is Type.Custom) add(type.name)
     }

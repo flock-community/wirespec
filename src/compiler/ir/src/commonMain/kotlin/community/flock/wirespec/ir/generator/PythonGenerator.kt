@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -352,6 +354,7 @@ object PythonGenerator : Generator {
             }
         }
         is TypeDescriptor -> "${type.emit()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()}\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -370,6 +373,7 @@ object PythonGenerator : Generator {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in Python")
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -377,6 +381,7 @@ object PythonGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> type.emit()
         is RawExpression -> code
         is NullLiteral -> "None"
         is NullableEmpty -> "None"
@@ -411,6 +416,7 @@ object PythonGenerator : Generator {
             }
         }
         is TypeDescriptor -> type.emit()
+        is Cast -> expression.emit()
         is NullCheck -> {
             val exprStr = expression.emit()
             val bodyStr = body.emitWithInlinedIt(exprStr)
@@ -441,7 +447,14 @@ object PythonGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Python")
         is NotExpression -> "not ${expression.emit()}"
         is IfExpression -> "(${thenExpr.emit()} if ${condition.emit()} else ${elseExpr.emit()})"
-        is MapExpression -> "[${body.emit()} for ${variable.camelCase()} in ${receiver.emit()}]"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emit()
+            } else {
+                "[${body.emit()} for ${variable.camelCase()} in ${receiver.emit()}]"
+            }
+        }
         is FlatMapIndexed -> "[item for ${indexVar.camelCase()}, ${elementVar.camelCase()} in enumerate(${receiver.emit()}) for item in ${body.emit()}]"
         is ListConcat -> when {
             lists.isEmpty() -> "[]"
@@ -479,7 +492,14 @@ object PythonGenerator : Generator {
         is EnumValueCall -> "${expression.emitWithInlinedIt(replacement)}.value"
         is NotExpression -> "not ${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${thenExpr.emitWithInlinedIt(replacement)} if ${condition.emitWithInlinedIt(replacement)} else ${elseExpr.emitWithInlinedIt(replacement)})"
-        is MapExpression -> "[${body.emitWithInlinedIt(replacement)} for ${variable.camelCase()} in ${receiver.emitWithInlinedIt(replacement)}]"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emitWithInlinedIt(replacement)
+            } else {
+                "[${body.emitWithInlinedIt(replacement)} for ${variable.camelCase()} in ${receiver.emitWithInlinedIt(replacement)}]"
+            }
+        }
         is FlatMapIndexed -> "[item for ${indexVar.camelCase()}, ${elementVar.camelCase()} in enumerate(${receiver.emitWithInlinedIt(replacement)}) for item in ${body.emitWithInlinedIt(replacement)}]"
         is ListConcat -> lists.joinToString(" + ") { it.emitWithInlinedIt(replacement) }
         is StringTemplate -> "f\"${parts.joinToString("") {

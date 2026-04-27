@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -488,6 +490,7 @@ ScalaEmitter(
         is EnumValueCall -> "${expression.emit()}.toString\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toScala()} ${right.emit()})\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()}.asInstanceOf[${targetType.emitGenerics()}]\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -506,6 +509,7 @@ ScalaEmitter(
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> "until"
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -527,6 +531,7 @@ ScalaEmitter(
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "scala.reflect.classTag[${type.emitGenerics()}]"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "None"
@@ -549,6 +554,7 @@ ScalaEmitter(
         is EnumValueCall -> "${expression.emit()}.toString"
         is BinaryOp -> "(${left.emit()} ${operator.toScala()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()
+        is Cast -> "${expression.emit()}.asInstanceOf[${targetType.emitGenerics()}]"
         is NullCheck -> "(${expression.emit()}.map(it => ${body.emit()})${alternative?.emit()?.let { ".getOrElse($it)" } ?: ""})"
         is NullableMap -> "(${expression.emit()}.map(it => ${body.emit()}).getOrElse(${alternative.emit()}))"
         is NullableOf -> "Some(${expression.emit()})"
@@ -595,7 +601,7 @@ ScalaEmitter(
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Scala")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "if (${condition.emit()}) ${thenExpr.emit()} else ${elseExpr.emit()}"
-        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()})"
+        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()}).toList"
         is FlatMapIndexed -> "${receiver.emit()}.zipWithIndex.flatMap { case (${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emit()} }"
         is ListConcat -> when {
             lists.isEmpty() -> "List.empty[String]"
@@ -628,9 +634,20 @@ ScalaEmitter(
     }
 
     private fun Literal.emit(): String = when (type) {
-        Type.String -> "\"$value\""
+        Type.String -> "\"${value.toString().escapeScalaString()}\""
         is Type.Integer -> if (type.precision == Precision.P64) "${value}L" else value.toString()
         else -> value.toString()
+    }
+
+    private fun String.escapeScalaString(): String = buildString {
+        for (c in this@escapeScalaString) when (c) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(c)
+        }
     }
 
     private fun ArrayIndexCall.emitArrayIndex(): String {

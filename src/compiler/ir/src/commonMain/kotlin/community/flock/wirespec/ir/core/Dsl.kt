@@ -29,6 +29,12 @@ interface BaseBuilder {
     fun literal(value: Boolean) = Literal(value, Type.Boolean)
     fun literal(value: Float) = Literal(value, Type.Number(Precision.P32))
     fun literal(value: Double) = Literal(value, Type.Number(Precision.P64))
+
+    fun classRef(type: Type): ClassReference = ClassReference(type)
+    fun classRef(typeName: String): ClassReference = ClassReference(Type.Custom(typeName))
+
+    fun cast(expression: Expression, targetType: Type): Cast = Cast(expression, targetType)
+    fun cast(expression: Expression, targetTypeName: String): Cast = Cast(expression, Type.Custom(targetTypeName))
 }
 
 @Dsl
