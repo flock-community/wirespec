@@ -757,4 +757,88 @@ class OpenAPIV3EmitterTest {
             """.trimMargin()
         result.shouldBeRight() shouldEqualJson expect
     }
+
+    @Test
+    fun linkAnnotationFromWirespec() {
+        val source =
+            // language=ws
+            """
+            |type User { id: String, name: String }
+            |
+            |endpoint CreateUser POST User /users -> {
+            |    @Link("GetUser", operationId: "GetUserById", parameters: {id: "${'$'}response.body#/id"}, description: "Fetch the just-created user")
+            |    @Link("DeleteUser", operationId: "DeleteUser", parameters: {id: "${'$'}response.body#/id"})
+            |    201 -> User
+            |}
+            """.trimMargin()
+
+        val result = compile(source).invoke { OpenAPIV3Emitter }
+
+        val emittedJson = result.shouldBeRight()
+        val emittedTree = Json.parseToJsonElement(emittedJson) as kotlinx.serialization.json.JsonObject
+        val linksTree = (emittedTree["paths"] as kotlinx.serialization.json.JsonObject)
+            .let { it["/users"] as kotlinx.serialization.json.JsonObject }
+            .let { it["post"] as kotlinx.serialization.json.JsonObject }
+            .let { it["responses"] as kotlinx.serialization.json.JsonObject }
+            .let { it["201"] as kotlinx.serialization.json.JsonObject }
+            .let { it["links"] as kotlinx.serialization.json.JsonObject }
+
+        val expectedLinks =
+            """
+            |{
+            |  "GetUser": {
+            |    "operationId": "GetUserById",
+            |    "parameters": {
+            |      "id": "${'$'}response.body#/id"
+            |    },
+            |    "description": "Fetch the just-created user"
+            |  },
+            |  "DeleteUser": {
+            |    "operationId": "DeleteUser",
+            |    "parameters": {
+            |      "id": "${'$'}response.body#/id"
+            |    }
+            |  }
+            |}
+            """.trimMargin()
+        json.encodeToString(linksTree) shouldEqualJson expectedLinks
+    }
+
+    @Test
+    fun linksRoundTrip() {
+        val path = Path("src/commonTest/resources/v3/links.json")
+        val openApiSource = SystemFileSystem.source(path).buffered().readString()
+        val ast = OpenAPIV3.decodeFromString(openApiSource).parse().shouldNotBeNull()
+
+        val emitted = OpenAPIV3Emitter.emitOpenAPIObject(ast, null, noLogger)
+        val emittedJson = json.encodeToString(emitted)
+
+        val expectedLinks =
+            """
+            |{
+            |  "GetUser": {
+            |    "operationId": "GetUserById",
+            |    "parameters": {
+            |      "id": "${'$'}response.body#/id"
+            |    },
+            |    "description": "Fetch the just-created user"
+            |  },
+            |  "DeleteUser": {
+            |    "operationId": "DeleteUser",
+            |    "parameters": {
+            |      "id": "${'$'}response.body#/id"
+            |    }
+            |  }
+            |}
+            """.trimMargin()
+
+        val emittedTree = Json.parseToJsonElement(emittedJson) as kotlinx.serialization.json.JsonObject
+        val linksTree = (emittedTree["paths"] as kotlinx.serialization.json.JsonObject)
+            .let { it["/users"] as kotlinx.serialization.json.JsonObject }
+            .let { it["post"] as kotlinx.serialization.json.JsonObject }
+            .let { it["responses"] as kotlinx.serialization.json.JsonObject }
+            .let { it["201"] as kotlinx.serialization.json.JsonObject }
+            .let { it["links"] as kotlinx.serialization.json.JsonObject }
+        json.encodeToString(linksTree) shouldEqualJson expectedLinks
+    }
 }
