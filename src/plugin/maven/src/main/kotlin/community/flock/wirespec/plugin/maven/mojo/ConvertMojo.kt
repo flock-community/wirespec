@@ -119,7 +119,7 @@ class ConvertMojo : BaseMojo() {
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
                 FileExtension.JSON -> Source<JSON>(inputPath.name, inputPath.read())
-                FileExtension.Avro -> Source<JSON>(inputPath.name, inputPath.read())
+                FileExtension.AvroJson -> Source<JSON>(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
                 .also { logger.info("Found 1 file to process: $inputPath") }

@@ -18,14 +18,14 @@ import kotlinx.io.readString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class AvroParserTest {
+class AvroJsonParserTest {
 
     @Test
     fun testCustomer() {
         val path = Path("src/commonTest/resources/customer.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        AvroParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
+        AvroJsonParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
     }
 
     @Test
@@ -34,7 +34,7 @@ class AvroParserTest {
         val resource = SystemFileSystem.source(path).buffered().readString()
 
         shouldThrow<Exception> {
-            AvroParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
+            AvroJsonParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
         }.message shouldBe "Cannot have multiple SimpleTypes in Union"
     }
 
@@ -44,7 +44,7 @@ class AvroParserTest {
         val resource = SystemFileSystem.source(path).buffered().readString()
 
         shouldNotThrow<Exception> {
-            AvroParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
+            AvroJsonParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
         }
     }
 
@@ -53,7 +53,7 @@ class AvroParserTest {
         val path = Path("src/commonTest/resources/example.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        val ast = AvroParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
+        val ast = AvroJsonParser.parse(ModuleContent(FileUri("test.ws"), resource), true)
 
         assertEquals(
             listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus", "User"),
