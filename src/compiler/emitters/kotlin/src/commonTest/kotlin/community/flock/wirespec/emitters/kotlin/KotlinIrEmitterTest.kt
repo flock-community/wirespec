@@ -255,6 +255,7 @@ class KotlinIrEmitterTest {
             |      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
             |        override val pathTemplate = "/todos/{id}"
             |        override val method = "PUT"
+            |        override val pathSegments: List<Wirespec.PathSegment> = listOf(Wirespec.Literal("todos"), Wirespec.Param("id", typeOf<String>()))
             |        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
             |          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
             |          override fun to(response: Response<*>) = toRawResponse(serialization, response)
@@ -472,6 +473,7 @@ class KotlinIrEmitterTest {
             |      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
             |        override val pathTemplate = "/todos"
             |        override val method = "GET"
+            |        override val pathSegments: List<Wirespec.PathSegment> = listOf(Wirespec.Literal("todos"))
             |        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
             |          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
             |          override fun to(response: Response<*>) = toRawResponse(serialization, response)
@@ -873,6 +875,7 @@ class KotlinIrEmitterTest {
         val expected = """
             |package community.flock.wirespec.kotlin
             |import kotlin.reflect.KType
+            |import kotlin.reflect.typeOf
             |object Wirespec {
             |  interface Model {
             |      fun validate(): List<String>
@@ -953,6 +956,9 @@ class KotlinIrEmitterTest {
             |  interface Transportation {
             |      suspend fun transport(request: RawRequest): RawResponse
             |  }
+            |  sealed interface PathSegment
+            |  data class Literal(val value: String) : PathSegment
+            |  data class Param(val name: String, val type: KType) : PathSegment
             |  interface ServerEdge<Req: Request<*>, Res: Response<*>> {
             |      fun from(request: RawRequest): Req
             |      fun to(response: Res): RawResponse
@@ -964,11 +970,13 @@ class KotlinIrEmitterTest {
             |  interface Client<Req: Request<*>, Res: Response<*>> {
             |      val pathTemplate: String
             |      val method: String
+            |      val pathSegments: List<PathSegment>
             |      fun client(serialization: Serialization): ClientEdge<Req, Res>
             |  }
             |  interface Server<Req: Request<*>, Res: Response<*>> {
             |      val pathTemplate: String
             |      val method: String
+            |      val pathSegments: List<PathSegment>
             |      fun server(serialization: Serialization): ServerEdge<Req, Res>
             |  }
             |}

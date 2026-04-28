@@ -466,6 +466,7 @@ class RustIrEmitterTest {
         |        type Res = Response;
         |        fn path_template(&self) -> &'static str { "/todos" }
         |        fn method(&self) -> Method { Method::GET }
+        |        fn path_segments(&self) -> &'static [PathSegment] { &[PathSegment::Literal { value: "todos" }] }
         |    }
         |}
         |
@@ -743,6 +744,7 @@ class RustIrEmitterTest {
         |        type Res = Response;
         |        fn path_template(&self) -> &'static str { "/todos/{id}" }
         |        fn method(&self) -> Method { Method::PUT }
+        |        fn path_segments(&self) -> &'static [PathSegment] { &[PathSegment::Literal { value: "todos" }, PathSegment::Param { name: "id", type_id: TypeId::of::<String>() }] }
         |    }
         |}
         |
@@ -1120,6 +1122,12 @@ class RustIrEmitterTest {
             |    type Res;
             |    fn path_template(&self) -> &'static str;
             |    fn method(&self) -> Method;
+            |    fn path_segments(&self) -> &'static [PathSegment];
+            |}
+            |
+            |pub enum PathSegment {
+            |    Literal { value: &'static str },
+            |    Param { name: &'static str, type_id: TypeId },
             |}
             |
         """.trimMargin()

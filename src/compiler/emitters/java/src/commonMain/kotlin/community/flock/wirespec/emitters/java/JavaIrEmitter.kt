@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -105,7 +106,25 @@ open class JavaIrEmitter(
             import("java.util", "Map"),
         )
 
-        private val clientServer = AstShared(packageString).convertClientServer().map {
+        private val pathSegmentElements: List<Element> = listOf(
+            raw(
+                """
+                |sealed interface PathSegment permits Wirespec.Literal, Wirespec.Param {}
+                |record Literal(String value) implements Wirespec.PathSegment {}
+                |record Param(String name, Class<?> type) implements Wirespec.PathSegment {}
+                |""".trimMargin()
+            )
+        )
+
+        private val clientServer = AstShared(packageString).convertClientServer()
+        .map { element ->
+            if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
+                element.copy(fields = element.fields + community.flock.wirespec.ir.core.Field(
+                    name = Name.of("pathSegments"),
+                    type = Type.Custom("List", generics = listOf(Type.Custom("Wirespec.PathSegment"))),
+                ))
+            } else element
+        }.map {
             it.toGetterAccessors { name ->
                 when (name.value()) {
                     "client" -> Name.of("getClient")
@@ -137,7 +156,7 @@ open class JavaIrEmitter(
                     file.copy(elements = packageElements + imports + rest)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
+                    if (namespace.name == Name.of("Wirespec")) pathSegmentElements + clientServer else emptyList()
                 }
             }
 
@@ -333,11 +352,32 @@ open class JavaIrEmitter(
         }
     }
 
+    private fun Reference.toJavaClassName(): String = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.String -> "String.class"
+            is Reference.Primitive.Type.Integer -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Integer.class" else "Long.class"
+            is Reference.Primitive.Type.Number -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Float.class" else "Double.class"
+            Reference.Primitive.Type.Boolean -> "Boolean.class"
+            Reference.Primitive.Type.Bytes -> "byte[].class"
+        }
+        is Reference.Custom -> "$value.class"
+        is Reference.Iterable -> "java.util.List.class"
+        is Reference.Dict -> "java.util.Map.class"
+        is Reference.Any -> "Object.class"
+        is Reference.Unit -> "Void.class"
+    }
+
     private fun buildHandlers(endpoint: Endpoint): Struct {
         val pathTemplate = "/" + endpoint.path.joinToString("/") {
             when (it) {
                 is Endpoint.Segment.Literal -> it.value
                 is Endpoint.Segment.Param -> "{${it.identifier.value}}"
+            }
+        }
+        val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> """new Wirespec.Literal("${segment.value}")"""
+                is Endpoint.Segment.Param -> """new Wirespec.Param("${segment.identifier.value}", ${segment.reference.toJavaClassName()})"""
             }
         }
 
@@ -355,6 +395,10 @@ open class JavaIrEmitter(
             function("getMethod", isOverride = true) {
                 returnType(Type.String)
                 returns(literal(endpoint.method.name))
+            }
+            function("getPathSegments", isOverride = true) {
+                returnType(type("List", type("Wirespec.PathSegment")))
+                returns(RawExpression("List.of($pathSegmentsCode)"))
             }
             function("getServer", isOverride = true) {
                 returnType(

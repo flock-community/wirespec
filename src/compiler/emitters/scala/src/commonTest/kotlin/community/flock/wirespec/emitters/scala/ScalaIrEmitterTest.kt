@@ -409,6 +409,7 @@ class ScalaIrEmitterTest {
             |  object Client extends Wirespec.Client[Request.type, Response[?]] {
             |    override val pathTemplate: String = "/todos"
             |    override val method: String = "GET"
+            |    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"))
             |    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request.type, Response[?]] = new Wirespec.ClientEdge[Request.type, Response[?]] {
             |      override def to(request: Request.type): Wirespec.RawRequest = toRawRequest(serialization, request)
             |      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
@@ -417,6 +418,7 @@ class ScalaIrEmitterTest {
             |  object Server extends Wirespec.Server[Request.type, Response[?]] {
             |    override val pathTemplate: String = "/todos"
             |    override val method: String = "GET"
+            |    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"))
             |    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request.type, Response[?]] = new Wirespec.ServerEdge[Request.type, Response[?]] {
             |      override def from(request: Wirespec.RawRequest): Request.type = fromRawRequest(serialization, request)
             |      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
@@ -619,6 +621,7 @@ class ScalaIrEmitterTest {
             |  object Client extends Wirespec.Client[Request, Response[?]] {
             |    override val pathTemplate: String = "/todos/{id}"
             |    override val method: String = "PUT"
+            |    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[String]))
             |    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request, Response[?]] = new Wirespec.ClientEdge[Request, Response[?]] {
             |      override def to(request: Request): Wirespec.RawRequest = toRawRequest(serialization, request)
             |      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
@@ -627,6 +630,7 @@ class ScalaIrEmitterTest {
             |  object Server extends Wirespec.Server[Request, Response[?]] {
             |    override val pathTemplate: String = "/todos/{id}"
             |    override val method: String = "PUT"
+            |    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[String]))
             |    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request, Response[?]] = new Wirespec.ServerEdge[Request, Response[?]] {
             |      override def from(request: Wirespec.RawRequest): Request = fromRawRequest(serialization, request)
             |      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
@@ -966,6 +970,9 @@ class ScalaIrEmitterTest {
             |  trait Transportation {
             |      def transport(request: RawRequest): RawResponse
             |  }
+            |  sealed trait PathSegment
+            |  case class Literal(val value: String) extends PathSegment
+            |  case class Param(val name: String, val `type`: ClassTag[?]) extends PathSegment
             |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
             |      def from(request: RawRequest): Req
             |      def to(response: Res): RawResponse
@@ -977,11 +984,13 @@ class ScalaIrEmitterTest {
             |  trait Client[Req <: Request[?], Res <: Response[?]] {
             |      def pathTemplate: String
             |      def method: String
+            |      def pathSegments: List[PathSegment]
             |      def client(serialization: Serialization): ClientEdge[Req, Res]
             |  }
             |  trait Server[Req <: Request[?], Res <: Response[?]] {
             |      def pathTemplate: String
             |      def method: String
+            |      def pathSegments: List[PathSegment]
             |      def server(serialization: Serialization): ServerEdge[Req, Res]
             |  }
             |}
