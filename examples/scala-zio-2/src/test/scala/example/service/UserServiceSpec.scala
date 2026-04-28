@@ -11,6 +11,6 @@ object UserServiceSpec extends ZIOSpecDefault:
       for
         svc   <- ZIO.service[UserService]
         users <- svc.getUsers()
-      yield assertTrue(users.nonEmpty)
+      yield assertTrue(users.size == 2) && assertTrue(users.exists(_.name == "Willem"))
     },
   ).provide(UserServiceLive.layer, InMemoryUserRepository.layer)
