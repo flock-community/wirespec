@@ -15,6 +15,7 @@ import community.flock.wirespec.plugin.io.getFullPath
 import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
+import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -59,7 +60,7 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
             input = nonEmptySetOf(sources),
             emitters = emitters(),
             writer = writer(outputDir),
-            error = { throw RuntimeException(it) },
+            error = { throw GradleException(it) },
             packageName = packageNameValue(),
             logger = wirespecLogger,
             shared = shared.getOrElse(true),

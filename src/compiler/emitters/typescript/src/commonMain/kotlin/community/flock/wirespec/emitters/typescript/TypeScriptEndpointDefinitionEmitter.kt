@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // Embedded TypeScript codegen templates stay on one line to preserve output fidelity.
+
 package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower

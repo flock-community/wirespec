@@ -1,6 +1,7 @@
 plugins {
     id("module.publication")
     id("module.spotless")
+    id("module.detekt")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
 }

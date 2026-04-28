@@ -1,6 +1,9 @@
 plugins {
     id("module.publication")
     id("module.spotless")
+    // module.detekt intentionally not applied: Spring Boot dependencies pull
+    // Kotlin 2.3.x onto the detekt classpath, which conflicts with detekt
+    // 1.23.x's embedded Kotlin 2.0.21. Re-enable once detekt 2.x ships.
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
