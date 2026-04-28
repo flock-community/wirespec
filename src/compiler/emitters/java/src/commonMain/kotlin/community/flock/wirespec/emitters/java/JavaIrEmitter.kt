@@ -116,7 +116,8 @@ open class JavaIrEmitter(
             )
         )
 
-        private val clientServer = AstShared(packageString).convertClientServer().map { element ->
+        private val clientServer = AstShared(packageString).convertClientServer()
+        .map { element ->
             if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
                 element.copy(fields = element.fields + community.flock.wirespec.ir.core.Field(
                     name = Name.of("pathSegments"),

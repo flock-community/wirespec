@@ -281,6 +281,7 @@ open class PythonIrEmitter(
         val endpointClass = Namespace(
             name = converted.name,
             elements = listOf(RawElement("path_segments = [$pathSegmentsCode]")) + classElements,
+            elements = classElements,
             extends = converted.extends,
         )
         return LanguageFile(converted.name, buildList {
