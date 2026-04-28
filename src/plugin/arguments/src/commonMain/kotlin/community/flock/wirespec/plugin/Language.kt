@@ -48,3 +48,16 @@ fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared) = when 
     Language.OpenAPIV3 -> OpenAPIV3Emitter
     Language.Avro -> AvroJsonEmitter
 }
+
+fun Language.toIrEmitter(packageName: PackageName, emitShared: EmitShared) = when (this) {
+    Language.Java -> JavaIrEmitter(packageName, emitShared)
+    Language.Kotlin -> KotlinIrEmitter(packageName, emitShared)
+    Language.Python -> PythonIrEmitter(packageName, emitShared)
+    Language.Rust -> RustIrEmitter(packageName, emitShared)
+    Language.Scala -> ScalaIrEmitter(packageName, emitShared)
+    Language.TypeScript -> TypeScriptIrEmitter()
+    Language.Wirespec -> WirespecEmitter()
+    Language.OpenAPIV2 -> OpenAPIV2Emitter
+    Language.OpenAPIV3 -> OpenAPIV3Emitter
+    Language.Avro -> AvroJsonEmitter
+}
