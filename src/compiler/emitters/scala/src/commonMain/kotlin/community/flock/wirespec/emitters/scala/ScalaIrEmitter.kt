@@ -28,7 +28,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall
@@ -49,9 +48,11 @@ import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
+import community.flock.wirespec.ir.transformer.injectEnumLabelField
+import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.emit.withSharedSource
@@ -176,21 +177,12 @@ open class ScalaIrEmitter(
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
-            .transform {
-                matchingElements { struct: Struct ->
-                    if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
-                    else struct
-                }
-            }
+            .ensureEmptyStructHasConstructor()
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
         .sanitizeNames(sanitizationConfig)
-        .transform {
-            matchingElements { languageEnum: LanguageEnum ->
-                languageEnum.withLabelField(sanitizeEntry = { it.sanitizeEnum() })
-            }
-        }
+        .injectEnumLabelField(sanitizeEntry = { it.sanitizeEnum() })
 
     override fun emit(union: Union): File = union
         .convert()
@@ -198,50 +190,30 @@ open class ScalaIrEmitter(
 
     override fun emit(refined: Refined): File {
         val file = refined.convert().sanitizeNames(sanitizationConfig)
-        val struct = file.findElement<Struct>()!!
-        val updatedStruct = struct.copy(
-            fields = struct.fields.map { f -> f.copy(isOverride = true) },
-            elements = struct.elements.map { element ->
-                if (element is LanguageFunction) {
-                    element.copy(isOverride = true)
-                } else element
-            },
-        ).transform {
-            expression { expr, tr ->
-                when {
-                    expr is FunctionCall && expr.name.camelCase() == "toString" && expr.receiver != null ->
-                        FieldCall(receiver = expr.receiver?.let { tr.transformExpression(it) }, field = Name.of("toString"))
-                    else -> expr.transformChildren(tr)
-                }
-            }
-        }
+        val updatedStruct = file.findElement<Struct>()!!
+            .markMembersAsOverride()
+            .convertToStringCallsToFieldAccess()
         return LanguageFile(Name.of(refined.identifier.sanitize()), listOf(updatedStruct))
     }
 
     override fun emit(endpoint: Endpoint): File {
-        val imports = endpoint.buildImports()
-        val file = endpoint.convert()
-        val endpointNamespace = file.findElement<Namespace>()!!
+        val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
         val flattened = endpointNamespace.flattenNestedStructs()
-        val requestIsObject = isRequestObject(flattened)
         val body = flattened
             .injectHandleFunction()
-            .let { ns -> buildClientServerObjects(endpoint, requestIsObject, ns) }
-        val sanitized = LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
+            .appendClientServerObjects(endpoint, isRequestObject(flattened))
+        return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) sanitized.copy(elements = imports + sanitized.elements)
-        else sanitized
+            .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })
     }
 
-    override fun emit(channel: Channel): File {
-        val imports = channel.buildImports()
-        val file = channel.convert().sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) file.copy(elements = imports + file.elements)
-        else file
-    }
+    override fun emit(channel: Channel): File = channel
+        .convert()
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(channel.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
-        val imports = endpoint.buildImports()
+        val imports = endpoint.buildModelImports(packageName)
         val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
         val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
         val subPackageName = packageName + "client"
@@ -300,82 +272,6 @@ open class ScalaIrEmitter(
         .joinToString("_")
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
-
-    private fun Definition.buildImports(): List<LanguageImport> = importReferences()
-        .distinctBy { it.value }
-        .map { import("${packageName.value}.model", it.value) }
-
-    private fun <T : Element> T.addIdentityTypeToCall(): T = transform {
-        matchingElements { struct: Struct ->
-            struct.copy(
-                interfaces = struct.interfaces.map { type ->
-                    if (type is LanguageType.Custom && type.name.endsWith(".Call")) {
-                        type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
-                    } else type
-                }
-            )
-        }
-    }
-
-    private fun isRequestObject(namespace: Namespace): Boolean {
-        val requestStruct = namespace.elements.filterIsInstance<Struct>()
-            .firstOrNull { it.name.pascalCase() == "Request" } ?: return false
-        return (requestStruct.constructors.size == 1 && requestStruct.constructors.single().parameters.isEmpty()) ||
-            (requestStruct.fields.isEmpty() && requestStruct.constructors.isEmpty())
-    }
-
-    private fun Namespace.injectHandleFunction(): Namespace = transform {
-        matchingElements { iface: Interface ->
-            if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
-                iface.copy(
-                    typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
-                    elements = iface.elements.map { element ->
-                        if (element is LanguageFunction) {
-                            element.copy(
-                                isAsync = false,
-                                returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
-                            )
-                        } else element
-                    },
-                )
-            } else iface
-        }
-    }
-
-    private fun buildClientServerObjects(endpoint: Endpoint, requestIsObject: Boolean, namespace: Namespace): Namespace {
-        val reqType = if (requestIsObject) "Request.type" else "Request"
-        val pathTemplate = "/" + endpoint.path.joinToString("/") {
-            when (it) {
-                is Endpoint.Segment.Literal -> it.value
-                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
-            }
-        }
-        val clientObject = raw(
-            """
-            |object Client extends Wirespec.Client[$reqType, Response[?]] {
-            |  override val pathTemplate: String = "$pathTemplate"
-            |  override val method: String = "${endpoint.method}"
-            |  override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[$reqType, Response[?]] = new Wirespec.ClientEdge[$reqType, Response[?]] {
-            |    override def to(request: $reqType): Wirespec.RawRequest = toRawRequest(serialization, request)
-            |    override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
-            |  }
-            |}
-            """.trimMargin()
-        )
-        val serverObject = raw(
-            """
-            |object Server extends Wirespec.Server[$reqType, Response[?]] {
-            |  override val pathTemplate: String = "$pathTemplate"
-            |  override val method: String = "${endpoint.method}"
-            |  override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[$reqType, Response[?]] = new Wirespec.ServerEdge[$reqType, Response[?]] {
-            |    override def from(request: Wirespec.RawRequest): $reqType = fromRawRequest(serialization, request)
-            |    override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
-            |  }
-            |}
-            """.trimMargin()
-        )
-        return namespace.copy(elements = namespace.elements + clientObject + serverObject)
-    }
 
     companion object : Keywords {
         override val reservedKeywords = setOf(
