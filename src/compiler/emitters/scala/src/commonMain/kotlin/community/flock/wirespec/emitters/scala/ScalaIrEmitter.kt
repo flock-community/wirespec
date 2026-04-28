@@ -199,22 +199,21 @@ open class ScalaIrEmitter(
     override fun emit(endpoint: Endpoint): File {
         val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
         val flattened = endpointNamespace.flattenNestedStructs()
-        val requestIsObject = isRequestObject(flattened)
         val body = flattened
             .injectHandleFunction()
-            .let { ns -> buildClientServerObjects(endpoint, requestIsObject, ns) }
+            .appendClientServerObjects(endpoint, isRequestObject(flattened))
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
-            .prependImports(endpoint.buildImports().takeIf { it.isNotEmpty() })
+            .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })
     }
 
     override fun emit(channel: Channel): File = channel
         .convert()
         .sanitizeNames(sanitizationConfig)
-        .prependImports(channel.buildImports().takeIf { it.isNotEmpty() })
+        .prependImports(channel.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
-        val imports = endpoint.buildImports()
+        val imports = endpoint.buildModelImports(packageName)
         val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
         val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig).addIdentityTypeToCall()
         val subPackageName = packageName + "client"
@@ -273,92 +272,6 @@ open class ScalaIrEmitter(
         .joinToString("_")
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
-
-    private fun Definition.buildImports(): List<LanguageImport> = importReferences()
-        .distinctBy { it.value }
-        .map { import("${packageName.value}.model", it.value) }
-
-    private fun <T : Element> T.convertToStringCallsToFieldAccess(): T = transform {
-        expression { expr, tr ->
-            when {
-                expr is FunctionCall && expr.name.camelCase() == "toString" && expr.receiver != null ->
-                    FieldCall(receiver = expr.receiver?.let { tr.transformExpression(it) }, field = Name.of("toString"))
-                else -> expr.transformChildren(tr)
-            }
-        }
-    }
-
-    private fun <T : Element> T.addIdentityTypeToCall(): T = transform {
-        matchingElements { struct: Struct ->
-            struct.copy(
-                interfaces = struct.interfaces.map { type ->
-                    if (type is LanguageType.Custom && type.name.endsWith(".Call")) {
-                        type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
-                    } else type
-                }
-            )
-        }
-    }
-
-    private fun isRequestObject(namespace: Namespace): Boolean {
-        val requestStruct = namespace.elements.filterIsInstance<Struct>()
-            .firstOrNull { it.name.pascalCase() == "Request" } ?: return false
-        return (requestStruct.constructors.size == 1 && requestStruct.constructors.single().parameters.isEmpty()) ||
-            (requestStruct.fields.isEmpty() && requestStruct.constructors.isEmpty())
-    }
-
-    private fun Namespace.injectHandleFunction(): Namespace = transform {
-        matchingElements { iface: Interface ->
-            if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
-                iface.copy(
-                    typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
-                    elements = iface.elements.map { element ->
-                        if (element is LanguageFunction) {
-                            element.copy(
-                                isAsync = false,
-                                returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
-                            )
-                        } else element
-                    },
-                )
-            } else iface
-        }
-    }
-
-    private fun buildClientServerObjects(endpoint: Endpoint, requestIsObject: Boolean, namespace: Namespace): Namespace {
-        val reqType = if (requestIsObject) "Request.type" else "Request"
-        val pathTemplate = "/" + endpoint.path.joinToString("/") {
-            when (it) {
-                is Endpoint.Segment.Literal -> it.value
-                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
-            }
-        }
-        val clientObject = raw(
-            """
-            |object Client extends Wirespec.Client[$reqType, Response[?]] {
-            |  override val pathTemplate: String = "$pathTemplate"
-            |  override val method: String = "${endpoint.method}"
-            |  override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[$reqType, Response[?]] = new Wirespec.ClientEdge[$reqType, Response[?]] {
-            |    override def to(request: $reqType): Wirespec.RawRequest = toRawRequest(serialization, request)
-            |    override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
-            |  }
-            |}
-            """.trimMargin()
-        )
-        val serverObject = raw(
-            """
-            |object Server extends Wirespec.Server[$reqType, Response[?]] {
-            |  override val pathTemplate: String = "$pathTemplate"
-            |  override val method: String = "${endpoint.method}"
-            |  override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[$reqType, Response[?]] = new Wirespec.ServerEdge[$reqType, Response[?]] {
-            |    override def from(request: Wirespec.RawRequest): $reqType = fromRawRequest(serialization, request)
-            |    override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
-            |  }
-            |}
-            """.trimMargin()
-        )
-        return namespace.copy(elements = namespace.elements + clientObject + serverObject)
-    }
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

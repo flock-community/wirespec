@@ -43,15 +43,11 @@ import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.Import
-import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.generator.KotlinGenerator
@@ -159,7 +155,7 @@ open class KotlinIrEmitter(
     }
 
     override fun emit(endpoint: Endpoint): File {
-        val imports = endpoint.buildImports()
+        val imports = endpoint.buildModelImports(packageName)
         val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
         val body = endpointNamespace.injectCompanionObject(endpoint)
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
@@ -170,10 +166,10 @@ open class KotlinIrEmitter(
     override fun emit(channel: Channel): File = channel
         .convert()
         .sanitizeNames(sanitizationConfig)
-        .prependImports(channel.buildImports().takeIf { it.isNotEmpty() })
+        .prependImports(channel.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
-        val imports = endpoint.buildImports()
+        val imports = endpoint.buildModelImports(packageName)
         val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
         val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig)
         val subPackageName = packageName + "client"
@@ -232,40 +228,6 @@ open class KotlinIrEmitter(
         .joinToString("_")
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
-
-    private fun Definition.buildImports(): List<Import> = importReferences()
-        .distinctBy { it.value }
-        .map { import("${packageName.value}.model", it.value) }
-
-    private fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace =
-        transform {
-            injectAfter { iface: Interface ->
-                if (iface.name == Name.of("Handler")) listOf(buildCompanionObject(endpoint)) else emptyList()
-            }
-        }
-
-    private fun buildCompanionObject(endpoint: Endpoint): RawElement {
-        val pathTemplate = "/" + endpoint.path.joinToString("/") {
-            when (it) {
-                is Endpoint.Segment.Literal -> it.value
-                is Endpoint.Segment.Param -> "{${it.identifier.value}}"
-            }
-        }
-        return """
-            |companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-            |  override val pathTemplate = "$pathTemplate"
-            |  override val method = "${endpoint.method}"
-            |  override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-            |    override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
-            |    override fun to(response: Response<*>) = toRawResponse(serialization, response)
-            |  }
-            |  override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |    override fun to(request: Request) = toRawRequest(serialization, request)
-            |    override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
-            |  }
-            |}
-        """.trimMargin().let(::raw)
-    }
 
     companion object : Keywords {
         override val reservedKeywords = setOf(
