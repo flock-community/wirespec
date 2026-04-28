@@ -59,5 +59,5 @@ fun Language.toIrEmitter(packageName: PackageName, emitShared: EmitShared) = whe
     Language.Wirespec -> WirespecEmitter()
     Language.OpenAPIV2 -> OpenAPIV2Emitter
     Language.OpenAPIV3 -> OpenAPIV3Emitter
-    Language.Avro -> AvroEmitter
+    Language.Avro -> AvroJsonEmitter
 }
