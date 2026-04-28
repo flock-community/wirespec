@@ -233,6 +233,54 @@ class ParseEndpointTest {
     }
 
     @Test
+    fun testBytesResponseContentType() {
+        val source =
+            // language=ws
+            """
+            |endpoint DownloadFile GET /download -> {
+            |    200 -> Bytes
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Endpoint>()
+            .responses.shouldNotBeEmpty()
+            .shouldHaveSize(1)
+            .first()
+            .content.shouldNotBeNull().run {
+                type shouldBe "application/octet-stream"
+                reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.Bytes
+            }
+    }
+
+    @Test
+    fun testBytesRequestContentType() {
+        val source =
+            // language=ws
+            """
+            |endpoint UploadFile POST Bytes /upload -> {
+            |    200 -> Unit
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Endpoint>()
+            .requests.shouldNotBeEmpty()
+            .shouldHaveSize(1)
+            .first()
+            .content.shouldNotBeNull().run {
+                type shouldBe "application/octet-stream"
+                reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.Bytes
+            }
+    }
+
+    @Test
     fun testDictionaryResponse() {
         val source =
             // language=ws

@@ -26,7 +26,9 @@ public class WirespecSerialization implements Serialization, DefaultParamSeriali
 
     @Override
     public <T> byte[] serializeBody(T body, Type type) {
-        if (body instanceof String) {
+        if (body instanceof byte[] bytes) {
+            return bytes;
+        } else if (body instanceof String) {
             return ((String) body).getBytes(StandardCharsets.UTF_8);
         } else {
             try {
@@ -44,9 +46,11 @@ public class WirespecSerialization implements Serialization, DefaultParamSeriali
             return null;
         }
 
-        if (valueType.equals(String.class)) {
-                return (T) new String(raw, StandardCharsets.UTF_8);
-            } else {
+        if (valueType.equals(byte[].class)) {
+            return (T) raw;
+        } else if (valueType.equals(String.class)) {
+            return (T) new String(raw, StandardCharsets.UTF_8);
+        } else {
             try {
                 JavaType type = wirespecObjectMapper.getTypeFactory().constructType(valueType);
                 return wirespecObjectMapper.readValue(raw, type);

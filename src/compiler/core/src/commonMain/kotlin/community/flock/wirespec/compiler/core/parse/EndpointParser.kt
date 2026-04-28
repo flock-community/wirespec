@@ -50,7 +50,7 @@ object EndpointParser {
             Endpoint.Request(
                 content = it?.let {
                     Endpoint.Content(
-                        type = "application/json",
+                        type = it.inferContentType(),
                         reference = it,
                     )
                 },
@@ -176,7 +176,7 @@ object EndpointParser {
                 null
             } else {
                 Endpoint.Content(
-                    type = "application/json",
+                    type = reference.inferContentType(),
                     reference = reference,
                 )
             }
@@ -189,6 +189,11 @@ object EndpointParser {
             content = content,
             annotations = annotations,
         )
+    }
+
+    private fun Reference.inferContentType(): String = when {
+        this is Reference.Primitive && type == Reference.Primitive.Type.Bytes -> "application/octet-stream"
+        else -> "application/json"
     }
 
     private fun TokenProvider.parseHeaders() = either {

@@ -43,6 +43,11 @@ class WirespecResponseBodyAdvice(
                 response.headers.putAll(rawResponse.headers)
                 if (rawResponse.body == null) {
                     Unit
+                } else if (body.body is ByteArray) {
+                    response.headers.set("Content-Type", MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    response.body.write(rawResponse.body!!)
+                    response.body.flush()
+                    null
                 } else {
                     rawResponse.body?.let { RawJsonBody(it) }
                 }
