@@ -17,12 +17,11 @@ internal fun Definition.buildModelImports(packageName: PackageName): List<Import
     .distinctBy { it.value }
     .map { import("${packageName.value}.model", it.value) }
 
-internal fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace =
-    transform {
-        injectAfter { iface: Interface ->
-            if (iface.name == Name.of("Handler")) listOf(buildCompanionObject(endpoint)) else emptyList()
-        }
+internal fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace = transform {
+    injectAfter { iface: Interface ->
+        if (iface.name == Name.of("Handler")) listOf(buildCompanionObject(endpoint)) else emptyList()
     }
+}
 
 private fun buildCompanionObject(endpoint: Endpoint): RawElement {
     val pathTemplate = "/" + endpoint.path.joinToString("/") {

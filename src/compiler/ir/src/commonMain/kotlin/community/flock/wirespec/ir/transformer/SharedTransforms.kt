@@ -30,8 +30,11 @@ fun Struct.markMembersAsOverride(): Struct = copy(
 
 fun <E : Element> E.ensureEmptyStructHasConstructor(): E = transform {
     matchingElements { struct: Struct ->
-        if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
-        else struct
+        if (struct.fields.isEmpty()) {
+            struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
+        } else {
+            struct
+        }
     }
 }
 
@@ -42,8 +45,11 @@ fun <E : Element> E.injectEnumLabelField(
     matchingElements { languageEnum: LanguageEnum ->
         val withLabel = languageEnum.withLabelField(sanitizeEntry)
         val extras = extraElements(withLabel)
-        if (extras.isEmpty()) withLabel
-        else withLabel.copy(elements = withLabel.elements + extras)
+        if (extras.isEmpty()) {
+            withLabel
+        } else {
+            withLabel.copy(elements = withLabel.elements + extras)
+        }
     }
 }
 
@@ -71,10 +77,14 @@ fun <E : Element> E.injectSelfReceiverToValidate(
                 statementAndExpression { s, t ->
                     if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
                         FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
-                    } else s.transformChildren(t)
+                    } else {
+                        s.transformChildren(t)
+                    }
                 }
             }
-        } else fn
+        } else {
+            fn
+        }
     }
 }
 

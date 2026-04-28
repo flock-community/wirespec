@@ -1,6 +1,5 @@
 package community.flock.wirespec.emitters.python
 
-import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.ir.converter.convertConstraint
@@ -20,8 +19,8 @@ import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.File as LanguageFile
+import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.Union as LanguageUnion
 
@@ -32,7 +31,7 @@ internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
                 when {
                     element is LanguageFunction && element.name == Name.of("validate") -> {
                         val constraintExpr = refined.reference.convertConstraint(
-                            FieldCall(VariableReference(Name.of("self")), Name.of("value"))
+                            FieldCall(VariableReference(Name.of("self")), Name.of("value")),
                         )
                         function("validate") {
                             arg("self", LanguageType.Custom(""))
@@ -77,10 +76,14 @@ internal fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {
                 elements = iface.elements.map { element ->
                     if (element is LanguageFunction) {
                         element.copy(name = Name.of(element.name.snakeCase()))
-                    } else element
+                    } else {
+                        element
+                    }
                 },
             )
-        } else iface
+        } else {
+            iface
+        }
     }
 }
 
@@ -88,9 +91,14 @@ internal fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = 
     type { type, _ ->
         if (type is LanguageType.Custom && type.name.startsWith("$endpointName.")) {
             val suffix = type.name.removePrefix("$endpointName.")
-            if (suffix == "Call" || suffix == "Handler") type
-            else type.copy(name = suffix)
-        } else type
+            if (suffix == "Call" || suffix == "Handler") {
+                type
+            } else {
+                type.copy(name = suffix)
+            }
+        } else {
+            type
+        }
     }
 }
 

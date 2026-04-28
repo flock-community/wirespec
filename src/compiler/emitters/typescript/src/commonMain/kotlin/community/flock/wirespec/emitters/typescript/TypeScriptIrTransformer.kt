@@ -47,7 +47,9 @@ internal fun <T : Element> T.renameValidateAndBindObjReceiver(
                     }
                 }
             }
-        } else fn
+        } else {
+            fn
+        }
     }
 }
 
@@ -59,10 +61,15 @@ internal fun <T : Element> T.stripTrailingSpaceFromErrorMessage(): T = transform
                     if (s is ErrorStatement && s.message is BinaryOp) {
                         val binary = s.message as BinaryOp
                         val literal = binary.left as? Literal
-                        if (literal != null) ErrorStatement(Literal(literal.value.toString().trimEnd(' '), literal.type))
-                        else s
-                    } else s
-                }
+                        if (literal != null) {
+                            ErrorStatement(Literal(literal.value.toString().trimEnd(' '), literal.type))
+                        } else {
+                            s
+                        }
+                    } else {
+                        s
+                    }
+                },
             ).transformChildren(transformer)
             else -> stmt.transformChildren(transformer)
         }
@@ -77,13 +84,17 @@ internal fun <T : Element> T.bindCallToRequestParams(): T = transform {
                     if (element is LanguageFunction) {
                         element.copy(
                             parameters = listOf(
-                                Parameter(Name.of("params"), LanguageType.Custom("RequestParams"))
-                            )
+                                Parameter(Name.of("params"), LanguageType.Custom("RequestParams")),
+                            ),
                         )
-                    } else element
-                }
+                    } else {
+                        element
+                    }
+                },
             )
-        } else iface
+        } else {
+            iface
+        }
     }
 }
 
@@ -122,7 +133,9 @@ internal fun transformPatternSwitchToValueSwitch(): Transformer = transformer {
                 default = stmt.default?.map { tr.transformStatement(it) },
                 variable = null,
             )
-        } else stmt.transformChildren(tr)
+        } else {
+            stmt.transformChildren(tr)
+        }
     }
 }
 
@@ -135,7 +148,8 @@ internal fun buildApiConst(endpoint: Endpoint): RawElement {
             is Endpoint.Segment.Param -> "{${it.identifier.value}}"
         }
     }
-    return raw("""
+    return raw(
+        """
         |export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
         |  from: (it) => fromRawResponse(serialization, it),
         |  to: (it) => toRawRequest(serialization, it)
@@ -151,5 +165,6 @@ internal fun buildApiConst(endpoint: Endpoint): RawElement {
         |  server,
         |  client
         |} as const
-    """.trimMargin())
+        """.trimMargin(),
+    )
 }

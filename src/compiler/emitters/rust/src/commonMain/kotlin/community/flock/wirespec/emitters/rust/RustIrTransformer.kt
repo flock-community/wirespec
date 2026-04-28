@@ -4,7 +4,6 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.core.Case
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -29,35 +28,39 @@ import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
-import community.flock.wirespec.ir.core.Function as LanguageFunction
+import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.ir.core.File as LanguageFile
+import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.Union as LanguageUnion
 
 internal val rustSelfParam = Parameter(Name.of("&self"), LanguageType.Custom(""))
 internal val rustResponsePattern = Regex("Response(\\d+|Default)")
 
-internal fun AstType.buildModelImports(): List<Element> =
-    importReferences().distinctBy { it.value }
-        .map { import("super::${it.value.toRustSnakeCase()}", it.value) }
+internal fun AstType.buildModelImports(): List<Element> = importReferences().distinctBy { it.value }
+    .map { import("super::${it.value.toRustSnakeCase()}", it.value) }
 
-internal fun Endpoint.buildEndpointImports(): List<Element> =
-    importReferences().distinctBy { it.value }
-        .map { import("super::super::model::${it.value.toRustSnakeCase()}", it.value) }
+internal fun Endpoint.buildEndpointImports(): List<Element> = importReferences().distinctBy { it.value }
+    .map { import("super::super::model::${it.value.toRustSnakeCase()}", it.value) }
 
 internal fun <T : Element> T.convertSimpleRawExpressionsToVariableRefs(): T = transform {
     val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
     statementAndExpression { s, t ->
         if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
             VariableReference(Name.of(s.code))
-        } else s.transformChildren(t)
+        } else {
+            s.transformChildren(t)
+        }
     }
 }
 
 internal fun <T : Element> T.stripWirespecPrefix(): T = transform {
     matching<LanguageType.Custom> { type ->
-        if (type.name.startsWith("Wirespec.")) type.copy(name = type.name.removePrefix("Wirespec."))
-        else type
+        if (type.name.startsWith("Wirespec.")) {
+            type.copy(name = type.name.removePrefix("Wirespec."))
+        } else {
+            type
+        }
     }
 }
 
@@ -75,7 +78,7 @@ internal fun File.injectApiStruct(endpoint: Endpoint): File = transform {
 
 private fun buildValidateFunction(refined: Refined): LanguageFunction {
     val constraintExpr = refined.reference.convertConstraint(
-        FieldCall(VariableReference(Name.of("self")), Name.of("value"))
+        FieldCall(VariableReference(Name.of("self")), Name.of("value")),
     )
     return function("validate") {
         arg("&self", LanguageType.Custom(""))
@@ -148,7 +151,9 @@ internal fun fixResponseSwitchPatterns(): Transformer = transformer {
                 cases = transformedCases,
                 default = null,
             )
-        } else s.transformChildren(t)
+        } else {
+            s.transformChildren(t)
+        }
     }
 }
 
@@ -161,10 +166,12 @@ internal fun fixConstructorCalls(): Transformer = transformer {
                 typeName != null && rustResponsePattern.matches(typeName) -> {
                     FunctionCall(
                         name = Name(listOf("Response::$typeName")),
-                        arguments = mapOf(Name.of("inner") to FunctionCall(
-                            name = Name(listOf("$typeName::new")),
-                            arguments = transformedArgs,
-                        )),
+                        arguments = mapOf(
+                            Name.of("inner") to FunctionCall(
+                                name = Name(listOf("$typeName::new")),
+                                arguments = transformedArgs,
+                            ),
+                        ),
                     )
                 }
                 typeName == "Request" -> {
@@ -175,7 +182,9 @@ internal fun fixConstructorCalls(): Transformer = transformer {
                 }
                 else -> s.transformChildren(t)
             }
-        } else s.transformChildren(t)
+        } else {
+            s.transformChildren(t)
+        }
     }
 }
 
@@ -202,7 +211,9 @@ internal fun <T : Element> T.injectSelfToHandlerMethods(): T = transform {
                     )
                 }
             }
-        } else iface
+        } else {
+            iface
+        }
     }
 }
 
@@ -213,7 +224,10 @@ internal fun <T : Element> T.injectHandlerImplForClient(endpoint: Endpoint): T =
             val method = handler.elements.filterIsInstance<LanguageFunction>().firstOrNull()
             if (method != null) {
                 val methodName = method.name.snakeCase()
-                ns.copy(elements = ns.elements + listOf(RawElement("""
+                ns.copy(
+                    elements = ns.elements + listOf(
+                        RawElement(
+                            """
                     impl<C: Client> Handler for C {
                         async fn $methodName(&self, request: Request) -> Response {
                             let raw = to_raw_request(self.serialization(), request);
@@ -221,21 +235,32 @@ internal fun <T : Element> T.injectHandlerImplForClient(endpoint: Endpoint): T =
                             from_raw_response(self.serialization(), resp)
                         }
                     }
-                """.trimIndent())))
-            } else ns
-        } else ns
+                            """.trimIndent(),
+                        ),
+                    ),
+                )
+            } else {
+                ns
+            }
+        } else {
+            ns
+        }
     }
 }
 
 internal fun <T : Element> T.injectResponseFromImpls(): T = transform {
     matchingElements<LanguageFile> { file ->
-        file.copy(elements = file.elements.flatMap { element ->
-            if (element is LanguageUnion && element.name.pascalCase() == "Response" && element.members.isNotEmpty()) {
-                listOf(element) + element.members.map { member ->
-                    RawElement("impl From<${member.name}> for Response { fn from(value: ${member.name}) -> Self { Response::${member.name}(value) } }\n")
+        file.copy(
+            elements = file.elements.flatMap { element ->
+                if (element is LanguageUnion && element.name.pascalCase() == "Response" && element.members.isNotEmpty()) {
+                    listOf(element) + element.members.map { member ->
+                        RawElement("impl From<${member.name}> for Response { fn from(value: ${member.name}) -> Self { Response::${member.name}(value) } }\n")
+                    }
+                } else {
+                    listOf(element)
                 }
-            } else listOf(element)
-        })
+            },
+        )
     }
 }
 

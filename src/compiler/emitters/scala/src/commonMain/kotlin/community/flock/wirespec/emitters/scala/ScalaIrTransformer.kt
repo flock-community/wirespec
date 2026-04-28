@@ -40,8 +40,10 @@ internal fun <T : Element> T.addIdentityTypeToCall(): T = transform {
             interfaces = struct.interfaces.map { type ->
                 if (type is LanguageType.Custom && type.name.endsWith(".Call")) {
                     type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
-                } else type
-            }
+                } else {
+                    type
+                }
+            },
         )
     }
 }
@@ -64,10 +66,14 @@ internal fun Namespace.injectHandleFunction(): Namespace = transform {
                             isAsync = false,
                             returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
                         )
-                    } else element
+                    } else {
+                        element
+                    }
                 },
             )
-        } else iface
+        } else {
+            iface
+        }
     }
 }
 
@@ -89,7 +95,7 @@ internal fun Namespace.appendClientServerObjects(endpoint: Endpoint, requestIsOb
         |    override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
         |  }
         |}
-        """.trimMargin()
+        """.trimMargin(),
     )
     val serverObject = raw(
         """
@@ -101,7 +107,7 @@ internal fun Namespace.appendClientServerObjects(endpoint: Endpoint, requestIsOb
         |    override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
         |  }
         |}
-        """.trimMargin()
+        """.trimMargin(),
     )
     return copy(elements = elements + clientObject + serverObject)
 }

@@ -42,14 +42,16 @@ internal fun File.applyRefinedStructShape(refined: Refined): File = transform {
                 elements = struct.elements.map { element ->
                     if (element is LanguageFunction) {
                         element.copy(isOverride = true)
-                    } else element
-                }
+                    } else {
+                        element
+                    }
+                },
             )
             .plus(
                 function("value", isOverride = true) {
                     returnType(refined.reference.convert())
                     returns(VariableReference(Name.of("value")))
-                }
+                },
             )
     }
 }
@@ -89,14 +91,18 @@ internal fun <T : Element> T.wrapAsyncReturnInThenApply(endpointName: String): T
                             receiver = transportAssign.value,
                             arguments = mapOf(
                                 Name.of("mapper") to RawExpression(
-                                    "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)"
-                                )
-                            )
-                        )
-                    )
+                                    "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)",
+                                ),
+                            ),
+                        ),
+                    ),
                 )
-            } else func
-        } else func
+            } else {
+                func
+            }
+        } else {
+            func
+        }
     }
 }
 
@@ -110,10 +116,10 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
 
     return struct(name = "Handlers") {
         implements(
-            type("Wirespec.Server", type("Request"), type("Response", Type.Wildcard))
+            type("Wirespec.Server", type("Request"), type("Response", Type.Wildcard)),
         )
         implements(
-            type("Wirespec.Client", type("Request"), type("Response", Type.Wildcard))
+            type("Wirespec.Client", type("Request"), type("Response", Type.Wildcard)),
         )
         function("getPathTemplate", isOverride = true) {
             returnType(Type.String)
@@ -125,59 +131,58 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
         }
         function("getServer", isOverride = true) {
             returnType(
-                type("Wirespec.ServerEdge", type("Request"), type("Response", Type.Wildcard))
+                type("Wirespec.ServerEdge", type("Request"), type("Response", Type.Wildcard)),
             )
             arg("serialization", type("Wirespec.Serialization"))
             returns(
                 RawExpression(
                     "new Wirespec.ServerEdge<>() {\n" +
-                            "@Override public Request from(Wirespec.RawRequest request) {\n" +
-                            "    return fromRawRequest(serialization, request);\n" +
-                            "}\n" +
-                            "@Override public Wirespec.RawResponse to(Response<?> response) {\n" +
-                            "    return toRawResponse(serialization, response);\n" +
-                            "}\n" +
-                            "}"
+                        "@Override public Request from(Wirespec.RawRequest request) {\n" +
+                        "    return fromRawRequest(serialization, request);\n" +
+                        "}\n" +
+                        "@Override public Wirespec.RawResponse to(Response<?> response) {\n" +
+                        "    return toRawResponse(serialization, response);\n" +
+                        "}\n" +
+                        "}",
                 ),
             )
         }
         function("getClient", isOverride = true) {
             returnType(
-                type("Wirespec.ClientEdge", type("Request"), type("Response", Type.Wildcard))
+                type("Wirespec.ClientEdge", type("Request"), type("Response", Type.Wildcard)),
             )
             arg("serialization", type("Wirespec.Serialization"))
             returns(
                 RawExpression(
                     "new Wirespec.ClientEdge<>() {\n" +
-                            "@Override public Wirespec.RawRequest to(Request request) {\n" +
-                            "    return toRawRequest(serialization, request);\n" +
-                            "}\n" +
-                            "@Override public Response<?> from(Wirespec.RawResponse response) {\n" +
-                            "    return fromRawResponse(serialization, response);\n" +
-                            "}\n" +
-                            "}"
+                        "@Override public Wirespec.RawRequest to(Request request) {\n" +
+                        "    return toRawRequest(serialization, request);\n" +
+                        "}\n" +
+                        "@Override public Response<?> from(Wirespec.RawResponse response) {\n" +
+                        "    return fromRawResponse(serialization, response);\n" +
+                        "}\n" +
+                        "}",
                 ),
             )
         }
     }
 }
 
-internal fun Interface.withFullyQualifiedPrefix(prefix: String): Interface =
-    if (prefix.isNotEmpty()) {
-        transform {
-            parametersWhere(
-                predicate = { it.name == Name.of("message") },
-                transform = { param ->
-                    when (val t = param.type) {
-                        is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
-                        else -> param
-                    }
-                },
-            )
-        }
-    } else {
-        this
+internal fun Interface.withFullyQualifiedPrefix(prefix: String): Interface = if (prefix.isNotEmpty()) {
+    transform {
+        parametersWhere(
+            predicate = { it.name == Name.of("message") },
+            transform = { param ->
+                when (val t = param.type) {
+                    is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
+                    else -> param
+                }
+            },
+        )
     }
+} else {
+    this
+}
 
 internal fun <T : Element> T.transformTypeDescriptors(): T = transform {
     statementAndExpression { stmt, tr ->
@@ -210,11 +215,13 @@ private fun Type.rawContainerClass(): String? = when (this) {
 
 private fun Type.toJavaName(): String = when (this) {
     is Type.Integer -> when (precision) {
-        Precision.P32 -> "Integer"; Precision.P64 -> "Long"
+        Precision.P32 -> "Integer"
+        Precision.P64 -> "Long"
     }
 
     is Type.Number -> when (precision) {
-        Precision.P32 -> "Float"; Precision.P64 -> "Double"
+        Precision.P32 -> "Float"
+        Precision.P64 -> "Double"
     }
 
     Type.String -> "String"
