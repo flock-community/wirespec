@@ -3,14 +3,17 @@ package community.flock.wirespec.integration.spring.java.web;
 import community.flock.wirespec.integration.spring.shared.RawJsonBody;
 import community.flock.wirespec.java.Wirespec;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -58,10 +61,20 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
             if (body instanceof Wirespec.Response<?> wirespecResponse) {
                 Wirespec.RawResponse rawResponse = (Wirespec.RawResponse) toResponse.invoke(null, wirespecSerialization, wirespecResponse);
-                
+
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode()));
                 for (Map.Entry<String, List<String>> entry : rawResponse.headers().entrySet()) {
                     response.getHeaders().put(entry.getKey(), entry.getValue());
+                }
+                if (wirespecResponse.body() instanceof Resource resource) {
+                    if (!response.getHeaders().containsKey("Content-Type")) {
+                        response.getHeaders().set("Content-Type", MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                    }
+                    try (InputStream in = resource.getInputStream()) {
+                        StreamUtils.copy(in, response.getBody());
+                    }
+                    response.getBody().flush();
+                    return null;
                 }
                 return rawResponse.body().map(RawJsonBody::new).orElse(null);
             }
