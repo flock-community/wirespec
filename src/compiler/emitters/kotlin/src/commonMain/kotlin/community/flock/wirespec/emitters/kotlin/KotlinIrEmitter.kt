@@ -13,6 +13,9 @@ import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
+import community.flock.wirespec.ir.transformer.injectEnumLabelField
+import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.emit.withSharedSource
@@ -39,7 +42,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
@@ -52,7 +54,6 @@ import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.generator.KotlinGenerator
 import community.flock.wirespec.ir.generator.generateKotlin
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
@@ -137,28 +138,15 @@ open class KotlinIrEmitter(
             .placeInPackage(packageName = packageName, definition = definition)
     }
 
-    override fun emit(type: Type, module: Module): File {
-        fun File.ensureEmptyStructHasConstructor(): File = transform {
-            matchingElements { struct: Struct ->
-                if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
-                else struct
-            }
-        }
-        return type.convertWithValidation(module)
+    override fun emit(type: Type, module: Module): File =
+        type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
             .ensureEmptyStructHasConstructor()
-    }
 
-    override fun emit(enum: Enum, module: Module): File {
-        fun File.injectEnumLabelField(): File = transform {
-            matchingElements { languageEnum: LanguageEnum ->
-                languageEnum.withLabelField(sanitizeEntry = { it.sanitizeEnum() })
-            }
-        }
-        return enum.convert()
-            .sanitizeNames(sanitizationConfig)
-            .injectEnumLabelField()
-    }
+    override fun emit(enum: Enum, module: Module): File = enum
+        .convert()
+        .sanitizeNames(sanitizationConfig)
+        .injectEnumLabelField(sanitizeEntry = { it.sanitizeEnum() })
 
     override fun emit(union: Union): File = union
         .convert()
@@ -248,13 +236,6 @@ open class KotlinIrEmitter(
     private fun Definition.buildImports(): List<Import> = importReferences()
         .distinctBy { it.value }
         .map { import("${packageName.value}.model", it.value) }
-
-    private fun Struct.markMembersAsOverride(): Struct = copy(
-        fields = fields.map { f -> f.copy(isOverride = true) },
-        elements = elements.map { element ->
-            if (element is LanguageFunction) element.copy(isOverride = true) else element
-        },
-    )
 
     private fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace =
         transform {

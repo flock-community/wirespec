@@ -48,7 +48,6 @@ import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
@@ -56,6 +55,7 @@ import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.generator.JavaGenerator
 import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.toGetterAccessors
 import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
@@ -163,23 +163,20 @@ open class JavaIrEmitter(
         type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
 
-    override fun emit(enum: Enum, module: Module): File {
-        fun File.injectEnumLabelMembers(): File = transform {
-            matchingElements { languageEnum: LanguageEnum ->
-                languageEnum
-                    .withLabelField(sanitizeEntry = { it.sanitizeEnum() })
-                    .plus(
-                        function("label") {
-                            returnType(Type.String)
-                            returns(VariableReference(Name.of("label")))
-                        }
-                    )
-            }
-        }
-        return enum.convert()
-            .injectEnumLabelMembers()
-            .sanitizeNames(sanitizationConfig)
-    }
+    override fun emit(enum: Enum, module: Module): File = enum
+        .convert()
+        .injectEnumLabelField(
+            sanitizeEntry = { it.sanitizeEnum() },
+            extraElements = {
+                listOf(
+                    function("label") {
+                        returnType(Type.String)
+                        returns(VariableReference(Name.of("label")))
+                    }
+                )
+            },
+        )
+        .sanitizeNames(sanitizationConfig)
 
     override fun emit(union: Union): File = union
         .convert()

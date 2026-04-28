@@ -7,8 +7,11 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.injectSelfReceiverToValidate
+import community.flock.wirespec.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
+import community.flock.wirespec.ir.transformer.sortKey
 import community.flock.wirespec.ir.emit.placeInModule
 import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.emit.Keywords
@@ -118,7 +121,7 @@ open class PythonIrEmitter(
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
-        val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
+        val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let {
             fun emitInitImport(def: Definition) = import(".${def.identifier.sanitize()}", def.identifier.sanitize())
             val hasEndpoints = module.statements.any { it is Endpoint }
@@ -168,25 +171,15 @@ open class PythonIrEmitter(
             .map { import(".${it.value}", it.value) }
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         return type.convertWithValidation(module)
-            .injectSelfToValidate(fieldNames)
+            .injectSelfReceiverToValidate(fieldNames)
             .sanitizeNames(sanitizationConfig)
             .prependImports(typeImports.takeIf { it.isNotEmpty() })
     }
 
-    override fun emit(enum: Enum, module: Module): File {
-        fun File.sanitizeEnumEntries(): File = transform {
-            matchingElements { languageEnum: LanguageEnum ->
-                languageEnum.copy(
-                    entries = languageEnum.entries.map {
-                        it.copy(name = Name.of(it.name.value().sanitizeEnum().sanitizeKeywords()))
-                    },
-                )
-            }
-        }
-        return enum.convert()
-            .sanitizeEnumEntries()
-            .sanitizeNames(sanitizationConfig)
-    }
+    override fun emit(enum: Enum, module: Module): File = enum
+        .convert()
+        .sanitizeEnumEntries(sanitizeEntry = { it.sanitizeEnum().sanitizeKeywords() })
+        .sanitizeNames(sanitizationConfig)
 
     override fun emit(union: Union): File =
         union.convert()
@@ -311,15 +304,6 @@ open class PythonIrEmitter(
     private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_")
         .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
 
-    private fun sort(definition: Definition) = when (definition) {
-        is Enum -> 1
-        is Refined -> 2
-        is Type -> 3
-        is Union -> 4
-        is Endpoint -> 5
-        is Channel -> 6
-    }
-
     private fun buildImports(wirespecPath: String): List<Element> = listOf(
         import("__future__", "annotations"),
         import("", "re"),
@@ -335,24 +319,6 @@ open class PythonIrEmitter(
         import(wirespecPath, "Wirespec"),
         import(wirespecPath, "_raise"),
     )
-
-    private fun <T : Element> T.injectSelfToValidate(fieldNames: Set<String>): T = transform {
-        matchingElements { fn: LanguageFunction ->
-            if (fn.name == Name.of("validate")) {
-                fn.copy(
-                    parameters = listOf(Parameter(Name.of("self"), LanguageType.Custom(""))),
-                ).transform {
-                    statementAndExpression { s, t ->
-                        if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
-                            FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
-                        } else {
-                            s.transformChildren(t)
-                        }
-                    }
-                }
-            } else fn
-        }
-    }
 
     private fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {
         matchingElements { iface: Interface ->

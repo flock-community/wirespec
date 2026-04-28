@@ -58,8 +58,11 @@ import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
 import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.injectSelfReceiverToValidate
+import community.flock.wirespec.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
+import community.flock.wirespec.ir.transformer.sortKey
 import community.flock.wirespec.ir.generator.RustGenerator
 import community.flock.wirespec.ir.generator.generateRust
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
@@ -318,7 +321,7 @@ open class RustIrEmitter(
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
-        val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
+        val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let { files ->
             fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
             val endpoints = module.statements.filterIsInstance<Endpoint>()
@@ -362,23 +365,17 @@ open class RustIrEmitter(
 
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
-            .injectSelfReceiver(type.shape.value.map { it.identifier.value }.toSet())
+            .injectSelfReceiverToValidate(
+                fieldNames = type.shape.value.map { it.identifier.value }.toSet(),
+                selfParamName = "&self",
+            )
             .sanitizeNames(sanitizationConfig)
             .prependImports(type.buildModelImports())
 
 
-    override fun emit(enum: Enum, module: Module): File {
-        fun File.sanitizeEnumEntries(): File = transform {
-            matchingElements { languageEnum: LanguageEnum ->
-                languageEnum.copy(
-                    entries = languageEnum.entries.map {
-                        it.copy(name = Name.of(it.name.value().sanitizeEnum().sanitizeKeywords()))
-                    },
-                )
-            }
-        }
-        return enum.convert().sanitizeEnumEntries()
-    }
+    override fun emit(enum: Enum, module: Module): File = enum
+        .convert()
+        .sanitizeEnumEntries(sanitizeEntry = { it.sanitizeEnum().sanitizeKeywords() })
 
     override fun emit(union: Union): File =
         union.convert()
@@ -538,15 +535,6 @@ open class RustIrEmitter(
         .toPascalCase()
         .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
 
-    private fun sort(definition: Definition) = when (definition) {
-        is Enum -> 1
-        is Refined -> 2
-        is Type -> 3
-        is Union -> 4
-        is Endpoint -> 5
-        is Channel -> 6
-    }
-
     private fun File.prependImports(imports: List<Element>): File =
         if (imports.isNotEmpty()) copy(elements = imports + elements)
         else this
@@ -558,20 +546,6 @@ open class RustIrEmitter(
     private fun Endpoint.buildEndpointImports(): List<Element> =
         importReferences().distinctBy { it.value }
             .map { import("super::super::model::${it.value.toSnakeCase()}", it.value) }
-
-    private fun <T : Element> T.injectSelfReceiver(fieldNames: Set<String>): T = transform {
-        matchingElements { fn: LanguageFunction ->
-            if (fn.name == Name.of("validate")) {
-                fn.copy(parameters = listOf(selfParam)).transform {
-                    statementAndExpression { s, t ->
-                        if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
-                            FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
-                        } else s.transformChildren(t)
-                    }
-                }
-            } else fn
-        }
-    }
 
     private fun <T : Element> T.convertSimpleRawExpressionsToVariableRefs(): T = transform {
         val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
