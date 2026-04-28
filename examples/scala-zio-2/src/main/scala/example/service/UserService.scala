@@ -1,13 +1,13 @@
 package example.service
 
-import community.flock.wirespec.generated.endpoint.GetUsers
-import example.port.UserRepository
+import community.flock.wirespec.generated.model.User
+import example.port.{UserRepository, UserService}
 import zio.*
 
-class UserService(repo: UserRepository) extends GetUsers.Handler[Task]:
-  override def getUsers(request: GetUsers.Request.type): Task[GetUsers.Response[?]] =
-    repo.findAll().map(new GetUsers.Response200(_))
+class UserServiceLive(repo: UserRepository) extends UserService:
+  override def getUsers(): Task[List[User]] =
+    repo.findAll()
 
-object UserService:
-  val layer: URLayer[UserRepository, GetUsers.Handler[Task]] =
-    ZLayer.fromZIO(ZIO.service[UserRepository].map(new UserService(_)))
+object UserServiceLive:
+  val layer: URLayer[UserRepository, UserService] =
+    ZLayer.fromZIO(ZIO.service[UserRepository].map(new UserServiceLive(_)))
