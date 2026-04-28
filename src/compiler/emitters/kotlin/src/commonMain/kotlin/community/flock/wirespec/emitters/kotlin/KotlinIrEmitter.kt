@@ -137,25 +137,28 @@ open class KotlinIrEmitter(
             .placeInPackage(packageName = packageName, definition = definition)
     }
 
-    override fun emit(type: Type, module: Module): File =
-        type.convertWithValidation(module)
-            .sanitizeNames(sanitizationConfig)
-            .transform {
-                matchingElements { struct: Struct ->
-                    if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
-                    else struct
-                }
-            }
-
-    override fun emit(enum: Enum, module: Module): File = enum
-        .convert()
-        .sanitizeNames(sanitizationConfig)
-        .transform {
-            matchingElements { languageEnum: LanguageEnum ->
-                languageEnum
-                    .withLabelField(sanitizeEntry = { it.sanitizeEnum() })
+    override fun emit(type: Type, module: Module): File {
+        fun File.ensureEmptyStructHasConstructor(): File = transform {
+            matchingElements { struct: Struct ->
+                if (struct.fields.isEmpty()) struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
+                else struct
             }
         }
+        return type.convertWithValidation(module)
+            .sanitizeNames(sanitizationConfig)
+            .ensureEmptyStructHasConstructor()
+    }
+
+    override fun emit(enum: Enum, module: Module): File {
+        fun File.injectEnumLabelField(): File = transform {
+            matchingElements { languageEnum: LanguageEnum ->
+                languageEnum.withLabelField(sanitizeEntry = { it.sanitizeEnum() })
+            }
+        }
+        return enum.convert()
+            .sanitizeNames(sanitizationConfig)
+            .injectEnumLabelField()
+    }
 
     override fun emit(union: Union): File = union
         .convert()
@@ -163,38 +166,23 @@ open class KotlinIrEmitter(
 
     override fun emit(refined: Refined): File {
         val file = refined.convert().sanitizeNames(sanitizationConfig)
-        val struct = file.findElement<Struct>()
-        val updatedStruct = struct?.copy(
-            fields = struct.fields.map { f -> f.copy(isOverride = true) },
-            elements = struct.elements.map { element ->
-                if (element is LanguageFunction) {
-                    element.copy(isOverride = true)
-                } else element
-            },
-        )
+        val updatedStruct = file.findElement<Struct>()?.markMembersAsOverride()
         return LanguageFile(Name.of(refined.identifier.sanitize()), updatedStruct?.let { listOf(it) } ?: emptyList())
     }
 
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
-        val file = endpoint.convert()
-        val endpointNamespace = file.findElement<Namespace>()!!
+        val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
         val body = endpointNamespace.injectCompanionObject(endpoint)
-        val sanitized = LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
+        return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) {
-            sanitized.copy(elements = imports + sanitized.elements)
-        } else {
-            sanitized
-        }
+            .prependImports(imports.takeIf { it.isNotEmpty() })
     }
 
-    override fun emit(channel: Channel): File {
-        val imports = channel.buildImports()
-        val file = channel.convert().sanitizeNames(sanitizationConfig)
-        return if (imports.isNotEmpty()) file.copy(elements = imports + file.elements)
-        else file
-    }
+    override fun emit(channel: Channel): File = channel
+        .convert()
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(channel.buildImports().takeIf { it.isNotEmpty() })
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
@@ -260,6 +248,13 @@ open class KotlinIrEmitter(
     private fun Definition.buildImports(): List<Import> = importReferences()
         .distinctBy { it.value }
         .map { import("${packageName.value}.model", it.value) }
+
+    private fun Struct.markMembersAsOverride(): Struct = copy(
+        fields = fields.map { f -> f.copy(isOverride = true) },
+        elements = elements.map { element ->
+            if (element is LanguageFunction) element.copy(isOverride = true) else element
+        },
+    )
 
     private fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace =
         transform {

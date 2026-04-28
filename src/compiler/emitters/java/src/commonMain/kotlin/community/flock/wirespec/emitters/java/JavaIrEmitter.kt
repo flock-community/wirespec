@@ -163,9 +163,8 @@ open class JavaIrEmitter(
         type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
 
-    override fun emit(enum: Enum, module: Module): File = enum
-        .convert()
-        .transform {
+    override fun emit(enum: Enum, module: Module): File {
+        fun File.injectEnumLabelMembers(): File = transform {
             matchingElements { languageEnum: LanguageEnum ->
                 languageEnum
                     .withLabelField(sanitizeEntry = { it.sanitizeEnum() })
@@ -177,14 +176,17 @@ open class JavaIrEmitter(
                     )
             }
         }
-        .sanitizeNames(sanitizationConfig)
+        return enum.convert()
+            .injectEnumLabelMembers()
+            .sanitizeNames(sanitizationConfig)
+    }
 
     override fun emit(union: Union): File = union
         .convert()
         .sanitizeNames(sanitizationConfig)
 
-    override fun emit(refined: Refined): File = refined.convert()
-        .transform {
+    override fun emit(refined: Refined): File {
+        fun File.applyRefinedStructShape(): File = transform {
             matchingElements { struct: Struct ->
                 struct
                     .copy(
@@ -203,25 +205,25 @@ open class JavaIrEmitter(
                     )
             }
         }
-        .sanitizeNames(sanitizationConfig)
+        return refined.convert()
+            .applyRefinedStructShape()
+            .sanitizeNames(sanitizationConfig)
+    }
 
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
+        fun File.prependEndpointImports(): File =
+            if (imports.isEmpty()) this
+            else transform {
+                matchingElements { f: File ->
+                    f.copy(elements = imports + f.elements)
+                }
+            }
         return endpoint.convert()
             .injectHandleFunction(endpoint)
             .transformTypeDescriptors()
             .sanitizeNames(sanitizationConfig)
-            .let { file ->
-                if (imports.isNotEmpty()) {
-                    file.transform {
-                        matchingElements { f: File ->
-                            f.copy(elements = imports + f.elements)
-                        }
-                    }
-                } else {
-                    file
-                }
-            }
+            .prependEndpointImports()
     }
 
     override fun emit(channel: Channel): File {
@@ -230,56 +232,36 @@ open class JavaIrEmitter(
         } else {
             ""
         }
+        fun File.applyFunctionalInterface(): File = transform {
+            matchingElements { it: Interface -> it.withFullyQualifiedPrefix(fullyQualifiedPrefix) }
+            matchingElements { file: File ->
+                val interfaceElement = file.findElement<Interface>()!!
+                file.copy(elements = listOf(RawElement("@FunctionalInterface\n"), interfaceElement))
+            }
+        }
         return channel.convert()
             .sanitizeNames(sanitizationConfig)
-            .transform {
-                matchingElements { it: Interface -> it.withFullyQualifiedPrefix(fullyQualifiedPrefix) }
-                matchingElements { file: File ->
-                    val interfaceElement = file.findElement<Interface>()!!
-                    file.copy(elements = listOf(RawElement("@FunctionalInterface\n"), interfaceElement))
-                }
-            }
+            .applyFunctionalInterface()
     }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildImports()
         val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
-        val file = super.emitEndpointClient(endpoint).sanitizeNames(sanitizationConfig).transformTypeDescriptors()
         val endpointName = endpoint.identifier.value
 
-        val transformedFile = file.transform {
-            matchingElements { func: LanguageFunction ->
-                if (func.isAsync && func.body.size >= 2) {
-                    val transportAssign = func.body[func.body.size - 2]
-                    val returnStmt = func.body.last()
-                    if (transportAssign is Assignment && returnStmt is ReturnStatement) {
-                        val bodyPrefix = func.body.dropLast(2)
-                        func.copy(
-                            body = bodyPrefix + ReturnStatement(
-                                FunctionCall(
-                                    name = Name.of("thenApply"),
-                                    receiver = transportAssign.value,
-                                    arguments = mapOf(
-                                        Name.of("mapper") to RawExpression(
-                                            "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)"
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    } else func
-                } else func
-            }
-        }
+        val file = super.emitEndpointClient(endpoint)
+            .sanitizeNames(sanitizationConfig)
+            .transformTypeDescriptors()
+            .wrapAsyncReturnInThenApply(endpointName)
 
         val subPackageName = packageName + "client"
         return File(
-            name = Name.of(subPackageName.toDir() + transformedFile.name.pascalCase().sanitizeSymbol()),
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(subPackageName.value)) +
                 wirespecImports +
                 imports +
                 listOf(endpointImport) +
-                transformedFile.elements
+                file.elements
         )
     }
 
@@ -321,7 +303,7 @@ open class JavaIrEmitter(
         .map { import("${packageName.value}.model", it.value) }
 
     private fun <T : Element> T.injectHandleFunction(endpoint: Endpoint): T {
-        val handlersStruct = buildHandlers(endpoint)
+        val handlersStruct = endpoint.buildHandlersStruct()
         return transform {
             matchingElements { iface: Interface ->
                 if (iface.name == Name.of("Handler")) {
@@ -333,8 +315,33 @@ open class JavaIrEmitter(
         }
     }
 
-    private fun buildHandlers(endpoint: Endpoint): Struct {
-        val pathTemplate = "/" + endpoint.path.joinToString("/") {
+    private fun <T : Element> T.wrapAsyncReturnInThenApply(endpointName: String): T = transform {
+        matchingElements { func: LanguageFunction ->
+            if (func.isAsync && func.body.size >= 2) {
+                val transportAssign = func.body[func.body.size - 2]
+                val returnStmt = func.body.last()
+                if (transportAssign is Assignment && returnStmt is ReturnStatement) {
+                    val bodyPrefix = func.body.dropLast(2)
+                    func.copy(
+                        body = bodyPrefix + ReturnStatement(
+                            FunctionCall(
+                                name = Name.of("thenApply"),
+                                receiver = transportAssign.value,
+                                arguments = mapOf(
+                                    Name.of("mapper") to RawExpression(
+                                        "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)"
+                                    )
+                                )
+                            )
+                        )
+                    )
+                } else func
+            } else func
+        }
+    }
+
+    private fun Endpoint.buildHandlersStruct(): Struct {
+        val pathTemplate = "/" + path.joinToString("/") {
             when (it) {
                 is Endpoint.Segment.Literal -> it.value
                 is Endpoint.Segment.Param -> "{${it.identifier.value}}"
@@ -354,7 +361,7 @@ open class JavaIrEmitter(
             }
             function("getMethod", isOverride = true) {
                 returnType(Type.String)
-                returns(literal(endpoint.method.name))
+                returns(literal(method.name))
             }
             function("getServer", isOverride = true) {
                 returnType(

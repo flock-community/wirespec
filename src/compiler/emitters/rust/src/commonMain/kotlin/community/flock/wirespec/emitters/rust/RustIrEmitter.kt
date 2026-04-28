@@ -367,9 +367,8 @@ open class RustIrEmitter(
             .prependImports(type.buildModelImports())
 
 
-    override fun emit(enum: Enum, module: Module): File = enum
-        .convert()
-        .transform {
+    override fun emit(enum: Enum, module: Module): File {
+        fun File.sanitizeEnumEntries(): File = transform {
             matchingElements { languageEnum: LanguageEnum ->
                 languageEnum.copy(
                     entries = languageEnum.entries.map {
@@ -378,30 +377,31 @@ open class RustIrEmitter(
                 )
             }
         }
+        return enum.convert().sanitizeEnumEntries()
+    }
 
     override fun emit(union: Union): File =
         union.convert()
 
-    override fun emit(refined: Refined): File =
-        refined.convert()
-            .transform {
-                matchingElements { s: Struct ->
-                    s.copy(elements = listOf(buildValidateFunction(refined), buildToStringFunction(refined)))
-                }
+    override fun emit(refined: Refined): File {
+        fun File.replaceStructWithRefinedFunctions(): File = transform {
+            matchingElements { s: Struct ->
+                s.copy(elements = listOf(buildValidateFunction(refined), buildToStringFunction(refined)))
             }
+        }
+        return refined.convert().replaceStructWithRefinedFunctions()
+    }
 
-    override fun emit(endpoint: Endpoint): File =
-        endpoint.convert()
+    override fun emit(endpoint: Endpoint): File {
+        fun File.injectApiStruct(): File = transform {
+            matchingElements<Namespace> { ns ->
+                ns.copy(elements = ns.elements + listOf(buildApiStruct(endpoint)))
+            }
+        }
+        return endpoint.convert()
             .flattenForRust()
             .stripWirespecPrefix()
-            .transform {
-                val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
-                statementAndExpression { s, t ->
-                    if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
-                        VariableReference(Name.of(s.code))
-                    } else s.transformChildren(t)
-                }
-            }
+            .convertSimpleRawExpressionsToVariableRefs()
             .stripHandlerExtends()
             .stripResponseGenerics()
             .transform { apply(fixResponseSwitchPatterns()) }
@@ -409,13 +409,10 @@ open class RustIrEmitter(
             .injectSelfToHandlerMethods()
             .injectHandlerImplForClient(endpoint)
             .injectResponseFromImpls()
-            .transform {
-                matchingElements<Namespace> { ns ->
-                    ns.copy(elements = ns.elements + listOf(buildApiStruct(endpoint)))
-                }
-            }
+            .injectApiStruct()
             .sanitizeNames(sanitizationConfig)
             .prependImports(endpoint.buildEndpointImports())
+    }
 
     override fun emit(channel: Channel): File =
         channel.convert()
@@ -573,6 +570,15 @@ open class RustIrEmitter(
                     }
                 }
             } else fn
+        }
+    }
+
+    private fun <T : Element> T.convertSimpleRawExpressionsToVariableRefs(): T = transform {
+        val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
+        statementAndExpression { s, t ->
+            if (s is RawExpression && identifierPattern.matches(s.code) && !s.code.contains(".")) {
+                VariableReference(Name.of(s.code))
+            } else s.transformChildren(t)
         }
     }
 

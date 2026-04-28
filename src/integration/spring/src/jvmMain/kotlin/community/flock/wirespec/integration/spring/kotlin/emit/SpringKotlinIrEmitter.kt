@@ -21,11 +21,12 @@ class SpringKotlinIrEmitter(packageName: PackageName) : KotlinIrEmitter(packageN
 
     override fun emit(endpoint: Endpoint): LanguageFile {
         val annotation = endpoint.springAnnotation()
-        return super.emit(endpoint).transform {
+        fun LanguageFile.injectSpringAnnotationBeforeHandler(): LanguageFile = transform {
             injectBefore { iface: Interface ->
                 if (iface.name == Name.of("Handler")) listOf(RawElement(annotation)) else emptyList()
             }
         }
+        return super.emit(endpoint).injectSpringAnnotationBeforeHandler()
     }
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {

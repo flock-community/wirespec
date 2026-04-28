@@ -167,32 +167,14 @@ open class PythonIrEmitter(
         val typeImports = type.importReferences().distinctBy { it.value }
             .map { import(".${it.value}", it.value) }
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
-        val file = type.convertWithValidation(module)
-            .transform {
-                matchingElements { fn: LanguageFunction ->
-                    if (fn.name == Name.of("validate")) {
-                        fn.copy(
-                            parameters = listOf(Parameter(Name.of("self"), LanguageType.Custom(""))),
-                        ).transform {
-                            statementAndExpression { s, t ->
-                                if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
-                                    FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
-                                } else {
-                                    s.transformChildren(t)
-                                }
-                            }
-                        }
-                    } else fn
-                }
-            }
+        return type.convertWithValidation(module)
+            .injectSelfToValidate(fieldNames)
             .sanitizeNames(sanitizationConfig)
-        return if (typeImports.isNotEmpty()) file.copy(elements = typeImports + file.elements)
-        else file
+            .prependImports(typeImports.takeIf { it.isNotEmpty() })
     }
 
-    override fun emit(enum: Enum, module: Module): File = enum
-        .convert()
-        .transform {
+    override fun emit(enum: Enum, module: Module): File {
+        fun File.sanitizeEnumEntries(): File = transform {
             matchingElements { languageEnum: LanguageEnum ->
                 languageEnum.copy(
                     entries = languageEnum.entries.map {
@@ -201,7 +183,10 @@ open class PythonIrEmitter(
                 )
             }
         }
-        .sanitizeNames(sanitizationConfig)
+        return enum.convert()
+            .sanitizeEnumEntries()
+            .sanitizeNames(sanitizationConfig)
+    }
 
     override fun emit(union: Union): File =
         union.convert()
@@ -350,6 +335,24 @@ open class PythonIrEmitter(
         import(wirespecPath, "Wirespec"),
         import(wirespecPath, "_raise"),
     )
+
+    private fun <T : Element> T.injectSelfToValidate(fieldNames: Set<String>): T = transform {
+        matchingElements { fn: LanguageFunction ->
+            if (fn.name == Name.of("validate")) {
+                fn.copy(
+                    parameters = listOf(Parameter(Name.of("self"), LanguageType.Custom(""))),
+                ).transform {
+                    statementAndExpression { s, t ->
+                        if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
+                            FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
+                        } else {
+                            s.transformChildren(t)
+                        }
+                    }
+                }
+            } else fn
+        }
+    }
 
     private fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {
         matchingElements { iface: Interface ->

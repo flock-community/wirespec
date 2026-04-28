@@ -176,28 +176,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
-            .transform {
-                matchingElements { fn: community.flock.wirespec.ir.core.Function ->
-                    if (fn.name == Name.of("validate")) {
-                        fn.copy(
-                            name = Name.of("validate${type.identifier.value}"),
-                            parameters = listOf(Parameter(Name.of("obj"), LanguageType.Custom(type.identifier.value))),
-                        ).transform {
-                            statementAndExpression { s, t ->
-                                when {
-                                    s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
-                                        val typeName = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
-                                        FunctionCall(name = Name.of("validate$typeName"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
-                                    }
-                                    s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
-                                        FieldCall(receiver = VariableReference(Name.of("obj")), field = s.field)
-                                    else -> s.transformChildren(t)
-                                }
-                            }
-                        }
-                    } else fn
-                }
-            }
+            .renameValidateAndBindObjReceiver(type.identifier.value, fieldNames)
         return if (allImports.isNotEmpty()) file.copy(elements = allImports + file.elements)
         else file
     }
@@ -229,54 +208,25 @@ open class TypeScriptIrEmitter : IrEmitter {
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.importReferences().distinctBy { it.value }
             .map { import("../model", it.value, isTypeOnly = true) }
-
         val hasRequestParams = endpoint.requestParameters().isNotEmpty()
+
+        fun File.injectApiConst(): File = transform {
+            injectAfter<Namespace> { listOf(buildApiConst(endpoint)) }
+        }
+        fun File.applyCallParamsIfNeeded(): File =
+            if (hasRequestParams) bindCallToRequestParams() else this
+
         return endpoint.convert()
-            .transform {
-                statement { stmt, transformer ->
-                    when (stmt) {
-                        is Switch -> stmt.copy(
-                            default = stmt.default?.map { s ->
-                                if (s is ErrorStatement && s.message is BinaryOp) {
-                                    val binary = s.message as BinaryOp
-                                    val literal = binary.left as? Literal
-                                    if (literal != null) ErrorStatement(Literal(literal.value.toString().trimEnd(' '), literal.type))
-                                    else s
-                                } else s
-                            }
-                        ).transformChildren(transformer)
-                        else -> stmt.transformChildren(transformer)
-                    }
-                }
-            }
+            .stripTrailingSpaceFromErrorMessage()
             .transform { apply(transformPatternSwitchToValueSwitch()) }
-            .transform {
-                if (hasRequestParams) {
-                    matchingElements { iface: community.flock.wirespec.ir.core.Interface ->
-                        if (iface.name == Name.of("Call")) {
-                            iface.copy(
-                                elements = iface.elements.map { element ->
-                                    if (element is community.flock.wirespec.ir.core.Function) {
-                                        element.copy(
-                                            parameters = listOf(
-                                                Parameter(Name.of("params"), LanguageType.Custom("RequestParams"))
-                                            )
-                                        )
-                                    } else element
-                                }
-                            )
-                        } else iface
-                    }
-                }
-            }
-            .transform { injectAfter<Namespace>{listOf(buildApiConst(endpoint))}}
+            .applyCallParamsIfNeeded()
+            .injectApiConst()
             .copy(name = Name.of(endpoint.identifier.sanitize()))
             .sanitizeNames(sanitizationConfig)
             .let {
                 if (imports.isNotEmpty()) it.copy(elements = imports + it.elements)
                 else it
             }
-
     }
 
     private fun buildApiConst(endpoint: Endpoint): RawElement {
@@ -371,6 +321,68 @@ open class TypeScriptIrEmitter : IrEmitter {
                 add(RawElement(code))
             }
         )
+    }
+
+    private fun <T : community.flock.wirespec.ir.core.Element> T.renameValidateAndBindObjReceiver(
+        typeName: String,
+        fieldNames: Set<String>,
+    ): T = transform {
+        matchingElements { fn: community.flock.wirespec.ir.core.Function ->
+            if (fn.name == Name.of("validate")) {
+                fn.copy(
+                    name = Name.of("validate$typeName"),
+                    parameters = listOf(Parameter(Name.of("obj"), LanguageType.Custom(typeName))),
+                ).transform {
+                    statementAndExpression { s, t ->
+                        when {
+                            s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
+                                val tn = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
+                                FunctionCall(name = Name.of("validate$tn"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
+                            }
+                            s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
+                                FieldCall(receiver = VariableReference(Name.of("obj")), field = s.field)
+                            else -> s.transformChildren(t)
+                        }
+                    }
+                }
+            } else fn
+        }
+    }
+
+    private fun <T : community.flock.wirespec.ir.core.Element> T.stripTrailingSpaceFromErrorMessage(): T = transform {
+        statement { stmt, transformer ->
+            when (stmt) {
+                is Switch -> stmt.copy(
+                    default = stmt.default?.map { s ->
+                        if (s is ErrorStatement && s.message is BinaryOp) {
+                            val binary = s.message as BinaryOp
+                            val literal = binary.left as? Literal
+                            if (literal != null) ErrorStatement(Literal(literal.value.toString().trimEnd(' '), literal.type))
+                            else s
+                        } else s
+                    }
+                ).transformChildren(transformer)
+                else -> stmt.transformChildren(transformer)
+            }
+        }
+    }
+
+    private fun <T : community.flock.wirespec.ir.core.Element> T.bindCallToRequestParams(): T = transform {
+        matchingElements { iface: community.flock.wirespec.ir.core.Interface ->
+            if (iface.name == Name.of("Call")) {
+                iface.copy(
+                    elements = iface.elements.map { element ->
+                        if (element is community.flock.wirespec.ir.core.Function) {
+                            element.copy(
+                                parameters = listOf(
+                                    Parameter(Name.of("params"), LanguageType.Custom("RequestParams"))
+                                )
+                            )
+                        } else element
+                    }
+                )
+            } else iface
+        }
     }
 
     private fun transformPatternSwitchToValueSwitch(): Transformer = transformer {
