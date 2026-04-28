@@ -1194,7 +1194,7 @@ class JavaIrEmitterTest {
             |  }
             |  sealed interface PathSegment permits Wirespec.Literal, Wirespec.Param {}
             |  record Literal(String value) implements Wirespec.PathSegment {}
-            |  record Param(String name, Class<?> type) implements Wirespec.PathSegment {}  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
+            |  record Param(String name, Class<?> type) implements Wirespec.PathSegment {}
             |  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
             |    public Req from(RawRequest request);
             |    public RawResponse to(Res response);

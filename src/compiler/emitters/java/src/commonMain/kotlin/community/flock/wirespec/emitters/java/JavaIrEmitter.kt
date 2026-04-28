@@ -112,7 +112,7 @@ open class JavaIrEmitter(
                 |sealed interface PathSegment permits Wirespec.Literal, Wirespec.Param {}
                 |record Literal(String value) implements Wirespec.PathSegment {}
                 |record Param(String name, Class<?> type) implements Wirespec.PathSegment {}
-                """.trimMargin()
+                |""".trimMargin()
             )
         )
 
