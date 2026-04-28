@@ -16,7 +16,7 @@ CLI="$ROOT_DIR/src/plugin/cli/build/bin/$PLATFORM/releaseExecutable/cli.kexe"
 
 if [ ! -f "$CLI" ]; then
   echo "Building Wirespec CLI for $PLATFORM..."
-  (cd "$ROOT_DIR" && ./gradlew ":src:plugin:cli:${PLATFORM}Binaries")
+  (cd "$ROOT_DIR" && ./gradlew -Pwirespec.enableNative=true ":src:plugin:cli:${PLATFORM}Binaries")
 fi
 
 OUT_DIR="$SCRIPT_DIR/target/generated-sources"
