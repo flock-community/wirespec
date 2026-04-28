@@ -5,7 +5,7 @@ import example.port.UserRepository
 import zio.*
 
 class InMemoryUserRepository extends UserRepository:
-  override def findAll(): Task[List[User]] =
+  override def findAll: Task[List[User]] =
     ZIO.succeed(List(User("Willem"), User("Maureen")))
 
 object InMemoryUserRepository:

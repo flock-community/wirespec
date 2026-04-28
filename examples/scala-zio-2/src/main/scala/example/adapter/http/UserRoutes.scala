@@ -11,6 +11,6 @@ object UserRoutes:
   def routes: Routes[Wirespec.Serialization & UserService, Response] =
     Routes(
       GetUsers.Server.toRoute { _ =>
-        ZIO.serviceWithZIO[UserService](_.getUsers().map(new GetUsers.Response200(_)))
+        ZIO.serviceWithZIO[UserService](_.getUsers.map(new GetUsers.Response200(_)))
       },
     ).handleError(e => Response.internalServerError(e.getMessage))

@@ -6,7 +6,7 @@ import zio.*
 
 class InMemoryTodoRepository(store: Ref[Map[TodoId, TodoDto]]) extends TodoRepository:
 
-  override def findAll(): Task[List[TodoDto]] =
+  override def findAll: Task[List[TodoDto]] =
     store.get.map(_.values.toList)
 
   override def save(todo: TodoDto): Task[TodoDto] =

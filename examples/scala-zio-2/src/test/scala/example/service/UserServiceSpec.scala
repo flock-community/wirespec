@@ -10,7 +10,7 @@ object UserServiceSpec extends ZIOSpecDefault:
     test("getUsers returns the list of users") {
       for
         svc   <- ZIO.service[UserService]
-        users <- svc.getUsers()
+        users <- svc.getUsers
       yield assertTrue(users.size == 2) && assertTrue(users.exists(_.name == "Willem"))
     },
   ).provide(UserServiceLive.layer, InMemoryUserRepository.layer)

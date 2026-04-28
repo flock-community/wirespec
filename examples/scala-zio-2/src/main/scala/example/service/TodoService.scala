@@ -9,7 +9,7 @@ import java.util.UUID
 class TodoServiceLive(repo: TodoRepository) extends TodoService:
 
   override def getTodos(done: Option[Boolean]): Task[List[TodoDto]] =
-    repo.findAll().map(_.filter(t => done.forall(_ == t.done)))
+    repo.findAll.map(_.filter(t => done.forall(_ == t.done)))
 
   override def createTodo(potential: PotentialTodoDto): Task[TodoDto] =
     for
@@ -36,4 +36,4 @@ class TodoServiceLive(repo: TodoRepository) extends TodoService:
 
 object TodoServiceLive:
   val layer: URLayer[TodoRepository, TodoService] =
-    ZLayer.fromZIO(ZIO.service[TodoRepository].map(new TodoServiceLive(_)))
+    ZLayer.fromZIO(ZIO.serviceWith[TodoRepository](new TodoServiceLive(_)))
