@@ -10,6 +10,7 @@ import community.flock.wirespec.java.serde.DefaultPathSerialization;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Example implementation of Wirespec Serialization using DefaultParamSerialization
@@ -44,7 +45,7 @@ public class WirespecSerializer implements Wirespec.Serialization, DefaultParamS
         }
         try {
             if (valueType == String.class) {
-                return (T) raw.toString();
+                return (T) new String(raw, StandardCharsets.UTF_8);
             }
             return objectMapper.readValue(raw, objectMapper.constructType(valueType));
         } catch (IOException e) {

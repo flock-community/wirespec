@@ -7,6 +7,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @EnableWirespec
 public class TodoApplication {
+
+    protected TodoApplication() {
+        // Bootstrap class; instantiated only by Spring's context.
+    }
+
+    @SuppressWarnings("java:S3051")
     public static void main(String[] args) {
         SpringApplication.run(TodoApplication.class, args);
     }

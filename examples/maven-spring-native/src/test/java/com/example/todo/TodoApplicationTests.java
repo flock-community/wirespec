@@ -8,6 +8,7 @@ class TodoApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// Intentionally empty: verifies that the Spring application context starts successfully.
 	}
 
 }

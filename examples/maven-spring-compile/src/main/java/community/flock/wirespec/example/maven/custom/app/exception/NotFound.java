@@ -5,6 +5,7 @@ public sealed class NotFound extends AppException {
         super(message);
     }
 
+    @SuppressWarnings("java:S110")
     public static final class User extends NotFound {
 
         public User() {

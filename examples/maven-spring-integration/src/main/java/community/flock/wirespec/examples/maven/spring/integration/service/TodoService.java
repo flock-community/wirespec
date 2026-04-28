@@ -12,8 +12,8 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class TodoService {
 
-    public List<Todo> store = new ArrayList<>();
-    public Map<String, Object> files = new HashMap<>();
+    private List<Todo> store = new ArrayList<>();
+    private final Map<String, Object> files = new HashMap<>();
 
     public TodoService(){
         store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "First todo", false));
@@ -52,5 +52,13 @@ public class TodoService {
 
     public void uploadFile(String name, Object file){
         files.put(name, file);
+    }
+
+    public List<Todo> getStore() {
+        return store;
+    }
+
+    public Map<String, Object> getFiles() {
+        return files;
     }
 }
