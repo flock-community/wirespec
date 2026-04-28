@@ -113,6 +113,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run Windows native tests
+        shell: bash
         run: ./gradlew -Pwirespec.enableNative=true mingwX64Test
 
   site:
