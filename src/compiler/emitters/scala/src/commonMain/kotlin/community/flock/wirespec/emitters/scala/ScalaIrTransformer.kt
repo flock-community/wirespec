@@ -4,7 +4,6 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
@@ -39,9 +38,11 @@ internal fun <T : Element> T.addIdentityTypeToCall(): T = transform {
     matchingElements { struct: Struct ->
         struct.copy(
             interfaces = struct.interfaces.map { type ->
-                (type as? LanguageType.Custom)?.takeIf { it.name.endsWith(".Call") }
-                    ?.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
-                    ?: type
+                if (type is LanguageType.Custom && type.name.endsWith(".Call")) {
+                    type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
+                } else {
+                    type
+                }
             },
         )
     }
@@ -56,16 +57,23 @@ internal fun isRequestObject(namespace: Namespace): Boolean {
 
 internal fun Namespace.injectHandleFunction(): Namespace = transform {
     matchingElements { iface: Interface ->
-        if (iface.name != Name.of("Handler") && iface.name != Name.of("Call")) return@matchingElements iface
-        iface.copy(
-            typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
-            elements = iface.elements.map { element ->
-                (element as? LanguageFunction)?.copy(
-                    isAsync = false,
-                    returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
-                ) ?: element
-            },
-        )
+        if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
+            iface.copy(
+                typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
+                elements = iface.elements.map { element ->
+                    if (element is LanguageFunction) {
+                        element.copy(
+                            isAsync = false,
+                            returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
+                        )
+                    } else {
+                        element
+                    }
+                },
+            )
+        } else {
+            iface
+        }
     }
 }
 
@@ -77,18 +85,11 @@ internal fun Namespace.appendClientServerObjects(endpoint: Endpoint, requestIsOb
             is Endpoint.Segment.Param -> "{${it.identifier.value}}"
         }
     }
-    val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
-        when (segment) {
-            is Endpoint.Segment.Literal -> """Wirespec.Literal("${segment.value}")"""
-            is Endpoint.Segment.Param -> """Wirespec.Param("${segment.identifier.value}", scala.reflect.classTag[${segment.reference.toScalaTypeName()}])"""
-        }
-    }
     val clientObject = raw(
         """
         |object Client extends Wirespec.Client[$reqType, Response[?]] {
         |  override val pathTemplate: String = "$pathTemplate"
         |  override val method: String = "${endpoint.method}"
-        |  override val pathSegments: List[Wirespec.PathSegment] = List($pathSegmentsCode)
         |  override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[$reqType, Response[?]] = new Wirespec.ClientEdge[$reqType, Response[?]] {
         |    override def to(request: $reqType): Wirespec.RawRequest = toRawRequest(serialization, request)
         |    override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
@@ -101,7 +102,6 @@ internal fun Namespace.appendClientServerObjects(endpoint: Endpoint, requestIsOb
         |object Server extends Wirespec.Server[$reqType, Response[?]] {
         |  override val pathTemplate: String = "$pathTemplate"
         |  override val method: String = "${endpoint.method}"
-        |  override val pathSegments: List[Wirespec.PathSegment] = List($pathSegmentsCode)
         |  override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[$reqType, Response[?]] = new Wirespec.ServerEdge[$reqType, Response[?]] {
         |    override def from(request: Wirespec.RawRequest): $reqType = fromRawRequest(serialization, request)
         |    override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
@@ -110,22 +110,4 @@ internal fun Namespace.appendClientServerObjects(endpoint: Endpoint, requestIsOb
         """.trimMargin(),
     )
     return copy(elements = elements + clientObject + serverObject)
-}
-
-private fun Reference.toScalaTypeName(): String {
-    val base = when (this) {
-        is Reference.Primitive -> when (val t = type) {
-            is Reference.Primitive.Type.String -> "String"
-            is Reference.Primitive.Type.Integer -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Int" else "Long"
-            is Reference.Primitive.Type.Number -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Float" else "Double"
-            Reference.Primitive.Type.Boolean -> "Boolean"
-            Reference.Primitive.Type.Bytes -> "Array[Byte]"
-        }
-        is Reference.Custom -> value
-        is Reference.Iterable -> "List[${reference.toScalaTypeName()}]"
-        is Reference.Dict -> "Map[String, ${reference.toScalaTypeName()}]"
-        is Reference.Any -> "Any"
-        is Reference.Unit -> "Unit"
-    }
-    return if (isNullable) "Option[$base]" else base
 }

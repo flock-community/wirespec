@@ -40,7 +40,11 @@ internal fun File.applyRefinedStructShape(refined: Refined): File = transform {
             .copy(
                 interfaces = listOf(Type.Custom("Wirespec.Refined")),
                 elements = struct.elements.map { element ->
-                    (element as? LanguageFunction)?.copy(isOverride = true) ?: element
+                    if (element is LanguageFunction) {
+                        element.copy(isOverride = true)
+                    } else {
+                        element
+                    }
                 },
             )
             .plus(
@@ -75,23 +79,30 @@ internal fun <T : Element> T.injectHandleFunction(endpoint: Endpoint): T {
 
 internal fun <T : Element> T.wrapAsyncReturnInThenApply(endpointName: String): T = transform {
     matchingElements { func: LanguageFunction ->
-        if (!func.isAsync || func.body.size < 2) return@matchingElements func
-        val transportAssign = func.body[func.body.size - 2] as? Assignment
-            ?: return@matchingElements func
-        if (func.body.last() !is ReturnStatement) return@matchingElements func
-        func.copy(
-            body = func.body.dropLast(2) + ReturnStatement(
-                FunctionCall(
-                    name = Name.of("thenApply"),
-                    receiver = transportAssign.value,
-                    arguments = mapOf(
-                        Name.of("mapper") to RawExpression(
-                            "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)",
+        if (func.isAsync && func.body.size >= 2) {
+            val transportAssign = func.body[func.body.size - 2]
+            val returnStmt = func.body.last()
+            if (transportAssign is Assignment && returnStmt is ReturnStatement) {
+                val bodyPrefix = func.body.dropLast(2)
+                func.copy(
+                    body = bodyPrefix + ReturnStatement(
+                        FunctionCall(
+                            name = Name.of("thenApply"),
+                            receiver = transportAssign.value,
+                            arguments = mapOf(
+                                Name.of("mapper") to RawExpression(
+                                    "rawResponse -> $endpointName.fromRawResponse(serialization(), rawResponse)",
+                                ),
+                            ),
                         ),
                     ),
-                ),
-            ),
-        )
+                )
+            } else {
+                func
+            }
+        } else {
+            func
+        }
     }
 }
 
