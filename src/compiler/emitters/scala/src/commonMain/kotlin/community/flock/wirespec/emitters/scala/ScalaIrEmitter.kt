@@ -93,11 +93,10 @@ open class ScalaIrEmitter(
             parameterNameCase = { name -> Name(listOf(name.camelCase().sanitizeSymbol())) },
             sanitizeSymbol = { it.sanitizeSymbol() },
             extraStatementTransforms = { stmt, tr ->
-                when (stmt) {
-                    is FunctionCall -> if (stmt.name.value() == "validate") {
+                when {
+                    stmt is FunctionCall && stmt.name.value() == "validate" ->
                         stmt.copy(typeArguments = emptyList()).transformChildren(tr)
-                    } else stmt.transformChildren(tr)
-                    is ConstructorStatement -> ConstructorStatement(
+                    stmt is ConstructorStatement -> ConstructorStatement(
                         type = tr.transformType(stmt.type),
                         namedArguments = stmt.namedArguments.map { (name, expr) ->
                             sanitizationConfig.sanitizeFieldName(name) to tr.transformExpression(expr)
@@ -121,8 +120,37 @@ open class ScalaIrEmitter(
                     val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
                     file.copy(elements = packageElements + import("scala.reflect", "ClassTag") + rest)
                 }
-            },
-        )
+                matchingElements { ns: Namespace ->
+                    if (ns.name != Name.of("Wirespec")) return@matchingElements ns
+                    val newElements = ns.elements.flatMap { element ->
+                        if (element !is Interface || element.name.pascalCase() !in setOf("Request", "Response")) {
+                            return@flatMap listOf(element)
+                        }
+                        val nestedHeaders = element.elements.filterIsInstance<Interface>()
+                            .firstOrNull { it.name.pascalCase() == "Headers" }
+                            ?: return@flatMap listOf(element)
+                        listOf(
+                            Namespace(element.name, listOf(nestedHeaders)),
+                            element.copy(
+                                elements = element.elements.filter {
+                                    !(it is Interface && it.name.pascalCase() == "Headers")
+                                },
+                                fields = element.fields.map { f ->
+                                    if (f.name.value() == "headers") {
+                                        f.copy(type = LanguageType.Custom("${element.name.pascalCase()}.Headers"))
+                                    } else f
+                                },
+                            ),
+                        )
+                    }
+                    ns.copy(elements = newElements)
+                }
+                injectAfter { namespace: Namespace ->
+                    if (namespace.name == Name.of("Wirespec")) clientServer
+                    else emptyList()
+                }
+            }
+            .generateScala()
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> =

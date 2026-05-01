@@ -71,33 +71,24 @@ internal fun File.splitEndpointStructsToModuleLevel(): File {
 
 internal fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {
     matchingElements { iface: Interface ->
-        if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
-            iface.copy(
-                elements = iface.elements.map { element ->
-                    if (element is LanguageFunction) {
-                        element.copy(name = Name.of(element.name.snakeCase()))
-                    } else {
-                        element
-                    }
-                },
-            )
-        } else {
-            iface
-        }
+        if (iface.name != Name.of("Handler") && iface.name != Name.of("Call")) return@matchingElements iface
+        iface.copy(
+            elements = iface.elements.map { element ->
+                (element as? LanguageFunction)?.copy(name = Name.of(element.name.snakeCase())) ?: element
+            },
+        )
     }
 }
 
 internal fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = transform {
     type { type, _ ->
-        if (type is LanguageType.Custom && type.name.startsWith("$endpointName.")) {
-            val suffix = type.name.removePrefix("$endpointName.")
-            if (suffix == "Call" || suffix == "Handler") {
-                type
-            } else {
-                type.copy(name = suffix)
+        when {
+            type !is LanguageType.Custom -> type
+            !type.name.startsWith("$endpointName.") -> type
+            else -> {
+                val suffix = type.name.removePrefix("$endpointName.")
+                if (suffix == "Call" || suffix == "Handler") type else type.copy(name = suffix)
             }
-        } else {
-            type
         }
     }
 }
@@ -109,17 +100,14 @@ internal fun <T : Element> T.addSelfReceiverToClientFields(): T {
 
     return transform {
         statementAndExpression { stmt, tr ->
-            when (stmt) {
-                is FieldCall -> {
-                    if (stmt.receiver == null && stmt.field.value() in fieldNames) {
-                        FieldCall(receiver = VariableReference(Name.of("self")), field = stmt.field)
-                    } else {
-                        FieldCall(
-                            receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                            field = stmt.field,
-                        )
-                    }
-                }
+            when {
+                stmt is FieldCall && stmt.receiver == null && stmt.field.value() in fieldNames ->
+                    FieldCall(receiver = VariableReference(Name.of("self")), field = stmt.field)
+                stmt is FieldCall ->
+                    FieldCall(
+                        receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                        field = stmt.field,
+                    )
                 else -> stmt.transformChildren(tr)
             }
         }

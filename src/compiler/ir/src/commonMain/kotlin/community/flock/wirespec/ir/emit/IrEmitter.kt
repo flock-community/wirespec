@@ -29,7 +29,6 @@ interface IrEmitter : Emitter {
                 logger.info("Emitting Nodes from ${m.fileUri.value} ")
                 emit(m, logger)
             }
-            .plus(emitShared()?.let { listOf(it) } ?: emptyList())
             .map { it.toEmitted() }
 
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
@@ -53,9 +52,7 @@ interface IrEmitter : Emitter {
         return definitionFiles + clientFiles + generatorFiles
     }
 
-    fun emitGenerator(definition: Definition, module: Module): File? = null
-
-    fun emit(definition: Definition, module: Module, logger: Logger): File = run {
+    fun emit(definition: Definition, module: Module, logger: Logger): File {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
         return when (definition) {
             is Type -> emit(definition, module)

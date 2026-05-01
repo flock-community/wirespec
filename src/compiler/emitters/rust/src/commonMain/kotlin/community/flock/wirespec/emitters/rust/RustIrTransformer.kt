@@ -129,61 +129,51 @@ internal fun File.flattenForRust(): File {
 
 internal fun fixResponseSwitchPatterns(): Transformer = transformer {
     statement { s, t ->
-        if (s is Switch && s.variable?.camelCase() == "r") {
-            val transformedCases = s.cases.map { case ->
-                val typeName = (case.type as? LanguageType.Custom)?.name
-                if (typeName != null && rustResponsePattern.matches(typeName)) {
-                    Case(
-                        value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
-                        body = case.body.map { t.transformStatement(it) },
-                        type = null,
-                    )
-                } else {
-                    Case(
-                        value = t.transformExpression(case.value),
-                        body = case.body.map { t.transformStatement(it) },
-                        type = case.type?.let { t.transformType(it) },
-                    )
-                }
+        if (s !is Switch || s.variable?.camelCase() != "r") return@statement s.transformChildren(t)
+        val transformedCases = s.cases.map { case ->
+            val typeName = (case.type as? LanguageType.Custom)?.name
+            if (typeName != null && rustResponsePattern.matches(typeName)) {
+                Case(
+                    value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
+                    body = case.body.map { t.transformStatement(it) },
+                    type = null,
+                )
+            } else {
+                Case(
+                    value = t.transformExpression(case.value),
+                    body = case.body.map { t.transformStatement(it) },
+                    type = case.type?.let { t.transformType(it) },
+                )
             }
-            s.copy(
-                expression = t.transformExpression(s.expression),
-                cases = transformedCases,
-                default = null,
-            )
-        } else {
-            s.transformChildren(t)
         }
+        s.copy(
+            expression = t.transformExpression(s.expression),
+            cases = transformedCases,
+            default = null,
+        )
     }
 }
 
 internal fun fixConstructorCalls(): Transformer = transformer {
     statementAndExpression { s, t ->
-        if (s is ConstructorStatement) {
-            val typeName = (s.type as? LanguageType.Custom)?.name
-            val transformedArgs = s.namedArguments.mapValues { t.transformExpression(it.value) }
-            when {
-                typeName != null && rustResponsePattern.matches(typeName) -> {
-                    FunctionCall(
-                        name = Name(listOf("Response::$typeName")),
-                        arguments = mapOf(
-                            Name.of("inner") to FunctionCall(
-                                name = Name(listOf("$typeName::new")),
-                                arguments = transformedArgs,
-                            ),
-                        ),
-                    )
-                }
-                typeName == "Request" -> {
-                    FunctionCall(
-                        name = Name(listOf("Request::new")),
+        if (s !is ConstructorStatement) return@statementAndExpression s.transformChildren(t)
+        val typeName = (s.type as? LanguageType.Custom)?.name
+        val transformedArgs = s.namedArguments.mapValues { t.transformExpression(it.value) }
+        when {
+            typeName != null && rustResponsePattern.matches(typeName) -> FunctionCall(
+                name = Name(listOf("Response::$typeName")),
+                arguments = mapOf(
+                    Name.of("inner") to FunctionCall(
+                        name = Name(listOf("$typeName::new")),
                         arguments = transformedArgs,
-                    )
-                }
-                else -> s.transformChildren(t)
-            }
-        } else {
-            s.transformChildren(t)
+                    ),
+                ),
+            )
+            typeName == "Request" -> FunctionCall(
+                name = Name(listOf("Request::new")),
+                arguments = transformedArgs,
+            )
+            else -> s.transformChildren(t)
         }
     }
 }
@@ -202,17 +192,14 @@ internal fun <T : Element> T.stripResponseGenerics(): T = transform {
 
 internal fun <T : Element> T.injectSelfToHandlerMethods(): T = transform {
     matchingElements<Interface> { iface ->
-        if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
-            iface.transform {
-                matchingElements { fn: LanguageFunction ->
-                    fn.copy(
-                        name = Name.of(fn.name.snakeCase()),
-                        parameters = listOf(rustSelfParam) + fn.parameters,
-                    )
-                }
+        if (iface.name != Name.of("Handler") && iface.name != Name.of("Call")) return@matchingElements iface
+        iface.transform {
+            matchingElements { fn: LanguageFunction ->
+                fn.copy(
+                    name = Name.of(fn.name.snakeCase()),
+                    parameters = listOf(rustSelfParam) + fn.parameters,
+                )
             }
-        } else {
-            iface
         }
     }
 }
@@ -220,14 +207,14 @@ internal fun <T : Element> T.injectSelfToHandlerMethods(): T = transform {
 internal fun <T : Element> T.injectHandlerImplForClient(endpoint: Endpoint): T = transform {
     matchingElements<Namespace> { ns ->
         val handler = ns.elements.filterIsInstance<Interface>().firstOrNull { it.name == Name.of("Handler") }
-        if (handler != null) {
-            val method = handler.elements.filterIsInstance<LanguageFunction>().firstOrNull()
-            if (method != null) {
-                val methodName = method.name.snakeCase()
-                ns.copy(
-                    elements = ns.elements + listOf(
-                        RawElement(
-                            """
+            ?: return@matchingElements ns
+        val method = handler.elements.filterIsInstance<LanguageFunction>().firstOrNull()
+            ?: return@matchingElements ns
+        val methodName = method.name.snakeCase()
+        ns.copy(
+            elements = ns.elements + listOf(
+                RawElement(
+                    """
                     impl<C: Client> Handler for C {
                         async fn $methodName(&self, request: Request) -> Response {
                             let raw = to_raw_request(self.serialization(), request);
@@ -235,16 +222,10 @@ internal fun <T : Element> T.injectHandlerImplForClient(endpoint: Endpoint): T =
                             from_raw_response(self.serialization(), resp)
                         }
                     }
-                            """.trimIndent(),
-                        ),
-                    ),
-                )
-            } else {
-                ns
-            }
-        } else {
-            ns
-        }
+                    """.trimIndent(),
+                ),
+            ),
+        )
     }
 }
 
