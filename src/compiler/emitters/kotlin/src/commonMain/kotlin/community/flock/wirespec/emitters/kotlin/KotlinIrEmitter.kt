@@ -83,11 +83,10 @@ open class KotlinIrEmitter(
             parameterNameCase = { name -> Name(listOf(name.camelCase().sanitizeSymbol())) },
             sanitizeSymbol = { it.sanitizeSymbol() },
             extraStatementTransforms = { stmt, tr ->
-                when (stmt) {
-                    is FunctionCall -> if (stmt.name.value() == "validate") {
+                when {
+                    stmt is FunctionCall && stmt.name.value() == "validate" ->
                         stmt.copy(typeArguments = emptyList()).transformChildren(tr)
-                    } else stmt.transformChildren(tr)
-                    is ConstructorStatement -> ConstructorStatement(
+                    stmt is ConstructorStatement -> ConstructorStatement(
                         type = tr.transformType(stmt.type),
                         namedArguments = stmt.namedArguments.map { (name, expr) ->
                             sanitizationConfig.sanitizeFieldName(name) to tr.transformExpression(expr)
@@ -151,7 +150,7 @@ open class KotlinIrEmitter(
     override fun emit(refined: Refined): File {
         val file = refined.convert().sanitizeNames(sanitizationConfig)
         val updatedStruct = file.findElement<Struct>()?.markMembersAsOverride()
-        return LanguageFile(Name.of(refined.identifier.sanitize()), updatedStruct?.let { listOf(it) } ?: emptyList())
+        return LanguageFile(Name.of(refined.identifier.sanitize()), listOfNotNull(updatedStruct))
     }
 
     override fun emit(endpoint: Endpoint): File {

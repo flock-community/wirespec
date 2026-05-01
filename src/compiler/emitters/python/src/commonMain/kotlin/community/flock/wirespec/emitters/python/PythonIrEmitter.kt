@@ -122,41 +122,42 @@ open class PythonIrEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
-        return super.emit(module.copy(statements = statements), logger).let {
-            fun emitInitImport(def: Definition) = import(".${def.identifier.sanitize()}", def.identifier.sanitize())
-            val hasEndpoints = module.statements.any { it is Endpoint }
-            val initElements: List<Element> = listOf(
-                import(".", "model"),
-                import(".", "endpoint"),
-            ) + (if (hasEndpoints) listOf(import(".", "client")) else emptyList()) +
-                listOf(import(".", "wirespec"))
-            val init = File(
-                Name.of(packageName.toDir() + "__init__"),
-                initElements
-            )
-            val initEndpoint = File(
-                Name.of(packageName.toDir() + "endpoint/" + "__init__"),
-                module.statements.filter { it is Endpoint }.map { stmt -> emitInitImport(stmt) }
-            )
-            val initModel = File(
-                Name.of(packageName.toDir() + "model/" + "__init__"),
-                module.statements.filter { it is Model }.map { stmt -> emitInitImport(stmt) }
-            )
-            val initClient = if (hasEndpoints) listOf(File(
-                Name.of(packageName.toDir() + "client/" + "__init__"),
-                emptyList()
-            )) else emptyList()
-            val shared = File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(shared.source)))
-            val parentInits = packageName.value.split(".")
-                .dropLast(1)
-                .runningFold("") { acc, segment -> if (acc.isEmpty()) segment else "$acc/$segment" }
-                .drop(1)
-                .map { File(Name.of("$it/__init__"), emptyList()) }
-            if (emitShared.value)
-                it + init + initEndpoint + initModel + initClient + shared + parentInits
-            else
-                it + init + parentInits
-        }
+        val emitted = super.emit(module.copy(statements = statements), logger)
+
+        fun emitInitImport(def: Definition) = import(".${def.identifier.sanitize()}", def.identifier.sanitize())
+        val hasEndpoints = module.statements.any { it is Endpoint }
+
+        val init = File(
+            Name.of(packageName.toDir() + "__init__"),
+            buildList {
+                add(import(".", "model"))
+                add(import(".", "endpoint"))
+                if (hasEndpoints) add(import(".", "client"))
+                add(import(".", "wirespec"))
+            }
+        )
+        val initEndpoint = File(
+            Name.of(packageName.toDir() + "endpoint/" + "__init__"),
+            module.statements.filterIsInstance<Endpoint>().map(::emitInitImport)
+        )
+        val initModel = File(
+            Name.of(packageName.toDir() + "model/" + "__init__"),
+            module.statements.filterIsInstance<Model>().map(::emitInitImport)
+        )
+        val initClient = if (hasEndpoints) listOf(
+            File(Name.of(packageName.toDir() + "client/" + "__init__"), emptyList())
+        ) else emptyList()
+        val shared = File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(shared.source)))
+        val parentInits = packageName.value.split(".")
+            .dropLast(1)
+            .runningFold("") { acc, segment -> if (acc.isEmpty()) segment else "$acc/$segment" }
+            .drop(1)
+            .map { File(Name.of("$it/__init__"), emptyList()) }
+
+        return if (emitShared.value)
+            emitted + init + initEndpoint + initModel + initClient + shared + parentInits
+        else
+            emitted + init + parentInits
     }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {

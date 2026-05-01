@@ -252,19 +252,16 @@ open class RustIrEmitter(
                 }
                 matchingElements { file: LanguageFile ->
                     val newElements = file.elements.flatMap { element ->
-                        if (element is Interface) {
-                            val name = element.name.pascalCase()
-                            when {
-                                name in dslTraits -> buildList {
-                                    add(dslTraits[name]!!)
-                                    if (name == "Request") add(requestHeaders)
-                                    if (name == "Response") add(responseHeaders)
-                                }
-                                name in rawElementInterfaces -> listOf(rawElementInterfaces[name]!!)
-                                else -> listOf(element)
+                        if (element !is Interface) return@flatMap listOf(element)
+                        val name = element.name.pascalCase()
+                        when {
+                            name in dslTraits -> buildList {
+                                add(dslTraits[name]!!)
+                                if (name == "Request") add(requestHeaders)
+                                if (name == "Response") add(responseHeaders)
                             }
-                        } else {
-                            listOf(element)
+                            name in rawElementInterfaces -> listOf(rawElementInterfaces[name]!!)
+                            else -> listOf(element)
                         }
                     } + client + server
                     file.copy(elements = newElements)
@@ -272,13 +269,12 @@ open class RustIrEmitter(
             }
             .let { file ->
                 LanguageFile(file.name, file.elements.flatMap { element ->
-                    if (element is Struct) {
-                        val derive = when (element.name.pascalCase()) {
-                            "RawRequest", "RawResponse" -> "#[derive(Debug, Clone, PartialEq)]"
-                            else -> "#[derive(Debug, Clone, Default, PartialEq)]"
-                        }
-                        listOf(LanguageFile(element.name, listOf(RawElement(derive), element)))
-                    } else listOf(element)
+                    if (element !is Struct) return@flatMap listOf(element)
+                    val derive = when (element.name.pascalCase()) {
+                        "RawRequest", "RawResponse" -> "#[derive(Debug, Clone, PartialEq)]"
+                        else -> "#[derive(Debug, Clone, Default, PartialEq)]"
+                    }
+                    listOf(LanguageFile(element.name, listOf(RawElement(derive), element)))
                 })
             }
             .let(RustTransform::apply)
@@ -289,28 +285,20 @@ open class RustIrEmitter(
                     iface.transform {
                         matchingElements { fn: LanguageFunction ->
                             val hasSelf = fn.parameters.any { it.name.value() == "&self" || it.name.value() == "self" }
-                            if (!hasSelf && !fn.isStatic) {
-                                fn.copy(parameters = listOf(rustSelfParam) + fn.parameters)
-                            } else fn
+                            if (hasSelf || fn.isStatic) fn
+                            else fn.copy(parameters = listOf(rustSelfParam) + fn.parameters)
                         }
                     }
                 }
             }
             .let { file ->
-                val groups = mutableListOf<List<Element>>()
-                var current = mutableListOf<Element>()
-                for (element in file.elements) {
-                    if (element is community.flock.wirespec.ir.core.Import) {
-                        current.add(element)
-                    } else {
-                        if (current.isNotEmpty()) {
-                            groups.add(current)
-                            current = mutableListOf()
-                        }
-                        groups.add(listOf(element))
-                    }
+                val groups = file.elements.fold(mutableListOf<MutableList<Element>>()) { acc, element ->
+                    val isImport = element is community.flock.wirespec.ir.core.Import
+                    val lastGroupIsImports = acc.lastOrNull()?.firstOrNull() is community.flock.wirespec.ir.core.Import
+                    if (isImport && lastGroupIsImports) acc.last().add(element)
+                    else acc.add(mutableListOf(element))
+                    acc
                 }
-                if (current.isNotEmpty()) groups.add(current)
                 groups.joinToString("\n\n") { group ->
                     group.joinToString("") { it.generateRust() }.trimEnd('\n')
                 } + "\n"
@@ -464,11 +452,8 @@ open class RustIrEmitter(
             val namespacePath = "$endpointModuleName::$endpointName"
             val methodName = endpointName.toSnakeCase()
             val (paramsStr, callArgs) = endpoint.buildClientParams()
-            val delegateCall = if (callArgs.isNotEmpty()) {
-                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName($callArgs).await"
-            } else {
-                "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n            .$methodName().await"
-            }
+            val delegateCall = "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n" +
+                "            .$methodName($callArgs).await"
 
             listOf(
                 "impl<S: Serialization, T: Transportation> $namespacePath::Call for Client<S, T> {",
@@ -527,14 +512,10 @@ open class RustIrEmitter(
 
     private fun Endpoint.buildClientParams(): Pair<String, String> {
         val params = requestParameters()
-        val paramsStr = if (params.isNotEmpty()) {
-            ", " + params.joinToString(", ") { (name, type) ->
-                "${name.snakeCase().sanitizeKeywords()}: ${with(RustTransform) { type.rustName() }}"
-            }
-        } else ""
-        val argsStr = if (params.isNotEmpty()) {
-            params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
-        } else ""
+        val argsStr = params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
+        val paramsStr = if (params.isEmpty()) "" else ", " + params.joinToString(", ") { (name, type) ->
+            "${name.snakeCase().sanitizeKeywords()}: ${with(RustTransform) { type.rustName() }}"
+        }
         return paramsStr to argsStr
     }
 

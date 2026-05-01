@@ -38,11 +38,9 @@ internal fun <T : Element> T.addIdentityTypeToCall(): T = transform {
     matchingElements { struct: Struct ->
         struct.copy(
             interfaces = struct.interfaces.map { type ->
-                if (type is LanguageType.Custom && type.name.endsWith(".Call")) {
-                    type.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
-                } else {
-                    type
-                }
+                (type as? LanguageType.Custom)?.takeIf { it.name.endsWith(".Call") }
+                    ?.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
+                    ?: type
             },
         )
     }
@@ -57,23 +55,16 @@ internal fun isRequestObject(namespace: Namespace): Boolean {
 
 internal fun Namespace.injectHandleFunction(): Namespace = transform {
     matchingElements { iface: Interface ->
-        if (iface.name == Name.of("Handler") || iface.name == Name.of("Call")) {
-            iface.copy(
-                typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
-                elements = iface.elements.map { element ->
-                    if (element is LanguageFunction) {
-                        element.copy(
-                            isAsync = false,
-                            returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
-                        )
-                    } else {
-                        element
-                    }
-                },
-            )
-        } else {
-            iface
-        }
+        if (iface.name != Name.of("Handler") && iface.name != Name.of("Call")) return@matchingElements iface
+        iface.copy(
+            typeParameters = listOf(TypeParameter(LanguageType.Custom("F[_]"))),
+            elements = iface.elements.map { element ->
+                (element as? LanguageFunction)?.copy(
+                    isAsync = false,
+                    returnType = element.returnType?.let { LanguageType.Custom("F", generics = listOf(it)) },
+                ) ?: element
+            },
+        )
     }
 }
 

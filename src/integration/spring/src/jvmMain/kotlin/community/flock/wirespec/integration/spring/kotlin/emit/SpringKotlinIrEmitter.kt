@@ -21,22 +21,13 @@ class SpringKotlinIrEmitter(packageName: PackageName) : KotlinIrEmitter(packageN
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
         val results = super.emit(ast, logger)
 
-        val modelNames = mutableListOf<String>()
-        val endpointNames = mutableListOf<String>()
+        val definitions = ast.modules.toList().flatMap { it.statements }
+        val modelNames = definitions.filterIsInstance<Model>().map { it.identifier.value }
+        val endpointNames = definitions
+            .filter { it is Endpoint || it is Channel }
+            .map { it.identifier.value }
 
-        ast.modules.forEach { module ->
-            module.statements.forEach { definition ->
-                val name = definition.identifier.value
-                when (definition) {
-                    is Model -> modelNames.add(name)
-                    is Endpoint, is Channel -> endpointNames.add(name)
-                }
-            }
-        }
-
-        if (modelNames.isEmpty() && endpointNames.isEmpty()) {
-            return results
-        }
+        if (modelNames.isEmpty() && endpointNames.isEmpty()) return results
 
         val source = emitNativeHints(modelNames, endpointNames)
         val file = packageName.toDir() + "WirespecNativeHints." + extension.value
