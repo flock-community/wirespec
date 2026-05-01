@@ -45,6 +45,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":src:compiler:core"))
+                api(project(":src:compiler:ir"))
             }
         }
         commonTest {

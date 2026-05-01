@@ -1,7 +1,7 @@
 .PHONY: *
 
 # The first command will be invoked with `make` only and should be `all`
-all: build image test example format
+all: build image test example format verify
 
 build: build-wirespec build-site
 
@@ -51,7 +51,7 @@ update:
 	npm install -g @vscode/vsce
 
 verify:
-	$(shell pwd)/scripts/verify.sh
+	./gradlew :src:verify:test -Pverify
 
 yolo:
 	$(shell pwd)/scripts/yolo.sh
