@@ -7,6 +7,9 @@ import community.flock.kotlinx.openapi.bindings.MediaType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Components
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Header
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3HeaderOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Link
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3LinkOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Links
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3MediaType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Operation
@@ -37,8 +40,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.findDescription
+import community.flock.wirespec.openapi.common.findLinks
 import community.flock.wirespec.openapi.common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
@@ -194,10 +199,28 @@ object OpenAPIV3Emitter : Emitter {
                         .mapNotNull { it.content }
                         .associate { it.emit() }
                         .ifEmpty { null },
+                    links = res.flatMap { it.annotations.findLinks() }.toOpenAPIV3Links(),
                 )
             }
             .toMap(),
     )
+
+    private fun List<LinkInfo>.toOpenAPIV3Links(): OpenAPIV3Links? {
+        if (isEmpty()) return null
+        val byName = LinkedHashMap<String, OpenAPIV3LinkOrReference>()
+        forEach { info ->
+            byName[info.name] = OpenAPIV3Link(
+                operationRef = info.operationRef,
+                operationId = info.operationId,
+                parameters = info.parameters
+                    .mapValues<String, String, kotlinx.serialization.json.JsonElement> { JsonPrimitive(it.value) }
+                    .ifEmpty { null },
+                requestBody = info.requestBody?.let { JsonPrimitive(it) },
+                description = info.description,
+            )
+        }
+        return OpenAPIV3Links(byName.entries.toSet())
+    }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {

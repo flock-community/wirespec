@@ -1,0 +1,9 @@
+protocol CollectionsProtocol {
+    record Product {
+        string id;
+        array<string> tags;
+        map<int> ratings;
+        array<array<string>> nestedTags;
+        map<array<string>> aliases;
+    }
+}

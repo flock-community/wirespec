@@ -1,0 +1,27 @@
+@namespace("com.example")
+protocol CustomerProtocol {
+    record Address {
+        /** Street */
+        string street;
+        /** Zipcode */
+        string zipcode;
+    }
+
+    /** Customer record */
+    record Customer {
+        /** First Name of Customer */
+        string first_name;
+        /** Last Name of Customer */
+        string last_name;
+        /** Age at the time of registration */
+        int age;
+        /** Height in cm */
+        float height;
+        /** Weight in kg */
+        float weight;
+        /** Marketing email enrollment */
+        boolean automated_email = true;
+        /** Address of Customer */
+        Address address;
+    }
+}

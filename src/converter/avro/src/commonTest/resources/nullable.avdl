@@ -1,0 +1,8 @@
+protocol NullableProtocol {
+    record User {
+        string id;
+        union { null, string } nickname;
+        string? email;
+        union { null, int } age;
+    }
+}

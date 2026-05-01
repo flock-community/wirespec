@@ -26,7 +26,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Ignore
 import kotlin.test.Test
 
-class AvroEmitterTest {
+class AvroJsonEmitterTest {
 
     private val json = Json {
         prettyPrint = true
@@ -43,7 +43,7 @@ class AvroEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val actual = AvroEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
+        val actual = AvroJsonEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
         val expected =
             // language=json
             """
@@ -131,8 +131,8 @@ class AvroEmitterTest {
         val path = Path("src/commonTest/resources/example.avsc")
         val text = SystemFileSystem.source(path).buffered().readString()
 
-        val ast = AvroParser.parse(ModuleContent(FileUri("test.ws"), text), true)
-        val actual = AvroEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
+        val ast = AvroJsonParser.parse(ModuleContent(FileUri("test.ws"), text), true)
+        val actual = AvroJsonEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
 
         val expected =
             // language=json
@@ -435,7 +435,7 @@ class AvroEmitterTest {
     @Test
     fun compileFullEndpointTest() {
         val result = CompileFullEndpointTest.compiler {
-            AvroEmitter
+            AvroJsonEmitter
         }
         val expect =
             //language=json
@@ -505,7 +505,7 @@ class AvroEmitterTest {
     @Test
     fun compileMinimalEndpointTest() {
         val result = CompileMinimalEndpointTest.compiler {
-            AvroEmitter
+            AvroJsonEmitter
         }
         val expect =
             //language=json
@@ -529,7 +529,7 @@ class AvroEmitterTest {
     @Test
     fun compileChannelTest() {
         val result = CompileChannelTest.compiler {
-            AvroEmitter
+            AvroJsonEmitter
         }
         val expect =
             //language=json
@@ -542,7 +542,7 @@ class AvroEmitterTest {
     @Test
     fun compileEnumTest() {
         val result = CompileEnumTest.compiler {
-            AvroEmitter
+            AvroJsonEmitter
         }
         val expect =
             //language=json
@@ -571,7 +571,7 @@ class AvroEmitterTest {
     @Test
     fun compileRefinedTest() {
         val result = CompileRefinedTest.compiler {
-            AvroEmitter
+            AvroJsonEmitter
         }
         val expect =
             //language=json
@@ -584,7 +584,7 @@ class AvroEmitterTest {
     @Test
     fun compileUnionTest() {
         val result = CompileUnionTest.compiler {
-            AvroEmitter
+            AvroJsonEmitter
         }
         val expect =
             //language=json
@@ -642,7 +642,7 @@ class AvroEmitterTest {
 
     @Test
     fun compileTypeTest() {
-        val result = CompileTypeTest.compiler { AvroEmitter }
+        val result = CompileTypeTest.compiler { AvroJsonEmitter }
         val expect =
             //language=json
             """
