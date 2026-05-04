@@ -153,6 +153,7 @@ internal fun generatorCallExpression(
     typeName: String,
     fieldNameStr: String,
     fieldDescriptor: Expression,
+    annotations: Expression = LiteralList(emptyList(), Type.Any),
 ): FunctionCall = FunctionCall(
     receiver = VariableReference(Name.of("generator")),
     name = Name.of("generate"),
@@ -160,6 +161,7 @@ internal fun generatorCallExpression(
         Name.of("path") to pathPlus(fieldNameStr),
         Name.of("type") to ClassReference(Type.Custom(typeName)),
         Name.of("field") to fieldDescriptor,
+        Name.of("annotations") to annotations,
     ),
 )
 
@@ -178,7 +180,11 @@ fun TypeWirespec.convertToGenerator(): File {
                         type = Type.Custom(typeName),
                         namedArguments = shape.value.associate { field ->
                             val fieldName = field.identifier.toFieldName()
-                            fieldName to field.reference.toGeneratorExpression(typeName, field.identifier.value)
+                            fieldName to field.reference.toGeneratorExpression(
+                                typeName,
+                                field.identifier.value,
+                                field.annotations,
+                            )
                         },
                     ),
                 )
@@ -187,7 +193,12 @@ fun TypeWirespec.convertToGenerator(): File {
     }
 }
 
-private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameStr: String): Expression {
+private fun ReferenceWirespec.toGeneratorExpression(
+    typeName: String,
+    fieldNameStr: String,
+    annotations: List<AnnotationWirespec>,
+): Expression {
+    val annotationsArg = annotationsToIrList(annotations)
     val nullableCheck: Expression = generatorCallExpression(
         typeName,
         fieldNameStr,
@@ -217,10 +228,13 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
                 },
             ),
         ),
+        annotationsArg,
     )
 
     val nonNullExpr: Expression = when (val ref = this) {
-        is ReferenceWirespec.Primitive -> generatorCallExpression(typeName, fieldNameStr, ref.toFieldDescriptor())
+        is ReferenceWirespec.Primitive -> generatorCallExpression(
+            typeName, fieldNameStr, ref.toFieldDescriptor(), annotationsArg,
+        )
         is ReferenceWirespec.Custom -> FunctionCall(
             receiver = RawExpression("${ref.value}Generator"),
             name = Name.of("generate"),
@@ -240,6 +254,7 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
                     type = Type.Custom("Wirespec.GeneratorFieldArray"),
                     namedArguments = mapOf(Name.of("inner") to ref.reference.toFieldDescriptorOrNull()),
                 ),
+                annotationsArg,
             )
             // Stringify the index portably: `i.toString()` compiles in Kotlin
             // but not in Java (primitive int has no method invocation). A
@@ -276,6 +291,7 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
                         Name.of("path") to indexedPath,
                         Name.of("type") to ClassReference(Type.Custom(typeName)),
                         Name.of("field") to inner.toFieldDescriptor(),
+                        Name.of("annotations") to LiteralList(emptyList(), Type.Any),
                     ),
                 )
                 else -> NullLiteral
@@ -301,6 +317,7 @@ private fun ReferenceWirespec.toGeneratorExpression(typeName: String, fieldNameS
                     Name.of("value") to ref.reference.toFieldDescriptorOrNull(),
                 ),
             ),
+            annotationsArg,
         )
         is ReferenceWirespec.Any, is ReferenceWirespec.Unit -> NullLiteral
     }
@@ -339,6 +356,7 @@ fun RefinedWirespec.convertToGenerator(): File {
                                     Name.of("path") to pathPlus("value"),
                                     Name.of("type") to ClassReference(Type.Custom(typeName)),
                                     Name.of("field") to reference.toFieldDescriptor(),
+                                    Name.of("annotations") to annotationsToIrList(annotations),
                                 ),
                             ),
                         ),
@@ -379,6 +397,7 @@ fun EnumWirespec.convertToGenerator(): File {
                                             ),
                                         ),
                                     ),
+                                    Name.of("annotations") to annotationsToIrList(annotations),
                                 ),
                             ),
                         ),
@@ -417,6 +436,7 @@ fun UnionWirespec.convertToGenerator(): File {
                                     ),
                                 ),
                             ),
+                            Name.of("annotations") to annotationsToIrList(annotations),
                         ),
                     ),
                 )

@@ -306,4 +306,47 @@ class GeneratorConverterTest {
         assertEquals(Literal(0L, Type.Integer()), first.values.getValue("min"))
         assertEquals(Literal(100L, Type.Integer()), second.values.getValue("max"))
     }
+
+    @Test
+    fun testTypeConvertToGeneratorThreadsFieldAnnotations() {
+        val person = TypeWirespec(
+            comment = null,
+            annotations = emptyList(),
+            identifier = definitionId("Person"),
+            shape = TypeWirespec.Shape(
+                listOf(
+                    Field(
+                        annotations = listOf(
+                            Annotation(
+                                name = "Email",
+                                parameters = emptyList(),
+                            ),
+                        ),
+                        identifier = fieldId("email"),
+                        reference = Reference.Primitive(Reference.Primitive.Type.String(null), false),
+                    ),
+                    Field(
+                        annotations = emptyList(),
+                        identifier = fieldId("name"),
+                        reference = Reference.Primitive(Reference.Primitive.Type.String(null), false),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        )
+
+        val file = person.convertToGenerator()
+        val calls = file.collectExpressions<community.flock.wirespec.ir.core.FunctionCall>()
+            .filter { it.name == Name.of("generate") && it.receiver is community.flock.wirespec.ir.core.VariableReference }
+
+        assertEquals(2, calls.size, "expected one generator.generate() call per primitive field")
+
+        val emailAnnotations = calls[0].arguments.getValue(Name.of("annotations")) as LiteralList
+        assertEquals(1, emailAnnotations.values.size)
+        val emailAnn = emailAnnotations.values.single() as LiteralMap
+        assertEquals(Literal("Email", Type.String), emailAnn.values.getValue("name"))
+
+        val nameAnnotations = calls[1].arguments.getValue(Name.of("annotations")) as LiteralList
+        assertTrue(nameAnnotations.values.isEmpty(), "field with no annotations should pass empty list")
+    }
 }
