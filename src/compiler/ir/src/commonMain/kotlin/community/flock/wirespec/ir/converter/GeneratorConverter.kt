@@ -136,6 +136,11 @@ internal fun AnnotationWirespec.toIrLiteralMap(): LiteralMap = LiteralMap(
     valueType = Type.Any,
 )
 
+internal fun annotationsToIrList(annotations: List<AnnotationWirespec>): LiteralList = LiteralList(
+    values = annotations.map { it.toIrLiteralMap() },
+    type = Type.Any,
+)
+
 // Produces an Optional<GeneratorField<?>>-shaped value: NullableOf(desc) when
 // primitive, NullableEmpty otherwise. In Kotlin this round-trips to a
 // `GeneratorField<*>?`; in Java it becomes `Optional<GeneratorField<?>>`.
