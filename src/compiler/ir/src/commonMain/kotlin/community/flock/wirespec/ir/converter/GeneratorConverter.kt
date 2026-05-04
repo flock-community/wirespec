@@ -97,6 +97,17 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(): Expression = when 
     )
 }
 
+private val INTEGER_REGEX = Regex("^-?[0-9]+$")
+private val DOUBLE_REGEX = Regex("^-?[0-9]+\\.[0-9]+([eE]-?[0-9]+)?$")
+
+internal fun coerceAnnotationValueLiteral(raw: String): Literal = when {
+    raw == "true" -> Literal(true, Type.Boolean)
+    raw == "false" -> Literal(false, Type.Boolean)
+    INTEGER_REGEX.matches(raw) -> Literal(raw.toLong(), Type.Integer())
+    DOUBLE_REGEX.matches(raw) -> Literal(raw.toDouble(), Type.Number())
+    else -> Literal(raw, Type.String)
+}
+
 // Produces an Optional<GeneratorField<?>>-shaped value: NullableOf(desc) when
 // primitive, NullableEmpty otherwise. In Kotlin this round-trips to a
 // `GeneratorField<*>?`; in Java it becomes `Optional<GeneratorField<?>>`.

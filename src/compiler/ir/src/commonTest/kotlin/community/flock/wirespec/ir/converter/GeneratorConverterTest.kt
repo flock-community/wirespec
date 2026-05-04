@@ -172,4 +172,33 @@ class GeneratorConverterTest {
         assertEquals(1, switches.size, "Union generator must contain one switch")
         assertEquals(2, switches[0].cases.size)
     }
+
+    @Test
+    fun testCoerceAnnotationValueLiteralBoolean() {
+        assertEquals(Literal(true, Type.Boolean), coerceAnnotationValueLiteral("true"))
+        assertEquals(Literal(false, Type.Boolean), coerceAnnotationValueLiteral("false"))
+    }
+
+    @Test
+    fun testCoerceAnnotationValueLiteralInteger() {
+        assertEquals(Literal(0L, Type.Integer()), coerceAnnotationValueLiteral("0"))
+        assertEquals(Literal(42L, Type.Integer()), coerceAnnotationValueLiteral("42"))
+        assertEquals(Literal(-7L, Type.Integer()), coerceAnnotationValueLiteral("-7"))
+    }
+
+    @Test
+    fun testCoerceAnnotationValueLiteralDouble() {
+        assertEquals(Literal(1.5, Type.Number()), coerceAnnotationValueLiteral("1.5"))
+        assertEquals(Literal(-3.14, Type.Number()), coerceAnnotationValueLiteral("-3.14"))
+        assertEquals(Literal(1.0e10, Type.Number()), coerceAnnotationValueLiteral("1.0e10"))
+    }
+
+    @Test
+    fun testCoerceAnnotationValueLiteralStringFallback() {
+        assertEquals(Literal("hello", Type.String), coerceAnnotationValueLiteral("hello"))
+        assertEquals(Literal("True", Type.String), coerceAnnotationValueLiteral("True"))
+        assertEquals(Literal("1e10", Type.String), coerceAnnotationValueLiteral("1e10"))
+        assertEquals(Literal("+1", Type.String), coerceAnnotationValueLiteral("+1"))
+        assertEquals(Literal("", Type.String), coerceAnnotationValueLiteral(""))
+    }
 }
