@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.converter
 
+import community.flock.wirespec.compiler.core.parse.ast.Annotation as AnnotationWirespec
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
@@ -13,6 +14,7 @@ import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
+import community.flock.wirespec.ir.core.LiteralMap
 import community.flock.wirespec.ir.core.MapExpression
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.NullLiteral
@@ -107,6 +109,32 @@ internal fun coerceAnnotationValueLiteral(raw: String): Literal = when {
     DOUBLE_REGEX.matches(raw) -> Literal(raw.toDouble(), Type.Number())
     else -> Literal(raw, Type.String)
 }
+
+private fun annotationValueToIrExpression(value: AnnotationWirespec.Value): Expression = when (value) {
+    is AnnotationWirespec.Value.Single -> coerceAnnotationValueLiteral(value.value)
+    is AnnotationWirespec.Value.Array -> LiteralList(
+        values = value.value.map { coerceAnnotationValueLiteral(it.value) },
+        type = Type.Any,
+    )
+    is AnnotationWirespec.Value.Dict -> LiteralMap(
+        values = value.value.associate { it.name to annotationValueToIrExpression(it.value) },
+        keyType = Type.String,
+        valueType = Type.Any,
+    )
+}
+
+internal fun AnnotationWirespec.toIrLiteralMap(): LiteralMap = LiteralMap(
+    values = mapOf(
+        "name" to Literal(name, Type.String),
+        "parameters" to LiteralMap(
+            values = parameters.associate { it.name to annotationValueToIrExpression(it.value) },
+            keyType = Type.String,
+            valueType = Type.Any,
+        ),
+    ),
+    keyType = Type.String,
+    valueType = Type.Any,
+)
 
 // Produces an Optional<GeneratorField<?>>-shaped value: NullableOf(desc) when
 // primitive, NullableEmpty otherwise. In Kotlin this round-trips to a

@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.converter
 
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -9,6 +10,8 @@ import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Function
 import community.flock.wirespec.ir.core.Literal
+import community.flock.wirespec.ir.core.LiteralList
+import community.flock.wirespec.ir.core.LiteralMap
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Statement
@@ -200,5 +203,87 @@ class GeneratorConverterTest {
         assertEquals(Literal("1e10", Type.String), coerceAnnotationValueLiteral("1e10"))
         assertEquals(Literal("+1", Type.String), coerceAnnotationValueLiteral("+1"))
         assertEquals(Literal("", Type.String), coerceAnnotationValueLiteral(""))
+    }
+
+    @Test
+    fun testAnnotationToIrLiteralMapBare() {
+        val ann = Annotation(name = "Deprecated", parameters = emptyList())
+        val ir = ann.toIrLiteralMap()
+        assertEquals(
+            LiteralMap(
+                values = mapOf(
+                    "name" to Literal("Deprecated", Type.String),
+                    "parameters" to LiteralMap(emptyMap(), Type.String, Type.Any),
+                ),
+                keyType = Type.String,
+                valueType = Type.Any,
+            ),
+            ir,
+        )
+    }
+
+    @Test
+    fun testAnnotationToIrLiteralMapMixedSingleParams() {
+        val ann = Annotation(
+            name = "Range",
+            parameters = listOf(
+                Annotation.Parameter("min", Annotation.Value.Single("0")),
+                Annotation.Parameter("max", Annotation.Value.Single("1.5")),
+                Annotation.Parameter("label", Annotation.Value.Single("hello")),
+                Annotation.Parameter("active", Annotation.Value.Single("true")),
+            ),
+        )
+        val ir = ann.toIrLiteralMap()
+        val params = (ir.values.getValue("parameters") as LiteralMap).values
+        assertEquals(Literal(0L, Type.Integer()), params.getValue("min"))
+        assertEquals(Literal(1.5, Type.Number()), params.getValue("max"))
+        assertEquals(Literal("hello", Type.String), params.getValue("label"))
+        assertEquals(Literal(true, Type.Boolean), params.getValue("active"))
+    }
+
+    @Test
+    fun testAnnotationToIrLiteralMapArrayParam() {
+        val ann = Annotation(
+            name = "Tags",
+            parameters = listOf(
+                Annotation.Parameter(
+                    name = "items",
+                    value = Annotation.Value.Array(
+                        listOf(Annotation.Value.Single("1"), Annotation.Value.Single("2")),
+                    ),
+                ),
+            ),
+        )
+        val ir = ann.toIrLiteralMap()
+        val items = (ir.values.getValue("parameters") as LiteralMap).values.getValue("items")
+        assertEquals(
+            LiteralList(
+                values = listOf(Literal(1L, Type.Integer()), Literal(2L, Type.Integer())),
+                type = Type.Any,
+            ),
+            items,
+        )
+    }
+
+    @Test
+    fun testAnnotationToIrLiteralMapDictParam() {
+        val ann = Annotation(
+            name = "Meta",
+            parameters = listOf(
+                Annotation.Parameter(
+                    name = "info",
+                    value = Annotation.Value.Dict(
+                        listOf(
+                            Annotation.Parameter("a", Annotation.Value.Single("1")),
+                            Annotation.Parameter("b", Annotation.Value.Single("hello")),
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val ir = ann.toIrLiteralMap()
+        val info = (ir.values.getValue("parameters") as LiteralMap).values.getValue("info") as LiteralMap
+        assertEquals(Literal(1L, Type.Integer()), info.values.getValue("a"))
+        assertEquals(Literal("hello", Type.String), info.values.getValue("b"))
     }
 }
