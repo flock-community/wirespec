@@ -286,4 +286,24 @@ class GeneratorConverterTest {
         assertEquals(Literal(1L, Type.Integer()), info.values.getValue("a"))
         assertEquals(Literal("hello", Type.String), info.values.getValue("b"))
     }
+
+    @Test
+    fun testAnnotationsToIrListEmpty() {
+        val ir = annotationsToIrList(emptyList())
+        assertEquals(LiteralList(values = emptyList(), type = Type.Any), ir)
+    }
+
+    @Test
+    fun testAnnotationsToIrListPreservesOrderAndDuplicates() {
+        val anns = listOf(
+            Annotation("Validate", listOf(Annotation.Parameter("min", Annotation.Value.Single("0")))),
+            Annotation("Validate", listOf(Annotation.Parameter("max", Annotation.Value.Single("100")))),
+        )
+        val ir = annotationsToIrList(anns)
+        assertEquals(2, ir.values.size)
+        val first = (ir.values[0] as LiteralMap).values.getValue("parameters") as LiteralMap
+        val second = (ir.values[1] as LiteralMap).values.getValue("parameters") as LiteralMap
+        assertEquals(Literal(0L, Type.Integer()), first.values.getValue("min"))
+        assertEquals(Literal(100L, Type.Integer()), second.values.getValue("max"))
+    }
 }
