@@ -254,6 +254,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
                 arg("path", list(string))
                 arg("type", reflect)
                 arg("field", type("GeneratorField", type("T")))
+                arg("annotations", list(dict(string, Type.Any)))
             }
         }
     }
