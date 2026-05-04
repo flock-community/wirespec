@@ -138,7 +138,7 @@ internal fun AnnotationWirespec.toIrLiteralMap(): LiteralMap = LiteralMap(
 
 internal fun annotationsToIrList(annotations: List<AnnotationWirespec>): LiteralList = LiteralList(
     values = annotations.map { it.toIrLiteralMap() },
-    type = Type.Any,
+    type = Type.Dict(Type.String, Type.Any),
 )
 
 // Produces an Optional<GeneratorField<?>>-shaped value: NullableOf(desc) when
@@ -153,7 +153,7 @@ internal fun generatorCallExpression(
     typeName: String,
     fieldNameStr: String,
     fieldDescriptor: Expression,
-    annotations: Expression = LiteralList(emptyList(), Type.Any),
+    annotations: Expression = LiteralList(emptyList(), Type.Dict(Type.String, Type.Any)),
 ): FunctionCall = FunctionCall(
     receiver = VariableReference(Name.of("generator")),
     name = Name.of("generate"),
@@ -291,7 +291,7 @@ private fun ReferenceWirespec.toGeneratorExpression(
                         Name.of("path") to indexedPath,
                         Name.of("type") to ClassReference(Type.Custom(typeName)),
                         Name.of("field") to inner.toFieldDescriptor(),
-                        Name.of("annotations") to LiteralList(emptyList(), Type.Any),
+                        Name.of("annotations") to LiteralList(emptyList(), Type.Dict(Type.String, Type.Any)),
                     ),
                 )
                 else -> NullLiteral

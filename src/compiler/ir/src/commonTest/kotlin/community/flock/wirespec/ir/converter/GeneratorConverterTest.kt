@@ -290,7 +290,7 @@ class GeneratorConverterTest {
     @Test
     fun testAnnotationsToIrListEmpty() {
         val ir = annotationsToIrList(emptyList())
-        assertEquals(LiteralList(values = emptyList(), type = Type.Any), ir)
+        assertEquals(LiteralList(values = emptyList(), type = Type.Dict(Type.String, Type.Any)), ir)
     }
 
     @Test
