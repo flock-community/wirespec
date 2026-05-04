@@ -80,6 +80,7 @@ class VerifyGeneratorTest : FunSpec({
                                 // Type.Reflect emits `KType` in Kotlin, `Type` in Java.
                                 arg("type", Type.Reflect)
                                 arg("field", Type.Custom("Wirespec.GeneratorField", listOf(Type.Custom("T"))))
+                                arg("annotations", Type.Array(Type.Dict(Type.String, Type.Any)))
                                 returnType(Type.Custom("T"))
                                 // `variable = f` introduces a narrowed pattern
                                 // binding: Kotlin emits `when(val f = field) { is X -> ... }`

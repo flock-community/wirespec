@@ -620,7 +620,7 @@ private class JavaEmitter(val file: File) {
         is MapExpression -> "${receiver.emitWithSubstitution(varName, replacement)}.stream().map(${variable.camelCase()} -> ${body.emitWithSubstitution(varName, replacement)}).toList()"
         is LiteralList -> {
             if (values.isEmpty()) {
-                "java.util.List.<${type.emit()}>of()"
+                "java.util.List.<${type.emitGenerics()}>of()"
             } else {
                 val list = values.map { it.emitWithSubstitution(varName, replacement) }.joinToString(", ")
                 "java.util.List.of($list)"
@@ -636,7 +636,7 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun LiteralList.emit(): String {
-        if (values.isEmpty()) return "java.util.List.<${type.emit()}>of()"
+        if (values.isEmpty()) return "java.util.List.<${type.emitGenerics()}>of()"
         val list = values.joinToString(", ") { it.emit() }
         return "java.util.List.of($list)"
     }
