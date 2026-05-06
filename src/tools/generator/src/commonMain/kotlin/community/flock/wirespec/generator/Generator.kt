@@ -63,23 +63,24 @@ private fun AST.generateType(def: Type, random: Random): JsonObject = random.nex
         .let(::JsonObject)
 }
 
+// Strip Perl-style `/.../flags` delimiters before handing the pattern to RgxGen.
+private fun stripRegexDelimiters(regex: String) = regex.substring(1, regex.length - 2)
+
 private fun generateRefined(def: Refined, random: Random) = when (val type = def.reference.type) {
     is Reference.Primitive.Type.String ->
         type.constraint
-            ?.let { randomRegex(it.value, random).let(::JsonPrimitive) }
+            ?.let { RgxGen.parse(stripRegexDelimiters(it.value)).generate(random).let(::JsonPrimitive) }
             ?: defaultGenerator(random)
     Reference.Primitive.Type.Boolean -> random.nextBoolean().let(::JsonPrimitive)
     Reference.Primitive.Type.Bytes -> defaultGenerator(random)
-    is Reference.Primitive.Type.Integer -> randomLong(
-        min = type.constraint?.min?.toLong() ?: 0,
-        max = type.constraint?.max?.toLong() ?: 0,
-        random = random,
+    is Reference.Primitive.Type.Integer -> random.nextLong(
+        type.constraint?.min?.toLong() ?: 0,
+        type.constraint?.max?.toLong() ?: 0,
     ).let(::JsonPrimitive)
 
-    is Reference.Primitive.Type.Number -> randomDouble(
-        min = type.constraint?.min?.toDouble() ?: 0.0,
-        max = type.constraint?.max?.toDouble() ?: 0.0,
-        random = random,
+    is Reference.Primitive.Type.Number -> random.nextDouble(
+        type.constraint?.min?.toDouble() ?: 0.0,
+        type.constraint?.max?.toDouble() ?: 0.0,
     ).let(::JsonPrimitive)
 }
 
