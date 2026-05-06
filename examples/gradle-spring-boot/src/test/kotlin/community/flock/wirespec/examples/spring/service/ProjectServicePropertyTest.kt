@@ -60,4 +60,17 @@ class ProjectServicePropertyTest {
             assertEquals(input.ownerId, fetched.ownerId)
         }
     }
+
+    @Test
+    fun `update replaces fields but keeps the id`() = runTest {
+        checkAll(config, projectInputArb, projectInputArb) { original, replacement ->
+            val created = service.create(original)
+            val updated = service.update(created.id, replacement)
+
+            assertNotNull(updated)
+            assertEquals(created.id, updated.id)
+            assertEquals(replacement.name, updated.name)
+            assertEquals(replacement.ownerId, updated.ownerId)
+        }
+    }
 }
