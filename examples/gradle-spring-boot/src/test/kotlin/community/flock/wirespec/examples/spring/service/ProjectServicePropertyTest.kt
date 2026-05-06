@@ -14,6 +14,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Property-based companion to [ProjectServiceTest]. Drives the IR-emitted
@@ -71,6 +73,16 @@ class ProjectServicePropertyTest {
             assertEquals(created.id, updated.id)
             assertEquals(replacement.name, updated.name)
             assertEquals(replacement.ownerId, updated.ownerId)
+        }
+    }
+
+    @Test
+    fun `delete then get returns null`() = runTest {
+        checkAll(config, projectInputArb) { input ->
+            val created = service.create(input)
+
+            assertTrue(service.delete(created.id))
+            assertNull(service.get(created.id))
         }
     }
 }
