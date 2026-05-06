@@ -23,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -191,6 +192,7 @@ object RustGenerator : Generator {
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val rustName = name.pascalCase()
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emit() }}>"
         val functions = elements.filterIsInstance<AstFunction>()
         val nonFunctions = elements.filterNot { it is AstFunction }
         val nestedContent = nonFunctions.joinToString("") { it.emit(indent, parents = parents + this, isStaticScope = false) }
@@ -203,7 +205,7 @@ object RustGenerator : Generator {
         }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
-            val structDef = "pub struct $rustName;\n\n".indentCode(indent)
+            val structDef = "pub struct $rustName$typeParamsStr;\n\n".indentCode(indent)
             return "$structDef$implBlock$nestedContent"
         }
 
@@ -211,7 +213,7 @@ object RustGenerator : Generator {
             val fieldName = it.name.snakeCase().sanitize()
             "pub $fieldName: ${it.type.emit()},".indentCode(1)
         }
-        val structDef = "pub struct $rustName {\n$fieldsStr\n}\n\n".indentCode(indent)
+        val structDef = "pub struct $rustName$typeParamsStr {\n$fieldsStr\n}\n\n".indentCode(indent)
 
         val customConstructors = constructors.joinToString("") { it.emit(rustName, fields, indent) }
 
@@ -289,6 +291,7 @@ object RustGenerator : Generator {
         is Type.Nullable -> "Option<${type.emit()}>"
         is Type.IntegerLiteral -> "i32"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "Box<dyn Fn(${parameterTypes.joinToString(", ") { it.emit() }}) -> ${returnType.emit()}>"
     }
 
     private fun emitArrayIndex(receiver: Expression, index: Expression, caseSensitive: Boolean = true): String = when {
@@ -400,7 +403,7 @@ object RustGenerator : Generator {
         is NullCheck, is NullableMap, is NullableOf, is NullableGet,
         is Constraint.RegexMatch, is Constraint.BoundCheck,
         is IfExpression, is MapExpression, is FlatMapIndexed,
-        is ListConcat, is StringTemplate,
+        is ListConcat, is StringTemplate, is Lambda,
         -> "${emit()};\n".indentCode(indent)
         is NotExpression -> "!${expression.emit()};\n".indentCode(indent)
     }
@@ -505,6 +508,10 @@ object RustGenerator : Generator {
             } else {
                 "format!(\"$formatStr\", ${args.joinToString(", ")})"
             }
+        }
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.snakeCase().sanitize() }
+            "Box::new(|$params| ${body.emit()})"
         }
     }
 

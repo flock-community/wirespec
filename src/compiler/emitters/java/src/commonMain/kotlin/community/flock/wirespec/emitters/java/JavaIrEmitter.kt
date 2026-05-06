@@ -149,7 +149,7 @@ open class JavaIrEmitter(
 
     override fun emitGenerator(definition: Definition, module: Module): File? {
         val generatorFile = when (definition) {
-            is AstType -> definition.convertToGenerator()
+            is AstType -> definition.convertToGenerator(module)
             is Enum -> definition.convertToGenerator()
             is Refined -> definition.convertToGenerator()
             is Union -> definition.convertToGenerator()

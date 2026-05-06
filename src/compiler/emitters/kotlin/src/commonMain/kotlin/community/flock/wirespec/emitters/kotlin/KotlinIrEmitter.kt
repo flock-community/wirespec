@@ -130,7 +130,7 @@ open class KotlinIrEmitter(
 
     override fun emitGenerator(definition: Definition, module: Module): LanguageFile? {
         val generatorFile = when (definition) {
-            is Type -> definition.convertToGenerator()
+            is Type -> definition.convertToGenerator(module)
             is Enum -> definition.convertToGenerator()
             is Refined -> definition.convertToGenerator()
             is Union -> definition.convertToGenerator()

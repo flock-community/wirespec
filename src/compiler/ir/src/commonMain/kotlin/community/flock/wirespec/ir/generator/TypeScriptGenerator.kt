@@ -23,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -169,12 +170,13 @@ object TypeScriptGenerator : Generator {
         val nestedContent = nonStructElements.joinToString("") { it.emit(indent) }
         val closingBrace = "}".indentCode(indent)
         val pascalName = name.pascalCase()
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emit() }}>"
         val typeStr = if (fields.isEmpty() && nonStructElements.isEmpty()) {
-            "export type $pascalName = {}\n".indentCode(indent)
+            "export type $pascalName$typeParamsStr = {}\n".indentCode(indent)
         } else if (fields.isEmpty()) {
-            "export type $pascalName = {}\n".indentCode(indent) + nestedContent
+            "export type $pascalName$typeParamsStr = {}\n".indentCode(indent) + nestedContent
         } else {
-            "export type $pascalName = {\n$fieldsContent$closingBrace\n".indentCode(indent) + nestedContent
+            "export type $pascalName$typeParamsStr = {\n$fieldsContent$closingBrace\n".indentCode(indent) + nestedContent
         }
         val constructorFunctions = constructors.joinToString("") { constructor ->
             emitStructConstructor(pascalName, constructor, indent)
@@ -455,6 +457,10 @@ object TypeScriptGenerator : Generator {
         is Type.Nullable -> "${type.emit()} | undefined"
         is Type.IntegerLiteral -> value.toString()
         is Type.StringLiteral -> "\"$value\""
+        is Type.Function -> {
+            val params = parameterTypes.mapIndexed { i, t -> "p$i: ${t.emit()}" }.joinToString(", ")
+            "($params) => ${returnType.emit()}"
+        }
     }
 
     private fun emitConstructorCall(type: Type, namedArguments: Map<Name, Expression>): String {
@@ -547,6 +553,7 @@ object TypeScriptGenerator : Generator {
         is FlatMapIndexed -> "${emit()};\n".indentCode(indent)
         is ListConcat -> "${emit()};\n".indentCode(indent)
         is StringTemplate -> "${emit()};\n".indentCode(indent)
+        is Lambda -> "${emit()};\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toTypeScript(): String = when (this) {
@@ -642,6 +649,10 @@ object TypeScriptGenerator : Generator {
                 is StringTemplate.Part.Expr -> "\${${it.expression.emit()}}"
             }
         }}`"
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { "${it.name.camelCase()}: ${it.type.emit()}" }
+            "($params) => ${body.emit()}"
+        }
     }
 
     private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {

@@ -347,7 +347,7 @@ open class RustIrEmitter(
 
     override fun emitGenerator(definition: Definition, module: Module): File? {
         val generatorFile = when (definition) {
-            is Type -> definition.convertToGenerator()
+            is Type -> definition.convertToGenerator(module)
             is Enum -> definition.convertToGenerator()
             is Refined -> definition.convertToGenerator()
             is Union -> definition.convertToGenerator()

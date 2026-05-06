@@ -241,6 +241,7 @@ object RustTransform {
         }
         is Type.IntegerLiteral -> "i32"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "Box<dyn Fn(${parameterTypes.joinToString(", ") { it.rustName() }}) -> ${returnType.rustName()}>"
     }
 
     /**

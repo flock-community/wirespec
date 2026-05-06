@@ -70,6 +70,7 @@ sealed interface Type {
     data class Nullable(val type: Type) : Type
     data class IntegerLiteral(val value: Int) : Type
     data class StringLiteral(val value: kotlin.String) : Type
+    data class Function(val parameterTypes: List<Type>, val returnType: Type) : Type
 }
 
 sealed interface Element
@@ -104,6 +105,7 @@ data class Struct(
     val constructors: List<Constructor> = emptyList(),
     val interfaces: List<Type.Custom> = emptyList(),
     override val elements: List<Element> = emptyList(),
+    val typeParameters: List<TypeParameter> = emptyList(),
 ) : HasName,
     HasElements
 
@@ -347,6 +349,13 @@ data class FlatMapIndexed(
 
 // Concatenate multiple lists
 data class ListConcat(val lists: List<Expression>) :
+    Statement,
+    Expression
+
+// Lambda / thunk - represents a deferred expression with zero or more parameters.
+// Kotlin: { p -> body }, Java: (p) -> body, TypeScript: (p: T) => body,
+// Python: lambda p: body, Rust: Box::new(|p| body), Scala: (p) => body
+data class Lambda(val parameters: List<Parameter>, val body: Expression) :
     Statement,
     Expression
 

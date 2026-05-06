@@ -39,8 +39,10 @@ import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.Case
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Transformer
@@ -134,6 +136,13 @@ open class TypeScriptIrEmitter : IrEmitter {
                     if (namespace.name == Name.of("Wirespec")) listOf(RawElement(api))
                     else emptyList()
                 }
+                matchingElements<Struct> { struct ->
+                    GENERATOR_FIELD_KINDS[struct.name.value()]?.let { kind ->
+                        struct.copy(
+                            fields = listOf(Field(Name.of("kind"), LanguageType.StringLiteral(kind))) + struct.fields,
+                        )
+                    } ?: struct
+                }
             }
     }
 
@@ -164,7 +173,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emitGenerator(definition: Definition, module: Module): File? {
         val generatorFile = when (definition) {
-            is AstType -> definition.convertToGenerator()
+            is AstType -> definition.convertToGenerator(module)
             is AstEnum -> definition.convertToGenerator()
             is Refined -> definition.convertToGenerator().transform {
                 expression { expr, t ->
@@ -175,7 +184,21 @@ open class TypeScriptIrEmitter : IrEmitter {
             }
             is Union -> definition.convertToGenerator()
             else -> return null
-        }.sanitizeNames(sanitizationConfig)
+        }.sanitizeNames(sanitizationConfig).transform {
+            expression { expr, t ->
+                if (expr is ConstructorStatement) {
+                    val typeName = (expr.type as? LanguageType.Custom)?.name?.removePrefix("Wirespec.")
+                    val kind = typeName?.let { GENERATOR_FIELD_KINDS[it] }
+                    if (kind != null) {
+                        ConstructorStatement(
+                            type = expr.type,
+                            namedArguments = mapOf(Name.of("kind") to Literal(kind, LanguageType.String)) +
+                                expr.namedArguments.mapValues { (_, v) -> t.transformExpression(v) },
+                        )
+                    } else expr.transformChildren(t)
+                } else expr.transformChildren(t)
+            }
+        }
 
         val generatorOwnName = "${definition.identifier.value}Generator"
         val customNames = generatorFile.collectCustomTypeNames()
@@ -385,6 +408,13 @@ open class TypeScriptIrEmitter : IrEmitter {
     private data class EndpointParam(val name: String, val type: String, val nullable: Boolean)
 
     companion object : Keywords {
+        private val GENERATOR_FIELD_KINDS: Map<String, String> = listOf(
+            "GeneratorFieldString", "GeneratorFieldInteger", "GeneratorFieldNumber",
+            "GeneratorFieldBoolean", "GeneratorFieldBytes", "GeneratorFieldEnum",
+            "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
+            "GeneratorFieldShape", "GeneratorFieldDict",
+        ).associateWith { it.removePrefix("GeneratorField").lowercase() }
+
         override val reservedKeywords = setOf(
             "break", "case", "catch", "continue", "debugger",
             "default", "delete", "do", "else", "finally",

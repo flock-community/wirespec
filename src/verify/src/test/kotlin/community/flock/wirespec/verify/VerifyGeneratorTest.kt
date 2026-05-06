@@ -22,7 +22,7 @@ import community.flock.wirespec.ir.core.file
 import io.kotest.core.spec.style.FunSpec
 
 /**
- * Verifies that the generated `PersonGenerator.generate(path, generator)` function
+ * Verifies that the generated `PersonGenerator.generate(generator, path)` function
  * produces a populated Person when invoked with a deterministic Generator callback.
  *
  * SCOPE: Kotlin and Java. Rust/Scala/Python/TypeScript are deferred because their
@@ -67,7 +67,7 @@ class VerifyGeneratorTest : FunSpec({
                         // for every GeneratorField variant. The generated
                         // PersonGenerator calls into this for each primitive field;
                         // for nested models (Address, Color, UUID) it delegates to
-                        // the corresponding *Generator.generate(path, generator).
+                        // the corresponding *Generator.generate(generator, path).
                         //
                         // Emits as `object Generator : Wirespec.Generator` (Kotlin)
                         // / `record Generator() implements Wirespec.Generator` (Java).
@@ -75,12 +75,11 @@ class VerifyGeneratorTest : FunSpec({
                         struct("Generator") {
                             implements(Type.Custom("Wirespec.Generator"))
                             function("generate", isOverride = true) {
-                                typeParam(Type.Custom("T"))
+                                typeParam(Type.Custom("T"), Type.Nullable(Type.Any))
                                 arg("path", Type.Array(Type.String))
                                 // Type.Reflect emits `KType` in Kotlin, `Type` in Java.
                                 arg("type", Type.Reflect)
                                 arg("field", Type.Custom("Wirespec.GeneratorField", listOf(Type.Custom("T"))))
-                                arg("annotations", Type.Array(Type.Dict(Type.String, Type.Any)))
                                 returnType(Type.Custom("T"))
                                 // `variable = f` introduces a narrowed pattern
                                 // binding: Kotlin emits `when(val f = field) { is X -> ... }`
@@ -114,9 +113,29 @@ class VerifyGeneratorTest : FunSpec({
                                                     index = Literal(0, Type.Integer()),
                                                 ),
                                             ),
-                                            typeCase("Wirespec.GeneratorFieldArray", Literal(2, Type.Integer())),
-                                            typeCase("Wirespec.GeneratorFieldNullable", Literal(false, Type.Boolean)),
-                                            typeCase("Wirespec.GeneratorFieldDict", Literal(1, Type.Integer())),
+                                            // Array/Dict/Nullable/Shape all carry a `(path) -> T` thunk;
+                                            // Kotlin invokes the function value with `f.generate(path)`,
+                                            // Java does `f.generate().apply(path)` (Function<List<String>, T>).
+                                            typeCase(
+                                                "Wirespec.GeneratorFieldArray",
+                                                RawExpression(if (isJava) "java.util.List.of(f.generate().apply(path))" else "listOf(f.generate(path))"),
+                                                generics = listOf(Type.Wildcard),
+                                            ),
+                                            typeCase(
+                                                "Wirespec.GeneratorFieldNullable",
+                                                RawExpression(if (isJava) "f.generate().apply(path)" else "f.generate(path)"),
+                                                generics = listOf(Type.Wildcard),
+                                            ),
+                                            typeCase(
+                                                "Wirespec.GeneratorFieldShape",
+                                                RawExpression(if (isJava) "f.generate().apply(path)" else "f.generate(path)"),
+                                                generics = listOf(Type.Wildcard),
+                                            ),
+                                            typeCase(
+                                                "Wirespec.GeneratorFieldDict",
+                                                RawExpression(if (isJava) "java.util.Map.of(\"a\", f.generate().apply(path))" else "mapOf(\"a\" to f.generate(path))"),
+                                                generics = listOf(Type.Wildcard),
+                                            ),
                                         ),
                                     ),
                                 )
@@ -130,8 +149,8 @@ class VerifyGeneratorTest : FunSpec({
                         assign(
                             "person",
                             functionCall("generate", receiver = RawExpression("PersonGenerator")) {
-                                arg("path", listOf(listOf(literal("Person")), string))
                                 arg("generator", generatorRef)
+                                arg("path", listOf(listOf(literal("Person")), string))
                             },
                         )
 
@@ -159,8 +178,9 @@ class VerifyGeneratorTest : FunSpec({
                             "Person.age should be populated by the generator",
                         )
 
-                        // Array fields produce 2 elements (the callback returns 2 for
-                        // GeneratorFieldArray, and PersonGenerator iterates that count).
+                        // Array fields produce 1 element by default — the IR builds a
+                        // 1-element list inside the GeneratorFieldArray thunk, and the
+                        // stub Generator just invokes that thunk.
                         assertThat(
                             BinaryOp(
                                 FieldCall(
@@ -168,13 +188,14 @@ class VerifyGeneratorTest : FunSpec({
                                     Name.of("size"),
                                 ),
                                 BinaryOp.Operator.EQUALS,
-                                Literal(2, Type.Integer()),
+                                Literal(1, Type.Integer()),
                             ),
-                            "Person.addresses should contain 2 generated Address elements",
+                            "Person.addresses should contain 1 generated Address element",
                         )
 
-                        // Nullable fields: callback returns false for GeneratorFieldNullable,
-                        // meaning "not null", so nickname holds "test-string".
+                        // Nullable fields: the callback invokes `f.generate()` for
+                        // GeneratorFieldNullable, which in turn calls the underlying
+                        // GeneratorFieldString case and returns "test-string".
                         // Kotlin: `String?`, Java: `Optional<String>` — NullableGet
                         // emits `!!` / `.get()` to extract the underlying value.
                         assertThat(
@@ -198,8 +219,8 @@ class VerifyGeneratorTest : FunSpec({
 // in `Cast(..., T)` so each branch emits `<value> as T`, satisfying the
 // callback's generic return type. `value = RawExpression("")` is ignored for
 // pattern-match cases (only `type` and `body` are consumed).
-private fun typeCase(typeName: String, bodyExpr: Expression): Case = Case(
+private fun typeCase(typeName: String, bodyExpr: Expression, generics: List<Type> = emptyList()): Case = Case(
     value = RawExpression(""),
     body = listOf(Cast(bodyExpr, Type.Custom("T"))),
-    type = Type.Custom(typeName),
+    type = Type.Custom(typeName, generics),
 )

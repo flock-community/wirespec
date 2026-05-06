@@ -23,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -203,6 +204,7 @@ private class JavaEmitter(val file: File) {
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         val implStr = if (interfaces.isEmpty()) "" else " implements ${interfaces.map { it.emitGenerics() }.distinct().joinToString(", ")}"
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emitGenerics() }}>"
 
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
         val typeModifier = when {
@@ -217,7 +219,7 @@ private class JavaEmitter(val file: File) {
         val params = fields.joinToString(",\n") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
         val paramsStr = if (fields.isEmpty()) " ()" else " (\n$params\n)"
 
-        return "$typeModifier ${name.pascalCase()}$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
+        return "$typeModifier ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
     }
 
     private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int, isRecord: Boolean, modifier: String = "public"): String {
@@ -268,8 +270,15 @@ private class JavaEmitter(val file: File) {
 
     private fun TypeParameter.emit(): String {
         val typeStr = type.emitGenerics()
-        val bounds = extends.joinNonEmpty(" & ", " extends ") { it.emitGenerics() }
-        return "$typeStr$bounds"
+        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — Java has no
+        // analogue to Kotlin's nullable upper bound, and `T extends Optional<Object>` excludes
+        // every primitive wrapper so primitive type arguments fail to compile.
+        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
+        return if (effectiveExtends.isEmpty()) {
+            typeStr
+        } else {
+            "$typeStr extends ${effectiveExtends.joinToString(" & ") { it.emitGenerics() }}"
+        }
     }
 
     private fun Type.emit(): String = when (this) {
@@ -294,6 +303,12 @@ private class JavaEmitter(val file: File) {
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
         is Type.IntegerLiteral -> "Integer"
         is Type.StringLiteral -> "String"
+        is Type.Function -> when (parameterTypes.size) {
+            0 -> "java.util.function.Supplier<${returnType.emitGenerics()}>"
+            1 -> "java.util.function.Function<${parameterTypes[0].emitGenerics()}, ${returnType.emitGenerics()}>"
+            2 -> "java.util.function.BiFunction<${parameterTypes[0].emitGenerics()}, ${parameterTypes[1].emitGenerics()}, ${returnType.emitGenerics()}>"
+            else -> error("Java emitter only supports 0-, 1-, or 2-arg function types, got ${parameterTypes.size}")
+        }
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -307,6 +322,7 @@ private class JavaEmitter(val file: File) {
             }
         }
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
+        is Type.Function -> emit()
         else -> emit()
     }
 
@@ -429,6 +445,7 @@ private class JavaEmitter(val file: File) {
         is FlatMapIndexed -> "${emit()};\n".indentCode(indent)
         is ListConcat -> "${emit()};\n".indentCode(indent)
         is StringTemplate -> "${emit()};\n".indentCode(indent)
+        is Lambda -> "${emit()};\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toJava(): String = when (this) {
@@ -544,6 +561,10 @@ private class JavaEmitter(val file: File) {
                 is StringTemplate.Part.Expr -> it.expression.emit()
             }
         }
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            "($params) -> ${body.emit()}"
+        }
     }
 
     private fun Expression.emitWithSubstitution(varName: Name, replacement: String): String = when (this) {
@@ -601,13 +622,15 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun String.escapeJavaString(): String = buildString {
-        for (c in this@escapeJavaString) when (c) {
-            '\\' -> append("\\\\")
-            '"' -> append("\\\"")
-            '\n' -> append("\\n")
-            '\r' -> append("\\r")
-            '\t' -> append("\\t")
-            else -> append(c)
+        for (c in this@escapeJavaString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
         }
     }
 

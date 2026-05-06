@@ -217,30 +217,34 @@ class TypeScriptIrEmitterTest {
             |})
             |
             |import {Wirespec} from '../Wirespec'
+            |import {PotentialTodoDto} from '../model/PotentialTodoDto'
             |export namespace PotentialTodoDtoGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): PotentialTodoDto {
-            |    return { name: generator.generate((path + 'name'), "PotentialTodoDto", { regex: undefined }), done: generator.generate((path + 'done'), "PotentialTodoDto", {}) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): PotentialTodoDto {
+            |    return { name: generator.generate([...path, ...['name']], "PotentialTodoDto", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), done: generator.generate([...path, ...['done']], "PotentialTodoDto", { kind: 'boolean', annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Token} from '../model/Token'
             |export namespace TokenGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Token {
-            |    return { iss: generator.generate((path + 'iss'), "Token", { regex: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Token {
+            |    return { iss: generator.generate([...path, ...['iss']], "Token", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TodoDto} from '../model/TodoDto'
             |export namespace TodoDtoGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TodoDto {
-            |    return { id: generator.generate((path + 'id'), "TodoDto", { regex: undefined }), name: generator.generate((path + 'name'), "TodoDto", { regex: undefined }), done: generator.generate((path + 'done'), "TodoDto", {}) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TodoDto {
+            |    return { id: generator.generate([...path, ...['id']], "TodoDto", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), name: generator.generate([...path, ...['name']], "TodoDto", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), done: generator.generate([...path, ...['done']], "TodoDto", { kind: 'boolean', annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Error} from '../model/Error'
             |export namespace ErrorGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Error {
-            |    return { code: generator.generate((path + 'code'), "Error", { min: undefined, max: undefined }), description: generator.generate((path + 'description'), "Error", { regex: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Error {
+            |    return { code: generator.generate([...path, ...['code']], "Error", { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), description: generator.generate([...path, ...['description']], "Error", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
@@ -281,9 +285,10 @@ class TypeScriptIrEmitterTest {
             |export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE" | "UnitedKingdom" | "-1" | "0" | "10" | "-999" | "88"
             |
             |import {Wirespec} from '../Wirespec'
+            |import {MyAwesomeEnum} from '../model/MyAwesomeEnum'
             |export namespace MyAwesomeEnumGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): MyAwesomeEnum {
-            |    return MyAwesomeEnum.valueOf(generator.generate((path + 'value'), "MyAwesomeEnum", { values: ['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'] }));
+            |  export function generate(generator: Wirespec.Generator, path: string[]): MyAwesomeEnum {
+            |    return MyAwesomeEnum.valueOf(generator.generate([...path, ...['value']], "MyAwesomeEnum", { kind: 'enum', values: ['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'], annotations: [] as Record<string, any>[] }));
             |  }
             |}
             |
@@ -401,9 +406,10 @@ class TypeScriptIrEmitterTest {
             |})
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TodoDto} from '../model/TodoDto'
             |export namespace TodoDtoGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TodoDto {
-            |    return { description: generator.generate((path + 'description'), "TodoDto", { regex: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TodoDto {
+            |    return { description: generator.generate([...path, ...['description']], "TodoDto", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
@@ -474,72 +480,82 @@ class TypeScriptIrEmitterTest {
             |  -0.2 <= value && value <= 0.5;
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TodoId} from '../model/TodoId'
             |export namespace TodoIdGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TodoId {
-            |    return { value: generator.generate((path + 'value'), "TodoId", { regex: '^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}' }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TodoId {
+            |    return generator.generate([...path, ...['value']], "TodoId", { kind: 'string', regex: '^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}', annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TodoNoRegex} from '../model/TodoNoRegex'
             |export namespace TodoNoRegexGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TodoNoRegex {
-            |    return { value: generator.generate((path + 'value'), "TodoNoRegex", { regex: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TodoNoRegex {
+            |    return generator.generate([...path, ...['value']], "TodoNoRegex", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestInt} from '../model/TestInt'
             |export namespace TestIntGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestInt {
-            |    return { value: generator.generate((path + 'value'), "TestInt", { min: undefined, max: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestInt {
+            |    return generator.generate([...path, ...['value']], "TestInt", { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestInt0} from '../model/TestInt0'
             |export namespace TestInt0Generator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestInt0 {
-            |    return { value: generator.generate((path + 'value'), "TestInt0", { min: undefined, max: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestInt0 {
+            |    return generator.generate([...path, ...['value']], "TestInt0", { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestInt1} from '../model/TestInt1'
             |export namespace TestInt1Generator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestInt1 {
-            |    return { value: generator.generate((path + 'value'), "TestInt1", { min: 0, max: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestInt1 {
+            |    return generator.generate([...path, ...['value']], "TestInt1", { kind: 'integer', min: 0, max: undefined, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestInt2} from '../model/TestInt2'
             |export namespace TestInt2Generator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestInt2 {
-            |    return { value: generator.generate((path + 'value'), "TestInt2", { min: 1, max: 3 }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestInt2 {
+            |    return generator.generate([...path, ...['value']], "TestInt2", { kind: 'integer', min: 1, max: 3, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestNum} from '../model/TestNum'
             |export namespace TestNumGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestNum {
-            |    return { value: generator.generate((path + 'value'), "TestNum", { min: undefined, max: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestNum {
+            |    return generator.generate([...path, ...['value']], "TestNum", { kind: 'number', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestNum0} from '../model/TestNum0'
             |export namespace TestNum0Generator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestNum0 {
-            |    return { value: generator.generate((path + 'value'), "TestNum0", { min: undefined, max: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestNum0 {
+            |    return generator.generate([...path, ...['value']], "TestNum0", { kind: 'number', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestNum1} from '../model/TestNum1'
             |export namespace TestNum1Generator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestNum1 {
-            |    return { value: generator.generate((path + 'value'), "TestNum1", { min: undefined, max: 0.5 }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestNum1 {
+            |    return generator.generate([...path, ...['value']], "TestNum1", { kind: 'number', min: undefined, max: 0.5, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {TestNum2} from '../model/TestNum2'
             |export namespace TestNum2Generator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): TestNum2 {
-            |    return { value: generator.generate((path + 'value'), "TestNum2", { min: -0.2, max: 0.5 }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): TestNum2 {
+            |    return generator.generate([...path, ...['value']], "TestNum2", { kind: 'number', min: -0.2, max: 0.5, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
@@ -594,15 +610,18 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {UserAccount} from '../model/UserAccount'
+            |import {UserAccountPasswordGenerator} from './UserAccountPasswordGenerator'
+            |import {UserAccountTokenGenerator} from './UserAccountTokenGenerator'
             |export namespace UserAccountGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): UserAccount {
-            |    const variant = generator.generate((path + 'variant'), "UserAccount", { variants: ['UserAccountPassword', 'UserAccountToken'] });
+            |  export function generate(generator: Wirespec.Generator, path: string[]): UserAccount {
+            |    const variant = generator.generate([...path, ...['variant']], "UserAccount", { kind: 'union', variants: ['UserAccountPassword', 'UserAccountToken'], annotations: [] as Record<string, any>[] });
             |    switch (variant) {
             |      case 'UserAccountPassword':
-            |        return UserAccountPasswordGenerator.generate((path + 'UserAccountPassword'), generator);
+            |        return UserAccountPasswordGenerator.generate(generator, [...path, ...['UserAccountPassword']]);
             |        break;
             |      case 'UserAccountToken':
-            |        return UserAccountTokenGenerator.generate((path + 'UserAccountToken'), generator);
+            |        return UserAccountTokenGenerator.generate(generator, [...path, ...['UserAccountToken']]);
             |        break;
             |    }
             |    throw new Error('Unknown variant');
@@ -610,23 +629,27 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {UserAccountPassword} from '../model/UserAccountPassword'
             |export namespace UserAccountPasswordGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): UserAccountPassword {
-            |    return { username: generator.generate((path + 'username'), "UserAccountPassword", { regex: undefined }), password: generator.generate((path + 'password'), "UserAccountPassword", { regex: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): UserAccountPassword {
+            |    return { username: generator.generate([...path, ...['username']], "UserAccountPassword", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), password: generator.generate([...path, ...['password']], "UserAccountPassword", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {UserAccountToken} from '../model/UserAccountToken'
             |export namespace UserAccountTokenGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): UserAccountToken {
-            |    return { token: generator.generate((path + 'token'), "UserAccountToken", { regex: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): UserAccountToken {
+            |    return { token: generator.generate([...path, ...['token']], "UserAccountToken", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {User} from '../model/User'
+            |import {UserAccountGenerator} from './UserAccountGenerator'
             |export namespace UserGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): User {
-            |    return { username: generator.generate((path + 'username'), "User", { regex: undefined }), account: UserAccountGenerator.generate((path + 'account'), generator) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): User {
+            |    return { username: generator.generate([...path, ...['username']], "User", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), account: generator.generate([...path, ...['account']], "User", { kind: 'shape', annotations: {}, generate: (p0: string[]) => UserAccountGenerator.generate(generator, p0) }) };
             |  }
             |}
             |
@@ -656,9 +679,10 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Request} from '../model/Request'
             |export namespace RequestGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Request {
-            |    return { type: generator.generate((path + 'type'), "Request", { regex: undefined }), url: generator.generate((path + 'url'), "Request", { regex: undefined }), BODY_TYPE: (generator.generate((path + 'BODY_TYPE'), "Request", { inner: { regex: undefined } }) ? undefined : generator.generate((path + 'BODY_TYPE'), "Request", { regex: undefined })), params: generator.generate((path + 'params'), "Request", { inner: { regex: undefined } }), headers: generator.generate((path + 'headers'), "Request", { key: undefined, value: { regex: undefined } }), body: (generator.generate((path + 'body'), "Request", { inner: { key: undefined, value: undefined } }) ? undefined : generator.generate((path + 'body'), "Request", { key: undefined, value: undefined })) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Request {
+            |    return { type: generator.generate([...path, ...['type']], "Request", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), url: generator.generate([...path, ...['url']], "Request", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), BODY_TYPE: generator.generate([...path, ...['BODY_TYPE']], "Request", { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, "Request", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), params: generator.generate([...path, ...['params']], "Request", { kind: 'array', generate: (p0: string[]) => generator.generate(p0, "Request", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), headers: generator.generate([...path, ...['headers']], "Request", { kind: 'dict', generate: (p0: string[]) => generator.generate(p0, "Request", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), body: generator.generate([...path, ...['body']], "Request", { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, "Request", { kind: 'dict', generate: (p1: string[]) => generator.generate(p1, "Request", { kind: 'array', generate: (p2: string[]) => generator.generate(p2, "Request", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }) }) }) };
             |  }
             |}
             |
@@ -701,23 +725,28 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {DutchPostalCode} from '../model/DutchPostalCode'
             |export namespace DutchPostalCodeGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): DutchPostalCode {
-            |    return { value: generator.generate((path + 'value'), "DutchPostalCode", { regex: '^([0-9]{4}[A-Z]{2})${'$'}' }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): DutchPostalCode {
+            |    return generator.generate([...path, ...['value']], "DutchPostalCode", { kind: 'string', regex: '^([0-9]{4}[A-Z]{2})${'$'}', annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Address} from '../model/Address'
+            |import {DutchPostalCodeGenerator} from './DutchPostalCodeGenerator'
             |export namespace AddressGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Address {
-            |    return { street: generator.generate((path + 'street'), "Address", { regex: undefined }), houseNumber: generator.generate((path + 'houseNumber'), "Address", { min: undefined, max: undefined }), postalCode: DutchPostalCodeGenerator.generate((path + 'postalCode'), generator) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Address {
+            |    return { street: generator.generate([...path, ...['street']], "Address", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), houseNumber: generator.generate([...path, ...['houseNumber']], "Address", { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), postalCode: generator.generate([...path, ...['postalCode']], "Address", { kind: 'shape', annotations: {}, generate: (p0: string[]) => DutchPostalCodeGenerator.generate(generator, p0) }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Person} from '../model/Person'
+            |import {AddressGenerator} from './AddressGenerator'
             |export namespace PersonGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Person {
-            |    return { name: generator.generate((path + 'name'), "Person", { regex: undefined }), address: AddressGenerator.generate((path + 'address'), generator), tags: generator.generate((path + 'tags'), "Person", { inner: { regex: undefined } }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Person {
+            |    return { name: generator.generate([...path, ...['name']], "Person", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), address: generator.generate([...path, ...['address']], "Person", { kind: 'shape', annotations: { 'street': [] as Record<string, any>[], 'houseNumber': [] as Record<string, any>[], 'postalCode': [] as Record<string, any>[] }, generate: (p0: string[]) => AddressGenerator.generate(generator, p0) }), tags: generator.generate([...path, ...['tags']], "Person", { kind: 'array', generate: (p0: string[]) => generator.generate(p0, "Person", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }) };
             |  }
             |}
             |
@@ -805,58 +834,73 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Email} from '../model/Email'
             |export namespace EmailGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Email {
-            |    return { value: generator.generate((path + 'value'), "Email", { regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}' }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Email {
+            |    return generator.generate([...path, ...['value']], "Email", { kind: 'string', regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}', annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {PhoneNumber} from '../model/PhoneNumber'
             |export namespace PhoneNumberGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): PhoneNumber {
-            |    return { value: generator.generate((path + 'value'), "PhoneNumber", { regex: '^\+[1-9]\d{1,14}${'$'}' }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): PhoneNumber {
+            |    return generator.generate([...path, ...['value']], "PhoneNumber", { kind: 'string', regex: '^\+[1-9]\d{1,14}${'$'}', annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Tag} from '../model/Tag'
             |export namespace TagGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Tag {
-            |    return { value: generator.generate((path + 'value'), "Tag", { regex: '^[a-z][a-z0-9-]{0,19}${'$'}' }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Tag {
+            |    return generator.generate([...path, ...['value']], "Tag", { kind: 'string', regex: '^[a-z][a-z0-9-]{0,19}${'$'}', annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {EmployeeAge} from '../model/EmployeeAge'
             |export namespace EmployeeAgeGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): EmployeeAge {
-            |    return { value: generator.generate((path + 'value'), "EmployeeAge", { min: 18, max: 65 }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): EmployeeAge {
+            |    return generator.generate([...path, ...['value']], "EmployeeAge", { kind: 'integer', min: 18, max: 65, annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {ContactInfo} from '../model/ContactInfo'
+            |import {EmailGenerator} from './EmailGenerator'
+            |import {PhoneNumberGenerator} from './PhoneNumberGenerator'
             |export namespace ContactInfoGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): ContactInfo {
-            |    return { email: EmailGenerator.generate((path + 'email'), generator), phone: (generator.generate((path + 'phone'), "ContactInfo", { inner: undefined }) ? undefined : PhoneNumberGenerator.generate((path + 'phone'), generator)) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): ContactInfo {
+            |    return { email: generator.generate([...path, ...['email']], "ContactInfo", { kind: 'shape', annotations: {}, generate: (p0: string[]) => EmailGenerator.generate(generator, p0) }), phone: generator.generate([...path, ...['phone']], "ContactInfo", { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, "ContactInfo", { kind: 'shape', annotations: {}, generate: (p1: string[]) => PhoneNumberGenerator.generate(generator, p1) }) }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Employee} from '../model/Employee'
+            |import {EmployeeAgeGenerator} from './EmployeeAgeGenerator'
+            |import {ContactInfoGenerator} from './ContactInfoGenerator'
+            |import {TagGenerator} from './TagGenerator'
             |export namespace EmployeeGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Employee {
-            |    return { name: generator.generate((path + 'name'), "Employee", { regex: undefined }), age: EmployeeAgeGenerator.generate((path + 'age'), generator), contactInfo: ContactInfoGenerator.generate((path + 'contactInfo'), generator), tags: generator.generate((path + 'tags'), "Employee", { inner: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Employee {
+            |    return { name: generator.generate([...path, ...['name']], "Employee", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), age: generator.generate([...path, ...['age']], "Employee", { kind: 'shape', annotations: {}, generate: (p0: string[]) => EmployeeAgeGenerator.generate(generator, p0) }), contactInfo: generator.generate([...path, ...['contactInfo']], "Employee", { kind: 'shape', annotations: { 'email': [] as Record<string, any>[], 'phone': [] as Record<string, any>[] }, generate: (p0: string[]) => ContactInfoGenerator.generate(generator, p0) }), tags: generator.generate([...path, ...['tags']], "Employee", { kind: 'array', generate: (p0: string[]) => generator.generate(p0, "Employee", { kind: 'shape', annotations: {}, generate: (p1: string[]) => TagGenerator.generate(generator, p1) }) }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Department} from '../model/Department'
+            |import {EmployeeGenerator} from './EmployeeGenerator'
             |export namespace DepartmentGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Department {
-            |    return { name: generator.generate((path + 'name'), "Department", { regex: undefined }), employees: generator.generate((path + 'employees'), "Department", { inner: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Department {
+            |    return { name: generator.generate([...path, ...['name']], "Department", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), employees: generator.generate([...path, ...['employees']], "Department", { kind: 'array', generate: (p0: string[]) => generator.generate(p0, "Department", { kind: 'shape', annotations: { 'name': [] as Record<string, any>[], 'age': [] as Record<string, any>[], 'contactInfo': [] as Record<string, any>[], 'tags': [] as Record<string, any>[] }, generate: (p1: string[]) => EmployeeGenerator.generate(generator, p1) }) }) };
             |  }
             |}
             |
             |import {Wirespec} from '../Wirespec'
+            |import {Company} from '../model/Company'
+            |import {DepartmentGenerator} from './DepartmentGenerator'
             |export namespace CompanyGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Company {
-            |    return { name: generator.generate((path + 'name'), "Company", { regex: undefined }), departments: generator.generate((path + 'departments'), "Company", { inner: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Company {
+            |    return { name: generator.generate([...path, ...['name']], "Company", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), departments: generator.generate([...path, ...['departments']], "Company", { kind: 'array', generate: (p0: string[]) => generator.generate(p0, "Company", { kind: 'shape', annotations: { 'name': [] as Record<string, any>[], 'employees': [] as Record<string, any>[] }, generate: (p1: string[]) => DepartmentGenerator.generate(generator, p1) }) }) };
             |  }
             |}
             |
@@ -947,38 +991,61 @@ class TypeScriptIrEmitterTest {
             |  export interface Transportation {
             |    transport(request: RawRequest): Promise<RawResponse>;
             |  }
-            |  export interface GeneratorField<T> {}
+            |  export interface GeneratorField<T extends any | undefined> {}
             |  export type GeneratorFieldString = {
+            |    "kind": "string",
             |    "regex": string | undefined,
+            |    "annotations": Record<string, any>[],
             |  }
             |  export type GeneratorFieldInteger = {
+            |    "kind": "integer",
             |    "min": number | undefined,
             |    "max": number | undefined,
+            |    "annotations": Record<string, any>[],
             |  }
             |  export type GeneratorFieldNumber = {
+            |    "kind": "number",
             |    "min": number | undefined,
             |    "max": number | undefined,
+            |    "annotations": Record<string, any>[],
             |  }
-            |  export type GeneratorFieldBoolean = {}
-            |  export type GeneratorFieldBytes = {}
+            |  export type GeneratorFieldBoolean = {
+            |    "kind": "boolean",
+            |    "annotations": Record<string, any>[],
+            |  }
+            |  export type GeneratorFieldBytes = {
+            |    "kind": "bytes",
+            |    "annotations": Record<string, any>[],
+            |  }
             |  export type GeneratorFieldEnum = {
+            |    "kind": "enum",
             |    "values": string[],
+            |    "annotations": Record<string, any>[],
             |  }
             |  export type GeneratorFieldUnion = {
+            |    "kind": "union",
             |    "variants": string[],
+            |    "annotations": Record<string, any>[],
             |  }
-            |  export type GeneratorFieldArray = {
-            |    "inner": GeneratorField<unknown> | undefined,
+            |  export type GeneratorFieldArray<T> = {
+            |    "kind": "array",
+            |    "generate": (p0: string[]) => T,
             |  }
-            |  export type GeneratorFieldNullable = {
-            |    "inner": GeneratorField<unknown> | undefined,
+            |  export type GeneratorFieldNullable<T> = {
+            |    "kind": "nullable",
+            |    "generate": (p0: string[]) => T,
             |  }
-            |  export type GeneratorFieldDict = {
-            |    "key": GeneratorField<unknown> | undefined,
-            |    "value": GeneratorField<unknown> | undefined,
+            |  export type GeneratorFieldShape<T> = {
+            |    "kind": "shape",
+            |    "annotations": Record<string, Record<string, any>[]>,
+            |    "generate": (p0: string[]) => T,
+            |  }
+            |  export type GeneratorFieldDict<V> = {
+            |    "kind": "dict",
+            |    "generate": (p0: string[]) => V,
             |  }
             |  export interface Generator {
-            |    generate<T>(path: string[], type: Type, field: GeneratorField<T>): T;
+            |    generate<T extends any | undefined>(path: string[], type: Type, field: GeneratorField<T>): T;
             |  }
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
             |    to: (request: REQ) => RawRequest;
@@ -1049,9 +1116,10 @@ class TypeScriptIrEmitterTest {
 
         val expected = """
             |import {Wirespec} from '../Wirespec'
+            |import {Address} from '../model/Address'
             |export namespace AddressGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Address {
-            |    return { street: generator.generate((path + 'street'), "Address", { regex: undefined }), number: generator.generate((path + 'number'), "Address", { min: undefined, max: undefined }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Address {
+            |    return { street: generator.generate([...path, ...['street']], "Address", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), number: generator.generate([...path, ...['number']], "Address", { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }) };
             |  }
             |}
             |
@@ -1071,9 +1139,10 @@ class TypeScriptIrEmitterTest {
 
         val expected = """
             |import {Wirespec} from '../Wirespec'
+            |import {Color} from '../model/Color'
             |export namespace ColorGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Color {
-            |    return Color.valueOf(generator.generate((path + 'value'), "Color", { values: ['RED', 'GREEN', 'BLUE'] }));
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Color {
+            |    return Color.valueOf(generator.generate([...path, ...['value']], "Color", { kind: 'enum', values: ['RED', 'GREEN', 'BLUE'], annotations: [] as Record<string, any>[] }));
             |  }
             |}
             |
@@ -1096,15 +1165,18 @@ class TypeScriptIrEmitterTest {
 
         val expected = """
             |import {Wirespec} from '../Wirespec'
+            |import {Shape} from '../model/Shape'
+            |import {CircleGenerator} from './CircleGenerator'
+            |import {SquareGenerator} from './SquareGenerator'
             |export namespace ShapeGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Shape {
-            |    const variant = generator.generate((path + 'variant'), "Shape", { variants: ['Circle', 'Square'] });
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Shape {
+            |    const variant = generator.generate([...path, ...['variant']], "Shape", { kind: 'union', variants: ['Circle', 'Square'], annotations: [] as Record<string, any>[] });
             |    switch (variant) {
             |      case 'Circle':
-            |        return CircleGenerator.generate((path + 'Circle'), generator);
+            |        return CircleGenerator.generate(generator, [...path, ...['Circle']]);
             |        break;
             |      case 'Square':
-            |        return SquareGenerator.generate((path + 'Square'), generator);
+            |        return SquareGenerator.generate(generator, [...path, ...['Square']]);
             |        break;
             |    }
             |    throw new Error('Unknown variant');
@@ -1132,9 +1204,10 @@ class TypeScriptIrEmitterTest {
 
         val expected = """
             |import {Wirespec} from '../Wirespec'
+            |import {UUID} from '../model/UUID'
             |export namespace UUIDGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): UUID {
-            |    return { value: generator.generate((path + 'value'), "UUID", { regex: '^[0-9a-f]{8}${'$'}' }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): UUID {
+            |    return generator.generate([...path, ...['value']], "UUID", { kind: 'string', regex: '^[0-9a-f]{8}${'$'}', annotations: [] as Record<string, any>[] });
             |  }
             |}
             |
@@ -1169,9 +1242,10 @@ class TypeScriptIrEmitterTest {
 
         val expected = """
             |import {Wirespec} from '../Wirespec'
+            |import {Inventory} from '../model/Inventory'
             |export namespace InventoryGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Inventory {
-            |    return { items: generator.generate((path + 'items'), "Inventory", { inner: { min: undefined, max: undefined } }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Inventory {
+            |    return { items: generator.generate([...path, ...['items']], "Inventory", { kind: 'array', generate: (p0: string[]) => generator.generate(p0, "Inventory", { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }) }) };
             |  }
             |}
             |
@@ -1206,9 +1280,10 @@ class TypeScriptIrEmitterTest {
 
         val expected = """
             |import {Wirespec} from '../Wirespec'
+            |import {Lookup} from '../model/Lookup'
             |export namespace LookupGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Lookup {
-            |    return { entries: generator.generate((path + 'entries'), "Lookup", { key: undefined, value: { min: undefined, max: undefined } }) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Lookup {
+            |    return { entries: generator.generate([...path, ...['entries']], "Lookup", { kind: 'dict', generate: (p0: string[]) => generator.generate(p0, "Lookup", { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }) }) };
             |  }
             |}
             |
@@ -1240,9 +1315,10 @@ class TypeScriptIrEmitterTest {
 
         val expected = """
             |import {Wirespec} from '../Wirespec'
+            |import {Person} from '../model/Person'
             |export namespace PersonGenerator {
-            |  export function generate(path: string[], generator: Wirespec.Generator): Person {
-            |    return { nickname: (generator.generate((path + 'nickname'), "Person", { inner: { regex: undefined } }) ? undefined : generator.generate((path + 'nickname'), "Person", { regex: undefined })) };
+            |  export function generate(generator: Wirespec.Generator, path: string[]): Person {
+            |    return { nickname: generator.generate([...path, ...['nickname']], "Person", { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, "Person", { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }) };
             |  }
             |}
             |

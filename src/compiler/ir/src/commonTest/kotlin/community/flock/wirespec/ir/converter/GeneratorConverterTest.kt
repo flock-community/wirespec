@@ -341,12 +341,14 @@ class GeneratorConverterTest {
 
         assertEquals(2, calls.size, "expected one generator.generate() call per primitive field")
 
-        val emailAnnotations = calls[0].arguments.getValue(Name.of("annotations")) as LiteralList
+        val emailField = calls[0].arguments.getValue(Name.of("field")) as community.flock.wirespec.ir.core.ConstructorStatement
+        val emailAnnotations = emailField.namedArguments.getValue(Name.of("annotations")) as LiteralList
         assertEquals(1, emailAnnotations.values.size)
         val emailAnn = emailAnnotations.values.single() as LiteralMap
         assertEquals(Literal("Email", Type.String), emailAnn.values.getValue("name"))
 
-        val nameAnnotations = calls[1].arguments.getValue(Name.of("annotations")) as LiteralList
+        val nameField = calls[1].arguments.getValue(Name.of("field")) as community.flock.wirespec.ir.core.ConstructorStatement
+        val nameAnnotations = nameField.namedArguments.getValue(Name.of("annotations")) as LiteralList
         assertTrue(nameAnnotations.values.isEmpty(), "field with no annotations should pass empty list")
     }
 }
