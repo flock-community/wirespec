@@ -109,4 +109,49 @@ object Wirespec {
         val method: String
         fun server(serialization: Serialization): ServerEdge<Req, Res>
     }
+    sealed interface GeneratorField<T : Any?>
+    data class GeneratorFieldString(
+        val regex: String?,
+        val annotations: List<Map<String, Any>>,
+    ) : GeneratorField<String>
+    data class GeneratorFieldInteger(
+        val min: Long?,
+        val max: Long?,
+        val annotations: List<Map<String, Any>>,
+    ) : GeneratorField<Long>
+    data class GeneratorFieldNumber(
+        val min: Double?,
+        val max: Double?,
+        val annotations: List<Map<String, Any>>,
+    ) : GeneratorField<Double>
+    data class GeneratorFieldBoolean(
+        val annotations: List<Map<String, Any>>,
+    ) : GeneratorField<Boolean>
+    data class GeneratorFieldBytes(
+        val annotations: List<Map<String, Any>>,
+    ) : GeneratorField<ByteArray>
+    data class GeneratorFieldEnum(
+        val values: List<String>,
+        val annotations: List<Map<String, Any>>,
+    ) : GeneratorField<String>
+    data class GeneratorFieldUnion(
+        val variants: List<String>,
+        val annotations: List<Map<String, Any>>,
+    ) : GeneratorField<String>
+    data class GeneratorFieldArray<T : Any>(
+        val generate: (List<String>) -> T,
+    ) : GeneratorField<List<T>>
+    data class GeneratorFieldNullable<T : Any>(
+        val generate: (List<String>) -> T,
+    ) : GeneratorField<T?>
+    data class GeneratorFieldShape<T : Any>(
+        val annotations: Map<String, List<Map<String, Any>>>,
+        val generate: (List<String>) -> T,
+    ) : GeneratorField<T>
+    data class GeneratorFieldDict<V : Any>(
+        val generate: (List<String>) -> V,
+    ) : GeneratorField<Map<String, V>>
+    interface Generator {
+        fun <T : Any?> generate(path: List<String>, type: KType, field: GeneratorField<T>): T
+    }
 }
