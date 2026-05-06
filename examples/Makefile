@@ -9,6 +9,7 @@ build:
 	(cd maven-spring-integration && ./mvnw verify) && \
 	(cd maven-spring-boot-4-integration && ./mvnw verify) && \
 	(cd gradle-ktor && ./gradlew check) && \
+	(cd gradle-spring-boot && ./gradlew check) && \
 	(cd npm-typescript && npm ci && npm run build) && \
 	(cd rust-petstore && bash gen.sh && cargo build) && \
 	(cd scala-zio && sbt compile)
@@ -22,6 +23,7 @@ clean:
 	(cd maven-spring-integration && ./mvnw clean) && \
 	(cd maven-spring-boot-4-integration && ./mvnw clean) && \
 	(cd gradle-ktor && ./gradlew clean) && \
+	(cd gradle-spring-boot && ./gradlew clean) && \
 	(cd npm-typescript && npm run clean)
 
 format:
@@ -36,4 +38,5 @@ yolo:
 	(cd maven-spring-custom && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-integration && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-boot-4-integration && ./mvnw verify -DskipTests) && \
-	(cd gradle-ktor && ./gradlew check -x test)
+	(cd gradle-ktor && ./gradlew check -x test) && \
+	(cd gradle-spring-boot && ./gradlew check -x test)

@@ -23,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -191,6 +192,9 @@ object PythonGenerator : Generator {
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), qualifier: ((String) -> String)? = null): String {
         val p = mutableListOf<String>()
         interfaces.forEach { p.add(it.emit()) }
+        if (typeParameters.isNotEmpty()) {
+            p.add("Generic[${typeParameters.joinToString(", ") { it.type.emit() }}]")
+        }
 
         val ext = if (p.isEmpty()) "" else "(${p.distinct().joinToString(", ")})"
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, parents = parents + this, isStaticScope = false, qualifier = qualifier) }
@@ -275,6 +279,7 @@ object PythonGenerator : Generator {
         is Type.Nullable -> "Optional[${type.emit(qualifier)}]"
         is Type.IntegerLiteral -> "int"
         is Type.StringLiteral -> "str"
+        is Type.Function -> "Callable[[${parameterTypes.joinToString(", ") { it.emit(qualifier) }}], ${returnType.emit(qualifier)}]"
     }
 
     private fun Statement.emit(indent: Int): String = when (this) {
@@ -367,6 +372,7 @@ object PythonGenerator : Generator {
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
+        is Lambda -> "${emit()}\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toPython(): String = when (this) {
@@ -467,6 +473,10 @@ object PythonGenerator : Generator {
                 is StringTemplate.Part.Expr -> "{${it.expression.emit()}}"
             }
         }}\""
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase() }
+            if (params.isEmpty()) "lambda: ${body.emit()}" else "lambda $params: ${body.emit()}"
+        }
     }
 
     private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {

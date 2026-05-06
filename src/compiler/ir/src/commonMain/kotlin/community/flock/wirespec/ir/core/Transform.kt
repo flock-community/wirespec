@@ -81,6 +81,10 @@ fun Type.transformChildren(transformer: Transformer): Type = when (this) {
     )
     is Type.Custom -> copy(generics = generics.map { transformer.transformType(it) })
     is Type.Nullable -> copy(type = transformer.transformType(type))
+    is Type.Function -> copy(
+        parameterTypes = parameterTypes.map { transformer.transformType(it) },
+        returnType = transformer.transformType(returnType),
+    )
     is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect, is Type.IntegerLiteral, is Type.StringLiteral -> this
 }
 
@@ -220,6 +224,10 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
         body = transformer.transformExpression(body),
     )
     is ListConcat -> copy(lists = lists.map { transformer.transformExpression(it) })
+    is Lambda -> copy(
+        parameters = parameters.map { transformer.transformParameter(it) },
+        body = transformer.transformExpression(body),
+    )
     is StringTemplate -> copy(
         parts = parts.map {
             when (it) {

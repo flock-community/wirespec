@@ -204,57 +204,79 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
             }
         }
         `interface`("GeneratorField", isSealed = true) {
-            typeParam(type("T"))
+            // T is upper-bounded at `Any?` (i.e. unbounded) so GeneratorFieldNullable<T>
+            // can extend GeneratorField<T?>.
+            typeParam(type("T"), Type.Nullable(Type.Any))
         }
         struct("GeneratorFieldString") {
             implements(type("GeneratorField", string))
             field("regex", string.nullable())
+            field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldInteger") {
             implements(type("GeneratorField", integer64))
             field("min", integer64.nullable())
             field("max", integer64.nullable())
+            field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldNumber") {
             implements(type("GeneratorField", number64))
             field("min", number64.nullable())
             field("max", number64.nullable())
+            field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldBoolean") {
             implements(type("GeneratorField", boolean))
+            field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldBytes") {
             implements(type("GeneratorField", bytes))
+            field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldEnum") {
             implements(type("GeneratorField", string))
             field("values", list(string))
+            field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldUnion") {
             implements(type("GeneratorField", string))
             field("variants", list(string))
+            field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldArray") {
-            implements(type("GeneratorField", integer))
-            field("inner", type("GeneratorField", Type.Wildcard).nullable())
+            // `generate` takes the path-for-this-element and returns a single
+            // element; the seeded generator decides how many elements to put in
+            // the resulting List<T> and what indices to attach to their paths.
+            typeParam(type("T"))
+            implements(type("GeneratorField", list(type("T"))))
+            field("generate", Type.Function(listOf(list(string)), type("T")))
         }
         struct("GeneratorFieldNullable") {
-            implements(type("GeneratorField", boolean))
-            field("inner", type("GeneratorField", Type.Wildcard).nullable())
+            typeParam(type("T"))
+            implements(type("GeneratorField", type("T").nullable()))
+            field("generate", Type.Function(listOf(list(string)), type("T")))
+        }
+        struct("GeneratorFieldShape") {
+            typeParam(type("T"))
+            implements(type("GeneratorField", type("T")))
+            field("annotations", dict(string, list(dict(string, Type.Any))))
+            field("generate", Type.Function(listOf(list(string)), type("T")))
         }
         struct("GeneratorFieldDict") {
-            implements(type("GeneratorField", integer))
-            field("key", type("GeneratorField", Type.Wildcard).nullable())
-            field("value", type("GeneratorField", Type.Wildcard).nullable())
+            // `generate` takes the path-for-this-entry and returns a single
+            // value; the seeded generator decides keys and entry count.
+            typeParam(type("V"))
+            implements(type("GeneratorField", dict(string, type("V"))))
+            field("generate", Type.Function(listOf(list(string)), type("V")))
         }
         `interface`("Generator") {
             function("generate") {
-                typeParam(type("T"))
+                // T is unbounded (`Any?`) so the result type can be nullable.
+                typeParam(type("T"), Type.Nullable(Type.Any))
                 returnType(type("T"))
                 arg("path", list(string))
                 arg("type", reflect)
                 arg("field", type("GeneratorField", type("T")))
-                arg("annotations", list(dict(string, Type.Any)))
             }
         }
     }
@@ -1001,6 +1023,7 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Dict -> "Map"
     is Type.IntegerLiteral -> "Integer"
     is Type.StringLiteral -> "String"
+    is Type.Function -> "Function"
 }
 
 fun ReferenceWirespec.convert(): Type = when (this) {

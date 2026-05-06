@@ -1,26 +1,39 @@
 type ProjectId = String(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/g)
-type TaskId = String(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/g)
+type TaskId = Integer(0, 99999)
 type MemberId = String(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/g)
 
 enum TaskStatus {
     TODO, IN_PROGRESS, DONE
 }
 
+type ProjectList {
+    projects: Project[]
+}
+
 type Project {
-    id: ProjectId,
+    @Seed id: ProjectId,
+    ref:String,
     name: String,
     description: String?,
-    ownerId: MemberId
+    owner: Member,
+    ownerId: MemberId,
+    tags: {String}
 }
 
 type ProjectInput {
+    ref:String,
     name: String,
     description: String?,
+    owner: Member?,
     ownerId: MemberId
 }
 
+type TaskList {
+    tasks: Task[]
+}
+
 type Task {
-    id: TaskId,
+    @Seed id: TaskId,
     projectId: ProjectId,
     title: String,
     description: String?,
@@ -37,13 +50,15 @@ type TaskInput {
 
 type Member {
     id: MemberId,
-    name: String,
-    email: String
+    ref:String,
+    @Generator("fullname") name: String,
+    @Generator("email") email: String
 }
 
 type MemberInput {
-    name: String,
-    @Email email: String
+    ref:String,
+    @Generator("fullname") name: String,
+    @Generator("email") email: String
 }
 
 type Error {

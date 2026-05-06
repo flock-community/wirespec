@@ -23,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -243,6 +244,7 @@ ScalaEmitter(
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         val implStr = if (interfaces.isEmpty()) "" else " extends ${interfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "[${typeParameters.joinToString(", ") { it.type.emitGenerics() }}]"
 
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
@@ -287,9 +289,9 @@ ScalaEmitter(
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
 
         return if (hasBody) {
-            "case class ${name.pascalCase()}$paramsStr$implStr {\n$customConstructors$nestedContent${"}".indentCode(indent)}\n\n".indentCode(indent)
+            "case class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent${"}".indentCode(indent)}\n\n".indentCode(indent)
         } else {
-            "case class ${name.pascalCase()}$paramsStr$implStr\n\n".indentCode(indent)
+            "case class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -371,6 +373,7 @@ ScalaEmitter(
         is Type.Nullable -> "Option[${type.emitGenerics()}]"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) => ${returnType.emitGenerics()}"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -385,6 +388,7 @@ ScalaEmitter(
         }
 
         is Type.Nullable -> "Option[${type.emitGenerics()}]"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) => ${returnType.emitGenerics()}"
         else -> emit()
     }
 
@@ -401,6 +405,7 @@ ScalaEmitter(
             }
         }
         is Type.Nullable -> "Option[${type.emitTypeAnnotation()}]"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitTypeAnnotation() }}) => ${returnType.emitTypeAnnotation()}"
         else -> emit()
     }
 
@@ -503,6 +508,7 @@ ScalaEmitter(
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
+        is Lambda -> "${emit()}\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toScala(): String = when (this) {
@@ -617,6 +623,10 @@ ScalaEmitter(
                 is StringTemplate.Part.Expr -> "\${${it.expression.emit()}}"
             }
         }}\""
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            "($params) => ${body.emit()}"
+        }
     }
 
     private fun LiteralList.emit(): String {
@@ -640,13 +650,15 @@ ScalaEmitter(
     }
 
     private fun String.escapeScalaString(): String = buildString {
-        for (c in this@escapeScalaString) when (c) {
-            '\\' -> append("\\\\")
-            '"' -> append("\\\"")
-            '\n' -> append("\\n")
-            '\r' -> append("\\r")
-            '\t' -> append("\\t")
-            else -> append(c)
+        for (c in this@escapeScalaString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
         }
     }
 

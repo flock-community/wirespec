@@ -23,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -198,6 +199,7 @@ private class KotlinEmitter(val file: File) {
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         val implStr = if (interfaces.isEmpty()) "" else " : ${interfaces.map { it.emitGenerics() }.distinct().joinToString(", ")}"
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.emit() }}>"
 
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitKotlin(fields, indent + 1) }
@@ -236,11 +238,11 @@ private class KotlinEmitter(val file: File) {
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
 
         return if (hasBody) {
-            "data class ${name.pascalCase()}$paramsStr$implStr {\n$customConstructors$nestedContent${"}".indentCode(indent)}\n\n".indentCode(
+            "data class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent${"}".indentCode(indent)}\n\n".indentCode(
                 indent,
             )
         } else {
-            "data class ${name.pascalCase()}$paramsStr$implStr\n\n".indentCode(indent)
+            "data class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -350,6 +352,7 @@ private class KotlinEmitter(val file: File) {
         is Type.Nullable -> "${type.emitGenerics()}?"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -364,6 +367,7 @@ private class KotlinEmitter(val file: File) {
         }
 
         is Type.Nullable -> "${type.emitGenerics()}?"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
         else -> emit()
     }
 
@@ -470,6 +474,7 @@ private class KotlinEmitter(val file: File) {
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
+        is Lambda -> "${emit()}\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toKotlin(): String = when (this) {
@@ -595,6 +600,10 @@ private class KotlinEmitter(val file: File) {
                 is StringTemplate.Part.Expr -> "\${${it.expression.emit()}}"
             }
         }}\""
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            if (params.isEmpty()) "{ ${body.emit()} }" else "{ $params -> ${body.emit()} }"
+        }
     }
 
     private fun LiteralList.emit(): String {
@@ -604,7 +613,7 @@ private class KotlinEmitter(val file: File) {
     }
 
     private fun LiteralMap.emit(): String {
-        if (values.isEmpty()) return "emptyMap()"
+        if (values.isEmpty()) return "emptyMap<${keyType.emitGenerics()}, ${valueType.emitGenerics()}>()"
         val map = values.entries.joinToString(", ") {
             "${Literal(it.key, keyType).emit()} to ${it.value.emit()}"
         }
@@ -618,14 +627,16 @@ private class KotlinEmitter(val file: File) {
     }
 
     private fun String.escapeKotlinString(): String = buildString {
-        for (c in this@escapeKotlinString) when (c) {
-            '\\' -> append("\\\\")
-            '"' -> append("\\\"")
-            '$' -> append("\\$")
-            '\n' -> append("\\n")
-            '\r' -> append("\\r")
-            '\t' -> append("\\t")
-            else -> append(c)
+        for (c in this@escapeKotlinString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '$' -> append("\\$")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
         }
     }
 
