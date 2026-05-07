@@ -31,9 +31,9 @@ they already install.
   `firstName`, `lastName`, `fullName`/`name`, `username`, `domain`, `color`).
   Those remain JVM-only because the upstream artifact has no Kotlin/JS-IR
   build.
-- No runtime test framework integration on the TS side. Verification is
-  type-check-only (`tsc --noEmit`) on a smoke file, mirroring
-  `examples/typescript-verify/`.
+- No runtime test framework on the TS side (no vitest/jest). The example
+  in `examples/npm-typescript-ir/` runs a node script that prints output;
+  end-to-end verification is "the script runs and prints sensible data."
 
 ## Architecture
 
@@ -230,6 +230,20 @@ The Kotlin/JS bundle filename is gradle-derived from the project path:
 matches the existing dist's naming for sibling modules
 (`wirespec-src-compiler-core.mjs`, `wirespec-src-converter-avro.mjs`, etc.).
 
+### 6. `examples/npm-typescript-ir/` — generator demo
+
+The existing meetup example is extended with a runnable demonstration that
+also serves as the structural-compat smoke test. New file:
+`src/example-generator.ts` (full source in *Verification* below). New
+`package.json` script `npm run demo` builds and runs it via `node`. A
+`tsconfig.build.json` adds emission to `dist/`; the existing
+`tsconfig.json` remains `noEmit` for `npm run typecheck`.
+
+The example's stated scope (per its existing design doc) widens slightly: it
+remains "no fetch client, no server, no integration tests," but now does
+include a node-runnable demo that prints generator output. The README gains
+a short "Generator demo" section.
+
 ## Verification
 
 ### Kotlin tests
@@ -253,17 +267,79 @@ both targets. A new `KotestWirespecGeneratorJsTest` in `jsTest` covers:
 and `wirespec-generator.d.ts`, plus `wirespec-src-integration-kotest.mjs` and
 the kotest-property runtime klib.
 
-### TypeScript smoke test
+### TypeScript demo + smoke test
 
-A new file `examples/npm-typescript-ir/src/smoke/generator-smoke.ts` follows
-the `examples/typescript-verify/src/test.ts` pattern: type-checked only, not
-executed. It imports `kotestWirespecGenerator` from
-`@flock/wirespec/generator` and a generated `MeetupGenerator` from
-`./gen/generator/MeetupGenerator`, asserts the assignment compiles, and uses
-the result. `npm run typecheck` (`tsc --noEmit`) is the gate.
+`examples/npm-typescript-ir/` is extended with a runnable demo file that
+doubles as the structural-compat smoke test for the new subpath. The example
+already wires `@flock/wirespec` from the local `productionLibrary` build via
+`file://`, so it picks up the new subpath without an npm publish.
 
-The example already wires `@flock/wirespec` from the local `productionLibrary`
-build via `file://`, so it picks up the new subpath without an npm publish.
+**New file:** `examples/npm-typescript-ir/src/example-generator.ts`
+
+```ts
+import { kotestWirespecGenerator } from '@flock/wirespec/generator';
+import { MeetupGenerator } from './gen/generator/MeetupGenerator';
+import { AttendeeGenerator } from './gen/generator/AttendeeGenerator';
+
+// 1. Default usage — preinstalled `email` and `ipAddress` arbs apply.
+const gen = kotestWirespecGenerator(42);
+const meetup = MeetupGenerator.generate(gen, []);
+console.log('Meetup (seed=42):\n', JSON.stringify(meetup, null, 2));
+
+// 2. Determinism — same seed produces identical output.
+const replay = MeetupGenerator.generate(kotestWirespecGenerator(42), []);
+console.log(
+    'Deterministic replay matches:',
+    JSON.stringify(meetup) === JSON.stringify(replay),
+);
+
+// 3. Custom registration — override @Generator("email") with a domain-specific
+//    factory. Names are case-insensitive.
+const customGen = kotestWirespecGenerator(7, {
+    email: (s) => `demo+${s}@example.com`,
+});
+const attendee = AttendeeGenerator.generate(customGen, []);
+console.log('Attendee with custom email factory:\n', JSON.stringify(attendee, null, 2));
+```
+
+The file is both a *demo* (run via `npm run demo`) and a *smoke test*: if the
+shim's `WirespecGenerator` type isn't structurally compatible with the
+codegen-emitted `Wirespec.Generator`, the assignment passed into
+`MeetupGenerator.generate(gen, [])` won't typecheck and `npm run typecheck`
+fails.
+
+**`package.json` changes:**
+
+```json
+{
+    "scripts": {
+        "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared --ir",
+        "build":    "npm run generate && npm run typecheck",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
+        "demo":     "tsc -p tsconfig.build.json && node dist/example-generator.js",
+        "clean":    "npm run clean:generated && npm run clean:dist && npm run clean:node_modules",
+        "clean:generated":    "npx --yes rimraf ./src/gen",
+        "clean:dist":         "npx --yes rimraf ./dist",
+        "clean:node_modules": "npx --yes rimraf ./node_modules"
+    }
+}
+```
+
+The split between `tsconfig.json` (`noEmit: true`) and `tsconfig.build.json`
+(`outDir: ./dist`, extends base) keeps the typecheck step
+emission-free — standard npm-package convention.
+
+**README addition:**
+
+A short section under a new "Generator demo" heading explains:
+
+- `npm run demo` runs the three blocks and prints generated `Meetup` and
+  `Attendee` records.
+- What each block illustrates (default catalog, determinism, custom
+  registry).
+- That `@Generator("name")` annotations in the `.ws` source route to the
+  registry; the meetup spec uses default-name fields, so the demo also
+  shows a custom override of `email`.
 
 ### Drift guard for the re-declared union
 
@@ -280,11 +356,11 @@ lockstep.
 - `./gradlew :src:plugin:npm:assemble` produces a `productionLibrary/`
   containing `wirespec-generator.{mjs,d.ts}`.
 - `cd examples/npm-typescript-ir && npm install && npm run build` succeeds
-  (which now runs `npm run generate && npm run typecheck` over the smoke
-  file).
-- A manual `node` invocation of the smoke file (or a small
-  `console.log(MeetupGenerator.generate(gen, []))`) prints a fully-populated
-  `Meetup` with email-shaped `attendees[*].email`. (Manual, not in CI.)
+  (runs `generate && typecheck` over `src/example-generator.ts`).
+- `npm run demo` in the same example prints a fully-populated `Meetup`
+  (including email-shaped `attendees[*].email`), confirms deterministic
+  replay, and prints an `Attendee` whose `email` matches the custom
+  `demo+<seed>@example.com` pattern. Manual run, not in CI.
 
 ## Out-of-scope future work
 
