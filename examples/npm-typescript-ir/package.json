@@ -5,7 +5,7 @@
   "description": "Wirespec IR-pipeline code-generation example (TypeScript, meetup app)",
   "license": "Apache-2.0",
   "scripts": {
-    "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared",
+    "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared --ir",
     "build": "npm run generate && npm run typecheck",
     "typecheck": "tsc --noEmit",
     "clean": "npm run clean:generated && npm run clean:node_modules",
