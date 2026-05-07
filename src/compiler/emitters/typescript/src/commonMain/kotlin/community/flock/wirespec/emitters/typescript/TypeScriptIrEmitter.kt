@@ -179,7 +179,22 @@ open class TypeScriptIrEmitter : IrEmitter {
     override fun emitGenerator(definition: Definition, module: Module): File? {
         val generatorFile = when (definition) {
             is AstType -> definition.convertToGenerator(module)
-            is AstEnum -> definition.convertToGenerator()
+            // TypeScript emits Wirespec enums as string-literal type aliases
+            // (`type X = "A" | "B"`), so the language-neutral `<EnumType>.valueOf(label=<expr>)`
+            // wrapper produced by GeneratorConverter has no runtime presence. Strip it —
+            // the inner generator.generate(...) call already returns a string that
+            // structurally conforms to the literal-union return type.
+            is AstEnum -> definition.convertToGenerator().transform {
+                expression { expr, t ->
+                    if (expr is FunctionCall &&
+                        expr.receiver is RawExpression &&
+                        (expr.receiver as RawExpression).code == definition.identifier.value &&
+                        expr.name == Name.of("valueOf")
+                    ) {
+                        expr.arguments[Name.of("label")] ?: expr
+                    } else expr.transformChildren(t)
+                }
+            }
             is Refined -> definition.convertToGenerator().transform {
                 expression { expr, t ->
                     if (expr is ConstructorStatement && expr.type == LanguageType.Custom(definition.identifier.value)) {
