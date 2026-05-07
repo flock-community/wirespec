@@ -91,7 +91,7 @@ endpoint GetMeetupById GET /api/meetups/{id: MeetupId} -> {
     404 -> MeetupError
 }
 
-endpoint CreateMeetup POST CreateMeetup /api/meetups -> {
+endpoint PostMeetup POST CreateMeetup /api/meetups -> {
     201 -> Meetup
     400 -> MeetupError
 }
