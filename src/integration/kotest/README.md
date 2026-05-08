@@ -9,16 +9,38 @@ hand-written `SeededGenerator` classes.
 [arb]: https://kotest.io/docs/proptest/property-test-generators.html
 [extras]: https://kotest.io/docs/proptest/property-test-extra-arbs.html
 
+## Targets
+
+The integration is multiplatform (JVM + JS/IR). Shared logic lives in
+`commonMain`; platform-specific defaults are wired via `expect`/`actual`.
+
+| Capability                              | JVM | JS  |
+| --------------------------------------- | :-: | :-: |
+| `Wirespec.Generator` impl, `@Seed`, DSL | ✅  | ✅  |
+| Regex-validated `String` fields         | ✅  | ✅  |
+| Default `email`, `ipAddress`            | ✅  | ✅  |
+| Default `uuid` (uses `java.util.UUID`)  | ✅  | ❌  |
+| `kotest-property-arbs` extras           | ✅  | ❌  |
+
+Regex generation uses [`community.flock.kotlinx.rgxgen`][rgxgen] (multiplatform),
+not `Arb.stringPattern` (which is JVM-only in kotest 6.x).
+`kotest-property-arbs` is JVM-only because its published artifact uses the
+legacy JS compiler, incompatible with the IR backend.
+
+[rgxgen]: https://github.com/flock-community/kotlin-rgxgen
+
 ## Dependency
 
 ```kotlin
+// JVM
 testImplementation("community.flock.wirespec.integration:kotest-jvm:<version>")
 testImplementation("io.kotest:kotest-property:<version>")
-testImplementation("io.kotest.extensions:kotest-property-arbs:2.1.2")
-```
+testImplementation("io.kotest.extensions:kotest-property-arbs:2.1.2") // JVM only
 
-The integration is JVM-only (the emitted `Wirespec.Generator` interface uses
-`kotlin.reflect.KType`).
+// JS / Kotlin Multiplatform
+testImplementation("community.flock.wirespec.integration:kotest-js:<version>")
+testImplementation("io.kotest:kotest-property:<version>")
+```
 
 ## Basic usage
 
@@ -39,18 +61,18 @@ Annotate fields in your `.ws` file with `@Generator("name")` to route them to
 named arbs. The integration ships these defaults (all matched
 case-insensitively):
 
-| Name        | Arb source                      | Notes                          |
-| ----------- | ------------------------------- | ------------------------------ |
-| `email`     | `Arb.email()`                   | `local@domain` style strings   |
-| `uuid`      | `Arb.uuid()`                    | Stringified UUIDs              |
-| `ipAddress` | `Arb.ipAddressV4()`             | Dotted-quad IPv4               |
-| `firstName` | `Arb.firstName()`               | Extra Arbs                     |
-| `lastName`  | `Arb.lastName()`                | Extra Arbs                     |
-| `fullName`  | `Arb.name()`                    | First + last; alias of `name`  |
-| `name`      | `Arb.name()`                    | Same as `fullName`             |
-| `username`  | `Arb.usernames()`               | Extra Arbs                     |
-| `domain`    | `Arb.domain()`                  | e.g. `www.wibble.co.uk`        |
-| `color`     | `Arb.color()`                   | Named colors                   |
+| Name        | Arb source                      | JVM | JS  | Notes                          |
+| ----------- | ------------------------------- | :-: | :-: | ------------------------------ |
+| `email`     | `Arb.email()`                   | ✅  | ✅  | `local@domain` style strings   |
+| `ipAddress` | `Arb.ipAddressV4()`             | ✅  | ✅  | Dotted-quad IPv4               |
+| `uuid`      | `Arb.uuid()`                    | ✅  | ❌  | Stringified UUIDs (`java.util.UUID`) |
+| `firstName` | `Arb.firstName()`               | ✅  | ❌  | Extra Arbs                     |
+| `lastName`  | `Arb.lastName()`                | ✅  | ❌  | Extra Arbs                     |
+| `fullName`  | `Arb.name()`                    | ✅  | ❌  | First + last; alias of `name`  |
+| `name`      | `Arb.name()`                    | ✅  | ❌  | Same as `fullName`             |
+| `username`  | `Arb.usernames()`               | ✅  | ❌  | Extra Arbs                     |
+| `domain`    | `Arb.domain()`                  | ✅  | ❌  | e.g. `www.wibble.co.uk`        |
+| `color`     | `Arb.color()`                   | ✅  | ❌  | Named colors                   |
 
 Wirespec definition:
 

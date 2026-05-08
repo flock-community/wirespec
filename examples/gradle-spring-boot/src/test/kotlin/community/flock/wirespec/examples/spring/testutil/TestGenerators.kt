@@ -25,16 +25,18 @@ import community.flock.wirespec.integration.kotest.kotestWirespecGenerator
  */
 object TestGenerators {
 
-    private fun gen(seed: Long) = kotestWirespecGenerator(seed = seed)
+    private fun generator(seed: Long) = kotestWirespecGenerator(seed = seed){
+        register("")
+    }
 
-    fun memberInput(seed: Long = 0L): MemberInput = MemberInputGenerator.generate(gen(seed), emptyList())
-    fun member(seed: Long = 0L): Member = MemberGenerator.generate(gen(seed), emptyList())
-    fun projectList(seed: Long = 0L): ProjectList = ProjectListGenerator.generate(gen(seed), emptyList())
-    fun projectInput(seed: Long = 0L): ProjectInput = ProjectInputGenerator.generate(gen(seed), emptyList())
-    fun project(seed: Long = 0L): Project = ProjectGenerator.generate(gen(seed), emptyList())
-    fun project(id: String, seed: Long = 0L): Project = ProjectGenerator.generate(gen(seed), listOf(id))
-    fun taskInput(seed: Long = 0L): TaskInput = TaskInputGenerator.generate(gen(seed), emptyList())
-    fun task(seed: Long = 0L): Task = TaskGenerator.generate(gen(seed), emptyList())
-    fun task(id: Long, seed: Long = 0L): Task = TaskGenerator.generate(gen(seed), listOf(id.toString()))
-    fun taskList(seed: Long = 0L): TaskList = TaskListGenerator.generate(gen(seed), emptyList())
+    fun memberInput(seed: Long = 0L): MemberInput = MemberInputGenerator.generate(generator(seed), emptyList())
+    fun member(id: String, seed: Long = 0L): Member = MemberGenerator.generate(generator(seed), listOf(id.toString()))
+    fun projectList(seed: Long = 0L): ProjectList = ProjectListGenerator.generate(generator(seed), emptyList())
+    fun projectInput(seed: Long = 0L): ProjectInput = ProjectInputGenerator.generate(generator(seed), emptyList())
+    fun project(seed: Long = 0L): Project = ProjectGenerator.generate(generator(seed), emptyList())
+    fun project(id: String, seed: Long = 0L): Project = ProjectGenerator.generate(generator(seed), listOf(id))
+    fun taskInput(seed: Long = 0L): TaskInput = TaskInputGenerator.generate(generator(seed), emptyList())
+    fun task(seed: Long = 0L): Task = TaskGenerator.generate(generator(seed), emptyList())
+    fun task(id: Long, seed: Long = 0L): Task = TaskGenerator.generate(generator(seed), listOf(id.toString()))
+    fun taskList(seed: Long = 0L): TaskList = TaskListGenerator.generate(generator(seed), emptyList())
 }

@@ -237,11 +237,13 @@ fun PackageName.convert(): File = file("Wirespec") {
             implements(type("GeneratorField", string))
             field("values", list(string))
             field("annotations", list(dict(string, Type.Any)))
+            field("type", reflect)
         }
         struct("GeneratorFieldUnion") {
             implements(type("GeneratorField", string))
             field("variants", list(string))
             field("annotations", list(dict(string, Type.Any)))
+            field("type", reflect)
         }
         struct("GeneratorFieldArray") {
             // `generate` takes the path-for-this-element and returns a single
@@ -261,6 +263,7 @@ fun PackageName.convert(): File = file("Wirespec") {
             implements(type("GeneratorField", type("T")))
             field("annotations", dict(string, list(dict(string, Type.Any))))
             field("generate", Type.Function(listOf(list(string)), type("T")))
+            field("type", reflect)
         }
         struct("GeneratorFieldDict") {
             // `generate` takes the path-for-this-entry and returns a single
@@ -275,7 +278,6 @@ fun PackageName.convert(): File = file("Wirespec") {
                 typeParam(type("T"), Type.Nullable(Type.Any))
                 returnType(type("T"))
                 arg("path", list(string))
-                arg("type", reflect)
                 arg("field", type("GeneratorField", type("T")))
             }
         }

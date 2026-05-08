@@ -96,7 +96,11 @@ class GeneratorConverterTest {
     }
 
     @Test
-    fun testTypeConvertToGeneratorEmitsClassReferenceAsType() {
+    fun testTypeConvertToGeneratorEmitsClassReferenceForShapeFields() {
+        // A Type with a Custom field reference wraps the call in a
+        // GeneratorFieldShape that carries the *target* type's ClassReference
+        // (e.g. `type = Coordinates::class`). Plain primitive fields no
+        // longer emit a top-level ClassReference.
         val address = TypeWirespec(
             comment = null,
             annotations = emptyList(),
@@ -108,6 +112,11 @@ class GeneratorConverterTest {
                         fieldId("street"),
                         Reference.Primitive(Reference.Primitive.Type.String(null), false),
                     ),
+                    Field(
+                        emptyList(),
+                        fieldId("coords"),
+                        Reference.Custom("Coordinates", false),
+                    ),
                 ),
             ),
             extends = emptyList(),
@@ -116,8 +125,12 @@ class GeneratorConverterTest {
         val file = address.convertToGenerator()
         val classRefs = file.collectExpressions<ClassReference>()
         assertTrue(
-            classRefs.any { it.type == Type.Custom("Address") },
-            "expected a ClassReference(Type.Custom(\"Address\")) in the generated body",
+            classRefs.any { it.type == Type.Custom("Coordinates") },
+            "expected a ClassReference(Type.Custom(\"Coordinates\")) inside the GeneratorFieldShape",
+        )
+        assertTrue(
+            classRefs.none { it.type == Type.Custom("Address") },
+            "the enclosing type should no longer be embedded in the generator body",
         )
     }
 
@@ -150,8 +163,6 @@ class GeneratorConverterTest {
             ),
         )
         val file = uuid.convertToGenerator()
-        val classRefs = file.collectExpressions<ClassReference>()
-        assertTrue(classRefs.any { it.type == Type.Custom("UUID") })
         val literals = file.collectExpressions<Literal>()
         assertTrue(
             literals.any { it.value == "^[0-9a-f]{8}$" },

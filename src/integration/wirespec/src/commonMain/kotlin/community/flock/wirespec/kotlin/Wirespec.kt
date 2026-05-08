@@ -133,10 +133,12 @@ object Wirespec {
     data class GeneratorFieldEnum(
         val values: List<String>,
         val annotations: List<Map<String, Any>>,
+        val type: KType,
     ) : GeneratorField<String>
     data class GeneratorFieldUnion(
         val variants: List<String>,
         val annotations: List<Map<String, Any>>,
+        val type: KType,
     ) : GeneratorField<String>
     data class GeneratorFieldArray<T : Any>(
         val generate: (List<String>) -> T,
@@ -147,11 +149,12 @@ object Wirespec {
     data class GeneratorFieldShape<T : Any>(
         val annotations: Map<String, List<Map<String, Any>>>,
         val generate: (List<String>) -> T,
+        val type: KType,
     ) : GeneratorField<T>
     data class GeneratorFieldDict<V : Any>(
         val generate: (List<String>) -> V,
     ) : GeneratorField<Map<String, V>>
     interface Generator {
-        fun <T : Any?> generate(path: List<String>, type: KType, field: GeneratorField<T>): T
+        fun <T : Any?> generate(path: List<String>, field: GeneratorField<T>): T
     }
 }

@@ -410,11 +410,11 @@ class JavaIrEmitterTest {
             |public interface PotentialTodoDtoGenerator {
             |  public static PotentialTodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new PotentialTodoDto(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), PotentialTodoDto.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), PotentialTodoDto.class, new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
             |    );
             |  }
             |}
@@ -424,7 +424,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Token;
             |public interface TokenGenerator {
             |  public static Token generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new Token(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("iss")).flatMap(java.util.Collection::stream).toList(), Token.class, new Wirespec.GeneratorFieldString(
+            |    return new Token(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("iss")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -437,15 +437,15 @@ class JavaIrEmitterTest {
             |public interface TodoDtoGenerator {
             |  public static TodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new TodoDto(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("id")).flatMap(java.util.Collection::stream).toList(), TodoDto.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("id")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), TodoDto.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), TodoDto.class, new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
             |    );
             |  }
             |}
@@ -456,12 +456,12 @@ class JavaIrEmitterTest {
             |public interface ErrorGenerator {
             |  public static Error generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Error(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("code")).flatMap(java.util.Collection::stream).toList(), Error.class, new Wirespec.GeneratorFieldInteger(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("code")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |        java.util.Optional.empty(),
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), Error.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      ))
@@ -490,7 +490,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileFullEndpointTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -542,14 +542,15 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.MyAwesomeEnum;
             |public interface MyAwesomeEnumGenerator {
             |  public static MyAwesomeEnum generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return MyAwesomeEnum.valueOf(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), MyAwesomeEnum.class, new Wirespec.GeneratorFieldEnum(
+            |    return MyAwesomeEnum.valueOf(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldEnum(
             |      java.util.List.of("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"),
-            |      java.util.List.<java.util.Map<String, Object>>of()
+            |      java.util.List.<java.util.Map<String, Object>>of(),
+            |      MyAwesomeEnum.class
             |    )));
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileEnumTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -697,7 +698,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TodoDto;
             |public interface TodoDtoGenerator {
             |  public static TodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TodoDto(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), TodoDto.class, new Wirespec.GeneratorFieldString(
+            |    return new TodoDto(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -722,7 +723,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -925,7 +926,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TodoId;
             |public interface TodoIdGenerator {
             |  public static TodoId generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TodoId(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TodoId.class, new Wirespec.GeneratorFieldString(
+            |    return new TodoId(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.of("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}"),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -937,7 +938,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TodoNoRegex;
             |public interface TodoNoRegexGenerator {
             |  public static TodoNoRegex generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TodoNoRegex(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TodoNoRegex.class, new Wirespec.GeneratorFieldString(
+            |    return new TodoNoRegex(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -949,7 +950,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestInt;
             |public interface TestIntGenerator {
             |  public static TestInt generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestInt(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestInt.class, new Wirespec.GeneratorFieldInteger(
+            |    return new TestInt(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |      java.util.Optional.empty(),
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -962,7 +963,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestInt0;
             |public interface TestInt0Generator {
             |  public static TestInt0 generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestInt0(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestInt0.class, new Wirespec.GeneratorFieldInteger(
+            |    return new TestInt0(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |      java.util.Optional.empty(),
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -975,7 +976,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestInt1;
             |public interface TestInt1Generator {
             |  public static TestInt1 generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestInt1(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestInt1.class, new Wirespec.GeneratorFieldInteger(
+            |    return new TestInt1(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |      java.util.Optional.of(0L),
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -988,7 +989,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestInt2;
             |public interface TestInt2Generator {
             |  public static TestInt2 generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestInt2(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestInt2.class, new Wirespec.GeneratorFieldInteger(
+            |    return new TestInt2(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |      java.util.Optional.of(1L),
             |      java.util.Optional.of(3L),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -1001,7 +1002,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestNum;
             |public interface TestNumGenerator {
             |  public static TestNum generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestNum(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestNum.class, new Wirespec.GeneratorFieldNumber(
+            |    return new TestNum(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber(
             |      java.util.Optional.empty(),
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -1014,7 +1015,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestNum0;
             |public interface TestNum0Generator {
             |  public static TestNum0 generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestNum0(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestNum0.class, new Wirespec.GeneratorFieldNumber(
+            |    return new TestNum0(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber(
             |      java.util.Optional.empty(),
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -1027,7 +1028,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestNum1;
             |public interface TestNum1Generator {
             |  public static TestNum1 generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestNum1(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestNum1.class, new Wirespec.GeneratorFieldNumber(
+            |    return new TestNum1(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber(
             |      java.util.Optional.empty(),
             |      java.util.Optional.of(0.5),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -1040,7 +1041,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.TestNum2;
             |public interface TestNum2Generator {
             |  public static TestNum2 generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new TestNum2(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), TestNum2.class, new Wirespec.GeneratorFieldNumber(
+            |    return new TestNum2(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber(
             |      java.util.Optional.of(-0.2),
             |      java.util.Optional.of(0.5),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -1048,7 +1049,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileRefinedTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1096,9 +1097,10 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.UserAccount;
             |public interface UserAccountGenerator {
             |  public static UserAccount generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    final var variant = generator.generate(java.util.stream.Stream.of(path, java.util.List.of("variant")).flatMap(java.util.Collection::stream).toList(), UserAccount.class, new Wirespec.GeneratorFieldUnion(
+            |    final var variant = generator.generate(java.util.stream.Stream.of(path, java.util.List.of("variant")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldUnion(
             |      java.util.List.of("UserAccountPassword", "UserAccountToken"),
-            |      java.util.List.<java.util.Map<String, Object>>of()
+            |      java.util.List.<java.util.Map<String, Object>>of(),
+            |      UserAccount.class
             |    ));
             |    switch (variant) {
             |        case "UserAccountPassword" -> {
@@ -1118,11 +1120,11 @@ class JavaIrEmitterTest {
             |public interface UserAccountPasswordGenerator {
             |  public static UserAccountPassword generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new UserAccountPassword(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("username")).flatMap(java.util.Collection::stream).toList(), UserAccountPassword.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("username")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("password")).flatMap(java.util.Collection::stream).toList(), UserAccountPassword.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("password")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      ))
@@ -1135,7 +1137,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.UserAccountToken;
             |public interface UserAccountTokenGenerator {
             |  public static UserAccountToken generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new UserAccountToken(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("token")).flatMap(java.util.Collection::stream).toList(), UserAccountToken.class, new Wirespec.GeneratorFieldString(
+            |    return new UserAccountToken(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("token")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -1145,22 +1147,24 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.generator;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.User;
+            |import community.flock.wirespec.generated.model.UserAccount;
             |public interface UserGenerator {
             |  public static User generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new User(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("username")).flatMap(java.util.Collection::stream).toList(), User.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("username")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("account")).flatMap(java.util.Collection::stream).toList(), User.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("account")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape(
             |        java.util.Collections.emptyMap(),
-            |        (p0) -> UserAccountGenerator.generate(generator, p0)
+            |        (p0) -> UserAccountGenerator.generate(generator, p0),
+            |        UserAccount.class
             |      ))
             |    );
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileUnionTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1189,27 +1193,27 @@ class JavaIrEmitterTest {
             |public interface RequestGenerator {
             |  public static Request generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Request(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("type")).flatMap(java.util.Collection::stream).toList(), Request.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("type")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("url")).flatMap(java.util.Collection::stream).toList(), Request.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("url")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("BODY_TYPE")).flatMap(java.util.Collection::stream).toList(), Request.class, new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, Request.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("BODY_TYPE")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )))),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("params")).flatMap(java.util.Collection::stream).toList(), Request.class, new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, Request.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("params")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )))),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("headers")).flatMap(java.util.Collection::stream).toList(), Request.class, new Wirespec.GeneratorFieldDict((p0) -> generator.generate(p0, Request.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("headers")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )))),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("body")).flatMap(java.util.Collection::stream).toList(), Request.class, new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, Request.class, new Wirespec.GeneratorFieldDict((p1) -> generator.generate(p1, Request.class, new Wirespec.GeneratorFieldArray((p2) -> generator.generate(p2, Request.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("body")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldDict((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldArray((p2) -> generator.generate(p2, new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      ))))))))
@@ -1217,7 +1221,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileTypeTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1275,7 +1279,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.DutchPostalCode;
             |public interface DutchPostalCodeGenerator {
             |  public static DutchPostalCode generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new DutchPostalCode(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), DutchPostalCode.class, new Wirespec.GeneratorFieldString(
+            |    return new DutchPostalCode(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.of("^([0-9]{4}[A-Z]{2})${'$'}"),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -1285,21 +1289,23 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.generator;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Address;
+            |import community.flock.wirespec.generated.model.DutchPostalCode;
             |public interface AddressGenerator {
             |  public static Address generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Address(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("street")).flatMap(java.util.Collection::stream).toList(), Address.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("street")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("houseNumber")).flatMap(java.util.Collection::stream).toList(), Address.class, new Wirespec.GeneratorFieldInteger(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("houseNumber")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |        java.util.Optional.empty(),
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("postalCode")).flatMap(java.util.Collection::stream).toList(), Address.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("postalCode")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape(
             |        java.util.Collections.emptyMap(),
-            |        (p0) -> DutchPostalCodeGenerator.generate(generator, p0)
+            |        (p0) -> DutchPostalCodeGenerator.generate(generator, p0),
+            |        DutchPostalCode.class
             |      ))
             |    );
             |  }
@@ -1308,18 +1314,20 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.generator;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Person;
+            |import community.flock.wirespec.generated.model.Address;
             |public interface PersonGenerator {
             |  public static Person generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Person(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), Person.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("address")).flatMap(java.util.Collection::stream).toList(), Person.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("address")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape(
             |        java.util.Map.ofEntries(java.util.Map.entry("street", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("houseNumber", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("postalCode", java.util.List.<java.util.Map<String, Object>>of())),
-            |        (p0) -> AddressGenerator.generate(generator, p0)
+            |        (p0) -> AddressGenerator.generate(generator, p0),
+            |        Address.class
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), Person.class, new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, Person.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      ))))
@@ -1327,7 +1335,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileNestedTypeTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1466,7 +1474,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Email;
             |public interface EmailGenerator {
             |  public static Email generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new Email(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), Email.class, new Wirespec.GeneratorFieldString(
+            |    return new Email(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.of("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}${'$'}"),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -1478,7 +1486,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.PhoneNumber;
             |public interface PhoneNumberGenerator {
             |  public static PhoneNumber generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new PhoneNumber(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), PhoneNumber.class, new Wirespec.GeneratorFieldString(
+            |    return new PhoneNumber(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.of("^\\+[1-9]\\d{1,14}${'$'}"),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -1490,7 +1498,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Tag;
             |public interface TagGenerator {
             |  public static Tag generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new Tag(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), Tag.class, new Wirespec.GeneratorFieldString(
+            |    return new Tag(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.of("^[a-z][a-z0-9-]{0,19}${'$'}"),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
@@ -1502,7 +1510,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.EmployeeAge;
             |public interface EmployeeAgeGenerator {
             |  public static EmployeeAge generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new EmployeeAge(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), EmployeeAge.class, new Wirespec.GeneratorFieldInteger(
+            |    return new EmployeeAge(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |      java.util.Optional.of(18L),
             |      java.util.Optional.of(65L),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -1513,16 +1521,20 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.generator;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.ContactInfo;
+            |import community.flock.wirespec.generated.model.Email;
+            |import community.flock.wirespec.generated.model.PhoneNumber;
             |public interface ContactInfoGenerator {
             |  public static ContactInfo generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new ContactInfo(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("email")).flatMap(java.util.Collection::stream).toList(), ContactInfo.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("email")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape(
             |        java.util.Collections.emptyMap(),
-            |        (p0) -> EmailGenerator.generate(generator, p0)
+            |        (p0) -> EmailGenerator.generate(generator, p0),
+            |        Email.class
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("phone")).flatMap(java.util.Collection::stream).toList(), ContactInfo.class, new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, ContactInfo.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("phone")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape(
             |        java.util.Collections.emptyMap(),
-            |        (p1) -> PhoneNumberGenerator.generate(generator, p1)
+            |        (p1) -> PhoneNumberGenerator.generate(generator, p1),
+            |        PhoneNumber.class
             |      ))))
             |    );
             |  }
@@ -1531,24 +1543,30 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.generator;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Employee;
+            |import community.flock.wirespec.generated.model.EmployeeAge;
+            |import community.flock.wirespec.generated.model.ContactInfo;
+            |import community.flock.wirespec.generated.model.Tag;
             |public interface EmployeeGenerator {
             |  public static Employee generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Employee(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), Employee.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("age")).flatMap(java.util.Collection::stream).toList(), Employee.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("age")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape(
             |        java.util.Collections.emptyMap(),
-            |        (p0) -> EmployeeAgeGenerator.generate(generator, p0)
+            |        (p0) -> EmployeeAgeGenerator.generate(generator, p0),
+            |        EmployeeAge.class
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("contactInfo")).flatMap(java.util.Collection::stream).toList(), Employee.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("contactInfo")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape(
             |        java.util.Map.ofEntries(java.util.Map.entry("email", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("phone", java.util.List.<java.util.Map<String, Object>>of())),
-            |        (p0) -> ContactInfoGenerator.generate(generator, p0)
+            |        (p0) -> ContactInfoGenerator.generate(generator, p0),
+            |        ContactInfo.class
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), Employee.class, new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, Employee.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape(
             |        java.util.Collections.emptyMap(),
-            |        (p1) -> TagGenerator.generate(generator, p1)
+            |        (p1) -> TagGenerator.generate(generator, p1),
+            |        Tag.class
             |      ))))
             |    );
             |  }
@@ -1557,16 +1575,18 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.generator;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Department;
+            |import community.flock.wirespec.generated.model.Employee;
             |public interface DepartmentGenerator {
             |  public static Department generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Department(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), Department.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("employees")).flatMap(java.util.Collection::stream).toList(), Department.class, new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, Department.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("employees")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape(
             |        java.util.Map.ofEntries(java.util.Map.entry("name", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("age", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("contactInfo", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("tags", java.util.List.<java.util.Map<String, Object>>of())),
-            |        (p1) -> EmployeeGenerator.generate(generator, p1)
+            |        (p1) -> EmployeeGenerator.generate(generator, p1),
+            |        Employee.class
             |      ))))
             |    );
             |  }
@@ -1575,22 +1595,24 @@ class JavaIrEmitterTest {
             |package community.flock.wirespec.generated.generator;
             |import community.flock.wirespec.java.Wirespec;
             |import community.flock.wirespec.generated.model.Company;
+            |import community.flock.wirespec.generated.model.Department;
             |public interface CompanyGenerator {
             |  public static Company generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Company(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), Company.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("departments")).flatMap(java.util.Collection::stream).toList(), Company.class, new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, Company.class, new Wirespec.GeneratorFieldShape(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("departments")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape(
             |        java.util.Map.ofEntries(java.util.Map.entry("name", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("employees", java.util.List.<java.util.Map<String, Object>>of())),
-            |        (p1) -> DepartmentGenerator.generate(generator, p1)
+            |        (p1) -> DepartmentGenerator.generate(generator, p1),
+            |        Department.class
             |      ))))
             |    );
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileComplexModelTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1729,12 +1751,14 @@ class JavaIrEmitterTest {
             |  };
             |  public static record GeneratorFieldEnum (
             |    java.util.List<String> values,
-            |    java.util.List<java.util.Map<String, Object>> annotations
+            |    java.util.List<java.util.Map<String, Object>> annotations,
+            |    Type type
             |  ) implements GeneratorField<String> {
             |  };
             |  public static record GeneratorFieldUnion (
             |    java.util.List<String> variants,
-            |    java.util.List<java.util.Map<String, Object>> annotations
+            |    java.util.List<java.util.Map<String, Object>> annotations,
+            |    Type type
             |  ) implements GeneratorField<String> {
             |  };
             |  public static record GeneratorFieldArray<T> (
@@ -1747,7 +1771,8 @@ class JavaIrEmitterTest {
             |  };
             |  public static record GeneratorFieldShape<T> (
             |    java.util.Map<String, java.util.List<java.util.Map<String, Object>>> annotations,
-            |    java.util.function.Function<java.util.List<String>, T> generate
+            |    java.util.function.Function<java.util.List<String>, T> generate,
+            |    Type type
             |  ) implements GeneratorField<T> {
             |  };
             |  public static record GeneratorFieldDict<V> (
@@ -1755,7 +1780,7 @@ class JavaIrEmitterTest {
             |  ) implements GeneratorField<java.util.Map<String, V>> {
             |  };
             |  public interface Generator {
-            |    public <T> T generate(java.util.List<String> path, Type type, GeneratorField<T> field);
+            |    public <T> T generate(java.util.List<String> path, GeneratorField<T> field);
             |  }
             |  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
             |    public Req from(RawRequest request);
@@ -1786,7 +1811,7 @@ class JavaIrEmitterTest {
             |    else { return actualTypeArguments; }
             |  }}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         val emitter = JavaIrEmitter()
         emitter.shared.source shouldBe expected
@@ -1855,11 +1880,11 @@ class JavaIrEmitterTest {
             |public interface AddressGenerator {
             |  public static Address generate(Wirespec.Generator generator, java.util.List<String> path) {
             |    return new Address(
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("street")).flatMap(java.util.Collection::stream).toList(), Address.class, new Wirespec.GeneratorFieldString(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("street")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
             |      )),
-            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("number")).flatMap(java.util.Collection::stream).toList(), Address.class, new Wirespec.GeneratorFieldInteger(
+            |      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("number")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
             |        java.util.Optional.empty(),
             |        java.util.Optional.empty(),
             |        java.util.List.<java.util.Map<String, Object>>of()
@@ -1868,7 +1893,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
     }
@@ -1888,14 +1913,15 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Color;
             |public interface ColorGenerator {
             |  public static Color generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return Color.valueOf(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), Color.class, new Wirespec.GeneratorFieldEnum(
+            |    return Color.valueOf(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldEnum(
             |      java.util.List.of("RED", "GREEN", "BLUE"),
-            |      java.util.List.<java.util.Map<String, Object>>of()
+            |      java.util.List.<java.util.Map<String, Object>>of(),
+            |      Color.class
             |    )));
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(color, "ColorGenerator") shouldBe expected
     }
@@ -1918,9 +1944,10 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Shape;
             |public interface ShapeGenerator {
             |  public static Shape generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    final var variant = generator.generate(java.util.stream.Stream.of(path, java.util.List.of("variant")).flatMap(java.util.Collection::stream).toList(), Shape.class, new Wirespec.GeneratorFieldUnion(
+            |    final var variant = generator.generate(java.util.stream.Stream.of(path, java.util.List.of("variant")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldUnion(
             |      java.util.List.of("Circle", "Square"),
-            |      java.util.List.<java.util.Map<String, Object>>of()
+            |      java.util.List.<java.util.Map<String, Object>>of(),
+            |      Shape.class
             |    ));
             |    switch (variant) {
             |        case "Circle" -> {
@@ -1934,7 +1961,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(shape, "ShapeGenerator") shouldBe expected
     }
@@ -1959,14 +1986,14 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.UUID;
             |public interface UUIDGenerator {
             |  public static UUID generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new UUID(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), UUID.class, new Wirespec.GeneratorFieldString(
+            |    return new UUID(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
             |      java.util.Optional.of("^[0-9a-f]{8}${'$'}"),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )));
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(uuid, "UUIDGenerator") shouldBe expected
     }
@@ -2001,7 +2028,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Inventory;
             |public interface InventoryGenerator {
             |  public static Inventory generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new Inventory(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("items")).flatMap(java.util.Collection::stream).toList(), Inventory.class, new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, Inventory.class, new Wirespec.GeneratorFieldInteger(
+            |    return new Inventory(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("items")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldInteger(
             |      java.util.Optional.empty(),
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -2009,7 +2036,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(inventory, "InventoryGenerator") shouldBe expected
     }
@@ -2044,7 +2071,7 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Lookup;
             |public interface LookupGenerator {
             |  public static Lookup generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new Lookup(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("entries")).flatMap(java.util.Collection::stream).toList(), Lookup.class, new Wirespec.GeneratorFieldDict((p0) -> generator.generate(p0, Lookup.class, new Wirespec.GeneratorFieldInteger(
+            |    return new Lookup(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("entries")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldInteger(
             |      java.util.Optional.empty(),
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
@@ -2052,7 +2079,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(lookup, "LookupGenerator") shouldBe expected
     }
@@ -2084,14 +2111,14 @@ class JavaIrEmitterTest {
             |import community.flock.wirespec.generated.model.Person;
             |public interface PersonGenerator {
             |  public static Person generate(Wirespec.Generator generator, java.util.List<String> path) {
-            |    return new Person(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("nickname")).flatMap(java.util.Collection::stream).toList(), Person.class, new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, Person.class, new Wirespec.GeneratorFieldString(
+            |    return new Person(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("nickname")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
             |      java.util.Optional.empty(),
             |      java.util.List.<java.util.Map<String, Object>>of()
             |    )))));
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(person, "PersonGenerator") shouldBe expected
     }

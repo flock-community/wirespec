@@ -49,7 +49,7 @@ type TaskInput {
 }
 
 type Member {
-    id: MemberId,
+    @Seed id: MemberId,
     ref:String,
     @Generator("fullname") name: String,
     @Generator("email") email: String

@@ -56,11 +56,6 @@ class VerifyGeneratorTest : FunSpec({
                     import(wirespecPkg, "Wirespec")
                     import("community.flock.wirespec.generated.model", "Person")
                     import("community.flock.wirespec.generated.generator", "PersonGenerator")
-                    if (isJava) {
-                        import("java.lang.reflect", "Type")
-                    } else {
-                        import("kotlin.reflect", "KType")
-                    }
 
                     main(statics = {
                         // A deterministic Generator that returns a predictable value
@@ -77,8 +72,6 @@ class VerifyGeneratorTest : FunSpec({
                             function("generate", isOverride = true) {
                                 typeParam(Type.Custom("T"), Type.Nullable(Type.Any))
                                 arg("path", Type.Array(Type.String))
-                                // Type.Reflect emits `KType` in Kotlin, `Type` in Java.
-                                arg("type", Type.Reflect)
                                 arg("field", Type.Custom("Wirespec.GeneratorField", listOf(Type.Custom("T"))))
                                 returnType(Type.Custom("T"))
                                 // `variable = f` introduces a narrowed pattern

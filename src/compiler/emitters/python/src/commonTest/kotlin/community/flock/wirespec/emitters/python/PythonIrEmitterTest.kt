@@ -260,7 +260,7 @@ class PythonIrEmitterTest {
             |class PotentialTodoDtoGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> PotentialTodoDto:
-            |        return PotentialTodoDto(name=generator.generate(path + ['name'], PotentialTodoDto, Wirespec.GeneratorFieldString(regex=None, annotations=[])), done=generator.generate(path + ['done'], PotentialTodoDto, Wirespec.GeneratorFieldBoolean(annotations=[])))
+            |        return PotentialTodoDto(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), done=generator.generate(path + ['done'], Wirespec.GeneratorFieldBoolean(annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -273,7 +273,7 @@ class PythonIrEmitterTest {
             |class TokenGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Token:
-            |        return Token(iss=generator.generate(path + ['iss'], Token, Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+            |        return Token(iss=generator.generate(path + ['iss'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -286,7 +286,7 @@ class PythonIrEmitterTest {
             |class TodoDtoGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TodoDto:
-            |        return TodoDto(id=generator.generate(path + ['id'], TodoDto, Wirespec.GeneratorFieldString(regex=None, annotations=[])), name=generator.generate(path + ['name'], TodoDto, Wirespec.GeneratorFieldString(regex=None, annotations=[])), done=generator.generate(path + ['done'], TodoDto, Wirespec.GeneratorFieldBoolean(annotations=[])))
+            |        return TodoDto(id=generator.generate(path + ['id'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), done=generator.generate(path + ['done'], Wirespec.GeneratorFieldBoolean(annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -299,7 +299,7 @@ class PythonIrEmitterTest {
             |class ErrorGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Error:
-            |        return Error(code=generator.generate(path + ['code'], Error, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), description=generator.generate(path + ['description'], Error, Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+            |        return Error(code=generator.generate(path + ['code'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), description=generator.generate(path + ['description'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
             |
             |from . import model
             |from . import endpoint
@@ -332,7 +332,7 @@ class PythonIrEmitterTest {
             |    async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
             |        return await PutTodoClient(serialization=self.serialization, transportation=self.transportation).put_todo(id, done, name, token, refreshToken, body)
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileFullEndpointTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -399,7 +399,7 @@ class PythonIrEmitterTest {
             |class MyAwesomeEnumGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> MyAwesomeEnum:
-            |        return MyAwesomeEnum.valueOf(generator.generate(path + ['value'], MyAwesomeEnum, Wirespec.GeneratorFieldEnum(values=['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'], annotations=[])))
+            |        return MyAwesomeEnum.valueOf(generator.generate(path + ['value'], Wirespec.GeneratorFieldEnum(values=['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'], annotations=[], type=MyAwesomeEnum)))
             |
             |from . import model
             |from . import endpoint
@@ -411,7 +411,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileEnumTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -543,7 +543,7 @@ class PythonIrEmitterTest {
             |class TodoDtoGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TodoDto:
-            |        return TodoDto(description=generator.generate(path + ['description'], TodoDto, Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+            |        return TodoDto(description=generator.generate(path + ['description'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
             |
             |from . import model
             |from . import endpoint
@@ -573,7 +573,7 @@ class PythonIrEmitterTest {
             |    async def get_todos(self) -> Response[Any]:
             |        return await GetTodosClient(serialization=self.serialization, transportation=self.transportation).get_todos()
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -742,7 +742,7 @@ class PythonIrEmitterTest {
             |class TodoIdGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TodoId:
-            |        return TodoId(value=generator.generate(path + ['value'], TodoId, Wirespec.GeneratorFieldString(regex='^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}', annotations=[])))
+            |        return TodoId(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}', annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -755,7 +755,7 @@ class PythonIrEmitterTest {
             |class TodoNoRegexGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TodoNoRegex:
-            |        return TodoNoRegex(value=generator.generate(path + ['value'], TodoNoRegex, Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+            |        return TodoNoRegex(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -768,7 +768,7 @@ class PythonIrEmitterTest {
             |class TestIntGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt:
-            |        return TestInt(value=generator.generate(path + ['value'], TestInt, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
+            |        return TestInt(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -781,7 +781,7 @@ class PythonIrEmitterTest {
             |class TestInt0Generator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt0:
-            |        return TestInt0(value=generator.generate(path + ['value'], TestInt0, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
+            |        return TestInt0(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -794,7 +794,7 @@ class PythonIrEmitterTest {
             |class TestInt1Generator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt1:
-            |        return TestInt1(value=generator.generate(path + ['value'], TestInt1, Wirespec.GeneratorFieldInteger(min=0, max=None, annotations=[])))
+            |        return TestInt1(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=0, max=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -807,7 +807,7 @@ class PythonIrEmitterTest {
             |class TestInt2Generator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt2:
-            |        return TestInt2(value=generator.generate(path + ['value'], TestInt2, Wirespec.GeneratorFieldInteger(min=1, max=3, annotations=[])))
+            |        return TestInt2(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=1, max=3, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -820,7 +820,7 @@ class PythonIrEmitterTest {
             |class TestNumGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum:
-            |        return TestNum(value=generator.generate(path + ['value'], TestNum, Wirespec.GeneratorFieldNumber(min=None, max=None, annotations=[])))
+            |        return TestNum(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=None, max=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -833,7 +833,7 @@ class PythonIrEmitterTest {
             |class TestNum0Generator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum0:
-            |        return TestNum0(value=generator.generate(path + ['value'], TestNum0, Wirespec.GeneratorFieldNumber(min=None, max=None, annotations=[])))
+            |        return TestNum0(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=None, max=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -846,7 +846,7 @@ class PythonIrEmitterTest {
             |class TestNum1Generator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum1:
-            |        return TestNum1(value=generator.generate(path + ['value'], TestNum1, Wirespec.GeneratorFieldNumber(min=None, max=0.5, annotations=[])))
+            |        return TestNum1(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=None, max=0.5, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -859,7 +859,7 @@ class PythonIrEmitterTest {
             |class TestNum2Generator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum2:
-            |        return TestNum2(value=generator.generate(path + ['value'], TestNum2, Wirespec.GeneratorFieldNumber(min=-0.2, max=0.5, annotations=[])))
+            |        return TestNum2(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=-0.2, max=0.5, annotations=[])))
             |
             |from . import model
             |from . import endpoint
@@ -871,7 +871,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileRefinedTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -942,7 +942,7 @@ class PythonIrEmitterTest {
             |class UserAccountPasswordGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccountPassword:
-            |        return UserAccountPassword(username=generator.generate(path + ['username'], UserAccountPassword, Wirespec.GeneratorFieldString(regex=None, annotations=[])), password=generator.generate(path + ['password'], UserAccountPassword, Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+            |        return UserAccountPassword(username=generator.generate(path + ['username'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), password=generator.generate(path + ['password'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -955,7 +955,7 @@ class PythonIrEmitterTest {
             |class UserAccountTokenGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccountToken:
-            |        return UserAccountToken(token=generator.generate(path + ['token'], UserAccountToken, Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+            |        return UserAccountToken(token=generator.generate(path + ['token'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -965,11 +965,12 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.User import User
+            |from ..model.UserAccount import UserAccount
             |from .UserAccountGenerator import UserAccountGenerator
             |class UserGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> User:
-            |        return User(username=generator.generate(path + ['username'], User, Wirespec.GeneratorFieldString(regex=None, annotations=[])), account=generator.generate(path + ['account'], User, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: UserAccountGenerator.generate(generator, p0))))
+            |        return User(username=generator.generate(path + ['username'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), account=generator.generate(path + ['account'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: UserAccountGenerator.generate(generator, p0), type=UserAccount)))
             |
             |from __future__ import annotations
             |import re
@@ -984,7 +985,7 @@ class PythonIrEmitterTest {
             |class UserAccountGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccount:
-            |        variant = generator.generate(path + ['variant'], UserAccount, Wirespec.GeneratorFieldUnion(variants=['UserAccountPassword', 'UserAccountToken'], annotations=[]))
+            |        variant = generator.generate(path + ['variant'], Wirespec.GeneratorFieldUnion(variants=['UserAccountPassword', 'UserAccountToken'], annotations=[], type=UserAccount))
             |        match variant:
             |            case 'UserAccountPassword':
             |                return UserAccountPasswordGenerator.generate(generator, path + ['UserAccountPassword'])
@@ -1002,7 +1003,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileUnionTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1039,7 +1040,7 @@ class PythonIrEmitterTest {
             |class RequestGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Request:
-            |        return Request(type=generator.generate(path + ['type'], Request, Wirespec.GeneratorFieldString(regex=None, annotations=[])), url=generator.generate(path + ['url'], Request, Wirespec.GeneratorFieldString(regex=None, annotations=[])), BODY_TYPE=generator.generate(path + ['BODY_TYPE'], Request, Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Request, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), params=generator.generate(path + ['params'], Request, Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Request, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), headers=generator.generate(path + ['headers'], Request, Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Request, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), body=generator.generate(path + ['body'], Request, Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Request, Wirespec.GeneratorFieldDict(generate=lambda p1: generator.generate(p1, Request, Wirespec.GeneratorFieldArray(generate=lambda p2: generator.generate(p2, Request, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))))))
+            |        return Request(type=generator.generate(path + ['type'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), url=generator.generate(path + ['url'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), BODY_TYPE=generator.generate(path + ['BODY_TYPE'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), params=generator.generate(path + ['params'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), headers=generator.generate(path + ['headers'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), body=generator.generate(path + ['body'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldDict(generate=lambda p1: generator.generate(p1, Wirespec.GeneratorFieldArray(generate=lambda p2: generator.generate(p2, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))))))
             |
             |from . import model
             |from . import endpoint
@@ -1051,7 +1052,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileTypeTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1117,7 +1118,7 @@ class PythonIrEmitterTest {
             |class DutchPostalCodeGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> DutchPostalCode:
-            |        return DutchPostalCode(value=generator.generate(path + ['value'], DutchPostalCode, Wirespec.GeneratorFieldString(regex='^([0-9]{4}[A-Z]{2})${'$'}', annotations=[])))
+            |        return DutchPostalCode(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^([0-9]{4}[A-Z]{2})${'$'}', annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -1127,11 +1128,12 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.Address import Address
+            |from ..model.DutchPostalCode import DutchPostalCode
             |from .DutchPostalCodeGenerator import DutchPostalCodeGenerator
             |class AddressGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Address:
-            |        return Address(street=generator.generate(path + ['street'], Address, Wirespec.GeneratorFieldString(regex=None, annotations=[])), houseNumber=generator.generate(path + ['houseNumber'], Address, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), postalCode=generator.generate(path + ['postalCode'], Address, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: DutchPostalCodeGenerator.generate(generator, p0))))
+            |        return Address(street=generator.generate(path + ['street'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), houseNumber=generator.generate(path + ['houseNumber'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), postalCode=generator.generate(path + ['postalCode'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: DutchPostalCodeGenerator.generate(generator, p0), type=DutchPostalCode)))
             |
             |from __future__ import annotations
             |import re
@@ -1141,11 +1143,12 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.Person import Person
+            |from ..model.Address import Address
             |from .AddressGenerator import AddressGenerator
             |class PersonGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Person:
-            |        return Person(name=generator.generate(path + ['name'], Person, Wirespec.GeneratorFieldString(regex=None, annotations=[])), address=generator.generate(path + ['address'], Person, Wirespec.GeneratorFieldShape(annotations={'street': [], 'houseNumber': [], 'postalCode': []}, generate=lambda p0: AddressGenerator.generate(generator, p0))), tags=generator.generate(path + ['tags'], Person, Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Person, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
+            |        return Person(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), address=generator.generate(path + ['address'], Wirespec.GeneratorFieldShape(annotations={'street': [], 'houseNumber': [], 'postalCode': []}, generate=lambda p0: AddressGenerator.generate(generator, p0), type=Address)), tags=generator.generate(path + ['tags'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
             |
             |from . import model
             |from . import endpoint
@@ -1157,7 +1160,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileNestedTypeTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1301,7 +1304,7 @@ class PythonIrEmitterTest {
             |class EmailGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Email:
-            |        return Email(value=generator.generate(path + ['value'], Email, Wirespec.GeneratorFieldString(regex='^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}', annotations=[])))
+            |        return Email(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}', annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -1314,7 +1317,7 @@ class PythonIrEmitterTest {
             |class PhoneNumberGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> PhoneNumber:
-            |        return PhoneNumber(value=generator.generate(path + ['value'], PhoneNumber, Wirespec.GeneratorFieldString(regex='^\+[1-9]\d{1,14}${'$'}', annotations=[])))
+            |        return PhoneNumber(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^\+[1-9]\d{1,14}${'$'}', annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -1327,7 +1330,7 @@ class PythonIrEmitterTest {
             |class TagGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Tag:
-            |        return Tag(value=generator.generate(path + ['value'], Tag, Wirespec.GeneratorFieldString(regex='^[a-z][a-z0-9-]{0,19}${'$'}', annotations=[])))
+            |        return Tag(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[a-z][a-z0-9-]{0,19}${'$'}', annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -1340,7 +1343,7 @@ class PythonIrEmitterTest {
             |class EmployeeAgeGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> EmployeeAge:
-            |        return EmployeeAge(value=generator.generate(path + ['value'], EmployeeAge, Wirespec.GeneratorFieldInteger(min=18, max=65, annotations=[])))
+            |        return EmployeeAge(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=18, max=65, annotations=[])))
             |
             |from __future__ import annotations
             |import re
@@ -1350,12 +1353,14 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.ContactInfo import ContactInfo
+            |from ..model.Email import Email
+            |from ..model.PhoneNumber import PhoneNumber
             |from .EmailGenerator import EmailGenerator
             |from .PhoneNumberGenerator import PhoneNumberGenerator
             |class ContactInfoGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> ContactInfo:
-            |        return ContactInfo(email=generator.generate(path + ['email'], ContactInfo, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: EmailGenerator.generate(generator, p0))), phone=generator.generate(path + ['phone'], ContactInfo, Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, ContactInfo, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p1: PhoneNumberGenerator.generate(generator, p1))))))
+            |        return ContactInfo(email=generator.generate(path + ['email'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: EmailGenerator.generate(generator, p0), type=Email)), phone=generator.generate(path + ['phone'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p1: PhoneNumberGenerator.generate(generator, p1), type=PhoneNumber)))))
             |
             |from __future__ import annotations
             |import re
@@ -1365,13 +1370,16 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.Employee import Employee
+            |from ..model.EmployeeAge import EmployeeAge
+            |from ..model.ContactInfo import ContactInfo
+            |from ..model.Tag import Tag
             |from .EmployeeAgeGenerator import EmployeeAgeGenerator
             |from .ContactInfoGenerator import ContactInfoGenerator
             |from .TagGenerator import TagGenerator
             |class EmployeeGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Employee:
-            |        return Employee(name=generator.generate(path + ['name'], Employee, Wirespec.GeneratorFieldString(regex=None, annotations=[])), age=generator.generate(path + ['age'], Employee, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: EmployeeAgeGenerator.generate(generator, p0))), contactInfo=generator.generate(path + ['contactInfo'], Employee, Wirespec.GeneratorFieldShape(annotations={'email': [], 'phone': []}, generate=lambda p0: ContactInfoGenerator.generate(generator, p0))), tags=generator.generate(path + ['tags'], Employee, Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Employee, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p1: TagGenerator.generate(generator, p1))))))
+            |        return Employee(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), age=generator.generate(path + ['age'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: EmployeeAgeGenerator.generate(generator, p0), type=EmployeeAge)), contactInfo=generator.generate(path + ['contactInfo'], Wirespec.GeneratorFieldShape(annotations={'email': [], 'phone': []}, generate=lambda p0: ContactInfoGenerator.generate(generator, p0), type=ContactInfo)), tags=generator.generate(path + ['tags'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p1: TagGenerator.generate(generator, p1), type=Tag)))))
             |
             |from __future__ import annotations
             |import re
@@ -1381,11 +1389,12 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.Department import Department
+            |from ..model.Employee import Employee
             |from .EmployeeGenerator import EmployeeGenerator
             |class DepartmentGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Department:
-            |        return Department(name=generator.generate(path + ['name'], Department, Wirespec.GeneratorFieldString(regex=None, annotations=[])), employees=generator.generate(path + ['employees'], Department, Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Department, Wirespec.GeneratorFieldShape(annotations={'name': [], 'age': [], 'contactInfo': [], 'tags': []}, generate=lambda p1: EmployeeGenerator.generate(generator, p1))))))
+            |        return Department(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), employees=generator.generate(path + ['employees'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={'name': [], 'age': [], 'contactInfo': [], 'tags': []}, generate=lambda p1: EmployeeGenerator.generate(generator, p1), type=Employee)))))
             |
             |from __future__ import annotations
             |import re
@@ -1395,11 +1404,12 @@ class PythonIrEmitterTest {
             |import enum
             |from ..wirespec import T, Wirespec, _raise
             |from ..model.Company import Company
+            |from ..model.Department import Department
             |from .DepartmentGenerator import DepartmentGenerator
             |class CompanyGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Company:
-            |        return Company(name=generator.generate(path + ['name'], Company, Wirespec.GeneratorFieldString(regex=None, annotations=[])), departments=generator.generate(path + ['departments'], Company, Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Company, Wirespec.GeneratorFieldShape(annotations={'name': [], 'employees': []}, generate=lambda p1: DepartmentGenerator.generate(generator, p1))))))
+            |        return Company(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), departments=generator.generate(path + ['departments'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={'name': [], 'employees': []}, generate=lambda p1: DepartmentGenerator.generate(generator, p1), type=Department)))))
             |
             |from . import model
             |from . import endpoint
@@ -1411,7 +1421,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileComplexModelTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1560,10 +1570,12 @@ class PythonIrEmitterTest {
             |    class GeneratorFieldEnum(GeneratorField[str]):
             |        values: list[str]
             |        annotations: list[dict[str, Any]]
+            |        type: type[T]
             |    @dataclass
             |    class GeneratorFieldUnion(GeneratorField[str]):
             |        variants: list[str]
             |        annotations: list[dict[str, Any]]
+            |        type: type[T]
             |    @dataclass
             |    class GeneratorFieldArray(GeneratorField[list[T]], Generic[T]):
             |        generate: Callable[[list[str]], T]
@@ -1574,15 +1586,16 @@ class PythonIrEmitterTest {
             |    class GeneratorFieldShape(GeneratorField[T], Generic[T]):
             |        annotations: dict[str, list[dict[str, Any]]]
             |        generate: Callable[[list[str]], T]
+            |        type: type[T]
             |    @dataclass
             |    class GeneratorFieldDict(GeneratorField[dict[str, V]], Generic[V]):
             |        generate: Callable[[list[str]], V]
             |    class Generator(ABC):
             |        @abstractmethod
-            |        def generate(self, path: list[str], type: type[Any], field: Wirespec.GeneratorField[T]) -> T:
+            |        def generate(self, path: list[str], field: Wirespec.GeneratorField[T]) -> T:
             |            ...
             |
-        """.trimMargin()
+            """.trimMargin()
 
         val emitter = PythonIrEmitter()
         emitter.shared.source shouldBe expected
@@ -1644,9 +1657,9 @@ class PythonIrEmitterTest {
             |class AddressGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Address:
-            |        return Address(street=generator.generate(path + ['street'], Address, Wirespec.GeneratorFieldString(regex=None, annotations=[])), number=generator.generate(path + ['number'], Address, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
+            |        return Address(street=generator.generate(path + ['street'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), number=generator.generate(path + ['number'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
     }
@@ -1672,9 +1685,9 @@ class PythonIrEmitterTest {
             |class ColorGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Color:
-            |        return Color.valueOf(generator.generate(path + ['value'], Color, Wirespec.GeneratorFieldEnum(values=['RED', 'GREEN', 'BLUE'], annotations=[])))
+            |        return Color.valueOf(generator.generate(path + ['value'], Wirespec.GeneratorFieldEnum(values=['RED', 'GREEN', 'BLUE'], annotations=[], type=Color)))
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(color, "ColorGenerator") shouldBe expected
     }
@@ -1705,7 +1718,7 @@ class PythonIrEmitterTest {
             |class ShapeGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Shape:
-            |        variant = generator.generate(path + ['variant'], Shape, Wirespec.GeneratorFieldUnion(variants=['Circle', 'Square'], annotations=[]))
+            |        variant = generator.generate(path + ['variant'], Wirespec.GeneratorFieldUnion(variants=['Circle', 'Square'], annotations=[], type=Shape))
             |        match variant:
             |            case 'Circle':
             |                return CircleGenerator.generate(generator, path + ['Circle'])
@@ -1713,7 +1726,7 @@ class PythonIrEmitterTest {
             |                return SquareGenerator.generate(generator, path + ['Square'])
             |        raise Exception('Unknown variant')
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(shape, "ShapeGenerator") shouldBe expected
     }
@@ -1744,9 +1757,9 @@ class PythonIrEmitterTest {
             |class UUIDGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> UUID:
-            |        return UUID(value=generator.generate(path + ['value'], UUID, Wirespec.GeneratorFieldString(regex='^[0-9a-f]{8}${'$'}', annotations=[])))
+            |        return UUID(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[0-9a-f]{8}${'$'}', annotations=[])))
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(uuid, "UUIDGenerator") shouldBe expected
     }
@@ -1787,9 +1800,9 @@ class PythonIrEmitterTest {
             |class InventoryGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Inventory:
-            |        return Inventory(items=generator.generate(path + ['items'], Inventory, Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Inventory, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))))
+            |        return Inventory(items=generator.generate(path + ['items'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))))
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(inventory, "InventoryGenerator") shouldBe expected
     }
@@ -1830,9 +1843,9 @@ class PythonIrEmitterTest {
             |class LookupGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Lookup:
-            |        return Lookup(entries=generator.generate(path + ['entries'], Lookup, Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Lookup, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))))
+            |        return Lookup(entries=generator.generate(path + ['entries'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))))
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(lookup, "LookupGenerator") shouldBe expected
     }
@@ -1870,9 +1883,9 @@ class PythonIrEmitterTest {
             |class PersonGenerator:
             |    @staticmethod
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Person:
-            |        return Person(nickname=generator.generate(path + ['nickname'], Person, Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Person, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
+            |        return Person(nickname=generator.generate(path + ['nickname'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(person, "PersonGenerator") shouldBe expected
     }

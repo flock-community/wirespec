@@ -87,7 +87,7 @@ class RustIrEmitterTest {
             |pub struct MyAwesomeEnumGenerator;
             |impl MyAwesomeEnumGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> MyAwesomeEnum {
-            |        return MyAwesomeEnum.value_of(generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<MyAwesomeEnum>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }));
+            |        return MyAwesomeEnum.value_of(generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<MyAwesomeEnum>() }));
             |    }
             |}
             |
@@ -96,7 +96,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileEnumTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -127,7 +127,7 @@ class RustIrEmitterTest {
             |pub struct RequestGenerator;
             |impl RequestGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Request {
-            |        return Request { r#type: generator.generate(vec![path.as_slice(), vec![String::from("type")].as_slice()].concat(), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), url: generator.generate(vec![path.as_slice(), vec![String::from("url")].as_slice()].concat(), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), body_type: generator.generate(vec![path.as_slice(), vec![String::from("BODY_TYPE")].as_slice()].concat(), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), params: generator.generate(vec![path.as_slice(), vec![String::from("params")].as_slice()].concat(), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), headers: generator.generate(vec![path.as_slice(), vec![String::from("headers")].as_slice()].concat(), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), body: generator.generate(vec![path.as_slice(), vec![String::from("body")].as_slice()].concat(), std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldDict { generate: Box::new(|p1| generator.generate(p1, std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldArray { generate: Box::new(|p2| generator.generate(p2, std::any::TypeId::of::<Request>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) })) })) }) };
+            |        return Request { r#type: generator.generate(vec![path.as_slice(), vec![String::from("type")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), url: generator.generate(vec![path.as_slice(), vec![String::from("url")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), body_type: generator.generate(vec![path.as_slice(), vec![String::from("BODY_TYPE")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), params: generator.generate(vec![path.as_slice(), vec![String::from("params")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), headers: generator.generate(vec![path.as_slice(), vec![String::from("headers")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), body: generator.generate(vec![path.as_slice(), vec![String::from("body")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldDict { generate: Box::new(|p1| generator.generate(p1, Wirespec.GeneratorFieldArray { generate: Box::new(|p2| generator.generate(p2, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) })) })) }) };
             |    }
             |}
             |
@@ -136,7 +136,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -319,7 +319,7 @@ class RustIrEmitterTest {
             |pub struct TodoIdGenerator;
             |impl TodoIdGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoId {
-            |        return TodoId { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TodoId>(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TodoId { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -329,7 +329,7 @@ class RustIrEmitterTest {
             |pub struct TodoNoRegexGenerator;
             |impl TodoNoRegexGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoNoRegex {
-            |        return TodoNoRegex { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TodoNoRegex>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TodoNoRegex { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -339,7 +339,7 @@ class RustIrEmitterTest {
             |pub struct TestIntGenerator;
             |impl TestIntGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt {
-            |        return TestInt { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestInt>(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestInt { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -349,7 +349,7 @@ class RustIrEmitterTest {
             |pub struct TestInt0Generator;
             |impl TestInt0Generator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt0 {
-            |        return TestInt0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestInt0>(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestInt0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -359,7 +359,7 @@ class RustIrEmitterTest {
             |pub struct TestInt1Generator;
             |impl TestInt1Generator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt1 {
-            |        return TestInt1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestInt1>(), Wirespec.GeneratorFieldInteger { min: Some(0_i32), max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestInt1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: Some(0_i32), max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -369,7 +369,7 @@ class RustIrEmitterTest {
             |pub struct TestInt2Generator;
             |impl TestInt2Generator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt2 {
-            |        return TestInt2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestInt2>(), Wirespec.GeneratorFieldInteger { min: Some(1_i32), max: Some(3_i32), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestInt2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: Some(1_i32), max: Some(3_i32), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -379,7 +379,7 @@ class RustIrEmitterTest {
             |pub struct TestNumGenerator;
             |impl TestNumGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum {
-            |        return TestNum { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestNum>(), Wirespec.GeneratorFieldNumber { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestNum { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -389,7 +389,7 @@ class RustIrEmitterTest {
             |pub struct TestNum0Generator;
             |impl TestNum0Generator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum0 {
-            |        return TestNum0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestNum0>(), Wirespec.GeneratorFieldNumber { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestNum0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -399,7 +399,7 @@ class RustIrEmitterTest {
             |pub struct TestNum1Generator;
             |impl TestNum1Generator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum1 {
-            |        return TestNum1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestNum1>(), Wirespec.GeneratorFieldNumber { min: None, max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestNum1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: None, max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -409,7 +409,7 @@ class RustIrEmitterTest {
             |pub struct TestNum2Generator;
             |impl TestNum2Generator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum2 {
-            |        return TestNum2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<TestNum2>(), Wirespec.GeneratorFieldNumber { min: Some(-0.2_f64), max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TestNum2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: Some(-0.2_f64), max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -418,7 +418,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileRefinedTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -479,7 +479,7 @@ class RustIrEmitterTest {
             |pub struct UserAccountPasswordGenerator;
             |impl UserAccountPasswordGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccountPassword {
-            |        return UserAccountPassword { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), std::any::TypeId::of::<UserAccountPassword>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), password: generator.generate(vec![path.as_slice(), vec![String::from("password")].as_slice()].concat(), std::any::TypeId::of::<UserAccountPassword>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return UserAccountPassword { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), password: generator.generate(vec![path.as_slice(), vec![String::from("password")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -489,18 +489,19 @@ class RustIrEmitterTest {
             |pub struct UserAccountTokenGenerator;
             |impl UserAccountTokenGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccountToken {
-            |        return UserAccountToken { token: generator.generate(vec![path.as_slice(), vec![String::from("token")].as_slice()].concat(), std::any::TypeId::of::<UserAccountToken>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return UserAccountToken { token: generator.generate(vec![path.as_slice(), vec![String::from("token")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
             |use super::super::wirespec::*;
             |use regex;
             |use super::super::model::user::User;
+            |use super::super::model::user_account::UserAccount;
             |use super::user_account_generator::UserAccountGenerator;
             |pub struct UserGenerator;
             |impl UserGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> User {
-            |        return User { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), std::any::TypeId::of::<User>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), account: generator.generate(vec![path.as_slice(), vec![String::from("account")].as_slice()].concat(), std::any::TypeId::of::<User>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| UserAccountGenerator.generate(generator, p0)) }) };
+            |        return User { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), account: generator.generate(vec![path.as_slice(), vec![String::from("account")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| UserAccountGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<UserAccount>() }) };
             |    }
             |}
             |
@@ -512,7 +513,7 @@ class RustIrEmitterTest {
             |pub struct UserAccountGenerator;
             |impl UserAccountGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccount {
-            |        let variant = generator.generate(vec![path.as_slice(), vec![String::from("variant")].as_slice()].concat(), std::any::TypeId::of::<UserAccount>(), Wirespec.GeneratorFieldUnion { variants: vec![String::from("UserAccountPassword"), String::from("UserAccountToken")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() });
+            |        let variant = generator.generate(vec![path.as_slice(), vec![String::from("variant")].as_slice()].concat(), Wirespec.GeneratorFieldUnion { variants: vec![String::from("UserAccountPassword"), String::from("UserAccountToken")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<UserAccount>() });
             |        match variant {
             |            String::from("UserAccountPassword") => {
             |                return UserAccountPasswordGenerator.generate(generator, vec![path.as_slice(), vec![String::from("UserAccountPassword")].as_slice()].concat());
@@ -530,7 +531,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileUnionTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -677,7 +678,7 @@ class RustIrEmitterTest {
             |pub struct TodoDtoGenerator;
             |impl TodoDtoGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoDto {
-            |        return TodoDto { description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TodoDto { description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -703,7 +704,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -967,7 +968,7 @@ class RustIrEmitterTest {
             |pub struct PotentialTodoDtoGenerator;
             |impl PotentialTodoDtoGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PotentialTodoDto {
-            |        return PotentialTodoDto { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), std::any::TypeId::of::<PotentialTodoDto>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), done: generator.generate(vec![path.as_slice(), vec![String::from("done")].as_slice()].concat(), std::any::TypeId::of::<PotentialTodoDto>(), Wirespec.GeneratorFieldBoolean { annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return PotentialTodoDto { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), done: generator.generate(vec![path.as_slice(), vec![String::from("done")].as_slice()].concat(), Wirespec.GeneratorFieldBoolean { annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -977,7 +978,7 @@ class RustIrEmitterTest {
             |pub struct TokenGenerator;
             |impl TokenGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Token {
-            |        return Token { iss: generator.generate(vec![path.as_slice(), vec![String::from("iss")].as_slice()].concat(), std::any::TypeId::of::<Token>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return Token { iss: generator.generate(vec![path.as_slice(), vec![String::from("iss")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -987,7 +988,7 @@ class RustIrEmitterTest {
             |pub struct TodoDtoGenerator;
             |impl TodoDtoGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoDto {
-            |        return TodoDto { id: generator.generate(vec![path.as_slice(), vec![String::from("id")].as_slice()].concat(), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), done: generator.generate(vec![path.as_slice(), vec![String::from("done")].as_slice()].concat(), std::any::TypeId::of::<TodoDto>(), Wirespec.GeneratorFieldBoolean { annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return TodoDto { id: generator.generate(vec![path.as_slice(), vec![String::from("id")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), done: generator.generate(vec![path.as_slice(), vec![String::from("done")].as_slice()].concat(), Wirespec.GeneratorFieldBoolean { annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -997,7 +998,7 @@ class RustIrEmitterTest {
             |pub struct ErrorGenerator;
             |impl ErrorGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Error {
-            |        return Error { code: generator.generate(vec![path.as_slice(), vec![String::from("code")].as_slice()].concat(), std::any::TypeId::of::<Error>(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), std::any::TypeId::of::<Error>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return Error { code: generator.generate(vec![path.as_slice(), vec![String::from("code")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -1026,7 +1027,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileFullEndpointTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -1085,29 +1086,31 @@ class RustIrEmitterTest {
             |pub struct DutchPostalCodeGenerator;
             |impl DutchPostalCodeGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> DutchPostalCode {
-            |        return DutchPostalCode { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<DutchPostalCode>(), Wirespec.GeneratorFieldString { regex: Some(String::from("^([0-9]{4}[A-Z]{2})${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return DutchPostalCode { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^([0-9]{4}[A-Z]{2})${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
             |use super::super::wirespec::*;
             |use regex;
             |use super::super::model::address::Address;
+            |use super::super::model::dutch_postal_code::DutchPostalCode;
             |use super::dutch_postal_code_generator::DutchPostalCodeGenerator;
             |pub struct AddressGenerator;
             |impl AddressGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Address {
-            |        return Address { street: generator.generate(vec![path.as_slice(), vec![String::from("street")].as_slice()].concat(), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), house_number: generator.generate(vec![path.as_slice(), vec![String::from("houseNumber")].as_slice()].concat(), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), postal_code: generator.generate(vec![path.as_slice(), vec![String::from("postalCode")].as_slice()].concat(), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| DutchPostalCodeGenerator.generate(generator, p0)) }) };
+            |        return Address { street: generator.generate(vec![path.as_slice(), vec![String::from("street")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), house_number: generator.generate(vec![path.as_slice(), vec![String::from("houseNumber")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), postal_code: generator.generate(vec![path.as_slice(), vec![String::from("postalCode")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| DutchPostalCodeGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<DutchPostalCode>() }) };
             |    }
             |}
             |
             |use super::super::wirespec::*;
             |use regex;
             |use super::super::model::person::Person;
+            |use super::super::model::address::Address;
             |use super::address_generator::AddressGenerator;
             |pub struct PersonGenerator;
             |impl PersonGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Person {
-            |        return Person { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), address: generator.generate(vec![path.as_slice(), vec![String::from("address")].as_slice()].concat(), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("street"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("houseNumber"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("postalCode"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p0| AddressGenerator.generate(generator, p0)) }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+            |        return Person { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), address: generator.generate(vec![path.as_slice(), vec![String::from("address")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("street"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("houseNumber"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("postalCode"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p0| AddressGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<Address>() }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
             |    }
             |}
             |
@@ -1116,7 +1119,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileNestedTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -1251,7 +1254,7 @@ class RustIrEmitterTest {
             |pub struct EmailGenerator;
             |impl EmailGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Email {
-            |        return Email { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<Email>(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return Email { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -1261,7 +1264,7 @@ class RustIrEmitterTest {
             |pub struct PhoneNumberGenerator;
             |impl PhoneNumberGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PhoneNumber {
-            |        return PhoneNumber { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<PhoneNumber>(), Wirespec.GeneratorFieldString { regex: Some(String::from("^\+[1-9]\d{1,14}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return PhoneNumber { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^\+[1-9]\d{1,14}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -1271,7 +1274,7 @@ class RustIrEmitterTest {
             |pub struct TagGenerator;
             |impl TagGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Tag {
-            |        return Tag { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<Tag>(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-z][a-z0-9-]{0,19}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return Tag { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-z][a-z0-9-]{0,19}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
@@ -1281,54 +1284,61 @@ class RustIrEmitterTest {
             |pub struct EmployeeAgeGenerator;
             |impl EmployeeAgeGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> EmployeeAge {
-            |        return EmployeeAge { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<EmployeeAge>(), Wirespec.GeneratorFieldInteger { min: Some(18_i32), max: Some(65_i32), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return EmployeeAge { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: Some(18_i32), max: Some(65_i32), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
             |use super::super::wirespec::*;
             |use regex;
             |use super::super::model::contact_info::ContactInfo;
+            |use super::super::model::email::Email;
+            |use super::super::model::phone_number::PhoneNumber;
             |use super::email_generator::EmailGenerator;
             |use super::phone_number_generator::PhoneNumberGenerator;
             |pub struct ContactInfoGenerator;
             |impl ContactInfoGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> ContactInfo {
-            |        return ContactInfo { email: generator.generate(vec![path.as_slice(), vec![String::from("email")].as_slice()].concat(), std::any::TypeId::of::<ContactInfo>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| EmailGenerator.generate(generator, p0)) }), phone: generator.generate(vec![path.as_slice(), vec![String::from("phone")].as_slice()].concat(), std::any::TypeId::of::<ContactInfo>(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<ContactInfo>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| PhoneNumberGenerator.generate(generator, p1)) })) }) };
+            |        return ContactInfo { email: generator.generate(vec![path.as_slice(), vec![String::from("email")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| EmailGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<Email>() }), phone: generator.generate(vec![path.as_slice(), vec![String::from("phone")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| PhoneNumberGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<PhoneNumber>() })) }) };
             |    }
             |}
             |
             |use super::super::wirespec::*;
             |use regex;
             |use super::super::model::employee::Employee;
+            |use super::super::model::employee_age::EmployeeAge;
+            |use super::super::model::contact_info::ContactInfo;
+            |use super::super::model::tag::Tag;
             |use super::employee_age_generator::EmployeeAgeGenerator;
             |use super::contact_info_generator::ContactInfoGenerator;
             |use super::tag_generator::TagGenerator;
             |pub struct EmployeeGenerator;
             |impl EmployeeGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Employee {
-            |        return Employee { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), std::any::TypeId::of::<Employee>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), age: generator.generate(vec![path.as_slice(), vec![String::from("age")].as_slice()].concat(), std::any::TypeId::of::<Employee>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| EmployeeAgeGenerator.generate(generator, p0)) }), contact_info: generator.generate(vec![path.as_slice(), vec![String::from("contactInfo")].as_slice()].concat(), std::any::TypeId::of::<Employee>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("email"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("phone"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p0| ContactInfoGenerator.generate(generator, p0)) }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), std::any::TypeId::of::<Employee>(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Employee>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| TagGenerator.generate(generator, p1)) })) }) };
+            |        return Employee { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), age: generator.generate(vec![path.as_slice(), vec![String::from("age")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| EmployeeAgeGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<EmployeeAge>() }), contact_info: generator.generate(vec![path.as_slice(), vec![String::from("contactInfo")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("email"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("phone"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p0| ContactInfoGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<ContactInfo>() }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| TagGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Tag>() })) }) };
             |    }
             |}
             |
             |use super::super::wirespec::*;
             |use regex;
             |use super::super::model::department::Department;
+            |use super::super::model::employee::Employee;
             |use super::employee_generator::EmployeeGenerator;
             |pub struct DepartmentGenerator;
             |impl DepartmentGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Department {
-            |        return Department { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), std::any::TypeId::of::<Department>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), employees: generator.generate(vec![path.as_slice(), vec![String::from("employees")].as_slice()].concat(), std::any::TypeId::of::<Department>(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Department>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("age"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("contactInfo"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("tags"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| EmployeeGenerator.generate(generator, p1)) })) }) };
+            |        return Department { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), employees: generator.generate(vec![path.as_slice(), vec![String::from("employees")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("age"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("contactInfo"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("tags"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| EmployeeGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Employee>() })) }) };
             |    }
             |}
             |
             |use super::super::wirespec::*;
             |use regex;
             |use super::super::model::company::Company;
+            |use super::super::model::department::Department;
             |use super::department_generator::DepartmentGenerator;
             |pub struct CompanyGenerator;
             |impl CompanyGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Company {
-            |        return Company { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), std::any::TypeId::of::<Company>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), departments: generator.generate(vec![path.as_slice(), vec![String::from("departments")].as_slice()].concat(), std::any::TypeId::of::<Company>(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Company>(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("employees"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| DepartmentGenerator.generate(generator, p1)) })) }) };
+            |        return Company { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), departments: generator.generate(vec![path.as_slice(), vec![String::from("departments")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("employees"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| DepartmentGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Department>() })) }) };
             |    }
             |}
             |
@@ -1337,7 +1347,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-        """.trimMargin()
+            """.trimMargin()
 
         CompileComplexModelTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -1499,12 +1509,14 @@ class RustIrEmitterTest {
             |pub struct GeneratorFieldEnum {
             |    pub values: Vec<String>,
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+            |    pub r#type: std::any::TypeId,
             |}
             |
             |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldUnion {
             |    pub variants: Vec<String>,
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+            |    pub r#type: std::any::TypeId,
             |}
             |
             |#[derive(Debug, Clone, Default, PartialEq)]
@@ -1521,6 +1533,7 @@ class RustIrEmitterTest {
             |pub struct GeneratorFieldShape<T> {
             |    pub annotations: std::collections::HashMap<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>,
             |    pub generate: Box<dyn Fn(Vec<String>) -> T>,
+            |    pub r#type: std::any::TypeId,
             |}
             |
             |#[derive(Debug, Clone, Default, PartialEq)]
@@ -1529,7 +1542,7 @@ class RustIrEmitterTest {
             |}
             |
             |pub trait Generator {
-            |    fn generate<T: Option<Box<dyn std::any::Any>>>(&self, path: Vec<String>, r#type: std::any::TypeId, field: impl GeneratorField<T>) -> T;
+            |    fn generate<T: Option<Box<dyn std::any::Any>>>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T;
             |}
             |
             |pub trait Client {
@@ -1546,7 +1559,7 @@ class RustIrEmitterTest {
             |    fn method(&self) -> Method;
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         val emitter = RustIrEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.elements?.filterIsInstance<RawElement>()?.joinToString("") { it.code } shouldBe expected
@@ -1603,11 +1616,11 @@ class RustIrEmitterTest {
             |pub struct AddressGenerator;
             |impl AddressGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Address {
-            |        return Address { street: generator.generate(vec![path.as_slice(), vec![String::from("street")].as_slice()].concat(), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), number: generator.generate(vec![path.as_slice(), vec![String::from("number")].as_slice()].concat(), std::any::TypeId::of::<Address>(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return Address { street: generator.generate(vec![path.as_slice(), vec![String::from("street")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), number: generator.generate(vec![path.as_slice(), vec![String::from("number")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(address, "address_generator") shouldBe expected
     }
@@ -1628,11 +1641,11 @@ class RustIrEmitterTest {
             |pub struct ColorGenerator;
             |impl ColorGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Color {
-            |        return Color.value_of(generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<Color>(), Wirespec.GeneratorFieldEnum { values: vec![String::from("RED"), String::from("GREEN"), String::from("BLUE")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }));
+            |        return Color.value_of(generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldEnum { values: vec![String::from("RED"), String::from("GREEN"), String::from("BLUE")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<Color>() }));
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(color, "color_generator") shouldBe expected
     }
@@ -1658,7 +1671,7 @@ class RustIrEmitterTest {
             |pub struct ShapeGenerator;
             |impl ShapeGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Shape {
-            |        let variant = generator.generate(vec![path.as_slice(), vec![String::from("variant")].as_slice()].concat(), std::any::TypeId::of::<Shape>(), Wirespec.GeneratorFieldUnion { variants: vec![String::from("Circle"), String::from("Square")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() });
+            |        let variant = generator.generate(vec![path.as_slice(), vec![String::from("variant")].as_slice()].concat(), Wirespec.GeneratorFieldUnion { variants: vec![String::from("Circle"), String::from("Square")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<Shape>() });
             |        match variant {
             |            String::from("Circle") => {
             |                return CircleGenerator.generate(generator, vec![path.as_slice(), vec![String::from("Circle")].as_slice()].concat());
@@ -1671,7 +1684,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(shape, "shape_generator") shouldBe expected
     }
@@ -1697,11 +1710,11 @@ class RustIrEmitterTest {
             |pub struct UUIDGenerator;
             |impl UUIDGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UUID {
-            |        return UUID { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), std::any::TypeId::of::<UUID>(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[0-9a-f]{8}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+            |        return UUID { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[0-9a-f]{8}${'$'}")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(uuid, "uuid_generator") shouldBe expected
     }
@@ -1737,11 +1750,11 @@ class RustIrEmitterTest {
             |pub struct InventoryGenerator;
             |impl InventoryGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Inventory {
-            |        return Inventory { items: generator.generate(vec![path.as_slice(), vec![String::from("items")].as_slice()].concat(), std::any::TypeId::of::<Inventory>(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Inventory>(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+            |        return Inventory { items: generator.generate(vec![path.as_slice(), vec![String::from("items")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(inventory, "inventory_generator") shouldBe expected
     }
@@ -1777,11 +1790,11 @@ class RustIrEmitterTest {
             |pub struct LookupGenerator;
             |impl LookupGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Lookup {
-            |        return Lookup { entries: generator.generate(vec![path.as_slice(), vec![String::from("entries")].as_slice()].concat(), std::any::TypeId::of::<Lookup>(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Lookup>(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+            |        return Lookup { entries: generator.generate(vec![path.as_slice(), vec![String::from("entries")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(lookup, "lookup_generator") shouldBe expected
     }
@@ -1814,11 +1827,11 @@ class RustIrEmitterTest {
             |pub struct PersonGenerator;
             |impl PersonGenerator {
             |    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Person {
-            |        return Person { nickname: generator.generate(vec![path.as_slice(), vec![String::from("nickname")].as_slice()].concat(), std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, std::any::TypeId::of::<Person>(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+            |        return Person { nickname: generator.generate(vec![path.as_slice(), vec![String::from("nickname")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
             |    }
             |}
             |
-        """.trimMargin()
+            """.trimMargin()
 
         emitGeneratorSource(person, "person_generator") shouldBe expected
     }
