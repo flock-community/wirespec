@@ -4,11 +4,10 @@ import hello.CustomCustom;
 import hello.TodoCustom;
 import hello.TodoIdCustom;
 import hello.TodoInputCustom;
+import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/todos")
@@ -21,8 +20,6 @@ class TodoController {
                 CustomCustom.class.getName(),
                 TodoCustom.class.getName(),
                 TodoIdCustom.class.getName(),
-                TodoInputCustom.class.getName()
-        );
+                TodoInputCustom.class.getName());
     }
-
 }

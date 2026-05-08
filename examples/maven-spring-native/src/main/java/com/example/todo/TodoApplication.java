@@ -8,8 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @EnableWirespecController
 public class TodoApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TodoApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(TodoApplication.class, args);
+    }
 }
