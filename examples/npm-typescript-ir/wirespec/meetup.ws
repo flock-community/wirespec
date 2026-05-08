@@ -14,7 +14,7 @@ type Venue {
 type Attendee {
     id: AttendeeId,
     name: String,
-    email: String
+    @Generator("email") email: String
 }
 
 type Meetup {
