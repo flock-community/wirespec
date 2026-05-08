@@ -1,10 +1,15 @@
 package community.flock.wirespec.example.maven.custom.app.todo;
 
+import static java.util.Collections.emptyList;
+
 import community.flock.wirespec.example.maven.custom.app.exception.NotFound;
 import community.flock.wirespec.generated.java.model.Error;
 import community.flock.wirespec.generated.java.model.Todo;
 import community.flock.wirespec.generated.java.model.TodoId;
 import community.flock.wirespec.generated.java.model.TodoInput;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,12 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static java.util.Collections.emptyList;
 
 @RestController
 @RequestMapping("/todos")

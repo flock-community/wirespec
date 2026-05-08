@@ -1,21 +1,20 @@
 package community.flock.wirespec.examples.maven.spring.integration.service;
 
-import community.flock.wirespec.generated.examples.spring.model.Todo;
-import org.springframework.stereotype.Service;
+import static java.util.stream.Collectors.toList;
 
+import community.flock.wirespec.generated.examples.spring.model.Todo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-
-import static java.util.stream.Collectors.toList;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TodoService {
 
     public List<Todo> store = new ArrayList<>();
 
-    public TodoService(){
+    public TodoService() {
         store.add(new Todo(UUID.randomUUID().toString(), "First todo", false));
         store.add(new Todo(UUID.randomUUID().toString(), "Second todo", false));
         store.add(new Todo(UUID.randomUUID().toString(), "Third todo", false));

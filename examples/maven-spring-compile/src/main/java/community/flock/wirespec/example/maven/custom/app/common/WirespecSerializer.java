@@ -1,22 +1,20 @@
 package community.flock.wirespec.example.maven.custom.app.common;
 
-import java.io.IOException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import community.flock.wirespec.example.maven.custom.app.exception.SerializationException;
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.java.serde.DefaultParamSerialization;
 import community.flock.wirespec.java.serde.DefaultPathSerialization;
+import java.io.IOException;
+import java.lang.reflect.Type;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Type;
-
 /**
- * Example implementation of Wirespec Serialization using DefaultParamSerialization
- * This class handles standard parameter serialization for headers and query parameters.
- * For custom serialization requirements, you can create your own implementation
- * of Wirespec.ParamSerialization instead of using DefaultParamSerialization.
- * In this case, you don't need the dependency on community.flock.wirespec.integration:wirespec
+ * Example implementation of Wirespec Serialization using DefaultParamSerialization This class handles standard
+ * parameter serialization for headers and query parameters. For custom serialization requirements, you can create your
+ * own implementation of Wirespec.ParamSerialization instead of using DefaultParamSerialization. In this case, you don't
+ * need the dependency on community.flock.wirespec.integration:wirespec
  */
 @Component
 public class WirespecSerializer implements Wirespec.Serialization, DefaultParamSerialization, DefaultPathSerialization {
