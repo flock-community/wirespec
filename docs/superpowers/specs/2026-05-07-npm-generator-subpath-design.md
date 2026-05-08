@@ -235,9 +235,9 @@ matches the existing dist's naming for sibling modules
 The existing meetup example is extended with a runnable demonstration that
 also serves as the structural-compat smoke test. New file:
 `src/example-generator.ts` (full source in *Verification* below). New
-`package.json` script `npm run demo` builds and runs it via `node`. A
-`tsconfig.build.json` adds emission to `dist/`; the existing
-`tsconfig.json` remains `noEmit` for `npm run typecheck`.
+`package.json` script `npm run demo` runs it via `tsx`; the existing
+`tsconfig.json` is extended to cover `src/**/*.ts` so `npm run typecheck`
+includes the demo file alongside the codegen output.
 
 The example's stated scope (per its existing design doc) widens slightly: it
 remains "no fetch client, no server, no integration tests," but now does
@@ -315,19 +315,27 @@ fails.
     "scripts": {
         "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared --ir",
         "build":    "npm run generate && npm run typecheck",
-        "typecheck": "tsc --noEmit -p tsconfig.json",
-        "demo":     "tsc -p tsconfig.build.json && node dist/example-generator.js",
-        "clean":    "npm run clean:generated && npm run clean:dist && npm run clean:node_modules",
+        "typecheck": "tsc --noEmit",
+        "demo":     "tsx src/example-generator.ts",
+        "clean":    "npm run clean:generated && npm run clean:node_modules",
         "clean:generated":    "npx --yes rimraf ./src/gen",
-        "clean:dist":         "npx --yes rimraf ./dist",
         "clean:node_modules": "npx --yes rimraf ./node_modules"
+    },
+    "devDependencies": {
+        "@flock/wirespec": "file://../../src/plugin/npm/build/dist/js/productionLibrary",
+        "tsx": "^4.19.0",
+        "typescript": "^5.6.2"
     }
 }
 ```
 
-The split between `tsconfig.json` (`noEmit: true`) and `tsconfig.build.json`
-(`outDir: ./dist`, extends base) keeps the typecheck step
-emission-free — standard npm-package convention.
+The demo runs through [`tsx`][tsx], a TypeScript-aware Node loader. It runs
+the `.ts` source directly with no emit step, sidestepping Node ESM's
+explicit-`.js`-extension requirement (the codegen output uses
+extensionless imports). One devDep, no `dist/` to manage. The plain
+`tsconfig.json` covers `src/**/*.ts` for `npm run typecheck`.
+
+[tsx]: https://github.com/privatenumber/tsx
 
 **README addition:**
 
