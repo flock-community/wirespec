@@ -4,6 +4,7 @@ import community.flock.wirespec.examples.spring.testutil.TestGenerators
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 class GeneratorTest {
 
@@ -26,6 +27,17 @@ class GeneratorTest {
 
         assertEquals(id, a.id.value)
         assertEquals(a, b)
+
+        val memberIdRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+        assertNotEquals("owner", a.owner.id.value)
+        assertNotEquals(id, a.owner.id.value)
+        assertTrue(
+            memberIdRegex.matches(a.owner.id.value),
+            "expected MemberId-shaped uuid, got '${a.owner.id.value}'",
+        )
+
+        val c = TestGenerators.member(id = a.owner.id.value)
+        assertEquals(c.id.value, a.owner.id.value)
     }
 
     @Test
@@ -40,6 +52,16 @@ class GeneratorTest {
     @Test
     fun `project picked from ProjectList matches project regenerated from its id`() {
         val list = TestGenerators.projectList()
+
+        println(list)
+
+        val a = TestGenerators.project(id = "4A7ccb18-1206-d1F2-d4C2-3Bb9CDDbE5f6", 5L)
+        val b = TestGenerators.member(id = "eCf1cb4c-6e4E-eBf3-41Dd-62605E0B50e0")
+
+        println(a)
+        println(b)
+
+
 
         list.projects.forEach { fromList ->
             val regenerated = TestGenerators.project(id = fromList.id.value)

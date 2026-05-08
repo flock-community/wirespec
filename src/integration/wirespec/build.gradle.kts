@@ -13,9 +13,9 @@ repositories {
 }
 
 kotlin {
-    compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
+    js(IR) {
+        nodejs()
+        useEsModules()
     }
     jvm {
         java {
@@ -24,15 +24,26 @@ kotlin {
             }
         }
     }
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = libs.versions.kotlin.compiler.get()
+        }
+    }
     sourceSets {
         commonTest {
             dependencies {
-                implementation(libs.bundles.kotlin.test)
+                implementation(libs.kotlin.test.common)
+                implementation(libs.kotlin.test.annotations.common)
             }
         }
         jvmMain {
             dependencies {
                 implementation(libs.bundles.jackson)
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation(libs.kotlin.test.junit)
             }
         }
     }

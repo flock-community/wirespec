@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
+import community.flock.kotlinx.rgxgen.RgxGen
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
 import io.kotest.property.RandomSource
@@ -11,9 +12,6 @@ import io.kotest.property.arbitrary.element
 import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
-import io.kotest.property.arbitrary.stringPattern
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.reflect.KType
 
 /**
  * `Wirespec.Generator` implementation backed by Kotest [Arb]s. Drive the
@@ -73,26 +71,46 @@ internal class KotestWirespecGenerator(
     private val namedArbs: Map<String, () -> Arb<String>>,
 ) : Wirespec.Generator {
 
-    // Stack of seeds to inject into a deeper @Seed string. Each frame is pushed
-    // by an enclosing Shape and consumed by the first matching string field.
     private val pendingSeeds = ArrayDeque<PendingSeed>()
 
-    // Stack of active "capture an array-element's @Seed value" frames. Only
-    // the top frame's @Seed string is captured; outer frames wait their turn.
     private val captures = ArrayDeque<Capture>()
 
-    private data class PendingSeed(val value: String, val target: String)
+    // Tracks descent into nested `GeneratorFieldShape.generate(...)` callbacks
+    // that cross a generator boundary. `@Seed` is only honored at the
+    // top-most level — i.e. the shape the user invoked directly via
+    // `XGenerator.generate(gen, [seed])`. When a parent generator forwards
+    // its path into a nested generator (e.g. `Project.owner: Member`), the
+    // path's leading slot is the *parent's* seed (or its field name), not a
+    // user-supplied seed for the nested type, so the inner generator's
+    // `@Seed` field falls through to a deterministic random value keyed on
+    // the path. See KotestWirespecGeneratorTest's `nested Shape with @Seed …`
+    // cases.
+    private var shapeDepth = 0
+
+    // `pathPrefix` is the path at which the seed was pushed. Consumption
+    // requires the consumer's `path` to equal `pathPrefix + [target]`
+    // exactly, which prevents a parent-scoped `PendingSeed` from being
+    // drained by an unrelated descendant of a nested shape.
+    private data class PendingSeed(val value: String, val target: String, val pathPrefix: List<String>)
 
     private class Capture(val shapePath: List<String>, val fieldName: String) {
-        val seed: AtomicReference<String?> = AtomicReference(null)
+        var seed: String? = null
     }
 
     private fun rsFor(path: List<String>): RandomSource = RandomSource.seeded(baseSeed xor path.joinToString("/").hashCode().toLong())
 
+    private inline fun <R> withShapeDepth(block: () -> R): R {
+        shapeDepth++
+        return try {
+            block()
+        } finally {
+            shapeDepth--
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     override fun <T> generate(
         path: List<String>,
-        type: KType,
         field: Wirespec.GeneratorField<T>,
     ): T {
         captureSeedIfMatches(path, field)?.let { return it as T }
@@ -101,13 +119,16 @@ internal class KotestWirespecGenerator(
 
         val annotations = field.fieldAnnotations()
 
-        if (annotations.any { it["name"] == "Seed" }) {
+        // Direct-`@Seed`-on-primitive: only honored at the top level. Inside
+        // a nested generator, the path's parent slot is a field name, not a
+        // user-supplied seed.
+        if (shapeDepth == 0 && annotations.any { it["name"] == "Seed" }) {
             path.dropLast(1).lastOrNull()?.let { candidate ->
                 seedAnnotationValueFor(field, candidate)?.let { return it as T }
             }
         }
 
-        if (field is Wirespec.GeneratorFieldShape<*>) {
+        if (shapeDepth == 0 && field is Wirespec.GeneratorFieldShape<*>) {
             seedFieldNameOf(field)?.let { seedFieldName ->
                 generateSeededShape(path, field, seedFieldName)?.let { return it as T }
             }
@@ -130,22 +151,23 @@ internal class KotestWirespecGenerator(
      */
     private fun captureSeedIfMatches(path: List<String>, field: Wirespec.GeneratorField<*>): Any? {
         val capture = captures.lastOrNull() ?: return null
-        if (capture.seed.get() != null) return null
+        if (capture.seed != null) return null
         val expectedPrefix = capture.shapePath + capture.fieldName
         if (path.size < expectedPrefix.size || path.subList(0, expectedPrefix.size) != expectedPrefix) return null
         val rs = rsFor(path)
         return when (field) {
             is Wirespec.GeneratorFieldString -> {
-                val regex = field.regex ?: "\\w{1,50}"
-                val value = Arb.stringPattern(regex).next(rs)
-                capture.seed.set(value)
+                val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
+                val regex = field.regex ?: "\\w{8}"
+                val value = prefix + RgxGen.parse(regex).generate(rs.random)
+                capture.seed = value
                 value
             }
             is Wirespec.GeneratorFieldInteger -> {
                 val lo = field.min ?: 0
                 val hi = field.max ?: Long.MAX_VALUE
                 val value = Arb.long(lo..hi).next(rs)
-                capture.seed.set(value.toString())
+                capture.seed = value.toString()
                 value
             }
             else -> null
@@ -154,7 +176,14 @@ internal class KotestWirespecGenerator(
 
     private fun consumePendingSeedIfMatches(path: List<String>, field: Wirespec.GeneratorField<*>): Any? {
         val pending = pendingSeeds.lastOrNull() ?: return null
-        if (pending.target !in path) return null
+        // Strict scope check: only fire when this leaf is the immediate
+        // child of the seed's pathPrefix, named exactly `target`. This stops
+        // an outer pending from being claimed by a deeper descendant of a
+        // sibling/nested shape (e.g. project's seed being slurped by
+        // `owner.id.value` inside a nested `Member`).
+        if (path.size != pending.pathPrefix.size + 1) return null
+        if (path.last() != pending.target) return null
+        if (path.subList(0, pending.pathPrefix.size) != pending.pathPrefix) return null
         return when (field) {
             is Wirespec.GeneratorFieldString -> {
                 pendingSeeds.removeLast()
@@ -187,15 +216,20 @@ internal class KotestWirespecGenerator(
         if (isArrayContext && captures.isEmpty()) {
             val capture = Capture(path, seedFieldName)
             val seed = withFrame(captures, capture) {
-                field.generate(path)
-                capture.seed.get() ?: error("Failed to capture @Seed value at $path for field $seedFieldName")
+                // Capture pass crosses the generator boundary, so increment
+                // depth to suppress nested @Seed re-extraction.
+                withShapeDepth { field.generate(path) }
+                capture.seed ?: error("Failed to capture @Seed value at $path for field $seedFieldName")
             }
+            // Replay pass is conceptually a fresh top-level call with
+            // path=[seed], so it stays at depth 0 — that lets the inner
+            // @Seed extract the captured value the normal way.
             return field.generate(listOf(seed))
         }
 
         val candidate = path.dropLast(1).lastOrNull() ?: return null
-        return withFrame(pendingSeeds, PendingSeed(candidate, seedFieldName)) {
-            field.generate(path)
+        return withFrame(pendingSeeds, PendingSeed(candidate, seedFieldName, path)) {
+            withShapeDepth { field.generate(path) }
         }
     }
 
@@ -211,8 +245,9 @@ internal class KotestWirespecGenerator(
         val rs = rsFor(path)
         return when (field) {
             is Wirespec.GeneratorFieldString -> {
-                val regex = field.regex ?: "\\w{1,50}"
-                Arb.stringPattern(regex).next(rs) as T
+                val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
+                val regex = field.regex ?: "\\w{8}"
+                (prefix + RgxGen.parse(regex).generate(rs.random)) as T
             }
             is Wirespec.GeneratorFieldInteger -> {
                 val lo = field.min ?: Long.MIN_VALUE

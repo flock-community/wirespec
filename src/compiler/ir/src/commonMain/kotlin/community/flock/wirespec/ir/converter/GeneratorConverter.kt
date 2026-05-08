@@ -157,7 +157,6 @@ internal fun ReferenceWirespec.toFieldDescriptorOrNull(annotations: List<Annotat
 }
 
 internal fun generatorCallExpression(
-    typeName: String,
     fieldNameStr: String,
     fieldDescriptor: Expression,
 ): FunctionCall = FunctionCall(
@@ -165,7 +164,6 @@ internal fun generatorCallExpression(
     name = Name.of("generate"),
     arguments = mapOf(
         Name.of("path") to pathPlus(fieldNameStr),
-        Name.of("type") to ClassReference(Type.Custom(typeName)),
         Name.of("field") to fieldDescriptor,
     ),
 )
@@ -229,9 +227,11 @@ private fun lambdaPathName(depth: Int): Name = Name.of("p$depth")
 private fun lambdaPathParam(depth: Int): List<Parameter> = listOf(Parameter(lambdaPathName(depth), Type.Array(Type.String)))
 private fun lambdaPathRef(depth: Int): Expression = VariableReference(lambdaPathName(depth))
 
-// `GeneratorFieldShape(annotations = { ... }, generate = { p -> XxxGenerator.generate(generator, p) })`.
+// `GeneratorFieldShape(annotations = { ... }, generate = { p -> XxxGenerator.generate(generator, p) }, type = <Target>::class)`.
 // `targetFieldAnnotations` maps each field of the target record to its annotation list;
-// the lambda forwards its path parameter to the downstream *Generator.
+// the lambda forwards its path parameter to the downstream *Generator. `type` lets
+// consumers (e.g. a kotest- or serialization-backed `Wirespec.Generator`) recover
+// the runtime class of the shape being generated.
 private fun shapeConstructor(
     downstreamGeneratorName: String,
     targetFieldAnnotations: Map<String, List<AnnotationWirespec>>,
@@ -255,6 +255,7 @@ private fun shapeConstructor(
                 ),
             ),
         ),
+        Name.of("type") to ClassReference(Type.Custom(downstreamGeneratorName)),
     ),
 )
 
@@ -275,7 +276,6 @@ private fun buildLeafExpr(
         name = Name.of("generate"),
         arguments = mapOf(
             Name.of("path") to pathExpr,
-            Name.of("type") to ClassReference(Type.Custom(typeName)),
             Name.of("field") to ref.toFieldDescriptor(annotations),
         ),
     )
@@ -284,7 +284,6 @@ private fun buildLeafExpr(
         name = Name.of("generate"),
         arguments = mapOf(
             Name.of("path") to pathExpr,
-            Name.of("type") to ClassReference(Type.Custom(typeName)),
             Name.of("field") to shapeConstructor(
                 ref.value,
                 targetFieldAnnotationsMap(ref.value, annotations, module),
@@ -297,7 +296,6 @@ private fun buildLeafExpr(
         name = Name.of("generate"),
         arguments = mapOf(
             Name.of("path") to pathExpr,
-            Name.of("type") to ClassReference(Type.Custom(typeName)),
             Name.of("field") to ConstructorStatement(
                 type = Type.Custom("Wirespec.GeneratorFieldArray"),
                 namedArguments = mapOf(
@@ -321,7 +319,6 @@ private fun buildLeafExpr(
         name = Name.of("generate"),
         arguments = mapOf(
             Name.of("path") to pathExpr,
-            Name.of("type") to ClassReference(Type.Custom(typeName)),
             Name.of("field") to ConstructorStatement(
                 type = Type.Custom("Wirespec.GeneratorFieldDict"),
                 namedArguments = mapOf(
@@ -358,7 +355,6 @@ private fun ReferenceWirespec.toGeneratorExpression(
             name = Name.of("generate"),
             arguments = mapOf(
                 Name.of("path") to outerPath,
-                Name.of("type") to ClassReference(Type.Custom(typeName)),
                 Name.of("field") to ConstructorStatement(
                     type = Type.Custom("Wirespec.GeneratorFieldNullable"),
                     namedArguments = mapOf(
@@ -394,7 +390,6 @@ fun RefinedWirespec.convertToGenerator(): File {
                                 name = Name.of("generate"),
                                 arguments = mapOf(
                                     Name.of("path") to pathPlus("value"),
-                                    Name.of("type") to ClassReference(Type.Custom(typeName)),
                                     Name.of("field") to reference.toFieldDescriptor(annotations),
                                 ),
                             ),
@@ -426,7 +421,6 @@ fun EnumWirespec.convertToGenerator(): File {
                                 name = Name.of("generate"),
                                 arguments = mapOf(
                                     Name.of("path") to pathPlus("value"),
-                                    Name.of("type") to ClassReference(Type.Custom(typeName)),
                                     Name.of("field") to ConstructorStatement(
                                         type = Type.Custom("Wirespec.GeneratorFieldEnum"),
                                         namedArguments = mapOf(
@@ -435,6 +429,7 @@ fun EnumWirespec.convertToGenerator(): File {
                                                 type = Type.String,
                                             ),
                                             Name.of("annotations") to annotationsToIrList(annotations),
+                                            Name.of("type") to ClassReference(Type.Custom(typeName)),
                                         ),
                                     ),
                                 ),
@@ -465,7 +460,6 @@ fun UnionWirespec.convertToGenerator(): File {
                         name = Name.of("generate"),
                         arguments = mapOf(
                             Name.of("path") to pathPlus("variant"),
-                            Name.of("type") to ClassReference(Type.Custom(typeName)),
                             Name.of("field") to ConstructorStatement(
                                 type = Type.Custom("Wirespec.GeneratorFieldUnion"),
                                 namedArguments = mapOf(
@@ -474,6 +468,7 @@ fun UnionWirespec.convertToGenerator(): File {
                                         type = Type.String,
                                     ),
                                     Name.of("annotations") to annotationsToIrList(annotations),
+                                    Name.of("type") to ClassReference(Type.Custom(typeName)),
                                 ),
                             ),
                         ),

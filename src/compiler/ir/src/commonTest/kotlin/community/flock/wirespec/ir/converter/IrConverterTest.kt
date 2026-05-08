@@ -225,9 +225,9 @@ class IrConverterTest {
         val generateFn = generator.elements
             .filterIsInstance<Function>()
             .first { it.name == Name.of("generate") }
-        assertEquals(3, generateFn.parameters.size, "generate() should take path, type, and field")
-        assertEquals(Type.Reflect, generateFn.parameters[1].type, "second param must be Type.Reflect")
-        assertEquals(Name.of("field"), generateFn.parameters[2].name, "third param must be 'field'")
+        assertEquals(2, generateFn.parameters.size, "generate() should take path and field")
+        assertEquals(Name.of("path"), generateFn.parameters[0].name, "first param must be 'path'")
+        assertEquals(Name.of("field"), generateFn.parameters[1].name, "second param must be 'field'")
 
         val expectedVariants = setOf(
             "GeneratorFieldString", "GeneratorFieldInteger", "GeneratorFieldNumber",

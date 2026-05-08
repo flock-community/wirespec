@@ -3,39 +3,25 @@ package community.flock.wirespec.integration.kotest
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant
-import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Pin the default `@Generator(...)` registrations shipped by the integration.
- * Each registered name should produce a non-empty `String` for any seed.
+ * Pin the cross-platform default `@Generator(...)` registrations shipped by
+ * the integration (the kotest-property core; available on JVM and JS).
+ * The JVM-only `kotest-property-arbs` extras are exercised by [DefaultArbsExtrasTest].
  */
 class DefaultArbsTest {
 
-    private val defaults = listOf(
-        // core kotest-property
-        "email",
-        "uuid",
-        "ipAddress",
-        // kotest-property-arbs extras
-        "firstName",
-        "lastName",
-        "fullName",
-        "name",
-        "username",
-        "domain",
-        "color",
-    )
+    private val coreDefaults = listOf("email", "ipAddress")
 
     @Test
-    fun `every default registration produces a non-empty string`() {
+    fun `every core default registration produces a non-empty string`() {
         val gen = kotestWirespecGenerator(seed = 1L)
-        defaults.forEach { name ->
+        coreDefaults.forEach { name ->
             val v = gen.generate(
                 path = listOf("x"),
-                type = typeOf<String>(),
                 field = Wirespec.GeneratorFieldString(
                     regex = null,
                     annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to name))),
@@ -52,7 +38,6 @@ class DefaultArbsTest {
         // "EMAIL" should match the "email" default registration.
         val v = gen.generate(
             path = listOf("x"),
-            type = typeOf<String>(),
             field = Wirespec.GeneratorFieldString(
                 regex = null,
                 annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "EMAIL"))),
@@ -68,7 +53,6 @@ class DefaultArbsTest {
         }
         val v = gen.generate(
             path = listOf("x"),
-            type = typeOf<String>(),
             field = Wirespec.GeneratorFieldString(
                 regex = null,
                 annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "email"))),

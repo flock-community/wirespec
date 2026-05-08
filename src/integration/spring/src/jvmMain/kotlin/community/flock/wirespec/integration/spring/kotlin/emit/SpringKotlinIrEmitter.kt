@@ -13,7 +13,7 @@ import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.File as LanguageFile
 
-class SpringKotlinIrEmitter(packageName: PackageName) : KotlinIrEmitter(packageName, EmitShared(false)) {
+class SpringKotlinIrEmitter(packageName: PackageName, emitShared: EmitShared = EmitShared(false)) : KotlinIrEmitter(packageName, emitShared) {
 
     override fun emit(endpoint: Endpoint): LanguageFile = super.emit(endpoint)
         .injectSpringAnnotationBeforeHandler(endpoint.springAnnotation())
