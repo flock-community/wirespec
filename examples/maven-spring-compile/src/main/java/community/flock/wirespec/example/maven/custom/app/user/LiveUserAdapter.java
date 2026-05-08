@@ -68,6 +68,7 @@ public class LiveUserAdapter implements UserAdapter {
             }
             case UploadImage.Response404 ignored -> throw new NotFound.User();
         }
+        ;
     }
 
     private <T> T complete(final CompletableFuture<T> future) {

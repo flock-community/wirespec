@@ -12,5 +12,5 @@ public interface UserClient
                 PostUser.Handler,
                 DeleteUserByName.Handler,
                 UploadImage.Handler {
-    String VERSION = "1.0.0";
+    String version = "1.0.0";
 }

@@ -53,7 +53,7 @@ class TodoController
                 switch (request) {
                     case GetTodoById.Request req -> req.path().id();
                 };
-        var res = new GetTodoById.Response200(service.getStore().get(parseInt(id.value())));
+        var res = new GetTodoById.Response200(service.store.get(parseInt(id.value())));
         return CompletableFuture.completedFuture(res);
     }
 

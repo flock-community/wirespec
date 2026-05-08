@@ -67,7 +67,7 @@ class AvroTestApplicationTests {
 
         var latch = new CountDownLatch(2);
 
-        var avroRecord = new TestAvroRecord(new TestAvroOrder(
+        var record = new TestAvroRecord(new TestAvroOrder(
                 "123",
                 "QR Code".getBytes(),
                 Optional.of(1L),
