@@ -884,7 +884,6 @@ class ScalaIrEmitterTest {
     fun sharedOutputTest() {
         val expected = """
             |package community.flock.wirespec.scala
-            |import scala.reflect.ClassTag
             |object Wirespec {
             |  trait Model {
             |      def validate(): List[String]
@@ -971,8 +970,13 @@ class ScalaIrEmitterTest {
             |      def transport(request: RawRequest): RawResponse
             |  }
             |  sealed trait PathSegment
-            |  case class Literal(val value: String) extends PathSegment
-            |  case class Param(val name: String, val `type`: ClassTag[?]) extends PathSegment
+            |  case class Literal(
+            |      val value: String
+            |    ) extends PathSegment
+            |  case class Param(
+            |      val name: String,
+            |      val `type`: scala.reflect.ClassTag[?]
+            |    ) extends PathSegment
             |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
             |      def from(request: RawRequest): Req
             |      def to(response: Res): RawResponse

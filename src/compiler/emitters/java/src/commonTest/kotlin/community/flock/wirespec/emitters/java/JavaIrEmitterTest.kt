@@ -1192,9 +1192,17 @@ class JavaIrEmitterTest {
             |  public interface Transportation {
             |    public java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request);
             |  }
-            |  sealed interface PathSegment permits Wirespec.Literal, Wirespec.Param {}
-            |  record Literal(String value) implements Wirespec.PathSegment {}
-            |  record Param(String name, Class<?> type) implements Wirespec.PathSegment {}
+            |  public sealed interface PathSegment {
+            |  }
+            |  public static record Literal (
+            |    String value
+            |  ) implements PathSegment {
+            |  };
+            |  public static record Param (
+            |    String name,
+            |    Type type
+            |  ) implements PathSegment {
+            |  };
             |  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
             |    public Req from(RawRequest request);
             |    public RawResponse to(Res response);
@@ -1206,13 +1214,13 @@ class JavaIrEmitterTest {
             |  public interface Client<Req extends Request<?>, Res extends Response<?>> {
             |    public String getPathTemplate();
             |    public String getMethod();
-            |    public List<Wirespec.PathSegment> getPathSegments();
+            |    public java.util.List<PathSegment> getPathSegments();
             |    public ClientEdge<Req, Res> getClient(Serialization serialization);
             |  }
             |  public interface Server<Req extends Request<?>, Res extends Response<?>> {
             |    public String getPathTemplate();
             |    public String getMethod();
-            |    public List<Wirespec.PathSegment> getPathSegments();
+            |    public java.util.List<PathSegment> getPathSegments();
             |    public ServerEdge<Req, Res> getServer(Serialization serialization);
             |  }
             |  public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {

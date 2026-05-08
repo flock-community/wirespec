@@ -36,6 +36,7 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.`interface`
+import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec
@@ -206,6 +207,19 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
     }
 }
 
+fun SharedWirespec.convertPathSegment(): List<Element> = listOf(
+    `interface`("PathSegment", isSealed = true),
+    struct("Literal") {
+        implements(type("PathSegment"))
+        field("value", Type.String)
+    },
+    struct("Param") {
+        implements(type("PathSegment"))
+        field("name", Type.String)
+        field("type", Type.Reflect)
+    },
+)
+
 fun SharedWirespec.convertClientServer(): List<Element> = listOf(
     `interface`("ServerEdge") {
         typeParam(type("Req"), type("Request", Type.Wildcard))
@@ -236,6 +250,7 @@ fun SharedWirespec.convertClientServer(): List<Element> = listOf(
         typeParam(type("Res"), type("Response", Type.Wildcard))
         field("pathTemplate", Type.String)
         field("method", Type.String)
+        field("pathSegments", Type.Array(Type.Custom("PathSegment")))
         function("client") {
             returnType(type("ClientEdge", type("Req"), type("Res")))
             arg("serialization", type("Serialization"))
@@ -246,6 +261,7 @@ fun SharedWirespec.convertClientServer(): List<Element> = listOf(
         typeParam(type("Res"), type("Response", Type.Wildcard))
         field("pathTemplate", Type.String)
         field("method", Type.String)
+        field("pathSegments", Type.Array(Type.Custom("PathSegment")))
         function("server") {
             returnType(type("ServerEdge", type("Req"), type("Res")))
             arg("serialization", type("Serialization"))

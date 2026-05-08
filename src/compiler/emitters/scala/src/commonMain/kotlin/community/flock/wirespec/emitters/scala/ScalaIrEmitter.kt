@@ -25,10 +25,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
-import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
+import community.flock.wirespec.ir.converter.convertPathSegment
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
@@ -113,27 +113,16 @@ open class ScalaIrEmitter(
     override val shared = object : Shared {
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.scala"
 
-        private val clientServer = AstShared(packageString).convertClientServer().map { element ->
-            if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
-                element.copy(fields = element.fields + Field(
-                    name = Name.of("pathSegments"),
-                    type = LanguageType.Array(LanguageType.Custom("PathSegment")),
-                ))
-            } else element
-        }
+        private val clientServer = AstShared(packageString).convertClientServer()
 
-        private val pathSegmentElements: List<Element> = listOf(
-            RawElement("sealed trait PathSegment"),
-            RawElement("case class Literal(val value: String) extends PathSegment"),
-            RawElement("case class Param(val name: String, val `type`: ClassTag[?]) extends PathSegment"),
-        )
+        private val pathSegmentElements = AstShared(packageString).convertPathSegment()
 
         override val source = AstShared(packageString)
             .convert()
             .transform {
                 matchingElements { file: LanguageFile ->
                     val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
-                    file.copy(elements = packageElements + import("scala.reflect", "ClassTag") + rest)
+                    file.copy(elements = packageElements + rest)
                 }
                 matchingElements { ns: Namespace ->
                     if (ns.name != Name.of("Wirespec")) return@matchingElements ns

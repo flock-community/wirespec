@@ -18,17 +18,15 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
+import community.flock.wirespec.ir.converter.convertPathSegment
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
@@ -95,33 +93,18 @@ open class JavaIrEmitter(
             import("java.util", "Map"),
         )
 
-        private val pathSegmentElements: List<Element> = listOf(
-            raw(
-                """
-                |sealed interface PathSegment permits Wirespec.Literal, Wirespec.Param {}
-                |record Literal(String value) implements Wirespec.PathSegment {}
-                |record Param(String name, Class<?> type) implements Wirespec.PathSegment {}
-                |""".trimMargin()
-            )
-        )
+        private val pathSegmentElements = AstShared(packageString).convertPathSegment()
 
         private val clientServer = AstShared(packageString).convertClientServer()
-        .map { element ->
-            if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
-                element.copy(fields = element.fields + community.flock.wirespec.ir.core.Field(
-                    name = Name.of("pathSegments"),
-                    type = Type.Custom("List", generics = listOf(Type.Custom("Wirespec.PathSegment"))),
-                ))
-            } else element
-        }.map {
-            it.toGetterAccessors { name ->
-                when (name.value()) {
-                    "client" -> Name.of("getClient")
-                    "server" -> Name.of("getServer")
-                    else -> null
+            .map { element ->
+                element.toGetterAccessors { name ->
+                    when (name.value()) {
+                        "client" -> Name.of("getClient")
+                        "server" -> Name.of("getServer")
+                        else -> null
+                    }
                 }
-            }
-        } + listOf(
+            } + listOf(
             raw(
                 """
                 |public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {

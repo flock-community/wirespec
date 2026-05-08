@@ -42,11 +42,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
+import community.flock.wirespec.ir.converter.convertPathSegment
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Struct
@@ -105,20 +104,9 @@ open class KotlinIrEmitter(
     override val shared = object : Shared {
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
 
-        private val pathSegmentElements: List<Element> = listOf(
-            RawElement("sealed interface PathSegment"),
-            RawElement("data class Literal(val value: String) : PathSegment"),
-            RawElement("data class Param(val name: String, val type: KType) : PathSegment"),
-        )
+        private val pathSegmentElements = AstShared(packageString).convertPathSegment()
 
-        private val clientServer = AstShared(packageString).convertClientServer().map { element ->
-            if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
-                element.copy(fields = element.fields + Field(
-                    name = Name.of("pathSegments"),
-                    type = LanguageType.Array(LanguageType.Custom("PathSegment")),
-                ))
-            } else element
-        }
+        private val clientServer = AstShared(packageString).convertClientServer()
 
         override val source = AstShared(packageString)
             .convert()

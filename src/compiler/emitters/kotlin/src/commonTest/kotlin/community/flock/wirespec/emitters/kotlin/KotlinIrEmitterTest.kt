@@ -957,8 +957,13 @@ class KotlinIrEmitterTest {
             |      suspend fun transport(request: RawRequest): RawResponse
             |  }
             |  sealed interface PathSegment
-            |  data class Literal(val value: String) : PathSegment
-            |  data class Param(val name: String, val type: KType) : PathSegment
+            |  data class Literal(
+            |      val value: String
+            |    ) : PathSegment
+            |  data class Param(
+            |      val name: String,
+            |      val type: KType
+            |    ) : PathSegment
             |  interface ServerEdge<Req: Request<*>, Res: Response<*>> {
             |      fun from(request: RawRequest): Req
             |      fun to(response: Res): RawResponse
