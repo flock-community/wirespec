@@ -8,6 +8,12 @@
  * `color`) are not available in the npm distribution because
  * `kotest-property-arbs` doesn't ship a Kotlin/JS-IR-compatible artifact.
  * Register custom names via the second argument.
+ *
+ * Integer-typed fields without explicit min/max bounds are drawn from the
+ * full Kotlin Long range and converted to JS numbers, so values can exceed
+ * `Number.MAX_SAFE_INTEGER` (2^53 - 1) and lose precision. For unconstrained
+ * Integer fields, prefer narrower bounds in your `.ws` source (e.g.,
+ * `Integer(0, 1000000)`) when precise round-tripping matters.
  */
 
 export type Type = string;
