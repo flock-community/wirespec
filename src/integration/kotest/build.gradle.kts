@@ -13,9 +13,9 @@ repositories {
 }
 
 kotlin {
-    compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
+    js(IR) {
+        nodejs()
+        useEsModules()
     }
     jvm {
         java {
@@ -24,27 +24,36 @@ kotlin {
             }
         }
     }
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = libs.versions.kotlin.compiler.get()
+        }
+    }
     sourceSets {
         commonMain {
             dependencies {
-                compileOnly(project(":src:integration:wirespec"))
+                implementation(project(":src:integration:wirespec"))
+                implementation(libs.kotest.property)
+                implementation(libs.kotlinx.rgxgen)
             }
         }
         commonTest {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
-                implementation(libs.bundles.kotlin.test)
-                implementation(libs.bundles.kotest)
+                implementation(libs.kotest.property)
+                implementation(kotlin("test"))
             }
         }
         jvmMain {
             dependencies {
-                compileOnly(libs.bundles.kotest.property)
+                // kotest-property-arbs ships JVM-only artifacts (legacy JS compiler);
+                // the extras live in this source set, common only sees the core defaults.
+                compileOnly(libs.kotest.property.arbs)
             }
         }
         jvmTest {
             dependencies {
-                implementation(libs.bundles.kotest.property)
+                implementation(libs.kotest.property.arbs)
             }
         }
     }
