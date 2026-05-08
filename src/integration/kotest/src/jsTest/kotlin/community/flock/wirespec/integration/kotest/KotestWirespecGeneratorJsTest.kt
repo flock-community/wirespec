@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.kotest
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -51,5 +52,15 @@ class KotestWirespecGeneratorJsTest {
         @Suppress("UNCHECKED_CAST")
         val value = gen.generate(listOf("b"), field) as String
         assertTrue(value.startsWith("CASE-"), "expected case-insensitive override, got '$value'")
+    }
+
+    @Test
+    fun `same seed produces identical output across two invocations`() {
+        val field = Wirespec.GeneratorFieldString(regex = null, annotations = emptyList())
+        @Suppress("UNCHECKED_CAST")
+        val a = kotestWirespecGeneratorJs(seed = 42).generate(listOf("a"), field) as String
+        @Suppress("UNCHECKED_CAST")
+        val b = kotestWirespecGeneratorJs(seed = 42).generate(listOf("a"), field) as String
+        assertEquals(a, b)
     }
 }
