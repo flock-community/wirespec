@@ -28,7 +28,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
-import community.flock.wirespec.ir.converter.convertPathSegment
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
@@ -115,8 +114,6 @@ open class ScalaIrEmitter(
 
         private val clientServer = AstShared(packageString).convertClientServer()
 
-        private val pathSegmentElements = AstShared(packageString).convertPathSegment()
-
         override val source = AstShared(packageString)
             .convert()
             .transform {
@@ -150,7 +147,7 @@ open class ScalaIrEmitter(
                     ns.copy(elements = newElements)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) pathSegmentElements + clientServer
+                    if (namespace.name == Name.of("Wirespec")) clientServer
                     else emptyList()
                 }
             }

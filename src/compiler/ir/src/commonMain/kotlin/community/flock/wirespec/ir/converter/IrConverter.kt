@@ -207,7 +207,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
     }
 }
 
-fun SharedWirespec.convertPathSegment(): List<Element> = listOf(
+fun SharedWirespec.convertClientServer(): List<Element> = listOf(
     `interface`("PathSegment", isSealed = true),
     struct("Literal") {
         implements(type("PathSegment"))
@@ -218,9 +218,6 @@ fun SharedWirespec.convertPathSegment(): List<Element> = listOf(
         field("name", Type.String)
         field("type", Type.Reflect)
     },
-)
-
-fun SharedWirespec.convertClientServer(): List<Element> = listOf(
     `interface`("ServerEdge") {
         typeParam(type("Req"), type("Request", Type.Wildcard))
         typeParam(type("Res"), type("Response", Type.Wildcard))

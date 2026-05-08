@@ -23,7 +23,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
-import community.flock.wirespec.ir.converter.convertPathSegment
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
@@ -93,8 +92,6 @@ open class JavaIrEmitter(
             import("java.util", "Map"),
         )
 
-        private val pathSegmentElements = AstShared(packageString).convertPathSegment()
-
         private val clientServer = AstShared(packageString).convertClientServer()
             .map { element ->
                 element.toGetterAccessors { name ->
@@ -128,7 +125,7 @@ open class JavaIrEmitter(
                     file.copy(elements = packageElements + imports + rest)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) pathSegmentElements + clientServer else emptyList()
+                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
                 }
             }
 

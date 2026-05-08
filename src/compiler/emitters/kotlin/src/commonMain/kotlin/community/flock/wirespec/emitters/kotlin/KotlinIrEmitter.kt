@@ -42,7 +42,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
-import community.flock.wirespec.ir.converter.convertPathSegment
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
@@ -104,8 +103,6 @@ open class KotlinIrEmitter(
     override val shared = object : Shared {
         override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
 
-        private val pathSegmentElements = AstShared(packageString).convertPathSegment()
-
         private val clientServer = AstShared(packageString).convertClientServer()
 
         override val source = AstShared(packageString)
@@ -116,7 +113,7 @@ open class KotlinIrEmitter(
                     file.copy(elements = packageElements + import("kotlin.reflect", "KType") + import("kotlin.reflect", "typeOf") + rest)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) pathSegmentElements + clientServer
+                    if (namespace.name == Name.of("Wirespec")) clientServer
                     else emptyList()
                 }
             }
