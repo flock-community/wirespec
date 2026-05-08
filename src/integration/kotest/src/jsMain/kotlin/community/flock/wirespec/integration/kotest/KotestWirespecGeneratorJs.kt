@@ -1,0 +1,23 @@
+@file:OptIn(ExperimentalJsExport::class)
+@file:JsExport
+
+package community.flock.wirespec.integration.kotest
+
+import community.flock.wirespec.kotlin.Wirespec
+
+/**
+ * TS-callable entry point. The DSL/Arb-based [kotestWirespecGenerator] cannot
+ * be `@JsExport`ed (lambda receivers + generic `Arb<T>` don't survive
+ * Kotlin/JS export), so this thin facade adapts a plain
+ * `Record<string, (seed: number) => string>` registry to the same underlying
+ * `KotestWirespecGenerator` algorithm.
+ *
+ * From TypeScript:
+ * ```ts
+ * const gen = kotestWirespecGeneratorJs(1, { orderId: (s) => `ORD-${s}` })
+ * ```
+ */
+fun kotestWirespecGeneratorJs(
+    seed: Int,
+    registrations: dynamic = null,
+): Wirespec.Generator = kotestWirespecGenerator(seed.toLong())
