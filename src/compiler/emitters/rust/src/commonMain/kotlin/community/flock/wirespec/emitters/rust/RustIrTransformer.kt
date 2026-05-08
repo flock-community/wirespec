@@ -268,7 +268,7 @@ private fun Endpoint.generateApiStructCode(): String {
             type Res = Response;
             fn path_template(&self) -> &'static str { "$pathTemplate" }
             fn method(&self) -> Method { Method::$methodName }
-            fn path_segments(&self) -> &'static [PathSegment] { &[$pathSegmentsCode] }
+            fn path_segments(&self) -> Vec<PathSegment> { vec![$pathSegmentsCode] }
         }
     """.trimIndent()
 }

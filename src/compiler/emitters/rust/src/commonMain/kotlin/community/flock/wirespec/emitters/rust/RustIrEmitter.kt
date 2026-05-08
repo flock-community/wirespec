@@ -116,6 +116,7 @@ open class RustIrEmitter(
     )
 
     private val endpointImports = listOf(
+        import("std::any", "TypeId"),
         import("super::super::wirespec", "*"),
         import("", "regex"),
     )
@@ -154,7 +155,7 @@ open class RustIrEmitter(
                 type Res;
                 fn path_template(&self) -> &'static str;
                 fn method(&self) -> Method;
-                fn path_segments(&self) -> &'static [PathSegment];
+                fn path_segments(&self) -> Vec<PathSegment>;
             }
             """.trimIndent()
         )

@@ -126,8 +126,8 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
             returns(literal(method.name))
         }
         function("getPathSegments", isOverride = true) {
-            returnType(type("List", type("Wirespec.PathSegment")))
-            returns(RawExpression("List.of($pathSegmentsCode)"))
+            returnType(type("java.util.List", type("Wirespec.PathSegment")))
+            returns(RawExpression("java.util.List.of($pathSegmentsCode)"))
         }
         function("getServer", isOverride = true) {
             returnType(

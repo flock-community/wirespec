@@ -291,8 +291,8 @@ class JavaIrEmitterTest {
             |        return "PUT";
             |      }
             |      @Override
-            |      public List<Wirespec.PathSegment> getPathSegments() {
-            |        return List.of(new Wirespec.Literal("todos"), new Wirespec.Param("id", String.class));
+            |      public java.util.List<Wirespec.PathSegment> getPathSegments() {
+            |        return java.util.List.of(new Wirespec.Literal("todos"), new Wirespec.Param("id", String.class));
             |      }
             |      @Override
             |      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
@@ -554,8 +554,8 @@ class JavaIrEmitterTest {
             |        return "GET";
             |      }
             |      @Override
-            |      public List<Wirespec.PathSegment> getPathSegments() {
-            |        return List.of(new Wirespec.Literal("todos"));
+            |      public java.util.List<Wirespec.PathSegment> getPathSegments() {
+            |        return java.util.List.of(new Wirespec.Literal("todos"));
             |      }
             |      @Override
             |      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
