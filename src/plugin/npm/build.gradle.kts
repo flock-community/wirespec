@@ -40,6 +40,10 @@ kotlin {
                         "types" to "./wirespec-serialization.d.ts",
                         "default" to "./wirespec-serialization.mjs",
                     ),
+                    "./generator" to mapOf(
+                        "types" to "./wirespec-generator.d.ts",
+                        "default" to "./wirespec-generator.mjs",
+                    ),
                 ),
             )
             customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
@@ -63,6 +67,8 @@ kotlin {
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:tools:generator"))
+                implementation(project(":src:integration:wirespec"))
+                implementation(project(":src:integration:kotest"))
                 implementation(libs.kotlinx.openapi.bindings)
                 implementation(libs.kotlinx.serialization)
             }
