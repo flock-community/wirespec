@@ -1,5 +1,8 @@
 package community.flock.wirespec.example.maven.custom.app.user;
 
+import static java.lang.Thread.currentThread;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import community.flock.wirespec.example.maven.custom.app.exception.CallInterrupted;
 import community.flock.wirespec.example.maven.custom.app.exception.Conflict;
 import community.flock.wirespec.example.maven.custom.app.exception.NotFound;
@@ -8,15 +11,11 @@ import community.flock.wirespec.generated.java.endpoint.GetUserByName;
 import community.flock.wirespec.generated.java.endpoint.GetUsers;
 import community.flock.wirespec.generated.java.endpoint.PostUser;
 import community.flock.wirespec.generated.java.endpoint.UploadImage;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-
-import static java.lang.Thread.currentThread;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import org.springframework.stereotype.Component;
 
 @Component
 public class LiveUserAdapter implements UserAdapter {
@@ -66,7 +65,8 @@ public class LiveUserAdapter implements UserAdapter {
         switch (res) {
             case UploadImage.Response201 ignored -> {}
             case UploadImage.Response404 ignored -> throw new NotFound.User();
-        };
+        }
+        ;
     }
 
     private <T> T complete(final CompletableFuture<T> future) {

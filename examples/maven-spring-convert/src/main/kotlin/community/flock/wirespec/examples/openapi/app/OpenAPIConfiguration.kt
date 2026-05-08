@@ -6,7 +6,6 @@ import org.springframework.web.client.RestTemplate
 
 @Configuration
 class OpenAPIConfiguration {
-
     @Bean
     fun restTemplate() = RestTemplate()
 }

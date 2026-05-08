@@ -1,10 +1,5 @@
 package community.flock.wirespec.example.maven.custom.app.user;
 
-import community.flock.wirespec.generated.java.model.AuthenticationPassword;
-import org.junit.jupiter.api.Test;
-
-import java.util.function.Consumer;
-
 import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.deleteUserByName;
 import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.getAllUsers;
 import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.getUserByName;
@@ -12,9 +7,11 @@ import static community.flock.wirespec.example.maven.custom.app.user.UserContext
 import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.uploadImageByName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.function.Consumer;
+import org.junit.jupiter.api.Test;
+
 class UserTest {
-    private interface Context extends UserContext {
-    }
+    private interface Context extends UserContext {}
 
     @Test
     void testGetAllUsers() {
@@ -35,7 +32,7 @@ class UserTest {
     @Test
     void testPostUser() {
         testContext(it -> {
-            var user = saveUser(it, new User("newName","secret"));
+            var user = saveUser(it, new User("newName", "secret"));
             assertEquals("newName", user.name());
         });
     }

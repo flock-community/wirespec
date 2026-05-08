@@ -16,6 +16,7 @@
     <properties>
         <java.version>21</java.version>
         <sortpom-maven-plugin.version>3.2.0</sortpom-maven-plugin.version>
+        <spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
         <wirespec.version>0.0.0-SNAPSHOT</wirespec.version>
     </properties>
 
@@ -68,6 +69,35 @@
                         <target>${java.version}</target>
                         <compilerArgs>--enable-preview</compilerArgs>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>${spotless-maven-plugin.version}</version>
+                    <configuration>
+                        <skip>false</skip>
+                        <java>
+                            <includes>
+                                <include>src/main/java/**/*.java</include>
+                                <include>src/test/java/**/*.java</include>
+                            </includes>
+                            <palantirJavaFormat>
+                                <style>PALANTIR</style>
+                                <formatJavadoc>true</formatJavadoc>
+                            </palantirJavaFormat>
+                            <importOrder/>
+                            <removeUnusedImports/>
+                        </java>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>spotless-apply</id>
+                            <goals>
+                                <goal>apply</goal>
+                            </goals>
+                            <phase>validate</phase>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -154,4 +184,19 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>format</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.diffplug.spotless</groupId>
+                        <artifactId>spotless-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

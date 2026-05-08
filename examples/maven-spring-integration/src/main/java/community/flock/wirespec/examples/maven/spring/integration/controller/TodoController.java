@@ -1,23 +1,28 @@
 package community.flock.wirespec.examples.maven.spring.integration.controller;
 
+import static java.lang.Integer.parseInt;
+
+import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
 import community.flock.wirespec.generated.examples.spring.endpoint.CreateTodo;
 import community.flock.wirespec.generated.examples.spring.endpoint.DeleteTodo;
 import community.flock.wirespec.generated.examples.spring.endpoint.GetTodoById;
 import community.flock.wirespec.generated.examples.spring.endpoint.GetTodos;
+import community.flock.wirespec.generated.examples.spring.endpoint.UpdateTodo;
 import community.flock.wirespec.generated.examples.spring.endpoint.UploadAttachment;
 import community.flock.wirespec.generated.examples.spring.model.Todo;
 import community.flock.wirespec.generated.examples.spring.model.TodoId;
-import community.flock.wirespec.generated.examples.spring.endpoint.UpdateTodo;
-import org.springframework.web.bind.annotation.RestController;
-import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
-
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-
-import static java.lang.Integer.parseInt;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTodo.Handler, UpdateTodo.Handler, DeleteTodo.Handler, UploadAttachment.Handler {
+class TodoController
+        implements GetTodos.Handler,
+                GetTodoById.Handler,
+                CreateTodo.Handler,
+                UpdateTodo.Handler,
+                DeleteTodo.Handler,
+                UploadAttachment.Handler {
 
     private final TodoService service;
 
@@ -27,14 +32,11 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
 
     @Override
     public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request request) {
-        var todoInput = switch (request){
-            case CreateTodo.Request req -> req.body();
-        };
-        var todo = new Todo(
-                new TodoId(UUID.randomUUID().toString()),
-                todoInput.name(),
-                todoInput.done()
-        );
+        var todoInput =
+                switch (request) {
+                    case CreateTodo.Request req -> req.body();
+                };
+        var todo = new Todo(new TodoId(UUID.randomUUID().toString()), todoInput.name(), todoInput.done());
         service.create(todo);
         var res = new CreateTodo.Response200(todo);
         return CompletableFuture.completedFuture(res);
@@ -47,9 +49,10 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
 
     @Override
     public CompletableFuture<GetTodoById.Response<?>> getTodoById(GetTodoById.Request request) {
-        var id = switch (request){
-            case GetTodoById.Request req -> req.path().id();
-        };
+        var id =
+                switch (request) {
+                    case GetTodoById.Request req -> req.path().id();
+                };
         var res = new GetTodoById.Response200(service.store.get(parseInt(id.value())));
         return CompletableFuture.completedFuture(res);
     }

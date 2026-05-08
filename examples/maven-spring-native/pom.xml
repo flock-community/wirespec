@@ -2,18 +2,21 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.1</version>
 		<relativePath/>
 	</parent>
+
 	<groupId>com.example</groupId>
 	<artifactId>maven-spring-native</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
 		<java.version>21</java.version>
+		<spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
 		<wirespec.version>0.0.0-SNAPSHOT</wirespec.version>
 	</properties>
 
@@ -32,16 +35,13 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>community.flock.wirespec.integration</groupId>
 			<artifactId>spring-jvm</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -70,6 +70,35 @@
 						<target>${java.version}</target>
 						<compilerArgs>--enable-preview</compilerArgs>
 					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>com.diffplug.spotless</groupId>
+					<artifactId>spotless-maven-plugin</artifactId>
+					<version>${spotless-maven-plugin.version}</version>
+					<configuration>
+						<skip>false</skip>
+						<java>
+							<includes>
+								<include>src/main/java/**/*.java</include>
+								<include>src/test/java/**/*.java</include>
+							</includes>
+							<palantirJavaFormat>
+								<style>PALANTIR</style>
+								<formatJavadoc>true</formatJavadoc>
+							</palantirJavaFormat>
+							<importOrder/>
+							<removeUnusedImports/>
+						</java>
+					</configuration>
+					<executions>
+						<execution>
+							<id>spotless-apply</id>
+							<goals>
+								<goal>apply</goal>
+							</goals>
+							<phase>validate</phase>
+						</execution>
+					</executions>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -109,5 +138,19 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>format</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.diffplug.spotless</groupId>
+						<artifactId>spotless-maven-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
