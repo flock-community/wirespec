@@ -1,0 +1,7 @@
+protocol SimpleProtocol {
+    record Pet {
+        string name;
+        int age;
+        boolean vaccinated;
+    }
+}

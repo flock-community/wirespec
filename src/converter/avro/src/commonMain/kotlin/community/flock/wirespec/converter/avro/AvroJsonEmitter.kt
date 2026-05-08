@@ -17,7 +17,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-object AvroEmitter : Emitter {
+object AvroJsonEmitter : Emitter {
 
     override val extension = FileExtension.JSON
 

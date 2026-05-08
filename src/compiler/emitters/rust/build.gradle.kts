@@ -14,11 +14,15 @@ repositories {
     mavenLocal()
 }
 
+val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+
 kotlin {
-    macosX64()
-    macosArm64()
-    linuxX64()
-    mingwX64()
+    if (enableNative) {
+        macosX64()
+        macosArm64()
+        linuxX64()
+        mingwX64()
+    }
     js(IR) {
         nodejs()
         useEsModules()

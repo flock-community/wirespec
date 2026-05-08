@@ -11,7 +11,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.validate.Validator
-import community.flock.wirespec.converter.avro.AvroParser
+import community.flock.wirespec.converter.avro.AvroJsonParser
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
@@ -35,7 +35,7 @@ fun convert(arguments: ConverterArguments) {
     val parser: Parser = when (arguments.format) {
         Format.OpenAPIV2 -> OpenAPIV2Parser
         Format.OpenAPIV3 -> OpenAPIV3Parser
-        Format.Avro -> AvroParser
+        Format.Avro -> AvroJsonParser
     }
     val options = ParseOptions(
         strict = arguments.strict,

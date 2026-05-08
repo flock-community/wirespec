@@ -26,31 +26,29 @@ interface IrEmitter : Emitter {
     val generator: Generator
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        val moduleEmitted = ast.modules.flatMap { m ->
-            logger.info("Emitting Nodes from ${m.fileUri.value} ")
-            emit(m, logger)
-        }.map { file -> Emitted(file.name.value() + "." + extension.value, generator.generate(file)) }
+        val moduleEmitted = ast.modules
+            .flatMap { m ->
+                logger.info("Emitting Nodes from ${m.fileUri.value} ")
+                emit(m, logger)
+            }
+            .map { it.toEmitted() }
 
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
-        return if (allEndpoints.isNotEmpty()) {
-            val mainClient = emitClient(allEndpoints, logger)
-            moduleEmitted + Emitted(mainClient.name.value() + "." + extension.value, generator.generate(mainClient))
-        } else {
-            moduleEmitted
-        }
+        return allEndpoints.takeIf { it.isNotEmpty() }
+            ?.let { moduleEmitted + emitClient(it, logger).toEmitted() }
+            ?: moduleEmitted
     }
 
     fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val definitionFiles = module.statements.map { emit(it, module, logger) }
-        val endpoints = module.statements.toList().filterIsInstance<Endpoint>()
-        val clientFiles = endpoints.map { endpoint ->
+        val clientFiles = module.statements.toList().filterIsInstance<Endpoint>().map { endpoint ->
             logger.info("Emitting Client for endpoint ${endpoint.identifier.value}")
             emitEndpointClient(endpoint)
         }
         return definitionFiles + clientFiles
     }
 
-    fun emit(definition: Definition, module: Module, logger: Logger): File = run {
+    fun emit(definition: Definition, module: Module, logger: Logger): File {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
         return when (definition) {
             is Type -> emit(definition, module)
@@ -61,6 +59,8 @@ interface IrEmitter : Emitter {
             is Channel -> emit(definition)
         }
     }
+
+    private fun File.toEmitted(): Emitted = Emitted(name.value() + "." + extension.value, generator.generate(this))
 
     fun emitEndpointClient(endpoint: Endpoint): File = endpoint.convertEndpointClient()
 

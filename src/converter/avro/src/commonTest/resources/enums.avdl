@@ -1,0 +1,17 @@
+protocol EnumsProtocol {
+    enum Color {
+        RED,
+        GREEN,
+        BLUE
+    }
+
+    enum Priority {
+        LOW, MEDIUM, HIGH
+    }
+
+    record Task {
+        string title;
+        Color color;
+        Priority priority;
+    }
+}

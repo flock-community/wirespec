@@ -18,7 +18,7 @@ CLI_KEXE="$ROOT_DIR/src/plugin/cli/build/bin/${PLATFORM}/releaseExecutable/cli.k
 
 if [ ! -f "$CLI_KEXE" ]; then
   echo "Building wirespec CLI..."
-  "$ROOT_DIR/gradlew" -p "$ROOT_DIR" ":src:plugin:cli:${PLATFORM}Binaries"
+  "$ROOT_DIR/gradlew" -p "$ROOT_DIR" -Pwirespec.enableNative=true ":src:plugin:cli:${PLATFORM}Binaries"
 fi
 
 "$CLI_KEXE" convert OpenAPIV2 \
