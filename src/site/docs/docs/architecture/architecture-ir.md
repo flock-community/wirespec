@@ -1,6 +1,7 @@
 ---
 title: IR Model
-sidebar_position: 4
+sidebar_position: 2
+slug: /architecture/ir
 ---
 
 # IR Model
