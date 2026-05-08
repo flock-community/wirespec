@@ -11,7 +11,8 @@ build:
 	(cd gradle-ktor && ./gradlew check) && \
 	(cd npm-typescript && npm ci && npm run build) && \
 	(cd rust-petstore && bash gen.sh && cargo build) && \
-	(cd scala-zio && sbt compile)
+	(cd scala-zio && sbt compile) && \
+	(cd scala-zio-2 && sbt compile)
 
 clean:
 	(cd maven-preprocessor && ./mvnw clean) && \
