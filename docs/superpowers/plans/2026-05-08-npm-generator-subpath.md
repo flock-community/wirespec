@@ -181,7 +181,7 @@ package community.flock.wirespec.integration.kotest
 
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
-import io.kotest.property.arbitrary.long
+import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.map
 
 /**
@@ -205,7 +205,7 @@ fun kotestWirespecGeneratorJs(
         for (key in keys) {
             val factory = registrations[key].unsafeCast<(Int) -> String>()
             register(key) {
-                Arb.long().map { factory(it.toInt()) }
+                Arb.int(0..Int.MAX_VALUE).map { factory(it) }
             }
         }
     }
