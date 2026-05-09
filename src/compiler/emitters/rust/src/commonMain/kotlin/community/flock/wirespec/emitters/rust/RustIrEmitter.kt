@@ -297,7 +297,7 @@ open class RustIrEmitter(
                     acc
                 }
                 groups.joinToString("\n\n") { group ->
-                    group.joinToString("") { it.generateRust() }.trimEnd('\n')
+                    group.joinToString("") { RustGenerator.generate(it) }.trimEnd('\n')
                 } + "\n"
             }
 

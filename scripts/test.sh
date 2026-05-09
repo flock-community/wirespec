@@ -58,4 +58,4 @@ dockerCommand=""
 for lang in "${languages[@]}"; do
   dockerCommand="$dockerCommand $(run "$dockerWirespec" '/app' 'docker' "$lang") && "
 done
-docker run $archSpecific --rm -it -v "$localWorkDir"/types:/app/types wirespec "$dockerCommand$done"
+docker run $archSpecific --rm -v "$localWorkDir"/types:/app/types wirespec "$dockerCommand$done"
