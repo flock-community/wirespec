@@ -8,6 +8,7 @@ import community.flock.wirespec.java.serde.DefaultParamSerialization;
 import community.flock.wirespec.java.serde.DefaultPathSerialization;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import org.springframework.stereotype.Component;
 
 /**
