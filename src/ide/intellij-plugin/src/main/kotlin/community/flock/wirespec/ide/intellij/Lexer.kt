@@ -30,6 +30,7 @@ import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TokenizeOptions
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
@@ -63,47 +64,14 @@ class Lexer : IntellijLexer() {
 
     override fun getState() = state
 
-    override fun getTokenType() = when (tokens.getOrNull(index)?.type) {
+    override fun getTokenType() = when (val type = tokens.getOrNull(index)?.type) {
         null -> null
-        is LeftCurly -> Types.LEFT_CURLY
-        is RightCurly -> Types.RIGHT_CURLY
-        is Colon -> Types.COLON
-        is Comma -> Types.COMMA
-        is QuestionMark -> Types.QUESTION_MARK
-        is Hash -> Types.HASH
-        is Annotation -> Types.ANNOTATION
-        is ForwardSlash -> Types.FORWARD_SLASH
-        is Brackets -> Types.BRACKETS
-        is LeftBracket -> Types.LEFT_BRACKET
-        is RightBracket -> Types.RIGHT_BRACKET
-        is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
-        is Comment -> Types.COMMENT
-        is Character -> Types.CHARACTER
-        is EndOfProgram -> Types.END_OF_PROGRAM
         is WhiteSpace -> Types.WHITE_SPACE
-        is TypeDefinition -> Types.TYPE_DEF
-        is EnumTypeDefinition -> Types.ENUM_DEF
-        is EndpointDefinition -> Types.ENDPOINT_DEF
-        is ChannelDefinition -> Types.CHANNEL_DEF
-        is WsString -> Types.WS_STRING
+        is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
+        is TypeIdentifier -> Types.TYPE_IDENTIFIER
         is WsInteger -> Types.WS_INTEGER
         is WsNumber -> Types.WS_NUMBER
-        is WsBoolean -> Types.WS_BOOLEAN
-        is WsBytes -> Types.WS_BYTES
-        is TypeIdentifier -> Types.TYPE_IDENTIFIER
-        is WsUnit -> Types.UNIT
-        is Method -> Types.METHOD
-        is Path -> Types.PATH
-        is Arrow -> Types.ARROW
-        is Equals -> Types.EQUALS
-        is Pipe -> Types.PIPE
-        is Integer -> Types.INTEGER
-        is Number -> Types.NUMBER
-        is RightParenthesis -> Types.RIGHT_PARENTHESES
-        is LeftParenthesis -> Types.LEFT_PARENTHESES
-        is RegExp -> Types.REG_EXP
-        is Underscore -> Types.UNDERSCORE
-        is LiteralString -> Types.LITERAL_STRING
+        else -> SIMPLE_TOKEN_TYPES[type]
     }
 
     override fun getTokenStart() = tokens[index]
@@ -120,6 +88,45 @@ class Lexer : IntellijLexer() {
     }
 
     override fun getBufferEnd() = bufferSequence.toString().length
+
+    companion object {
+        private val SIMPLE_TOKEN_TYPES: Map<TokenType, Types.ElementType> = mapOf(
+            LeftCurly to Types.LEFT_CURLY,
+            RightCurly to Types.RIGHT_CURLY,
+            Colon to Types.COLON,
+            Comma to Types.COMMA,
+            QuestionMark to Types.QUESTION_MARK,
+            Hash to Types.HASH,
+            Annotation to Types.ANNOTATION,
+            ForwardSlash to Types.FORWARD_SLASH,
+            Brackets to Types.BRACKETS,
+            LeftBracket to Types.LEFT_BRACKET,
+            RightBracket to Types.RIGHT_BRACKET,
+            Comment to Types.COMMENT,
+            Character to Types.CHARACTER,
+            EndOfProgram to Types.END_OF_PROGRAM,
+            TypeDefinition to Types.TYPE_DEF,
+            EnumTypeDefinition to Types.ENUM_DEF,
+            EndpointDefinition to Types.ENDPOINT_DEF,
+            ChannelDefinition to Types.CHANNEL_DEF,
+            WsString to Types.WS_STRING,
+            WsBoolean to Types.WS_BOOLEAN,
+            WsBytes to Types.WS_BYTES,
+            WsUnit to Types.UNIT,
+            Method to Types.METHOD,
+            Path to Types.PATH,
+            Arrow to Types.ARROW,
+            Equals to Types.EQUALS,
+            Pipe to Types.PIPE,
+            Integer to Types.INTEGER,
+            Number to Types.NUMBER,
+            LeftParenthesis to Types.LEFT_PARENTHESES,
+            RightParenthesis to Types.RIGHT_PARENTHESES,
+            RegExp to Types.REG_EXP,
+            Underscore to Types.UNDERSCORE,
+            LiteralString to Types.LITERAL_STRING,
+        )
+    }
 }
 
 fun Token.Coordinates.getStartPos() = idxAndLength.idx - idxAndLength.length

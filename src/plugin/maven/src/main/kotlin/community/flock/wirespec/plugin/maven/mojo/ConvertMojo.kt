@@ -75,37 +75,40 @@ class ConvertMojo : BaseMojo() {
     }
 
     private fun preProcess(input: String): String {
-        if (preProcessor == null) {
-            return input // Identity function if no preprocessor is specified
-        }
-
-        log.info("Load preprocessor: $preProcessor")
-
-        try {
-            val classLoader = getClassLoader(project)
-            val preProcessorClass: Class<*> = classLoader.loadClass(preProcessor!!)
-            val preProcessorMethod = preProcessorClass.methods
-                .find { m -> m.parameterCount == 1 && m.parameterTypes[0] == String::class.java && m.returnType == String::class.java }
-                ?: throw MojoExecutionException("Preprocessor class must have a method that takes a String and returns a String")
-
-            val instance = if (Modifier.isStatic(preProcessorMethod.modifiers)) {
-                null
-            } else {
-                try {
-                    preProcessorClass.getDeclaredConstructor().newInstance()
-                } catch (e: Exception) {
-                    throw MojoExecutionException("Failed to create an instance of preprocessor class.", e)
-                }
+        val preProcessorName = preProcessor ?: return input
+        log.info("Load preprocessor: $preProcessorName")
+        val preProcessorClass = loadPreProcessorClass(preProcessorName)
+        val method = preProcessorClass.methods
+            .find { m ->
+                m.parameterCount == 1 &&
+                    m.parameterTypes[0] == String::class.java &&
+                    m.returnType == String::class.java
             }
+            ?: throw MojoExecutionException(
+                "Preprocessor class must have a method that takes a String and returns a String",
+            )
+        val instance = if (Modifier.isStatic(method.modifiers)) null else instantiate(preProcessorClass)
+        return invokePreProcessor(method, instance, input)
+    }
 
-            return try {
-                preProcessorMethod(instance, input) as String
-            } catch (e: Exception) {
-                throw MojoExecutionException("Failed to apply preprocessor", e)
-            }
-        } catch (e: Exception) {
-            throw MojoExecutionException("Failed to load preprocessor class: $preProcessor", e)
-        }
+    private fun loadPreProcessorClass(className: String): Class<*> = try {
+        getClassLoader(project).loadClass(className)
+    } catch (e: ClassNotFoundException) {
+        throw MojoExecutionException("Failed to load preprocessor class: $className", e)
+    } catch (e: LinkageError) {
+        throw MojoExecutionException("Failed to load preprocessor class: $className", e)
+    }
+
+    private fun instantiate(preProcessorClass: Class<*>): Any = try {
+        preProcessorClass.getDeclaredConstructor().newInstance()
+    } catch (e: ReflectiveOperationException) {
+        throw MojoExecutionException("Failed to create an instance of preprocessor class.", e)
+    }
+
+    private fun invokePreProcessor(method: java.lang.reflect.Method, instance: Any?, input: String): String = try {
+        method(instance, input) as String
+    } catch (e: ReflectiveOperationException) {
+        throw MojoExecutionException("Failed to apply preprocessor", e)
     }
 
     override fun execute() {
@@ -131,7 +134,7 @@ class ConvertMojo : BaseMojo() {
             input = nonEmptySetOf(sources),
             emitters = emitters,
             writer = writer(outputDir),
-            error = { throw RuntimeException(it) },
+            error = { throw MojoExecutionException(it) },
             packageName = PackageName(packageName),
             logger = logger,
             shared = shared,

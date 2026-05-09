@@ -17,6 +17,7 @@ import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -82,9 +83,9 @@ abstract class BaseWirespecTask : DefaultTask() {
                 .orEmpty()
             constructor.newInstance(*args.toTypedArray()) as? Emitter
         }
-    } catch (e: Exception) {
+    } catch (e: ReflectiveOperationException) {
         logger.error("Cannot create instance of emitter: ${emitterClass.orNull?.simpleName}", e)
-        throw e
+        throw GradleException("Failed to instantiate custom emitter", e)
     }
 
     protected fun emitters() = languages.get()
@@ -111,5 +112,5 @@ abstract class BaseWirespecTask : DefaultTask() {
         return Source(name = Name(name), content = preProcess(content))
     }
 
-    protected fun handleError(string: String): Nothing = throw RuntimeException(string)
+    protected fun handleError(string: String): Nothing = throw GradleException(string)
 }

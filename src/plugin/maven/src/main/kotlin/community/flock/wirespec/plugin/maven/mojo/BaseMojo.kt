@@ -20,6 +20,7 @@ import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import community.flock.wirespec.plugin.toEmitter
 import org.apache.maven.plugin.AbstractMojo
+import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import java.io.File
@@ -153,5 +154,5 @@ abstract class BaseMojo : AbstractMojo() {
         return Source<E>(name = Name(name), content = content)
     }
 
-    protected fun handleError(string: String): Nothing = throw RuntimeException(string)
+    protected fun handleError(string: String): Nothing = throw MojoExecutionException(string)
 }

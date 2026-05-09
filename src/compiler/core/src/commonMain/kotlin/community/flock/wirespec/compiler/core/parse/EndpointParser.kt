@@ -32,61 +32,18 @@ object EndpointParser {
         }
     }
 
-    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, annotations: List<Annotation>, name: DefinitionIdentifier) = parseToken {
-        val method = when (token.type) {
-            is Method -> Endpoint.Method.valueOf(token.value)
-            else -> raiseWrongToken<Method>().bind()
-        }.also { eatToken().bind() }
-
-        val requests = listOf(
-            with(TypeParser) {
-                when (token.type) {
-                    is LeftCurly -> parseDict().bind()
-                    is WirespecType -> parseType().bind()
-                    else -> null
-                }
-            },
-        ).map {
-            Endpoint.Request(
-                content = it?.let {
-                    Endpoint.Content(
-                        type = "application/json",
-                        reference = it,
-                    )
-                },
-            )
-        }
-
-        val segments = mutableListOf<Endpoint.Segment>().apply {
-            while (token.type !is QuestionMark && token.type !is Hash && token.type !is Arrow) {
-                add(parseEndpointSegments().bind())
-            }
-        }
-
-        val queryParams = when (token.type) {
-            is QuestionMark -> {
-                eatToken().bind()
-                when (token.type) {
-                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
-                    else -> raiseWrongToken<LeftCurly>().bind()
-                }
-            }
-
-            else -> emptyList()
-        }
-
+    private fun TokenProvider.parseEndpointDefinition(
+        comment: Comment?,
+        annotations: List<Annotation>,
+        name: DefinitionIdentifier,
+    ) = parseToken {
+        val method = parseEndpointMethod().bind()
+        val requests = parseEndpointRequests().bind()
+        val segments = parseEndpointSegmentList().bind()
+        val queryParams = parseEndpointQueryParams().bind()
         val headers = parseHeaders().bind()
-
-        when (token.type) {
-            is Arrow -> eatToken().bind()
-            else -> raiseWrongToken<Arrow>().bind()
-        }
-
-        when (token.type) {
-            is LeftCurly -> Unit
-            else -> raiseWrongToken<LeftCurly>().bind()
-        }.also { eatToken().bind() }
-
+        expectArrow().bind()
+        expectLeftCurlyAndEat().bind()
         val responses = parseEndpointResponses().bind()
 
         Endpoint(
@@ -100,6 +57,67 @@ object EndpointParser {
             requests = requests,
             responses = responses,
         )
+    }
+
+    private fun TokenProvider.parseEndpointMethod() = either {
+        val method = when (token.type) {
+            is Method -> Endpoint.Method.valueOf(token.value)
+            else -> raiseWrongToken<Method>().bind()
+        }
+        eatToken().bind()
+        method
+    }
+
+    private fun TokenProvider.parseEndpointRequests() = either {
+        val body = with(TypeParser) {
+            when (token.type) {
+                is LeftCurly -> parseDict().bind()
+                is WirespecType -> parseType().bind()
+                else -> null
+            }
+        }
+        listOf(
+            Endpoint.Request(
+                content = body?.let { Endpoint.Content(type = "application/json", reference = it) },
+            ),
+        )
+    }
+
+    private fun TokenProvider.parseEndpointSegmentList() = either {
+        buildList {
+            while (token.type !is QuestionMark && token.type !is Hash && token.type !is Arrow) {
+                add(parseEndpointSegments().bind())
+            }
+        }
+    }
+
+    private fun TokenProvider.parseEndpointQueryParams() = either {
+        when (token.type) {
+            is QuestionMark -> {
+                eatToken().bind()
+                when (token.type) {
+                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
+                    else -> raiseWrongToken<LeftCurly>().bind()
+                }
+            }
+
+            else -> emptyList()
+        }
+    }
+
+    private fun TokenProvider.expectArrow() = either {
+        when (token.type) {
+            is Arrow -> eatToken().bind()
+            else -> raiseWrongToken<Arrow>().bind()
+        }
+    }
+
+    private fun TokenProvider.expectLeftCurlyAndEat() = either {
+        when (token.type) {
+            is LeftCurly -> Unit
+            else -> raiseWrongToken<LeftCurly>().bind()
+        }
+        eatToken().bind()
     }
 
     private fun TokenProvider.parseEndpointSegments() = either {

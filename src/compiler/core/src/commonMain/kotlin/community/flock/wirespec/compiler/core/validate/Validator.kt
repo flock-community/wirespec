@@ -38,9 +38,16 @@ object Validator {
         .let { either { it.bindAll() } }
         .map { AST(it) }
 
-    private fun runValidateOptions(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { it.runOption(options.allowUnions) { fillExtendsClause() } }
+    private fun runValidateOptions(
+        options: ParseOptions,
+    ): (Statements) -> EitherNel<WirespecException, Statements> = {
+        it.runOption(options.allowUnions) { fillExtendsClause() }
+    }
 
-    private fun Statements.runOption(bool: Boolean, block: Statements.() -> EitherNel<WirespecException, Statements>) = if (bool) block() else right()
+    private fun Statements.runOption(
+        bool: Boolean,
+        block: Statements.() -> EitherNel<WirespecException, Statements>,
+    ) = if (bool) block() else right()
 
     private fun Statements.fillExtendsClause(): EitherNel<WirespecException, Statements> = either {
         map { definition ->

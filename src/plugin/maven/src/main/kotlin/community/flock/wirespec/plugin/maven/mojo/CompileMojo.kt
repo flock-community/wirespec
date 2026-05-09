@@ -16,6 +16,7 @@ import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
+import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.ResolutionScope
@@ -48,7 +49,7 @@ class CompileMojo : BaseMojo() {
             input = sources,
             emitters = emitters,
             writer = writer(outputDir),
-            error = { throw RuntimeException(it) },
+            error = { throw MojoExecutionException(it) },
             packageName = PackageName(packageName),
             logger = logger,
             shared = shared,

@@ -14,6 +14,7 @@ import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
+import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -45,7 +46,7 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
             input = sources,
             emitters = emitters(),
             writer = writer(outputDir),
-            error = { throw RuntimeException(it) },
+            error = { throw GradleException(it) },
             packageName = packageNameValue(),
             logger = wirespecLogger,
             shared = shared.getOrElse(true),

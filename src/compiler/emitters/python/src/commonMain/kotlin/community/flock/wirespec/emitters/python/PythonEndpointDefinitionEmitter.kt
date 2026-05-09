@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // Embedded Python codegen templates stay on one line to preserve output fidelity.
+
 package community.flock.wirespec.emitters.python
 
 import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter

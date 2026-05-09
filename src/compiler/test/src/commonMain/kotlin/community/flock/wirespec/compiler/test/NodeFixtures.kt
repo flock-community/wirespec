@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // Test fixtures include opaque regex literals.
+
 package community.flock.wirespec.compiler.test
 
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier

@@ -42,7 +42,9 @@ fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
     .tokenize(source)
     .also(TOKENIZED::log)
 
-fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.fileUri, tokenize(it.content)) }).also(PARSED::log)
+fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(
+    source.map { TokenizedModule(it.fileUri, tokenize(it.content)) },
+).also(PARSED::log)
 
 fun EmitContext.emit(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }

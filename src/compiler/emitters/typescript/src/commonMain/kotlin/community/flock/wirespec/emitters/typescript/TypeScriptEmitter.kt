@@ -24,7 +24,7 @@ interface TypeScriptEmitters:
     TypeScriptEndpointDefinitionEmitter,
     TypeScriptRefinedTypeDefinitionEmitter
 
-open class TypeScriptEmitter() : LanguageEmitter(), TypeScriptEmitters {
+open class TypeScriptEmitter : LanguageEmitter(), TypeScriptEmitters {
 
     override val extension = FileExtension.TypeScript
 

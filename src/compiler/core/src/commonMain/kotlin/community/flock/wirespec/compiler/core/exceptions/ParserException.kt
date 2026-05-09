@@ -10,14 +10,19 @@ sealed class ParserException(fileUri: FileUri, coordinates: Token.Coordinates, m
 
 sealed class EatTokenException(fileUri: FileUri, coordinates: Token.Coordinates, message: String) : ParserException(fileUri, coordinates, message)
 
-class WrongTokenException(fileUri: FileUri, expected: KClass<out TokenType>, actual: Token) :
-    EatTokenException(
-        fileUri,
-        actual.coordinates,
-        "${expected.simpleName} expected, not: ${actual.type.name()} at line ${actual.coordinates.line} and position ${actual.coordinates.position - actual.value.length}",
-    ) {
+class WrongTokenException(
+    fileUri: FileUri,
+    expected: KClass<out TokenType>,
+    actual: Token,
+) : EatTokenException(fileUri, actual.coordinates, buildMessage(expected, actual)) {
     companion object {
         inline operator fun <reified T : TokenType> invoke(fileUri: FileUri, actual: Token) = WrongTokenException(fileUri, T::class, actual)
+
+        private fun buildMessage(expected: KClass<out TokenType>, actual: Token): String {
+            val position = actual.coordinates.position - actual.value.length
+            return "${expected.simpleName} expected, not: ${actual.type.name()} " +
+                "at line ${actual.coordinates.line} and position $position"
+        }
     }
 }
 

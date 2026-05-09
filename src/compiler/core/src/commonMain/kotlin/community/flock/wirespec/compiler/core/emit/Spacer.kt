@@ -1,12 +1,12 @@
 package community.flock.wirespec.compiler.core.emit
 
 data object Spacer {
-    private const val SPACER = "  "
+    private const val INDENT = "  "
 
-    override fun toString() = SPACER
+    override fun toString() = INDENT
 
-    operator fun invoke(times: Int) = SPACER.repeat(times)
-    operator fun invoke(block: () -> String) = "$SPACER${block().split("\n").joinToString("\n$SPACER")}"
+    operator fun invoke(times: Int) = INDENT.repeat(times)
+    operator fun invoke(block: () -> String) = "$INDENT${block().split("\n").joinToString("\n$INDENT")}"
 }
 
 fun String.spacer(space: Int = 1) = split("\n")

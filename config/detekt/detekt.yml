@@ -1,0 +1,62 @@
+# Detekt configuration overlayed on top of detekt's default ruleset.
+# Only declare rules/properties here when they differ from the defaults.
+# See: https://detekt.dev/docs/introduction/configurations
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  # when/is dispatch over AST types naturally pushes close to these numbers
+  # in emitters and parsers; stay moderately above the hot spots.
+  CyclomaticComplexMethod:
+    threshold: 25
+  LongMethod:
+    threshold: 100
+  NestedBlockDepth:
+    threshold: 5
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
+  TooManyFunctions:
+    # Emitters and OpenAPI parsers legitimately expose many top-level helpers.
+    thresholdInFiles: 40
+    thresholdInClasses: 30
+    thresholdInInterfaces: 30
+    thresholdInObjects: 30
+    thresholdInEnums: 30
+
+
+naming:
+  # KMP layouts (src/jvmMain/kotlin/..., src/commonMain/kotlin/...) and Gradle
+  # precompiled script plugins don't match the "dir path == package" convention.
+  InvalidPackageDeclaration:
+    active: false
+
+performance:
+  # Spread (`*array`) is an idiomatic Kotlin pattern throughout the codebase.
+  SpreadOperator:
+    active: false
+
+style:
+  MagicNumber:
+    active: false
+  # `it` inside lambdas with multiple parameters (e.g., `{ index, it -> ... }`)
+  # is commonly the clearer name; leave that to reviewer judgement.
+  ExplicitItLambdaParameter:
+    active: false
+  ReturnCount:
+    max: 4
+  # Task entry points validate several input shapes and throw a dedicated
+  # exception for each.
+  ThrowsCount:
+    max: 4
+  MaxLineLength:
+    maxLineLength: 160
+  WildcardImport:
+    active: true
+    excludeImports:
+      - "java.util.*"

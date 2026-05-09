@@ -2,6 +2,7 @@
 arrow = "2.2.1.1"
 clikt = "5.1.0"
 default = "0.0.0-SNAPSHOT"
+detekt = "1.23.8"
 dokka = "1.9.20"
 from_env = "VERSION"
 group_id = "community.flock.wirespec"
@@ -67,6 +68,7 @@ spring_webflux = { module = "org.springframework:spring-webflux", version.ref = 
 spring_boot_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }
 wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+detekt = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 
 [bundles]
 jackson = ["jackson_databind", "jackson_jdk8", "jackson_kotlin"]
