@@ -59,18 +59,9 @@ import community.flock.wirespec.ir.core.Function as AstFunction
 
 object JavaGenerator : Generator {
     override fun generate(element: Element): String = when (element) {
-        is File -> {
-            val emitter = JavaEmitter(element)
-            emitter.emitFile()
-        }
-        else -> {
-            val emitter = JavaEmitter(File(Name.of(""), listOf(element)))
-            emitter.emitFile()
-        }
+        is File -> emitFile(element)
+        else -> emitFile(File(Name.of(""), listOf(element)))
     }
-}
-
-private class JavaEmitter(val file: File) {
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -82,15 +73,7 @@ private class JavaEmitter(val file: File) {
         }.compact()
     }
 
-    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
-
-    private fun String.indentCode(level: Int): String {
-        if (level <= 0) return this
-        val prefix = " ".repeat(level * 2)
-        return this.lines().joinToString("\n") { line ->
-            if (line.isEmpty()) line else prefix + line
-        }
-    }
+    private fun String.indentCode(level: Int): String = indentLines(level)
 
     private fun Element.emit(indent: Int, isStatic: Boolean = true, parents: List<Element>): String = when (this) {
         is Package -> emit(indent)
@@ -102,10 +85,10 @@ private class JavaEmitter(val file: File) {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is Main -> {
+            val fileName = parents.filterIsInstance<File>().firstOrNull()?.name?.pascalCase().orEmpty()
             val staticContent = statics.joinToString("") { it.emit(1, true, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            "public class ${file.name.pascalCase()} {\n$staticContent" +
-                "  public static void main(String[] args) {\n$content  }\n}\n"
+            "public class $fileName {\n$staticContent  public static void main(String[] args) {\n$content  }\n}\n"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> code.indentCode(indent)
@@ -168,11 +151,13 @@ private class JavaEmitter(val file: File) {
     private fun Union.emit(indent: Int, parents: List<Element>): String {
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val extendsName = extends?.name
-        val ext = listOfNotNull(extends?.emitGenerics()) +
-            parents.filterIsInstance<Union>().filter { it.name.pascalCase() != extendsName }.map { it.name.pascalCase() }
-
-        val extStr = if (ext.isEmpty()) "" else " extends ${ext.distinct().joinToString(", ")}"
-        val permitsStr = if (members.isEmpty()) "" else " permits ${members.joinToString(", ") { it.name }}"
+        val ext = (
+            listOfNotNull(extends?.emitGenerics()) +
+                parents.filterIsInstance<Union>().filter { it.name.pascalCase() != extendsName }.map { it.name.pascalCase() }
+            )
+            .distinct()
+        val extStr = ext.joinNonEmpty(", ", " extends ")
+        val permitsStr = members.joinNonEmpty(", ", " permits ") { it.name }
         return "public sealed interface ${name.pascalCase()}$typeParamsStr$extStr$permitsStr {}\n\n".indentCode(indent)
     }
 
@@ -203,9 +188,7 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val implStr = if (interfaces.isEmpty()) "" else " implements ${interfaces.map { it.emitGenerics() }.distinct().joinToString(", ")}"
-        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emitGenerics() }}>"
-
+        val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " implements ")
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
         val typeModifier = when {
             indent == 0 -> "public record"
@@ -216,8 +199,11 @@ private class JavaEmitter(val file: File) {
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
-        val params = fields.joinToString(",\n") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
-        val paramsStr = if (fields.isEmpty()) " ()" else " (\n$params\n)"
+        val paramsStr = if (fields.isEmpty()) {
+            " ()"
+        } else {
+            fields.joinToString(",\n", " (\n", "\n)") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
+        }
 
         return "$typeModifier ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
     }
@@ -270,15 +256,8 @@ private class JavaEmitter(val file: File) {
 
     private fun TypeParameter.emit(): String {
         val typeStr = type.emitGenerics()
-        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — Java has no
-        // analogue to Kotlin's nullable upper bound, and `T extends Optional<Object>` excludes
-        // every primitive wrapper so primitive type arguments fail to compile.
-        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
-        return if (effectiveExtends.isEmpty()) {
-            typeStr
-        } else {
-            "$typeStr extends ${effectiveExtends.joinToString(" & ") { it.emitGenerics() }}"
-        }
+        val bounds = extends.joinNonEmpty(" & ", " extends ") { it.emitGenerics() }
+        return "$typeStr$bounds"
     }
 
     private fun Type.emit(): String = when (this) {
@@ -401,34 +380,12 @@ private class JavaEmitter(val file: File) {
         is NullLiteral -> "null;\n".indentCode(indent)
         is NullableEmpty -> "java.util.Optional.empty();\n".indentCode(indent)
         is VariableReference -> "${name.camelCase().sanitize()};\n".indentCode(indent)
-        is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.value().sanitize()}();\n".indentCode(indent)
-        }
-        is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            val awaitSuffix = if (isAwait) ".join()" else ""
-            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix;\n".indentCode(indent)
-        }
-        is ArrayIndexCall -> if (caseSensitive) {
-            "${receiver.emit()}.get(${index.emit()});\n".indentCode(indent)
-        } else {
-            "${receiver.emit()}.entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase(${index.emit()})).findFirst().map(java.util.Map.Entry::getValue).orElse(null);\n".indentCode(indent)
-        }
-        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()};\n".indentCode(indent)
-        is EnumValueCall -> "${expression.emit()}.name();\n".indentCode(indent)
-        is BinaryOp -> when {
-            operator == BinaryOp.Operator.EQUALS && right is NullLiteral -> "(${left.emit()} == null);\n".indentCode(indent)
-            operator == BinaryOp.Operator.NOT_EQUALS && right is NullLiteral -> "(${left.emit()} != null);\n".indentCode(indent)
-            operator == BinaryOp.Operator.EQUALS && left is NullLiteral -> "(null == ${right.emit()});\n".indentCode(indent)
-            operator == BinaryOp.Operator.NOT_EQUALS && left is NullLiteral -> "(null != ${right.emit()});\n".indentCode(indent)
-            operator == BinaryOp.Operator.EQUALS && isPrimitiveLiteral() -> "(${left.emit()} == ${right.emit()});\n".indentCode(indent)
-            operator == BinaryOp.Operator.NOT_EQUALS && isPrimitiveLiteral() -> "(${left.emit()} != ${right.emit()});\n".indentCode(indent)
-            operator == BinaryOp.Operator.EQUALS -> "(${left.emit()}.equals(${right.emit()}));\n".indentCode(indent)
-            operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}));\n".indentCode(indent)
-            else -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
-        }
+        is FieldCall -> "${emit()};\n".indentCode(indent)
+        is FunctionCall -> "${emit()};\n".indentCode(indent)
+        is ArrayIndexCall -> "${emit()};\n".indentCode(indent)
+        is EnumReference -> "${emit()};\n".indentCode(indent)
+        is EnumValueCall -> "${emit()};\n".indentCode(indent)
+        is BinaryOp -> "${emit()};\n".indentCode(indent)
         is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
         // Route primitive expressions through Object: Java won't auto-box
         // during an unchecked cast to a type parameter T.
@@ -477,10 +434,11 @@ private class JavaEmitter(val file: File) {
             "$receiverStr${field.value().sanitize()}()"
         }
         is FunctionCall -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            val awaitSuffix = if (isAwait) ".join()" else ""
-            "$receiverStr$typeArgsStr${name.value().sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})$awaitSuffix"
+            val typeArgsStr = typeArguments.joinNonEmpty(", ", "<", ">") { it.emitGenerics() }
+            val receiverStr = receiver?.emit()?.plus(".").orEmpty()
+            val awaitSuffix = ".join()".takeIf { isAwait }.orEmpty()
+            val args = arguments.values.joinToString(", ") { it.emit() }
+            "$receiverStr$typeArgsStr${name.value().sanitize()}($args)$awaitSuffix"
         }
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}.get(${index.emit()})"

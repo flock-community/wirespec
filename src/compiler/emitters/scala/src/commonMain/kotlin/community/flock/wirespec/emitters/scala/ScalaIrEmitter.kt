@@ -53,11 +53,11 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
+import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
-import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.ScalaGenerator
@@ -108,16 +108,16 @@ open class ScalaIrEmitter(
         )
     }
 
-    override val shared = object : Shared {
-        override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.scala"
+    override fun emitShared(): File? {
 
-        private val clientServer = AstShared(packageString).convertClientServer()
+        val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.scala")
 
-        override val source = AstShared(packageString)
-            .convert()
+        val clientServer = packageName.convertClientServer()
+
+        val wirespecShared = packageName.convert()
             .transform {
-                matchingElements { file: LanguageFile ->
-                    val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
+                matchingElements { file: File ->
+                    val (packageElements, rest) = file.elements.partition { it is Package }
                     file.copy(elements = packageElements + import("scala.reflect", "ClassTag") + rest)
                 }
                 matchingElements { ns: Namespace ->
@@ -146,20 +146,16 @@ open class ScalaIrEmitter(
                     ns.copy(elements = newElements)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) clientServer
-                    else emptyList()
+                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
                 }
             }
-            .generateScala()
-    }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
-        super.emit(module, logger).withSharedSource(emitShared) {
-            File(
-                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.scala").toDir() + "Wirespec"),
-                listOf(RawElement(shared.source))
-            )
+        return if (emitShared.value) {
+            wirespecShared
+        } else {
+            null
         }
+    }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)

@@ -59,19 +59,9 @@ import community.flock.wirespec.ir.core.Function as AstFunction
 
 object KotlinGenerator : Generator {
     override fun generate(element: Element): String = when (element) {
-        is File -> {
-            val emitter = KotlinEmitter(element)
-            emitter.emitFile()
-        }
-
-        else -> {
-            val emitter = KotlinEmitter(File(Name.of(""), listOf(element)))
-            emitter.emitFile()
-        }
+        is File -> emitFile(element)
+        else -> emitFile(File(Name.of(""), listOf(element)))
     }
-}
-
-private class KotlinEmitter(val file: File) {
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -85,15 +75,7 @@ private class KotlinEmitter(val file: File) {
         }.compact()
     }
 
-    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
-
-    private fun String.indentCode(level: Int): String {
-        if (level <= 0) return this
-        val prefix = " ".repeat(level * 2)
-        return this.lines().joinToString("\n") { line ->
-            if (line.isEmpty()) line else prefix + line
-        }
-    }
+    private fun String.indentCode(level: Int): String = indentLines(level)
 
     private fun Element.emit(indent: Int, isStatic: Boolean = false, parents: List<Element>): String = when (this) {
         is Package -> emit(indent)
@@ -108,7 +90,7 @@ private class KotlinEmitter(val file: File) {
             val staticContent = statics.joinToString("") { it.emit(indent, false, parents) }
             val content = body.joinToString("") { it.emit(1) }
             val modifier = if (isAsync) "suspend " else ""
-            "$staticContent${"${modifier}fun main() {\n$content}\n\n".indentCode(indent)}"
+            staticContent + "${modifier}fun main() {\n$content}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -187,9 +169,8 @@ private class KotlinEmitter(val file: File) {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val implStr = if (interfaces.isEmpty()) "" else " : ${interfaces.map { it.emitGenerics() }.distinct().joinToString(", ")}"
-        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.emit() }}>"
-
+        val pascal = name.pascalCase()
+        val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitKotlin(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
@@ -225,11 +206,9 @@ private class KotlinEmitter(val file: File) {
         }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
-            "data class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent${"}".indentCode(indent)}\n\n".indentCode(
-                indent,
-            )
+            "data class $pascal$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "data class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            "data class $pascal$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -256,23 +235,15 @@ private class KotlinEmitter(val file: File) {
         }
     }
 
-    private fun AstFunction.emit(indent: Int, parents: List<Element>): String {
-        val lastParent = parents.lastOrNull()
-        val isInterface = lastParent is Interface
-
-        val overridePrefix = if (isOverride) "override " else ""
-        val suspendPrefix = if (isAsync) "suspend " else ""
-        val typeParamsStr = if (typeParameters.isNotEmpty()) {
-            "<${typeParameters.joinToString(", ") { it.emit() }}> "
-        } else {
-            ""
+    private fun AstFunction.emit(indent: Int, @Suppress("UNUSED_PARAMETER") parents: List<Element>): String {
+        val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
+        val suspendPrefix = "suspend ".takeIf { isAsync }.orEmpty()
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", "> ") { it.emit() }
+        val rType = when {
+            isAsync -> returnType?.emitGenerics() ?: "Unit"
+            else -> returnType?.takeIf { it != Type.Unit }?.emitGenerics()
         }
-        val rType = if (isAsync) {
-            returnType?.emitGenerics() ?: "Unit"
-        } else {
-            returnType?.takeIf { it != Type.Unit }?.emitGenerics()
-        }
-        val returnTypeStr = if (rType != null) ": $rType" else ""
+        val returnTypeStr = rType?.let { ": $it" }.orEmpty()
         val params = parameters.joinToString(", ") { it.emit(0) }
         val signature = "$overridePrefix${suspendPrefix}fun $typeParamsStr${name.camelCase()}($params)$returnTypeStr"
 
@@ -372,14 +343,7 @@ private class KotlinEmitter(val file: File) {
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
         is FieldCall -> "${emit()}\n".indentCode(indent)
 
-        is FunctionCall -> {
-            val typeArgsStr =
-                if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${
-                name.value().toKotlinStaticCall().sanitize()
-            }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
-        }
+        is FunctionCall -> "${emit()}\n".indentCode(indent)
 
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emit()}[${index.emit()}]\n".indentCode(indent)
@@ -434,6 +398,26 @@ private class KotlinEmitter(val file: File) {
         return "$header {\n$casesStr$defaultStr}"
     }
 
+    private fun Switch.emitWhen(caseIndent: Int): String {
+        val isPatternSwitch = cases.any { it.type != null }
+        val casesStr = cases.joinToString("") { case ->
+            val bodyStr = case.body.joinToString("") { it.emit(1) }
+            val label = if (isPatternSwitch) "is ${case.type?.emitGenerics() ?: "Any"}" else case.value.emit()
+            "$label -> {\n$bodyStr}\n".indentCode(caseIndent)
+        }
+        val defaultStr = default?.let {
+            val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
+            "else -> {\n$bodyStr}\n".indentCode(caseIndent)
+        }.orEmpty()
+        val header = if (isPatternSwitch) {
+            val exprStr = variable?.let { "val ${it.camelCase()} = ${expression.emit()}" } ?: expression.emit()
+            "when($exprStr)"
+        } else {
+            "when (${expression.emit()})"
+        }
+        return "$header {\n$casesStr$defaultStr}"
+    }
+
     private fun String.toKotlinStaticCall(): String = when (this) {
         "java.util.Collections.emptyList" -> "emptyList"
         "java.util.Collections.emptyMap" -> "emptyMap"
@@ -457,12 +441,10 @@ private class KotlinEmitter(val file: File) {
         }
 
         is FunctionCall -> {
-            val typeArgsStr =
-                if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${
-                name.value().toKotlinStaticCall().sanitize()
-            }$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
+            val typeArgsStr = typeArguments.joinNonEmpty(", ", "<", ">") { it.emitGenerics() }
+            val receiverStr = receiver?.emit()?.plus(".").orEmpty()
+            val args = arguments.values.joinToString(", ") { it.emit() }
+            "$receiverStr${name.value().toKotlinStaticCall().sanitize()}$typeArgsStr($args)"
         }
 
         is ArrayIndexCall -> if (caseSensitive) {

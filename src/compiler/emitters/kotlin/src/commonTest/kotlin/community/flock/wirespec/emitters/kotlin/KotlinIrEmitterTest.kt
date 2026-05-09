@@ -27,7 +27,7 @@ import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
 import community.flock.wirespec.compiler.utils.NoLogger
-import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.ir.generator.KotlinGenerator
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -1562,8 +1562,8 @@ class KotlinIrEmitterTest {
             |
             """.trimMargin()
 
-        val emitter = KotlinIrEmitter()
-        emitter.shared.source shouldBe expected
+        val emitter = KotlinIrEmitter(emitShared = EmitShared(true))
+        emitter.emitShared()?.let(KotlinGenerator::generate) shouldBe expected
     }
 
     private fun EmitContext.emitFirst(node: Definition) = emitters.map {

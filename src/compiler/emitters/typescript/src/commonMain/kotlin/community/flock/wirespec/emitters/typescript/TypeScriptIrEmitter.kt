@@ -70,7 +70,7 @@ open class TypeScriptIrEmitter : IrEmitter {
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
             reservedKeywords = reservedKeywords,
-            escapeKeyword = { "_$it" },
+            escapeKeyword = { "$it" },
             fieldNameCase = { name ->
                 val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
                 Name(listOf(sanitized))
@@ -107,7 +107,10 @@ open class TypeScriptIrEmitter : IrEmitter {
         apply(transformPatternSwitchToValueSwitch())
     }
 
-    override val shared = object : Shared {
+    override fun emitShared(): File? {
+
+        val packageName = PackageName(DEFAULT_SHARED_PACKAGE_STRING)
+
         val api = """
           |export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
           |  to: (request: REQ) => RawRequest;
@@ -158,9 +161,6 @@ open class TypeScriptIrEmitter : IrEmitter {
                     )
                 }
         )
-
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
-        super.emit(module, logger) + File(Name.of("Wirespec"), listOf(RawElement(shared.source)))
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)

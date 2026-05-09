@@ -64,9 +64,7 @@ object RustGenerator : Generator {
 
     private fun String.indentCode(level: Int): String = indentLines(level, width = 4)
 
-    private fun File.emit(indent: Int): String = elements.joinToString("") { it.emit(indent) }.removeEmptyLines()
-
-    private fun String.removeEmptyLines(): String = lines().filterNot(String::isEmpty).joinToString("\n", postfix = "\n")
+    private fun File.emit(indent: Int): String = elements.joinToString("") { it.emit(indent) }.compact()
 
     private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false): String = when (this) {
         is Package -> emit(indent)

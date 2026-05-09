@@ -17,7 +17,6 @@ import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
-import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.emit.Keywords
@@ -42,7 +41,6 @@ import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Struct
@@ -97,29 +95,29 @@ open class KotlinIrEmitter(
         )
     }
 
-    override val shared = object : Shared {
-        override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
+    override fun emitShared(): File? {
 
-        private val clientServer = AstShared(packageString).convertClientServer()
+        val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.kotlin")
 
-        override val source = AstShared(packageString)
-            .convert()
+        val clientServer = packageName.convertClientServer()
+
+        val wirespecShared = packageName.convert()
             .transform {
-                matchingElements { file: LanguageFile ->
-                    val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
+                matchingElements { file: File ->
+                    val (packageElements, rest) = file.elements.partition { it is Package }
                     file.copy(elements = packageElements + import("kotlin.reflect", "KType") + rest)
                 }
-            },
-        )
-    }
+                injectAfter { namespace: Namespace ->
+                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
+                }
+            }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
-        super.emit(module, logger).withSharedSource(emitShared) {
-            File(
-                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.kotlin").toDir() + "Wirespec"),
-                listOf(RawElement(shared.source))
-            )
+        return if (emitShared.value) {
+            wirespecShared
+        } else {
+            null
         }
+    }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)

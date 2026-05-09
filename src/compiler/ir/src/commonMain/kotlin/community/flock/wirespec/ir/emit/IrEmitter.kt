@@ -29,6 +29,7 @@ interface IrEmitter : Emitter {
                 logger.info("Emitting Nodes from ${m.fileUri.value} ")
                 emit(m, logger)
             }
+            .plus(emitShared()?.let { listOf(it) } ?: emptyList())
             .map { it.toEmitted() }
 
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }

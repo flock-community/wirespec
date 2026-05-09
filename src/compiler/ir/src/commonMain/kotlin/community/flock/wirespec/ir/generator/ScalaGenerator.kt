@@ -67,14 +67,6 @@ object ScalaGenerator : Generator {
         primaryFieldNames = collectPrimaryFieldNames(file.elements)
         return emitFile(file)
     }
-}
-
-private class
-ScalaEmitter(
-    val file: File,
-) {
-    private val objectNames = collectObjectNames(file.elements)
-    private val primaryFieldNames = collectPrimaryFieldNames(file.elements)
 
     private fun collectObjectNames(elements: List<Element>): Set<String> {
         val names = mutableSetOf<String>()
@@ -121,27 +113,19 @@ ScalaEmitter(
         return argNames != primaryFields
     }
 
-    fun emitFile(): String {
-        val packages = file.elements.filterIsInstance<Package>()
-        val imports = file.elements.filterIsInstance<Import>()
-        val otherElements = file.elements.filter { it !is Package && it !is Import }
-
-        val packagesStr = packages.joinToString("") { it.emit(0) }
-        val importsStr = imports.joinToString("") { it.emit(0) }
-        val elementsStr = otherElements.joinToString("") { it.emit(0, parents = emptyList()) }
-
-        return "$packagesStr\n$importsStr\n$elementsStr".removeEmptyLines()
+    private fun emitFile(file: File): String {
+        val (packages, rest) = file.elements.partition { it is Package }
+        val (imports, others) = rest.partition { it is Import }
+        return buildString {
+            packages.forEach { append((it as Package).emit(0)) }
+            append('\n')
+            imports.forEach { append((it as Import).emit(0)) }
+            append('\n')
+            others.forEach { append(it.emit(0, parents = listOf(file))) }
+        }.compact()
     }
 
-    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
-
-    private fun String.indentCode(level: Int): String {
-        if (level <= 0) return this
-        val prefix = " ".repeat(level * 2)
-        return this.lines().joinToString("\n") { line ->
-            if (line.isEmpty()) line else prefix + line
-        }
-    }
+    private fun String.indentCode(level: Int): String = indentLines(level)
 
     private fun Element.emit(indent: Int, isStatic: Boolean = false, parents: List<Element>): String = when (this) {
         is Package -> emit(indent)
@@ -153,9 +137,10 @@ ScalaEmitter(
         is Union -> emit(indent)
         is Enum -> emit(indent)
         is Main -> {
+            val fileName = parents.filterIsInstance<File>().firstOrNull()?.name?.pascalCase().orEmpty()
             val staticContent = statics.joinToString("") { it.emit(1, false, parents) }
             val content = body.joinToString("") { it.emit(1) }
-            "object ${file.name.pascalCase()} {\n$staticContent  def main(args: Array[String]): Unit = {\n$content  }\n}\n\n".indentCode(indent)
+            "object $fileName {\n$staticContent  def main(args: Array[String]): Unit = {\n$content  }\n}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
         is RawElement -> "$code\n".indentCode(indent)
@@ -233,9 +218,8 @@ ScalaEmitter(
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val implStr = if (interfaces.isEmpty()) "" else " extends ${interfaces.map { it.emitTypeAnnotation() }.distinct().joinToString(" with ")}"
-        val typeParamsStr = if (typeParameters.isEmpty()) "" else "[${typeParameters.joinToString(", ") { it.type.emitGenerics() }}]"
-
+        val pascal = name.pascalCase()
+        val implStr = interfaces.map { it.emitTypeAnnotation() }.distinct().joinNonEmpty(" with ", " extends ")
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
@@ -272,17 +256,19 @@ ScalaEmitter(
             }
         }
 
-        val params = fields.joinToString(",\n") {
-            "${if (it.isOverride) "override " else ""}val ${it.name.value().sanitize()}: ${it.type.emitTypeAnnotation()}".indentCode(indent + 1)
-        }
-        val paramsStr = if (fields.isEmpty()) "" else "(\n$params\n${")".indentCode(indent)}"
-
-        val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
-
-        return if (hasBody) {
-            "case class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent${"}".indentCode(indent)}\n\n".indentCode(indent)
+        val paramsStr = if (fields.isEmpty()) {
+            ""
         } else {
-            "case class ${name.pascalCase()}$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            fields.joinToString(",\n", "(\n", "\n${")".indentCode(indent)}") {
+                val overridePrefix = "override ".takeIf { _ -> it.isOverride }.orEmpty()
+                "${overridePrefix}val ${it.name.value().sanitize()}: ${it.type.emitTypeAnnotation()}".indentCode(indent + 1)
+            }
+        }
+        val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
+        return if (hasBody) {
+            "case class $pascal$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+        } else {
+            "case class $pascal$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -302,13 +288,9 @@ ScalaEmitter(
         return "def this($params) = $rhs\n".indentCode(indent)
     }
 
-    private fun AstFunction.emit(indent: Int, parents: List<Element>): String {
-        val overridePrefix = if (isOverride) "override " else ""
-        val typeParamsStr = if (typeParameters.isNotEmpty()) {
-            "[${typeParameters.joinToString(", ") { it.emit() }}]"
-        } else {
-            ""
-        }
+    private fun AstFunction.emit(indent: Int): String {
+        val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "[", "]") { it.emit() }
         val rType = returnType?.takeIf { it != Type.Unit }?.emitTypeAnnotation() ?: "Unit"
         val params = parameters.joinToString(", ") { it.emit(0) }
         val signature = "${overridePrefix}def ${name.camelCase()}$typeParamsStr($params): $rType"
@@ -452,18 +434,8 @@ ScalaEmitter(
         is NullLiteral -> "null\n".indentCode(indent)
         is NullableEmpty -> "None\n".indentCode(indent)
         is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
-        is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.value().sanitize()}\n".indentCode(indent)
-        }
-
-        is FunctionCall -> {
-            val typeArgsStr =
-                if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
-        }
-
+        is FieldCall -> "${emit()}\n".indentCode(indent)
+        is FunctionCall -> "${emit()}\n".indentCode(indent)
         is ArrayIndexCall -> "${emitArrayIndex()}\n".indentCode(indent)
         is EnumReference -> "${emit()}\n".indentCode(indent)
         is EnumValueCall -> "${emit()}\n".indentCode(indent)
@@ -511,10 +483,10 @@ ScalaEmitter(
         }
 
         is FunctionCall -> {
-            val typeArgsStr =
-                if (typeArguments.isNotEmpty()) "[${typeArguments.joinToString(", ") { it.emitGenerics() }}]" else ""
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${name.value().sanitize()}$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
+            val typeArgsStr = typeArguments.joinNonEmpty(", ", "[", "]") { it.emitGenerics() }
+            val receiverStr = receiver?.emit()?.plus(".").orEmpty()
+            val args = arguments.values.joinToString(", ") { it.emit() }
+            "$receiverStr${name.value().sanitize()}$typeArgsStr($args)"
         }
 
         is ArrayIndexCall -> emitArrayIndex()

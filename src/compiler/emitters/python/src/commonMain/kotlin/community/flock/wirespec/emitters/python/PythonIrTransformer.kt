@@ -15,10 +15,10 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Type as LanguageType

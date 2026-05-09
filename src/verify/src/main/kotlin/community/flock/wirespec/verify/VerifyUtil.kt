@@ -104,12 +104,12 @@ class Language(
         val name = file.name.pascalCase()
         val transformed = emitter.transformTestFile(file)
         val (fileName, content) = when (emitter) {
-            is JavaIrEmitter -> "${name}.java" to transformed.generateJava()
-            is KotlinIrEmitter -> "${name}.kt" to transformed.generateKotlin()
-            is PythonIrEmitter -> "${name}.py" to transformed.generatePython()
-            is RustIrEmitter -> "${name}.rs" to transformed.generateRust()
-            is ScalaIrEmitter -> "${name}.scala" to transformed.generateScala()
-            is TypeScriptIrEmitter -> "${name}.ts" to transformed.generateTypeScript()
+            is JavaIrEmitter -> "${name}.java" to JavaGenerator.generate(transformed)
+            is KotlinIrEmitter -> "${name}.kt" to KotlinGenerator.generate(transformed)
+            is PythonIrEmitter -> "${name}.py" to PythonGenerator.generate(transformed)
+            is RustIrEmitter -> "${name}.rs" to RustGenerator.generate(transformed)
+            is ScalaIrEmitter -> "${name}.scala" to ScalaGenerator.generate(transformed)
+            is TypeScriptIrEmitter -> "${name}.ts" to TypeScriptGenerator.generate(transformed)
             else -> error("Unknown language: $name")
         }
         outputDir.resolve(fileName).writeText(content)
@@ -190,7 +190,7 @@ class Language(
                 } else ""
                 // Generate the test file content (which contains fn main())
                 val transformedRust = emitter.transformTestFile(resolved)
-                val rustContent = transformedRust.generateRust()
+                val rustContent = RustGenerator.generate(transformedRust)
                 // Filter out the Import lines the generator produced from Java-style paths
                 // (e.g. `use community.flock.wirespec.generated.model::X;`). These contain '.'
                 // in the first path segment and would be invalid Rust — run() regenerates

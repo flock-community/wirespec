@@ -284,7 +284,7 @@ fun PackageName.convert(): File = file("Wirespec") {
     }
 }
 
-fun SharedWirespec.convertClientServer(): List<Element> = listOf(
+fun PackageName.convertClientServer(): List<Element> = listOf(
     `interface`("ServerEdge") {
         typeParam(type("Req"), type("Request", Type.Wildcard))
         typeParam(type("Res"), type("Response", Type.Wildcard))

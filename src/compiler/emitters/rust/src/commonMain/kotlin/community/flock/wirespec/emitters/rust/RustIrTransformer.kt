@@ -22,12 +22,12 @@ import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Function as LanguageFunction

@@ -62,10 +62,9 @@ object PythonGenerator : Generator {
 
     private fun String.indentCode(level: Int): String = " ".repeat(level * 4) + this
 
-    private fun File.emit(indent: Int): String = groupImports(elements).joinToString("") { it.emit(indent) }.removeEmptyLines()
+    private fun File.emit(indent: Int): String = groupImports(elements).joinToString("") { it.emit(indent) }.compact()
 
-    private fun groupImports(elements: List<Element>): List<Element> {
-        val result = mutableListOf<Element>()
+    private fun groupImports(elements: List<Element>): List<Element> = buildList {
         var i = 0
         while (i < elements.size) {
             val element = elements[i]
@@ -73,24 +72,18 @@ object PythonGenerator : Generator {
                 val path = element.path
                 val types = mutableListOf(element.type.name)
                 while (i + 1 < elements.size) {
-                    val next = elements[i + 1]
-                    if (next is Import && next.path == path) {
-                        types.add(next.type.name)
-                        i++
-                    } else {
-                        break
-                    }
+                    val next = elements[i + 1] as? Import ?: break
+                    if (next.path != path) break
+                    types.add(next.type.name)
+                    i++
                 }
-                result.add(RawElement("from $path import ${types.joinToString(", ")}"))
+                add(RawElement("from $path import ${types.joinToString(", ")}"))
             } else {
-                result.add(element)
+                add(element)
             }
             i++
         }
-        return result
     }
-
-    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
 
     private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false, qualifier: ((String) -> String)? = null): String = when (this) {
         is Package -> emit(indent)
