@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class TodoController
         implements GetTodos.Handler, GetTodoById.Handler, CreateTodo.Handler, UpdateTodo.Handler, DeleteTodo.Handler {
 
+    private static final String TODO_NOT_FOUND = "Todo not found";
+
     private final TodoService todoService;
 
     public TodoController(TodoService todoService) {
@@ -27,7 +29,7 @@ public class TodoController
         return CompletableFuture.completedFuture(todoService
                 .findById(request.path().id())
                 .<GetTodoById.Response<?>>map(GetTodoById.Response200::new)
-                .orElse(new GetTodoById.Response404(new Error("Todo not found"))));
+                .orElse(new GetTodoById.Response404(new Error(TODO_NOT_FOUND))));
     }
 
     @Override
@@ -41,7 +43,7 @@ public class TodoController
         return CompletableFuture.completedFuture(todoService
                 .update(request.path().id(), request.body())
                 .<UpdateTodo.Response<?>>map(UpdateTodo.Response200::new)
-                .orElse(new UpdateTodo.Response404(new Error("Todo not found"))));
+                .orElse(new UpdateTodo.Response404(new Error(TODO_NOT_FOUND))));
     }
 
     @Override
@@ -49,6 +51,6 @@ public class TodoController
         if (todoService.delete(request.path().id())) {
             return CompletableFuture.completedFuture(new DeleteTodo.Response204());
         }
-        return CompletableFuture.completedFuture(new DeleteTodo.Response404(new Error("Todo not found")));
+        return CompletableFuture.completedFuture(new DeleteTodo.Response404(new Error(TODO_NOT_FOUND)));
     }
 }

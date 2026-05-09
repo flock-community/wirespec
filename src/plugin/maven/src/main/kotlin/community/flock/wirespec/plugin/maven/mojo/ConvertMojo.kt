@@ -22,12 +22,6 @@ import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
 import java.lang.reflect.Modifier
-import java.nio.charset.StandardCharsets
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import javax.tools.JavaFileObject
-import javax.tools.StandardLocation
-import javax.tools.ToolProvider
 
 @Suppress("unused")
 @Mojo(
@@ -50,29 +44,6 @@ class ConvertMojo : BaseMojo() {
      */
     @Parameter
     private var preProcessor: String? = null
-
-    private fun loadCompiledClasses(): List<String> {
-        val compiler = ToolProvider.getSystemJavaCompiler()
-        if (compiler == null) {
-            throw MojoExecutionException("Could not get system Java compiler. Ensure you are running Maven with a JDK, not just a JRE.")
-        }
-
-        val fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)
-            .apply { setLocation(StandardLocation.CLASS_OUTPUT, listOf(classOutputDir())) }
-
-        val outputLocation = StandardLocation.CLASS_OUTPUT
-        val outputFiles = fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.CLASS), true)
-        val outputDirectory: Path = Path.of(fileManager.getLocation(outputLocation).iterator().next().toURI())
-        return outputFiles
-            .filter { fileObject -> fileObject.kind == JavaFileObject.Kind.CLASS }
-            .map { fileObject ->
-                val filePath: Path = Path.of(fileObject.toUri())
-                val relativePath: Path = outputDirectory.relativize(filePath)
-                relativePath.toString()
-                    .replace(FileSystems.getDefault().separator, ".") // Use system-specific separator
-                    .replace(".class", "")
-            }
-    }
 
     private fun preProcess(input: String): String {
         if (preProcessor == null) {

@@ -80,8 +80,8 @@ class TodoTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvcMultipartResult)).andExpect(status().isCreated());
-        byte[] files = (byte[]) service.files.get("plain");
-        Todo todo = (Todo) service.files.get("json");
+        byte[] files = (byte[]) service.getFiles().get("plain");
+        Todo todo = (Todo) service.getFiles().get("json");
         assertEquals("Hello Wirespec", new String(files));
         assertEquals("Todo 1", todo.name());
     }

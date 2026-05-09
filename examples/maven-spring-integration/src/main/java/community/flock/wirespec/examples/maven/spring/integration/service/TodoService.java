@@ -11,13 +11,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class TodoService {
 
-    public List<Todo> store = new ArrayList<>();
-    public Map<String, Object> files = new HashMap<>();
+    private List<Todo> store = new ArrayList<>();
+    private final Map<String, Object> files = new HashMap<>();
 
     public TodoService() {
         store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "First todo", false));
         store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "Second todo", false));
         store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "Third todo", false));
+    }
+
+    public List<Todo> getStore() {
+        return store;
+    }
+
+    public Map<String, Object> getFiles() {
+        return files;
     }
 
     public CompletableFuture<Todo> create(Todo todo) {
