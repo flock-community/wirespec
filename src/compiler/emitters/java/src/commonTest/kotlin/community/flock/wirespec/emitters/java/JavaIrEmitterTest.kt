@@ -4,6 +4,7 @@ import arrow.core.nonEmptyListOf
 import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -27,6 +28,7 @@ import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.ir.generator.JavaGenerator
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -1812,8 +1814,8 @@ class JavaIrEmitterTest {
             |
             """.trimMargin()
 
-        val emitter = JavaIrEmitter()
-        emitter.shared.source shouldBe expected
+        val emitter = JavaIrEmitter(emitShared = EmitShared(true))
+        emitter.emitShared()?.let(JavaGenerator::generate) shouldBe expected
     }
 
     private fun EmitContext.emitFirst(node: Definition) = emitters.map {

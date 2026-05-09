@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class AvroExampleApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(AvroExampleApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(AvroExampleApplication.class, args);
+    }
 }

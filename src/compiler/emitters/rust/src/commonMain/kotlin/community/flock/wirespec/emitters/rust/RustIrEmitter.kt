@@ -9,10 +9,8 @@ import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
-import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -52,7 +50,6 @@ import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.function
@@ -66,7 +63,6 @@ import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.sortKey
 import community.flock.wirespec.ir.generator.RustGenerator
-import community.flock.wirespec.ir.generator.generateRust
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.File as LanguageFile
@@ -122,23 +118,22 @@ open class RustIrEmitter(
         import("", "regex"),
     )
 
-    override val shared = object : Shared {
-        override val packageString = "shared"
+    override fun emitShared(): File? {
 
-        private val rustImports = listOf(
+        val rustImports = listOf(
             import("std::any", "TypeId"),
             import("std::collections", "HashMap"),
         )
 
-        private val requestHeaders = `interface`("RequestHeaders") {
+        val requestHeaders = `interface`("RequestHeaders") {
             extends(LanguageType.Custom("Headers"))
         }
 
-        private val responseHeaders = `interface`("ResponseHeaders") {
+        val responseHeaders = `interface`("ResponseHeaders") {
             extends(LanguageType.Custom("Headers"))
         }
 
-        private val client = RawElement(
+        val client = RawElement(
             """
             pub trait Client {
                 type Transport: Transportation;
@@ -149,7 +144,7 @@ open class RustIrEmitter(
             """.trimIndent()
         )
 
-        private val server = RawElement(
+        val server = RawElement(
             """
             pub trait Server {
                 type Req;
@@ -160,7 +155,7 @@ open class RustIrEmitter(
             """.trimIndent()
         )
 
-        private val enumTrait = `interface`("Enum") {
+        val enumTrait = `interface`("Enum") {
             extends(LanguageType.Custom("Sized"))
             function("label") {
                 arg("&self", LanguageType.Custom(""))
@@ -172,7 +167,7 @@ open class RustIrEmitter(
             }
         }
 
-        private val refinedTrait = `interface`("Refined") {
+        val refinedTrait = `interface`("Refined") {
             typeParam(type("T"))
             function("value") {
                 arg("&self", LanguageType.Custom(""))
@@ -184,7 +179,7 @@ open class RustIrEmitter(
             }
         }
 
-        private val requestTrait = `interface`("Request") {
+        val requestTrait = `interface`("Request") {
             typeParam(type("T"))
             field("path", type("Path").borrowDyn())
             field("method", type("Method").borrow())
@@ -193,14 +188,14 @@ open class RustIrEmitter(
             field("body", type("T").borrow())
         }
 
-        private val responseTrait = `interface`("Response") {
+        val responseTrait = `interface`("Response") {
             typeParam(type("T"))
             field("status", integer32)
             field("headers", type("ResponseHeaders").borrowDyn())
             field("body", type("T").borrow())
         }
 
-        private val rawElementInterfaces = mapOf(
+        val rawElementInterfaces = mapOf(
             "BodySerializer" to RawElement("pub trait BodySerializer {\n    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;\n}"),
             "BodyDeserializer" to RawElement("pub trait BodyDeserializer {\n    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;\n}"),
             "PathSerializer" to RawElement("pub trait PathSerializer {\n    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;\n}"),
@@ -209,7 +204,7 @@ open class RustIrEmitter(
             "ParamDeserializer" to RawElement("pub trait ParamDeserializer {\n    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;\n}"),
         )
 
-        private val transportationTrait = `interface`("Transportation") {
+        val transportationTrait = `interface`("Transportation") {
             asyncFunction("transport") {
                 arg("&self", LanguageType.Custom(""))
                 arg("request", type("RawRequest").borrow())
@@ -217,7 +212,7 @@ open class RustIrEmitter(
             }
         }
 
-        private val dslTraits = mapOf(
+        val dslTraits = mapOf(
             "Enum" to enumTrait,
             "Refined" to refinedTrait,
             "Request" to requestTrait,
@@ -225,7 +220,7 @@ open class RustIrEmitter(
             "Transportation" to transportationTrait,
         )
 
-        private val wirespecFile = AstShared(packageString)
+        val wirespecFile = PackageName("shared")
             .convert()
             .transform {
                 matchingElements { file: LanguageFile ->
@@ -282,7 +277,7 @@ open class RustIrEmitter(
             }
             .let(RustTransform::apply)
 
-        override val source: String = wirespecFile
+        val source: String = wirespecFile
             .transform {
                 matchingElements { iface: Interface ->
                     iface.transform {
@@ -303,9 +298,15 @@ open class RustIrEmitter(
                     acc
                 }
                 groups.joinToString("\n\n") { group ->
-                    group.joinToString("") { it.generateRust() }.trimEnd('\n')
+                    group.joinToString("") { RustGenerator.generate(it) }.trimEnd('\n')
                 } + "\n"
             }
+
+        return if (emitShared.value) {
+            File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(source)))
+        } else {
+            null
+        }
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
@@ -327,9 +328,8 @@ open class RustIrEmitter(
                 Name.of(packageName.toDir() + "model/" + "mod"),
                 listOf(RawElement(module.statements.filterIsInstance<Model>().joinToString("\n") { emitMod(it) }))
             )
-            val shared = File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(shared.source)))
             if (emitShared.value)
-                files + modRs + modEndpoint + modModel + shared
+                files + modRs + modEndpoint + modModel
             else
                 files + modRs
         }

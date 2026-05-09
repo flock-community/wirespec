@@ -1,24 +1,31 @@
 package community.flock.wirespec.examples.maven.spring.integration.service;
 
+import static java.util.stream.Collectors.toList;
+
 import community.flock.wirespec.generated.examples.spring.model.Todo;
 import community.flock.wirespec.generated.examples.spring.model.TodoId;
-import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-
-import static java.util.stream.Collectors.toList;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TodoService {
 
-    public List<Todo> store = new ArrayList<>();
-    public Map<String, Object> files = new HashMap<>();
+    private List<Todo> store = new ArrayList<>();
+    private final Map<String, Object> files = new HashMap<>();
 
-    public TodoService(){
+    public TodoService() {
         store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "First todo", false));
         store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "Second todo", false));
         store.add(new Todo(new TodoId(UUID.randomUUID().toString()), "Third todo", false));
+    }
+
+    public List<Todo> getStore() {
+        return store;
+    }
+
+    public Map<String, Object> getFiles() {
+        return files;
     }
 
     public CompletableFuture<Todo> create(Todo todo) {
@@ -50,7 +57,7 @@ public class TodoService {
                 .orElseThrow();
     }
 
-    public void uploadFile(String name, Object file){
+    public void uploadFile(String name, Object file) {
         files.put(name, file);
     }
 }

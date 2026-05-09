@@ -29,6 +29,10 @@ import community.flock.wirespec.emitters.python.PythonIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.generator.generate
+import community.flock.wirespec.ir.generator.JavaGenerator
+import community.flock.wirespec.ir.generator.KotlinGenerator
+import community.flock.wirespec.ir.generator.PythonGenerator
+import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
@@ -40,10 +44,10 @@ import kotlinx.serialization.json.Json
 
 @JsExport
 enum class Shared(val source: String) {
-    KOTLIN(KotlinIrEmitter().shared.source),
-    JAVA(JavaIrEmitter().shared.source),
-    TYPESCRIPT(TypeScriptIrEmitter().shared.source),
-    PYTHON(PythonIrEmitter().shared.source),
+    KOTLIN(KotlinIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(KotlinGenerator::generate)),
+    JAVA(JavaIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(JavaGenerator::generate)),
+    TYPESCRIPT(TypeScriptIrEmitter().emitShared()!!.let(TypeScriptGenerator::generate)),
+    PYTHON(PythonIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(PythonGenerator::generate)),
 }
 
 @JsExport

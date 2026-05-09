@@ -8,9 +8,8 @@ import community.flock.wirespec.generated.java.endpoint.GetUsers;
 import community.flock.wirespec.generated.java.endpoint.PostUser;
 import community.flock.wirespec.generated.java.endpoint.UploadImage;
 import community.flock.wirespec.java.Wirespec;
-import org.springframework.stereotype.Component;
-
 import java.util.concurrent.CompletableFuture;
+import org.springframework.stereotype.Component;
 
 @Component
 public class LiveUserClient implements UserClient {
@@ -22,7 +21,7 @@ public class LiveUserClient implements UserClient {
     private final Wirespec.ClientEdge<DeleteUserByName.Request, DeleteUserByName.Response<?>> deleteUserByName;
     private final Wirespec.ClientEdge<UploadImage.Request, UploadImage.Response<?>> uploadImage;
 
-    public LiveUserClient(final WirespecTransporter transporter,final  WirespecSerializer serializer) {
+    public LiveUserClient(final WirespecTransporter transporter, final WirespecSerializer serializer) {
         this.transporter = transporter;
         this.getUsers = new GetUsers.Handler.Handlers().getClient(serializer);
         this.getUserByName = new GetUserByName.Handler.Handlers().getClient(serializer);
@@ -33,31 +32,26 @@ public class LiveUserClient implements UserClient {
 
     @Override
     public CompletableFuture<GetUsers.Response<?>> getUsers(final GetUsers.Request request) {
-        return transporter.transport(getUsers.to(request))
-                .thenApplyAsync(getUsers::from);
+        return transporter.transport(getUsers.to(request)).thenApplyAsync(getUsers::from);
     }
 
     @Override
     public CompletableFuture<GetUserByName.Response<?>> getUserByName(final GetUserByName.Request request) {
-        return transporter.transport(getUserByName.to(request))
-                .thenApplyAsync(getUserByName::from);
+        return transporter.transport(getUserByName.to(request)).thenApplyAsync(getUserByName::from);
     }
 
     @Override
     public CompletableFuture<PostUser.Response<?>> postUser(final PostUser.Request request) {
-        return transporter.transport(postUser.to(request))
-                .thenApplyAsync(postUser::from);
+        return transporter.transport(postUser.to(request)).thenApplyAsync(postUser::from);
     }
 
     @Override
     public CompletableFuture<DeleteUserByName.Response<?>> deleteUserByName(final DeleteUserByName.Request request) {
-        return transporter.transport(deleteUserByName.to(request))
-                .thenApplyAsync(deleteUserByName::from);
+        return transporter.transport(deleteUserByName.to(request)).thenApplyAsync(deleteUserByName::from);
     }
 
     @Override
     public CompletableFuture<UploadImage.Response<?>> uploadImage(UploadImage.Request request) {
-        return transporter.transport(uploadImage.to(request))
-                .thenApplyAsync(uploadImage::from);
+        return transporter.transport(uploadImage.to(request)).thenApplyAsync(uploadImage::from);
     }
 }

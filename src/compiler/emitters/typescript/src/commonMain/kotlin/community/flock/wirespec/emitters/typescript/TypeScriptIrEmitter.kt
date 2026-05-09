@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.namespace
 import community.flock.wirespec.compiler.core.emit.plus
@@ -59,9 +58,7 @@ import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.generator.TypeScriptGenerator
-import community.flock.wirespec.ir.generator.generateTypeScript
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
-import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 
 open class TypeScriptIrEmitter : IrEmitter {
@@ -73,7 +70,7 @@ open class TypeScriptIrEmitter : IrEmitter {
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
             reservedKeywords = reservedKeywords,
-            escapeKeyword = { "_$it" },
+            escapeKeyword = { "$it" },
             fieldNameCase = { name ->
                 val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
                 Name(listOf(sanitized))
@@ -110,7 +107,10 @@ open class TypeScriptIrEmitter : IrEmitter {
         apply(transformPatternSwitchToValueSwitch())
     }
 
-    override val shared = object : Shared {
+    override fun emitShared(): File? {
+
+        val packageName = PackageName(DEFAULT_SHARED_PACKAGE_STRING)
+
         val api = """
           |export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
           |  to: (request: REQ) => RawRequest;
@@ -128,9 +128,8 @@ open class TypeScriptIrEmitter : IrEmitter {
           |  server: Server<REQ, RES>
           |}
         """.trimMargin()
-        override val packageString = DEFAULT_SHARED_PACKAGE_STRING
-        override val source = AstShared(packageString)
-            .convert()
+
+        return packageName.convert()
             .transform {
                 injectBefore { namespace: Namespace ->
                     if (namespace.name == Name.of("Wirespec")) listOf(RawElement("export type Type = string"))
@@ -148,7 +147,6 @@ open class TypeScriptIrEmitter : IrEmitter {
                     } ?: struct
                 }
             }
-            .generateTypeScript()
     }
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger)
@@ -163,9 +161,6 @@ open class TypeScriptIrEmitter : IrEmitter {
                     )
                 }
         )
-
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
-        super.emit(module, logger) + File(Name.of("Wirespec"), listOf(RawElement(shared.source)))
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)

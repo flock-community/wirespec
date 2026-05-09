@@ -1,18 +1,17 @@
 package community.flock.wirespec.example.maven.custom.emit;
 
-
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter;
 import community.flock.wirespec.compiler.core.emit.FileExtension;
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter;
 import community.flock.wirespec.compiler.core.emit.Shared;
 import community.flock.wirespec.compiler.core.parse.ast.Channel;
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint;
+import community.flock.wirespec.compiler.core.parse.ast.Enum;
 import community.flock.wirespec.compiler.core.parse.ast.Field;
 import community.flock.wirespec.compiler.core.parse.ast.Identifier;
-import community.flock.wirespec.compiler.core.parse.ast.Reference;
 import community.flock.wirespec.compiler.core.parse.ast.Module;
+import community.flock.wirespec.compiler.core.parse.ast.Reference;
 import community.flock.wirespec.compiler.core.parse.ast.Refined;
 import community.flock.wirespec.compiler.core.parse.ast.Type;
-import community.flock.wirespec.compiler.core.parse.ast.Enum;
 import community.flock.wirespec.compiler.core.parse.ast.Union;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,13 +104,13 @@ public class CustomEmitter extends LanguageEmitter {
 
     @NotNull
     @Override
-    public String emitValidator(@NotNull Refined refined)  {
+    public String emitValidator(@NotNull Refined refined) {
         return notYetImplemented();
     }
 
     @NotNull
     @Override
-    public String emit(@NotNull Reference.Primitive.Type.Constraint constraint)  {
+    public String emit(@NotNull Reference.Primitive.Type.Constraint constraint) {
         return notYetImplemented();
     }
 }

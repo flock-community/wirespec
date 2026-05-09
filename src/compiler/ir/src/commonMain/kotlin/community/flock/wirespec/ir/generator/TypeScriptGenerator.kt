@@ -57,35 +57,36 @@ import community.flock.wirespec.ir.core.forEachElement
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object TypeScriptGenerator : Generator {
-    override fun generate(element: Element): String = when (element) {
-        is File -> TypeScriptFileEmitter(element).emitFile()
-        else -> TypeScriptFileEmitter(File(Name.of(""), listOf(element))).emitFile()
+    private var structsWithConstructors: Set<String> = emptySet()
+    private var constructorFuncNames: Set<String> = emptySet()
+
+    override fun generate(element: Element): String {
+        val file = if (element is File) element else File(Name.of(""), listOf(element))
+        initCaches(file)
+        return emitFile(file)
     }
 
-    fun generateExpression(expression: Expression): String = TypeScriptFileEmitter(File(Name.of(""), emptyList())).renderExpression(expression)
-}
+    fun generateExpression(expression: Expression): String {
+        initCaches(File(Name.of(""), emptyList()))
+        return expression.emit()
+    }
 
-private class TypeScriptFileEmitter(val file: File) {
-
-    private val structsWithConstructors: Set<String> = buildSet {
-        file.forEachElement { element ->
-            if (element is Struct && element.constructors.isNotEmpty()) {
-                add(element.name.pascalCase())
+    private fun initCaches(file: File) {
+        structsWithConstructors = buildSet {
+            file.forEachElement { element ->
+                if (element is Struct && element.constructors.isNotEmpty()) {
+                    add(element.name.pascalCase())
+                }
             }
         }
+        constructorFuncNames = structsWithConstructors
+            .map { it.replaceFirstChar { c -> c.lowercaseChar() } }
+            .toSet()
     }
 
-    private val constructorFuncNames: Set<String> = structsWithConstructors
-        .map { it.replaceFirstChar { c -> c.lowercaseChar() } }
-        .toSet()
-
-    fun emitFile(): String = file.elements.joinToString("") { it.emit(0) }.removeEmptyLines()
-
-    fun renderExpression(expression: Expression): String = expression.emit()
+    private fun emitFile(file: File): String = file.elements.joinToString("") { it.emit(0) }.compact()
 
     private fun String.indentCode(level: Int): String = " ".repeat(level * 2) + this
-
-    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n").plus("\n")
 
     private fun Element.emit(indent: Int): String = when (this) {
         is Package -> emit(indent)
@@ -105,10 +106,11 @@ private class TypeScriptFileEmitter(val file: File) {
         is RawElement -> code.lines().joinToString("\n") { if (it.isEmpty()) it else it.indentCode(indent) } + "\n"
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun Package.emit(indent: Int): String = ""
 
     private fun Import.emit(indent: Int): String {
-        val prefix = if (isTypeOnly) "type " else ""
+        val prefix = "type ".takeIf { isTypeOnly }.orEmpty()
         return "import {$prefix${type.name}} from '$path'\n".indentCode(indent)
     }
 
@@ -119,21 +121,15 @@ private class TypeScriptFileEmitter(val file: File) {
     }
 
     private fun Interface.emit(indent: Int): String {
-        val typeParamsStr = if (typeParameters.isNotEmpty()) {
-            "<${typeParameters.joinToString(", ") { tp ->
-                val extendsStr = if (tp.extends.isNotEmpty()) " extends ${tp.extends.joinToString(" & ") { it.emit() }}" else ""
-                "${tp.type.emit()}$extendsStr"
-            }}>"
-        } else {
-            ""
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { tp ->
+            val extendsStr = tp.extends.joinNonEmpty(" & ", " extends ") { it.emit() }
+            "${tp.type.emit()}$extendsStr"
         }
-        val ext = extends.map { it.emit() }
-        val extStr = if (ext.isEmpty()) "" else " extends ${ext.joinToString(", ")}"
+        val extStr = extends.map { it.emit() }.joinNonEmpty(", ", " extends ")
         val nestedInterfaces = elements.filterIsInstance<Interface>().associateBy { it.name.pascalCase() }
         val nonInterfaceElements = elements.filter { it !is Interface }
         val fieldsContent = fields.joinToString("") { field ->
-            val typeStr = field.type.emitWithInlineInterfaces(nestedInterfaces)
-            "${field.name.value()}: $typeStr;\n".indentCode(indent + 1)
+            "${field.name.value()}: ${field.type.emitWithInlineInterfaces(nestedInterfaces)};\n".indentCode(indent + 1)
         }
         val elementsContent = nonInterfaceElements.joinToString("") {
             when (it) {
@@ -142,24 +138,21 @@ private class TypeScriptFileEmitter(val file: File) {
             }
         }
         val content = fieldsContent + elementsContent
+        val signature = "export interface ${name.pascalCase()}$typeParamsStr$extStr"
         return if (content.isEmpty()) {
-            "export interface ${name.pascalCase()}$typeParamsStr$extStr {}\n".indentCode(indent)
+            "$signature {}\n".indentCode(indent)
         } else {
-            val closingBrace = "}\n".indentCode(indent)
-            "export interface ${name.pascalCase()}$typeParamsStr$extStr {\n$content$closingBrace".indentCode(indent)
+            "$signature {\n$content${"}\n".indentCode(indent)}".indentCode(indent)
         }
     }
 
     private fun Union.emit(indent: Int): String {
-        val typeParamsStr = if (typeParameters.isNotEmpty()) {
-            "<${typeParameters.joinToString(", ") { "${it.type.emit()} = unknown" }}>"
-        } else {
-            ""
-        }
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { "${it.type.emit()} = unknown" }
         return if (members.isNotEmpty()) {
-            "export type ${name.pascalCase()}$typeParamsStr = ${members.joinToString(" | ") { it.name }}\n".indentCode(indent)
+            val membersStr = members.joinToString(" | ") { it.name }
+            "export type ${name.pascalCase()}$typeParamsStr = $membersStr\n".indentCode(indent)
         } else {
-            val extStr = extends?.let { " extends ${it.emit()}" } ?: ""
+            val extStr = extends?.emit()?.let { " extends $it" }.orEmpty()
             "export interface ${name.pascalCase()}$typeParamsStr$extStr {}\n".indentCode(indent)
         }
     }
@@ -285,15 +278,11 @@ private class TypeScriptFileEmitter(val file: File) {
 
     private fun AstFunction.emit(indent: Int, inlineInterfaces: Map<String, Interface> = emptyMap()): String {
         val retType = returnType
-        val rType = retType?.let { ": ${it.emitWithInlineInterfaces(inlineInterfaces)}" } ?: ""
+        val rType = retType?.emitWithInlineInterfaces(inlineInterfaces)?.let { ": $it" }.orEmpty()
 
-        val typeParamsStr = if (typeParameters.isNotEmpty()) {
-            "<${typeParameters.joinToString(", ") { tp ->
-                val extendsStr = if (tp.extends.isNotEmpty()) " extends ${tp.extends.joinToString(" & ") { it.emit() }}" else ""
-                "${tp.type.emit()}$extendsStr"
-            }}>"
-        } else {
-            ""
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { tp ->
+            val extendsStr = tp.extends.joinNonEmpty(" & ", " extends ") { it.emit() }
+            "${tp.type.emit()}$extendsStr"
         }
 
         // Detect parameter names that collide with constructor function names
@@ -304,23 +293,15 @@ private class TypeScriptFileEmitter(val file: File) {
         val effectiveParams = parameters.map { p ->
             renames[p.name.camelCase()]?.let { Parameter(Name(listOf(it)), p.type) } ?: p
         }
-        val effectiveBody = if (renames.isNotEmpty()) {
-            body.map { stmt -> renameVariables(stmt, renames) }
-        } else {
-            body
-        }
+        val effectiveBody = if (renames.isEmpty()) body else body.map { stmt -> renameVariables(stmt, renames) }
 
         val params = effectiveParams.joinToString(", ") { it.emitWithInlineInterfaces(inlineInterfaces) }
-        val prefix = if (isAsync) "async " else ""
+        val prefix = "async ".takeIf { isAsync }.orEmpty()
         return if (effectiveBody.isEmpty()) {
-            val tsRType = if (isAsync) {
-                if (retType == null || retType == Type.Unit) {
-                    ": Promise<void>"
-                } else {
-                    ": Promise<${retType.emitWithInlineInterfaces(inlineInterfaces)}>"
-                }
-            } else {
-                rType
+            val tsRType = when {
+                isAsync && (retType == null || retType == Type.Unit) -> ": Promise<void>"
+                isAsync -> ": Promise<${retType!!.emitWithInlineInterfaces(inlineInterfaces)}>"
+                else -> rType
             }
             "${name.camelCase()}$typeParamsStr($params)$tsRType;\n".indentCode(indent)
         } else {

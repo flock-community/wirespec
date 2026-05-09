@@ -2,6 +2,7 @@ package community.flock.wirespec.emitters.python
 
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -23,6 +24,7 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.ir.core.RawElement
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -1597,8 +1599,8 @@ class PythonIrEmitterTest {
             |
             """.trimMargin()
 
-        val emitter = PythonIrEmitter()
-        emitter.shared.source shouldBe expected
+        val emitter = PythonIrEmitter(emitShared = EmitShared(true))
+        emitter.emitShared()?.elements?.filterIsInstance<RawElement>()?.joinToString("") { it.code } shouldBe expected
     }
 
     private fun emitGeneratorSource(node: Definition, fileNameSubstring: String): String {

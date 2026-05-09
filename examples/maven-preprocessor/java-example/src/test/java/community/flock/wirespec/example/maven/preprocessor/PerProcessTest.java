@@ -11,5 +11,4 @@ class PerProcessTest {
         var handlers = new addPetProcessed.Handler.Handlers();
         Assertions.assertEquals("/pet", handlers.getPathTemplate());
     }
-
 }

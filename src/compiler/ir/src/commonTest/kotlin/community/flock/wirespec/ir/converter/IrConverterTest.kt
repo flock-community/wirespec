@@ -8,8 +8,8 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Shared
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Function
@@ -209,7 +209,7 @@ class IrConverterTest {
 
     @Test
     fun testSharedContainsGeneratorField() {
-        val file = Shared("com.example").convert()
+        val file = PackageName("com.example").convert()
         val wirespecNamespace = file.elements
             .filterIsInstance<Namespace>()
             .first { it.name == Name.of("Wirespec") }

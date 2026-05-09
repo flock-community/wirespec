@@ -1,6 +1,5 @@
 package community.flock.wirespec.emitters.scala
 
-import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
@@ -11,7 +10,6 @@ import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.needImports
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
@@ -37,13 +35,13 @@ import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
+import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.flattenNestedStructs
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.`interface`
@@ -53,16 +51,14 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
+import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
-import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.ScalaGenerator
-import community.flock.wirespec.ir.generator.generateScala
-import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
@@ -110,16 +106,16 @@ open class ScalaIrEmitter(
         )
     }
 
-    override val shared = object : Shared {
-        override val packageString = "$DEFAULT_SHARED_PACKAGE_STRING.scala"
+    override fun emitShared(): File? {
 
-        private val clientServer = AstShared(packageString).convertClientServer()
+        val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.scala")
 
-        override val source = AstShared(packageString)
-            .convert()
+        val clientServer = packageName.convertClientServer()
+
+        val wirespecShared = packageName.convert()
             .transform {
-                matchingElements { file: LanguageFile ->
-                    val (packageElements, rest) = file.elements.partition { it is LanguagePackage }
+                matchingElements { file: File ->
+                    val (packageElements, rest) = file.elements.partition { it is Package }
                     file.copy(elements = packageElements + import("scala.reflect", "ClassTag") + rest)
                 }
                 matchingElements { ns: Namespace ->
@@ -148,20 +144,16 @@ open class ScalaIrEmitter(
                     ns.copy(elements = newElements)
                 }
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) clientServer
-                    else emptyList()
+                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
                 }
             }
-            .generateScala()
-    }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
-        super.emit(module, logger).withSharedSource(emitShared) {
-            File(
-                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.scala").toDir() + "Wirespec"),
-                listOf(RawElement(shared.source))
-            )
+        return if (emitShared.value) {
+            wirespecShared.copy(name = Name.of(packageName.toDir() + "Wirespec"))
+        } else {
+            null
         }
+    }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)

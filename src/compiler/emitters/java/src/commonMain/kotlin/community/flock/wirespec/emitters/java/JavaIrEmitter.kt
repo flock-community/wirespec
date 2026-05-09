@@ -1,6 +1,5 @@
 package community.flock.wirespec.emitters.java
 
-import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -10,7 +9,6 @@ import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.needImports
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
@@ -32,7 +30,6 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
-import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.function
@@ -43,14 +40,11 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
-import community.flock.wirespec.ir.emit.withSharedSource
 import community.flock.wirespec.ir.generator.JavaGenerator
-import community.flock.wirespec.ir.generator.generateJava
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.toGetterAccessors
-import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 
 open class JavaIrEmitter(
@@ -59,6 +53,7 @@ open class JavaIrEmitter(
 ) : IrEmitter, HasPackageName {
 
     override val generator = JavaGenerator
+
 
     override val extension = FileExtension.Java
 
@@ -78,49 +73,51 @@ open class JavaIrEmitter(
             when {
                 stmt is FunctionCall && stmt.name.value() == "validate" ->
                     stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+
                 else -> stmt.transformChildren(tr)
             }
         },
     )
 
-    override val shared = object : Shared {
-        override val packageString: String = "$DEFAULT_SHARED_PACKAGE_STRING.java"
+    override fun emitShared(): File? {
 
-        private val wirespecShared = AstShared(packageString).convert()
+        val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.java")
 
-        private val imports = listOf(
+        val imports = listOf(
             import("java.lang.reflect", "Type"),
             import("java.lang.reflect", "ParameterizedType"),
             import("java.util", "List"),
             import("java.util", "Map"),
         )
 
-        private val clientServer = AstShared(packageString).convertClientServer().map {
-            it.toGetterAccessors { name ->
-                when (name.value()) {
-                    "client" -> Name.of("getClient")
-                    "server" -> Name.of("getServer")
-                    else -> null
+        val clientServer = packageName.convertClientServer()
+            .map {
+                it.toGetterAccessors { name ->
+                    when (name.value()) {
+                        "client" -> Name.of("getClient")
+                        "server" -> Name.of("getServer")
+                        else -> null
+                    }
                 }
             }
-        } + listOf(
-            raw(
-                """
-                |public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
-                |  if(rawType != null) {
-                |    return new ParameterizedType() {
-                |      public Type getRawType() { return rawType; }
-                |      public Type[] getActualTypeArguments() { return new Class<?>[]{actualTypeArguments}; }
-                |      public Type getOwnerType() { return null; }
-                |    };
-                |  }
-                |  else { return actualTypeArguments; }
-                |}
+            .plus(
+                raw(
+                    """
+                    |public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
+                    |  if(rawType != null) {
+                    |    return new ParameterizedType() {
+                    |      public Type getRawType() { return rawType; }
+                    |      public Type[] getActualTypeArguments() { return new Class<?>[]{actualTypeArguments}; }
+                    |      public Type getOwnerType() { return null; }
+                    |    };
+                    |  }
+                    |  else { return actualTypeArguments; }
+                    |}
                 """.trimMargin(),
-            ),
-        )
+                ),
+            )
 
-        private val wirespecFile = wirespecShared
+        val wirespecShared = packageName.convert()
             .transform {
                 matchingElements { file: File ->
                     val (packageElements, rest) = file.elements.partition { it is Package }
@@ -131,16 +128,12 @@ open class JavaIrEmitter(
                 }
             }
 
-        override val source: String = wirespecFile.generateJava()
-    }
-
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> =
-        super.emit(module, logger).withSharedSource(emitShared) {
-            File(
-                Name.of(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.java").toDir() + "Wirespec"),
-                listOf(RawElement(shared.source))
-            )
+        return if (emitShared.value) {
+            wirespecShared
+        } else {
+            null
         }
+    }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
@@ -232,10 +225,10 @@ open class JavaIrEmitter(
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(subPackageName.value)) +
-                wirespecImports +
-                imports +
-                listOf(endpointImport) +
-                file.elements
+                    wirespecImports +
+                    imports +
+                    listOf(endpointImport) +
+                    file.elements
         )
     }
 
@@ -250,9 +243,9 @@ open class JavaIrEmitter(
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(Package(packageName.value)) +
-                wirespecImports +
-                allImports +
-                file.elements
+                    wirespecImports +
+                    allImports +
+                    file.elements
         )
     }
 
