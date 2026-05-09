@@ -39,7 +39,6 @@ import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.placeInModule
 import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.PythonGenerator
-import community.flock.wirespec.ir.generator.generatePython
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.injectSelfReceiverToValidate
 import community.flock.wirespec.ir.transformer.sanitizeEnumEntries
@@ -103,7 +102,10 @@ open class PythonIrEmitter(
         val source = PackageName("shared").convert()
 
         return if (emitShared.value) {
-            File(Name.of(packageName.toDir() + "wirespec"), listOf(raw(sharedSource)) + source.elements)
+            File(
+                Name.of(packageName.toDir() + "wirespec"),
+                listOf(raw(sharedSource + PythonGenerator.generate(source)))
+            )
         } else {
             null
         }

@@ -61,7 +61,6 @@ import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.sortKey
 import community.flock.wirespec.ir.generator.RustGenerator
-import community.flock.wirespec.ir.generator.generateRust
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.File as LanguageFile
@@ -296,7 +295,7 @@ open class RustIrEmitter(
                     acc
                 }
                 groups.joinToString("\n\n") { group ->
-                    group.joinToString("") { it.generateRust() }.trimEnd('\n')
+                    group.joinToString("") { RustGenerator.generate(it) }.trimEnd('\n')
                 } + "\n"
             }
 

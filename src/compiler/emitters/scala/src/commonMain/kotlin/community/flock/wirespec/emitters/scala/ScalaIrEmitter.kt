@@ -147,7 +147,7 @@ open class ScalaIrEmitter(
             }
 
         return if (emitShared.value) {
-            wirespecShared
+            wirespecShared.copy(name = Name.of(packageName.toDir() + "Wirespec"))
         } else {
             null
         }
