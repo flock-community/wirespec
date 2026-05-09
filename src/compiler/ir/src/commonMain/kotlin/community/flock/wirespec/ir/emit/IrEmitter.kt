@@ -3,7 +3,6 @@ package community.flock.wirespec.ir.emit
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
-import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -21,8 +20,6 @@ import community.flock.wirespec.ir.generator.Generator
 
 interface IrEmitter : Emitter {
 
-    val shared: Shared?
-
     val generator: Generator
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
@@ -31,6 +28,7 @@ interface IrEmitter : Emitter {
                 logger.info("Emitting Nodes from ${m.fileUri.value} ")
                 emit(m, logger)
             }
+            .plus(emitShared()?.let { listOf(it) } ?: emptyList())
             .map { it.toEmitted() }
 
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
@@ -68,6 +66,8 @@ interface IrEmitter : Emitter {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
         return endpoints.convertClient()
     }
+
+    fun emitShared(): File?
 
     fun emit(type: Type, module: Module): File
     fun emit(enum: Enum, module: Module): File

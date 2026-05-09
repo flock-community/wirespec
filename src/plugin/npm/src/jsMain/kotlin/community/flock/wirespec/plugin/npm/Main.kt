@@ -39,14 +39,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @JsExport
-enum class Shared(val source: String) {
-    KOTLIN(KotlinIrEmitter().shared.source),
-    JAVA(JavaIrEmitter().shared.source),
-    TYPESCRIPT(TypeScriptIrEmitter().shared.source),
-    PYTHON(PythonIrEmitter().shared.source),
-}
-
-@JsExport
 enum class Emitters {
     WIRESPEC,
     TYPESCRIPT,
