@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 import kotlin.reflect.typeOf
 
 /**
@@ -106,8 +105,7 @@ internal object ScalaInterop {
     }
 
     /** kotlin T? → scala.Option<T>. */
-    private fun nullableToScalaOption(value: Any?): Any =
-        if (value == null) optionEmpty.invoke(optionModule) else optionApply.invoke(optionModule, value)
+    private fun nullableToScalaOption(value: Any?): Any = if (value == null) optionEmpty.invoke(optionModule) else optionApply.invoke(optionModule, value)
 
     /**
      * Decode a Scala `Wirespec$GeneratorField*` case-class instance into the

@@ -44,18 +44,76 @@ testImplementation("io.kotest:kotest-property:<version>")
 `kotest-property-arbs` is pulled in transitively — the integration depends on
 `io.kotest:kotest-property-arbs:3.0.0` directly, no separate declaration needed.
 
-## Basic usage
+## Basic usage — Kotlin-emitted code
 
 ```kotlin
-import community.flock.wirespec.integration.kotest.kotestWirespecGenerator
+import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 
-val gen = kotestWirespecGenerator(seed = 1L)
+val gen = kotestWirespecKotlinGenerator(seed = 1L)
 val member: Member = MemberGenerator.generate(gen, emptyList())
 val project: Project = ProjectGenerator.generate(gen, emptyList())
 ```
 
-Each `kotestWirespecGenerator(seed = …)` is deterministic: same seed → same
+Each `kotestWirespecKotlinGenerator(seed = …)` is deterministic: same seed → same
 output for the same generated type.
+
+## Java-emitted code
+
+The Java emitter produces `*Generator.java` factories that take a
+`community.flock.wirespec.java.Wirespec.Generator`. Use the Java sibling
+factory:
+
+```kotlin
+import community.flock.wirespec.integration.kotest.kotestWirespecJavaGenerator
+import community.flock.wirespec.java.Wirespec
+import com.example.generated.MemberGenerator
+
+val gen: Wirespec.Generator = kotestWirespecJavaGenerator(seed = 1L) {
+    register("orderId") { Arb.uuid().map(java.util.UUID::toString) }
+}
+val member = MemberGenerator.generate(gen, java.util.List.of())
+```
+
+Same DSL, default arb catalog, and `@Generator` / `@Seed` semantics as the
+Kotlin sibling. The two differences are JVM-flavoured:
+
+- `GeneratorFieldString.regex`, `GeneratorFieldInteger.min`/`max`, etc. carry
+  `java.util.Optional<X>` instead of Kotlin's `X?` — the adapter handles the
+  `Optional.empty()` ↔ `null` translation.
+- `GeneratorFieldNullable<T>` returns `java.util.Optional<T>` (Java semantics)
+  rather than the bare `T?` the commonMain algorithm produces.
+
+## Scala-emitted code
+
+The Scala emitter produces `*Generator.scala` factories that take a
+`community.flock.wirespec.scala.Wirespec.Generator`. Use the Scala sibling
+factory and cast at the call site — the kotest module has zero compile-time
+Scala dependency, so the factory's static return type is `Any`:
+
+```kotlin
+import community.flock.wirespec.integration.kotest.kotestWirespecScalaGenerator
+import community.flock.wirespec.scala.Wirespec  // from your --emit-shared output
+import com.example.generated.generator.MemberGenerator
+
+val gen: Wirespec.Generator =
+    kotestWirespecScalaGenerator(seed = 1L) {
+        register("orderId") { Arb.uuid().map(java.util.UUID::toString) }
+    } as Wirespec.Generator
+
+val member = MemberGenerator.generate(gen, scala.collection.immutable.List.empty())
+```
+
+**Requirement:** the user's codegen MUST run with `--emit-shared` so the
+generated `Wirespec.scala` (which declares `Wirespec.Generator`) lands on the
+test classpath. If it's missing, the first call raises:
+
+> *Scala-emitted Wirespec.scala not found on classpath. Run your codegen with
+> --emit-shared and make sure the generated source set is on the test
+> compile/runtime classpath.*
+
+Internally the Scala adapter is a `java.lang.reflect.Proxy` that resolves
+`Wirespec.Generator` reflectively at construction time. Reflective Scala ↔
+Kotlin conversions live in `ScalaInterop.kt`.
 
 ## Default `@Generator(...)` registrations
 
@@ -91,7 +149,7 @@ Register your own `Arb<String>`s (or override the defaults) via the builder
 block:
 
 ```kotlin
-val gen = kotestWirespecGenerator(seed = 1L) {
+val gen = kotestWirespecKotlinGenerator(seed = 1L) {
     register("orderId") { Arb.int(0..999_999).map { "ORD-%06d".format(it) } }
     register("email")   { Arb.constant("test@example.com") }   // overrides default
 }
@@ -123,5 +181,5 @@ If you need to share a `RandomSource` with other Kotest property tests:
 import io.kotest.property.RandomSource
 
 val rs = RandomSource.seeded(42L)
-val gen = kotestWirespecGenerator(rs) { /* ... */ }
+val gen = kotestWirespecKotlinGenerator(rs) { /* ... */ }
 ```
