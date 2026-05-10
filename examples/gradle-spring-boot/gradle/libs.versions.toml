@@ -1,7 +1,7 @@
 [versions]
 java = "21"
 kotest = "6.1.4"
-kotestPropertyArbs = "2.1.2"
+kotestPropertyArbs = "3.0.0"
 kotlin = "2.3.10"
 springBoot = "3.4.1"
 springDependencyManagement = "1.1.7"
@@ -22,7 +22,7 @@ wirespec_integration_spring = { module = "community.flock.wirespec.integration:s
 wirespec_integration_wirespec = { module = "community.flock.wirespec.integration:wirespec-jvm", version.ref = "wirespec" }
 wirespec_integration_kotest = { module = "community.flock.wirespec.integration:kotest-jvm", version.ref = "wirespec" }
 kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
-kotest_property_arbs = { module = "io.kotest.extensions:kotest-property-arbs", version.ref = "kotestPropertyArbs" }
+kotest_property_arbs = { module = "io.kotest:kotest-property-arbs", version.ref = "kotestPropertyArbs" }
 
 [plugins]
 kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

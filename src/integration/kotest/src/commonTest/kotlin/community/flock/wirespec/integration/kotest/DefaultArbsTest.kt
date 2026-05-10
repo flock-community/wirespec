@@ -8,18 +8,30 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Pin the cross-platform default `@Generator(...)` registrations shipped by
- * the integration (the kotest-property core; available on JVM and JS).
- * The JVM-only `kotest-property-arbs` extras are exercised by [DefaultArbsExtrasTest].
+ * Pin the default `@Generator(...)` registrations shipped by the integration.
+ * All of these are now multiplatform: kotest-property core (`email`,
+ * `ipAddress`, `uuid`) plus kotest-property-arbs (`firstName`, `lastName`,
+ * `fullName`/`name`, `username`, `domain`, `color`).
  */
 class DefaultArbsTest {
 
-    private val coreDefaults = listOf("email", "ipAddress")
+    private val defaults = listOf(
+        "email",
+        "ipAddress",
+        "uuid",
+        "firstName",
+        "lastName",
+        "fullName",
+        "name",
+        "username",
+        "domain",
+        "color",
+    )
 
     @Test
-    fun `every core default registration produces a non-empty string`() {
+    fun `every default registration produces a non-empty string`() {
         val gen = kotestWirespecGenerator(seed = 1L)
-        coreDefaults.forEach { name ->
+        defaults.forEach { name ->
             val v = gen.generate(
                 path = listOf("x"),
                 field = Wirespec.GeneratorFieldString(

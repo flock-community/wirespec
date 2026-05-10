@@ -11,7 +11,7 @@ java = "17"
 junit_launcher = "1.11.3"
 kafka_avro = "7.7.1"
 kotest = "6.1.4"
-kotest_property_arbs = "2.1.2"
+kotest_property_arbs = "3.0.0"
 ksp = "2.3.6"
 kotlin = "2.3.10"
 kotlin_api = "1.9"
@@ -49,7 +49,7 @@ kotest_assertions_arrow = { module = "io.kotest:kotest-assertions-arrow", versio
 kotest_assertions_json = { module = "io.kotest:kotest-assertions-json", version.ref = "kotest" }
 kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
-kotest_property_arbs = { module = "io.kotest.extensions:kotest-property-arbs", version.ref = "kotest_property_arbs" }
+kotest_property_arbs = { module = "io.kotest:kotest-property-arbs", version.ref = "kotest_property_arbs" }
 kotlin_compiler_embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin_embedded"}
 kotlin_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
 kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }

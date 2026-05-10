@@ -51,7 +51,7 @@ The demo (`src/example-generator.ts`) covers three scenarios:
    case-insensitively against `@Generator("name")` field annotations in the
    `.ws` source.
 
-The Kotlin-side JVM extras (`uuid`, `firstName`, `lastName`, `fullName`/`name`,
-`username`, `domain`, `color`) are not available in the npm distribution
-because `kotest-property-arbs` doesn't ship a Kotlin/JS-IR-compatible artifact.
-Register your own via the second argument when you need them.
+The full default catalog is available on npm too (`uuid`, `firstName`,
+`lastName`, `fullName`/`name`, `username`, `domain`, `color`) now that
+`io.kotest:kotest-property-arbs` 3.0.0 ships a Kotlin/JS-IR-compatible
+multiplatform artifact. Override or extend any of them via the second argument.

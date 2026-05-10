@@ -11,21 +11,21 @@ hand-written `SeededGenerator` classes.
 
 ## Targets
 
-The integration is multiplatform (JVM + JS/IR). Shared logic lives in
-`commonMain`; platform-specific defaults are wired via `expect`/`actual`.
+The integration is multiplatform (JVM + JS/IR). All defaults live in
+`commonMain` since `kotest-property-arbs` 3.0.0 ships an IR-compatible
+multiplatform artifact under the new `io.kotest` group.
 
-| Capability                              | JVM | JS  |
-| --------------------------------------- | :-: | :-: |
-| `Wirespec.Generator` impl, `@Seed`, DSL | ✅  | ✅  |
-| Regex-validated `String` fields         | ✅  | ✅  |
-| Default `email`, `ipAddress`            | ✅  | ✅  |
-| Default `uuid` (uses `java.util.UUID`)  | ✅  | ❌  |
-| `kotest-property-arbs` extras           | ✅  | ❌  |
+| Capability                                                      | JVM | JS  |
+| --------------------------------------------------------------- | :-: | :-: |
+| `Wirespec.Generator` impl, `@Seed`, DSL                         | ✅  | ✅  |
+| Regex-validated `String` fields                                 | ✅  | ✅  |
+| Default `email`, `ipAddress`, `uuid`                            | ✅  | ✅  |
+| `kotest-property-arbs` extras (`firstName`, `color`, …)         | ✅  | ✅  |
 
 Regex generation uses [`community.flock.kotlinx.rgxgen`][rgxgen] (multiplatform),
-not `Arb.stringPattern` (which is JVM-only in kotest 6.x).
-`kotest-property-arbs` is JVM-only because its published artifact uses the
-legacy JS compiler, incompatible with the IR backend.
+not `Arb.stringPattern` (which is JVM-only in kotest 6.x). The default `uuid`
+arb is an in-house portable RFC 4122 v4 generator (kotest core's `Arb.uuid()`
+wraps `java.util.UUID` and is JVM-only).
 
 [rgxgen]: https://github.com/flock-community/kotlin-rgxgen
 
@@ -35,12 +35,14 @@ legacy JS compiler, incompatible with the IR backend.
 // JVM
 testImplementation("community.flock.wirespec.integration:kotest-jvm:<version>")
 testImplementation("io.kotest:kotest-property:<version>")
-testImplementation("io.kotest.extensions:kotest-property-arbs:2.1.2") // JVM only
 
 // JS / Kotlin Multiplatform
 testImplementation("community.flock.wirespec.integration:kotest-js:<version>")
 testImplementation("io.kotest:kotest-property:<version>")
 ```
+
+`kotest-property-arbs` is pulled in transitively — the integration depends on
+`io.kotest:kotest-property-arbs:3.0.0` directly, no separate declaration needed.
 
 ## Basic usage
 
@@ -65,14 +67,14 @@ case-insensitively):
 | ----------- | ------------------------------- | :-: | :-: | ------------------------------ |
 | `email`     | `Arb.email()`                   | ✅  | ✅  | `local@domain` style strings   |
 | `ipAddress` | `Arb.ipAddressV4()`             | ✅  | ✅  | Dotted-quad IPv4               |
-| `uuid`      | `Arb.uuid()`                    | ✅  | ❌  | Stringified UUIDs (`java.util.UUID`) |
-| `firstName` | `Arb.firstName()`               | ✅  | ❌  | Extra Arbs                     |
-| `lastName`  | `Arb.lastName()`                | ✅  | ❌  | Extra Arbs                     |
-| `fullName`  | `Arb.name()`                    | ✅  | ❌  | First + last; alias of `name`  |
-| `name`      | `Arb.name()`                    | ✅  | ❌  | Same as `fullName`             |
-| `username`  | `Arb.usernames()`               | ✅  | ❌  | Extra Arbs                     |
-| `domain`    | `Arb.domain()`                  | ✅  | ❌  | e.g. `www.wibble.co.uk`        |
-| `color`     | `Arb.color()`                   | ✅  | ❌  | Named colors                   |
+| `uuid`      | in-house RFC 4122 v4            | ✅  | ✅  | Portable, seed-respecting      |
+| `firstName` | `Arb.firstName()`               | ✅  | ✅  | Extra Arbs                     |
+| `lastName`  | `Arb.lastName()`                | ✅  | ✅  | Extra Arbs                     |
+| `fullName`  | `Arb.name()`                    | ✅  | ✅  | First + last; alias of `name`  |
+| `name`      | `Arb.name()`                    | ✅  | ✅  | Same as `fullName`             |
+| `username`  | `Arb.usernames()`               | ✅  | ✅  | Extra Arbs                     |
+| `domain`    | `Arb.domain()`                  | ✅  | ✅  | e.g. `www.wibble.co.uk`        |
+| `color`     | `Arb.color()`                   | ✅  | ✅  | Named colors                   |
 
 Wirespec definition:
 
@@ -90,7 +92,7 @@ block:
 
 ```kotlin
 val gen = kotestWirespecGenerator(seed = 1L) {
-    register("orderId") { Arb.uuid().map { "ORD-$it" } }
+    register("orderId") { Arb.int(0..999_999).map { "ORD-%06d".format(it) } }
     register("email")   { Arb.constant("test@example.com") }   // overrides default
 }
 ```
