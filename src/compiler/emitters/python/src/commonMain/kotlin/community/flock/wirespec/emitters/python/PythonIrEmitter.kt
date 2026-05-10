@@ -86,9 +86,10 @@ open class PythonIrEmitter(
         |import enum
         |from abc import ABC, abstractmethod
         |from dataclasses import dataclass
-        |from typing import Any, Generic, Optional, Type, TypeVar
+        |from typing import Any, Callable, Generic, Optional, Type, TypeVar
         |
         |T = TypeVar('T')
+        |V = TypeVar('V')
         |
         |
         |def _raise(msg: str) -> Any:
@@ -98,9 +99,7 @@ open class PythonIrEmitter(
     """.trimMargin()
 
     override fun emitShared(): File? {
-
-        val source = PackageName("shared").convert()
-
+        val source = PackageName("shared").convert().replaceReflectInNonGenericStructFields()
         return if (emitShared.value) {
             File(
                 Name.of(packageName.toDir() + "wirespec"),

@@ -114,9 +114,13 @@ class VerifyGeneratorTest : FunSpec({
                                                 RawExpression(if (isJava) "java.util.List.of(f.generate().apply(path))" else "listOf(f.generate(path))"),
                                                 generics = listOf(Type.Wildcard),
                                             ),
+                                            // GeneratorFieldNullable<X> implements GeneratorField<Optional<X>>, so the
+                                            // generic Generator.generate's return type binds to Optional<X> in Java
+                                            // and X? in Kotlin. Wrap the inner thunk's value to match: Java needs
+                                            // an Optional, Kotlin's nullable T accepts the bare value.
                                             typeCase(
                                                 "Wirespec.GeneratorFieldNullable",
-                                                RawExpression(if (isJava) "f.generate().apply(path)" else "f.generate(path)"),
+                                                RawExpression(if (isJava) "java.util.Optional.of(f.generate().apply(path))" else "f.generate(path)"),
                                                 generics = listOf(Type.Wildcard),
                                             ),
                                             typeCase(
