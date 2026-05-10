@@ -24,7 +24,7 @@ import io.kotest.property.arbitrary.next
  * ```
  *
  * On the JVM you typically get a `Wirespec.Generator` directly via
- * `kotestWirespecGenerator(...)` (jvmMain), which wraps this commonMain
+ * `kotestWirespecKotlinGenerator(...)` (jvmMain), which wraps this commonMain
  * factory. On Kotlin/JS, [kotestWirespecGeneratorJs] does the same wrapping
  * with a dynamic boundary.
  *

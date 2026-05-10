@@ -6,7 +6,7 @@ import kotlin.reflect.KType
  * Generation contract owned by the kotest integration. Mirrors the
  * `Wirespec.Generator` shape but lives in commonMain so the JS facade can
  * implement it without depending on the JVM-only `:src:integration:wirespec`
- * module. The JVM bridge in [kotestWirespecGenerator] adapts a
+ * module. The JVM bridge in [kotestWirespecKotlinGenerator] adapts a
  * `KotestGenerator` into a `Wirespec.Generator` for IR-emitted callers.
  */
 interface KotestGenerator {

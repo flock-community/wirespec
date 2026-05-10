@@ -3,32 +3,36 @@ package community.flock.wirespec.integration.kotest
 import community.flock.wirespec.kotlin.Wirespec
 
 /**
- * JVM-facing factory: returns a `Wirespec.Generator`, which is the contract
- * IR-emitted `*Generator.generate(gen: Wirespec.Generator, …)` factories
- * expect. Internally builds a multiplatform [KotestGenerator] and wraps it
- * in [WirespecGeneratorAdapter], which translates `Wirespec.GeneratorField*`
+ * JVM-facing factory for Kotlin-emitted code: returns a `community.flock.wirespec
+ * .kotlin.Wirespec.Generator`, which is the contract IR-emitted
+ * `*Generator.generate(gen: Wirespec.Generator, …)` factories expect. Internally
+ * builds a multiplatform [KotestGenerator] and wraps it in
+ * [WirespecKotlinGeneratorAdapter], which translates `Wirespec.GeneratorField*`
  * inputs into the kotest-owned [KotestField] mirror types on each call.
  *
  * ```
- * val gen = kotestWirespecGenerator(seed = 1L) {
+ * val gen = kotestWirespecKotlinGenerator(seed = 1L) {
  *     register("orderId") { Arb.uuid().map(java.util.UUID::toString) }
  * }
  * val member = MemberGenerator.generate(gen, emptyList())
  * ```
+ *
+ * For Java- and Scala-emitted code, see [kotestWirespecJavaGenerator] and
+ * [kotestWirespecScalaGenerator] respectively.
  */
-fun kotestWirespecGenerator(
+fun kotestWirespecKotlinGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
-): Wirespec.Generator = WirespecGeneratorAdapter(kotestGenerator(seed, block))
+): Wirespec.Generator = WirespecKotlinGeneratorAdapter(kotestGenerator(seed, block))
 
 /**
- * Bridge between Wirespec's `Generator` / `GeneratorField*` (which live in
- * `:src:integration:wirespec`, JVM-only, Kotlin 1.9-pinned for downstream
+ * Bridge between Wirespec's Kotlin `Generator` / `GeneratorField*` (which live
+ * in `:src:integration:wirespec`, JVM-only, Kotlin 1.9-pinned for downstream
  * binary compat) and kotest's commonMain `KotestGenerator` / `KotestField*`
  * mirror types. The two hierarchies are 1:1, so translation is a flat `when`
  * with no semantic logic.
  */
-internal class WirespecGeneratorAdapter(private val inner: KotestGenerator) : Wirespec.Generator {
+internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator) : Wirespec.Generator {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> generate(
