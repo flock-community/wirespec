@@ -75,6 +75,14 @@ open class ScalaIrEmitter(
 
     override val extension = FileExtension.Scala
 
+    // Pre-scan all generated files so cross-file constructor expressions can distinguish a
+    // singleton object reference (`GetTodos.Request`) from an empty case class (`Foo()`).
+    // Scala objects can't be `apply`d but empty Wirespec.Model case classes require parens —
+    // the IR uses the same `ConstructorStatement(type, emptyMap())` for both.
+    override fun beforeGenerate(allFiles: List<LanguageFile>) {
+        ScalaGenerator.setGlobalObjectNames(allFiles)
+    }
+
     private val wirespecImports = listOf(
         import("$DEFAULT_SHARED_PACKAGE_STRING.scala", "Wirespec"),
         import("scala.reflect", "ClassTag"),
