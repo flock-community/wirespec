@@ -55,6 +55,7 @@ kotlin {
         jvmTest {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
+                implementation("org.scala-lang:scala3-library_3:3.3.4")
             }
         }
     }
