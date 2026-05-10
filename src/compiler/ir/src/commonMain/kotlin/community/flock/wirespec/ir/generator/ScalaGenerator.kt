@@ -61,25 +61,54 @@ object ScalaGenerator : Generator {
     private var objectNames: Set<String> = emptySet()
     private var primaryFieldNames: Map<String, Set<String>> = emptyMap()
 
+    // Global object-name registry, populated by the emitter from all files before
+    // per-file generation. Lets cross-file references (e.g. `GetTodos.Request` referenced
+    // from a separate Client file) emit without parens, since Scala objects can't be `apply`d.
+    private var globalObjectNames: Set<String> = emptySet()
+
+    /**
+     * Pre-populate the cross-file object-name registry from all files in the AST.
+     * Call this before generating any individual file so cross-file constructor expressions
+     * can distinguish a singleton object reference (`Foo`) from an empty case class (`Foo()`).
+     *
+     * Only qualified names are tracked globally: unqualified name collisions across files are
+     * common (e.g. each endpoint defines its own `Request`, which may be either an object or a
+     * case class) and a local lookup must reflect the local file only.
+     */
+    fun setGlobalObjectNames(files: List<File>) {
+        globalObjectNames = files.fold(emptySet()) { acc, f ->
+            acc + collectObjectNames(f.elements).filter { '.' in it }
+        }
+    }
+
     override fun generate(element: Element): String {
         val file = if (element is File) element else File(Name.of(""), listOf(element))
-        objectNames = collectObjectNames(file.elements)
+        objectNames = collectObjectNames(file.elements) + globalObjectNames
         primaryFieldNames = collectPrimaryFieldNames(file.elements)
         return emitFile(file)
     }
 
-    private fun collectObjectNames(elements: List<Element>): Set<String> {
+    private fun collectObjectNames(elements: List<Element>, prefix: String = ""): Set<String> {
         val names = mutableSetOf<String>()
         for (element in elements) {
             when (element) {
                 is Struct -> {
+                    val pascal = element.name.pascalCase()
+                    val qualified = if (prefix.isEmpty()) pascal else "$prefix.$pascal"
                     val isObject = (element.constructors.size == 1 && element.constructors.single().parameters.isEmpty()) ||
                         (element.fields.isEmpty() && element.constructors.isEmpty())
-                    if (isObject && !element.isModelStruct()) names.add(element.name.pascalCase())
-                    names.addAll(collectObjectNames(element.elements))
+                    if (isObject && !element.isModelStruct()) {
+                        names.add(pascal)
+                        names.add(qualified)
+                    }
+                    names.addAll(collectObjectNames(element.elements, qualified))
                 }
-                is Namespace -> names.addAll(collectObjectNames(element.elements))
-                is Interface -> names.addAll(collectObjectNames(element.elements))
+                is Namespace -> {
+                    val nsName = element.name.pascalCase()
+                    val nsQualified = if (prefix.isEmpty()) nsName else "$prefix.$nsName"
+                    names.addAll(collectObjectNames(element.elements, nsQualified))
+                }
+                is Interface -> names.addAll(collectObjectNames(element.elements, prefix))
                 else -> {}
             }
         }
@@ -312,10 +341,15 @@ object ScalaGenerator : Generator {
 
     private fun TypeParameter.emit(): String {
         val typeStr = type.emitGenerics()
-        return if (extends.isEmpty()) {
+        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — emitting
+        // `T <: Option[Any]` would force every type argument (String, Long, Boolean, …)
+        // to also subtype Option[Any], which they don't, and break `GeneratorField[String]`
+        // implementations. Mirrors Java's handling in JavaGenerator.TypeParameter.emit.
+        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
+        return if (effectiveExtends.isEmpty()) {
             typeStr
         } else {
-            "$typeStr <: ${extends.joinToString(" with ") { it.emitGenerics() }}"
+            "$typeStr <: ${effectiveExtends.joinToString(" with ") { it.emitGenerics() }}"
         }
     }
 
@@ -388,9 +422,18 @@ object ScalaGenerator : Generator {
         }
     }
 
+    // True when the named type is a Scala `object` (singleton) — those don't take parens.
+    // Wirespec.Model case classes with no fields are still emitted as `case class Foo()`,
+    // so they fall through to receive `()` apply-syntax below.
+    private fun ConstructorStatement.isSingletonObject(): Boolean {
+        val typeName = (type as? Type.Custom)?.name ?: return false
+        return typeName in objectNames
+    }
+
     private fun ConstructorStatement.emitConstructorExpression(): String {
         val prefix = "new ".takeIf { needsNew() }.orEmpty()
-        return "$prefix${type.emitGenerics()}${formatArgs()}"
+        val args = formatArgs().ifEmpty { if (isSingletonObject()) "" else "()" }
+        return "$prefix${type.emitGenerics()}$args"
     }
 
     private fun Switch.emitMatch(caseIndent: Int): String {

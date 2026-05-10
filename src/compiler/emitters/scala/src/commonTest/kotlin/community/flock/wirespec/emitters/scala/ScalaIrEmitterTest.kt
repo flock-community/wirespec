@@ -1508,7 +1508,7 @@ class ScalaIrEmitterTest {
             |  trait Transportation {
             |      def transport(request: RawRequest): RawResponse
             |  }
-            |  sealed trait GeneratorField[T <: Option[Any]]
+            |  sealed trait GeneratorField[T]
             |  case class GeneratorFieldString(
             |      val regex: Option[String],
             |      val annotations: List[Map[String, Any]]
@@ -1554,7 +1554,7 @@ class ScalaIrEmitterTest {
             |      val generate: (List[String]) => V
             |    ) extends GeneratorField[Map[String, V]]
             |  trait Generator {
-            |      def generate[T <: Option[Any]](path: List[String], field: GeneratorField[T]): T
+            |      def generate[T](path: List[String], field: GeneratorField[T]): T
             |  }
             |  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
             |      def from(request: RawRequest): Req
@@ -1663,6 +1663,27 @@ class ScalaIrEmitterTest {
         """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
+    }
+
+    @Test
+    fun testEmitGeneratorForEmptyType() {
+        // Empty Wirespec.Model case classes must be constructed with `Foo()` rather than `Foo`,
+        // since `Foo` alone refers to the companion object's `.type`. Regression test for the
+        // bug where the generator emitted just the type name and Scala compilation failed with
+        // "Found: Foo.type, Required: Foo".
+        val expected = """
+            |package community.flock.wirespec.generated.generator
+            |import community.flock.wirespec.scala.Wirespec
+            |import scala.reflect.ClassTag
+            |import community.flock.wirespec.generated.model.TodoWithoutProperties
+            |object TodoWithoutPropertiesGenerator {
+            |  def generate(generator: Wirespec.Generator, path: List[String]): TodoWithoutProperties =
+            |    TodoWithoutProperties()
+            |}
+            |
+        """.trimMargin()
+
+        emitGeneratorSource(NodeFixtures.emptyType, "TodoWithoutPropertiesGenerator") shouldBe expected
     }
 
     @Test
