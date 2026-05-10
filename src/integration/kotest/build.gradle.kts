@@ -34,6 +34,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.kotest.property)
+                implementation(libs.kotest.property.arbs)
                 implementation(libs.kotlinx.rgxgen)
             }
         }
@@ -42,18 +43,6 @@ kotlin {
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.kotest.property)
                 implementation(kotlin("test"))
-            }
-        }
-        jvmMain {
-            dependencies {
-                // kotest-property-arbs ships JVM-only artifacts (legacy JS compiler);
-                // the extras live in this source set, common only sees the core defaults.
-                compileOnly(libs.kotest.property.arbs)
-            }
-        }
-        jvmTest {
-            dependencies {
-                implementation(libs.kotest.property.arbs)
             }
         }
     }
