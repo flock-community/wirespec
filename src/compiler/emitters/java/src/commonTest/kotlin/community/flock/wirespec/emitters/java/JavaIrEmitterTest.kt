@@ -490,7 +490,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileFullEndpointTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -550,7 +550,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileEnumTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -723,7 +723,7 @@ class JavaIrEmitterTest {
             |  }
             |};
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1049,7 +1049,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileRefinedTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1164,7 +1164,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileUnionTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1221,7 +1221,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileTypeTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1335,7 +1335,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileNestedTypeTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1612,7 +1612,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileComplexModelTest.compiler { JavaIrEmitter() } shouldBeRight java
     }
@@ -1811,7 +1811,7 @@ class JavaIrEmitterTest {
             |    else { return actualTypeArguments; }
             |  }}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         val emitter = JavaIrEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(JavaGenerator::generate) shouldBe expected
@@ -1893,7 +1893,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
     }
@@ -1921,7 +1921,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(color, "ColorGenerator") shouldBe expected
     }
@@ -1961,7 +1961,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(shape, "ShapeGenerator") shouldBe expected
     }
@@ -1993,7 +1993,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(uuid, "UUIDGenerator") shouldBe expected
     }
@@ -2036,7 +2036,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(inventory, "InventoryGenerator") shouldBe expected
     }
@@ -2079,7 +2079,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(lookup, "LookupGenerator") shouldBe expected
     }
@@ -2118,7 +2118,7 @@ class JavaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(person, "PersonGenerator") shouldBe expected
     }

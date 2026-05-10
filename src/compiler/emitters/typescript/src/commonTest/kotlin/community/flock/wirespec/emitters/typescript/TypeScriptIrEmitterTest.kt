@@ -259,7 +259,7 @@ class TypeScriptIrEmitterTest {
             |export {Token} from './Token'
             |export {TodoDto} from './TodoDto'
             |export {Error} from './Error'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileFullEndpointTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -293,7 +293,7 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |export {MyAwesomeEnum} from './MyAwesomeEnum'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileEnumTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -421,7 +421,7 @@ class TypeScriptIrEmitterTest {
             |
             |export {GetTodos} from './GetTodos'
             |export {TodoDto} from './TodoDto'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -569,7 +569,7 @@ class TypeScriptIrEmitterTest {
             |export {TestNum0} from './TestNum0'
             |export {TestNum1} from './TestNum1'
             |export {TestNum2} from './TestNum2'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileRefinedTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -658,7 +658,7 @@ class TypeScriptIrEmitterTest {
             |export {UserAccountPassword} from './UserAccountPassword'
             |export {UserAccountToken} from './UserAccountToken'
             |export {User} from './User'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileUnionTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -688,7 +688,7 @@ class TypeScriptIrEmitterTest {
             |}
             |
             |export {Request} from './Request'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileTypeTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -756,7 +756,7 @@ class TypeScriptIrEmitterTest {
             |export {DutchPostalCode} from './DutchPostalCode'
             |export {Address} from './Address'
             |export {Person} from './Person'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileNestedTypeTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -922,7 +922,7 @@ class TypeScriptIrEmitterTest {
             |export {Employee} from './Employee'
             |export {Department} from './Department'
             |export {Company} from './Company'
-            """.trimMargin()
+        """.trimMargin()
 
         CompileComplexModelTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
@@ -1077,7 +1077,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         val emitter = TypeScriptIrEmitter()
         emitter.emitShared()?.let(TypeScriptGenerator::generate) shouldBe expected
@@ -1136,7 +1136,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
     }
@@ -1159,7 +1159,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(color, "ColorGenerator") shouldBe expected
     }
@@ -1196,7 +1196,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(shape, "ShapeGenerator") shouldBe expected
     }
@@ -1224,7 +1224,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(uuid, "UUIDGenerator") shouldBe expected
     }
@@ -1262,7 +1262,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(inventory, "InventoryGenerator") shouldBe expected
     }
@@ -1300,7 +1300,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(lookup, "LookupGenerator") shouldBe expected
     }
@@ -1335,7 +1335,7 @@ class TypeScriptIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(person, "PersonGenerator") shouldBe expected
     }

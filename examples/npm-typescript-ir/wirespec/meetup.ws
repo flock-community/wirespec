@@ -12,13 +12,13 @@ type Venue {
 }
 
 type Attendee {
-    id: AttendeeId,
+    @Seed id: AttendeeId,
     name: String,
     @Generator("email") email: String
 }
 
 type Meetup {
-    id: MeetupId,
+    @Seed id: MeetupId,
     title: String,
     description: String,
     status: MeetupStatus,

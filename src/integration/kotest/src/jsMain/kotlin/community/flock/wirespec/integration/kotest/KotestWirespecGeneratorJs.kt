@@ -26,10 +26,11 @@ import kotlin.reflect.typeOf
  * const value = gen.generate(["path"], { kind: "string", regex: undefined, annotations: [] })
  * ```
  */
-class WirespecGeneratorJs internal constructor(private val inner: Wirespec.Generator) {
+class KotestWirespecGeneratorJs internal constructor(private val inner: Wirespec.Generator) {
 
     fun generate(path: Array<String>, field: dynamic): dynamic {
         val kotlinField = jsToKotlinField(field)
+
         @Suppress("UNCHECKED_CAST")
         val result = inner.generate(path.toList(), kotlinField as Wirespec.GeneratorField<Any?>)
         return kotlinToJs(result)
@@ -39,7 +40,7 @@ class WirespecGeneratorJs internal constructor(private val inner: Wirespec.Gener
 fun kotestWirespecGeneratorJs(
     seed: Int,
     registrations: dynamic = null,
-): WirespecGeneratorJs {
+): KotestWirespecGeneratorJs {
     val inner = kotestWirespecGenerator(seed.toLong()) {
         if (registrations != null) {
             val keys = js("Object").keys(registrations) as Array<String>
@@ -51,7 +52,7 @@ fun kotestWirespecGeneratorJs(
             }
         }
     }
-    return WirespecGeneratorJs(inner)
+    return KotestWirespecGeneratorJs(inner)
 }
 
 private fun jsToKotlinField(field: dynamic): Wirespec.GeneratorField<*> {

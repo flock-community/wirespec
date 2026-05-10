@@ -25,9 +25,7 @@ import community.flock.wirespec.integration.kotest.kotestWirespecGenerator
  */
 object TestGenerators {
 
-    private fun generator(seed: Long) = kotestWirespecGenerator(seed = seed){
-        register("")
-    }
+    private fun generator(seed: Long) = kotestWirespecGenerator(seed = seed)
 
     fun memberInput(seed: Long = 0L): MemberInput = MemberInputGenerator.generate(generator(seed), emptyList())
     fun member(id: String, seed: Long = 0L): Member = MemberGenerator.generate(generator(seed), listOf(id.toString()))
