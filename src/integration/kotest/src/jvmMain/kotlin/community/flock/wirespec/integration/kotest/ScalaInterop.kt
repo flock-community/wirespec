@@ -44,6 +44,9 @@ internal object ScalaInterop {
     private val convertersAsScala: Method by lazy {
         convertersModule.javaClass.getMethod("asScala", java.lang.Iterable::class.java)
     }
+    private val convertersAsScalaMap: Method by lazy {
+        convertersModule.javaClass.getMethod("asScala", java.util.Map::class.java)
+    }
 
     private val optionIsEmpty: Method by lazy {
         cl.loadClass("scala.Option").getMethod("isEmpty")
@@ -89,7 +92,7 @@ internal object ScalaInterop {
     /** kotlin Map<String, V> → scala.collection.immutable.Map<String, V>. */
     private fun kotlinMapToScala(m: Map<*, *>): Any {
         val javaMap = HashMap<Any?, Any?>(m)
-        val scalaMutableMap = convertersAsScala.invoke(convertersModule, javaMap)
+        val scalaMutableMap = convertersAsScalaMap.invoke(convertersModule, javaMap)
         val toMap = scalaMutableMap.javaClass.getMethod("toMap", cl.loadClass("scala.\$less\$colon\$less"))
         // scala.<:< has a `refl()` factory.
         val lessColonLessModule = cl.loadClass("scala.\$less\$colon\$less\$").getField("MODULE\$").get(null)

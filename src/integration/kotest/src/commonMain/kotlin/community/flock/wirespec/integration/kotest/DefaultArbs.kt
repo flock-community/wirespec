@@ -14,7 +14,7 @@ import io.kotest.property.arbs.usernames
 
 /**
  * Default catalog of `@Generator("name")` registrations preinstalled on every
- * `kotestWirespecGenerator` instance. Keys mirror the source `Arb.xxx()` names
+ * `kotestWirespecKotlinGenerator` instance. Keys mirror the source `Arb.xxx()` names
  * for readability; lookup is case-insensitive (the registry lowercases keys on
  * `register`), so `@Generator("firstName")`, `@Generator("firstname")`, and
  * `@Generator("FIRSTNAME")` all resolve to the same entry.
@@ -43,7 +43,7 @@ internal val DEFAULT_ARBS: Map<String, () -> Arb<String>> = mapOf(
 
 /**
  * Portable RFC 4122 v4 UUID arb that draws every nibble from the supplied
- * `RandomSource`, so the same `kotestWirespecGenerator(seed)` produces the
+ * `RandomSource`, so the same `kotestWirespecKotlinGenerator(seed)` produces the
  * same UUIDs across JVM and JS. Format: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`
  * with `y` ∈ `{8,9,a,b}` (variant 1).
  */

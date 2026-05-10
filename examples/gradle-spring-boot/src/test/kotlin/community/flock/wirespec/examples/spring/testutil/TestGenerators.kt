@@ -16,16 +16,16 @@ import community.flock.wirespec.examples.spring.generated.model.ProjectList
 import community.flock.wirespec.examples.spring.generated.model.Task
 import community.flock.wirespec.examples.spring.generated.model.TaskInput
 import community.flock.wirespec.examples.spring.generated.model.TaskList
-import community.flock.wirespec.integration.kotest.kotestWirespecGenerator
+import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 
 /**
- * Per-type convenience factories on top of [kotestWirespecGenerator].
+ * Per-type convenience factories on top of [kotestWirespecKotlinGenerator].
  * `@Generator("email")`, `@Generator("fullname")` etc. on `.ws` fields are
  * routed automatically; `@Seed`-annotated fields use the supplied path.
  */
 object TestGenerators {
 
-    private fun generator(seed: Long) = kotestWirespecGenerator(seed = seed)
+    private fun generator(seed: Long) = kotestWirespecKotlinGenerator(seed = seed)
 
     fun memberInput(seed: Long = 0L): MemberInput = MemberInputGenerator.generate(generator(seed), emptyList())
     fun member(id: String, seed: Long = 0L): Member = MemberGenerator.generate(generator(seed), listOf(id.toString()))
