@@ -172,14 +172,3 @@ val byId = ProjectGenerator.generate(gen, listOf("proj-42"))
 For arrays of records, the integration runs a two-pass capture/replay: the
 first pass auto-generates the seed; the second pass propagates it through
 nested refined wrappers so each element has stable, reproducible identity.
-
-## RandomSource overload
-
-If you need to share a `RandomSource` with other Kotest property tests:
-
-```kotlin
-import io.kotest.property.RandomSource
-
-val rs = RandomSource.seeded(42L)
-val gen = kotestWirespecKotlinGenerator(rs) { /* ... */ }
-```

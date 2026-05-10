@@ -4,7 +4,7 @@ import community.flock.wirespec.examples.spring.generated.generator.ProjectInput
 import community.flock.wirespec.examples.spring.generated.model.ProjectInput
 import community.flock.wirespec.examples.spring.repository.MemberRepository
 import community.flock.wirespec.examples.spring.repository.ProjectRepository
-import community.flock.wirespec.integration.kotest.kotestWirespecGenerator
+import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 import io.kotest.property.Arb
 import io.kotest.property.PropTestConfig
 import io.kotest.property.arbitrary.arbitrary
@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 
 /**
  * Property-based companion to [ProjectServiceTest]. Drives the IR-emitted
- * `ProjectInputGenerator` through `kotestWirespecGenerator` to produce many
+ * `ProjectInputGenerator` through `kotestWirespecKotlinGenerator` to produce many
  * random `ProjectInput` values per property, asserting service-layer
  * invariants over each one.
  */
@@ -37,12 +37,12 @@ class ProjectServicePropertyTest {
 
     /**
      * Bridge: a kotest `Arb` that draws a fresh per-iteration seed from the
-     * `RandomSource` and feeds it to `kotestWirespecGenerator`, which then
+     * `RandomSource` and feeds it to `kotestWirespecKotlinGenerator`, which then
      * drives the IR-emitted `ProjectInputGenerator`. No schema duplication —
      * the Arb is a thin wrapper around the existing generator.
      */
     private val projectInputArb: Arb<ProjectInput> = arbitrary { rs ->
-        val gen = kotestWirespecGenerator(seed = rs.random.nextLong())
+        val gen = kotestWirespecKotlinGenerator(seed = rs.random.nextLong())
         ProjectInputGenerator.generate(gen, emptyList())
     }
 
