@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 public interface Wirespec {
     interface Enum { String label(); }
@@ -49,6 +50,38 @@ public interface Wirespec {
     interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
     record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, Optional<byte[]> body) {}
     record RawResponse(int statusCode, Map<String, List<String>> headers, Optional<byte[]> body) {}
+    sealed interface GeneratorField<T>
+        permits GeneratorFieldString, GeneratorFieldInteger, GeneratorFieldNumber,
+                GeneratorFieldBoolean, GeneratorFieldBytes, GeneratorFieldEnum,
+                GeneratorFieldUnion, GeneratorFieldArray, GeneratorFieldNullable,
+                GeneratorFieldShape, GeneratorFieldDict {}
+    record GeneratorFieldString(Optional<String> regex, List<Map<String, Object>> annotations)
+        implements GeneratorField<String> {}
+    record GeneratorFieldInteger(Optional<Long> min, Optional<Long> max, List<Map<String, Object>> annotations)
+        implements GeneratorField<Long> {}
+    record GeneratorFieldNumber(Optional<Double> min, Optional<Double> max, List<Map<String, Object>> annotations)
+        implements GeneratorField<Double> {}
+    record GeneratorFieldBoolean(List<Map<String, Object>> annotations)
+        implements GeneratorField<Boolean> {}
+    record GeneratorFieldBytes(List<Map<String, Object>> annotations)
+        implements GeneratorField<byte[]> {}
+    record GeneratorFieldEnum(List<String> values, List<Map<String, Object>> annotations, Type type)
+        implements GeneratorField<String> {}
+    record GeneratorFieldUnion(List<String> variants, List<Map<String, Object>> annotations, Type type)
+        implements GeneratorField<String> {}
+    record GeneratorFieldArray<T>(Function<List<String>, T> generate)
+        implements GeneratorField<List<T>> {}
+    record GeneratorFieldNullable<T>(Function<List<String>, T> generate)
+        implements GeneratorField<Optional<T>> {}
+    record GeneratorFieldShape<T>(Map<String, List<Map<String, Object>>> annotations,
+                                  Function<List<String>, T> generate,
+                                  Type type)
+        implements GeneratorField<T> {}
+    record GeneratorFieldDict<V>(Function<List<String>, V> generate)
+        implements GeneratorField<Map<String, V>> {}
+    interface Generator {
+        <T> T generate(List<String> path, GeneratorField<T> field);
+    }
     static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         if(rawType != null) {
             return new ParameterizedType() {
