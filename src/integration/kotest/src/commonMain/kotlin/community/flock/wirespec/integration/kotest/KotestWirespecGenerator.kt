@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
 import community.flock.kotlinx.rgxgen.RgxGen
-import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
 import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.boolean
@@ -14,15 +13,20 @@ import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
 
 /**
- * `Wirespec.Generator` implementation backed by Kotest [Arb]s. Drive the
+ * `KotestGenerator` implementation backed by Kotest [Arb]s. Drive the
  * IR-emitted `*Generator.generate(...)` factories with this in your tests:
  *
  * ```
- * val gen = kotestWirespecGenerator(seed = 1L) {
+ * val gen = kotestGenerator(seed = 1L) {
  *     register("orderId") { Arb.uuid().map(java.util.UUID::toString) }
  * }
  * val member = MemberGenerator.generate(gen, emptyList())
  * ```
+ *
+ * On the JVM you typically get a `Wirespec.Generator` directly via
+ * `kotestWirespecGenerator(...)` (jvmMain), which wraps this commonMain
+ * factory. On Kotlin/JS, [kotestWirespecGeneratorJs] does the same wrapping
+ * with a dynamic boundary.
  *
  * Field-level dispatch:
  * - `@Generator("name")` looks `name` up case-insensitively in the registry.
@@ -30,18 +34,18 @@ import io.kotest.property.arbitrary.next
  *   from the parent path (or, inside an array context, captured on a first
  *   pass and replayed on a second pass) so test data can be regenerated
  *   deterministically given just an ID.
- * - Otherwise, each `Wirespec.GeneratorField<T>` variant maps to a sensible
- *   default `Arb<T>` (`Arb.stringPattern(regex)`, `Arb.long(min..max)`, …).
+ * - Otherwise, each `KotestField<T>` variant maps to a sensible default
+ *   `Arb<T>` (`Arb.stringPattern(regex)`, `Arb.long(min..max)`, …).
  *
  * Determinism: each leaf draws from a [RandomSource] keyed on
  * `seed XOR hashCode(path)`. Changing the path (e.g. via a different `@Seed`
  * id) reshuffles every sibling field, so two records with different ids are
  * guaranteed to differ in their content.
  */
-fun kotestWirespecGenerator(
+fun kotestGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
-): Wirespec.Generator {
+): KotestGenerator {
     val builder = KotestWirespecGeneratorBuilder().apply {
         // Preinstall the curated default catalog. User registrations in
         // `block` override these by lowercase-name match.
@@ -69,13 +73,13 @@ class KotestWirespecGeneratorBuilder internal constructor() {
 internal class KotestWirespecGenerator(
     private val baseSeed: Long,
     private val namedArbs: Map<String, () -> Arb<String>>,
-) : Wirespec.Generator {
+) : KotestGenerator {
 
     private val pendingSeeds = ArrayDeque<PendingSeed>()
 
     private val captures = ArrayDeque<Capture>()
 
-    // Tracks descent into nested `GeneratorFieldShape.generate(...)` callbacks
+    // Tracks descent into nested `KotestFieldShape.generate(...)` callbacks
     // that cross a generator boundary. `@Seed` is only honored at the
     // top-most level — i.e. the shape the user invoked directly via
     // `XGenerator.generate(gen, [seed])`. When a parent generator forwards
@@ -111,7 +115,7 @@ internal class KotestWirespecGenerator(
     @Suppress("UNCHECKED_CAST")
     override fun <T> generate(
         path: List<String>,
-        field: Wirespec.GeneratorField<T>,
+        field: KotestField<T>,
     ): T {
         captureSeedIfMatches(path, field)?.let { return it as T }
 
@@ -128,7 +132,7 @@ internal class KotestWirespecGenerator(
             }
         }
 
-        if (shapeDepth == 0 && field is Wirespec.GeneratorFieldShape<*>) {
+        if (shapeDepth == 0 && field is KotestFieldShape<*>) {
             seedFieldNameOf(field)?.let { seedFieldName ->
                 generateSeededShape(path, field, seedFieldName)?.let { return it as T }
             }
@@ -136,7 +140,7 @@ internal class KotestWirespecGenerator(
 
         annotations.namedGeneratorOrNull()?.let { name ->
             val factory = namedArbs[name.lowercase()]
-                ?: error("Unknown @Generator name: '$name' — register it via kotestWirespecGenerator { register(\"$name\") { … } }")
+                ?: error("Unknown @Generator name: '$name' — register it via kotestGenerator { register(\"$name\") { … } }")
             return factory().next(rsFor(path)) as T
         }
 
@@ -149,21 +153,21 @@ internal class KotestWirespecGenerator(
      * stored as a String (paths are `List<String>`); for an Integer @Seed we
      * also return the parsed Long so the field receives its native type.
      */
-    private fun captureSeedIfMatches(path: List<String>, field: Wirespec.GeneratorField<*>): Any? {
+    private fun captureSeedIfMatches(path: List<String>, field: KotestField<*>): Any? {
         val capture = captures.lastOrNull() ?: return null
         if (capture.seed != null) return null
         val expectedPrefix = capture.shapePath + capture.fieldName
         if (path.size < expectedPrefix.size || path.subList(0, expectedPrefix.size) != expectedPrefix) return null
         val rs = rsFor(path)
         return when (field) {
-            is Wirespec.GeneratorFieldString -> {
+            is KotestFieldString -> {
                 val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
                 val regex = field.regex ?: "\\w{8}"
                 val value = prefix + RgxGen.parse(regex).generate(rs.random)
                 capture.seed = value
                 value
             }
-            is Wirespec.GeneratorFieldInteger -> {
+            is KotestFieldInteger -> {
                 val lo = field.min ?: 0
                 val hi = field.max ?: Long.MAX_VALUE
                 val value = Arb.long(lo..hi).next(rs)
@@ -174,7 +178,7 @@ internal class KotestWirespecGenerator(
         }
     }
 
-    private fun consumePendingSeedIfMatches(path: List<String>, field: Wirespec.GeneratorField<*>): Any? {
+    private fun consumePendingSeedIfMatches(path: List<String>, field: KotestField<*>): Any? {
         val pending = pendingSeeds.lastOrNull() ?: return null
         // Strict scope check: only fire when this leaf is the immediate
         // child of the seed's pathPrefix, named exactly `target`. This stops
@@ -185,11 +189,11 @@ internal class KotestWirespecGenerator(
         if (path.last() != pending.target) return null
         if (path.subList(0, pending.pathPrefix.size) != pending.pathPrefix) return null
         return when (field) {
-            is Wirespec.GeneratorFieldString -> {
+            is KotestFieldString -> {
                 pendingSeeds.removeLast()
                 pending.value
             }
-            is Wirespec.GeneratorFieldInteger -> {
+            is KotestFieldInteger -> {
                 pendingSeeds.removeLast()
                 pending.value.toLong()
             }
@@ -201,15 +205,15 @@ internal class KotestWirespecGenerator(
      * Direct-`@Seed`-on-primitive case (no Refined wrapper): pull the seed
      * from the parent path segment and coerce to the field's native type.
      */
-    private fun seedAnnotationValueFor(field: Wirespec.GeneratorField<*>, candidate: String): Any? = when (field) {
-        is Wirespec.GeneratorFieldString -> candidate
-        is Wirespec.GeneratorFieldInteger -> candidate.toLongOrNull()
+    private fun seedAnnotationValueFor(field: KotestField<*>, candidate: String): Any? = when (field) {
+        is KotestFieldString -> candidate
+        is KotestFieldInteger -> candidate.toLongOrNull()
         else -> null
     }
 
     private fun generateSeededShape(
         path: List<String>,
-        field: Wirespec.GeneratorFieldShape<*>,
+        field: KotestFieldShape<*>,
         seedFieldName: String,
     ): Any? {
         val isArrayContext = path.lastOrNull()?.toIntOrNull() != null
@@ -233,7 +237,7 @@ internal class KotestWirespecGenerator(
         }
     }
 
-    private fun seedFieldNameOf(field: Wirespec.GeneratorFieldShape<*>): String? = field.annotations.entries
+    private fun seedFieldNameOf(field: KotestFieldShape<*>): String? = field.annotations.entries
         .firstOrNull { (_, anns) -> anns.any { it["name"] == "Seed" } }
         ?.key
 
@@ -241,48 +245,48 @@ internal class KotestWirespecGenerator(
         ?.let { (it["parameters"] as? Map<*, *>)?.get("default") as? String }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> generateLeaf(field: Wirespec.GeneratorField<T>, path: List<String>): T {
+    private fun <T> generateLeaf(field: KotestField<T>, path: List<String>): T {
         val rs = rsFor(path)
         return when (field) {
-            is Wirespec.GeneratorFieldString -> {
+            is KotestFieldString -> {
                 val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
                 val regex = field.regex ?: "\\w{8}"
                 (prefix + RgxGen.parse(regex).generate(rs.random)) as T
             }
-            is Wirespec.GeneratorFieldInteger -> {
+            is KotestFieldInteger -> {
                 val lo = field.min ?: Long.MIN_VALUE
                 val hi = field.max ?: Long.MAX_VALUE
                 Arb.long(lo..hi).next(rs) as T
             }
-            is Wirespec.GeneratorFieldNumber -> {
+            is KotestFieldNumber -> {
                 val lo = field.min ?: -1e6
                 val hi = field.max ?: 1e6
                 Arb.double(lo, hi).next(rs) as T
             }
-            is Wirespec.GeneratorFieldBoolean -> Arb.boolean().next(rs) as T
-            is Wirespec.GeneratorFieldBytes -> Arb.byteArray(Arb.int(0..16), Arb.byte()).next(rs) as T
-            is Wirespec.GeneratorFieldEnum -> Arb.element(field.values).next(rs) as T
-            is Wirespec.GeneratorFieldUnion -> Arb.element(field.variants).next(rs) as T
-            is Wirespec.GeneratorFieldArray<*> -> {
+            is KotestFieldBoolean -> Arb.boolean().next(rs) as T
+            is KotestFieldBytes -> Arb.byteArray(Arb.int(0..16), Arb.byte()).next(rs) as T
+            is KotestFieldEnum -> Arb.element(field.values).next(rs) as T
+            is KotestFieldUnion -> Arb.element(field.variants).next(rs) as T
+            is KotestFieldArray<*> -> {
                 val size = Arb.int(1..10).next(rs)
                 (0 until size).map { i -> field.generate(path + "$i") } as T
             }
             // Match the existing SeededGenerator: always materialize the value rather
             // than randomly returning null. Tests that need null can do `.copy(field = null)`.
-            is Wirespec.GeneratorFieldNullable<*> -> field.generate(path) as T
-            is Wirespec.GeneratorFieldShape<*> -> field.generate(path) as T
-            is Wirespec.GeneratorFieldDict<*> -> mapOf("a" to field.generate(path + "a")) as T
+            is KotestFieldNullable<*> -> field.generate(path) as T
+            is KotestFieldShape<*> -> field.generate(path) as T
+            is KotestFieldDict<*> -> mapOf("a" to field.generate(path + "a")) as T
         }
     }
 
-    private fun Wirespec.GeneratorField<*>.fieldAnnotations(): List<Map<String, Any>> = when (this) {
-        is Wirespec.GeneratorFieldString -> annotations
-        is Wirespec.GeneratorFieldInteger -> annotations
-        is Wirespec.GeneratorFieldNumber -> annotations
-        is Wirespec.GeneratorFieldBoolean -> annotations
-        is Wirespec.GeneratorFieldBytes -> annotations
-        is Wirespec.GeneratorFieldEnum -> annotations
-        is Wirespec.GeneratorFieldUnion -> annotations
+    private fun KotestField<*>.fieldAnnotations(): List<Map<String, Any>> = when (this) {
+        is KotestFieldString -> annotations
+        is KotestFieldInteger -> annotations
+        is KotestFieldNumber -> annotations
+        is KotestFieldBoolean -> annotations
+        is KotestFieldBytes -> annotations
+        is KotestFieldEnum -> annotations
+        is KotestFieldUnion -> annotations
         else -> emptyList()
     }
 }

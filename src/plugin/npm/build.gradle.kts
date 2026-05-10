@@ -67,7 +67,10 @@ kotlin {
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:tools:generator"))
-                implementation(project(":src:integration:wirespec"))
+                // :src:integration:wirespec is JVM-only (Kotlin 1.9 metadata
+                // pin for downstream binary compat). The npm bundle reaches
+                // its kotest-based generator types via :src:integration:kotest
+                // alone — kotest's commonMain mirrors the field hierarchy.
                 implementation(project(":src:integration:kotest"))
                 implementation(libs.kotlinx.openapi.bindings)
                 implementation(libs.kotlinx.serialization)
