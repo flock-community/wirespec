@@ -437,7 +437,7 @@ class KotlinIrEmitterTest {
             |    ).putTodo(id, done, name, token, refreshToken, body)
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileFullEndpointTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -489,7 +489,7 @@ class KotlinIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileEnumTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -632,7 +632,7 @@ class KotlinIrEmitterTest {
             |    ).getTodos()
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -888,7 +888,7 @@ class KotlinIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileRefinedTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -998,7 +998,7 @@ class KotlinIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileUnionTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -1053,7 +1053,7 @@ class KotlinIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileTypeTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -1158,7 +1158,7 @@ class KotlinIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileNestedTypeTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -1403,7 +1403,7 @@ class KotlinIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileComplexModelTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
@@ -1561,7 +1561,7 @@ class KotlinIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         val emitter = KotlinIrEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(KotlinGenerator::generate) shouldBe expected
@@ -1643,7 +1643,7 @@ class KotlinIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
     }
@@ -1671,7 +1671,7 @@ class KotlinIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(color, "ColorGenerator") shouldBe expected
     }
@@ -1712,7 +1712,7 @@ class KotlinIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(shape, "ShapeGenerator") shouldBe expected
     }
@@ -1744,7 +1744,7 @@ class KotlinIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(uuid, "UUIDGenerator") shouldBe expected
     }
@@ -1787,7 +1787,7 @@ class KotlinIrEmitterTest {
             |    )) })))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(inventory, "InventoryGenerator") shouldBe expected
     }
@@ -1830,7 +1830,7 @@ class KotlinIrEmitterTest {
             |    )) })))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(lookup, "LookupGenerator") shouldBe expected
     }
@@ -1869,7 +1869,7 @@ class KotlinIrEmitterTest {
             |    )) })))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(person, "PersonGenerator") shouldBe expected
     }

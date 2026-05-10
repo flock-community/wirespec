@@ -334,7 +334,7 @@ class PythonIrEmitterTest {
             |    async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
             |        return await PutTodoClient(serialization=self.serialization, transportation=self.transportation).put_todo(id, done, name, token, refreshToken, body)
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileFullEndpointTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -413,7 +413,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileEnumTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -575,7 +575,7 @@ class PythonIrEmitterTest {
             |    async def get_todos(self) -> Response[Any]:
             |        return await GetTodosClient(serialization=self.serialization, transportation=self.transportation).get_todos()
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -873,7 +873,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileRefinedTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1005,7 +1005,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileUnionTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1054,7 +1054,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileTypeTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1162,7 +1162,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileNestedTypeTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1423,7 +1423,7 @@ class PythonIrEmitterTest {
             |
             |
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileComplexModelTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
@@ -1597,7 +1597,7 @@ class PythonIrEmitterTest {
             |        def generate(self, path: list[str], field: Wirespec.GeneratorField[T]) -> T:
             |            ...
             |
-            """.trimMargin()
+        """.trimMargin()
 
         val emitter = PythonIrEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.elements?.filterIsInstance<RawElement>()?.joinToString("") { it.code } shouldBe expected
@@ -1661,7 +1661,7 @@ class PythonIrEmitterTest {
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Address:
             |        return Address(street=generator.generate(path + ['street'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), number=generator.generate(path + ['number'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
     }
@@ -1689,7 +1689,7 @@ class PythonIrEmitterTest {
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Color:
             |        return Color.valueOf(generator.generate(path + ['value'], Wirespec.GeneratorFieldEnum(values=['RED', 'GREEN', 'BLUE'], annotations=[], type=Color)))
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(color, "ColorGenerator") shouldBe expected
     }
@@ -1728,7 +1728,7 @@ class PythonIrEmitterTest {
             |                return SquareGenerator.generate(generator, path + ['Square'])
             |        raise Exception('Unknown variant')
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(shape, "ShapeGenerator") shouldBe expected
     }
@@ -1761,7 +1761,7 @@ class PythonIrEmitterTest {
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> UUID:
             |        return UUID(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[0-9a-f]{8}${'$'}', annotations=[])))
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(uuid, "UUIDGenerator") shouldBe expected
     }
@@ -1804,7 +1804,7 @@ class PythonIrEmitterTest {
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Inventory:
             |        return Inventory(items=generator.generate(path + ['items'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))))
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(inventory, "InventoryGenerator") shouldBe expected
     }
@@ -1847,7 +1847,7 @@ class PythonIrEmitterTest {
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Lookup:
             |        return Lookup(entries=generator.generate(path + ['entries'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))))
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(lookup, "LookupGenerator") shouldBe expected
     }
@@ -1887,7 +1887,7 @@ class PythonIrEmitterTest {
             |    def generate(generator: Wirespec.Generator, path: list[str]) -> Person:
             |        return Person(nickname=generator.generate(path + ['nickname'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(person, "PersonGenerator") shouldBe expected
     }

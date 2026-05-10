@@ -98,7 +98,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileEnumTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -138,7 +138,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -420,7 +420,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileRefinedTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -533,7 +533,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileUnionTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -706,7 +706,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -1029,7 +1029,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileFullEndpointTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -1121,7 +1121,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileNestedTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -1349,7 +1349,7 @@ class RustIrEmitterTest {
             |pub mod endpoint;
             |pub mod wirespec;
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileComplexModelTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
@@ -1561,7 +1561,7 @@ class RustIrEmitterTest {
             |    fn method(&self) -> Method;
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         val emitter = RustIrEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.elements?.filterIsInstance<RawElement>()?.joinToString("") { it.code } shouldBe expected
@@ -1622,7 +1622,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(address, "address_generator") shouldBe expected
     }
@@ -1647,7 +1647,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(color, "color_generator") shouldBe expected
     }
@@ -1686,7 +1686,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(shape, "shape_generator") shouldBe expected
     }
@@ -1716,7 +1716,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(uuid, "uuid_generator") shouldBe expected
     }
@@ -1756,7 +1756,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(inventory, "inventory_generator") shouldBe expected
     }
@@ -1796,7 +1796,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(lookup, "lookup_generator") shouldBe expected
     }
@@ -1833,7 +1833,7 @@ class RustIrEmitterTest {
             |    }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(person, "person_generator") shouldBe expected
     }

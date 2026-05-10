@@ -7,6 +7,11 @@ const gen = kotestWirespecGenerator(42);
 const meetup = MeetupGenerator.generate(gen, []);
 console.log('Meetup (seed=42):\n', JSON.stringify(meetup, null, 2));
 
+const attendeeSeed = AttendeeGenerator.generate(gen, [meetup.attendees[0].id]);
+console.log('Attendee id:\n', meetup.attendees[0].id);
+console.log('Attendee name:\n', meetup.attendees[0].name, attendeeSeed.name);
+console.log('Attendee (seed=42):\n', JSON.stringify(attendeeSeed, null, 2));
+
 // 2. Determinism — same seed produces identical output.
 const replay = MeetupGenerator.generate(kotestWirespecGenerator(42), []);
 console.log(

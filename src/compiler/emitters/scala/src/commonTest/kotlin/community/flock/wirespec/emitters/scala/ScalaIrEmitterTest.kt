@@ -174,7 +174,7 @@ class ScalaIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileTypeTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -213,7 +213,7 @@ class ScalaIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileEnumTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -469,7 +469,7 @@ class ScalaIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileRefinedTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -579,7 +579,7 @@ class ScalaIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileUnionTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -739,7 +739,7 @@ class ScalaIrEmitterTest {
             |    ).getTodos()
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileMinimalEndpointTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -1061,7 +1061,7 @@ class ScalaIrEmitterTest {
             |    ).putTodo(id, done, name, token, refreshToken, body)
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileFullEndpointTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -1166,7 +1166,7 @@ class ScalaIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileNestedTypeTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -1411,7 +1411,7 @@ class ScalaIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         CompileComplexModelTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
@@ -1574,7 +1574,7 @@ class ScalaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         val emitter = ScalaIrEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(ScalaGenerator::generate) shouldBe expected
@@ -1656,7 +1656,7 @@ class ScalaIrEmitterTest {
             |    )
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(address, "AddressGenerator") shouldBe expected
     }
@@ -1684,7 +1684,7 @@ class ScalaIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(color, "ColorGenerator") shouldBe expected
     }
@@ -1725,7 +1725,7 @@ class ScalaIrEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(shape, "ShapeGenerator") shouldBe expected
     }
@@ -1757,7 +1757,7 @@ class ScalaIrEmitterTest {
             |    )))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(uuid, "UUIDGenerator") shouldBe expected
     }
@@ -1800,7 +1800,7 @@ class ScalaIrEmitterTest {
             |    )))))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(inventory, "InventoryGenerator") shouldBe expected
     }
@@ -1843,7 +1843,7 @@ class ScalaIrEmitterTest {
             |    )))))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(lookup, "LookupGenerator") shouldBe expected
     }
@@ -1882,7 +1882,7 @@ class ScalaIrEmitterTest {
             |    )))))
             |}
             |
-            """.trimMargin()
+        """.trimMargin()
 
         emitGeneratorSource(person, "PersonGenerator") shouldBe expected
     }

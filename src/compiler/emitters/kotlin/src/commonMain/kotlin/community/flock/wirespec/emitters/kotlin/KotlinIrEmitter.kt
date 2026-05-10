@@ -113,7 +113,7 @@ open class KotlinIrEmitter(
             }
 
         return if (emitShared.value) {
-            wirespecShared
+            wirespecShared.copy(name = Name.of(packageName.toDir() + wirespecShared.name.value()))
         } else {
             null
         }
