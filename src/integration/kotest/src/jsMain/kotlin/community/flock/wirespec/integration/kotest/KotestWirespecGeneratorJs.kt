@@ -3,22 +3,27 @@
 
 package community.flock.wirespec.integration.kotest
 
-import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.map
 import kotlin.reflect.typeOf
 
 /**
- * `@JsExport`-friendly wrapper around an inner [Wirespec.Generator]. The wrapper
- * accepts JS plain-object `GeneratorField`s (identified by their `kind`
- * discriminator), translates them to Kotlin `Wirespec.GeneratorField*` instances,
- * delegates to the inner algorithm, and translates the result back to JS shapes.
+ * `@JsExport`-friendly wrapper around an inner [KotestGenerator]. The wrapper
+ * accepts JS plain-object fields (identified by their `kind` discriminator),
+ * translates them to Kotlin [KotestField] instances, delegates to the inner
+ * algorithm, and translates the result back to JS shapes.
  *
- * The non-generic `generate(path: Array<String>, field: dynamic): dynamic` signature
- * is what allows this method to survive Kotlin/JS production DCE — `@JsExport`
- * cannot surface the inner interface's generic
- * `<T>(path: List<String>, field: GeneratorField<T>): T`.
+ * The non-generic `generate(path: Array<String>, field: dynamic): dynamic`
+ * signature is what allows this method to survive Kotlin/JS production DCE —
+ * `@JsExport` cannot surface the inner interface's generic
+ * `<T>(path: List<String>, field: KotestField<T>): T`.
+ *
+ * Note: the JS facade depends only on kotest's commonMain types. The JVM-only
+ * `:src:integration:wirespec` module (which carries `Wirespec.Generator`) is
+ * deliberately not on the kotest-js classpath — that's what keeps the
+ * downstream `wirespec-jvm` artifact pinned to Kotlin 1.9 metadata for
+ * older-Kotlin consumers.
  *
  * From TypeScript:
  * ```ts
@@ -26,13 +31,13 @@ import kotlin.reflect.typeOf
  * const value = gen.generate(["path"], { kind: "string", regex: undefined, annotations: [] })
  * ```
  */
-class KotestWirespecGeneratorJs internal constructor(private val inner: Wirespec.Generator) {
+class KotestWirespecGeneratorJs internal constructor(private val inner: KotestGenerator) {
 
     fun generate(path: Array<String>, field: dynamic): dynamic {
-        val kotlinField = jsToKotlinField(field)
+        val kotlinField = jsToKotestField(field)
 
         @Suppress("UNCHECKED_CAST")
-        val result = inner.generate(path.toList(), kotlinField as Wirespec.GeneratorField<Any?>)
+        val result = inner.generate(path.toList(), kotlinField as KotestField<Any?>)
         return kotlinToJs(result)
     }
 }
@@ -41,7 +46,7 @@ fun kotestWirespecGeneratorJs(
     seed: Int,
     registrations: dynamic = null,
 ): KotestWirespecGeneratorJs {
-    val inner = kotestWirespecGenerator(seed.toLong()) {
+    val inner = kotestGenerator(seed.toLong()) {
         if (registrations != null) {
             val keys = js("Object").keys(registrations) as Array<String>
             for (key in keys) {
@@ -55,50 +60,50 @@ fun kotestWirespecGeneratorJs(
     return KotestWirespecGeneratorJs(inner)
 }
 
-private fun jsToKotlinField(field: dynamic): Wirespec.GeneratorField<*> {
+private fun jsToKotestField(field: dynamic): KotestField<*> {
     val kind = field.kind as String
     return when (kind) {
-        "string" -> Wirespec.GeneratorFieldString(
+        "string" -> KotestFieldString(
             regex = field.regex as String?,
             annotations = jsAnnotationsToKotlin(field.annotations),
         )
-        "integer" -> Wirespec.GeneratorFieldInteger(
+        "integer" -> KotestFieldInteger(
             min = (field.min as? Number)?.toLong(),
             max = (field.max as? Number)?.toLong(),
             annotations = jsAnnotationsToKotlin(field.annotations),
         )
-        "number" -> Wirespec.GeneratorFieldNumber(
+        "number" -> KotestFieldNumber(
             min = (field.min as? Number)?.toDouble(),
             max = (field.max as? Number)?.toDouble(),
             annotations = jsAnnotationsToKotlin(field.annotations),
         )
-        "boolean" -> Wirespec.GeneratorFieldBoolean(jsAnnotationsToKotlin(field.annotations))
-        "bytes" -> Wirespec.GeneratorFieldBytes(jsAnnotationsToKotlin(field.annotations))
-        "enum" -> Wirespec.GeneratorFieldEnum(
+        "boolean" -> KotestFieldBoolean(jsAnnotationsToKotlin(field.annotations))
+        "bytes" -> KotestFieldBytes(jsAnnotationsToKotlin(field.annotations))
+        "enum" -> KotestFieldEnum(
             values = (field.values.unsafeCast<Array<String>>()).toList(),
             annotations = jsAnnotationsToKotlin(field.annotations),
             type = typeOf<String>(),
         )
-        "union" -> Wirespec.GeneratorFieldUnion(
+        "union" -> KotestFieldUnion(
             variants = (field.variants.unsafeCast<Array<String>>()).toList(),
             annotations = jsAnnotationsToKotlin(field.annotations),
             type = typeOf<String>(),
         )
         "array" -> {
             val jsGen = field.generate.unsafeCast<(Array<String>) -> dynamic>()
-            Wirespec.GeneratorFieldArray<Any> { p ->
+            KotestFieldArray<Any> { p ->
                 jsGen(p.toTypedArray()) as? Any ?: error("array element callback returned null at path $p")
             }
         }
         "nullable" -> {
             val jsGen = field.generate.unsafeCast<(Array<String>) -> dynamic>()
-            Wirespec.GeneratorFieldNullable<Any> { p ->
+            KotestFieldNullable<Any> { p ->
                 jsGen(p.toTypedArray()) as? Any ?: error("nullable inner callback returned null at path $p")
             }
         }
         "shape" -> {
             val jsGen = field.generate.unsafeCast<(Array<String>) -> dynamic>()
-            Wirespec.GeneratorFieldShape<Any>(
+            KotestFieldShape<Any>(
                 annotations = jsShapeAnnotationsToKotlin(field.annotations),
                 generate = { p ->
                     jsGen(p.toTypedArray()) as? Any ?: error("shape callback returned null at path $p")
@@ -108,11 +113,11 @@ private fun jsToKotlinField(field: dynamic): Wirespec.GeneratorField<*> {
         }
         "dict" -> {
             val jsGen = field.generate.unsafeCast<(Array<String>) -> dynamic>()
-            Wirespec.GeneratorFieldDict<Any> { p ->
+            KotestFieldDict<Any> { p ->
                 jsGen(p.toTypedArray()) as? Any ?: error("dict value callback returned null at path $p")
             }
         }
-        else -> error("Unknown GeneratorField kind: '$kind'")
+        else -> error("Unknown KotestField kind: '$kind'")
     }
 }
 

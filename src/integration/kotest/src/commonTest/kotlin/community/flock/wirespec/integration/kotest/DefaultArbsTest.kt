@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.kotest
 
-import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant
 import kotlin.test.Test
@@ -30,11 +29,11 @@ class DefaultArbsTest {
 
     @Test
     fun `every default registration produces a non-empty string`() {
-        val gen = kotestWirespecGenerator(seed = 1L)
+        val gen = kotestGenerator(seed = 1L)
         defaults.forEach { name ->
             val v = gen.generate(
                 path = listOf("x"),
-                field = Wirespec.GeneratorFieldString(
+                field = KotestFieldString(
                     regex = null,
                     annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to name))),
                 ),
@@ -46,11 +45,11 @@ class DefaultArbsTest {
 
     @Test
     fun `default registrations are case-insensitive`() {
-        val gen = kotestWirespecGenerator(seed = 1L)
+        val gen = kotestGenerator(seed = 1L)
         // "EMAIL" should match the "email" default registration.
         val v = gen.generate(
             path = listOf("x"),
-            field = Wirespec.GeneratorFieldString(
+            field = KotestFieldString(
                 regex = null,
                 annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "EMAIL"))),
             ),
@@ -60,12 +59,12 @@ class DefaultArbsTest {
 
     @Test
     fun `user registration overrides default`() {
-        val gen = kotestWirespecGenerator(seed = 1L) {
+        val gen = kotestGenerator(seed = 1L) {
             register("email") { Arb.constant("override@example.com") }
         }
         val v = gen.generate(
             path = listOf("x"),
-            field = Wirespec.GeneratorFieldString(
+            field = KotestFieldString(
                 regex = null,
                 annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "email"))),
             ),

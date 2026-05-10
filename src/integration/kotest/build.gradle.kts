@@ -32,7 +32,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":src:integration:wirespec"))
                 implementation(libs.kotest.property)
                 implementation(libs.kotest.property.arbs)
                 implementation(libs.kotlinx.rgxgen)
@@ -40,9 +39,22 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation(project(":src:integration:wirespec"))
                 implementation(libs.kotest.property)
                 implementation(kotlin("test"))
+            }
+        }
+        jvmMain {
+            dependencies {
+                // wirespec is JVM-only (pinned to Kotlin 1.9 metadata for
+                // backward compat with older consumers); the kotest JVM
+                // facade adapts the commonMain KotestGenerator into a
+                // Wirespec.Generator for IR-emitted callers.
+                implementation(project(":src:integration:wirespec"))
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation(project(":src:integration:wirespec"))
             }
         }
     }

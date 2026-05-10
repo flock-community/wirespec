@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.kotest
 
-import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant
 import kotlin.reflect.typeOf
@@ -15,8 +14,8 @@ class KotestWirespecGeneratorTest {
     // ---------- String ----------
 
     @Test
-    fun `plain GeneratorFieldString produces a non-empty deterministic string`() {
-        val field = Wirespec.GeneratorFieldString(regex = null, annotations = emptyList())
+    fun `plain KotestFieldString produces a non-empty deterministic string`() {
+        val field = KotestFieldString(regex = null, annotations = emptyList())
         val a = generate(seed = 0L, field) as String
         val b = generate(seed = 0L, field) as String
         assertNotNull(a)
@@ -25,9 +24,9 @@ class KotestWirespecGeneratorTest {
     }
 
     @Test
-    fun `GeneratorFieldString with regex matches the regex`() {
+    fun `KotestFieldString with regex matches the regex`() {
         val regex = "[A-Z]{3}-[0-9]{4}"
-        val field = Wirespec.GeneratorFieldString(regex = regex, annotations = emptyList())
+        val field = KotestFieldString(regex = regex, annotations = emptyList())
         val value = generate(seed = 1L, field) as String
         assertTrue(Regex(regex).matches(value), "expected '$value' to match '$regex'")
     }
@@ -35,17 +34,17 @@ class KotestWirespecGeneratorTest {
     // ---------- Integer ----------
 
     @Test
-    fun `GeneratorFieldInteger without bounds returns a deterministic Long`() {
-        val field = Wirespec.GeneratorFieldInteger(min = null, max = null, annotations = emptyList())
+    fun `KotestFieldInteger without bounds returns a deterministic Long`() {
+        val field = KotestFieldInteger(min = null, max = null, annotations = emptyList())
         val a = generate(seed = 0L, field) as Long
         val b = generate(seed = 0L, field) as Long
         assertEquals(a, b)
     }
 
     @Test
-    fun `GeneratorFieldInteger with bounds stays within bounds`() {
+    fun `KotestFieldInteger with bounds stays within bounds`() {
         repeat(20) { i ->
-            val field = Wirespec.GeneratorFieldInteger(min = 10, max = 20, annotations = emptyList())
+            val field = KotestFieldInteger(min = 10, max = 20, annotations = emptyList())
             val v = generate(seed = i.toLong(), field) as Long
             assertTrue(v in 10..20, "expected 10..20, got $v")
         }
@@ -54,9 +53,9 @@ class KotestWirespecGeneratorTest {
     // ---------- Number ----------
 
     @Test
-    fun `GeneratorFieldNumber with bounds stays within bounds`() {
+    fun `KotestFieldNumber with bounds stays within bounds`() {
         repeat(20) { i ->
-            val field = Wirespec.GeneratorFieldNumber(min = 1.0, max = 2.0, annotations = emptyList())
+            val field = KotestFieldNumber(min = 1.0, max = 2.0, annotations = emptyList())
             val v = generate(seed = i.toLong(), field) as Double
             assertTrue(v in 1.0..2.0, "expected 1.0..2.0, got $v")
         }
@@ -65,16 +64,16 @@ class KotestWirespecGeneratorTest {
     // ---------- Boolean / Bytes ----------
 
     @Test
-    fun `GeneratorFieldBoolean returns a Boolean deterministically`() {
-        val field = Wirespec.GeneratorFieldBoolean(annotations = emptyList())
+    fun `KotestFieldBoolean returns a Boolean deterministically`() {
+        val field = KotestFieldBoolean(annotations = emptyList())
         val a = generate(seed = 0L, field) as Boolean
         val b = generate(seed = 0L, field) as Boolean
         assertEquals(a, b)
     }
 
     @Test
-    fun `GeneratorFieldBytes returns a ByteArray`() {
-        val field = Wirespec.GeneratorFieldBytes(annotations = emptyList())
+    fun `KotestFieldBytes returns a ByteArray`() {
+        val field = KotestFieldBytes(annotations = emptyList())
         val a = generate(seed = 0L, field) as ByteArray
         assertNotNull(a)
     }
@@ -82,20 +81,20 @@ class KotestWirespecGeneratorTest {
     // ---------- Enum / Union ----------
 
     @Test
-    fun `GeneratorFieldEnum picks a value from the values list`() {
+    fun `KotestFieldEnum picks a value from the values list`() {
         val values = listOf("A", "B", "C")
         repeat(20) { i ->
-            val field = Wirespec.GeneratorFieldEnum(values = values, annotations = emptyList(), type = typeOf<String>())
+            val field = KotestFieldEnum(values = values, annotations = emptyList(), type = typeOf<String>())
             val v = generate(seed = i.toLong(), field) as String
             assertTrue(v in values, "expected one of $values, got '$v'")
         }
     }
 
     @Test
-    fun `GeneratorFieldUnion picks a variant from the variants list`() {
+    fun `KotestFieldUnion picks a variant from the variants list`() {
         val variants = listOf("V1", "V2")
         repeat(20) { i ->
-            val field = Wirespec.GeneratorFieldUnion(variants = variants, annotations = emptyList(), type = typeOf<String>())
+            val field = KotestFieldUnion(variants = variants, annotations = emptyList(), type = typeOf<String>())
             val v = generate(seed = i.toLong(), field) as String
             assertTrue(v in variants, "expected one of $variants, got '$v'")
         }
@@ -104,9 +103,9 @@ class KotestWirespecGeneratorTest {
     // ---------- Array / Nullable / Shape / Dict (recursive) ----------
 
     @Test
-    fun `GeneratorFieldArray invokes the inner generate callback at indexed paths`() {
+    fun `KotestFieldArray invokes the inner generate callback at indexed paths`() {
         val capturedPaths = mutableListOf<List<String>>()
-        val field = Wirespec.GeneratorFieldArray<String> { p ->
+        val field = KotestFieldArray<String> { p ->
             capturedPaths += p
             "x"
         }
@@ -122,9 +121,9 @@ class KotestWirespecGeneratorTest {
     }
 
     @Test
-    fun `GeneratorFieldNullable invokes the inner generate callback`() {
+    fun `KotestFieldNullable invokes the inner generate callback`() {
         var calls = 0
-        val field = Wirespec.GeneratorFieldNullable<String> {
+        val field = KotestFieldNullable<String> {
             calls++
             "y"
         }
@@ -135,9 +134,9 @@ class KotestWirespecGeneratorTest {
     }
 
     @Test
-    fun `GeneratorFieldShape invokes the inner generate callback with the same path`() {
+    fun `KotestFieldShape invokes the inner generate callback with the same path`() {
         val captured = mutableListOf<List<String>>()
-        val field = Wirespec.GeneratorFieldShape<String>(
+        val field = KotestFieldShape<String>(
             annotations = emptyMap(),
             generate = { p ->
                 captured += p
@@ -151,9 +150,9 @@ class KotestWirespecGeneratorTest {
     }
 
     @Test
-    fun `GeneratorFieldDict invokes the callback once and wraps as map with one entry`() {
+    fun `KotestFieldDict invokes the callback once and wraps as map with one entry`() {
         var calls = 0
-        val field = Wirespec.GeneratorFieldDict<String> {
+        val field = KotestFieldDict<String> {
             calls++
             "value"
         }
@@ -169,12 +168,12 @@ class KotestWirespecGeneratorTest {
 
     @Test
     fun `Generator annotation routes to a registered Arb`() {
-        val gen = kotestWirespecGenerator(seed = 0L) {
+        val gen = kotestGenerator(seed = 0L) {
             register("orderId") { Arb.constant("ORD-123") }
         }
         val v = gen.generate(
             path = listOf("orderId"),
-            field = Wirespec.GeneratorFieldString(
+            field = KotestFieldString(
                 regex = null,
                 annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "orderId"))),
             ),
@@ -184,12 +183,12 @@ class KotestWirespecGeneratorTest {
 
     @Test
     fun `Generator annotation lookup is case-insensitive`() {
-        val gen = kotestWirespecGenerator(seed = 0L) {
+        val gen = kotestGenerator(seed = 0L) {
             register("orderId") { Arb.constant("ORD-CASE") }
         }
         val v = gen.generate(
             path = listOf("x"),
-            field = Wirespec.GeneratorFieldString(
+            field = KotestFieldString(
                 regex = null,
                 annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "ORDERID"))),
             ),
@@ -203,12 +202,12 @@ class KotestWirespecGeneratorTest {
     fun `Shape with @Seed string child receives the seed from the parent path`() {
         // Simulate an IR-emitted ProjectGenerator: Shape whose only field is
         // an @Seed-annotated string child.
-        val gen = kotestWirespecGenerator(seed = 0L)
+        val gen = kotestGenerator(seed = 0L)
         val seedAnnotation = mapOf("name" to "Seed", "parameters" to emptyMap<String, Any>())
-        val shape = Wirespec.GeneratorFieldShape<Map<String, String>>(
+        val shape = KotestFieldShape<Map<String, String>>(
             annotations = mapOf("id" to listOf(seedAnnotation)),
             generate = { p ->
-                val idField = Wirespec.GeneratorFieldString(
+                val idField = KotestFieldString(
                     regex = null,
                     annotations = listOf(seedAnnotation),
                 )
@@ -231,29 +230,29 @@ class KotestWirespecGeneratorTest {
         // Member.id must NOT be set to the literal "owner" (the outer field
         // name) nor to the project's seed — it must fall through to a
         // deterministic random value.
-        val gen = kotestWirespecGenerator(seed = 0L)
+        val gen = kotestGenerator(seed = 0L)
         val seedAnnotation = mapOf("name" to "Seed", "parameters" to emptyMap<String, Any>())
 
-        // Refined-style wrapper: GeneratorFieldShape{value: [@Seed]} -> String value.
-        fun refinedSeedShape() = Wirespec.GeneratorFieldShape<String>(
+        // Refined-style wrapper: KotestFieldShape{value: [@Seed]} -> String value.
+        fun refinedSeedShape() = KotestFieldShape<String>(
             annotations = mapOf("value" to listOf(seedAnnotation)),
             generate = { p ->
                 gen.generate(
                     p + "value",
-                    Wirespec.GeneratorFieldString(regex = null, annotations = listOf(seedAnnotation)),
+                    KotestFieldString(regex = null, annotations = listOf(seedAnnotation)),
                 )
             },
             type = typeOf<String>(),
         )
 
         // Inner Member: Shape with @Seed id.
-        val memberShape = Wirespec.GeneratorFieldShape<Map<String, Any>>(
+        val memberShape = KotestFieldShape<Map<String, Any>>(
             annotations = mapOf("id" to listOf(seedAnnotation), "ref" to emptyList<Map<String, Any>>()),
             generate = { memberPath ->
                 val id = gen.generate(memberPath + "id", refinedSeedShape())
                 val ref = gen.generate(
                     memberPath + "ref",
-                    Wirespec.GeneratorFieldString(regex = null, annotations = emptyList()),
+                    KotestFieldString(regex = null, annotations = emptyList()),
                 )
                 mapOf("id" to id, "ref" to ref)
             },
@@ -277,18 +276,18 @@ class KotestWirespecGeneratorTest {
         // same outer path must produce the same nested @Seed value.
         val seedAnnotation = mapOf("name" to "Seed", "parameters" to emptyMap<String, Any>())
 
-        fun buildOwner(gen: Wirespec.Generator): String {
-            val refinedSeedShape = Wirespec.GeneratorFieldShape<String>(
+        fun buildOwner(gen: KotestGenerator): String {
+            val refinedSeedShape = KotestFieldShape<String>(
                 annotations = mapOf("value" to listOf(seedAnnotation)),
                 generate = { p ->
                     gen.generate(
                         p + "value",
-                        Wirespec.GeneratorFieldString(regex = null, annotations = listOf(seedAnnotation)),
+                        KotestFieldString(regex = null, annotations = listOf(seedAnnotation)),
                     )
                 },
                 type = typeOf<String>(),
             )
-            val memberShape = Wirespec.GeneratorFieldShape<Map<String, Any>>(
+            val memberShape = KotestFieldShape<Map<String, Any>>(
                 annotations = mapOf("id" to listOf(seedAnnotation)),
                 generate = { memberPath ->
                     mapOf("id" to gen.generate(memberPath + "id", refinedSeedShape))
@@ -299,26 +298,26 @@ class KotestWirespecGeneratorTest {
             return owner["id"] as String
         }
 
-        val a = buildOwner(kotestWirespecGenerator(seed = 0L))
-        val b = buildOwner(kotestWirespecGenerator(seed = 0L))
+        val a = buildOwner(kotestGenerator(seed = 0L))
+        val b = buildOwner(kotestGenerator(seed = 0L))
         assertEquals(a, b, "same baseSeed + same outer path must yield the same nested @Seed")
 
-        val c = buildOwner(kotestWirespecGenerator(seed = 0L))
+        val c = buildOwner(kotestGenerator(seed = 0L))
         // Vary just the outer seed via path[0]: different project ids should
         // reshuffle the nested owner.id even though Member.id has @Seed.
         val seedAnnotation2 = seedAnnotation
-        val gen2 = kotestWirespecGenerator(seed = 0L)
-        val refinedSeedShape2 = Wirespec.GeneratorFieldShape<String>(
+        val gen2 = kotestGenerator(seed = 0L)
+        val refinedSeedShape2 = KotestFieldShape<String>(
             annotations = mapOf("value" to listOf(seedAnnotation2)),
             generate = { p ->
                 gen2.generate(
                     p + "value",
-                    Wirespec.GeneratorFieldString(regex = null, annotations = listOf(seedAnnotation2)),
+                    KotestFieldString(regex = null, annotations = listOf(seedAnnotation2)),
                 )
             },
             type = typeOf<String>(),
         )
-        val memberShape2 = Wirespec.GeneratorFieldShape<Map<String, Any>>(
+        val memberShape2 = KotestFieldShape<Map<String, Any>>(
             annotations = mapOf("id" to listOf(seedAnnotation2)),
             generate = { memberPath ->
                 mapOf("id" to gen2.generate(memberPath + "id", refinedSeedShape2))
@@ -331,11 +330,11 @@ class KotestWirespecGeneratorTest {
 
     @Test
     fun `unknown Generator name throws a clear error`() {
-        val gen = kotestWirespecGenerator(seed = 0L)
+        val gen = kotestGenerator(seed = 0L)
         val ex = runCatching {
             gen.generate(
                 path = listOf("x"),
-                field = Wirespec.GeneratorFieldString(
+                field = KotestFieldString(
                     regex = null,
                     annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "unregistered"))),
                 ),
@@ -353,8 +352,8 @@ class KotestWirespecGeneratorTest {
     @Suppress("UNCHECKED_CAST")
     private fun generate(
         seed: Long,
-        field: Wirespec.GeneratorField<*>,
+        field: KotestField<*>,
         path: List<String> = listOf("x"),
-    ): Any? = kotestWirespecGenerator(seed = seed)
-        .generate(path, field as Wirespec.GeneratorField<Any?>)
+    ): Any? = kotestGenerator(seed = seed)
+        .generate(path, field as KotestField<Any?>)
 }
