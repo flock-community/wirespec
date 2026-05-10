@@ -1475,76 +1475,65 @@ class RustIrEmitterTest {
             |    async fn transport(&self, request: &RawRequest) -> RawResponse;
             |}
             |
-            |pub trait GeneratorField<T: Option<Box<dyn std::any::Any>>> {}
+            |pub trait GeneratorField<T> {}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldString {
             |    pub regex: Option<String>,
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldInteger {
             |    pub min: Option<i64>,
             |    pub max: Option<i64>,
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldNumber {
             |    pub min: Option<f64>,
             |    pub max: Option<f64>,
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldBoolean {
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldBytes {
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldEnum {
             |    pub values: Vec<String>,
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
             |    pub r#type: std::any::TypeId,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldUnion {
             |    pub variants: Vec<String>,
             |    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
             |    pub r#type: std::any::TypeId,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldArray<T> {
             |    pub generate: Box<dyn Fn(Vec<String>) -> T>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldNullable<T> {
             |    pub generate: Box<dyn Fn(Vec<String>) -> T>,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldShape<T> {
             |    pub annotations: std::collections::HashMap<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>,
             |    pub generate: Box<dyn Fn(Vec<String>) -> T>,
             |    pub r#type: std::any::TypeId,
             |}
             |
-            |#[derive(Debug, Clone, Default, PartialEq)]
             |pub struct GeneratorFieldDict<V> {
             |    pub generate: Box<dyn Fn(Vec<String>) -> V>,
             |}
             |
             |pub trait Generator {
-            |    fn generate<T: Option<Box<dyn std::any::Any>>>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T;
+            |    fn generate<T>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T;
             |}
             |
             |pub trait Client {

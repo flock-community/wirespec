@@ -252,10 +252,15 @@ object RustGenerator : Generator {
 
     private fun TypeParameter.emit(): String {
         val typeStr = type.emit()
-        return if (extends.isEmpty()) {
+        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — Rust trait
+        // bounds must be traits, but `Type.Nullable(Type.Any)` would render as the enum
+        // `Option<Box<dyn std::any::Any>>` and fail to compile (E0404). Mirrors Java's
+        // handling in JavaGenerator.TypeParameter.emit.
+        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
+        return if (effectiveExtends.isEmpty()) {
             typeStr
         } else {
-            "$typeStr: ${extends.joinToString(" + ") { it.emit() }}"
+            "$typeStr: ${effectiveExtends.joinToString(" + ") { it.emit() }}"
         }
     }
 

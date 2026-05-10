@@ -295,6 +295,19 @@ object JavaGenerator : Generator {
         }
     }
 
+    /**
+     * Emit a type for use as a constructor target (`new X...`). For Wirespec runtime
+     * generic records (`GeneratorFieldArray`, `GeneratorFieldNullable`, `GeneratorFieldShape`,
+     * `GeneratorFieldDict`) we append `<>` so javac infers the type argument from the
+     * constructor's lambda; without the diamond the type is raw and `Generator.generate`
+     * returns `Object`, which fails to assign to the surrounding record component.
+     */
+    private fun Type.emitConstructorType(): String {
+        val str = emitGenerics()
+        val needsDiamond = this is Type.Custom && generics.isEmpty() && str in PARAMETRIC_RUNTIME_TYPES
+        return if (needsDiamond) "$str<>" else str
+    }
+
     private fun Type.emitGenerics(): String = when (this) {
         is Type.Array -> "${emit()}<${elementType.emitGenerics()}>"
         is Type.Dict -> "${emit()}<${keyType.emitGenerics()}, ${valueType.emitGenerics()}>"
@@ -332,7 +345,7 @@ object JavaGenerator : Generator {
             val expr = when {
                 type == Type.Unit -> "null"
                 isInsideConstructor -> "this${formatArgs()}"
-                else -> "new ${type.emitGenerics()}${formatArgs()}"
+                else -> "new ${type.emitConstructorType()}${formatArgs()}"
             }
             "$expr;\n".indentCode(indent)
         }
@@ -341,7 +354,7 @@ object JavaGenerator : Generator {
         is LiteralMap -> "${emit()};\n".indentCode(indent)
         is Assignment -> {
             val expr = (value as? ConstructorStatement)?.let { c ->
-                if (c.type == Type.Unit) "null" else "new ${c.type.emitGenerics()}${c.formatArgs()}"
+                if (c.type == Type.Unit) "null" else "new ${c.type.emitConstructorType()}${c.formatArgs()}"
             } ?: value.emit()
             val lhs = if (isProperty) name.value().sanitize() else "final var ${name.camelCase().sanitize()}"
             "$lhs = $expr;\n".indentCode(indent)
@@ -424,7 +437,7 @@ object JavaGenerator : Generator {
 
     private fun Expression.emit(): String = when (this) {
         is ConstructorStatement -> {
-            if (type == Type.Unit) "null" else "new ${type.emitGenerics()}${formatArgs()}"
+            if (type == Type.Unit) "null" else "new ${type.emitConstructorType()}${formatArgs()}"
         }
         is Literal -> emit()
         is LiteralList -> emit()
@@ -610,6 +623,13 @@ object JavaGenerator : Generator {
         if (last is ReturnStatement) return this
         return dropLast(1) + ReturnStatement(last as Expression)
     }
+
+    private val PARAMETRIC_RUNTIME_TYPES = setOf(
+        "Wirespec.GeneratorFieldArray",
+        "Wirespec.GeneratorFieldNullable",
+        "Wirespec.GeneratorFieldShape",
+        "Wirespec.GeneratorFieldDict",
+    )
 }
 
 private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "_$this" else this

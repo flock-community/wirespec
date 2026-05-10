@@ -268,11 +268,13 @@ open class RustIrEmitter(
                 LanguageFile(file.name, file.elements.flatMap { element ->
                     if (element !is Struct) return@flatMap listOf(element)
                     val derive = when {
+                        element.fields.any { containsUnderiveable(it.type) } -> ""
                         element.fields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"
                         element.name.pascalCase() in setOf("RawRequest", "RawResponse") -> "#[derive(Debug, Clone, PartialEq)]"
                         else -> "#[derive(Debug, Clone, Default, PartialEq)]"
                     }
-                    listOf(LanguageFile(element.name, listOf(RawElement(derive), element)))
+                    val prefix = if (derive.isEmpty()) emptyList() else listOf(RawElement(derive))
+                    listOf(LanguageFile(element.name, prefix + element))
                 })
             }
             .let(RustTransform::apply)
@@ -559,6 +561,25 @@ open class RustIrEmitter(
         is LanguageType.Nullable -> containsWildcard(type.type)
         is LanguageType.Array -> containsWildcard(type.elementType)
         is LanguageType.Dict -> containsWildcard(type.keyType) || containsWildcard(type.valueType)
+        else -> false
+    }
+
+    /**
+     * Detects field types that don't auto-derive cleanly. None of `Box<dyn Any>`,
+     * `Box<dyn Fn(..)>`, or `std::any::TypeId` cooperate with the default
+     * `#[derive(Debug, Clone, Default, PartialEq)]` — `dyn Any` lacks `Clone`/`PartialEq`,
+     * `dyn Fn` lacks all four, and `TypeId` lacks `Default`. Any struct with one of
+     * these falls back to no derive at all, since the verify tests only construct these
+     * structs inline and never clone/compare/default-construct/format them.
+     */
+    private fun containsUnderiveable(type: LanguageType): Boolean = when (type) {
+        LanguageType.Any -> true
+        LanguageType.Reflect -> true
+        is LanguageType.Function -> true
+        is LanguageType.Custom -> type.generics.any { containsUnderiveable(it) }
+        is LanguageType.Nullable -> containsUnderiveable(type.type)
+        is LanguageType.Array -> containsUnderiveable(type.elementType)
+        is LanguageType.Dict -> containsUnderiveable(type.keyType) || containsUnderiveable(type.valueType)
         else -> false
     }
 

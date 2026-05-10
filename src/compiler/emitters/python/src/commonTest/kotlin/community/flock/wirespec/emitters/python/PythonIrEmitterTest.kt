@@ -1436,9 +1436,10 @@ class PythonIrEmitterTest {
             |import enum
             |from abc import ABC, abstractmethod
             |from dataclasses import dataclass
-            |from typing import Any, Generic, Optional, Type, TypeVar
+            |from typing import Any, Callable, Generic, Optional, Type, TypeVar
             |
             |T = TypeVar('T')
+            |V = TypeVar('V')
             |
             |
             |def _raise(msg: str) -> Any:
@@ -1572,12 +1573,12 @@ class PythonIrEmitterTest {
             |    class GeneratorFieldEnum(GeneratorField[str]):
             |        values: list[str]
             |        annotations: list[dict[str, Any]]
-            |        type: type[T]
+            |        type: type[Any]
             |    @dataclass
             |    class GeneratorFieldUnion(GeneratorField[str]):
             |        variants: list[str]
             |        annotations: list[dict[str, Any]]
-            |        type: type[T]
+            |        type: type[Any]
             |    @dataclass
             |    class GeneratorFieldArray(GeneratorField[list[T]], Generic[T]):
             |        generate: Callable[[list[str]], T]
