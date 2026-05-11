@@ -28,5 +28,10 @@ object GeneratorSpec extends ZIOSpecDefault {
       // which is out of scope.
       assertTrue(m != null)
     },
+    test("Different seeds produce different APIs") {
+      val a = APIGenerator.generate(KotestBridge.generator(seed = 1L), List.empty)
+      val b = APIGenerator.generate(KotestBridge.generator(seed = 2L), List.empty)
+      assertTrue(a != b)
+    },
   )
 }
