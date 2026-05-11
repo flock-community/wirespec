@@ -8,13 +8,16 @@ import zio.test.*
 object GeneratorSpec extends ZIOSpecDefault {
 
   override def spec: Spec[TestEnvironment & Scope, Any] = suite("GeneratorSpec")(
-    test("APIGenerator produces non-null required fields") {
+    test("APIGenerator produces an API with populated required fields") {
       val gen = KotestBridge.generator(seed = 1L)
       val api: API = APIGenerator.generate(gen, List.empty)
+      // The Scala fields here are non-nullable (`String`, `Map[…]`), so a
+      // `!= null` check would be vacuously true. Asserting `nonEmpty`
+      // actually verifies the generator produced content.
       assertTrue(
-        api.added != null,
-        api.preferred != null,
-        api.versions != null,
+        api.added.nonEmpty,
+        api.preferred.nonEmpty,
+        api.versions.nonEmpty,
       )
     },
   )
