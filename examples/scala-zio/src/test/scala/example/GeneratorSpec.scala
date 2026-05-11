@@ -20,5 +20,13 @@ object GeneratorSpec extends ZIOSpecDefault {
         api.versions.nonEmpty,
       )
     },
+    test("MetricsGenerator returns a populated Metrics") {
+      val gen = KotestBridge.generator(seed = 1L)
+      val m: Metrics = MetricsGenerator.generate(gen, List.empty)
+      // Smoke: the generator runs to completion and produces a non-null
+      // instance. Field-level invariants would need property coverage,
+      // which is out of scope.
+      assertTrue(m != null)
+    },
   )
 }
