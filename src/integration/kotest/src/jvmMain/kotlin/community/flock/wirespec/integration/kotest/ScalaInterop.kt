@@ -193,6 +193,7 @@ internal object ScalaInterop {
     private fun invokeScalaFunction1(scalaFn: Any, kotlinPath: List<String>): Any {
         val scalaArg = kotlinListToScala(kotlinPath)
         val applyMethod = scalaFn.javaClass.getMethod("apply", Any::class.java)
+        applyMethod.isAccessible = true
         return applyMethod.invoke(scalaFn, scalaArg)
     }
 
