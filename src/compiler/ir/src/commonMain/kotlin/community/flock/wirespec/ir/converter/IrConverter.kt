@@ -37,7 +37,6 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.`interface`
-import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec

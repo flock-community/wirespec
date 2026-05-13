@@ -28,9 +28,12 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Package
+import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.plus
 import community.flock.wirespec.ir.core.raw
+import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.placeInModule
@@ -42,7 +45,6 @@ import community.flock.wirespec.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.sortKey
-import community.flock.wirespec.ir.core.Type as LanguageType
 
 open class PythonIrEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),

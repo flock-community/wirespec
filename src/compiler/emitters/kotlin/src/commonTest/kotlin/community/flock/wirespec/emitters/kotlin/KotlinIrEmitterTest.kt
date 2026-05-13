@@ -875,7 +875,6 @@ class KotlinIrEmitterTest {
         val expected = """
             |package community.flock.wirespec.kotlin
             |import kotlin.reflect.KType
-            |import kotlin.reflect.typeOf
             |object Wirespec {
             |  interface Model {
             |      fun validate(): List<String>

@@ -224,21 +224,6 @@ open class TypeScriptIrEmitter : IrEmitter {
             }
     }
 
-    private fun Reference.toTypeScriptTypeName(): String = when (this) {
-        is Reference.Primitive -> when (type) {
-            is Reference.Primitive.Type.String -> "string"
-            is Reference.Primitive.Type.Integer -> "number"
-            is Reference.Primitive.Type.Number -> "number"
-            is Reference.Primitive.Type.Boolean -> "boolean"
-            is Reference.Primitive.Type.Bytes -> "ArrayBuffer"
-        }
-        is Reference.Custom -> value
-        is Reference.Iterable -> "${reference.toTypeScriptTypeName()}[]"
-        is Reference.Dict -> "Record<string, ${reference.toTypeScriptTypeName()}>"
-        is Reference.Any -> "any"
-        is Reference.Unit -> "undefined"
-    }
-
     override fun emit(channel: Channel): File =
         channel.convert()
             .sanitizeNames(sanitizationConfig)

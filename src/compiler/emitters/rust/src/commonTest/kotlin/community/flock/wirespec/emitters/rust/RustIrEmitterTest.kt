@@ -366,7 +366,6 @@ class RustIrEmitterTest {
         |    }
         |}
         |
-        |use std::any::TypeId;
         |use super::super::wirespec::*;
         |use regex;
         |use super::super::model::todo_dto::TodoDto;
@@ -570,7 +569,6 @@ class RustIrEmitterTest {
         |    }
         |}
         |
-        |use std::any::TypeId;
         |use super::super::wirespec::*;
         |use regex;
         |use super::super::model::token::Token;

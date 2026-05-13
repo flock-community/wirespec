@@ -32,7 +32,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -40,7 +39,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertWithValidation
-import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
@@ -105,7 +103,7 @@ open class KotlinIrEmitter(
             .transform {
                 matchingElements { file: File ->
                     val (packageElements, rest) = file.elements.partition { it is Package }
-                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + import("kotlin.reflect", "typeOf") + rest)
+                    file.copy(elements = packageElements + import("kotlin.reflect", "KType") + rest)
                 }
                 injectAfter { namespace: Namespace ->
                     if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()

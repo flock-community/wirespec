@@ -112,7 +112,6 @@ open class RustIrEmitter(
     )
 
     private val endpointImports = listOf(
-        import("std::any", "TypeId"),
         import("super::super::wirespec", "*"),
         import("", "regex"),
     )
