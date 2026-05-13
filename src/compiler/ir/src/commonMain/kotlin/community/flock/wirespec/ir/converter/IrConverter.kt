@@ -208,16 +208,6 @@ fun PackageName.convert(): File = file("Wirespec") {
 }
 
 fun PackageName.convertClientServer(): List<Element> = listOf(
-    `interface`("PathSegment", isSealed = true),
-    struct("Literal") {
-        implements(type("PathSegment"))
-        field("value", Type.String)
-    },
-    struct("Param") {
-        implements(type("PathSegment"))
-        field("name", Type.String)
-        field("type", Type.Reflect)
-    },
     `interface`("ServerEdge") {
         typeParam(type("Req"), type("Request", Type.Wildcard))
         typeParam(type("Res"), type("Response", Type.Wildcard))
@@ -247,7 +237,6 @@ fun PackageName.convertClientServer(): List<Element> = listOf(
         typeParam(type("Res"), type("Response", Type.Wildcard))
         field("pathTemplate", Type.String)
         field("method", Type.String)
-        field("pathSegments", Type.Array(Type.Custom("PathSegment")))
         function("client") {
             returnType(type("ClientEdge", type("Req"), type("Res")))
             arg("serialization", type("Serialization"))
@@ -258,7 +247,6 @@ fun PackageName.convertClientServer(): List<Element> = listOf(
         typeParam(type("Res"), type("Response", Type.Wildcard))
         field("pathTemplate", Type.String)
         field("method", Type.String)
-        field("pathSegments", Type.Array(Type.Custom("PathSegment")))
         function("server") {
             returnType(type("ServerEdge", type("Req"), type("Res")))
             arg("serialization", type("Serialization"))

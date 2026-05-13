@@ -29,6 +29,7 @@ import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.File
@@ -45,6 +46,7 @@ import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.raw
+import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
@@ -109,7 +111,28 @@ open class ScalaIrEmitter(
 
         val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.scala")
 
-        val clientServer = packageName.convertClientServer()
+        val pathSegmentTypes: List<Element> = listOf(
+            `interface`("PathSegment", isSealed = true),
+            struct("Literal") {
+                implements(LanguageType.Custom("PathSegment"))
+                field("value", LanguageType.String)
+            },
+            struct("Param") {
+                implements(LanguageType.Custom("PathSegment"))
+                field("name", LanguageType.String)
+                field("type", LanguageType.Reflect)
+            },
+        )
+
+        val clientServer = pathSegmentTypes + packageName.convertClientServer().map { element ->
+            if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
+                element.copy(
+                    fields = element.fields + Field(Name.of("pathSegments"), LanguageType.Array(LanguageType.Custom("PathSegment"))),
+                )
+            } else {
+                element
+            }
+        }
 
         val wirespecShared = packageName.convert()
             .transform {
