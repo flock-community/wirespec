@@ -108,9 +108,6 @@ open class TypeScriptIrEmitter : IrEmitter {
         val packageName = PackageName(DEFAULT_SHARED_PACKAGE_STRING)
 
         val api = """
-          |export type Literal = { kind: "Literal"; value: string }
-          |export type Param = { kind: "Param"; name: string; type: string }
-          |export type PathSegment = Literal | Param
           |export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
           |  to: (request: REQ) => RawRequest;
           |  from: (response: RawResponse) => RES
@@ -123,7 +120,6 @@ open class TypeScriptIrEmitter : IrEmitter {
           |  name: string;
           |  method: Method,
           |  path: string,
-          |  pathSegments: PathSegment[],
           |  client: Client<REQ, RES>;
           |  server: Server<REQ, RES>
           |}

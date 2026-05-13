@@ -1,7 +1,6 @@
 package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
 import community.flock.wirespec.ir.core.Case
@@ -128,12 +127,6 @@ internal fun buildApiConst(endpoint: Endpoint): RawElement {
             is Endpoint.Segment.Param -> "{${it.identifier.value}}"
         }
     }
-    val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
-        when (segment) {
-            is Endpoint.Segment.Literal -> """{ kind: "Literal", value: "${segment.value}" }"""
-            is Endpoint.Segment.Param -> """{ kind: "Param", name: "${segment.identifier.value}", type: "${segment.reference.toTypeScriptTypeName()}" }"""
-        }
-    }
     return raw(
         """
         |export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
@@ -148,25 +141,9 @@ internal fun buildApiConst(endpoint: Endpoint): RawElement {
         |  name: "$apiName",
         |  method: "$method",
         |  path: "$pathString",
-        |  pathSegments: [$pathSegmentsCode],
         |  server,
         |  client
         |} as const
         """.trimMargin(),
     )
-}
-
-private fun Reference.toTypeScriptTypeName(): String = when (this) {
-    is Reference.Primitive -> when (type) {
-        is Reference.Primitive.Type.String -> "string"
-        is Reference.Primitive.Type.Integer -> "number"
-        is Reference.Primitive.Type.Number -> "number"
-        is Reference.Primitive.Type.Boolean -> "boolean"
-        is Reference.Primitive.Type.Bytes -> "ArrayBuffer"
-    }
-    is Reference.Custom -> value
-    is Reference.Iterable -> "${reference.toTypeScriptTypeName()}[]"
-    is Reference.Dict -> "Record<string, ${reference.toTypeScriptTypeName()}>"
-    is Reference.Any -> "any"
-    is Reference.Unit -> "undefined"
 }
