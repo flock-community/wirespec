@@ -11,7 +11,6 @@ import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Parameter
-import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
@@ -58,18 +57,13 @@ internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
     }
 }
 
-internal fun File.splitEndpointStructsToModuleLevel(pathSegmentsCode: String = ""): File {
+internal fun File.splitEndpointStructsToModuleLevel(): File {
     val namespace = findElement<Namespace>()!!
     val flattened = namespace.flattenNestedStructs()
     val (moduleElements, classElements) = flattened.elements.partition { it is Struct || it is LanguageUnion }
-    val pathSegmentsElement = if (pathSegmentsCode.isNotEmpty()) {
-        listOf(RawElement("path_segments = [$pathSegmentsCode]"))
-    } else {
-        emptyList()
-    }
     val endpointClass = Namespace(
         name = namespace.name,
-        elements = pathSegmentsElement + classElements,
+        elements = classElements,
         extends = namespace.extends,
     )
     return LanguageFile(namespace.name, moduleElements + endpointClass)

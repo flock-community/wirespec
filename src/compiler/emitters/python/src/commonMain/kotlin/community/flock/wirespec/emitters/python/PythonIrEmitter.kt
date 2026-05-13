@@ -18,7 +18,6 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -29,14 +28,9 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.Package
-import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.plus
 import community.flock.wirespec.ir.core.raw
-import community.flock.wirespec.ir.core.struct
-import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.placeInModule
@@ -101,24 +95,9 @@ open class PythonIrEmitter(
         |
     """.trimMargin()
 
-    private val pathSegmentStructs: List<Element> = listOf(
-        struct("Literal") {
-            field("value", string)
-        },
-        struct("Param") {
-            field("name", string)
-            field("type", type("Type", LanguageType.Any))
-        },
-    )
-
     override fun emitShared(): File? {
 
         val source = PackageName("shared").convert()
-            .transform {
-                injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) pathSegmentStructs else emptyList()
-                }
-            }
 
         return if (emitShared.value) {
             File(
@@ -203,32 +182,11 @@ open class PythonIrEmitter(
     override fun emit(endpoint: Endpoint): File {
         val endpointImports = endpoint.importReferences().distinctBy { it.value }
             .map { import("..model.${it.value}", it.value) }
-        val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
-            when (segment) {
-                is Endpoint.Segment.Literal -> """Wirespec.Literal("${segment.value}")"""
-                is Endpoint.Segment.Param -> """Wirespec.Param("${segment.identifier.value}", ${segment.reference.toPythonTypeName()})"""
-            }
-        }
         return endpoint.convert()
-            .splitEndpointStructsToModuleLevel(pathSegmentsCode)
+            .splitEndpointStructsToModuleLevel()
             .let { it.copy(elements = endpointImports + it.elements) }
             .snakeCaseHandlerAndCallMethods()
             .sanitizeNames(sanitizationConfig)
-    }
-
-    private fun Reference.toPythonTypeName(): String = when (this) {
-        is Reference.Primitive -> when (type) {
-            is Reference.Primitive.Type.String -> "str"
-            is Reference.Primitive.Type.Integer -> "int"
-            is Reference.Primitive.Type.Number -> "float"
-            is Reference.Primitive.Type.Boolean -> "bool"
-            is Reference.Primitive.Type.Bytes -> "bytes"
-        }
-        is Reference.Custom -> value
-        is Reference.Iterable -> "list[${reference.toPythonTypeName()}]"
-        is Reference.Dict -> "dict[str, ${reference.toPythonTypeName()}]"
-        is Reference.Any -> "Any"
-        is Reference.Unit -> "None"
     }
 
     override fun emit(channel: Channel): File =
