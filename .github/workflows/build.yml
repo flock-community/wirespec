@@ -271,8 +271,6 @@ jobs:
             type: rust
           - name: scala-zio
             type: scala
-          - name: scala-zio-2
-            type: scala
 
     steps:
       - uses: actions/checkout@v4

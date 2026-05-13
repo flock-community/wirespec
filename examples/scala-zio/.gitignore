@@ -5,3 +5,5 @@ project/project/
 .idea/
 *.class
 *.log
+
+zio-quickstarts/

@@ -12,8 +12,7 @@ build:
 	(cd maven-spring-native && ./mvnw verify) && \
 	(cd npm-typescript && npm ci && npm run build) && \
 	(cd rust-petstore && bash gen.sh && cargo build) && \
-	(cd scala-zio && sbt compile) && \
-	(cd scala-zio-2 && sbt compile)
+	(cd scala-zio && sbt compile)
 
 clean:
 	(cd gradle-ktor && ./gradlew clean) && \
@@ -25,7 +24,8 @@ clean:
 	(cd maven-spring-custom && ./mvnw clean) && \
 	(cd maven-spring-integration && ./mvnw clean) && \
 	(cd maven-spring-native && ./mvnw clean) && \
-	(cd npm-typescript && npm run clean)
+	(cd npm-typescript && npm run clean) && \
+	(cd scala-zio && sbt clean)
 
 format:
 	(cd gradle-ktor && ./gradlew spotlessApply) && \
