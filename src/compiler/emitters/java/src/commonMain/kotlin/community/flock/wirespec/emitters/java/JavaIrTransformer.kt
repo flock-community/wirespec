@@ -4,7 +4,6 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.core.Assignment
@@ -103,12 +102,6 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
             is Endpoint.Segment.Param -> "{${it.identifier.value}}"
         }
     }
-    val pathSegmentsCode = path.joinToString(", ") { segment ->
-        when (segment) {
-            is Endpoint.Segment.Literal -> """new Wirespec.Literal("${segment.value}")"""
-            is Endpoint.Segment.Param -> """new Wirespec.Param("${segment.identifier.value}", ${segment.reference.toJavaClassName()})"""
-        }
-    }
 
     return struct(name = "Handlers") {
         implements(
@@ -124,10 +117,6 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
         function("getMethod", isOverride = true) {
             returnType(Type.String)
             returns(literal(method.name))
-        }
-        function("getPathSegments", isOverride = true) {
-            returnType(type("java.util.List", type("Wirespec.PathSegment")))
-            returns(RawExpression("java.util.List.of($pathSegmentsCode)"))
         }
         function("getServer", isOverride = true) {
             returnType(
@@ -231,19 +220,4 @@ private fun Type.toJavaName(): String = when (this) {
     Type.Unit -> "Void"
     is Type.Custom -> name
     else -> "Object"
-}
-
-private fun Reference.toJavaClassName(): String = when (this) {
-    is Reference.Primitive -> when (val t = type) {
-        is Reference.Primitive.Type.String -> "String.class"
-        is Reference.Primitive.Type.Integer -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Integer.class" else "Long.class"
-        is Reference.Primitive.Type.Number -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Float.class" else "Double.class"
-        Reference.Primitive.Type.Boolean -> "Boolean.class"
-        Reference.Primitive.Type.Bytes -> "byte[].class"
-    }
-    is Reference.Custom -> "$value.class"
-    is Reference.Iterable -> "java.util.List.class"
-    is Reference.Dict -> "java.util.Map.class"
-    is Reference.Any -> "Object.class"
-    is Reference.Unit -> "Void.class"
 }
