@@ -7,10 +7,16 @@ on:
     branches:
   release:
     types: [ "created" ]
+  workflow_dispatch:
+    inputs:
+      base_version:
+        description: 'Base version (e.g. 0.18.0) — RC.N suffix is auto-computed'
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'release' }}
 
 jobs:
 
@@ -191,6 +197,21 @@ jobs:
       - name: Build IntelliJ plugin
         run: ./gradlew :src:ide:intellij-plugin:buildPlugin
 
+  verify:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Verify
+        run: ./gradlew :src:verify:test -Pverify
+
   example-build:
 
     runs-on: ubuntu-latest
@@ -246,6 +267,10 @@ jobs:
             type: gradle
           - name: npm-typescript
             type: npm
+          - name: rust-petstore
+            type: rust
+          - name: scala-zio
+            type: scala
 
     steps:
       - uses: actions/checkout@v4
@@ -255,6 +280,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: gradle
       - name: Set up GraalVM
         if: matrix.type == 'native'
         uses: graalvm/setup-graalvm@v1
@@ -265,8 +291,14 @@ jobs:
         if: matrix.type == 'npm'
         with:
           node-version: 20
+      - name: Set up Rust
+        if: matrix.type == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Set up sbt
+        if: matrix.type == 'scala'
+        uses: sbt/setup-sbt@v1
       - name: Download Maven Local artifacts
-        if: matrix.type != 'npm'
+        if: matrix.type != 'npm' && matrix.type != 'rust' && matrix.type != 'scala'
         uses: actions/download-artifact@v4
         with:
           name: wirespec-m2
@@ -292,6 +324,14 @@ jobs:
         if: matrix.type == 'npm'
         working-directory: examples/${{ matrix.name }}
         run: npm ci && npm run build
+      - name: Run ${{ matrix.name }} example
+        if: matrix.type == 'rust'
+        working-directory: examples/${{ matrix.name }}
+        run: bash gen.sh && cargo build && cargo test
+      - name: Run ${{ matrix.name }} example
+        if: matrix.type == 'scala'
+        working-directory: examples/${{ matrix.name }}
+        run: sbt compile test
 
   success:
 
@@ -310,6 +350,7 @@ jobs:
       - vscode
       - intellij-plugin
       - example-test
+      - verify
 
     steps:
       - name: Check CI status
@@ -324,7 +365,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published')
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'release' && (github.event.action == 'created' || github.event.action == 'published'))
 
     needs:
       - success
@@ -333,12 +376,20 @@ jobs:
       version: ${{steps.version.outputs.version}}
 
     steps:
+      - name: Guard against master dispatch
+        if: github.event_name == 'workflow_dispatch' && github.ref_name == 'master'
+        run: |
+          echo "::error::Manual RC publish is not allowed from master; cut a GitHub release to publish a stable version."
+          exit 1
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: version
         name: Generate version
         uses: ./.github/actions/version
         with:
-          version: ${{ github.event.release.tag_name }}
+          version: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.base_version) || github.event.release.tag_name }}
+          branch: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || github.event.release.target_commitish }}
 
   native-publish:
 
@@ -394,6 +445,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
+
     needs:
       - version
 
@@ -416,6 +469,8 @@ jobs:
   release-vscode:
 
     runs-on: ubuntu-latest
+
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
 
     needs:
       - version
@@ -452,6 +507,8 @@ jobs:
   release-cli:
 
     runs-on: ubuntu-latest
+
+    if: github.event_name == 'release'
 
     needs:
       - native-publish
@@ -546,11 +603,17 @@ jobs:
       - name: Publish
         working-directory: ./src/plugin/npm/build/dist/js/productionLibrary
         run: |
-          npm publish --access public
+          if [[ "$VERSION" == *"-RC."* ]]; then
+            npm publish --access public --tag rc
+          else
+            npm publish --access public
+          fi
 
   publish-docs:
 
     runs-on: ubuntu-latest
+
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
 
     needs:
       - version
@@ -576,6 +639,8 @@ jobs:
 
   publish-playground:
     runs-on: ubuntu-latest
+
+    if: ${{ !contains(needs.version.outputs.version, '-RC.') }}
 
     needs:
       - version

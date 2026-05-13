@@ -7,7 +7,9 @@ import community.flock.wirespec.generated.kotlin.model.TodoDto
 import community.flock.wirespec.generated.kotlin.model.TodoId
 import java.util.UUID
 
-object TodoConsumer : Consumer<PotentialTodoDto, Todo> {
+// Kept as an `object` (not a lambda) so callers can `import TodoConsumer.consume`
+// and call `dto.consume()` as an extension — see TodoHandler.kt.
+object TodoConsumer : Consumer<PotentialTodoDto, Todo> { // NOSONAR S6516
     override fun PotentialTodoDto.consume(): Todo = Todo(
         id = Todo.Id(value = UUID.randomUUID().toString()),
         name = Name(name),
@@ -15,7 +17,9 @@ object TodoConsumer : Consumer<PotentialTodoDto, Todo> {
     )
 }
 
-object TodoProducer : Producer<Todo, TodoDto> {
+// Kept as an `object` (not a lambda) so callers can `import TodoProducer.produce`
+// and call `domain.produce()` as an extension — see TodoHandler.kt.
+object TodoProducer : Producer<Todo, TodoDto> { // NOSONAR S6516
     override fun Todo.produce(): TodoDto = TodoDto(
         id = TodoId(id.value),
         name = name.value,

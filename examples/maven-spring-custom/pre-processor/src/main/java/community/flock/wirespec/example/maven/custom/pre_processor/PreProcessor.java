@@ -6,11 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class PreProcessor implements Function<String, String> {
+public class PreProcessor implements UnaryOperator<String> {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
@@ -26,7 +26,7 @@ public class PreProcessor implements Function<String, String> {
             openapi.set("paths", objectMapper.valueToTree(filteredPaths));
             return objectMapper.writeValueAsString(openapi);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Cannot process openapi json file", e);
+            throw new IllegalStateException("Cannot process openapi json file", e);
         }
     }
 }

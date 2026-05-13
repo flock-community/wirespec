@@ -46,6 +46,7 @@ import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrEmitter
 
 enum class Options(vararg val flags: String) {
     Input("-i", "--input"),
@@ -55,6 +56,7 @@ enum class Options(vararg val flags: String) {
     LogLevel("--log-level"),
     Shared("--shared"),
     Strict("--strict"),
+    Ir("--ir"),
 }
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -74,6 +76,7 @@ private abstract class CommonOptions : CliktCommand() {
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$INFO")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
+    val ir by option(*Options.Ir.flags, help = "Output intermediate representation").flag(default = false)
 
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG
@@ -119,7 +122,7 @@ private class Compile(
             }
         }
 
-        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared), ir)
 
         val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
@@ -131,6 +134,7 @@ private class Compile(
             logger = logger,
             shared = shared,
             strict = strict,
+            ir = ir,
         ).let(compiler)
     }
 }
@@ -159,7 +163,7 @@ private class Convert(
                 .also { logger.info("Found 1 file to process: $inputPath") }
         }
 
-        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared), ir)
         val directory = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         ConverterArguments(
             format = format,
@@ -171,12 +175,13 @@ private class Convert(
             logger = logger,
             shared = shared,
             strict = strict,
+            ir = ir,
         ).let(converter)
     }
 }
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
 
-private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared) = this
-    .map { it.toEmitter(packageName, emitShared) }
+private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared, ir: Boolean = false) = this
+    .map { if (ir) it.toIrEmitter(packageName, emitShared) else it.toEmitter(packageName, emitShared) }
     .toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())

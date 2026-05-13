@@ -29,6 +29,7 @@ class CommandLineEntitiesTest {
                     // To enable flags they only need the flag name. Therefore, the 'argument' part is null.
                     Options.Shared -> null
                     Options.Strict -> null
+                    Options.Ir -> null
                 },
             )
         }.toTypedArray()
@@ -45,6 +46,7 @@ class CommandLineEntitiesTest {
                 }
                 it.shared.also(::println) shouldBe true
                 it.strict shouldBe true
+                it.ir shouldBe true
             },
             noopConverter {},
         ).main(arrayOf("compile") + opts)
@@ -67,6 +69,7 @@ class CommandLineEntitiesTest {
                 }
                 it.shared shouldBe false
                 it.strict shouldBe false
+                it.ir shouldBe false
             },
         ).main(arrayOf("convert", "-i", "src/commonTest/resources/openapi/keto.json", "openapiv2"))
     }

@@ -12,12 +12,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class TodoService {
 
-    public List<Todo> store = new ArrayList<>();
+    private List<Todo> store = new ArrayList<>();
 
     public TodoService() {
         store.add(new Todo(UUID.randomUUID().toString(), "First todo", false));
         store.add(new Todo(UUID.randomUUID().toString(), "Second todo", false));
         store.add(new Todo(UUID.randomUUID().toString(), "Third todo", false));
+    }
+
+    public List<Todo> getStore() {
+        return store;
     }
 
     public CompletableFuture<Todo> create(Todo todo) {

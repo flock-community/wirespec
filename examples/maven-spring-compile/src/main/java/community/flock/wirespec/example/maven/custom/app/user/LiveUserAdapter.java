@@ -29,7 +29,7 @@ public class LiveUserAdapter implements UserAdapter {
     }
 
     public List<User> getAllUsers(String name) {
-        var res = complete(client.getUsers(new GetUsers.Request(name, UserClient.version)));
+        var res = complete(client.getUsers(new GetUsers.Request(name, UserClient.VERSION)));
         return switch (res) {
             case GetUsers.Response200 r -> converter.internalize(r.body());
         };
@@ -63,10 +63,11 @@ public class LiveUserAdapter implements UserAdapter {
     public void uploadImage(String name, byte[] bytes) {
         var res = complete(client.uploadImage(new UploadImage.Request(name, bytes)));
         switch (res) {
-            case UploadImage.Response201 ignored -> {}
+            case UploadImage.Response201 ignored -> {
+                // 201 Created — nothing to return; upload succeeded.
+            }
             case UploadImage.Response404 ignored -> throw new NotFound.User();
         }
-        ;
     }
 
     private <T> T complete(final CompletableFuture<T> future) {

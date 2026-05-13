@@ -67,7 +67,7 @@ class AvroTestApplicationTests {
 
         var latch = new CountDownLatch(2);
 
-        var record = new TestAvroRecord(new TestAvroOrder(
+        var avroRecord = new TestAvroRecord(new TestAvroOrder(
                 "123",
                 "QR Code".getBytes(),
                 Optional.of(1L),
@@ -82,17 +82,17 @@ class AvroTestApplicationTests {
                 3L));
 
         service.listen("group1", message -> {
-            assertRecordEquals(record, message);
+            assertRecordEquals(avroRecord, message);
             latch.countDown();
         });
 
         service.listen("group2", message -> {
-            assertRecordEquals(record, message);
+            assertRecordEquals(avroRecord, message);
 
             latch.countDown();
         });
 
-        service.invoke(record);
+        service.invoke(avroRecord);
 
         boolean messageConsumed = latch.await(10, TimeUnit.SECONDS);
         assertTrue(messageConsumed);

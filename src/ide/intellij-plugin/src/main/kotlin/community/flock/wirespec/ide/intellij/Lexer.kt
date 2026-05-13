@@ -1,5 +1,6 @@
 package community.flock.wirespec.ide.intellij
 
+import com.intellij.psi.tree.IElementType
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.Annotation
 import community.flock.wirespec.compiler.core.tokenize.Arrow
@@ -30,6 +31,7 @@ import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TokenizeOptions
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
@@ -43,6 +45,7 @@ import community.flock.wirespec.compiler.core.tokenize.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.WsString
 import community.flock.wirespec.compiler.core.tokenize.WsUnit
 import community.flock.wirespec.compiler.core.tokenize.tokenize
+import kotlin.reflect.KClass
 import com.intellij.lexer.LexerBase as IntellijLexer
 
 class Lexer : IntellijLexer() {
@@ -63,47 +66,15 @@ class Lexer : IntellijLexer() {
 
     override fun getState() = state
 
-    override fun getTokenType() = when (tokens.getOrNull(index)?.type) {
-        null -> null
-        is LeftCurly -> Types.LEFT_CURLY
-        is RightCurly -> Types.RIGHT_CURLY
-        is Colon -> Types.COLON
-        is Comma -> Types.COMMA
-        is QuestionMark -> Types.QUESTION_MARK
-        is Hash -> Types.HASH
-        is Annotation -> Types.ANNOTATION
-        is ForwardSlash -> Types.FORWARD_SLASH
-        is Brackets -> Types.BRACKETS
-        is LeftBracket -> Types.LEFT_BRACKET
-        is RightBracket -> Types.RIGHT_BRACKET
-        is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
-        is Comment -> Types.COMMENT
-        is Character -> Types.CHARACTER
-        is EndOfProgram -> Types.END_OF_PROGRAM
-        is WhiteSpace -> Types.WHITE_SPACE
-        is TypeDefinition -> Types.TYPE_DEF
-        is EnumTypeDefinition -> Types.ENUM_DEF
-        is EndpointDefinition -> Types.ENDPOINT_DEF
-        is ChannelDefinition -> Types.CHANNEL_DEF
-        is WsString -> Types.WS_STRING
-        is WsInteger -> Types.WS_INTEGER
-        is WsNumber -> Types.WS_NUMBER
-        is WsBoolean -> Types.WS_BOOLEAN
-        is WsBytes -> Types.WS_BYTES
-        is TypeIdentifier -> Types.TYPE_IDENTIFIER
-        is WsUnit -> Types.UNIT
-        is Method -> Types.METHOD
-        is Path -> Types.PATH
-        is Arrow -> Types.ARROW
-        is Equals -> Types.EQUALS
-        is Pipe -> Types.PIPE
-        is Integer -> Types.INTEGER
-        is Number -> Types.NUMBER
-        is RightParenthesis -> Types.RIGHT_PARENTHESES
-        is LeftParenthesis -> Types.LEFT_PARENTHESES
-        is RegExp -> Types.REG_EXP
-        is Underscore -> Types.UNDERSCORE
-        is LiteralString -> Types.LITERAL_STRING
+    override fun getTokenType(): IElementType? {
+        val type = tokens.getOrNull(index)?.type ?: return null
+        // Sealed-interface checks first; concrete `data object` token types fall through to the map.
+        return when (type) {
+            is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
+            is TypeIdentifier -> Types.TYPE_IDENTIFIER
+            is WhiteSpace -> Types.WHITE_SPACE
+            else -> tokenTypeByClass[type::class]
+        }
     }
 
     override fun getTokenStart() = tokens[index]
@@ -120,6 +91,47 @@ class Lexer : IntellijLexer() {
     }
 
     override fun getBufferEnd() = bufferSequence.toString().length
+
+    private companion object {
+        private val tokenTypeByClass: Map<KClass<out TokenType>, IElementType> = mapOf(
+            LeftCurly::class to Types.LEFT_CURLY,
+            RightCurly::class to Types.RIGHT_CURLY,
+            Colon::class to Types.COLON,
+            Comma::class to Types.COMMA,
+            QuestionMark::class to Types.QUESTION_MARK,
+            Hash::class to Types.HASH,
+            Annotation::class to Types.ANNOTATION,
+            ForwardSlash::class to Types.FORWARD_SLASH,
+            Brackets::class to Types.BRACKETS,
+            LeftBracket::class to Types.LEFT_BRACKET,
+            RightBracket::class to Types.RIGHT_BRACKET,
+            Comment::class to Types.COMMENT,
+            Character::class to Types.CHARACTER,
+            EndOfProgram::class to Types.END_OF_PROGRAM,
+            TypeDefinition::class to Types.TYPE_DEF,
+            EnumTypeDefinition::class to Types.ENUM_DEF,
+            EndpointDefinition::class to Types.ENDPOINT_DEF,
+            ChannelDefinition::class to Types.CHANNEL_DEF,
+            WsString::class to Types.WS_STRING,
+            WsInteger::class to Types.WS_INTEGER,
+            WsNumber::class to Types.WS_NUMBER,
+            WsBoolean::class to Types.WS_BOOLEAN,
+            WsBytes::class to Types.WS_BYTES,
+            WsUnit::class to Types.UNIT,
+            Method::class to Types.METHOD,
+            Path::class to Types.PATH,
+            Arrow::class to Types.ARROW,
+            Equals::class to Types.EQUALS,
+            Pipe::class to Types.PIPE,
+            Integer::class to Types.INTEGER,
+            Number::class to Types.NUMBER,
+            RightParenthesis::class to Types.RIGHT_PARENTHESES,
+            LeftParenthesis::class to Types.LEFT_PARENTHESES,
+            RegExp::class to Types.REG_EXP,
+            Underscore::class to Types.UNDERSCORE,
+            LiteralString::class to Types.LITERAL_STRING,
+        )
+    }
 }
 
 fun Token.Coordinates.getStartPos() = idxAndLength.idx - idxAndLength.length

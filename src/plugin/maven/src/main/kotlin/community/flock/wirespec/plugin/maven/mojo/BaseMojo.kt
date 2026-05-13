@@ -19,6 +19,7 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrEmitter
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -72,6 +73,12 @@ abstract class BaseMojo : AbstractMojo() {
     protected var strict: Boolean = true
 
     /**
+     * Specifies whether to output intermediate representation. Default 'false'.
+     */
+    @Parameter
+    protected var ir: Boolean = false
+
+    /**
      * Source directory. Default 'null'.
      */
     @Parameter
@@ -87,26 +94,28 @@ abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    private fun emitter() = if (emitterClass != null) {
-        val clazz = getClassLoader(project).loadClass(emitterClass) ?: error("No class found: $emitterClass")
-        val constructor = clazz.constructors.first() ?: error("No constructor found: $emitterClass")
-        val args: List<Any> = constructor.parameters
-            .map {
-                when (it.type) {
-                    PackageName::class.java -> PackageName(packageName)
-                    EmitShared::class.java -> EmitShared(shared)
-                    else -> error("Cannot map constructor parameter: $emitterClass - ${it.type.simpleName}")
+    private val emitter
+        get() = try {
+            val clazz = getClassLoader(project).loadClass(emitterClass)
+            val constructor = clazz.constructors.first()
+            val args: List<Any> = constructor.parameters
+                .map {
+                    when (it.type) {
+                        PackageName::class.java -> PackageName(packageName)
+                        EmitShared::class.java -> EmitShared(shared)
+                        else -> error("Cannot map constructor parameter")
+                    }
                 }
-            }
-        constructor.newInstance(*args.toTypedArray()) as Emitter
-    } else {
-        null
-    }
+            constructor.newInstance(*args.toTypedArray()) as Emitter
+        } catch (e: Exception) {
+            logger.debug(e.toString())
+            null
+        }
 
     val emitters
         get() = languages
-            .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-            .plus(emitter())
+            .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
+            .plus(emitter)
             .mapNotNull { it }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguageOrEmitter()
