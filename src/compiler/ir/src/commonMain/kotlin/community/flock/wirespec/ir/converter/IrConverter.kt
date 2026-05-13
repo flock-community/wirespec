@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.converter
 
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
@@ -45,7 +46,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Field as FieldWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
-import community.flock.wirespec.compiler.core.parse.ast.Shared as SharedWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionWirespec
 import community.flock.wirespec.ir.core.Constraint as LanguageConstraint
@@ -59,8 +59,8 @@ fun DefinitionWirespec.convert(): File = when (this) {
     is EndpointWirespec -> convert()
 }
 
-fun SharedWirespec.convert(): File = file("Wirespec") {
-    `package`(packageString)
+fun PackageName.convert(): File = file("Wirespec") {
+    `package`(value)
 
     namespace("Wirespec") {
         `interface`("Model") {
@@ -207,7 +207,7 @@ fun SharedWirespec.convert(): File = file("Wirespec") {
     }
 }
 
-fun SharedWirespec.convertClientServer(): List<Element> = listOf(
+fun PackageName.convertClientServer(): List<Element> = listOf(
     `interface`("PathSegment", isSealed = true),
     struct("Literal") {
         implements(type("PathSegment"))
@@ -459,11 +459,11 @@ fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation
                                 elementIsNullable = inner.isNullable,
                             ),
                         )
-                        else -> {} // skip
+                        else -> {}
                     }
                 }
             }
-            else -> {} // Primitive, Dict, Unit, Any - skip
+            else -> {}
         }
     }
 }

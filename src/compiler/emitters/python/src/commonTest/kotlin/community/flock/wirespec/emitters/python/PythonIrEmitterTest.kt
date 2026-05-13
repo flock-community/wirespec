@@ -1,5 +1,6 @@
 package community.flock.wirespec.emitters.python
 
+import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
@@ -9,6 +10,7 @@ import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.ir.core.RawElement
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -1098,7 +1100,7 @@ class PythonIrEmitterTest {
             |
         """.trimMargin()
 
-        val emitter = PythonIrEmitter()
-        emitter.shared.source shouldBe expected
+        val emitter = PythonIrEmitter(emitShared = EmitShared(true))
+        emitter.emitShared()?.elements?.filterIsInstance<RawElement>()?.joinToString("") { it.code } shouldBe expected
     }
 }

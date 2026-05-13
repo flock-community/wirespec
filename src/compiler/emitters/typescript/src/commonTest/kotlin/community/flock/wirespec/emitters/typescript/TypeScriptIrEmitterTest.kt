@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -726,6 +727,6 @@ class TypeScriptIrEmitterTest {
         """.trimMargin()
 
         val emitter = TypeScriptIrEmitter()
-        emitter.shared.source shouldBe expected
+        emitter.emitShared()?.let(TypeScriptGenerator::generate) shouldBe expected
     }
 }

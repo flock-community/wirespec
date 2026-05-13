@@ -2,9 +2,8 @@ package community.flock.wirespec.example.maven.custom.app.todo;
 
 import community.flock.wirespec.generated.java.model.Todo;
 import community.flock.wirespec.generated.java.model.TodoId;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TodoService {

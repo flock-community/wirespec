@@ -8,10 +8,6 @@ sealed interface Definition :
     val identifier: Identifier
 }
 
-data class Shared(
-    val packageString: String,
-) : Node
-
 data class Field(
     override val annotations: List<Annotation>,
     val identifier: FieldIdentifier,

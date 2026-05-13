@@ -5,19 +5,9 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.transformer.SanitizationConfig
-import community.flock.wirespec.ir.transformer.injectSelfReceiverToValidate
-import community.flock.wirespec.ir.transformer.sanitizeEnumEntries
-import community.flock.wirespec.ir.transformer.sanitizeFieldName
-import community.flock.wirespec.ir.transformer.sanitizeNames
-import community.flock.wirespec.ir.transformer.sortKey
-import community.flock.wirespec.ir.emit.placeInModule
-import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
@@ -34,36 +24,31 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
-import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Field
-import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Parameter
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.flattenNestedStructs
-import community.flock.wirespec.ir.core.function
+import community.flock.wirespec.ir.core.Package
+import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.import
+import community.flock.wirespec.ir.core.plus
+import community.flock.wirespec.ir.core.raw
+import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.emit.placeInModule
+import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.PythonGenerator
-import community.flock.wirespec.ir.generator.generatePython
-import community.flock.wirespec.compiler.core.parse.ast.Shared as AstShared
-import community.flock.wirespec.ir.core.Enum as LanguageEnum
-import community.flock.wirespec.ir.core.Function as LanguageFunction
-import community.flock.wirespec.ir.core.File as LanguageFile
+import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.injectSelfReceiverToValidate
+import community.flock.wirespec.ir.transformer.sanitizeEnumEntries
+import community.flock.wirespec.ir.transformer.sanitizeFieldName
+import community.flock.wirespec.ir.transformer.sanitizeNames
+import community.flock.wirespec.ir.transformer.sortKey
 import community.flock.wirespec.ir.core.Type as LanguageType
-import community.flock.wirespec.ir.core.Union as LanguageUnion
 
 open class PythonIrEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -92,6 +77,7 @@ open class PythonIrEmitter(
                             .map { (k, v) -> sanitizationConfig.sanitizeFieldName(k) to tr.transformExpression(v) }
                             .toMap(),
                     )
+
                     else -> stmt.transformChildren(tr)
                 }
             },
@@ -116,29 +102,32 @@ open class PythonIrEmitter(
     """.trimMargin()
 
     private val pathSegmentStructs: List<Element> = listOf(
-        Struct(
-            name = Name.of("Literal"),
-            fields = listOf(Field(Name.of("value"), LanguageType.String)),
-        ),
-        Struct(
-            name = Name.of("Param"),
-            fields = listOf(
-                Field(Name.of("name"), LanguageType.String),
-                Field(Name.of("type"), LanguageType.Custom("Type", listOf(LanguageType.Any))),
-            ),
-        ),
+        struct("Literal") {
+            field("value", string)
+        },
+        struct("Param") {
+            field("name", string)
+            field("type", type("Type", LanguageType.Any))
+        },
     )
 
-    override val shared = object : Shared {
-        override val packageString = "shared"
-        override val source = sharedSource + AstShared(packageString).convert()
+    override fun emitShared(): File? {
+
+        val source = PackageName("shared").convert()
             .transform {
                 injectAfter { namespace: Namespace ->
-                    if (namespace.name == Name.of("Wirespec")) pathSegmentStructs
-                    else emptyList()
+                    if (namespace.name == Name.of("Wirespec")) pathSegmentStructs else emptyList()
                 }
             }
-            .generatePython()
+
+        return if (emitShared.value) {
+            File(
+                Name.of(packageName.toDir() + "wirespec"),
+                listOf(raw(sharedSource + PythonGenerator.generate(source)))
+            )
+        } else {
+            null
+        }
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
@@ -168,7 +157,6 @@ open class PythonIrEmitter(
         val initClient = if (hasEndpoints) listOf(
             File(Name.of(packageName.toDir() + "client/" + "__init__"), emptyList())
         ) else emptyList()
-        val shared = File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(shared.source)))
         val parentInits = packageName.value.split(".")
             .dropLast(1)
             .runningFold("") { acc, segment -> if (acc.isEmpty()) segment else "$acc/$segment" }
@@ -176,7 +164,7 @@ open class PythonIrEmitter(
             .map { File(Name.of("$it/__init__"), emptyList()) }
 
         return if (emitShared.value)
-            emitted + init + initEndpoint + initModel + initClient + shared + parentInits
+            emitted + init + initEndpoint + initModel + initClient + parentInits
         else
             emitted + init + parentInits
     }
@@ -263,9 +251,9 @@ open class PythonIrEmitter(
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
             elements = buildImports("..wirespec") +
-                modelImports +
-                listOf(endpointImport) +
-                file.elements
+                    modelImports +
+                    listOf(endpointImport) +
+                    file.elements
         )
     }
 
@@ -273,7 +261,8 @@ open class PythonIrEmitter(
         val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
             .map { import(".model.${it.value}", it.value) }
         val endpointImports = endpoints.map { import(".endpoint.${it.identifier.value}", "*") }
-        val clientImports = endpoints.map { import(".client.${it.identifier.value}Client", "${it.identifier.value}Client") }
+        val clientImports =
+            endpoints.map { import(".client.${it.identifier.value}Client", "${it.identifier.value}Client") }
         val allImports = modelImports + endpointImports + clientImports
         val endpointNames = endpoints.map { it.identifier.value }
 
@@ -286,8 +275,8 @@ open class PythonIrEmitter(
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
             elements = buildImports(".wirespec") +
-                allImports +
-                file.elements
+                    allImports +
+                    file.elements
         )
     }
 

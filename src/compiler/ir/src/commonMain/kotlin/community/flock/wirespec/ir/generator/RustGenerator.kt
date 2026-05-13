@@ -59,17 +59,9 @@ object RustGenerator : Generator {
         else -> File(Name.of(""), listOf(element)).emit(0)
     }
 
-    private fun String.indentCode(level: Int): String {
-        if (level <= 0) return this
-        val prefix = " ".repeat(level * 4)
-        return this.lines().joinToString("\n") { line ->
-            if (line.isEmpty()) line else prefix + line
-        }
-    }
+    private fun String.indentCode(level: Int): String = indentLines(level, width = 4)
 
-    private fun File.emit(indent: Int): String = elements.joinToString("") { it.emit(indent) }.removeEmptyLines()
-
-    private fun String.removeEmptyLines(): String = lines().filterNot(String::isEmpty).joinToString("\n", postfix = "\n")
+    private fun File.emit(indent: Int): String = elements.joinToString("") { it.emit(indent) }.compact()
 
     private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false): String = when (this) {
         is Package -> emit(indent)
@@ -121,17 +113,18 @@ object RustGenerator : Generator {
 
     private fun Interface.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val rustName = name.pascalCase()
-        val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
-        val extStr = if (extends.isNotEmpty()) ": ${extends.joinToString(" + ") { it.emit() }}" else ""
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
+        val extStr = extends.joinNonEmpty(" + ", ": ") { it.emit() }
         val fieldsContent = fields.joinToString("") { field ->
             "fn ${field.name.snakeCase().sanitize()}(&self) -> ${field.type.emit()};\n".indentCode(1)
         }
         val elementsContent = elements.joinToString("") { it.emit(1, parents = parents + this, isStaticScope = false) }
         val content = fieldsContent + elementsContent
+        val signature = "pub trait $rustName$typeParamsStr$extStr"
         return if (content.isEmpty()) {
-            "pub trait $rustName$typeParamsStr$extStr {}\n\n".indentCode(indent)
+            "$signature {}\n\n".indentCode(indent)
         } else {
-            "pub trait $rustName$typeParamsStr$extStr {\n$content}\n\n".indentCode(indent)
+            "$signature {\n$content}\n\n".indentCode(indent)
         }
     }
 

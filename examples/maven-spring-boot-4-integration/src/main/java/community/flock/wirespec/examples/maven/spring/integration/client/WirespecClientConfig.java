@@ -7,8 +7,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WirespecClientConfig {
 
-  @Bean("wirespecSpringWebClient")
-  public WebClient webClient() {
-    return WebClient.builder().baseUrl("http://localhost:8080").build();
-  }
+    @Bean("wirespecSpringWebClient")
+    public WebClient webClient() {
+        return WebClient.builder().baseUrl("http://localhost:8080").build();
+    }
 }

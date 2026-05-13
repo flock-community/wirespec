@@ -12,11 +12,11 @@ public class UserConverter implements Converter<User, UserDto> {
     public User internalize(final UserDto userDto) {
         return switch (userDto.authentication()) {
             case AuthenticationPassword password -> new User(userDto.name(), password.secret());
-            case AuthenticationToken token -> throw new UnsupportedOperationException("Token authentication not yet supported.");
+            case AuthenticationToken token ->
+                throw new UnsupportedOperationException("Token authentication not yet supported.");
             case null -> throw new IllegalStateException("Authentication cannot be null");
         };
     }
-
 
     @Override
     public UserDto externalize(final User user) {

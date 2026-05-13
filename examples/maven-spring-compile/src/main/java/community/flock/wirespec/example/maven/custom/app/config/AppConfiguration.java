@@ -10,8 +10,6 @@ public class AppConfiguration {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplateBuilder()
-                .rootUri("http://localhost:8080")
-                .build();
+        return new RestTemplateBuilder().rootUri("http://localhost:8080").build();
     }
 }

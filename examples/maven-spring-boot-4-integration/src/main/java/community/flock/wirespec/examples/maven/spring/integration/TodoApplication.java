@@ -7,7 +7,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @EnableWirespec
 public class TodoApplication {
-    public static void main(String[] args) {
+
+    private TodoApplication() {
+        // Utility class: instantiated only by the Spring container via reflection.
+    }
+
+    public static void main(String... args) {
         SpringApplication.run(TodoApplication.class, args);
     }
 }

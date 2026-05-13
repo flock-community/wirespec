@@ -1,4 +1,3 @@
 package community.flock.wirespec.example.maven.custom.app.user;
 
-public record User(String name, String password) {
-}
+public record User(String name, String password) {}

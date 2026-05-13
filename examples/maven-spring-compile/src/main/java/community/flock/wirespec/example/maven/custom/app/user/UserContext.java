@@ -4,8 +4,7 @@ import java.util.List;
 
 public interface UserContext extends UserAdapter.Module {
     class Service {
-        private Service() {
-        }
+        private Service() {}
 
         public static List<User> getAllUsers(final UserContext ctx, final String name) {
             return ctx.userAdapter().getAllUsers(name);
@@ -25,7 +24,6 @@ public interface UserContext extends UserAdapter.Module {
 
         public static void uploadImageByName(final UserContext ctx, final String name, final byte[] bytes) {
             ctx.userAdapter().uploadImage(name, bytes);
-
         }
     }
 }
