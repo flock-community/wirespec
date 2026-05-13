@@ -257,7 +257,6 @@ class KotlinIrEmitterTest {
             |      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
             |        override val pathTemplate = "/todos/{id}"
             |        override val method = "PUT"
-            |        override val pathSegments: List<Wirespec.PathSegment> = listOf(Wirespec.Literal("todos"), Wirespec.Param("id", typeOf<String>()))
             |        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
             |          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
             |          override fun to(response: Response<*>) = toRawResponse(serialization, response)
@@ -475,7 +474,6 @@ class KotlinIrEmitterTest {
             |      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
             |        override val pathTemplate = "/todos"
             |        override val method = "GET"
-            |        override val pathSegments: List<Wirespec.PathSegment> = listOf(Wirespec.Literal("todos"))
             |        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
             |          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
             |          override fun to(response: Response<*>) = toRawResponse(serialization, response)

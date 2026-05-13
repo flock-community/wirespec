@@ -4,7 +4,6 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
@@ -31,17 +30,10 @@ private fun buildCompanionObject(endpoint: Endpoint): RawElement {
             is Endpoint.Segment.Param -> "{${it.identifier.value}}"
         }
     }
-    val pathSegmentsCode = endpoint.path.joinToString(", ") { segment ->
-        when (segment) {
-            is Endpoint.Segment.Literal -> """Wirespec.Literal("${segment.value}")"""
-            is Endpoint.Segment.Param -> """Wirespec.Param("${segment.identifier.value}", typeOf<${segment.reference.toKotlinTypeName()}>())"""
-        }
-    }
     return """
         |companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
         |  override val pathTemplate = "$pathTemplate"
         |  override val method = "${endpoint.method}"
-        |  override val pathSegments: List<Wirespec.PathSegment> = listOf($pathSegmentsCode)
         |  override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         |    override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
         |    override fun to(response: Response<*>) = toRawResponse(serialization, response)
@@ -52,22 +44,4 @@ private fun buildCompanionObject(endpoint: Endpoint): RawElement {
         |  }
         |}
     """.trimMargin().let(::raw)
-}
-
-private fun Reference.toKotlinTypeName(): String {
-    val base = when (this) {
-        is Reference.Primitive -> when (val t = type) {
-            is Reference.Primitive.Type.String -> "String"
-            is Reference.Primitive.Type.Integer -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Int" else "Long"
-            is Reference.Primitive.Type.Number -> if (t.precision == Reference.Primitive.Type.Precision.P32) "Float" else "Double"
-            Reference.Primitive.Type.Boolean -> "Boolean"
-            Reference.Primitive.Type.Bytes -> "ByteArray"
-        }
-        is Reference.Custom -> value
-        is Reference.Iterable -> "List<${reference.toKotlinTypeName()}>"
-        is Reference.Dict -> "Map<String, ${reference.toKotlinTypeName()}>"
-        is Reference.Any -> "Any"
-        is Reference.Unit -> "Unit"
-    }
-    return if (isNullable) "$base?" else base
 }
