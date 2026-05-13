@@ -150,16 +150,6 @@ open class RustIrEmitter(
                 type Res;
                 fn path_template(&self) -> &'static str;
                 fn method(&self) -> Method;
-                fn path_segments(&self) -> Vec<PathSegment>;
-            }
-            """.trimIndent()
-        )
-
-        val pathSegment = RawElement(
-            """
-            pub enum PathSegment {
-                Literal { value: &'static str },
-                Param { name: &'static str, type_id: TypeId },
             }
             """.trimIndent()
         )
@@ -269,7 +259,7 @@ open class RustIrEmitter(
                             name in rawElementInterfaces -> listOf(rawElementInterfaces[name]!!)
                             else -> listOf(element)
                         }
-                    } + client + server + pathSegment
+                    } + client + server
                     file.copy(elements = newElements)
                 }
             }

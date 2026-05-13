@@ -255,12 +255,6 @@ private fun Endpoint.generateApiStructCode(): String {
         }
     }.let { "/$it" }
     val methodName = method.name
-    val pathSegmentsCode = path.joinToString(", ") { segment ->
-        when (segment) {
-            is Endpoint.Segment.Literal -> """PathSegment::Literal { value: "${segment.value}" }"""
-            is Endpoint.Segment.Param -> """PathSegment::Param { name: "${segment.identifier.value}", type_id: TypeId::of::<${segment.reference.toRustTypeName()}>() }"""
-        }
-    }
     return """
         pub struct Api;
         impl Server for Api {
@@ -268,24 +262,8 @@ private fun Endpoint.generateApiStructCode(): String {
             type Res = Response;
             fn path_template(&self) -> &'static str { "$pathTemplate" }
             fn method(&self) -> Method { Method::$methodName }
-            fn path_segments(&self) -> Vec<PathSegment> { vec![$pathSegmentsCode] }
         }
     """.trimIndent()
-}
-
-private fun Reference.toRustTypeName(): String = when (this) {
-    is Reference.Primitive -> when (val t = type) {
-        is Reference.Primitive.Type.String -> "String"
-        is Reference.Primitive.Type.Integer -> if (t.precision == Reference.Primitive.Type.Precision.P32) "i32" else "i64"
-        is Reference.Primitive.Type.Number -> if (t.precision == Reference.Primitive.Type.Precision.P32) "f32" else "f64"
-        Reference.Primitive.Type.Boolean -> "bool"
-        is Reference.Primitive.Type.Bytes -> "Vec<u8>"
-    }
-    is Reference.Custom -> value
-    is Reference.Iterable -> "Vec<${reference.toRustTypeName()}>"
-    is Reference.Dict -> "std::collections::HashMap<String, ${reference.toRustTypeName()}>"
-    is Reference.Any -> "dyn std::any::Any"
-    is Reference.Unit -> "()"
 }
 
 private fun String.toRustSnakeCase(): String = Name.of(this).snakeCase()
