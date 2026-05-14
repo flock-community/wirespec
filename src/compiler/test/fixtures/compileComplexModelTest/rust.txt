@@ -1,0 +1,125 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Email {
+    pub value: String,
+}
+impl Email {
+    pub fn validate(&self) -> bool {
+        return regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap().is_match(&self.value);
+    }
+    pub fn to_string(&self) -> String {
+        return self.value.clone();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct PhoneNumber {
+    pub value: String,
+}
+impl PhoneNumber {
+    pub fn validate(&self) -> bool {
+        return regex::Regex::new(r"^\+[1-9]\d{1,14}$").unwrap().is_match(&self.value);
+    }
+    pub fn to_string(&self) -> String {
+        return self.value.clone();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Tag {
+    pub value: String,
+}
+impl Tag {
+    pub fn validate(&self) -> bool {
+        return regex::Regex::new(r"^[a-z][a-z0-9-]{0,19}$").unwrap().is_match(&self.value);
+    }
+    pub fn to_string(&self) -> String {
+        return self.value.clone();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct EmployeeAge {
+    pub value: i64,
+}
+impl EmployeeAge {
+    pub fn validate(&self) -> bool {
+        return 18 <= self.value && self.value <= 65;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::email::Email;
+use super::phone_number::PhoneNumber;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ContactInfo {
+    pub email: Email,
+    pub phone: Option<PhoneNumber>,
+}
+impl ContactInfo {
+    pub fn validate(&self) -> Vec<String> {
+        return vec![if !self.email.validate() { vec![String::from("email")] } else { Vec::<String>::new() }.as_slice(), self.phone.as_ref().map(|it| if !it.validate() { vec![String::from("phone")] } else { Vec::<String>::new() }).unwrap_or(Vec::<String>::new()).as_slice()].concat();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::employee_age::EmployeeAge;
+use super::contact_info::ContactInfo;
+use super::tag::Tag;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Employee {
+    pub name: String,
+    pub age: EmployeeAge,
+    pub contact_info: ContactInfo,
+    pub tags: Vec<Tag>,
+}
+impl Employee {
+    pub fn validate(&self) -> Vec<String> {
+        return vec![if !self.age.validate() { vec![String::from("age")] } else { Vec::<String>::new() }.as_slice(), self.contact_info.validate().iter().map(|e| format!("contactInfo.{}", e)).collect::<Vec<_>>().as_slice(), self.tags.iter().enumerate().flat_map(|(i, el)| if !el.validate() { vec![format!("tags[{}]", i)] } else { Vec::<String>::new() }).collect::<Vec<_>>().as_slice()].concat();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::employee::Employee;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Department {
+    pub name: String,
+    pub employees: Vec<Employee>,
+}
+impl Department {
+    pub fn validate(&self) -> Vec<String> {
+        return self.employees.iter().enumerate().flat_map(|(i, el)| el.validate().iter().map(|e| format!("employees[{}].{}", i, e)).collect::<Vec<_>>()).collect::<Vec<_>>();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::department::Department;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Company {
+    pub name: String,
+    pub departments: Vec<Department>,
+}
+impl Company {
+    pub fn validate(&self) -> Vec<String> {
+        return self.departments.iter().enumerate().flat_map(|(i, el)| el.validate().iter().map(|e| format!("departments[{}].{}", i, e)).collect::<Vec<_>>()).collect::<Vec<_>>();
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

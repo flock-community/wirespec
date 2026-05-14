@@ -1,0 +1,4 @@
+package community.flock.wirespec.generated.channel
+interface Queue : Wirespec.Channel {
+  fun invoke(message: String)
+}

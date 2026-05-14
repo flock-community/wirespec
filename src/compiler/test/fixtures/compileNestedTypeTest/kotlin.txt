@@ -1,0 +1,35 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class DutchPostalCode(
+  override val value: String
+) : Wirespec.Refined<String> {
+  override fun validate(): Boolean =
+    Regex(${"\"\"\""}^([0-9]{4}[A-Z]{2})$${"\"\"\""}).matches(value)
+  override fun toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Address(
+  val street: String,
+  val houseNumber: Long,
+  val postalCode: DutchPostalCode
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    if (!postalCode.validate()) listOf("postalCode") else emptyList<String>()
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Person(
+  val name: String,
+  val address: Address,
+  val tags: List<String>
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    address.validate().map { e -> "address.${e}" }
+}

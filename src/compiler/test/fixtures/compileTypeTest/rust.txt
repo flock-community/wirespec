@@ -1,0 +1,21 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Request {
+    pub r#type: String,
+    pub url: String,
+    pub body_type: Option<String>,
+    pub params: Vec<String>,
+    pub headers: std::collections::HashMap<String, String>,
+    pub body: Option<std::collections::HashMap<String, Option<Vec<Option<String>>>>>,
+}
+impl Request {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

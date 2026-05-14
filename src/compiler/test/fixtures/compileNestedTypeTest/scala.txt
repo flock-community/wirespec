@@ -1,0 +1,35 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class DutchPostalCode(
+  override val value: String
+) extends Wirespec.Refined[String] {
+  override def validate(): Boolean =
+    ${"\"\"\""}^([0-9]{4}[A-Z]{2})$${"\"\"\""}.r.findFirstIn(value).isDefined
+  override def toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class Address(
+  val street: String,
+  val houseNumber: Long,
+  val postalCode: DutchPostalCode
+) extends Wirespec.Model {
+  override def validate(): List[String] =
+    if (!postalCode.validate()) List("postalCode") else List.empty[String]
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class Person(
+  val name: String,
+  val address: Address,
+  val tags: List[String]
+) extends Wirespec.Model {
+  override def validate(): List[String] =
+    address.validate().map(e => s"address.${e}")
+}

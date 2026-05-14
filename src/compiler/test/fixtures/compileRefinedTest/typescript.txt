@@ -1,0 +1,60 @@
+import {Wirespec} from '../Wirespec'
+export type TodoId = string;
+export const validateTodoId = (value: string) =>
+  /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g.test(value);
+
+import {Wirespec} from '../Wirespec'
+export type TodoNoRegex = string;
+export const validateTodoNoRegex = (value: string) =>
+  true;
+
+import {Wirespec} from '../Wirespec'
+export type TestInt = number;
+export const validateTestInt = (value: number) =>
+  true;
+
+import {Wirespec} from '../Wirespec'
+export type TestInt0 = number;
+export const validateTestInt0 = (value: number) =>
+  true;
+
+import {Wirespec} from '../Wirespec'
+export type TestInt1 = number;
+export const validateTestInt1 = (value: number) =>
+  0 <= value;
+
+import {Wirespec} from '../Wirespec'
+export type TestInt2 = number;
+export const validateTestInt2 = (value: number) =>
+  1 <= value && value <= 3;
+
+import {Wirespec} from '../Wirespec'
+export type TestNum = number;
+export const validateTestNum = (value: number) =>
+  true;
+
+import {Wirespec} from '../Wirespec'
+export type TestNum0 = number;
+export const validateTestNum0 = (value: number) =>
+  true;
+
+import {Wirespec} from '../Wirespec'
+export type TestNum1 = number;
+export const validateTestNum1 = (value: number) =>
+  value <= 0.5;
+
+import {Wirespec} from '../Wirespec'
+export type TestNum2 = number;
+export const validateTestNum2 = (value: number) =>
+  -0.2 <= value && value <= 0.5;
+
+export {TodoId} from './TodoId'
+export {TodoNoRegex} from './TodoNoRegex'
+export {TestInt} from './TestInt'
+export {TestInt0} from './TestInt0'
+export {TestInt1} from './TestInt1'
+export {TestInt2} from './TestInt2'
+export {TestNum} from './TestNum'
+export {TestNum0} from './TestNum0'
+export {TestNum1} from './TestNum1'
+export {TestNum2} from './TestNum2'

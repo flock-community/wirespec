@@ -1,0 +1,10 @@
+package community.flock.wirespec.generated.model
+case class Todo(
+  val name: String,
+  val description: Option[String],
+  val notes: List[String],
+  val done: Boolean
+) extends Wirespec.Model {
+  override def validate(): List[String] =
+    List.empty[String]
+}

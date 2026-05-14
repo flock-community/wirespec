@@ -1,0 +1,80 @@
+import {Wirespec} from '../Wirespec'
+export type Email = string;
+export const validateEmail = (value: string) =>
+  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/g.test(value);
+
+import {Wirespec} from '../Wirespec'
+export type PhoneNumber = string;
+export const validatePhoneNumber = (value: string) =>
+  /^\+[1-9]\d{1,14}$/g.test(value);
+
+import {Wirespec} from '../Wirespec'
+export type Tag = string;
+export const validateTag = (value: string) =>
+  /^[a-z][a-z0-9-]{0,19}$/g.test(value);
+
+import {Wirespec} from '../Wirespec'
+export type EmployeeAge = number;
+export const validateEmployeeAge = (value: number) =>
+  18 <= value && value <= 65;
+
+import {Wirespec} from '../Wirespec'
+import {Email} from './Email'
+import {PhoneNumber} from './PhoneNumber'
+import {validateEmail} from './Email'
+import {validatePhoneNumber} from './PhoneNumber'
+export type ContactInfo = {
+  "email": Email,
+  "phone": PhoneNumber | undefined,
+}
+export function validateContactInfo(obj: ContactInfo): string[] {
+  return [...(!validateEmail(obj.email) ? ['email'] : [] as string[]), ...obj.phone != null ? (!validatePhoneNumber(obj.phone) ? ['phone'] : [] as string[]) : [] as string[]];
+}
+
+import {Wirespec} from '../Wirespec'
+import {EmployeeAge} from './EmployeeAge'
+import {ContactInfo} from './ContactInfo'
+import {Tag} from './Tag'
+import {validateEmployeeAge} from './EmployeeAge'
+import {validateContactInfo} from './ContactInfo'
+import {validateTag} from './Tag'
+export type Employee = {
+  "name": string,
+  "age": EmployeeAge,
+  "contactInfo": ContactInfo,
+  "tags": Tag[],
+}
+export function validateEmployee(obj: Employee): string[] {
+  return [...(!validateEmployeeAge(obj.age) ? ['age'] : [] as string[]), ...validateContactInfo(obj.contactInfo).map(e => `contactInfo.${e}`), ...obj.tags.flatMap((el, i) => (!validateTag(el) ? [`tags[${i}]`] : [] as string[]))];
+}
+
+import {Wirespec} from '../Wirespec'
+import {Employee} from './Employee'
+import {validateEmployee} from './Employee'
+export type Department = {
+  "name": string,
+  "employees": Employee[],
+}
+export function validateDepartment(obj: Department): string[] {
+  return obj.employees.flatMap((el, i) => validateEmployee(el).map(e => `employees[${i}].${e}`));
+}
+
+import {Wirespec} from '../Wirespec'
+import {Department} from './Department'
+import {validateDepartment} from './Department'
+export type Company = {
+  "name": string,
+  "departments": Department[],
+}
+export function validateCompany(obj: Company): string[] {
+  return obj.departments.flatMap((el, i) => validateDepartment(el).map(e => `departments[${i}].${e}`));
+}
+
+export {Email} from './Email'
+export {PhoneNumber} from './PhoneNumber'
+export {Tag} from './Tag'
+export {EmployeeAge} from './EmployeeAge'
+export {ContactInfo} from './ContactInfo'
+export {Employee} from './Employee'
+export {Department} from './Department'
+export {Company} from './Company'

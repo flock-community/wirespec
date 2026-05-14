@@ -1,0 +1,154 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TodoId {
+    pub value: String,
+}
+impl TodoId {
+    pub fn validate(&self) -> bool {
+        return regex::Regex::new(r"^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$").unwrap().is_match(&self.value);
+    }
+    pub fn to_string(&self) -> String {
+        return self.value.clone();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TodoNoRegex {
+    pub value: String,
+}
+impl TodoNoRegex {
+    pub fn validate(&self) -> bool {
+        return true;
+    }
+    pub fn to_string(&self) -> String {
+        return self.value.clone();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestInt {
+    pub value: i64,
+}
+impl TestInt {
+    pub fn validate(&self) -> bool {
+        return true;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestInt0 {
+    pub value: i64,
+}
+impl TestInt0 {
+    pub fn validate(&self) -> bool {
+        return true;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestInt1 {
+    pub value: i64,
+}
+impl TestInt1 {
+    pub fn validate(&self) -> bool {
+        return 0 <= self.value;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestInt2 {
+    pub value: i64,
+}
+impl TestInt2 {
+    pub fn validate(&self) -> bool {
+        return 1 <= self.value && self.value <= 3;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestNum {
+    pub value: f64,
+}
+impl TestNum {
+    pub fn validate(&self) -> bool {
+        return true;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestNum0 {
+    pub value: f64,
+}
+impl TestNum0 {
+    pub fn validate(&self) -> bool {
+        return true;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestNum1 {
+    pub value: f64,
+}
+impl TestNum1 {
+    pub fn validate(&self) -> bool {
+        return self.value <= 0.5;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TestNum2 {
+    pub value: f64,
+}
+impl TestNum2 {
+    pub fn validate(&self) -> bool {
+        return -0.2 <= self.value && self.value <= 0.5;
+    }
+    pub fn to_string(&self) -> String {
+        return format!("{}", self.value);
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

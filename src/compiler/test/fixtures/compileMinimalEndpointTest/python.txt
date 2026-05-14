@@ -1,0 +1,140 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TodoDto(Wirespec.Model):
+    description: str
+    def validate(self) -> list[str]:
+        return []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.TodoDto import TodoDto
+@dataclass
+class Path(Wirespec.Path):
+    pass
+@dataclass
+class Queries(Wirespec.Queries):
+    pass
+@dataclass
+class RequestHeaders(Wirespec.Request.Headers):
+    pass
+@dataclass
+class Request(Wirespec.Request[None]):
+    path: Path
+    method: Wirespec.Method
+    queries: Queries
+    headers: RequestHeaders
+    body: None
+    def __init__(self):
+        self.path = Path()
+        self.method = Wirespec.Method.GET
+        self.queries = Queries()
+        self.headers = RequestHeaders()
+        self.body = None
+class Response(Wirespec.Response[T], Generic[T]):
+    pass
+class Response2XX(Response[T], Generic[T]):
+    pass
+class ResponseListTodoDto(Response[list[TodoDto]]):
+    pass
+@dataclass
+class Response200Headers(Wirespec.Response.Headers):
+    pass
+@dataclass
+class Response200(Response2XX[list[TodoDto]], ResponseListTodoDto):
+    status: int
+    headers: Response200Headers
+    body: list[TodoDto]
+    def __init__(
+        self,
+        body: list[TodoDto],
+    ):
+        self.status = 200
+        self.headers = Response200Headers()
+        self.body = body
+class GetTodos(Wirespec.Endpoint):
+    @staticmethod
+    def toRawRequest(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
+        return Wirespec.RawRequest(method=request.method.value, path=['todos'], queries={}, headers={}, body=None)
+    @staticmethod
+    def fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> Request:
+        return Request()
+    @staticmethod
+    def toRawResponse(serialization: Wirespec.Serializer, response: Response[Any]) -> Wirespec.RawResponse:
+        match response:
+            case Response200() as r:
+                return Wirespec.RawResponse(statusCode=r.status, headers={}, body=serialization.serializeBody(r.body, list[TodoDto]))
+            case _:
+                raise Exception(('Cannot match response with status: ' + str(response.status)))
+    @staticmethod
+    def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> Response[Any]:
+        match response.statusCode:
+            case 200:
+                return Response200(body=serialization.deserializeBody(response.body, list[TodoDto]) if response.body is not None else _raise('body is null'))
+            case _:
+                raise Exception(('Cannot match response with status: ' + str(response.statusCode)))
+    class Handler(Wirespec.Handler, ABC):
+        @abstractmethod
+        async def get_todos(self, request: Request) -> Response[Any]:
+            ...
+    class Call(Wirespec.Call, ABC):
+        @abstractmethod
+        async def get_todos(self) -> Response[Any]:
+            ...
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.TodoDto import TodoDto
+from ..endpoint.GetTodos import *
+@dataclass
+class GetTodosClient(GetTodos.Call):
+    serialization: Wirespec.Serialization
+    transportation: Wirespec.Transportation
+    async def get_todos(self) -> Response[Any]:
+        request = Request()
+        rawRequest = GetTodos.toRawRequest(serialization=self.serialization, request=request)
+        rawResponse = await self.transportation.transport(rawRequest)
+        return GetTodos.fromRawResponse(serialization=self.serialization, response=rawResponse)
+
+from . import model
+from . import endpoint
+from . import client
+from . import wirespec
+
+
+
+
+
+
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from .wirespec import T, Wirespec, _raise
+from .model.TodoDto import TodoDto
+from .endpoint.GetTodos import *
+from .client.GetTodosClient import GetTodosClient
+@dataclass
+class Client(GetTodos.Call):
+    serialization: Wirespec.Serialization
+    transportation: Wirespec.Transportation
+    async def get_todos(self) -> Response[Any]:
+        return await GetTodosClient(serialization=self.serialization, transportation=self.transportation).get_todos()

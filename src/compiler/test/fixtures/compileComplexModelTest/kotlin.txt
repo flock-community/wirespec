@@ -1,0 +1,93 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Email(
+  override val value: String
+) : Wirespec.Refined<String> {
+  override fun validate(): Boolean =
+    Regex(${"\"\"\""}^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$${"\"\"\""}).matches(value)
+  override fun toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class PhoneNumber(
+  override val value: String
+) : Wirespec.Refined<String> {
+  override fun validate(): Boolean =
+    Regex(${"\"\"\""}^\+[1-9]\d{1,14}$${"\"\"\""}).matches(value)
+  override fun toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Tag(
+  override val value: String
+) : Wirespec.Refined<String> {
+  override fun validate(): Boolean =
+    Regex(${"\"\"\""}^[a-z][a-z0-9-]{0,19}$${"\"\"\""}).matches(value)
+  override fun toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class EmployeeAge(
+  override val value: Long
+) : Wirespec.Refined<Long> {
+  override fun validate(): Boolean =
+    18 <= value && value <= 65
+  override fun toString(): String =
+    value.toString()
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class ContactInfo(
+  val email: Email,
+  val phone: PhoneNumber?
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    (if (!email.validate()) listOf("email") else emptyList<String>()) + (phone?.let { if (!it.validate()) listOf("phone") else emptyList<String>() } ?: emptyList<String>())
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Employee(
+  val name: String,
+  val age: EmployeeAge,
+  val contactInfo: ContactInfo,
+  val tags: List<Tag>
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    (if (!age.validate()) listOf("age") else emptyList<String>()) + contactInfo.validate().map { e -> "contactInfo.${e}" } + tags.flatMapIndexed { i, el -> if (!el.validate()) listOf("tags[${i}]") else emptyList<String>() }
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Department(
+  val name: String,
+  val employees: List<Employee>
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    employees.flatMapIndexed { i, el -> el.validate().map { e -> "employees[${i}].${e}" } }
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Company(
+  val name: String,
+  val departments: List<Department>
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    departments.flatMapIndexed { i, el -> el.validate().map { e -> "departments[${i}].${e}" } }
+}

@@ -1,0 +1,51 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct UserAccountPassword {
+    pub username: String,
+    pub password: String,
+}
+impl UserAccountPassword {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct UserAccountToken {
+    pub token: String,
+}
+impl UserAccountToken {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::user_account::UserAccount;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct User {
+    pub username: String,
+    pub account: UserAccount,
+}
+impl User {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, PartialEq)]
+pub enum UserAccount {
+    UserAccountPassword(UserAccountPassword),
+    UserAccountToken(UserAccountToken),
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;
