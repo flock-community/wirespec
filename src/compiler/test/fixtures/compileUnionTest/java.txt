@@ -1,0 +1,34 @@
+package community.flock.wirespec.generated.model;
+public sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
+
+package community.flock.wirespec.generated.model;
+public record UserAccountPassword (
+  String username,
+  String password
+) implements Wirespec.Model, UserAccount {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+public record UserAccountToken (
+  String token
+) implements Wirespec.Model, UserAccount {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+public record User (
+  String username,
+  UserAccount account
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};

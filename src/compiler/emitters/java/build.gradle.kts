@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+
 plugins {
     id("module.publication")
     id("module.spotless")
@@ -56,4 +58,94 @@ kotlin {
             }
         }
     }
+}
+
+// ---------- Emitter fixtures: shared `.txt` expectations + codegen + updater ----------
+//
+// Tests reference `EmitterFixtures.<testName>` constants. Those constants are
+// generated from the matching `<lang>.txt` files in :src:compiler:test/fixtures.
+// Run `./gradlew :src:compiler:emitters:java:updateEmitterFixtures` to regenerate
+// the .txt files by actually running the emitter against the shared fixture inputs.
+
+val emitterLanguage = "java"
+val emitterPackage = "community.flock.wirespec.emitters.java"
+val emitterUpdaterMainClass = "$emitterPackage.UpdateEmitterFixturesKt"
+
+val fixturesSourceDir = rootProject.layout.projectDirectory.dir("src/compiler/test/fixtures").asFile
+val generatedSourcesDir = layout.buildDirectory.dir("generated/emitterFixtures/commonTest/kotlin")
+
+fun escapeKotlinString(s: String): String = buildString(s.length + 16) {
+    for (ch in s) {
+        when (ch) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '$' -> append("\\\$")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> if (ch.code < 0x20) {
+                append("\\u")
+                append(ch.code.toString(16).padStart(4, '0'))
+            } else {
+                append(ch)
+            }
+        }
+    }
+}
+
+val generateEmitterFixtures = tasks.register("generateEmitterFixtures") {
+    description = "Generate Kotlin constants from $emitterLanguage fixture files."
+    group = "build"
+
+    inputs.dir(fixturesSourceDir).withPropertyName("fixtures").optional(true)
+    inputs.property("language", emitterLanguage)
+    inputs.property("package", emitterPackage)
+    outputs.dir(generatedSourcesDir).withPropertyName("generatedSources")
+
+    doLast {
+        val outFile = generatedSourcesDir.get().asFile
+            .resolve(emitterPackage.replace('.', '/'))
+            .resolve("EmitterFixtures.kt")
+        outFile.parentFile.mkdirs()
+
+        val sb = StringBuilder()
+        sb.appendLine("// AUTO-GENERATED — do not edit. Run `:updateEmitterFixtures` to refresh.")
+        sb.appendLine("@file:Suppress(\"ktlint\", \"MaxLineLength\")")
+        sb.appendLine("package $emitterPackage")
+        sb.appendLine()
+        sb.appendLine("internal object EmitterFixtures {")
+
+        val dirs = fixturesSourceDir.listFiles { f -> f.isDirectory }
+            ?.sortedBy { it.name }
+            .orEmpty()
+        for (dir in dirs) {
+            val file = dir.resolve("$emitterLanguage.txt")
+            if (!file.exists()) continue
+            val literal = escapeKotlinString(file.readText())
+            sb.appendLine("    val ${dir.name}: String = \"$literal\"")
+        }
+        sb.appendLine("}")
+        outFile.writeText(sb.toString())
+    }
+}
+
+extensions.configure<KotlinMultiplatformExtension> {
+    sourceSets.named("commonTest") {
+        kotlin.srcDir(generateEmitterFixtures)
+    }
+}
+
+tasks.register<JavaExec>("updateEmitterFixtures") {
+    description = "Run the $emitterLanguage emitter and overwrite the shared fixture files."
+    group = "verification"
+
+    val jvmTestCompilation = extensions.getByType<KotlinMultiplatformExtension>()
+        .targets.getByName("jvm").compilations.getByName("test")
+
+    classpath = jvmTestCompilation.runtimeDependencyFiles + jvmTestCompilation.output.allOutputs
+    mainClass.set(emitterUpdaterMainClass)
+    args(fixturesSourceDir.absolutePath)
+
+    dependsOn(jvmTestCompilation.compileTaskProvider)
+    outputs.upToDateWhen { false }
 }

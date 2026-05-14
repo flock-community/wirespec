@@ -1,0 +1,7 @@
+package community.flock.wirespec.generated.model;
+public record TodoWithoutProperties () implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
