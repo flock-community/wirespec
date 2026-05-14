@@ -34,16 +34,14 @@ private fun emitNode(node: Definition): String {
     return emitContext.emitters.first().emit(ast, emitContext.logger).first().result
 }
 
-private fun compile(fixture: Fixture): String =
-    fixture.compiler { JavaIrEmitter() }.fold(
-        { error("Failed to compile fixture: $it") },
-        { it },
-    )
+private fun compile(fixture: Fixture): String = fixture.compiler { JavaIrEmitter() }.fold(
+    { error("Failed to compile fixture: $it") },
+    { it },
+)
 
-private fun shared(): String =
-    JavaIrEmitter(emitShared = EmitShared(true)).emitShared()
-        ?.let(JavaGenerator::generate)
-        ?: error("Shared emit returned null")
+private fun shared(): String = JavaIrEmitter(emitShared = EmitShared(true)).emitShared()
+    ?.let(JavaGenerator::generate)
+    ?: error("Shared emit returned null")
 
 fun main(args: Array<String>) {
     require(args.isNotEmpty()) { "Usage: UpdateEmitterFixtures <fixturesRootDir>" }
