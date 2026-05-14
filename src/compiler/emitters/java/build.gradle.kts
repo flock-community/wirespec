@@ -126,7 +126,7 @@ val generateEmitterFixtures = tasks.register("generateEmitterFixtures") {
         for (dir in dirs) {
             val file = dir.resolve("$language.txt")
             if (!file.exists()) continue
-            val literal = escapeKotlinString(file.readText())
+            val literal = escapeKotlinString(file.readText().replace("\r\n", "\n"))
             sb.appendLine("    val ${dir.name}: String = \"$literal\"")
         }
         sb.appendLine("}")
