@@ -57,7 +57,7 @@ wirespec compile ./todo.ws -o ./tmp -l Kotlin
 * Maven
 * Gradle
 
-## Extentions
+## Extensions
 
 * IntelliJ IDEA
 * Visual Studio Code

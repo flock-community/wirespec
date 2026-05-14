@@ -24,7 +24,8 @@ clean:
 	(cd maven-spring-custom && ./mvnw clean) && \
 	(cd maven-spring-integration && ./mvnw clean) && \
 	(cd maven-spring-native && ./mvnw clean) && \
-	(cd npm-typescript && npm run clean)
+	(cd npm-typescript && npm run clean) && \
+	(cd scala-zio && sbt clean)
 
 format:
 	(cd gradle-ktor && ./gradlew spotlessApply) && \
