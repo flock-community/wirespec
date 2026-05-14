@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-
 plugins {
     id("module.publication")
     id("module.spotless")
@@ -129,23 +127,19 @@ val generateEmitterFixtures = tasks.register("generateEmitterFixtures") {
     }
 }
 
-extensions.configure<KotlinMultiplatformExtension> {
-    sourceSets.named("commonTest") {
-        kotlin.srcDir(generateEmitterFixtures)
-    }
+kotlin.sourceSets.named("commonTest") {
+    kotlin.srcDir(generateEmitterFixtures)
 }
 
 tasks.register<JavaExec>("updateEmitterFixtures") {
     description = "Run the $emitterLanguage emitter and overwrite the shared fixture files."
     group = "verification"
 
-    val jvmTestCompilation = extensions.getByType<KotlinMultiplatformExtension>()
-        .targets.getByName("jvm").compilations.getByName("test")
-
-    classpath = jvmTestCompilation.runtimeDependencyFiles + jvmTestCompilation.output.allOutputs
+    val jvmTest = tasks.named<Test>("jvmTest")
+    classpath = files(jvmTest.map { it.classpath })
     mainClass.set(emitterUpdaterMainClass)
     args(fixturesSourceDir.absolutePath)
 
-    dependsOn(jvmTestCompilation.compileTaskProvider)
+    dependsOn(jvmTest.map { it.dependsOn })
     outputs.upToDateWhen { false }
 }
