@@ -5,7 +5,7 @@ data class Email(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
-    Regex(${"\"\"\""}^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$${"\"\"\""}).matches(value)
+    Regex("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""").matches(value)
   override fun toString(): String =
     value
 }
@@ -17,7 +17,7 @@ data class PhoneNumber(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
-    Regex(${"\"\"\""}^\+[1-9]\d{1,14}$${"\"\"\""}).matches(value)
+    Regex("""^\+[1-9]\d{1,14}$""").matches(value)
   override fun toString(): String =
     value
 }
@@ -29,7 +29,7 @@ data class Tag(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
-    Regex(${"\"\"\""}^[a-z][a-z0-9-]{0,19}$${"\"\"\""}).matches(value)
+    Regex("""^[a-z][a-z0-9-]{0,19}$""").matches(value)
   override fun toString(): String =
     value
 }

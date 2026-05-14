@@ -5,7 +5,7 @@ case class DutchPostalCode(
   override val value: String
 ) extends Wirespec.Refined[String] {
   override def validate(): Boolean =
-    ${"\"\"\""}^([0-9]{4}[A-Z]{2})$${"\"\"\""}.r.findFirstIn(value).isDefined
+    """^([0-9]{4}[A-Z]{2})$""".r.findFirstIn(value).isDefined
   override def toString(): String =
     value
 }
