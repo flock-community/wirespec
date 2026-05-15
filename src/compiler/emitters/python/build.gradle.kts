@@ -63,16 +63,7 @@ kotlin.sourceSets.named("commonTest") {
     kotlin.srcDir(tasks.named("generateEmitterFixtures"))
 }
 
-kotlin.sourceSets.named("jvmTest") {
-    kotlin.srcDir(tasks.named("generateUpdateEmitterFixtures"))
-}
-
 emitterFixtures {
     language = "python"
     emitterPackage = "community.flock.wirespec.emitters.python"
-    emitterClass = "PythonIrEmitter"
-    generatorClass = "community.flock.wirespec.ir.generator.PythonGenerator"
-    includesTestEmitterFixtures = false
-    emitterAcceptsEmitShared = true
-    sharedOutputStyle = "elements"
 }
