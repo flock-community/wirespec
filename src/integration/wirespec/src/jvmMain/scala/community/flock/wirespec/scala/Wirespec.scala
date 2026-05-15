@@ -1,0 +1,154 @@
+package community.flock.wirespec.scala
+import scala.reflect.ClassTag
+object Wirespec {
+  trait Model {
+      def validate(): List[String]
+  }
+  trait Enum {
+      def label: String
+  }
+  trait Endpoint
+  trait Channel
+  trait Refined[T] {
+      def value: T
+      def validate(): Boolean
+  }
+  trait Path
+  trait Queries
+  trait Headers
+  trait Handler
+  trait Call
+  enum Method {
+      case GET
+      case PUT
+      case POST
+      case DELETE
+      case OPTIONS
+      case HEAD
+      case PATCH
+      case TRACE
+    }
+  object Request {
+      trait Headers
+  }
+  trait Request[T] {
+      def path: Path
+      def method: Method
+      def queries: Queries
+      def headers: Request.Headers
+      def body: T
+  }
+  object Response {
+      trait Headers
+  }
+  trait Response[T] {
+      def status: Int
+      def headers: Response.Headers
+      def body: T
+  }
+  trait BodySerializer {
+      def serializeBody[T](t: T, `type`: scala.reflect.ClassTag[?]): Array[Byte]
+  }
+  trait BodyDeserializer {
+      def deserializeBody[T](raw: Array[Byte], `type`: scala.reflect.ClassTag[?]): T
+  }
+  trait BodySerialization extends BodySerializer with BodyDeserializer
+  trait PathSerializer {
+      def serializePath[T](t: T, `type`: scala.reflect.ClassTag[?]): String
+  }
+  trait PathDeserializer {
+      def deserializePath[T](raw: String, `type`: scala.reflect.ClassTag[?]): T
+  }
+  trait PathSerialization extends PathSerializer with PathDeserializer
+  trait ParamSerializer {
+      def serializeParam[T](value: T, `type`: scala.reflect.ClassTag[?]): List[String]
+  }
+  trait ParamDeserializer {
+      def deserializeParam[T](values: List[String], `type`: scala.reflect.ClassTag[?]): T
+  }
+  trait ParamSerialization extends ParamSerializer with ParamDeserializer
+  trait Serializer extends BodySerializer with PathSerializer with ParamSerializer
+  trait Deserializer extends BodyDeserializer with PathDeserializer with ParamDeserializer
+  trait Serialization extends Serializer with Deserializer
+  case class RawRequest(
+      val method: String,
+      val path: List[String],
+      val queries: Map[String, List[String]],
+      val headers: Map[String, List[String]],
+      val body: Option[Array[Byte]]
+    )
+  case class RawResponse(
+      val statusCode: Int,
+      val headers: Map[String, List[String]],
+      val body: Option[Array[Byte]]
+    )
+  trait Transportation {
+      def transport(request: RawRequest): RawResponse
+  }
+  sealed trait GeneratorField[T]
+  case class GeneratorFieldString(
+      val regex: Option[String],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[String]
+  case class GeneratorFieldInteger(
+      val min: Option[Long],
+      val max: Option[Long],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Long]
+  case class GeneratorFieldNumber(
+      val min: Option[Double],
+      val max: Option[Double],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Double]
+  case class GeneratorFieldBoolean(
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Boolean]
+  case class GeneratorFieldBytes(
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Array[Byte]]
+  case class GeneratorFieldEnum(
+      val values: List[String],
+      val annotations: List[Map[String, Any]],
+      val `type`: scala.reflect.ClassTag[?]
+    ) extends GeneratorField[String]
+  case class GeneratorFieldUnion(
+      val variants: List[String],
+      val annotations: List[Map[String, Any]],
+      val `type`: scala.reflect.ClassTag[?]
+    ) extends GeneratorField[String]
+  case class GeneratorFieldArray[T](
+      val generate: (List[String]) => T
+    ) extends GeneratorField[List[T]]
+  case class GeneratorFieldNullable[T](
+      val generate: (List[String]) => T
+    ) extends GeneratorField[Option[T]]
+  case class GeneratorFieldShape[T](
+      val annotations: Map[String, List[Map[String, Any]]],
+      val generate: (List[String]) => T,
+      val `type`: scala.reflect.ClassTag[?]
+    ) extends GeneratorField[T]
+  case class GeneratorFieldDict[V](
+      val generate: (List[String]) => V
+    ) extends GeneratorField[Map[String, V]]
+  trait Generator {
+      def generate[T](path: List[String], field: GeneratorField[T]): T
+  }
+  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
+      def from(request: RawRequest): Req
+      def to(response: Res): RawResponse
+  }
+  trait ClientEdge[Req <: Request[?], Res <: Response[?]] {
+      def to(request: Req): RawRequest
+      def from(response: RawResponse): Res
+  }
+  trait Client[Req <: Request[?], Res <: Response[?]] {
+      def pathTemplate: String
+      def method: String
+      def client(serialization: Serialization): ClientEdge[Req, Res]
+  }
+  trait Server[Req <: Request[?], Res <: Response[?]] {
+      def pathTemplate: String
+      def method: String
+      def server(serialization: Serialization): ServerEdge[Req, Res]
+  }
+}
