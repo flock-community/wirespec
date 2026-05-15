@@ -91,6 +91,9 @@ object Wirespec {
         val headers: Map<String, List<String>>,
         val body: ByteArray?,
     )
+    interface Transportation {
+        suspend fun transport(request: RawRequest): RawResponse
+    }
     interface ServerEdge<Req : Request<*>, Res : Response<*>> {
         fun from(request: RawRequest): Req
         fun to(response: Res): RawResponse

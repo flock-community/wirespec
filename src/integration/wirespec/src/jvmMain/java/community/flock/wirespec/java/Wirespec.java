@@ -49,6 +49,7 @@ public interface Wirespec {
     interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
     record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, Optional<byte[]> body) {}
     record RawResponse(int statusCode, Map<String, List<String>> headers, Optional<byte[]> body) {}
+    interface Transportation { java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request); }
     static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         if(rawType != null) {
             return new ParameterizedType() {
