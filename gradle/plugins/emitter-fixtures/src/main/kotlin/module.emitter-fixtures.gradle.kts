@@ -11,7 +11,6 @@ import org.gradle.process.CommandLineArgumentProvider
 // Apply alongside the Kotlin Multiplatform plugin and configure via:
 //
 //     emitterFixtures {
-//         emitterPackage = "community.flock.wirespec.emitters.java"
 //         emitterClass = "community.flock.wirespec.emitters.java.JavaIrEmitter"
 //     }
 //
@@ -34,7 +33,7 @@ tasks.register("generateEmitterFixtures") {
     // (which the configuration cache cannot serialize).
     val fixturesDir = fixturesSourceDir
     val outDirProvider = generatedSourcesDir
-    val packageProvider = ext.emitterPackage
+    val packageProvider = ext.emitterClass.map { it.substringBeforeLast('.') }
 
     inputs.dir(fixturesDir).withPropertyName("fixtures").optional(true)
     inputs.property("package", packageProvider)

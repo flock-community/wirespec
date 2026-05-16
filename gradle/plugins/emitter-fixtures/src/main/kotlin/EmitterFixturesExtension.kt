@@ -2,10 +2,7 @@ import org.gradle.api.provider.Property
 
 interface EmitterFixturesExtension {
 
-    /** Kotlin package that owns the per-emitter test code. Used to place the
-     *  generated `EmitterFixtures.kt`. */
-    val emitterPackage: Property<String>
-
-    /** Fully-qualified class name of the IrEmitter to drive `updateEmitterFixtures`. */
+    /** Fully-qualified class name of the IrEmitter to drive `updateEmitterFixtures`.
+     *  Its package portion also locates the generated `EmitterFixtures.kt`. */
     val emitterClass: Property<String>
 }
