@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
-import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.generator.RustGenerator
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -85,6 +85,6 @@ class RustIrEmitterTest {
         val expected = EmitterFixtures.sharedOutputTest
 
         val emitter = RustIrEmitter(emitShared = EmitShared(true))
-        emitter.emitShared()?.elements?.filterIsInstance<RawElement>()?.joinToString("") { it.code } shouldBe expected
+        emitter.emitShared()?.let(RustGenerator::generate) shouldBe expected
     }
 }

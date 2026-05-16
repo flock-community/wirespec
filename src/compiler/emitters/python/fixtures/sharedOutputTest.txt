@@ -1,16 +1,11 @@
 from __future__ import annotations
-
 import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, Optional, Type, TypeVar
-
 T = TypeVar('T')
-
-
 def _raise(msg: str) -> Any:
     raise Exception(msg)
-
 # package shared
 class Wirespec:
     class Model(ABC):

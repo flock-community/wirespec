@@ -66,7 +66,8 @@ private fun Any.asIrEmitter(fqcn: String): IrEmitter {
     return this
 }
 
-private fun IrEmitter.sharedOutputAsString(): String = emitSharedAsString()
+private fun IrEmitter.sharedOutputAsString(): String = emitShared()
+    ?.let(generator::generate)
     ?: error("Shared emit returned null")
 
 private fun compileFixtures(emitterFactory: () -> Emitter): Map<String, () -> String> = linkedMapOf(
