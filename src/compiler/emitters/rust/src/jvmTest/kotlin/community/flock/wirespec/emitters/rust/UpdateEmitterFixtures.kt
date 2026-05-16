@@ -8,7 +8,6 @@ fun main(args: Array<String>) {
     val factory = { RustIrEmitter() }
     EmitterFixtureUpdater.run(
         args = args,
-        language = "rust",
         fixtures = EmitterFixtureUpdater.compileFixtures(factory) +
             mapOf(
                 "sharedOutputTest" to {

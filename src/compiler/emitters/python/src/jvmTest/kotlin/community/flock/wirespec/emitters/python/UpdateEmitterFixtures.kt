@@ -8,7 +8,6 @@ fun main(args: Array<String>) {
     val factory = { PythonIrEmitter() }
     EmitterFixtureUpdater.run(
         args = args,
-        language = "python",
         fixtures = EmitterFixtureUpdater.compileFixtures(factory) +
             mapOf(
                 "sharedOutputTest" to {

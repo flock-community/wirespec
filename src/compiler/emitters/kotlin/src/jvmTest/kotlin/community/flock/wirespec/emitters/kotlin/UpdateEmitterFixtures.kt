@@ -8,7 +8,6 @@ fun main(args: Array<String>) {
     val factory = { KotlinIrEmitter() }
     EmitterFixtureUpdater.run(
         args = args,
-        language = "kotlin",
         fixtures = EmitterFixtureUpdater.nodeFixtures(factory) +
             EmitterFixtureUpdater.compileFixtures(factory) +
             mapOf(

@@ -64,6 +64,5 @@ kotlin.sourceSets.named("commonTest") {
 }
 
 emitterFixtures {
-    language = "kotlin"
     emitterPackage = "community.flock.wirespec.emitters.kotlin"
 }

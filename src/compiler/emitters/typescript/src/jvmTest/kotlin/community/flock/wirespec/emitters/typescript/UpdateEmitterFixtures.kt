@@ -7,7 +7,6 @@ fun main(args: Array<String>) {
     val factory = { TypeScriptIrEmitter() }
     EmitterFixtureUpdater.run(
         args = args,
-        language = "typescript",
         fixtures = EmitterFixtureUpdater.compileFixtures(factory) +
             mapOf(
                 "sharedOutputTest" to {

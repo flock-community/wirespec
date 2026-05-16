@@ -8,7 +8,6 @@ fun main(args: Array<String>) {
     val factory = { ScalaIrEmitter() }
     EmitterFixtureUpdater.run(
         args = args,
-        language = "scala",
         fixtures = EmitterFixtureUpdater.nodeFixtures(factory) +
             EmitterFixtureUpdater.compileFixtures(factory) +
             mapOf(

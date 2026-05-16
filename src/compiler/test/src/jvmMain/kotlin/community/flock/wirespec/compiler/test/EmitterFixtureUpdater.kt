@@ -20,17 +20,15 @@ object EmitterFixtureUpdater {
 
     fun run(
         args: Array<String>,
-        language: String,
         fixtures: Map<String, () -> String>,
     ) {
-        require(args.isNotEmpty()) { "Usage: UpdateEmitterFixtures <fixturesRootDir>" }
+        require(args.isNotEmpty()) { "Usage: UpdateEmitterFixtures <fixturesDir>" }
         val root = File(args[0])
         root.mkdirs()
         fixtures.forEach { (name, produce) ->
-            val target = root.resolve(name).resolve("$language.txt")
-            target.parentFile.mkdirs()
+            val target = root.resolve("$name.txt")
             target.writeText(produce())
-            println("[$language] wrote ${target.absolutePath}")
+            println("[fixtures] wrote ${target.absolutePath}")
         }
     }
 
