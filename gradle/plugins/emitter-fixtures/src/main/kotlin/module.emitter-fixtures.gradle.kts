@@ -1,17 +1,18 @@
 import org.gradle.api.tasks.testing.Test
+import org.gradle.process.CommandLineArgumentProvider
 
 // Codegen + updater wiring for emitter test fixtures.
 //
 // Each emitter test asserts against `EmitterFixtures.<testName>` constants. Those
 // constants are generated from .txt files in the per-emitter `fixtures/` directory,
-// one file per test. The actual runtime that overwrites the .txt files lives in
-// the `:src:compiler:test` `EmitterFixtureUpdater` object; each emitter has a
-// tiny `UpdateEmitterFixtures.kt` main that delegates to it.
+// one file per test. A single updater main in `:src:compiler:test` overwrites those
+// files; we pass the emitter's FQCN as an arg so it can reflectively instantiate it.
 //
 // Apply alongside the Kotlin Multiplatform plugin and configure via:
 //
 //     emitterFixtures {
 //         emitterPackage = "community.flock.wirespec.emitters.java"
+//         emitterClass = "community.flock.wirespec.emitters.java.JavaIrEmitter"
 //     }
 //
 // The emitter's build.gradle.kts wires the generated source dir into commonTest:
@@ -94,8 +95,13 @@ tasks.register<JavaExec>("updateEmitterFixtures") {
     // (vs. `files(jvmTest.map { ... })`) hides the source task from Gradle, so
     // only the FileCollection's own build deps (compile tasks) are inherited.
     classpath = files(provider { tasks.named<Test>("jvmTest").get().classpath })
-    mainClass.set(ext.emitterPackage.map { "$it.UpdateEmitterFixturesKt" })
-    args(fixturesSourceDir.absolutePath)
+    mainClass.set("community.flock.wirespec.compiler.test.EmitterFixtureUpdater")
+
+    val fixturesPath = fixturesSourceDir.absolutePath
+    val emitterClassProvider = ext.emitterClass
+    argumentProviders.add(
+        CommandLineArgumentProvider { listOf(fixturesPath, emitterClassProvider.get()) },
+    )
 
     dependsOn(tasks.named("jvmTestClasses"))
     outputs.upToDateWhen { false }

@@ -65,4 +65,5 @@ kotlin.sourceSets.named("commonTest") {
 
 emitterFixtures {
     emitterPackage = "community.flock.wirespec.emitters.scala"
+    emitterClass = "community.flock.wirespec.emitters.scala.ScalaIrEmitter"
 }

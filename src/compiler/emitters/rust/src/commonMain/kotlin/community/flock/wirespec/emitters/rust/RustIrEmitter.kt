@@ -306,6 +306,11 @@ open class RustIrEmitter(
         }
     }
 
+    override fun emitSharedAsString(): String? = emitShared()
+        ?.elements
+        ?.filterIsInstance<RawElement>()
+        ?.joinToString("") { it.code }
+
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let { files ->

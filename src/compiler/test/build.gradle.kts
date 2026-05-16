@@ -48,5 +48,11 @@ kotlin {
                 implementation(libs.bundles.kotest)
             }
         }
+        jvmMain {
+            dependencies {
+                implementation(project(":src:compiler:ir"))
+                implementation(libs.kotlin.reflect)
+            }
+        }
     }
 }

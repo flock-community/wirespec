@@ -69,6 +69,11 @@ interface IrEmitter : Emitter {
 
     fun emitShared(): File?
 
+    /** Render `emitShared()` as a source string. Default delegates to [generator.generate];
+     *  emitters whose shared file is a single embedded raw block can override to bypass
+     *  generator-level formatting (e.g. blank-line compaction). */
+    fun emitSharedAsString(): String? = emitShared()?.let(generator::generate)
+
     fun emit(type: Type, module: Module): File
     fun emit(enum: Enum, module: Module): File
     fun emit(refined: Refined): File
