@@ -85,6 +85,54 @@ pub struct RawResponse {
 pub trait Transportation {
     async fn transport(&self, request: &RawRequest) -> RawResponse;
 }
+pub trait GeneratorField<T> {}
+pub struct GeneratorFieldString {
+    pub regex: Option<String>,
+    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+}
+pub struct GeneratorFieldInteger {
+    pub min: Option<i64>,
+    pub max: Option<i64>,
+    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+}
+pub struct GeneratorFieldNumber {
+    pub min: Option<f64>,
+    pub max: Option<f64>,
+    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+}
+pub struct GeneratorFieldBoolean {
+    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+}
+pub struct GeneratorFieldBytes {
+    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+}
+pub struct GeneratorFieldEnum {
+    pub values: Vec<String>,
+    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub r#type: std::any::TypeId,
+}
+pub struct GeneratorFieldUnion {
+    pub variants: Vec<String>,
+    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub r#type: std::any::TypeId,
+}
+pub struct GeneratorFieldArray<T> {
+    pub generate: Box<dyn Fn(Vec<String>) -> T>,
+}
+pub struct GeneratorFieldNullable<T> {
+    pub generate: Box<dyn Fn(Vec<String>) -> T>,
+}
+pub struct GeneratorFieldShape<T> {
+    pub annotations: std::collections::HashMap<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>,
+    pub generate: Box<dyn Fn(Vec<String>) -> T>,
+    pub r#type: std::any::TypeId,
+}
+pub struct GeneratorFieldDict<V> {
+    pub generate: Box<dyn Fn(Vec<String>) -> V>,
+}
+pub trait Generator {
+    fn generate<T>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T;
+}
 pub trait Client {
     type Transport: Transportation;
     type Ser: Serialization;

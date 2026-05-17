@@ -2,8 +2,9 @@ from __future__ import annotations
 import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Generic, Optional, Type, TypeVar
+from typing import Any, Callable, Generic, Optional, Type, TypeVar
 T = TypeVar('T')
+V = TypeVar('V')
 def _raise(msg: str) -> Any:
     raise Exception(msg)
 # package shared
@@ -107,4 +108,54 @@ class Wirespec:
     class Transportation(ABC):
         @abstractmethod
         async def transport(self, request: Wirespec.RawRequest) -> Wirespec.RawResponse:
+            ...
+    class GeneratorField(ABC, Generic[T]):
+        pass
+    @dataclass
+    class GeneratorFieldString(GeneratorField[str]):
+        regex: Optional[str]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldInteger(GeneratorField[int]):
+        min: Optional[int]
+        max: Optional[int]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldNumber(GeneratorField[float]):
+        min: Optional[float]
+        max: Optional[float]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldBoolean(GeneratorField[bool]):
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldBytes(GeneratorField[bytes]):
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldEnum(GeneratorField[str]):
+        values: list[str]
+        annotations: list[dict[str, Any]]
+        type: type[Any]
+    @dataclass
+    class GeneratorFieldUnion(GeneratorField[str]):
+        variants: list[str]
+        annotations: list[dict[str, Any]]
+        type: type[Any]
+    @dataclass
+    class GeneratorFieldArray(GeneratorField[list[T]], Generic[T]):
+        generate: Callable[[list[str]], T]
+    @dataclass
+    class GeneratorFieldNullable(GeneratorField[Optional[T]], Generic[T]):
+        generate: Callable[[list[str]], T]
+    @dataclass
+    class GeneratorFieldShape(GeneratorField[T], Generic[T]):
+        annotations: dict[str, list[dict[str, Any]]]
+        generate: Callable[[list[str]], T]
+        type: type[T]
+    @dataclass
+    class GeneratorFieldDict(GeneratorField[dict[str, V]], Generic[V]):
+        generate: Callable[[list[str]], V]
+    class Generator(ABC):
+        @abstractmethod
+        def generate(self, path: list[str], field: Wirespec.GeneratorField[T]) -> T:
             ...

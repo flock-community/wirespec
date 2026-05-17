@@ -16,6 +16,19 @@ class Request(Wirespec.Model):
     def validate(self) -> list[str]:
         return []
 
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Request import Request
+class RequestGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Request:
+        return Request(type=generator.generate(path + ['type'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), url=generator.generate(path + ['url'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), BODY_TYPE=generator.generate(path + ['BODY_TYPE'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), params=generator.generate(path + ['params'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), headers=generator.generate(path + ['headers'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), body=generator.generate(path + ['body'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldDict(generate=lambda p1: generator.generate(p1, Wirespec.GeneratorFieldArray(generate=lambda p2: generator.generate(p2, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))))))
+
 from . import model
 from . import endpoint
 from . import wirespec

@@ -123,3 +123,146 @@ public record Company (
     return java.util.stream.IntStream.range(0, departments().size()).mapToObj(i -> departments().get(i).validate().stream().map(e -> "departments[" + i + "]." + e).toList()).flatMap(java.util.Collection::stream).toList();
   }
 };
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Email;
+public interface EmailGenerator {
+  public static Email generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Email(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.of("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.PhoneNumber;
+public interface PhoneNumberGenerator {
+  public static PhoneNumber generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new PhoneNumber(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.of("^\\+[1-9]\\d{1,14}$"),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Tag;
+public interface TagGenerator {
+  public static Tag generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Tag(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.of("^[a-z][a-z0-9-]{0,19}$"),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.EmployeeAge;
+public interface EmployeeAgeGenerator {
+  public static EmployeeAge generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new EmployeeAge(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
+      java.util.Optional.of(18L),
+      java.util.Optional.of(65L),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.ContactInfo;
+import community.flock.wirespec.generated.model.Email;
+import community.flock.wirespec.generated.model.PhoneNumber;
+public interface ContactInfoGenerator {
+  public static ContactInfo generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new ContactInfo(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("email")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p0) -> EmailGenerator.generate(generator, p0),
+        Email.class
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("phone")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p1) -> PhoneNumberGenerator.generate(generator, p1),
+        PhoneNumber.class
+      ))))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Employee;
+import community.flock.wirespec.generated.model.EmployeeAge;
+import community.flock.wirespec.generated.model.ContactInfo;
+import community.flock.wirespec.generated.model.Tag;
+public interface EmployeeGenerator {
+  public static Employee generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Employee(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("age")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p0) -> EmployeeAgeGenerator.generate(generator, p0),
+        EmployeeAge.class
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("contactInfo")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("email", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("phone", java.util.List.<java.util.Map<String, Object>>of())),
+        (p0) -> ContactInfoGenerator.generate(generator, p0),
+        ContactInfo.class
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p1) -> TagGenerator.generate(generator, p1),
+        Tag.class
+      ))))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Department;
+import community.flock.wirespec.generated.model.Employee;
+public interface DepartmentGenerator {
+  public static Department generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Department(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("employees")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("name", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("age", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("contactInfo", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("tags", java.util.List.<java.util.Map<String, Object>>of())),
+        (p1) -> EmployeeGenerator.generate(generator, p1),
+        Employee.class
+      ))))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Company;
+import community.flock.wirespec.generated.model.Department;
+public interface CompanyGenerator {
+  public static Company generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Company(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("departments")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("name", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("employees", java.util.List.<java.util.Map<String, Object>>of())),
+        (p1) -> DepartmentGenerator.generate(generator, p1),
+        Department.class
+      ))))
+    );
+  }
+}

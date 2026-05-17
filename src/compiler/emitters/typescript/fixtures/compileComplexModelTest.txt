@@ -70,6 +70,84 @@ export function validateCompany(obj: Company): string[] {
   return obj.departments.flatMap((el, i) => validateDepartment(el).map(e => `departments[${i}].${e}`));
 }
 
+import {Wirespec} from '../Wirespec'
+import {Email} from '../model/Email'
+export namespace EmailGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Email {
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', annotations: [] as Record<string, any>[] });
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {PhoneNumber} from '../model/PhoneNumber'
+export namespace PhoneNumberGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): PhoneNumber {
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^\+[1-9]\d{1,14}$', annotations: [] as Record<string, any>[] });
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Tag} from '../model/Tag'
+export namespace TagGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Tag {
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[a-z][a-z0-9-]{0,19}$', annotations: [] as Record<string, any>[] });
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {EmployeeAge} from '../model/EmployeeAge'
+export namespace EmployeeAgeGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): EmployeeAge {
+    return generator.generate([...path, ...['value']], { kind: 'integer', min: 18, max: 65, annotations: [] as Record<string, any>[] });
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {ContactInfo} from '../model/ContactInfo'
+import {Email} from '../model/Email'
+import {PhoneNumber} from '../model/PhoneNumber'
+import {EmailGenerator} from './EmailGenerator'
+import {PhoneNumberGenerator} from './PhoneNumberGenerator'
+export namespace ContactInfoGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): ContactInfo {
+    return { email: generator.generate([...path, ...['email']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => EmailGenerator.generate(generator, p0), type: "Email" }), phone: generator.generate([...path, ...['phone']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: {}, generate: (p1: string[]) => PhoneNumberGenerator.generate(generator, p1), type: "PhoneNumber" }) }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Employee} from '../model/Employee'
+import {EmployeeAge} from '../model/EmployeeAge'
+import {ContactInfo} from '../model/ContactInfo'
+import {Tag} from '../model/Tag'
+import {EmployeeAgeGenerator} from './EmployeeAgeGenerator'
+import {ContactInfoGenerator} from './ContactInfoGenerator'
+import {TagGenerator} from './TagGenerator'
+export namespace EmployeeGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Employee {
+    return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), age: generator.generate([...path, ...['age']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => EmployeeAgeGenerator.generate(generator, p0), type: "EmployeeAge" }), contactInfo: generator.generate([...path, ...['contactInfo']], { kind: 'shape', annotations: { 'email': [] as Record<string, any>[], 'phone': [] as Record<string, any>[] }, generate: (p0: string[]) => ContactInfoGenerator.generate(generator, p0), type: "ContactInfo" }), tags: generator.generate([...path, ...['tags']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: {}, generate: (p1: string[]) => TagGenerator.generate(generator, p1), type: "Tag" }) }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Department} from '../model/Department'
+import {Employee} from '../model/Employee'
+import {EmployeeGenerator} from './EmployeeGenerator'
+export namespace DepartmentGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Department {
+    return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), employees: generator.generate([...path, ...['employees']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: { 'name': [] as Record<string, any>[], 'age': [] as Record<string, any>[], 'contactInfo': [] as Record<string, any>[], 'tags': [] as Record<string, any>[] }, generate: (p1: string[]) => EmployeeGenerator.generate(generator, p1), type: "Employee" }) }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Company} from '../model/Company'
+import {Department} from '../model/Department'
+import {DepartmentGenerator} from './DepartmentGenerator'
+export namespace CompanyGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Company {
+    return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), departments: generator.generate([...path, ...['departments']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: { 'name': [] as Record<string, any>[], 'employees': [] as Record<string, any>[] }, generate: (p1: string[]) => DepartmentGenerator.generate(generator, p1), type: "Department" }) }) };
+  }
+}
+
 export {Email} from './Email'
 export {PhoneNumber} from './PhoneNumber'
 export {Tag} from './Tag'

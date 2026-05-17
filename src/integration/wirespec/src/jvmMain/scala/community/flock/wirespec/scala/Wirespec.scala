@@ -1,5 +1,4 @@
 package community.flock.wirespec.scala
-import scala.reflect.ClassTag
 object Wirespec {
   trait Model {
       def validate(): List[String]
@@ -133,6 +132,14 @@ object Wirespec {
   trait Generator {
       def generate[T](path: List[String], field: GeneratorField[T]): T
   }
+  sealed trait PathSegment
+  case class Literal(
+      val value: String
+    ) extends PathSegment
+  case class Param(
+      val name: String,
+      val `type`: scala.reflect.ClassTag[?]
+    ) extends PathSegment
   trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
       def from(request: RawRequest): Req
       def to(response: Res): RawResponse
@@ -144,11 +151,13 @@ object Wirespec {
   trait Client[Req <: Request[?], Res <: Response[?]] {
       def pathTemplate: String
       def method: String
+      def pathSegments: List[PathSegment]
       def client(serialization: Serialization): ClientEdge[Req, Res]
   }
   trait Server[Req <: Request[?], Res <: Response[?]] {
       def pathTemplate: String
       def method: String
+      def pathSegments: List[PathSegment]
       def server(serialization: Serialization): ServerEdge[Req, Res]
   }
 }

@@ -100,6 +100,66 @@ public interface Wirespec {
   public interface Transportation {
     public java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request);
   }
+  public sealed interface GeneratorField<T> {
+  }
+  public static record GeneratorFieldString (
+    java.util.Optional<String> regex,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<String> {
+  };
+  public static record GeneratorFieldInteger (
+    java.util.Optional<Long> min,
+    java.util.Optional<Long> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Long> {
+  };
+  public static record GeneratorFieldNumber (
+    java.util.Optional<Double> min,
+    java.util.Optional<Double> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Double> {
+  };
+  public static record GeneratorFieldBoolean (
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Boolean> {
+  };
+  public static record GeneratorFieldBytes (
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<byte[]> {
+  };
+  public static record GeneratorFieldEnum (
+    java.util.List<String> values,
+    java.util.List<java.util.Map<String, Object>> annotations,
+    Type type
+  ) implements GeneratorField<String> {
+  };
+  public static record GeneratorFieldUnion (
+    java.util.List<String> variants,
+    java.util.List<java.util.Map<String, Object>> annotations,
+    Type type
+  ) implements GeneratorField<String> {
+  };
+  public static record GeneratorFieldArray<T> (
+    java.util.function.Function<java.util.List<String>, T> generate
+  ) implements GeneratorField<java.util.List<T>> {
+  };
+  public static record GeneratorFieldNullable<T> (
+    java.util.function.Function<java.util.List<String>, T> generate
+  ) implements GeneratorField<java.util.Optional<T>> {
+  };
+  public static record GeneratorFieldShape<T> (
+    java.util.Map<String, java.util.List<java.util.Map<String, Object>>> annotations,
+    java.util.function.Function<java.util.List<String>, T> generate,
+    Type type
+  ) implements GeneratorField<T> {
+  };
+  public static record GeneratorFieldDict<V> (
+    java.util.function.Function<java.util.List<String>, V> generate
+  ) implements GeneratorField<java.util.Map<String, V>> {
+  };
+  public interface Generator {
+    public <T> T generate(java.util.List<String> path, GeneratorField<T> field);
+  }
   public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
     public Req from(RawRequest request);
     public RawResponse to(Res response);

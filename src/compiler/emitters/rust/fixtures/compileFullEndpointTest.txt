@@ -248,6 +248,46 @@ impl<'a, S: Serialization, T: Transportation> put_todo::PutTodo::Call for PutTod
     }
 }
 
+use super::super::wirespec::*;
+use regex;
+use super::super::model::potential_todo_dto::PotentialTodoDto;
+pub struct PotentialTodoDtoGenerator;
+impl PotentialTodoDtoGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PotentialTodoDto {
+        return PotentialTodoDto { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), done: generator.generate(vec![path.as_slice(), vec![String::from("done")].as_slice()].concat(), Wirespec.GeneratorFieldBoolean { annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::token::Token;
+pub struct TokenGenerator;
+impl TokenGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Token {
+        return Token { iss: generator.generate(vec![path.as_slice(), vec![String::from("iss")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::todo_dto::TodoDto;
+pub struct TodoDtoGenerator;
+impl TodoDtoGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoDto {
+        return TodoDto { id: generator.generate(vec![path.as_slice(), vec![String::from("id")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), done: generator.generate(vec![path.as_slice(), vec![String::from("done")].as_slice()].concat(), Wirespec.GeneratorFieldBoolean { annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::error::Error;
+pub struct ErrorGenerator;
+impl ErrorGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Error {
+        return Error { code: generator.generate(vec![path.as_slice(), vec![String::from("code")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;

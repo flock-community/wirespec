@@ -69,6 +69,65 @@ export namespace Wirespec {
   export interface Transportation {
     transport(request: RawRequest): Promise<RawResponse>;
   }
+  export interface GeneratorField<T extends any | undefined> {}
+  export type GeneratorFieldString = {
+    "kind": "string",
+    "regex": string | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldInteger = {
+    "kind": "integer",
+    "min": number | undefined,
+    "max": number | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldNumber = {
+    "kind": "number",
+    "min": number | undefined,
+    "max": number | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldBoolean = {
+    "kind": "boolean",
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldBytes = {
+    "kind": "bytes",
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldEnum = {
+    "kind": "enum",
+    "values": string[],
+    "annotations": Record<string, any>[],
+    "type": Type,
+  }
+  export type GeneratorFieldUnion = {
+    "kind": "union",
+    "variants": string[],
+    "annotations": Record<string, any>[],
+    "type": Type,
+  }
+  export type GeneratorFieldArray<T> = {
+    "kind": "array",
+    "generate": (p0: string[]) => T,
+  }
+  export type GeneratorFieldNullable<T> = {
+    "kind": "nullable",
+    "generate": (p0: string[]) => T,
+  }
+  export type GeneratorFieldShape<T> = {
+    "kind": "shape",
+    "annotations": Record<string, Record<string, any>[]>,
+    "generate": (p0: string[]) => T,
+    "type": Type,
+  }
+  export type GeneratorFieldDict<V> = {
+    "kind": "dict",
+    "generate": (p0: string[]) => V,
+  }
+  export interface Generator {
+    generate<T extends any | undefined>(path: string[], field: GeneratorField<T>): T;
+  }
   export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
     to: (request: REQ) => RawRequest;
     from: (response: RawResponse) => RES

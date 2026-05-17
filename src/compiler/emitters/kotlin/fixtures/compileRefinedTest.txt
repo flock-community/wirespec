@@ -117,3 +117,131 @@ data class TestNum2(
   override fun toString(): String =
     value.toString()
 }
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TodoId
+object TodoIdGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TodoId =
+    TodoId(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+      regex = "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$",
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TodoNoRegex
+object TodoNoRegexGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TodoNoRegex =
+    TodoNoRegex(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+      regex = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestInt
+object TestIntGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestInt =
+    TestInt(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger(
+      min = null,
+      max = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestInt0
+object TestInt0Generator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestInt0 =
+    TestInt0(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger(
+      min = null,
+      max = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestInt1
+object TestInt1Generator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestInt1 =
+    TestInt1(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger(
+      min = 0,
+      max = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestInt2
+object TestInt2Generator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestInt2 =
+    TestInt2(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger(
+      min = 1,
+      max = 3,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestNum
+object TestNumGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestNum =
+    TestNum(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber(
+      min = null,
+      max = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestNum0
+object TestNum0Generator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestNum0 =
+    TestNum0(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber(
+      min = null,
+      max = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestNum1
+object TestNum1Generator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestNum1 =
+    TestNum1(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber(
+      min = null,
+      max = 0.5,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TestNum2
+object TestNum2Generator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TestNum2 =
+    TestNum2(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber(
+      min = -0.2,
+      max = 0.5,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}

@@ -215,6 +215,58 @@ class PutTodoClient(PutTodo.Call):
         rawResponse = await self.transportation.transport(rawRequest)
         return PutTodo.fromRawResponse(serialization=self.serialization, response=rawResponse)
 
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.PotentialTodoDto import PotentialTodoDto
+class PotentialTodoDtoGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> PotentialTodoDto:
+        return PotentialTodoDto(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), done=generator.generate(path + ['done'], Wirespec.GeneratorFieldBoolean(annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Token import Token
+class TokenGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Token:
+        return Token(iss=generator.generate(path + ['iss'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.TodoDto import TodoDto
+class TodoDtoGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> TodoDto:
+        return TodoDto(id=generator.generate(path + ['id'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), done=generator.generate(path + ['done'], Wirespec.GeneratorFieldBoolean(annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Error import Error
+class ErrorGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Error:
+        return Error(code=generator.generate(path + ['code'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), description=generator.generate(path + ['description'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+
 from . import model
 from . import endpoint
 from . import client

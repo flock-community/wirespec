@@ -110,6 +110,18 @@ case class GetTodosClient(
   }
 }
 
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.TodoDto
+object TodoDtoGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): TodoDto =
+    new TodoDto(description = generator.generate(path ++ List("description"), new Wirespec.GeneratorFieldString(
+      regex = None,
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
 package community.flock.wirespec.generated
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag

@@ -42,3 +42,64 @@ public record Person (
     return address().validate().stream().map(e -> "address." + e).toList();
   }
 };
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.DutchPostalCode;
+public interface DutchPostalCodeGenerator {
+  public static DutchPostalCode generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new DutchPostalCode(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.of("^([0-9]{4}[A-Z]{2})$"),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Address;
+import community.flock.wirespec.generated.model.DutchPostalCode;
+public interface AddressGenerator {
+  public static Address generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Address(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("street")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("houseNumber")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
+        java.util.Optional.empty(),
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("postalCode")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p0) -> DutchPostalCodeGenerator.generate(generator, p0),
+        DutchPostalCode.class
+      ))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Person;
+import community.flock.wirespec.generated.model.Address;
+public interface PersonGenerator {
+  public static Person generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Person(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("address")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("street", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("houseNumber", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("postalCode", java.util.List.<java.util.Map<String, Object>>of())),
+        (p0) -> AddressGenerator.generate(generator, p0),
+        Address.class
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))))
+    );
+  }
+}

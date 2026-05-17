@@ -30,6 +30,51 @@ export function validateUser(obj: User): string[] {
   return [] as string[];
 }
 
+import {Wirespec} from '../Wirespec'
+import {UserAccount} from '../model/UserAccount'
+import {UserAccountPasswordGenerator} from './UserAccountPasswordGenerator'
+import {UserAccountTokenGenerator} from './UserAccountTokenGenerator'
+export namespace UserAccountGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): UserAccount {
+    const variant = generator.generate([...path, ...['variant']], { kind: 'union', variants: ['UserAccountPassword', 'UserAccountToken'], annotations: [] as Record<string, any>[], type: "UserAccount" });
+    switch (variant) {
+      case 'UserAccountPassword':
+        return UserAccountPasswordGenerator.generate(generator, [...path, ...['UserAccountPassword']]);
+        break;
+      case 'UserAccountToken':
+        return UserAccountTokenGenerator.generate(generator, [...path, ...['UserAccountToken']]);
+        break;
+    }
+    throw new Error('Unknown variant');
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {UserAccountPassword} from '../model/UserAccountPassword'
+export namespace UserAccountPasswordGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): UserAccountPassword {
+    return { username: generator.generate([...path, ...['username']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), password: generator.generate([...path, ...['password']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {UserAccountToken} from '../model/UserAccountToken'
+export namespace UserAccountTokenGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): UserAccountToken {
+    return { token: generator.generate([...path, ...['token']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {User} from '../model/User'
+import {UserAccount} from '../model/UserAccount'
+import {UserAccountGenerator} from './UserAccountGenerator'
+export namespace UserGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): User {
+    return { username: generator.generate([...path, ...['username']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), account: generator.generate([...path, ...['account']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => UserAccountGenerator.generate(generator, p0), type: "UserAccount" }) };
+  }
+}
+
 export {UserAccount} from './UserAccount'
 export {UserAccountPassword} from './UserAccountPassword'
 export {UserAccountToken} from './UserAccountToken'

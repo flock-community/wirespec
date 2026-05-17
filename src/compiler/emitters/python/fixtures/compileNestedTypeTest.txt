@@ -45,6 +45,49 @@ class Person(Wirespec.Model):
     def validate(self) -> list[str]:
         return [f"address.{e}" for e in self.address.validate()]
 
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.DutchPostalCode import DutchPostalCode
+class DutchPostalCodeGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> DutchPostalCode:
+        return DutchPostalCode(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^([0-9]{4}[A-Z]{2})$', annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Address import Address
+from ..model.DutchPostalCode import DutchPostalCode
+from .DutchPostalCodeGenerator import DutchPostalCodeGenerator
+class AddressGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Address:
+        return Address(street=generator.generate(path + ['street'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), houseNumber=generator.generate(path + ['houseNumber'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), postalCode=generator.generate(path + ['postalCode'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: DutchPostalCodeGenerator.generate(generator, p0), type=DutchPostalCode)))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Person import Person
+from ..model.Address import Address
+from .AddressGenerator import AddressGenerator
+class PersonGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Person:
+        return Person(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), address=generator.generate(path + ['address'], Wirespec.GeneratorFieldShape(annotations={'street': [], 'houseNumber': [], 'postalCode': []}, generate=lambda p0: AddressGenerator.generate(generator, p0), type=Address)), tags=generator.generate(path + ['tags'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
+
 from . import model
 from . import endpoint
 from . import wirespec

@@ -47,6 +47,16 @@ impl std::fmt::Display for MyAwesomeEnum {
     }
 }
 
+use super::super::wirespec::*;
+use regex;
+use super::super::model::my_awesome_enum::MyAwesomeEnum;
+pub struct MyAwesomeEnumGenerator;
+impl MyAwesomeEnumGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> MyAwesomeEnum {
+        return MyAwesomeEnum.value_of(generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<MyAwesomeEnum>() }));
+    }
+}
+
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;

@@ -84,6 +84,54 @@ object Wirespec {
   trait Transportation {
       def transport(request: RawRequest): RawResponse
   }
+  sealed trait GeneratorField[T]
+  case class GeneratorFieldString(
+      val regex: Option[String],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[String]
+  case class GeneratorFieldInteger(
+      val min: Option[Long],
+      val max: Option[Long],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Long]
+  case class GeneratorFieldNumber(
+      val min: Option[Double],
+      val max: Option[Double],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Double]
+  case class GeneratorFieldBoolean(
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Boolean]
+  case class GeneratorFieldBytes(
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Array[Byte]]
+  case class GeneratorFieldEnum(
+      val values: List[String],
+      val annotations: List[Map[String, Any]],
+      val `type`: scala.reflect.ClassTag[?]
+    ) extends GeneratorField[String]
+  case class GeneratorFieldUnion(
+      val variants: List[String],
+      val annotations: List[Map[String, Any]],
+      val `type`: scala.reflect.ClassTag[?]
+    ) extends GeneratorField[String]
+  case class GeneratorFieldArray[T](
+      val generate: (List[String]) => T
+    ) extends GeneratorField[List[T]]
+  case class GeneratorFieldNullable[T](
+      val generate: (List[String]) => T
+    ) extends GeneratorField[Option[T]]
+  case class GeneratorFieldShape[T](
+      val annotations: Map[String, List[Map[String, Any]]],
+      val generate: (List[String]) => T,
+      val `type`: scala.reflect.ClassTag[?]
+    ) extends GeneratorField[T]
+  case class GeneratorFieldDict[V](
+      val generate: (List[String]) => V
+    ) extends GeneratorField[Map[String, V]]
+  trait Generator {
+      def generate[T](path: List[String], field: GeneratorField[T]): T
+  }
   sealed trait PathSegment
   case class Literal(
       val value: String

@@ -32,3 +32,75 @@ public record User (
     return java.util.List.<String>of();
   }
 };
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.UserAccount;
+public interface UserAccountGenerator {
+  public static UserAccount generate(Wirespec.Generator generator, java.util.List<String> path) {
+    final var variant = generator.generate(java.util.stream.Stream.of(path, java.util.List.of("variant")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldUnion(
+      java.util.List.of("UserAccountPassword", "UserAccountToken"),
+      java.util.List.<java.util.Map<String, Object>>of(),
+      UserAccount.class
+    ));
+    switch (variant) {
+        case "UserAccountPassword" -> {
+          return UserAccountPasswordGenerator.generate(generator, java.util.stream.Stream.of(path, java.util.List.of("UserAccountPassword")).flatMap(java.util.Collection::stream).toList());
+        }
+        case "UserAccountToken" -> {
+          return UserAccountTokenGenerator.generate(generator, java.util.stream.Stream.of(path, java.util.List.of("UserAccountToken")).flatMap(java.util.Collection::stream).toList());
+        }
+    }
+    throw new IllegalStateException("Unknown variant");
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.UserAccountPassword;
+public interface UserAccountPasswordGenerator {
+  public static UserAccountPassword generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new UserAccountPassword(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("username")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("password")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.UserAccountToken;
+public interface UserAccountTokenGenerator {
+  public static UserAccountToken generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new UserAccountToken(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("token")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.empty(),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.User;
+import community.flock.wirespec.generated.model.UserAccount;
+public interface UserGenerator {
+  public static User generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new User(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("username")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("account")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p0) -> UserAccountGenerator.generate(generator, p0),
+        UserAccount.class
+      ))
+    );
+  }
+}

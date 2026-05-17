@@ -67,7 +67,7 @@ case class Employee(
   val tags: List[Tag]
 ) extends Wirespec.Model {
   override def validate(): List[String] =
-    (if (!age.validate()) List("age") else List.empty[String]) ++ contactInfo.validate().map(e => s"contactInfo.${e}") ++ tags.zipWithIndex.flatMap { case (el, i) => if (!el.validate()) List(s"tags[${i}]") else List.empty[String] }
+    (if (!age.validate()) List("age") else List.empty[String]) ++ contactInfo.validate().map(e => s"contactInfo.${e}").toList ++ tags.zipWithIndex.flatMap { case (el, i) => if (!el.validate()) List(s"tags[${i}]") else List.empty[String] }
 }
 
 package community.flock.wirespec.generated.model
@@ -78,7 +78,7 @@ case class Department(
   val employees: List[Employee]
 ) extends Wirespec.Model {
   override def validate(): List[String] =
-    employees.zipWithIndex.flatMap { case (el, i) => el.validate().map(e => s"employees[${i}].${e}") }
+    employees.zipWithIndex.flatMap { case (el, i) => el.validate().map(e => s"employees[${i}].${e}").toList }
 }
 
 package community.flock.wirespec.generated.model
@@ -89,5 +89,148 @@ case class Company(
   val departments: List[Department]
 ) extends Wirespec.Model {
   override def validate(): List[String] =
-    departments.zipWithIndex.flatMap { case (el, i) => el.validate().map(e => s"departments[${i}].${e}") }
+    departments.zipWithIndex.flatMap { case (el, i) => el.validate().map(e => s"departments[${i}].${e}").toList }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Email
+object EmailGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Email =
+    new Email(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldString(
+      regex = Some("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"),
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.PhoneNumber
+object PhoneNumberGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): PhoneNumber =
+    new PhoneNumber(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldString(
+      regex = Some("^\\+[1-9]\\d{1,14}$"),
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Tag
+object TagGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Tag =
+    new Tag(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldString(
+      regex = Some("^[a-z][a-z0-9-]{0,19}$"),
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.EmployeeAge
+object EmployeeAgeGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): EmployeeAge =
+    new EmployeeAge(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldInteger(
+      min = Some(18),
+      max = Some(65),
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.ContactInfo
+import community.flock.wirespec.generated.model.Email
+import community.flock.wirespec.generated.model.PhoneNumber
+object ContactInfoGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): ContactInfo =
+    new ContactInfo(
+      email = generator.generate(path ++ List("email"), new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p0) => EmailGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[Email]
+      )),
+      phone = generator.generate(path ++ List("phone"), new Wirespec.GeneratorFieldNullable(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p1) => PhoneNumberGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[PhoneNumber]
+      ))))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Employee
+import community.flock.wirespec.generated.model.EmployeeAge
+import community.flock.wirespec.generated.model.ContactInfo
+import community.flock.wirespec.generated.model.Tag
+object EmployeeGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Employee =
+    new Employee(
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      age = generator.generate(path ++ List("age"), new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p0) => EmployeeAgeGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[EmployeeAge]
+      )),
+      contactInfo = generator.generate(path ++ List("contactInfo"), new Wirespec.GeneratorFieldShape(
+        annotations = Map("email" -> List.empty[Map[String, Any]], "phone" -> List.empty[Map[String, Any]]),
+        generate = (p0) => ContactInfoGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[ContactInfo]
+      )),
+      tags = generator.generate(path ++ List("tags"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p1) => TagGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[Tag]
+      ))))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Department
+import community.flock.wirespec.generated.model.Employee
+object DepartmentGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Department =
+    new Department(
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      employees = generator.generate(path ++ List("employees"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map("name" -> List.empty[Map[String, Any]], "age" -> List.empty[Map[String, Any]], "contactInfo" -> List.empty[Map[String, Any]], "tags" -> List.empty[Map[String, Any]]),
+        generate = (p1) => EmployeeGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[Employee]
+      ))))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Company
+import community.flock.wirespec.generated.model.Department
+object CompanyGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Company =
+    new Company(
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      departments = generator.generate(path ++ List("departments"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map("name" -> List.empty[Map[String, Any]], "employees" -> List.empty[Map[String, Any]]),
+        generate = (p1) => DepartmentGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[Department]
+      ))))
+    )
 }
