@@ -1,0 +1,11 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+enum class TodoStatus (override val label: String): Wirespec.Enum {
+  OPEN("OPEN"),
+  IN_PROGRESS("IN_PROGRESS"),
+  CLOSE("CLOSE");
+  override fun toString(): String {
+    return label
+  }
+}

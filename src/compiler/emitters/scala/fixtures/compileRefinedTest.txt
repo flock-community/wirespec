@@ -1,0 +1,119 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TodoId(
+  override val value: String
+) extends Wirespec.Refined[String] {
+  override def validate(): Boolean =
+    """^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$""".r.findFirstIn(value).isDefined
+  override def toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TodoNoRegex(
+  override val value: String
+) extends Wirespec.Refined[String] {
+  override def validate(): Boolean =
+    true
+  override def toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestInt(
+  override val value: Long
+) extends Wirespec.Refined[Long] {
+  override def validate(): Boolean =
+    true
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestInt0(
+  override val value: Long
+) extends Wirespec.Refined[Long] {
+  override def validate(): Boolean =
+    true
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestInt1(
+  override val value: Long
+) extends Wirespec.Refined[Long] {
+  override def validate(): Boolean =
+    0 <= value
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestInt2(
+  override val value: Long
+) extends Wirespec.Refined[Long] {
+  override def validate(): Boolean =
+    1 <= value && value <= 3
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestNum(
+  override val value: Double
+) extends Wirespec.Refined[Double] {
+  override def validate(): Boolean =
+    true
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestNum0(
+  override val value: Double
+) extends Wirespec.Refined[Double] {
+  override def validate(): Boolean =
+    true
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestNum1(
+  override val value: Double
+) extends Wirespec.Refined[Double] {
+  override def validate(): Boolean =
+    value <= 0.5
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class TestNum2(
+  override val value: Double
+) extends Wirespec.Refined[Double] {
+  override def validate(): Boolean =
+    -0.2 <= value && value <= 0.5
+  override def toString(): String =
+    value.toString
+}

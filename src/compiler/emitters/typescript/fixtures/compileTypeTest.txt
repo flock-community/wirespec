@@ -1,0 +1,14 @@
+import {Wirespec} from '../Wirespec'
+export type Request = {
+  "type": string,
+  "url": string,
+  "BODY_TYPE": string | undefined,
+  "params": string[],
+  "headers": Record<string, string>,
+  "body": Record<string, (string | undefined)[] | undefined> | undefined,
+}
+export function validateRequest(obj: Request): string[] {
+  return [] as string[];
+}
+
+export {Request} from './Request'

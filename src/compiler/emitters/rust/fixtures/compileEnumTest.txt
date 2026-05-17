@@ -1,0 +1,53 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, PartialEq)]
+pub enum MyAwesomeEnum {
+    ONE,
+    Two,
+    THREEMORE,
+    UnitedKingdom,
+    _1,
+    _0,
+    _10,
+    _999,
+    _88,
+}
+impl Enum for MyAwesomeEnum {
+    fn label(&self) -> &str {
+        match self {
+            MyAwesomeEnum::ONE => "ONE",
+            MyAwesomeEnum::Two => "Two",
+            MyAwesomeEnum::THREEMORE => "THREE_MORE",
+            MyAwesomeEnum::UnitedKingdom => "UnitedKingdom",
+            MyAwesomeEnum::_1 => "-1",
+            MyAwesomeEnum::_0 => "0",
+            MyAwesomeEnum::_10 => "10",
+            MyAwesomeEnum::_999 => "-999",
+            MyAwesomeEnum::_88 => "88",
+        }
+    }
+    fn from_label(s: &str) -> Option<Self> {
+        match s {
+            "ONE" => Some(MyAwesomeEnum::ONE),
+            "Two" => Some(MyAwesomeEnum::Two),
+            "THREE_MORE" => Some(MyAwesomeEnum::THREEMORE),
+            "UnitedKingdom" => Some(MyAwesomeEnum::UnitedKingdom),
+            "-1" => Some(MyAwesomeEnum::_1),
+            "0" => Some(MyAwesomeEnum::_0),
+            "10" => Some(MyAwesomeEnum::_10),
+            "-999" => Some(MyAwesomeEnum::_999),
+            "88" => Some(MyAwesomeEnum::_88),
+            _ => None,
+        }
+    }
+}
+impl std::fmt::Display for MyAwesomeEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.label())
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

@@ -1,0 +1,110 @@
+from __future__ import annotations
+import enum
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, Optional, Type, TypeVar
+T = TypeVar('T')
+def _raise(msg: str) -> Any:
+    raise Exception(msg)
+# package shared
+class Wirespec:
+    class Model(ABC):
+        @abstractmethod
+        def validate(self) -> list[str]:
+            ...
+    class Enum(ABC):
+        label: str
+    class Endpoint(ABC):
+        pass
+    class Channel(ABC):
+        pass
+    class Refined(ABC, Generic[T]):
+        value: T
+        @abstractmethod
+        def validate(self) -> bool:
+            ...
+    class Path(ABC):
+        pass
+    class Queries(ABC):
+        pass
+    class Headers(ABC):
+        pass
+    class Handler(ABC):
+        pass
+    class Call(ABC):
+        pass
+    class Method(enum.Enum):
+        GET = "GET"
+        PUT = "PUT"
+        POST = "POST"
+        DELETE = "DELETE"
+        OPTIONS = "OPTIONS"
+        HEAD = "HEAD"
+        PATCH = "PATCH"
+        TRACE = "TRACE"
+    class Request(ABC, Generic[T]):
+        path: Wirespec.Path
+        method: Wirespec.Method
+        queries: Wirespec.Queries
+        headers: Headers
+        body: T
+        class Headers(ABC):
+            pass
+    class Response(ABC, Generic[T]):
+        status: int
+        headers: Headers
+        body: T
+        class Headers(ABC):
+            pass
+    class BodySerializer(ABC):
+        @abstractmethod
+        def serializeBody(self, t: T, type: type[T]) -> bytes:
+            ...
+    class BodyDeserializer(ABC):
+        @abstractmethod
+        def deserializeBody(self, raw: bytes, type: type[T]) -> T:
+            ...
+    class BodySerialization(BodySerializer, BodyDeserializer, ABC):
+        pass
+    class PathSerializer(ABC):
+        @abstractmethod
+        def serializePath(self, t: T, type: type[T]) -> str:
+            ...
+    class PathDeserializer(ABC):
+        @abstractmethod
+        def deserializePath(self, raw: str, type: type[T]) -> T:
+            ...
+    class PathSerialization(PathSerializer, PathDeserializer, ABC):
+        pass
+    class ParamSerializer(ABC):
+        @abstractmethod
+        def serializeParam(self, value: T, type: type[T]) -> list[str]:
+            ...
+    class ParamDeserializer(ABC):
+        @abstractmethod
+        def deserializeParam(self, values: list[str], type: type[T]) -> T:
+            ...
+    class ParamSerialization(ParamSerializer, ParamDeserializer, ABC):
+        pass
+    class Serializer(BodySerializer, PathSerializer, ParamSerializer, ABC):
+        pass
+    class Deserializer(BodyDeserializer, PathDeserializer, ParamDeserializer, ABC):
+        pass
+    class Serialization(Serializer, Deserializer, ABC):
+        pass
+    @dataclass
+    class RawRequest:
+        method: str
+        path: list[str]
+        queries: dict[str, list[str]]
+        headers: dict[str, list[str]]
+        body: Optional[bytes]
+    @dataclass
+    class RawResponse:
+        statusCode: int
+        headers: dict[str, list[str]]
+        body: Optional[bytes]
+    class Transportation(ABC):
+        @abstractmethod
+        async def transport(self, request: Wirespec.RawRequest) -> Wirespec.RawResponse:
+            ...

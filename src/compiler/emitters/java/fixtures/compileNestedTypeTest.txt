@@ -1,0 +1,44 @@
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record DutchPostalCode (
+  String value
+) implements Wirespec.Refined {
+  @Override
+  public Boolean validate() {
+    return java.util.regex.Pattern.compile("^([0-9]{4}[A-Z]{2})$").matcher(value).find();
+  }
+  @Override
+  public String toString() {
+    return value;
+  }
+  @Override
+  public String value() {
+    return value;
+  }
+};
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Address (
+  String street,
+  Long houseNumber,
+  DutchPostalCode postalCode
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return (!postalCode().validate() ? java.util.List.of("postalCode") : java.util.List.<String>of());
+  }
+};
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Person (
+  String name,
+  Address address,
+  java.util.List<String> tags
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return address().validate().stream().map(e -> "address." + e).toList();
+  }
+};

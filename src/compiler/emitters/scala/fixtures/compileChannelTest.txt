@@ -1,0 +1,4 @@
+package community.flock.wirespec.generated.channel
+trait Queue extends Wirespec.Channel {
+  def invoke(message: String): Unit
+}

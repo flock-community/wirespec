@@ -1,0 +1,274 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct PotentialTodoDto {
+    pub name: String,
+    pub done: bool,
+}
+impl PotentialTodoDto {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Token {
+    pub iss: String,
+}
+impl Token {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct TodoDto {
+    pub id: String,
+    pub name: String,
+    pub done: bool,
+}
+impl TodoDto {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Error {
+    pub code: i64,
+    pub description: String,
+}
+impl Error {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::token::Token;
+use super::super::model::potential_todo_dto::PotentialTodoDto;
+use super::super::model::todo_dto::TodoDto;
+use super::super::model::error::Error;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Path {
+    pub id: String,
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Queries {
+    pub done: bool,
+    pub name: Option<String>,
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct RequestHeaders {
+    pub token: Token,
+    pub refresh_token: Option<Token>,
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Request {
+    pub path: Path,
+    pub method: Method,
+    pub queries: Queries,
+    pub headers: RequestHeaders,
+    pub body: PotentialTodoDto,
+}
+impl Request {
+    pub fn new(id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> Self {
+        Request {
+            path: Path { id: id },
+            method: Method::PUT,
+            queries: Queries { done: done, name: name },
+            headers: RequestHeaders { token: token, refresh_token: refresh_token },
+            body: body
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq)]
+pub enum Response {
+    Response200(Response200),
+    Response201(Response201),
+    Response500(Response500),
+}
+impl From<Response200> for Response { fn from(value: Response200) -> Self { Response::Response200(value) } }
+impl From<Response201> for Response { fn from(value: Response201) -> Self { Response::Response201(value) } }
+impl From<Response500> for Response { fn from(value: Response500) -> Self { Response::Response500(value) } }
+#[derive(Debug, Clone, PartialEq)]
+pub enum Response2XX {
+    Response200(Response200),
+    Response201(Response201),
+}
+#[derive(Debug, Clone, PartialEq)]
+pub enum Response5XX {
+    Response500(Response500),
+}
+#[derive(Debug, Clone, PartialEq)]
+pub enum ResponseTodoDto {
+    Response200(Response200),
+    Response201(Response201),
+}
+#[derive(Debug, Clone, PartialEq)]
+pub enum ResponseError {
+    Response500(Response500),
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Response200Headers;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Response200 {
+    pub status: i32,
+    pub headers: Response200Headers,
+    pub body: TodoDto,
+}
+impl Response200 {
+    pub fn new(body: TodoDto) -> Self {
+        Response200 {
+            status: 200_i32,
+            headers: Response200Headers {},
+            body: body
+        }
+    }
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Response201Headers {
+    pub token: Token,
+    pub refresh_token: Option<Token>,
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Response201 {
+    pub status: i32,
+    pub headers: Response201Headers,
+    pub body: TodoDto,
+}
+impl Response201 {
+    pub fn new(token: Token, refresh_token: Option<Token>, body: TodoDto) -> Self {
+        Response201 {
+            status: 201_i32,
+            headers: Response201Headers { token: token, refresh_token: refresh_token },
+            body: body
+        }
+    }
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Response500Headers;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Response500 {
+    pub status: i32,
+    pub headers: Response500Headers,
+    pub body: Error,
+}
+impl Response500 {
+    pub fn new(body: Error) -> Self {
+        Response500 {
+            status: 500_i32,
+            headers: Response500Headers {},
+            body: body
+        }
+    }
+}
+pub mod PutTodo {
+    use super::*;
+    pub fn to_raw_request(serialization: &impl Serializer, request: Request) -> RawRequest {
+        return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("todos"), serialization.serialize_path(&request.path.id, std::any::TypeId::of::<String>())], queries: std::collections::HashMap::from([(String::from("done"), serialization.serialize_param(&request.queries.done, std::any::TypeId::of::<bool>())), (String::from("name"), request.queries.name.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<String>())).unwrap_or(Vec::<String>::new()))]), headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&request.headers.token, std::any::TypeId::of::<Token>())), (String::from("Refresh-Token"), request.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&request.body, std::any::TypeId::of::<PotentialTodoDto>())) };
+    }
+    pub fn from_raw_request(serialization: &impl Deserializer, request: RawRequest) -> Request {
+        return Request::new(serialization.deserialize_path(&request.path[1], std::any::TypeId::of::<String>()), request.queries.get("done").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<bool>())).expect("Param done cannot be null"), request.queries.get("name").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<String>())), request.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case("token")).map(|(_, v)| v.clone()).as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())).expect("Param token cannot be null"), request.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case("Refresh-Token")).map(|(_, v)| v.clone()).as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())), request.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<PotentialTodoDto>())).expect("body is null"));
+    }
+    pub fn to_raw_response(serialization: &impl Serializer, response: Response) -> RawResponse {
+        match response {
+            Response::Response200(r) => {
+                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
+            }
+            Response::Response201(r) => {
+                return RawResponse { status_code: r.status, headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&r.headers.token, std::any::TypeId::of::<Token>())), (String::from("refreshToken"), r.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
+            }
+            Response::Response500(r) => {
+                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Error>())) };
+            }
+        }
+    }
+    pub fn from_raw_response(serialization: &impl Deserializer, response: RawResponse) -> Response {
+        match response.status_code {
+            200_i32 => {
+                return Response::Response200(Response200::new(response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<TodoDto>())).expect("body is null")));
+            }
+            201_i32 => {
+                return Response::Response201(Response201::new(response.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case("token")).map(|(_, v)| v.clone()).as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())).expect("Param token cannot be null"), response.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case("refreshToken")).map(|(_, v)| v.clone()).as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<Token>())), response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<TodoDto>())).expect("body is null")));
+            }
+            500_i32 => {
+                return Response::Response500(Response500::new(response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<Error>())).expect("body is null")));
+            }
+            _ => {
+                panic!("Cannot match response with status: {}", response.status_code);
+            }
+        }
+    }
+    pub trait Handler {
+        async fn put_todo(&self, request: Request) -> Response;
+    }
+    pub trait Call {
+        async fn put_todo(&self, id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> Response;
+    }
+    impl<C: Client> Handler for C {
+        async fn put_todo(&self, request: Request) -> Response {
+            let raw = to_raw_request(self.serialization(), request);
+            let resp = self.transport().transport(&raw).await;
+            from_raw_response(self.serialization(), resp)
+        }
+    }
+    pub struct Api;
+    impl Server for Api {
+        type Req = Request;
+        type Res = Response;
+        fn path_template(&self) -> &'static str { "/todos/{id}" }
+        fn method(&self) -> Method { Method::PUT }
+    }
+}
+
+use super::super::wirespec::*;
+use super::super::endpoint::put_todo;
+use super::super::model::token::Token;
+use super::super::model::potential_todo_dto::PotentialTodoDto;
+use super::super::model::todo_dto::TodoDto;
+use super::super::model::error::Error;
+pub struct PutTodoClient<'a, S: Serialization, T: Transportation> {
+    pub serialization: &'a S,
+    pub transportation: &'a T,
+}
+impl<'a, S: Serialization, T: Transportation> put_todo::PutTodo::Call for PutTodoClient<'a, S, T> {
+    async fn put_todo(&self, id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> put_todo::Response {
+        let request = put_todo::Request::new(id, done, name, token, refresh_token, body);
+        let raw_request = put_todo::PutTodo::to_raw_request(self.serialization, request);
+        let raw_response = self.transportation.transport(&raw_request).await;
+        put_todo::PutTodo::from_raw_response(self.serialization, raw_response)
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod client;
+pub mod wirespec;
+
+pub mod put_todo_client;
+use super::wirespec::*;
+use super::model::token::Token;
+use super::model::potential_todo_dto::PotentialTodoDto;
+use super::model::todo_dto::TodoDto;
+use super::model::error::Error;
+use super::endpoint::put_todo;
+use put_todo_client::PutTodoClient;
+pub struct Client<S: Serialization, T: Transportation> {
+    pub serialization: S,
+    pub transportation: T,
+}
+impl<S: Serialization, T: Transportation> put_todo::PutTodo::Call for Client<S, T> {
+    async fn put_todo(&self, id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> put_todo::Response {
+        PutTodoClient { serialization: &self.serialization, transportation: &self.transportation }
+            .put_todo(id, done, name, token, refresh_token, body).await
+    }
+}

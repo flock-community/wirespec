@@ -152,6 +152,16 @@ make all
 to compile the project and test the Wirespec compiler with definitions found in `types`. Locate the result
 in `types/out`
 
+## Updating emitter test fixtures
+
+Each emitter (`java`, `kotlin`, `python`, `rust`, `scala`, `typescript`) keeps its expected outputs as `.txt` files under `src/compiler/emitters/<lang>/fixtures/`. Tests compare the emitter's output against these files. When you change emitter behavior on purpose, regenerate the fixtures for that module:
+
+```shell
+./gradlew :src:compiler:emitters:kotlin:updateEmitterFixtures
+```
+
+Substitute `kotlin` with the language you changed. The task runs the emitter against the shared test inputs and overwrites the `.txt` files — always review the diff before committing.
+
 # Releases
 
 A release can be made using GitHub the UI.

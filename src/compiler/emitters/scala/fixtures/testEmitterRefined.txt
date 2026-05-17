@@ -1,0 +1,11 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class UUID(
+  override val value: String
+) extends Wirespec.Refined[String] {
+  override def validate(): Boolean =
+    """^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$""".r.findFirstIn(value).isDefined
+  override def toString(): String =
+    value
+}

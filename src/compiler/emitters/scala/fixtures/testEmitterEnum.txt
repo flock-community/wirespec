@@ -1,0 +1,11 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+enum TodoStatus(override val label: String) extends Wirespec.Enum {
+  case OPEN extends TodoStatus("OPEN"),
+  case IN_PROGRESS extends TodoStatus("IN_PROGRESS"),
+  case CLOSE extends TodoStatus("CLOSE")
+  override def toString(): String = {
+    label
+  }
+}

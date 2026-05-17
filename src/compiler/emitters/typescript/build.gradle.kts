@@ -1,6 +1,7 @@
 plugins {
     id("module.publication")
     id("module.spotless")
+    id("module.emitter-fixtures")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
@@ -56,4 +57,12 @@ kotlin {
             }
         }
     }
+}
+
+kotlin.sourceSets.named("commonTest") {
+    kotlin.srcDir(tasks.named("generateEmitterFixtures"))
+}
+
+emitterFixtures {
+    emitterClass = "community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter"
 }

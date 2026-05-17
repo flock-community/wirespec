@@ -1,0 +1,32 @@
+import {Wirespec} from '../Wirespec'
+export type DutchPostalCode = string;
+export const validateDutchPostalCode = (value: string) =>
+  /^([0-9]{4}[A-Z]{2})$/g.test(value);
+
+import {Wirespec} from '../Wirespec'
+import {DutchPostalCode} from './DutchPostalCode'
+import {validateDutchPostalCode} from './DutchPostalCode'
+export type Address = {
+  "street": string,
+  "houseNumber": number,
+  "postalCode": DutchPostalCode,
+}
+export function validateAddress(obj: Address): string[] {
+  return (!validateDutchPostalCode(obj.postalCode) ? ['postalCode'] : [] as string[]);
+}
+
+import {Wirespec} from '../Wirespec'
+import {Address} from './Address'
+import {validateAddress} from './Address'
+export type Person = {
+  "name": string,
+  "address": Address,
+  "tags": string[],
+}
+export function validatePerson(obj: Person): string[] {
+  return validateAddress(obj.address).map(e => `address.${e}`);
+}
+
+export {DutchPostalCode} from './DutchPostalCode'
+export {Address} from './Address'
+export {Person} from './Person'

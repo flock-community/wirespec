@@ -1,0 +1,112 @@
+import {Wirespec} from '../Wirespec'
+import {type TodoDto} from '../model'
+export namespace GetTodos {
+  export type Path = {}
+  export type Queries = {}
+  export type RequestHeaders = {}
+  export type Request = {
+    "path": Path,
+    "method": Wirespec.Method,
+    "queries": Queries,
+    "headers": RequestHeaders,
+    "body": void,
+  }
+  export type RequestParams = {}
+  export const request = (): Request => ({
+    path: {},
+    method: "GET",
+    queries: {},
+    headers: {},
+    body: undefined,
+  })
+  export type Response<T = unknown> = Response2XX | ResponseListTodoDto
+  export type Response2XX<T = unknown> = Response200
+  export type ResponseListTodoDto = Response200
+  export type Response200 = {
+    "status": 200,
+    "headers": {},
+    "body": TodoDto[],
+  }
+  export type Response200Params = {"body": TodoDto[]}
+  export const response200 = (params: Response200Params): Response200 => ({
+    status: 200,
+    headers: {},
+    body: params.body,
+  })
+  export function toRawRequest(serialization: Wirespec.Serializer, _request: Request): Wirespec.RawRequest {
+    return { method: _request.method, path: ['todos'], queries: {}, headers: {}, body: undefined };
+  }
+  export function fromRawRequest(serialization: Wirespec.Deserializer, _request: Wirespec.RawRequest): Request {
+    return request();
+  }
+  export function toRawResponse(serialization: Wirespec.Serializer, response: Response<unknown>): Wirespec.RawResponse {
+    switch (response.status) {
+      case 200: {
+        const r = response as Response200;
+        return { statusCode: r.status, headers: {}, body: serialization.serializeBody(r.body, "TodoDto[]") };
+      }
+      default: {
+        throw new Error('Cannot match response with status:');
+      }
+    }
+  }
+  export function fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<unknown> {
+    switch (response.statusCode) {
+      case 200:
+        return response200({"body": response.body != null ? serialization.deserializeBody(response.body, "TodoDto[]") : (() => { throw new Error('body is null') })()});
+        break;
+      default:
+        throw new Error('Cannot match response with status:');
+    }
+  }
+  export interface Handler extends Wirespec.Handler {
+    getTodos(_request: Request): Promise<Response<unknown>>;
+  }
+  export interface Call extends Wirespec.Call {
+    getTodos(): Promise<Response<unknown>>;
+  }
+  export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
+    from: (it) => fromRawResponse(serialization, it),
+    to: (it) => toRawRequest(serialization, it)
+  })
+  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
+    from: (it) => fromRawRequest(serialization, it),
+    to: (it) => toRawResponse(serialization, it)
+  })
+  export const api = {
+    name: "getTodos",
+    method: "GET",
+    path: "todos",
+    server,
+    client
+  } as const
+}
+
+import {Wirespec} from '../Wirespec'
+export type TodoDto = {
+  "description": string,
+}
+export function validateTodoDto(obj: TodoDto): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+import {GetTodos} from '../endpoint/GetTodos'
+import {type TodoDto} from '../model'
+export const getTodosClient = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+  getTodos: async (): Promise<GetTodos.Response<unknown>> => {
+    const request: GetTodos.Request = GetTodos.request();
+    const rawRequest = GetTodos.toRawRequest(serialization, request);
+    const rawResponse = await transportation.transport(rawRequest);
+    return GetTodos.fromRawResponse(serialization, rawResponse);
+  }
+})
+
+import {Wirespec} from './Wirespec'
+import {getTodosClient} from './client/GetTodosClient'
+export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+  ...getTodosClient(serialization, transportation),
+})
+
+export {GetTodos} from './GetTodos'
+export {TodoDto} from './TodoDto'

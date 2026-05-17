@@ -1,0 +1,56 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class DutchPostalCode(Wirespec.Refined[str]):
+    value: str
+    def validate(self) -> bool:
+        return bool(re.match(r"/^([0-9]{4}[A-Z]{2})$/g", self.value))
+    def __str__(self) -> str:
+        return self.value
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .DutchPostalCode import DutchPostalCode
+@dataclass
+class Address(Wirespec.Model):
+    street: str
+    houseNumber: int
+    postalCode: DutchPostalCode
+    def validate(self) -> list[str]:
+        return (['postalCode'] if not self.postalCode.validate() else [])
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .Address import Address
+@dataclass
+class Person(Wirespec.Model):
+    name: str
+    address: Address
+    tags: list[str]
+    def validate(self) -> list[str]:
+        return [f"address.{e}" for e in self.address.validate()]
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+

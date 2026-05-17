@@ -1,0 +1,87 @@
+export namespace Wirespec {
+  export type Type = string
+  export interface Model {
+    validate(): string[];
+  }
+  export interface Enum {
+    label: string;
+  }
+  export interface Endpoint {}
+  export interface Channel {}
+  export interface Refined<T> {
+    value: T;
+    validate(): boolean;
+  }
+  export interface Path {}
+  export interface Queries {}
+  export interface Headers {}
+  export interface Handler {}
+  export interface Call {}
+  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
+  export interface Request<T> {
+    path: Path;
+    method: Method;
+    queries: Queries;
+    headers: {};
+    body: T;
+  }
+  export interface Response<T> {
+    status: number;
+    headers: {};
+    body: T;
+  }
+  export interface BodySerializer {
+    serializeBody<T>(t: T, type: Type): Uint8Array;
+  }
+  export interface BodyDeserializer {
+    deserializeBody<T>(raw: Uint8Array, type: Type): T;
+  }
+  export interface BodySerialization extends BodySerializer, BodyDeserializer {}
+  export interface PathSerializer {
+    serializePath<T>(t: T, type: Type): string;
+  }
+  export interface PathDeserializer {
+    deserializePath<T>(raw: string, type: Type): T;
+  }
+  export interface PathSerialization extends PathSerializer, PathDeserializer {}
+  export interface ParamSerializer {
+    serializeParam<T>(value: T, type: Type): string[];
+  }
+  export interface ParamDeserializer {
+    deserializeParam<T>(values: string[], type: Type): T;
+  }
+  export interface ParamSerialization extends ParamSerializer, ParamDeserializer {}
+  export interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {}
+  export interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {}
+  export interface Serialization extends Serializer, Deserializer {}
+  export type RawRequest = {
+    "method": string,
+    "path": string[],
+    "queries": Record<string, string[]>,
+    "headers": Record<string, string[]>,
+    "body": Uint8Array | undefined,
+  }
+  export type RawResponse = {
+    "statusCode": number,
+    "headers": Record<string, string[]>,
+    "body": Uint8Array | undefined,
+  }
+  export interface Transportation {
+    transport(request: RawRequest): Promise<RawResponse>;
+  }
+  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
+    to: (request: REQ) => RawRequest;
+    from: (response: RawResponse) => RES
+  }
+  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
+    from: (request: RawRequest) => REQ;
+    to: (response: RES) => RawResponse
+  }
+  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = {
+    name: string;
+    method: Method,
+    path: string,
+    client: Client<REQ, RES>;
+    server: Server<REQ, RES>
+  }
+}

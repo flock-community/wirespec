@@ -1,0 +1,18 @@
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record UUID (
+  String value
+) implements Wirespec.Refined {
+  @Override
+  public Boolean validate() {
+    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(value).find();
+  }
+  @Override
+  public String toString() {
+    return value;
+  }
+  @Override
+  public String value() {
+    return value;
+  }
+};
