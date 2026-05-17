@@ -1,0 +1,49 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct DutchPostalCode {
+    pub value: String,
+}
+impl DutchPostalCode {
+    pub fn validate(&self) -> bool {
+        return regex::Regex::new(r"^([0-9]{4}[A-Z]{2})$").unwrap().is_match(&self.value);
+    }
+    pub fn to_string(&self) -> String {
+        return self.value.clone();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::dutch_postal_code::DutchPostalCode;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Address {
+    pub street: String,
+    pub house_number: i64,
+    pub postal_code: DutchPostalCode,
+}
+impl Address {
+    pub fn validate(&self) -> Vec<String> {
+        return if !self.postal_code.validate() { vec![String::from("postalCode")] } else { Vec::<String>::new() };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::address::Address;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Person {
+    pub name: String,
+    pub address: Address,
+    pub tags: Vec<String>,
+}
+impl Person {
+    pub fn validate(&self) -> Vec<String> {
+        return self.address.validate().iter().map(|e| format!("address.{}", e)).collect::<Vec<_>>();
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

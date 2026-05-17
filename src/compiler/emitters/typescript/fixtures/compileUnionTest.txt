@@ -1,0 +1,36 @@
+import {Wirespec} from '../Wirespec'
+import {type UserAccountPassword} from '../model'
+import {type UserAccountToken} from '../model'
+export type UserAccount = UserAccountPassword | UserAccountToken
+
+import {Wirespec} from '../Wirespec'
+export type UserAccountPassword = {
+  "username": string,
+  "password": string,
+}
+export function validateUserAccountPassword(obj: UserAccountPassword): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+export type UserAccountToken = {
+  "token": string,
+}
+export function validateUserAccountToken(obj: UserAccountToken): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+import {UserAccount} from './UserAccount'
+export type User = {
+  "username": string,
+  "account": UserAccount,
+}
+export function validateUser(obj: User): string[] {
+  return [] as string[];
+}
+
+export {UserAccount} from './UserAccount'
+export {UserAccountPassword} from './UserAccountPassword'
+export {UserAccountToken} from './UserAccountToken'
+export {User} from './User'

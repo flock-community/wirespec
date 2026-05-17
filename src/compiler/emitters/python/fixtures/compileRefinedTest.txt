@@ -1,0 +1,159 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TodoId(Wirespec.Refined[str]):
+    value: str
+    def validate(self) -> bool:
+        return bool(re.match(r"/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g", self.value))
+    def __str__(self) -> str:
+        return self.value
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TodoNoRegex(Wirespec.Refined[str]):
+    value: str
+    def validate(self) -> bool:
+        return True
+    def __str__(self) -> str:
+        return self.value
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestInt(Wirespec.Refined[int]):
+    value: int
+    def validate(self) -> bool:
+        return True
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestInt0(Wirespec.Refined[int]):
+    value: int
+    def validate(self) -> bool:
+        return True
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestInt1(Wirespec.Refined[int]):
+    value: int
+    def validate(self) -> bool:
+        return 0 <= self.value
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestInt2(Wirespec.Refined[int]):
+    value: int
+    def validate(self) -> bool:
+        return 1 <= self.value and self.value <= 3
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestNum(Wirespec.Refined[float]):
+    value: float
+    def validate(self) -> bool:
+        return True
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestNum0(Wirespec.Refined[float]):
+    value: float
+    def validate(self) -> bool:
+        return True
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestNum1(Wirespec.Refined[float]):
+    value: float
+    def validate(self) -> bool:
+        return self.value <= 0.5
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class TestNum2(Wirespec.Refined[float]):
+    value: float
+    def validate(self) -> bool:
+        return -0.2 <= self.value and self.value <= 0.5
+    def __str__(self) -> str:
+        return str(self.value)
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+

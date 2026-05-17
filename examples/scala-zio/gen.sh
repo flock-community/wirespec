@@ -22,9 +22,9 @@ fi
 OUT_DIR="$SCRIPT_DIR/target/generated-sources"
 mkdir -p "$OUT_DIR"
 
-echo "Generating Scala code from guru.json..."
-"$CLI" convert OpenAPIV3 \
-  -i "$SCRIPT_DIR/guru.json" \
+echo "Generating Scala code from wirespec defs..."
+"$CLI" compile \
+  -i "$SCRIPT_DIR/wirespec" \
   -o "$OUT_DIR" \
   -l Scala \
   -p community.flock.wirespec.generated \

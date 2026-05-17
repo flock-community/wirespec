@@ -28,7 +28,8 @@ clean:
 	(cd maven-spring-native && ./mvnw clean) && \
 	(cd gradle-spring-boot && ./gradlew clean) && \
 	(cd npm-typescript && npm run clean) && \
-	(cd npm-typescript-ir && npm run clean)
+	(cd npm-typescript-ir && npm run clean) && \
+	(cd scala-zio && sbt clean)
 
 format:
 	(cd gradle-ktor && ./gradlew spotlessApply) && \

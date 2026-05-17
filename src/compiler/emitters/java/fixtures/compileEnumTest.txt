@@ -1,0 +1,24 @@
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public enum MyAwesomeEnum implements Wirespec.Enum {
+  ONE("ONE"),
+  Two("Two"),
+  THREE_MORE("THREE_MORE"),
+  UnitedKingdom("UnitedKingdom"),
+  _1("-1"),
+  _0("0"),
+  _10("10"),
+  _999("-999"),
+  _88("88");
+  public final String label;
+  MyAwesomeEnum(String label) {
+    this.label = label;
+  }
+  @Override
+  public String toString() {
+    return label;
+  }
+  public String label() {
+    return label;
+  }
+}

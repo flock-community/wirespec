@@ -1,0 +1,280 @@
+package community.flock.wirespec.generated.endpoint;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Token;
+import community.flock.wirespec.generated.model.Token;
+import community.flock.wirespec.generated.model.PotentialTodoDto;
+import community.flock.wirespec.generated.model.TodoDto;
+import community.flock.wirespec.generated.model.Error;
+public interface PutTodo extends Wirespec.Endpoint {
+  public static record Path (
+    String id
+  ) implements Wirespec.Path {
+  };
+  public static record Queries (
+    Boolean done,
+    java.util.Optional<String> name
+  ) implements Wirespec.Queries {
+  };
+  public static record RequestHeaders (
+    Token token,
+    java.util.Optional<Token> refreshToken
+  ) implements Wirespec.Request.Headers {
+  };
+  public static record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    PotentialTodoDto body
+  ) implements Wirespec.Request<PotentialTodoDto> {
+    public Request(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
+      this(new Path(id), Wirespec.Method.PUT, new Queries(
+        done,
+        name
+      ), new RequestHeaders(
+        token,
+        refreshToken
+      ), body);
+    }
+  };
+  public sealed interface Response<T> extends Wirespec.Response<T> permits Response2XX, Response5XX, ResponseTodoDto, ResponseError {}
+  public sealed interface Response2XX<T> extends Response<T> permits Response200, Response201 {}
+  public sealed interface Response5XX<T> extends Response<T> permits Response500 {}
+  public sealed interface ResponseTodoDto extends Response<TodoDto> permits Response200, Response201 {}
+  public sealed interface ResponseError extends Response<Error> permits Response500 {}
+  public static record Response200 (
+    Integer status,
+    Headers headers,
+    TodoDto body
+  ) implements Response2XX<TodoDto>, ResponseTodoDto {
+    public Response200(TodoDto body) {
+      this(200, new Headers(), body);
+    }
+    public static record Headers () implements Wirespec.Response.Headers {
+    };
+  };
+  public static record Response201 (
+    Integer status,
+    Headers headers,
+    TodoDto body
+  ) implements Response2XX<TodoDto>, ResponseTodoDto {
+    public Response201(Token token, java.util.Optional<Token> refreshToken, TodoDto body) {
+      this(201, new Headers(
+        token,
+        refreshToken
+      ), body);
+    }
+    public static record Headers (
+      Token token,
+      java.util.Optional<Token> refreshToken
+    ) implements Wirespec.Response.Headers {
+    };
+  };
+  public static record Response500 (
+    Integer status,
+    Headers headers,
+    Error body
+  ) implements Response5XX<Error>, ResponseError {
+    public Response500(Error body) {
+      this(500, new Headers(), body);
+    }
+    public static record Headers () implements Wirespec.Response.Headers {
+    };
+  };
+  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+    return new Wirespec.RawRequest(
+      request.method().name(),
+      java.util.List.of("todos", serialization.<String>serializePath(request.path().id(), Wirespec.getType(String.class, null))),
+      java.util.Map.ofEntries(java.util.Map.entry("done", serialization.<Boolean>serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", request.queries().name().map(it -> serialization.<String>serializeParam(it, Wirespec.getType(String.class, null))).orElse(java.util.List.<String>of()))),
+      java.util.Map.ofEntries(java.util.Map.entry("token", serialization.<Token>serializeParam(request.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", request.headers().refreshToken().map(it -> serialization.<Token>serializeParam(it, Wirespec.getType(Token.class, null))).orElse(java.util.List.<String>of()))),
+      java.util.Optional.of(serialization.<PotentialTodoDto>serializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null)))
+    );
+  }
+  public static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    return new Request(
+      serialization.<String>deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
+      java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, null))).orElseThrow(() -> new IllegalStateException("Param done cannot be null")),
+      java.util.Optional.ofNullable(request.queries().get("name")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, null))),
+      java.util.Optional.ofNullable(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))).orElseThrow(() -> new IllegalStateException("Param token cannot be null")),
+      java.util.Optional.ofNullable(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("Refresh-Token")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))),
+      request.body().map(it -> serialization.<PotentialTodoDto>deserializeBody(it, Wirespec.getType(PotentialTodoDto.class, null))).orElseThrow(() -> new IllegalStateException("body is null"))
+    );
+  }
+  public static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
+    if (response instanceof Response200 r) {
+      return new Wirespec.RawResponse(
+        r.status(),
+        java.util.Collections.emptyMap(),
+        java.util.Optional.of(serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, null)))
+      );
+    } else if (response instanceof Response201 r) {
+      return new Wirespec.RawResponse(
+        r.status(),
+        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.<Token>serializeParam(r.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", r.headers().refreshToken().map(it -> serialization.<Token>serializeParam(it, Wirespec.getType(Token.class, null))).orElse(java.util.List.<String>of()))),
+        java.util.Optional.of(serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, null)))
+      );
+    } else if (response instanceof Response500 r) {
+      return new Wirespec.RawResponse(
+        r.status(),
+        java.util.Collections.emptyMap(),
+        java.util.Optional.of(serialization.serializeBody(r.body(), Wirespec.getType(Error.class, null)))
+      );
+    } else {
+      throw new IllegalStateException(("Cannot match response with status: " + response.status()));
+    }
+  }
+  public static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    switch (response.statusCode()) {
+        case 200 -> {
+          return new Response200(response.body().map(it -> serialization.<TodoDto>deserializeBody(it, Wirespec.getType(TodoDto.class, null))).orElseThrow(() -> new IllegalStateException("body is null")));
+        }
+        case 201 -> {
+          return new Response201(
+            java.util.Optional.ofNullable(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("token")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))).orElseThrow(() -> new IllegalStateException("Param token cannot be null")),
+            java.util.Optional.ofNullable(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("refreshToken")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, null))),
+            response.body().map(it -> serialization.<TodoDto>deserializeBody(it, Wirespec.getType(TodoDto.class, null))).orElseThrow(() -> new IllegalStateException("body is null"))
+          );
+        }
+        case 500 -> {
+          return new Response500(response.body().map(it -> serialization.<Error>deserializeBody(it, Wirespec.getType(Error.class, null))).orElseThrow(() -> new IllegalStateException("body is null")));
+        }
+        default -> {
+          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
+        }
+    }
+  }
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);
+    public static record Handlers () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+      @Override
+      public String getPathTemplate() {
+        return "/todos/{id}";
+      }
+      @Override
+      public String getMethod() {
+        return "PUT";
+      }
+      @Override
+      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
+        return new Wirespec.ServerEdge<>() {
+        @Override public Request from(Wirespec.RawRequest request) {
+            return fromRawRequest(serialization, request);
+        }
+        @Override public Wirespec.RawResponse to(Response<?> response) {
+            return toRawResponse(serialization, response);
+        }
+        };
+      }
+      @Override
+      public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
+        return new Wirespec.ClientEdge<>() {
+        @Override public Wirespec.RawRequest to(Request request) {
+            return toRawRequest(serialization, request);
+        }
+        @Override public Response<?> from(Wirespec.RawResponse response) {
+            return fromRawResponse(serialization, response);
+        }
+        };
+      }
+    };
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body);
+  }
+}
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record PotentialTodoDto (
+  String name,
+  Boolean done
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Token (
+  String iss
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record TodoDto (
+  String id,
+  String name,
+  Boolean done
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Error (
+  Long code,
+  String description
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.client;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Token;
+import community.flock.wirespec.generated.model.Token;
+import community.flock.wirespec.generated.model.PotentialTodoDto;
+import community.flock.wirespec.generated.model.TodoDto;
+import community.flock.wirespec.generated.model.Error;
+import community.flock.wirespec.generated.endpoint.PutTodo;
+public record PutTodoClient (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements PutTodo.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<PutTodo.Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
+    final var request = new PutTodo.Request(
+      id,
+      done,
+      name,
+      token,
+      refreshToken,
+      body
+    );
+    final var rawRequest = PutTodo.toRawRequest(serialization(), request);
+    return transportation().transport(rawRequest).thenApply(rawResponse -> PutTodo.fromRawResponse(serialization(), rawResponse));
+  }
+};
+
+package community.flock.wirespec.generated;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Token;
+import community.flock.wirespec.generated.model.PotentialTodoDto;
+import community.flock.wirespec.generated.model.TodoDto;
+import community.flock.wirespec.generated.model.Error;
+import community.flock.wirespec.generated.endpoint.PutTodo;
+import community.flock.wirespec.generated.client.PutTodoClient;
+public record Client (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements PutTodo.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<PutTodo.Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
+    return new PutTodoClient(
+      serialization(),
+      transportation()
+    ).putTodo(id, done, name, token, refreshToken, body);
+  }
+};

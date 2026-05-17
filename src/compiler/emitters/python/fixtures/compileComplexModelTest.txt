@@ -1,0 +1,134 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class Email(Wirespec.Refined[str]):
+    value: str
+    def validate(self) -> bool:
+        return bool(re.match(r"/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/g", self.value))
+    def __str__(self) -> str:
+        return self.value
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class PhoneNumber(Wirespec.Refined[str]):
+    value: str
+    def validate(self) -> bool:
+        return bool(re.match(r"/^\+[1-9]\d{1,14}$/g", self.value))
+    def __str__(self) -> str:
+        return self.value
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class Tag(Wirespec.Refined[str]):
+    value: str
+    def validate(self) -> bool:
+        return bool(re.match(r"/^[a-z][a-z0-9-]{0,19}$/g", self.value))
+    def __str__(self) -> str:
+        return self.value
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class EmployeeAge(Wirespec.Refined[int]):
+    value: int
+    def validate(self) -> bool:
+        return 18 <= self.value and self.value <= 65
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .Email import Email
+from .PhoneNumber import PhoneNumber
+@dataclass
+class ContactInfo(Wirespec.Model):
+    email: Email
+    phone: Optional[PhoneNumber]
+    def validate(self) -> list[str]:
+        return (['email'] if not self.email.validate() else []) + (['phone'] if not self.phone.validate() else []) if self.phone is not None else []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .EmployeeAge import EmployeeAge
+from .ContactInfo import ContactInfo
+from .Tag import Tag
+@dataclass
+class Employee(Wirespec.Model):
+    name: str
+    age: EmployeeAge
+    contactInfo: ContactInfo
+    tags: list[Tag]
+    def validate(self) -> list[str]:
+        return (['age'] if not self.age.validate() else []) + [f"contactInfo.{e}" for e in self.contactInfo.validate()] + [item for i, el in enumerate(self.tags) for item in ([f"tags[{i}]"] if not el.validate() else [])]
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .Employee import Employee
+@dataclass
+class Department(Wirespec.Model):
+    name: str
+    employees: list[Employee]
+    def validate(self) -> list[str]:
+        return [item for i, el in enumerate(self.employees) for item in [f"employees[{i}].{e}" for e in el.validate()]]
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .Department import Department
+@dataclass
+class Company(Wirespec.Model):
+    name: str
+    departments: list[Department]
+    def validate(self) -> list[str]:
+        return [item for i, el in enumerate(self.departments) for item in [f"departments[{i}].{e}" for e in el.validate()]]
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+

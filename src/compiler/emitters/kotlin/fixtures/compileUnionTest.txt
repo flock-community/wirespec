@@ -1,0 +1,28 @@
+package community.flock.wirespec.generated.model
+sealed interface UserAccount
+
+package community.flock.wirespec.generated.model
+data class UserAccountPassword(
+  val username: String,
+  val password: String
+) : Wirespec.Model, UserAccount {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
+package community.flock.wirespec.generated.model
+data class UserAccountToken(
+  val token: String
+) : Wirespec.Model, UserAccount {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
+package community.flock.wirespec.generated.model
+data class User(
+  val username: String,
+  val account: UserAccount
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}

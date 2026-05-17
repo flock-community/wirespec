@@ -1,0 +1,122 @@
+package community.flock.wirespec.generated.endpoint
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TodoDto
+object GetTodos : Wirespec.Endpoint {
+  object Path : Wirespec.Path
+  object Queries : Wirespec.Queries
+  object RequestHeaders : Wirespec.Request.Headers
+  data object Request : Wirespec.Request<Unit> {
+      override val path: Path = Path
+      override val method: Wirespec.Method = Wirespec.Method.GET
+      override val queries: Queries = Queries
+      override val headers: RequestHeaders = RequestHeaders
+      override val body: Unit = Unit  }
+  sealed interface Response<T: Any> : Wirespec.Response<T>
+  sealed interface Response2XX<T: Any> : Response<T>
+  sealed interface ResponseListTodoDto : Response<List<TodoDto>>
+  data class Response200(
+      override val status: Int,
+      override val headers: Headers,
+      override val body: List<TodoDto>
+    ) : Response2XX<List<TodoDto>>, ResponseListTodoDto {
+      constructor(body: List<TodoDto>) : this(200, Headers, body)
+      object Headers : Wirespec.Response.Headers
+    }
+  fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = request.method.name,
+      path = listOf("todos"),
+      queries = emptyMap(),
+      headers = emptyMap(),
+      body = null
+    )
+  fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    Request
+  fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
+    when(val r = response) {
+        is Response200 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = emptyMap(),
+            body = serialization.serializeBody(r.body, typeOf<List<TodoDto>>())
+          )
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.status))
+        }
+    }
+  }
+  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> {
+    when (response.statusCode) {
+        200 -> {
+          return Response200(body = (response.body?.let { serialization.deserializeBody<List<TodoDto>>(it, typeOf<List<TodoDto>>()) } ?: error("body is null")))
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.statusCode))
+        }
+    }
+  }
+  interface Handler : Wirespec.Handler {
+      suspend fun getTodos(request: Request): Response<*>
+      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        override val pathTemplate = "/todos"
+        override val method = "GET"
+        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+          override fun to(response: Response<*>) = toRawResponse(serialization, response)
+        }
+        override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+          override fun to(request: Request) = toRawRequest(serialization, request)
+          override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+        }
+      }
+  }
+  interface Call : Wirespec.Call {
+      suspend fun getTodos(): Response<*>
+  }
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class TodoDto(
+  val description: String
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
+package community.flock.wirespec.generated.client
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TodoDto
+import community.flock.wirespec.generated.endpoint.GetTodos
+data class GetTodosClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : GetTodos.Call {
+  override suspend fun getTodos(): GetTodos.Response<*> {
+    val request = GetTodos.Request
+    val rawRequest = GetTodos.toRawRequest(serialization, request)
+    val rawResponse = transportation.transport(rawRequest)
+    return GetTodos.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+package community.flock.wirespec.generated
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TodoDto
+import community.flock.wirespec.generated.endpoint.GetTodos
+import community.flock.wirespec.generated.client.GetTodosClient
+data class Client(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : GetTodos.Call {
+  override suspend fun getTodos(): GetTodos.Response<*> =
+    GetTodosClient(
+      serialization = serialization,
+      transportation = transportation
+    ).getTodos()
+}

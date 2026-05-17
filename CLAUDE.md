@@ -235,3 +235,15 @@ Key files:
 | `src/compiler/emitters/typescript/.../TypeScriptIrEmitter.kt` | TypeScript-specific transforms + emit |
 | `src/compiler/emitters/python/.../PythonIrEmitter.kt` | Python-specific transforms + emit |
 | `src/compiler/emitters/rust/.../RustIrEmitter.kt` | Rust-specific transforms + emit |
+
+## Emitter Test Fixtures
+
+Each emitter module owns its expected-output fixtures under `src/compiler/emitters/{lang}/fixtures/{testName}.txt`. The `module.emitter-fixtures` Gradle convention plugin reads those files and generates an `EmitterFixtures.kt` object (one `val` per fixture) into `commonTest`, so tests assert against `EmitterFixtures.<testName>`.
+
+When emitter output changes intentionally, regenerate the fixtures for a specific module:
+
+```shell
+./gradlew :src:compiler:emitters:kotlin:updateEmitterFixtures
+```
+
+Substitute `kotlin` with `java`, `python`, `rust`, `scala`, or `typescript`. Each `updateEmitterFixtures` task runs the emitter against the shared test inputs and overwrites the `.txt` files in that module's `fixtures/` directory; review the diff before committing.
