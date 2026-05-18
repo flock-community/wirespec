@@ -12,12 +12,6 @@ configure<MavenPublishBaseExtension> {
         signAllPublications()
     }
 
-    coordinates(
-        groupId = project.group.toString(),
-        artifactId = project.name,
-        version = project.version.toString(),
-    )
-
     pom {
         name.set("Wirespec")
         description.set("Type safe wires made easy")
