@@ -1,61 +1,50 @@
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.kotlin.dsl.`maven-publish`
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-    `maven-publish`
-    signing
+    id("com.vanniktech.maven.publish")
 }
 
-publishing {
-    // Configure all publications
-    publications.withType<MavenPublication> {
-        // Stub javadoc.jar artifact
-        artifact(
-            tasks.register("${name}JavadocJar", Jar::class) {
-                archiveClassifier.set("javadoc")
-                archiveAppendix.set(this@withType.name)
-            },
-        )
+configure<MavenPublishBaseExtension> {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
 
-        // Provide artifacts information required by Maven Central
-        pom {
-            name.set("Wirespec")
-            description.set("Type safe wires made easy")
-            licenses {
-                license {
-                    name.set("Apache-2.0")
-                    url.set("https://opensource.org/license/apache-2-0")
-                }
+    if (System.getenv("GPG_PRIVATE_KEY") != null) {
+        signAllPublications()
+    }
+
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = project.name,
+        version = project.version.toString(),
+    )
+
+    pom {
+        name.set("Wirespec")
+        description.set("Type safe wires made easy")
+        url.set("https://flock.community")
+        licenses {
+            license {
+                name.set("Apache-2.0")
+                url.set("https://opensource.org/license/apache-2-0")
             }
-            url.set("https://flock.community")
-            issueManagement {
-                system.set("Github")
-                url.set("https://github.com/flock-community/wirespec/issues")
+        }
+        issueManagement {
+            system.set("Github")
+            url.set("https://github.com/flock-community/wirespec/issues")
+        }
+        scm {
+            connection.set("https://github.com/flock-community/wirespec.git")
+            url.set("https://github.com/flock-community/wirespec")
+        }
+        developers {
+            developer {
+                name.set("Jerre van Veluw")
+                email.set("jerre.van.veluw@flock.community")
             }
-            scm {
-                connection.set("https://github.com/flock-community/wirespec.git")
-                url.set("https://github.com/flock-community/wirespec")
-            }
-            developers {
-                developer {
-                    name.set("Jerre van Veluw")
-                    email.set("jerre.van.veluw@flock.community")
-                }
-                developer {
-                    name.set("Willem Veelenturf")
-                    email.set("willem.veelenturf@flock.community")
-                }
+            developer {
+                name.set("Willem Veelenturf")
+                email.set("willem.veelenturf@flock.community")
             }
         }
     }
-}
-
-signing {
-    setRequired { System.getenv("GPG_PRIVATE_KEY") != null }
-    useInMemoryPgpKeys(
-        System.getenv("GPG_PRIVATE_KEY"),
-        System.getenv("GPG_PASSPHRASE"),
-    )
-    sign(publishing.publications)
 }

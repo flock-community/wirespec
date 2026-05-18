@@ -554,11 +554,14 @@ jobs:
 
     env:
       VERSION: ${{needs.version.outputs.version}}
-      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-      SONATYPE_STAGING_PROFILE_ID: "staging-${{needs.version.outputs.version}}"
+      # Vanniktech reads these as Gradle properties via the ORG_GRADLE_PROJECT_ prefix.
+      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+      # Kept so the convention plugin's `if (System.getenv("GPG_PRIVATE_KEY") != null)`
+      # gate still opts into signing in CI.
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v4
@@ -567,19 +570,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
-      - name: Publish to Sonatype staging
-        run: ./gradlew -Pwirespec.enableNative=true publishToSonatype -Dorg.gradle.parallel=false
-      # The Central Portal's OSSRH staging API has a replication lag between
-      # upload acknowledgement and object-storage visibility. Closing too soon
-      # surfaces as `Failed to find file in storage` (HTTP 400). Give the
-      # backend time to catch up, then close+release in a second invocation
-      # that re-discovers the open staging repo via the API.
-      - name: Wait for Sonatype storage to settle
-        run: sleep 300
-      - name: Close and release staging repository
-        run: ./gradlew -Pwirespec.enableNative=true findSonatypeStagingRepository closeAndReleaseSonatypeStagingRepository -Dorg.gradle.parallel=false
+      - name: Publish to Maven Central
+        run: ./gradlew -Pwirespec.enableNative=true publishAndReleaseToMavenCentral -Dorg.gradle.parallel=false --no-configuration-cache
 
   release-lib-npm:
 
@@ -605,9 +597,11 @@ jobs:
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-      - name: Build
-        run: |
-          make build
+      - name: Build NPM distribution
+        # JS-only build: only the tasks needed to produce
+        # src/plugin/npm/build/dist/js/productionLibrary. Skips JVM/native
+        # compilation and any tests.
+        run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Publish
         working-directory: ./src/plugin/npm/build/dist/js/productionLibrary
         run: |
