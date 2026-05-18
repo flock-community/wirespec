@@ -15,14 +15,17 @@ public class DefaultPathSerializationTest {
 
     record StringRefined(String value) implements Wirespec.Refined<String> {
         @Override public String value() { return value; }
+        @Override public Boolean validate() { return true; }
     }
 
     record LongRefined(Long value) implements Wirespec.Refined<Long> {
         @Override public Long value() { return value; }
+        @Override public Boolean validate() { return true; }
     }
 
     record DoubleRefined(Double value) implements Wirespec.Refined<Double> {
         @Override public Double value() { return value; }
+        @Override public Boolean validate() { return true; }
     }
 
     @Test
