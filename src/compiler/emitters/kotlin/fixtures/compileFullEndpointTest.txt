@@ -158,7 +158,7 @@ import kotlin.reflect.typeOf
 data class PotentialTodoDto(
   val name: String,
   val done: Boolean
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -168,7 +168,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 data class Token(
   val iss: String
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -180,7 +180,7 @@ data class TodoDto(
   val id: String,
   val name: String,
   val done: Boolean
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -191,7 +191,7 @@ import kotlin.reflect.typeOf
 data class Error(
   val code: Long,
   val description: String
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }

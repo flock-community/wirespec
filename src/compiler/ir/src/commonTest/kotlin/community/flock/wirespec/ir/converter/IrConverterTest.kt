@@ -62,7 +62,7 @@ class IrConverterTest {
 
         val expected = file("Foo") {
             struct("Foo") {
-                implements(Type.Custom("Wirespec.Model"))
+                implements(Type.Custom("Wirespec.Shape"))
                 field(Name(listOf("bar")), string)
                 function("validate", isOverride = true) {
                     returnType(Type.Array(Type.String))
@@ -113,7 +113,7 @@ class IrConverterTest {
             },
             file("Foo") {
                 struct("Foo") {
-                    implements(Type.Custom("Wirespec.Model"))
+                    implements(Type.Custom("Wirespec.Shape"))
                     implements(Type.Custom("MyUnion"))
                     field(Name(listOf("a")), string)
                     function("validate", isOverride = true) {
@@ -124,7 +124,7 @@ class IrConverterTest {
             },
             file("Bar") {
                 struct("Bar") {
-                    implements(Type.Custom("Wirespec.Model"))
+                    implements(Type.Custom("Wirespec.Shape"))
                     implements(Type.Custom("MyUnion"))
                     field(Name(listOf("b")), string)
                     function("validate", isOverride = true) {

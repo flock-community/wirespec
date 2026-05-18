@@ -52,7 +52,7 @@ import kotlin.reflect.typeOf
 data class ContactInfo(
   val email: Email,
   val phone: PhoneNumber?
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     (if (!email.validate()) listOf("email") else emptyList<String>()) + (phone?.let { if (!it.validate()) listOf("phone") else emptyList<String>() } ?: emptyList<String>())
 }
@@ -65,7 +65,7 @@ data class Employee(
   val age: EmployeeAge,
   val contactInfo: ContactInfo,
   val tags: List<Tag>
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     (if (!age.validate()) listOf("age") else emptyList<String>()) + contactInfo.validate().map { e -> "contactInfo.${e}" } + tags.flatMapIndexed { i, el -> if (!el.validate()) listOf("tags[${i}]") else emptyList<String>() }
 }
@@ -76,7 +76,7 @@ import kotlin.reflect.typeOf
 data class Department(
   val name: String,
   val employees: List<Employee>
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     employees.flatMapIndexed { i, el -> el.validate().map { e -> "employees[${i}].${e}" } }
 }
@@ -87,7 +87,7 @@ import kotlin.reflect.typeOf
 data class Company(
   val name: String,
   val departments: List<Department>
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     departments.flatMapIndexed { i, el -> el.validate().map { e -> "departments[${i}].${e}" } }
 }

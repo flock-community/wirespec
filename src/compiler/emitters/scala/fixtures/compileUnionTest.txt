@@ -5,7 +5,7 @@ package community.flock.wirespec.generated.model
 case class UserAccountPassword(
   val username: String,
   val password: String
-) extends Wirespec.Model with UserAccount {
+) extends Wirespec.Shape with UserAccount {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -13,7 +13,7 @@ case class UserAccountPassword(
 package community.flock.wirespec.generated.model
 case class UserAccountToken(
   val token: String
-) extends Wirespec.Model with UserAccount {
+) extends Wirespec.Shape with UserAccount {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -22,7 +22,7 @@ package community.flock.wirespec.generated.model
 case class User(
   val username: String,
   val account: UserAccount
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }

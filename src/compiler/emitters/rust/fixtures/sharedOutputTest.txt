@@ -1,18 +1,19 @@
 use std::any::TypeId;
 use std::collections::HashMap;
-pub trait Model {
+pub trait Model {}
+pub trait Shape: Model {
     fn validate(&self) -> Vec<String>;
 }
 pub trait Enum: Sized {
     fn label(&self) -> &str;
     fn from_label(s: &str) -> Option<Self>;
 }
-pub trait Endpoint {}
-pub trait Channel {}
 pub trait Refined<T> {
     fn value(&self) -> &T;
     fn validate(&self) -> bool;
 }
+pub trait Endpoint {}
+pub trait Channel {}
 pub trait Path {}
 pub trait Queries {}
 pub trait Headers {}

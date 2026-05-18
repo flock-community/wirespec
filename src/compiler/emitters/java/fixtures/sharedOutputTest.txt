@@ -5,18 +5,20 @@ import java.util.List;
 import java.util.Map;
 public interface Wirespec {
   public interface Model {
+  }
+  public interface Shape extends Model {
     public java.util.List<String> validate();
   }
-  public interface Enum {
+  public interface Enum extends Model {
     String label();
+  }
+  public interface Refined<T> extends Model {
+    T value();
+    public Boolean validate();
   }
   public interface Endpoint {
   }
   public interface Channel {
-  }
-  public interface Refined<T> {
-    T value();
-    public Boolean validate();
   }
   public interface Path {
   }

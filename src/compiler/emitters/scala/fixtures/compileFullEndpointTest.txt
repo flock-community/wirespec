@@ -164,7 +164,7 @@ import scala.reflect.ClassTag
 case class PotentialTodoDto(
   val name: String,
   val done: Boolean
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -174,7 +174,7 @@ import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 case class Token(
   val iss: String
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -186,7 +186,7 @@ case class TodoDto(
   val id: String,
   val name: String,
   val done: Boolean
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -197,7 +197,7 @@ import scala.reflect.ClassTag
 case class Error(
   val code: Long,
   val description: String
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }

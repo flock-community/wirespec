@@ -88,7 +88,7 @@ import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 case class TodoDto(
   val description: String
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }

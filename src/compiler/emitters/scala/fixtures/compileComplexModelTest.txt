@@ -52,7 +52,7 @@ import scala.reflect.ClassTag
 case class ContactInfo(
   val email: Email,
   val phone: Option[PhoneNumber]
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     (if (!email.validate()) List("email") else List.empty[String]) ++ (phone.map(it => if (!it.validate()) List("phone") else List.empty[String]).getOrElse(List.empty[String]))
 }
@@ -65,7 +65,7 @@ case class Employee(
   val age: EmployeeAge,
   val contactInfo: ContactInfo,
   val tags: List[Tag]
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     (if (!age.validate()) List("age") else List.empty[String]) ++ contactInfo.validate().map(e => s"contactInfo.${e}").toList ++ tags.zipWithIndex.flatMap { case (el, i) => if (!el.validate()) List(s"tags[${i}]") else List.empty[String] }
 }
@@ -76,7 +76,7 @@ import scala.reflect.ClassTag
 case class Department(
   val name: String,
   val employees: List[Employee]
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     employees.zipWithIndex.flatMap { case (el, i) => el.validate().map(e => s"employees[${i}].${e}").toList }
 }
@@ -87,7 +87,7 @@ import scala.reflect.ClassTag
 case class Company(
   val name: String,
   val departments: List[Department]
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     departments.zipWithIndex.flatMap { case (el, i) => el.validate().map(e => s"departments[${i}].${e}").toList }
 }

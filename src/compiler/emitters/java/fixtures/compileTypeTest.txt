@@ -6,7 +6,7 @@ public record Request (
   java.util.List<String> params,
   java.util.Map<String, String> headers,
   java.util.Optional<java.util.Map<String, java.util.Optional<java.util.List<java.util.Optional<String>>>>> body
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();

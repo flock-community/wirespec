@@ -1,17 +1,18 @@
 export namespace Wirespec {
   export type Type = string
-  export interface Model {
+  export interface Model {}
+  export interface Shape extends Model {
     validate(): string[];
   }
-  export interface Enum {
+  export interface Enum extends Model {
     label: string;
   }
-  export interface Endpoint {}
-  export interface Channel {}
-  export interface Refined<T> {
+  export interface Refined<T> extends Model {
     value: T;
     validate(): boolean;
   }
+  export interface Endpoint {}
+  export interface Channel {}
   export interface Path {}
   export interface Queries {}
   export interface Headers {}

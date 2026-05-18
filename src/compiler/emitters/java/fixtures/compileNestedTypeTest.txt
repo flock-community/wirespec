@@ -23,7 +23,7 @@ public record Address (
   String street,
   Long houseNumber,
   DutchPostalCode postalCode
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return (!postalCode().validate() ? java.util.List.of("postalCode") : java.util.List.<String>of());
@@ -36,7 +36,7 @@ public record Person (
   String name,
   Address address,
   java.util.List<String> tags
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return address().validate().stream().map(e -> "address." + e).toList();

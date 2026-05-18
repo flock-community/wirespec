@@ -4,7 +4,7 @@ data class Todo(
   val description: String?,
   val notes: List<String>,
   val done: Boolean
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }

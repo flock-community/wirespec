@@ -5,7 +5,7 @@ package community.flock.wirespec.generated.model;
 public record UserAccountPassword (
   String username,
   String password
-) implements Wirespec.Model, UserAccount {
+) implements Wirespec.Shape, UserAccount {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -15,7 +15,7 @@ public record UserAccountPassword (
 package community.flock.wirespec.generated.model;
 public record UserAccountToken (
   String token
-) implements Wirespec.Model, UserAccount {
+) implements Wirespec.Shape, UserAccount {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -26,7 +26,7 @@ package community.flock.wirespec.generated.model;
 public record User (
   String username,
   UserAccount account
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();

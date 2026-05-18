@@ -6,7 +6,7 @@ case class Request(
   val params: List[String],
   val headers: Map[String, String],
   val body: Option[Map[String, Option[List[Option[String]]]]]
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }

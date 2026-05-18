@@ -1,18 +1,19 @@
 package community.flock.wirespec.kotlin
 import kotlin.reflect.KType
 object Wirespec {
-  interface Model {
+  interface Model
+  interface Shape : Model {
       fun validate(): List<String>
   }
-  interface Enum {
+  interface Enum : Model {
       val label: String
   }
-  interface Endpoint
-  interface Channel
-  interface Refined<T: Any> {
+  interface Refined<T: Any> : Model {
       val value: T
       fun validate(): Boolean
   }
+  interface Endpoint
+  interface Channel
   interface Path
   interface Queries
   interface Headers

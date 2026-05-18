@@ -10,20 +10,22 @@ def _raise(msg: str) -> Any:
 # package shared
 class Wirespec:
     class Model(ABC):
+        pass
+    class Shape(Model, ABC):
         @abstractmethod
         def validate(self) -> list[str]:
             ...
-    class Enum(ABC):
+    class Enum(Model, ABC):
         label: str
-    class Endpoint(ABC):
-        pass
-    class Channel(ABC):
-        pass
-    class Refined(ABC, Generic[T]):
+    class Refined(Model, ABC, Generic[T]):
         value: T
         @abstractmethod
         def validate(self) -> bool:
             ...
+    class Endpoint(ABC):
+        pass
+    class Channel(ABC):
+        pass
     class Path(ABC):
         pass
     class Queries(ABC):

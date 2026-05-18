@@ -60,25 +60,28 @@ fun DefinitionWirespec.convert(): File = when (this) {
 
 fun PackageName.convert(): File = file("Wirespec") {
     `package`(value)
-
     namespace("Wirespec") {
-        `interface`("Model") {
+        `interface`("Model")
+        `interface`("Shape") {
+            extends(Type.Custom("Model"))
             function("validate") {
                 returnType(list(string))
             }
         }
         `interface`("Enum") {
+            extends(Type.Custom("Model"))
             field("label", string)
         }
-        `interface`("Endpoint")
-        `interface`("Channel")
         `interface`("Refined") {
+            extends(Type.Custom("Model"))
             typeParam(type("T"))
             field("value", type("T"))
             function("validate") {
                 returnType(boolean)
             }
         }
+        `interface`("Endpoint")
+        `interface`("Channel")
         `interface`("Path")
         `interface`("Queries")
         `interface`("Headers")
@@ -357,7 +360,7 @@ private fun Identifier.toName(): Name = when (this) {
 
 fun TypeWirespec.convert() = file(identifier.toName()) {
     struct(identifier.toName()) {
-        implements(Type.Custom("Wirespec.Model"))
+        implements(Type.Custom("Wirespec.Shape"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
         shape.value.forEach {
             field(it.identifier.toName(), it.reference.convert())

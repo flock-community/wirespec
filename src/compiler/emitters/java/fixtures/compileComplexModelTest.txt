@@ -79,7 +79,7 @@ import community.flock.wirespec.java.Wirespec;
 public record ContactInfo (
   Email email,
   java.util.Optional<PhoneNumber> phone
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.stream.Stream.of((!email().validate() ? java.util.List.of("email") : java.util.List.<String>of()), phone().map(it -> (!it.validate() ? java.util.List.of("phone") : java.util.List.<String>of())).orElse(java.util.List.<String>of())).flatMap(java.util.Collection::stream).toList();
@@ -93,7 +93,7 @@ public record Employee (
   EmployeeAge age,
   ContactInfo contactInfo,
   java.util.List<Tag> tags
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.stream.Stream.of((!age().validate() ? java.util.List.of("age") : java.util.List.<String>of()), contactInfo().validate().stream().map(e -> "contactInfo." + e).toList(), java.util.stream.IntStream.range(0, tags().size()).mapToObj(i -> (!tags().get(i).validate() ? java.util.List.of("tags[" + i + "]") : java.util.List.<String>of())).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList();
@@ -105,7 +105,7 @@ import community.flock.wirespec.java.Wirespec;
 public record Department (
   String name,
   java.util.List<Employee> employees
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.stream.IntStream.range(0, employees().size()).mapToObj(i -> employees().get(i).validate().stream().map(e -> "employees[" + i + "]." + e).toList()).flatMap(java.util.Collection::stream).toList();
@@ -117,7 +117,7 @@ import community.flock.wirespec.java.Wirespec;
 public record Company (
   String name,
   java.util.List<Department> departments
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.stream.IntStream.range(0, departments().size()).mapToObj(i -> departments().get(i).validate().stream().map(e -> "departments[" + i + "]." + e).toList()).flatMap(java.util.Collection::stream).toList();

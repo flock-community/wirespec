@@ -68,7 +68,7 @@ from ..wirespec import T, Wirespec, _raise
 from .Email import Email
 from .PhoneNumber import PhoneNumber
 @dataclass
-class ContactInfo(Wirespec.Model):
+class ContactInfo(Wirespec.Shape):
     email: Email
     phone: Optional[PhoneNumber]
     def validate(self) -> list[str]:
@@ -85,7 +85,7 @@ from .EmployeeAge import EmployeeAge
 from .ContactInfo import ContactInfo
 from .Tag import Tag
 @dataclass
-class Employee(Wirespec.Model):
+class Employee(Wirespec.Shape):
     name: str
     age: EmployeeAge
     contactInfo: ContactInfo
@@ -102,7 +102,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 from .Employee import Employee
 @dataclass
-class Department(Wirespec.Model):
+class Department(Wirespec.Shape):
     name: str
     employees: list[Employee]
     def validate(self) -> list[str]:
@@ -117,7 +117,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 from .Department import Department
 @dataclass
-class Company(Wirespec.Model):
+class Company(Wirespec.Shape):
     name: str
     departments: list[Department]
     def validate(self) -> list[str]:

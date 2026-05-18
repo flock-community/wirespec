@@ -1,17 +1,18 @@
 package community.flock.wirespec.scala
 object Wirespec {
-  trait Model {
+  trait Model
+  trait Shape extends Model {
       def validate(): List[String]
   }
-  trait Enum {
+  trait Enum extends Model {
       def label: String
   }
-  trait Endpoint
-  trait Channel
-  trait Refined[T] {
+  trait Refined[T] extends Model {
       def value: T
       def validate(): Boolean
   }
+  trait Endpoint
+  trait Channel
   trait Path
   trait Queries
   trait Headers

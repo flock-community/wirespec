@@ -17,7 +17,7 @@ case class Address(
   val street: String,
   val houseNumber: Long,
   val postalCode: DutchPostalCode
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     if (!postalCode.validate()) List("postalCode") else List.empty[String]
 }
@@ -29,7 +29,7 @@ case class Person(
   val name: String,
   val address: Address,
   val tags: List[String]
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     address.validate().map(e => s"address.${e}").toList
 }

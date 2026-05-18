@@ -4,7 +4,7 @@ public record Todo (
   java.util.Optional<String> description,
   java.util.List<String> notes,
   Boolean done
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();

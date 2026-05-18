@@ -17,7 +17,7 @@ data class Address(
   val street: String,
   val houseNumber: Long,
   val postalCode: DutchPostalCode
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     if (!postalCode.validate()) listOf("postalCode") else emptyList<String>()
 }
@@ -29,7 +29,7 @@ data class Person(
   val name: String,
   val address: Address,
   val tags: List<String>
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     address.validate().map { e -> "address.${e}" }
 }

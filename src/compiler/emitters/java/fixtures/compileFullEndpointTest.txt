@@ -188,7 +188,7 @@ import community.flock.wirespec.java.Wirespec;
 public record PotentialTodoDto (
   String name,
   Boolean done
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -199,7 +199,7 @@ package community.flock.wirespec.generated.model;
 import community.flock.wirespec.java.Wirespec;
 public record Token (
   String iss
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -212,7 +212,7 @@ public record TodoDto (
   String id,
   String name,
   Boolean done
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -224,7 +224,7 @@ import community.flock.wirespec.java.Wirespec;
 public record Error (
   Long code,
   String description
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();

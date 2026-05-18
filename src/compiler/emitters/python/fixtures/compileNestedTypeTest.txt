@@ -22,7 +22,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 from .DutchPostalCode import DutchPostalCode
 @dataclass
-class Address(Wirespec.Model):
+class Address(Wirespec.Shape):
     street: str
     houseNumber: int
     postalCode: DutchPostalCode
@@ -38,7 +38,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 from .Address import Address
 @dataclass
-class Person(Wirespec.Model):
+class Person(Wirespec.Shape):
     name: str
     address: Address
     tags: list[str]
