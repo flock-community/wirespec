@@ -31,11 +31,17 @@ java {
     withSourcesJar()
 }
 
+// The `module.publication` convention (vanniktech) auto-registers a `maven`
+// publication from `components["java"]`; we only override its artifactId here
+// instead of registering a duplicate publication. Registering a second
+// publication (e.g. `mavenJava`) would produce two signing tasks writing to
+// the same `.asc` path under `build/libs/` and fail Gradle 9's dependency
+// validation when the publish task picks up an `.asc` from a sibling sign
+// task. `configureEach` is used because vanniktech registers `maven` lazily.
 publishing {
-    publications {
-        register("mavenJava", MavenPublication::class) {
+    publications.withType<MavenPublication>().configureEach {
+        if (name == "maven") {
             artifactId = "wirespec-maven-plugin"
-            from(components["java"])
         }
     }
 }
