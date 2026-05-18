@@ -494,8 +494,8 @@ jobs:
           node-version: 20
       - name: Build lib
         run: |
-          ./gradlew publishToMavenLocal \
-                    src:plugin:npm:jsNodeProductionLibraryDistribution
+          ./gradlew --no-configuration-cache publishToMavenLocal \
+                    :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build vscode extension
         working-directory: ./src/ide/vscode
         run: |
