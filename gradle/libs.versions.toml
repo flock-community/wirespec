@@ -27,7 +27,7 @@ maven_plugin = "1.0.3"
 maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
-nexus-publish = "2.0.0"
+vanniktech-maven-publish = "0.30.0"
 spotless = "7.2.1"
 spring_boot = "3.3.4"
 spring_webflux = "6.1.13"
@@ -67,7 +67,7 @@ kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
-nexus_publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
+vanniktech_maven_publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktech-maven-publish" }
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
 spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }
 spring_boot_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }
@@ -93,3 +93,4 @@ kotlinx_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", vers
 maven_plugin_development = { id = "org.gradlex.maven-plugin-development", version.ref = "maven_plugin" }
 spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
 spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }
+vanniktech_maven_publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-maven-publish" }
