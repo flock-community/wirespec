@@ -26,17 +26,29 @@ data class KotestFieldString(
     val annotations: List<Map<String, Any>>,
 ) : KotestField<String>
 
-data class KotestFieldInteger(
+data class KotestFieldInteger64(
     val min: Long?,
     val max: Long?,
     val annotations: List<Map<String, Any>>,
 ) : KotestField<Long>
 
-data class KotestFieldNumber(
+data class KotestFieldInteger32(
+    val min: Int?,
+    val max: Int?,
+    val annotations: List<Map<String, Any>>,
+) : KotestField<Int>
+
+data class KotestFieldNumber64(
     val min: Double?,
     val max: Double?,
     val annotations: List<Map<String, Any>>,
 ) : KotestField<Double>
+
+data class KotestFieldNumber32(
+    val min: Float?,
+    val max: Float?,
+    val annotations: List<Map<String, Any>>,
+) : KotestField<Float>
 
 data class KotestFieldBoolean(
     val annotations: List<Map<String, Any>>,

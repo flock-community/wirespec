@@ -8,6 +8,7 @@ import io.kotest.property.arbitrary.byte
 import io.kotest.property.arbitrary.byteArray
 import io.kotest.property.arbitrary.double
 import io.kotest.property.arbitrary.element
+import io.kotest.property.arbitrary.float
 import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
@@ -167,10 +168,17 @@ internal class KotestWirespecGenerator(
                 capture.seed = value
                 value
             }
-            is KotestFieldInteger -> {
+            is KotestFieldInteger64 -> {
                 val lo = field.min ?: 0
                 val hi = field.max ?: Long.MAX_VALUE
                 val value = Arb.long(lo..hi).next(rs)
+                capture.seed = value.toString()
+                value
+            }
+            is KotestFieldInteger32 -> {
+                val lo = field.min ?: 0
+                val hi = field.max ?: Int.MAX_VALUE
+                val value = Arb.int(lo..hi).next(rs)
                 capture.seed = value.toString()
                 value
             }
@@ -193,9 +201,13 @@ internal class KotestWirespecGenerator(
                 pendingSeeds.removeLast()
                 pending.value
             }
-            is KotestFieldInteger -> {
+            is KotestFieldInteger64 -> {
                 pendingSeeds.removeLast()
                 pending.value.toLong()
+            }
+            is KotestFieldInteger32 -> {
+                pendingSeeds.removeLast()
+                pending.value.toInt()
             }
             else -> null
         }
@@ -207,7 +219,8 @@ internal class KotestWirespecGenerator(
      */
     private fun seedAnnotationValueFor(field: KotestField<*>, candidate: String): Any? = when (field) {
         is KotestFieldString -> candidate
-        is KotestFieldInteger -> candidate.toLongOrNull()
+        is KotestFieldInteger64 -> candidate.toLongOrNull()
+        is KotestFieldInteger32 -> candidate.toIntOrNull()
         else -> null
     }
 
@@ -253,15 +266,25 @@ internal class KotestWirespecGenerator(
                 val regex = field.regex ?: "\\w{8}"
                 (prefix + RgxGen.parse(regex).generate(rs.random)) as T
             }
-            is KotestFieldInteger -> {
+            is KotestFieldInteger64 -> {
                 val lo = field.min ?: Long.MIN_VALUE
                 val hi = field.max ?: Long.MAX_VALUE
                 Arb.long(lo..hi).next(rs) as T
             }
-            is KotestFieldNumber -> {
+            is KotestFieldInteger32 -> {
+                val lo = field.min ?: Int.MIN_VALUE
+                val hi = field.max ?: Int.MAX_VALUE
+                Arb.int(lo..hi).next(rs) as T
+            }
+            is KotestFieldNumber64 -> {
                 val lo = field.min ?: -1e6
                 val hi = field.max ?: 1e6
                 Arb.double(lo, hi).next(rs) as T
+            }
+            is KotestFieldNumber32 -> {
+                val lo = field.min ?: -1e6f
+                val hi = field.max ?: 1e6f
+                Arb.float(lo, hi).next(rs) as T
             }
             is KotestFieldBoolean -> Arb.boolean().next(rs) as T
             is KotestFieldBytes -> Arb.byteArray(Arb.int(0..16), Arb.byte()).next(rs) as T
@@ -281,8 +304,10 @@ internal class KotestWirespecGenerator(
 
     private fun KotestField<*>.fieldAnnotations(): List<Map<String, Any>> = when (this) {
         is KotestFieldString -> annotations
-        is KotestFieldInteger -> annotations
-        is KotestFieldNumber -> annotations
+        is KotestFieldInteger64 -> annotations
+        is KotestFieldInteger32 -> annotations
+        is KotestFieldNumber64 -> annotations
+        is KotestFieldNumber32 -> annotations
         is KotestFieldBoolean -> annotations
         is KotestFieldBytes -> annotations
         is KotestFieldEnum -> annotations

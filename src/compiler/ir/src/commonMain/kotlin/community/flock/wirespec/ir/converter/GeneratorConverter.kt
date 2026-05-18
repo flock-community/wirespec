@@ -19,6 +19,7 @@ import community.flock.wirespec.ir.core.NullLiteral
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableOf
 import community.flock.wirespec.ir.core.Parameter
+import community.flock.wirespec.ir.core.Precision
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
@@ -79,22 +80,42 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(annotations: List<Ann
                 ),
             )
         }
-        is ReferenceWirespec.Primitive.Type.Integer -> ConstructorStatement(
-            type = Type.Custom("Wirespec.GeneratorFieldInteger"),
-            namedArguments = mapOf(
-                Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toLong(), Type.Integer())) } ?: NullableEmpty),
-                Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toLong(), Type.Integer())) } ?: NullableEmpty),
-                Name.of("annotations") to annotationsArg,
-            ),
-        )
-        is ReferenceWirespec.Primitive.Type.Number -> ConstructorStatement(
-            type = Type.Custom("Wirespec.GeneratorFieldNumber"),
-            namedArguments = mapOf(
-                Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toDouble(), Type.Number())) } ?: NullableEmpty),
-                Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toDouble(), Type.Number())) } ?: NullableEmpty),
-                Name.of("annotations") to annotationsArg,
-            ),
-        )
+        is ReferenceWirespec.Primitive.Type.Integer -> when (t.precision) {
+            ReferenceWirespec.Primitive.Type.Precision.P64 -> ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldInteger64"),
+                namedArguments = mapOf(
+                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toLong(), Type.Integer(Precision.P64))) } ?: NullableEmpty),
+                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toLong(), Type.Integer(Precision.P64))) } ?: NullableEmpty),
+                    Name.of("annotations") to annotationsArg,
+                ),
+            )
+            ReferenceWirespec.Primitive.Type.Precision.P32 -> ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldInteger32"),
+                namedArguments = mapOf(
+                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toInt(), Type.Integer(Precision.P32))) } ?: NullableEmpty),
+                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toInt(), Type.Integer(Precision.P32))) } ?: NullableEmpty),
+                    Name.of("annotations") to annotationsArg,
+                ),
+            )
+        }
+        is ReferenceWirespec.Primitive.Type.Number -> when (t.precision) {
+            ReferenceWirespec.Primitive.Type.Precision.P64 -> ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldNumber64"),
+                namedArguments = mapOf(
+                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toDouble(), Type.Number(Precision.P64))) } ?: NullableEmpty),
+                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toDouble(), Type.Number(Precision.P64))) } ?: NullableEmpty),
+                    Name.of("annotations") to annotationsArg,
+                ),
+            )
+            ReferenceWirespec.Primitive.Type.Precision.P32 -> ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldNumber32"),
+                namedArguments = mapOf(
+                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toFloat(), Type.Number(Precision.P32))) } ?: NullableEmpty),
+                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toFloat(), Type.Number(Precision.P32))) } ?: NullableEmpty),
+                    Name.of("annotations") to annotationsArg,
+                ),
+            )
+        }
         ReferenceWirespec.Primitive.Type.Boolean -> ConstructorStatement(
             type = Type.Custom("Wirespec.GeneratorFieldBoolean"),
             namedArguments = mapOf(Name.of("annotations") to annotationsArg),

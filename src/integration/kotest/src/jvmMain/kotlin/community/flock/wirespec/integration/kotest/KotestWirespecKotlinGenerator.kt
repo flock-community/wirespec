@@ -43,8 +43,10 @@ internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator
     @Suppress("UNCHECKED_CAST")
     private fun Wirespec.GeneratorField<*>.toKotestField(): KotestField<*> = when (this) {
         is Wirespec.GeneratorFieldString -> KotestFieldString(regex, annotations)
-        is Wirespec.GeneratorFieldInteger -> KotestFieldInteger(min, max, annotations)
-        is Wirespec.GeneratorFieldNumber -> KotestFieldNumber(min, max, annotations)
+        is Wirespec.GeneratorFieldInteger64 -> KotestFieldInteger64(min, max, annotations)
+        is Wirespec.GeneratorFieldInteger32 -> KotestFieldInteger32(min, max, annotations)
+        is Wirespec.GeneratorFieldNumber64 -> KotestFieldNumber64(min, max, annotations)
+        is Wirespec.GeneratorFieldNumber32 -> KotestFieldNumber32(min, max, annotations)
         is Wirespec.GeneratorFieldBoolean -> KotestFieldBoolean(annotations)
         is Wirespec.GeneratorFieldBytes -> KotestFieldBytes(annotations)
         is Wirespec.GeneratorFieldEnum -> KotestFieldEnum(values, annotations, type)

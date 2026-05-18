@@ -66,7 +66,7 @@ public interface AddressGenerator {
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("houseNumber")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("houseNumber")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
         java.util.Optional.empty(),
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()

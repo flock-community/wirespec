@@ -165,7 +165,7 @@ import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.EmployeeAge;
 public interface EmployeeAgeGenerator {
   public static EmployeeAge generate(Wirespec.Generator generator, java.util.List<String> path) {
-    return new EmployeeAge(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger(
+    return new EmployeeAge(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
       java.util.Optional.of(18L),
       java.util.Optional.of(65L),
       java.util.List.<java.util.Map<String, Object>>of()

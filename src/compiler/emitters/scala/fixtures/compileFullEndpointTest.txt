@@ -282,7 +282,7 @@ import community.flock.wirespec.generated.model.Error
 object ErrorGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): Error =
     new Error(
-      code = generator.generate(path ++ List("code"), new Wirespec.GeneratorFieldInteger(
+      code = generator.generate(path ++ List("code"), new Wirespec.GeneratorFieldInteger64(
         min = None,
         max = None,
         annotations = List.empty[Map[String, Any]]

@@ -107,17 +107,29 @@ public interface Wirespec {
     java.util.List<java.util.Map<String, Object>> annotations
   ) implements GeneratorField<String> {
   };
-  public static record GeneratorFieldInteger (
+  public static record GeneratorFieldInteger64 (
     java.util.Optional<Long> min,
     java.util.Optional<Long> max,
     java.util.List<java.util.Map<String, Object>> annotations
   ) implements GeneratorField<Long> {
   };
-  public static record GeneratorFieldNumber (
+  public static record GeneratorFieldInteger32 (
+    java.util.Optional<Integer> min,
+    java.util.Optional<Integer> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Integer> {
+  };
+  public static record GeneratorFieldNumber64 (
     java.util.Optional<Double> min,
     java.util.Optional<Double> max,
     java.util.List<java.util.Map<String, Object>> annotations
   ) implements GeneratorField<Double> {
+  };
+  public static record GeneratorFieldNumber32 (
+    java.util.Optional<Float> min,
+    java.util.Optional<Float> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Float> {
   };
   public static record GeneratorFieldBoolean (
     java.util.List<java.util.Map<String, Object>> annotations

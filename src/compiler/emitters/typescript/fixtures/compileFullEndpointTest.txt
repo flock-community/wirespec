@@ -210,7 +210,7 @@ import {Wirespec} from '../Wirespec'
 import {Error} from '../model/Error'
 export namespace ErrorGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): Error {
-    return { code: generator.generate([...path, ...['code']], { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), description: generator.generate([...path, ...['description']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+    return { code: generator.generate([...path, ...['code']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), description: generator.generate([...path, ...['description']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
   }
 }
 

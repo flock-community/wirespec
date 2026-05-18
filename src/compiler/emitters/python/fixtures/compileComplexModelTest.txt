@@ -173,7 +173,7 @@ from ..model.EmployeeAge import EmployeeAge
 class EmployeeAgeGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> EmployeeAge:
-        return EmployeeAge(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=18, max=65, annotations=[])))
+        return EmployeeAge(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger64(min=18, max=65, annotations=[])))
 
 from __future__ import annotations
 import re

@@ -20,9 +20,11 @@ export type Type = string;
 
 export interface GeneratorField<T extends any | undefined> {}
 
-export type GeneratorFieldString  = { kind: "string",  regex: string | undefined, annotations: Record<string, any>[] };
-export type GeneratorFieldInteger = { kind: "integer", min: number | undefined, max: number | undefined, annotations: Record<string, any>[] };
-export type GeneratorFieldNumber  = { kind: "number",  min: number | undefined, max: number | undefined, annotations: Record<string, any>[] };
+export type GeneratorFieldString    = { kind: "string",    regex: string | undefined, annotations: Record<string, any>[] };
+export type GeneratorFieldInteger64 = { kind: "integer64", min: number | undefined, max: number | undefined, annotations: Record<string, any>[] };
+export type GeneratorFieldInteger32 = { kind: "integer32", min: number | undefined, max: number | undefined, annotations: Record<string, any>[] };
+export type GeneratorFieldNumber64  = { kind: "number64",  min: number | undefined, max: number | undefined, annotations: Record<string, any>[] };
+export type GeneratorFieldNumber32  = { kind: "number32",  min: number | undefined, max: number | undefined, annotations: Record<string, any>[] };
 export type GeneratorFieldBoolean = { kind: "boolean", annotations: Record<string, any>[] };
 export type GeneratorFieldBytes   = { kind: "bytes",   annotations: Record<string, any>[] };
 export type GeneratorFieldEnum    = { kind: "enum",    values: string[], annotations: Record<string, any>[], type: Type };

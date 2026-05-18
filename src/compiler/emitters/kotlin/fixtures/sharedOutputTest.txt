@@ -85,16 +85,26 @@ object Wirespec {
       val regex: String?,
       val annotations: List<Map<String, Any>>
     ) : GeneratorField<String>
-  data class GeneratorFieldInteger(
+  data class GeneratorFieldInteger64(
       val min: Long?,
       val max: Long?,
       val annotations: List<Map<String, Any>>
     ) : GeneratorField<Long>
-  data class GeneratorFieldNumber(
+  data class GeneratorFieldInteger32(
+      val min: Int?,
+      val max: Int?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Int>
+  data class GeneratorFieldNumber64(
       val min: Double?,
       val max: Double?,
       val annotations: List<Map<String, Any>>
     ) : GeneratorField<Double>
+  data class GeneratorFieldNumber32(
+      val min: Float?,
+      val max: Float?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Float>
   data class GeneratorFieldBoolean(
       val annotations: List<Map<String, Any>>
     ) : GeneratorField<Boolean>

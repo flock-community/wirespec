@@ -85,8 +85,10 @@ class VerifyGeneratorTest : FunSpec({
                                         variable = Name.of("f"),
                                         cases = listOf(
                                             typeCase("Wirespec.GeneratorFieldString", Literal("test-string", Type.String)),
-                                            typeCase("Wirespec.GeneratorFieldInteger", Literal(42L, Type.Integer(Precision.P64))),
-                                            typeCase("Wirespec.GeneratorFieldNumber", Literal(1.0, Type.Number(Precision.P64))),
+                                            typeCase("Wirespec.GeneratorFieldInteger64", Literal(42L, Type.Integer(Precision.P64))),
+                                            typeCase("Wirespec.GeneratorFieldInteger32", Literal(7, Type.Integer(Precision.P32))),
+                                            typeCase("Wirespec.GeneratorFieldNumber64", Literal(1.0, Type.Number(Precision.P64))),
+                                            typeCase("Wirespec.GeneratorFieldNumber32", Literal(0.5f, Type.Number(Precision.P32))),
                                             typeCase("Wirespec.GeneratorFieldBoolean", Literal(true, Type.Boolean)),
                                             typeCase("Wirespec.GeneratorFieldBytes", emptyBytes),
                                             // `f.values[0]` / `f.values().get(0)`. Kotlin List has

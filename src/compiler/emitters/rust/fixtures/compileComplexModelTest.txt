@@ -155,7 +155,7 @@ use super::super::model::employee_age::EmployeeAge;
 pub struct EmployeeAgeGenerator;
 impl EmployeeAgeGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> EmployeeAge {
-        return EmployeeAge { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: Some(18_i32), max: Some(65_i32), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return EmployeeAge { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: Some(18_i64), max: Some(65_i64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 

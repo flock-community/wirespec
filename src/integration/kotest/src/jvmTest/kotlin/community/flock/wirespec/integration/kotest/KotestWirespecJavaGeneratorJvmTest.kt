@@ -60,8 +60,8 @@ class KotestWirespecJavaGeneratorJvmTest {
         val gen = kotestWirespecJavaGenerator(seed = 0L)
 
         gen.generate(listOf("s"), Wirespec.GeneratorFieldString(Optional.empty(), emptyList()))
-        gen.generate(listOf("i"), Wirespec.GeneratorFieldInteger(Optional.empty(), Optional.empty(), emptyList()))
-        gen.generate(listOf("nu"), Wirespec.GeneratorFieldNumber(Optional.empty(), Optional.empty(), emptyList()))
+        gen.generate(listOf("i"), Wirespec.GeneratorFieldInteger64(Optional.empty(), Optional.empty(), emptyList()))
+        gen.generate(listOf("nu"), Wirespec.GeneratorFieldNumber64(Optional.empty(), Optional.empty(), emptyList()))
         gen.generate(listOf("b"), Wirespec.GeneratorFieldBoolean(emptyList()))
         gen.generate(listOf("y"), Wirespec.GeneratorFieldBytes(emptyList()))
         gen.generate(

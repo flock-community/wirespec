@@ -134,9 +134,9 @@ import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.EmployeeAge
 object EmployeeAgeGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): EmployeeAge =
-    new EmployeeAge(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldInteger(
-      min = Some(18),
-      max = Some(65),
+    new EmployeeAge(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldInteger64(
+      min = Some(18L),
+      max = Some(65L),
       annotations = List.empty[Map[String, Any]]
     )))
 }

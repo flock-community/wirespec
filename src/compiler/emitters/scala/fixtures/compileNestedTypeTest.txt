@@ -58,7 +58,7 @@ object AddressGenerator {
         regex = None,
         annotations = List.empty[Map[String, Any]]
       )),
-      houseNumber = generator.generate(path ++ List("houseNumber"), new Wirespec.GeneratorFieldInteger(
+      houseNumber = generator.generate(path ++ List("houseNumber"), new Wirespec.GeneratorFieldInteger64(
         min = None,
         max = None,
         annotations = List.empty[Map[String, Any]]

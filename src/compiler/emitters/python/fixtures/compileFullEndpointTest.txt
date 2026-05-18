@@ -265,7 +265,7 @@ from ..model.Error import Error
 class ErrorGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Error:
-        return Error(code=generator.generate(path + ['code'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), description=generator.generate(path + ['description'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+        return Error(code=generator.generate(path + ['code'], Wirespec.GeneratorFieldInteger64(min=None, max=None, annotations=[])), description=generator.generate(path + ['description'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
 
 from . import model
 from . import endpoint

@@ -116,12 +116,22 @@ class Wirespec:
         regex: Optional[str]
         annotations: list[dict[str, Any]]
     @dataclass
-    class GeneratorFieldInteger(GeneratorField[int]):
+    class GeneratorFieldInteger64(GeneratorField[int]):
         min: Optional[int]
         max: Optional[int]
         annotations: list[dict[str, Any]]
     @dataclass
-    class GeneratorFieldNumber(GeneratorField[float]):
+    class GeneratorFieldInteger32(GeneratorField[int]):
+        min: Optional[int]
+        max: Optional[int]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldNumber64(GeneratorField[float]):
+        min: Optional[float]
+        max: Optional[float]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldNumber32(GeneratorField[float]):
         min: Optional[float]
         max: Optional[float]
         annotations: list[dict[str, Any]]

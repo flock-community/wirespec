@@ -52,16 +52,21 @@ public interface Wirespec {
     record RawResponse(int statusCode, Map<String, List<String>> headers, Optional<byte[]> body) {}
     interface Transportation { java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request); }
     sealed interface GeneratorField<T>
-        permits GeneratorFieldString, GeneratorFieldInteger, GeneratorFieldNumber,
+        permits GeneratorFieldString, GeneratorFieldInteger64, GeneratorFieldInteger32,
+                GeneratorFieldNumber64, GeneratorFieldNumber32,
                 GeneratorFieldBoolean, GeneratorFieldBytes, GeneratorFieldEnum,
                 GeneratorFieldUnion, GeneratorFieldArray, GeneratorFieldNullable,
                 GeneratorFieldShape, GeneratorFieldDict {}
     record GeneratorFieldString(Optional<String> regex, List<Map<String, Object>> annotations)
         implements GeneratorField<String> {}
-    record GeneratorFieldInteger(Optional<Long> min, Optional<Long> max, List<Map<String, Object>> annotations)
+    record GeneratorFieldInteger64(Optional<Long> min, Optional<Long> max, List<Map<String, Object>> annotations)
         implements GeneratorField<Long> {}
-    record GeneratorFieldNumber(Optional<Double> min, Optional<Double> max, List<Map<String, Object>> annotations)
+    record GeneratorFieldInteger32(Optional<Integer> min, Optional<Integer> max, List<Map<String, Object>> annotations)
+        implements GeneratorField<Integer> {}
+    record GeneratorFieldNumber64(Optional<Double> min, Optional<Double> max, List<Map<String, Object>> annotations)
         implements GeneratorField<Double> {}
+    record GeneratorFieldNumber32(Optional<Float> min, Optional<Float> max, List<Map<String, Object>> annotations)
+        implements GeneratorField<Float> {}
     record GeneratorFieldBoolean(List<Map<String, Object>> annotations)
         implements GeneratorField<Boolean> {}
     record GeneratorFieldBytes(List<Map<String, Object>> annotations)

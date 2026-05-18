@@ -41,7 +41,7 @@ import {DutchPostalCode} from '../model/DutchPostalCode'
 import {DutchPostalCodeGenerator} from './DutchPostalCodeGenerator'
 export namespace AddressGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): Address {
-    return { street: generator.generate([...path, ...['street']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), houseNumber: generator.generate([...path, ...['houseNumber']], { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), postalCode: generator.generate([...path, ...['postalCode']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => DutchPostalCodeGenerator.generate(generator, p0), type: "DutchPostalCode" }) };
+    return { street: generator.generate([...path, ...['street']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), houseNumber: generator.generate([...path, ...['houseNumber']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), postalCode: generator.generate([...path, ...['postalCode']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => DutchPostalCodeGenerator.generate(generator, p0), type: "DutchPostalCode" }) };
   }
 }
 

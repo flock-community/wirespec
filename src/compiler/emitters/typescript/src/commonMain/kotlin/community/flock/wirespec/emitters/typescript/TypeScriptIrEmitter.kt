@@ -424,7 +424,9 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     companion object : Keywords {
         private val GENERATOR_FIELD_KINDS: Map<String, String> = listOf(
-            "GeneratorFieldString", "GeneratorFieldInteger", "GeneratorFieldNumber",
+            "GeneratorFieldString",
+            "GeneratorFieldInteger64", "GeneratorFieldInteger32",
+            "GeneratorFieldNumber64", "GeneratorFieldNumber32",
             "GeneratorFieldBoolean", "GeneratorFieldBytes", "GeneratorFieldEnum",
             "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
             "GeneratorFieldShape", "GeneratorFieldDict",

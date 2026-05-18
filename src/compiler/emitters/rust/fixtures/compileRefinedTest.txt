@@ -174,7 +174,7 @@ use super::super::model::test_int::TestInt;
 pub struct TestIntGenerator;
 impl TestIntGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt {
-        return TestInt { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestInt { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -184,7 +184,7 @@ use super::super::model::test_int0::TestInt0;
 pub struct TestInt0Generator;
 impl TestInt0Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt0 {
-        return TestInt0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestInt0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -194,7 +194,7 @@ use super::super::model::test_int1::TestInt1;
 pub struct TestInt1Generator;
 impl TestInt1Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt1 {
-        return TestInt1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: Some(0_i32), max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestInt1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: Some(0_i64), max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -204,7 +204,7 @@ use super::super::model::test_int2::TestInt2;
 pub struct TestInt2Generator;
 impl TestInt2Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt2 {
-        return TestInt2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger { min: Some(1_i32), max: Some(3_i32), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestInt2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: Some(1_i64), max: Some(3_i64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -214,7 +214,7 @@ use super::super::model::test_num::TestNum;
 pub struct TestNumGenerator;
 impl TestNumGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum {
-        return TestNum { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestNum { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber64 { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -224,7 +224,7 @@ use super::super::model::test_num0::TestNum0;
 pub struct TestNum0Generator;
 impl TestNum0Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum0 {
-        return TestNum0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestNum0 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber64 { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -234,7 +234,7 @@ use super::super::model::test_num1::TestNum1;
 pub struct TestNum1Generator;
 impl TestNum1Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum1 {
-        return TestNum1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: None, max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestNum1 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber64 { min: None, max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -244,7 +244,7 @@ use super::super::model::test_num2::TestNum2;
 pub struct TestNum2Generator;
 impl TestNum2Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum2 {
-        return TestNum2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber { min: Some(-0.2_f64), max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TestNum2 { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldNumber64 { min: Some(-0.2_f64), max: Some(0.5_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 

@@ -213,16 +213,28 @@ fun PackageName.convert(): File = file("Wirespec") {
             field("regex", string.nullable())
             field("annotations", list(dict(string, Type.Any)))
         }
-        struct("GeneratorFieldInteger") {
+        struct("GeneratorFieldInteger64") {
             implements(type("GeneratorField", integer64))
             field("min", integer64.nullable())
             field("max", integer64.nullable())
             field("annotations", list(dict(string, Type.Any)))
         }
-        struct("GeneratorFieldNumber") {
+        struct("GeneratorFieldInteger32") {
+            implements(type("GeneratorField", integer32))
+            field("min", integer32.nullable())
+            field("max", integer32.nullable())
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldNumber64") {
             implements(type("GeneratorField", number64))
             field("min", number64.nullable())
             field("max", number64.nullable())
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldNumber32") {
+            implements(type("GeneratorField", number32))
+            field("min", number32.nullable())
+            field("max", number32.nullable())
             field("annotations", list(dict(string, Type.Any)))
         }
         struct("GeneratorFieldBoolean") {

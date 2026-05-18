@@ -71,7 +71,7 @@ from .DutchPostalCodeGenerator import DutchPostalCodeGenerator
 class AddressGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Address:
-        return Address(street=generator.generate(path + ['street'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), houseNumber=generator.generate(path + ['houseNumber'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])), postalCode=generator.generate(path + ['postalCode'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: DutchPostalCodeGenerator.generate(generator, p0), type=DutchPostalCode)))
+        return Address(street=generator.generate(path + ['street'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), houseNumber=generator.generate(path + ['houseNumber'], Wirespec.GeneratorFieldInteger64(min=None, max=None, annotations=[])), postalCode=generator.generate(path + ['postalCode'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: DutchPostalCodeGenerator.generate(generator, p0), type=DutchPostalCode)))
 
 from __future__ import annotations
 import re

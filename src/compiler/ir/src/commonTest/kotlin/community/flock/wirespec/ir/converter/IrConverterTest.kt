@@ -230,7 +230,9 @@ class IrConverterTest {
         assertEquals(Name.of("field"), generateFn.parameters[1].name, "second param must be 'field'")
 
         val expectedVariants = setOf(
-            "GeneratorFieldString", "GeneratorFieldInteger", "GeneratorFieldNumber",
+            "GeneratorFieldString",
+            "GeneratorFieldInteger64", "GeneratorFieldInteger32",
+            "GeneratorFieldNumber64", "GeneratorFieldNumber32",
             "GeneratorFieldBoolean", "GeneratorFieldBytes", "GeneratorFieldEnum",
             "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
             "GeneratorFieldDict",

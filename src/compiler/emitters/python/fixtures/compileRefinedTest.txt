@@ -185,7 +185,7 @@ from ..model.TestInt import TestInt
 class TestIntGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt:
-        return TestInt(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
+        return TestInt(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger64(min=None, max=None, annotations=[])))
 
 from __future__ import annotations
 import re
@@ -198,7 +198,7 @@ from ..model.TestInt0 import TestInt0
 class TestInt0Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt0:
-        return TestInt0(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=None, max=None, annotations=[])))
+        return TestInt0(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger64(min=None, max=None, annotations=[])))
 
 from __future__ import annotations
 import re
@@ -211,7 +211,7 @@ from ..model.TestInt1 import TestInt1
 class TestInt1Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt1:
-        return TestInt1(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=0, max=None, annotations=[])))
+        return TestInt1(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger64(min=0, max=None, annotations=[])))
 
 from __future__ import annotations
 import re
@@ -224,7 +224,7 @@ from ..model.TestInt2 import TestInt2
 class TestInt2Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt2:
-        return TestInt2(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger(min=1, max=3, annotations=[])))
+        return TestInt2(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger64(min=1, max=3, annotations=[])))
 
 from __future__ import annotations
 import re
@@ -237,7 +237,7 @@ from ..model.TestNum import TestNum
 class TestNumGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum:
-        return TestNum(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=None, max=None, annotations=[])))
+        return TestNum(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber64(min=None, max=None, annotations=[])))
 
 from __future__ import annotations
 import re
@@ -250,7 +250,7 @@ from ..model.TestNum0 import TestNum0
 class TestNum0Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum0:
-        return TestNum0(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=None, max=None, annotations=[])))
+        return TestNum0(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber64(min=None, max=None, annotations=[])))
 
 from __future__ import annotations
 import re
@@ -263,7 +263,7 @@ from ..model.TestNum1 import TestNum1
 class TestNum1Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum1:
-        return TestNum1(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=None, max=0.5, annotations=[])))
+        return TestNum1(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber64(min=None, max=0.5, annotations=[])))
 
 from __future__ import annotations
 import re
@@ -276,7 +276,7 @@ from ..model.TestNum2 import TestNum2
 class TestNum2Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum2:
-        return TestNum2(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber(min=-0.2, max=0.5, annotations=[])))
+        return TestNum2(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldNumber64(min=-0.2, max=0.5, annotations=[])))
 
 from . import model
 from . import endpoint

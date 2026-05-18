@@ -67,14 +67,24 @@ private fun jsToKotestField(field: dynamic): KotestField<*> {
             regex = field.regex as String?,
             annotations = jsAnnotationsToKotlin(field.annotations),
         )
-        "integer" -> KotestFieldInteger(
+        "integer64" -> KotestFieldInteger64(
             min = (field.min as? Number)?.toLong(),
             max = (field.max as? Number)?.toLong(),
             annotations = jsAnnotationsToKotlin(field.annotations),
         )
-        "number" -> KotestFieldNumber(
+        "integer32" -> KotestFieldInteger32(
+            min = (field.min as? Number)?.toInt(),
+            max = (field.max as? Number)?.toInt(),
+            annotations = jsAnnotationsToKotlin(field.annotations),
+        )
+        "number64" -> KotestFieldNumber64(
             min = (field.min as? Number)?.toDouble(),
             max = (field.max as? Number)?.toDouble(),
+            annotations = jsAnnotationsToKotlin(field.annotations),
+        )
+        "number32" -> KotestFieldNumber32(
+            min = (field.min as? Number)?.toFloat(),
+            max = (field.max as? Number)?.toFloat(),
             annotations = jsAnnotationsToKotlin(field.annotations),
         )
         "boolean" -> KotestFieldBoolean(jsAnnotationsToKotlin(field.annotations))

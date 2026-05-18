@@ -66,8 +66,8 @@ class KotestWirespecKotlinGeneratorJvmTest {
 
         // Smoke: each variant gets dispatched through the adapter's `when`.
         gen.generate(listOf("s"), Wirespec.GeneratorFieldString(null, emptyList()))
-        gen.generate(listOf("i"), Wirespec.GeneratorFieldInteger(null, null, emptyList()))
-        gen.generate(listOf("n"), Wirespec.GeneratorFieldNumber(null, null, emptyList()))
+        gen.generate(listOf("i"), Wirespec.GeneratorFieldInteger64(null, null, emptyList()))
+        gen.generate(listOf("n"), Wirespec.GeneratorFieldNumber64(null, null, emptyList()))
         gen.generate(listOf("b"), Wirespec.GeneratorFieldBoolean(emptyList()))
         gen.generate(listOf("y"), Wirespec.GeneratorFieldBytes(emptyList()))
         gen.generate(

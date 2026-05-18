@@ -134,9 +134,9 @@ import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.EmployeeAge
 object EmployeeAgeGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): EmployeeAge =
-    EmployeeAge(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger(
-      min = 18,
-      max = 65,
+    EmployeeAge(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger64(
+      min = 18L,
+      max = 65L,
       annotations = emptyList<Map<String, Any>>()
     )))
 }

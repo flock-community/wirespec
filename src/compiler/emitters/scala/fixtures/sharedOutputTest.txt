@@ -89,16 +89,26 @@ object Wirespec {
       val regex: Option[String],
       val annotations: List[Map[String, Any]]
     ) extends GeneratorField[String]
-  case class GeneratorFieldInteger(
+  case class GeneratorFieldInteger64(
       val min: Option[Long],
       val max: Option[Long],
       val annotations: List[Map[String, Any]]
     ) extends GeneratorField[Long]
-  case class GeneratorFieldNumber(
+  case class GeneratorFieldInteger32(
+      val min: Option[Int],
+      val max: Option[Int],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Int]
+  case class GeneratorFieldNumber64(
       val min: Option[Double],
       val max: Option[Double],
       val annotations: List[Map[String, Any]]
     ) extends GeneratorField[Double]
+  case class GeneratorFieldNumber32(
+      val min: Option[Float],
+      val max: Option[Float],
+      val annotations: List[Map[String, Any]]
+    ) extends GeneratorField[Float]
   case class GeneratorFieldBoolean(
       val annotations: List[Map[String, Any]]
     ) extends GeneratorField[Boolean]

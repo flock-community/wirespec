@@ -34,17 +34,17 @@ class KotestWirespecGeneratorTest {
     // ---------- Integer ----------
 
     @Test
-    fun `KotestFieldInteger without bounds returns a deterministic Long`() {
-        val field = KotestFieldInteger(min = null, max = null, annotations = emptyList())
+    fun `KotestFieldInteger64 without bounds returns a deterministic Long`() {
+        val field = KotestFieldInteger64(min = null, max = null, annotations = emptyList())
         val a = generate(seed = 0L, field) as Long
         val b = generate(seed = 0L, field) as Long
         assertEquals(a, b)
     }
 
     @Test
-    fun `KotestFieldInteger with bounds stays within bounds`() {
+    fun `KotestFieldInteger64 with bounds stays within bounds`() {
         repeat(20) { i ->
-            val field = KotestFieldInteger(min = 10, max = 20, annotations = emptyList())
+            val field = KotestFieldInteger64(min = 10, max = 20, annotations = emptyList())
             val v = generate(seed = i.toLong(), field) as Long
             assertTrue(v in 10..20, "expected 10..20, got $v")
         }
@@ -53,9 +53,9 @@ class KotestWirespecGeneratorTest {
     // ---------- Number ----------
 
     @Test
-    fun `KotestFieldNumber with bounds stays within bounds`() {
+    fun `KotestFieldNumber64 with bounds stays within bounds`() {
         repeat(20) { i ->
-            val field = KotestFieldNumber(min = 1.0, max = 2.0, annotations = emptyList())
+            val field = KotestFieldNumber64(min = 1.0, max = 2.0, annotations = emptyList())
             val v = generate(seed = i.toLong(), field) as Double
             assertTrue(v in 1.0..2.0, "expected 1.0..2.0, got $v")
         }

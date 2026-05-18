@@ -68,7 +68,7 @@ import {Wirespec} from '../Wirespec'
 import {TestInt} from '../model/TestInt'
 export namespace TestIntGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt {
-    return generator.generate([...path, ...['value']], { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -76,7 +76,7 @@ import {Wirespec} from '../Wirespec'
 import {TestInt0} from '../model/TestInt0'
 export namespace TestInt0Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt0 {
-    return generator.generate([...path, ...['value']], { kind: 'integer', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -84,7 +84,7 @@ import {Wirespec} from '../Wirespec'
 import {TestInt1} from '../model/TestInt1'
 export namespace TestInt1Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt1 {
-    return generator.generate([...path, ...['value']], { kind: 'integer', min: 0, max: undefined, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'integer64', min: 0, max: undefined, annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -92,7 +92,7 @@ import {Wirespec} from '../Wirespec'
 import {TestInt2} from '../model/TestInt2'
 export namespace TestInt2Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt2 {
-    return generator.generate([...path, ...['value']], { kind: 'integer', min: 1, max: 3, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'integer64', min: 1, max: 3, annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -100,7 +100,7 @@ import {Wirespec} from '../Wirespec'
 import {TestNum} from '../model/TestNum'
 export namespace TestNumGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum {
-    return generator.generate([...path, ...['value']], { kind: 'number', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'number64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -108,7 +108,7 @@ import {Wirespec} from '../Wirespec'
 import {TestNum0} from '../model/TestNum0'
 export namespace TestNum0Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum0 {
-    return generator.generate([...path, ...['value']], { kind: 'number', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'number64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -116,7 +116,7 @@ import {Wirespec} from '../Wirespec'
 import {TestNum1} from '../model/TestNum1'
 export namespace TestNum1Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum1 {
-    return generator.generate([...path, ...['value']], { kind: 'number', min: undefined, max: 0.5, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'number64', min: undefined, max: 0.5, annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -124,7 +124,7 @@ import {Wirespec} from '../Wirespec'
 import {TestNum2} from '../model/TestNum2'
 export namespace TestNum2Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum2 {
-    return generator.generate([...path, ...['value']], { kind: 'number', min: -0.2, max: 0.5, annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'number64', min: -0.2, max: 0.5, annotations: [] as Record<string, any>[] });
   }
 }
 

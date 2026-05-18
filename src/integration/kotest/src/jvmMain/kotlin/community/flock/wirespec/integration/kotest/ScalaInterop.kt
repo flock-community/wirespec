@@ -126,17 +126,29 @@ internal object ScalaInterop {
                 val annotations = decodeAnnotations(cls.getMethod("annotations").invoke(field))
                 KotestFieldString(regex, annotations) as KotestField<Any?>
             }
-            "GeneratorFieldInteger" -> {
+            "GeneratorFieldInteger64" -> {
                 val min = scalaOptionToNullable(cls.getMethod("min").invoke(field)) as Long?
                 val max = scalaOptionToNullable(cls.getMethod("max").invoke(field)) as Long?
                 val annotations = decodeAnnotations(cls.getMethod("annotations").invoke(field))
-                KotestFieldInteger(min, max, annotations) as KotestField<Any?>
+                KotestFieldInteger64(min, max, annotations) as KotestField<Any?>
             }
-            "GeneratorFieldNumber" -> {
+            "GeneratorFieldInteger32" -> {
+                val min = scalaOptionToNullable(cls.getMethod("min").invoke(field)) as Int?
+                val max = scalaOptionToNullable(cls.getMethod("max").invoke(field)) as Int?
+                val annotations = decodeAnnotations(cls.getMethod("annotations").invoke(field))
+                KotestFieldInteger32(min, max, annotations) as KotestField<Any?>
+            }
+            "GeneratorFieldNumber64" -> {
                 val min = scalaOptionToNullable(cls.getMethod("min").invoke(field)) as Double?
                 val max = scalaOptionToNullable(cls.getMethod("max").invoke(field)) as Double?
                 val annotations = decodeAnnotations(cls.getMethod("annotations").invoke(field))
-                KotestFieldNumber(min, max, annotations) as KotestField<Any?>
+                KotestFieldNumber64(min, max, annotations) as KotestField<Any?>
+            }
+            "GeneratorFieldNumber32" -> {
+                val min = scalaOptionToNullable(cls.getMethod("min").invoke(field)) as Float?
+                val max = scalaOptionToNullable(cls.getMethod("max").invoke(field)) as Float?
+                val annotations = decodeAnnotations(cls.getMethod("annotations").invoke(field))
+                KotestFieldNumber32(min, max, annotations) as KotestField<Any?>
             }
             "GeneratorFieldBoolean" -> KotestFieldBoolean(decodeAnnotations(cls.getMethod("annotations").invoke(field))) as KotestField<Any?>
             "GeneratorFieldBytes" -> KotestFieldBytes(decodeAnnotations(cls.getMethod("annotations").invoke(field))) as KotestField<Any?>
