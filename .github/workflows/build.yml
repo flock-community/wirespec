@@ -569,9 +569,17 @@ jobs:
           distribution: 'temurin'
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
-      - name: Run
-        run: |
-          ./gradlew -Pwirespec.enableNative=true publishToSonatype closeAndReleaseSonatypeStagingRepository -Dorg.gradle.parallel=false
+      - name: Publish to Sonatype staging
+        run: ./gradlew -Pwirespec.enableNative=true publishToSonatype -Dorg.gradle.parallel=false
+      # The Central Portal's OSSRH staging API has a replication lag between
+      # upload acknowledgement and object-storage visibility. Closing too soon
+      # surfaces as `Failed to find file in storage` (HTTP 400). Give the
+      # backend time to catch up, then close+release in a second invocation
+      # that re-discovers the open staging repo via the API.
+      - name: Wait for Sonatype storage to settle
+        run: sleep 300
+      - name: Close and release staging repository
+        run: ./gradlew -Pwirespec.enableNative=true findSonatypeStagingRepository closeAndReleaseSonatypeStagingRepository -Dorg.gradle.parallel=false
 
   release-lib-npm:
 
