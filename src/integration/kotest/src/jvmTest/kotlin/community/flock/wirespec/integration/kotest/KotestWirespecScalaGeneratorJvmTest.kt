@@ -1,8 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
 import community.flock.wirespec.scala.Wirespec
-import io.kotest.property.Arb
-import io.kotest.property.arbitrary.constant
 import scala.Option
 import scala.collection.immutable.`List$`
 import kotlin.test.Test
@@ -32,27 +30,6 @@ class KotestWirespecScalaGeneratorJvmTest {
     }
 
     @Test
-    fun `adapter routes Scala Wirespec_GeneratorFieldString through the algorithm`() {
-        val gen = kotestWirespecScalaGenerator(seed = 0L) {
-            register("orderId") { Arb.constant("ORD-SCALA") }
-        } as Wirespec.Generator
-
-        val annotations = `List$`.`MODULE$`.empty<scala.collection.immutable.Map<String, Any>>()
-            .prepended(
-                scalaMapOf(
-                    "name" to "Generator",
-                    "parameters" to scalaMapOf("default" to "orderId"),
-                ),
-            )
-
-        val v: String = gen.generate(
-            scalaListOf("x"),
-            Wirespec.GeneratorFieldString(Option.empty(), annotations),
-        )
-        assertEquals("ORD-SCALA", v)
-    }
-
-    @Test
     fun `adapter wraps GeneratorFieldNullable result in scala_Option`() {
         val gen = kotestWirespecScalaGenerator(seed = 0L) as Wirespec.Generator
 
@@ -70,10 +47,4 @@ class KotestWirespecScalaGeneratorJvmTest {
         return acc
     }
 
-    private fun scalaMapOf(vararg entries: Pair<String, Any>): scala.collection.immutable.Map<String, Any> {
-        var acc: scala.collection.immutable.Map<String, Any> =
-            scala.collection.immutable.`Map$`.`MODULE$`.empty()
-        for ((k, v) in entries) acc = acc.updated(k, v) as scala.collection.immutable.Map<String, Any>
-        return acc
-    }
 }

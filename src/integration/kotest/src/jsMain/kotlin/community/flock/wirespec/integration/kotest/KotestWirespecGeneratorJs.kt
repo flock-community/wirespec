@@ -3,9 +3,6 @@
 
 package community.flock.wirespec.integration.kotest
 
-import io.kotest.property.Arb
-import io.kotest.property.arbitrary.int
-import io.kotest.property.arbitrary.map
 import kotlin.reflect.typeOf
 
 /**
@@ -44,19 +41,8 @@ class KotestWirespecGeneratorJs internal constructor(private val inner: KotestGe
 
 fun kotestWirespecGeneratorJs(
     seed: Int,
-    registrations: dynamic = null,
 ): KotestWirespecGeneratorJs {
-    val inner = kotestGenerator(seed.toLong()) {
-        if (registrations != null) {
-            val keys = js("Object").keys(registrations) as Array<String>
-            for (key in keys) {
-                val factory = registrations[key].unsafeCast<(Int) -> String>()
-                register(key) {
-                    Arb.int(0..Int.MAX_VALUE).map { factory(it) }
-                }
-            }
-        }
-    }
+    val inner = kotestGenerator(seed.toLong())
     return KotestWirespecGeneratorJs(inner)
 }
 

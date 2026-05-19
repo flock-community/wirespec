@@ -1,11 +1,8 @@
 package community.flock.wirespec.integration.kotest
 
 import community.flock.wirespec.kotlin.Wirespec
-import io.kotest.property.Arb
-import io.kotest.property.arbitrary.constant
 import kotlin.reflect.typeOf
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -24,21 +21,6 @@ class KotestWirespecKotlinGeneratorJvmTest {
     fun `factory returns a Wirespec_Generator`() {
         val gen: Wirespec.Generator = kotestWirespecKotlinGenerator(seed = 1L)
         assertNotNull(gen)
-    }
-
-    @Test
-    fun `adapter routes Wirespec_GeneratorFieldString through the algorithm`() {
-        val gen = kotestWirespecKotlinGenerator(seed = 0L) {
-            register("orderId") { Arb.constant("ORD-JVM") }
-        }
-        val v = gen.generate(
-            path = listOf("x"),
-            field = Wirespec.GeneratorFieldString(
-                regex = null,
-                annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "orderId"))),
-            ),
-        )
-        assertEquals("ORD-JVM", v)
     }
 
     @Test

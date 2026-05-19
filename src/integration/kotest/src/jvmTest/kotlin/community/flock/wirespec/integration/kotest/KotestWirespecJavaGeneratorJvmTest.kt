@@ -1,8 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
 import community.flock.wirespec.java.Wirespec
-import io.kotest.property.Arb
-import io.kotest.property.arbitrary.constant
 import java.util.Optional
 import java.util.function.Function
 import kotlin.test.Test
@@ -27,21 +25,6 @@ class KotestWirespecJavaGeneratorJvmTest {
     fun `factory returns a Java Wirespec_Generator`() {
         val gen: Wirespec.Generator = kotestWirespecJavaGenerator(seed = 1L)
         assertNotNull(gen)
-    }
-
-    @Test
-    fun `adapter routes Java Wirespec_GeneratorFieldString through the algorithm`() {
-        val gen = kotestWirespecJavaGenerator(seed = 0L) {
-            register("orderId") { Arb.constant("ORD-JAVA") }
-        }
-        val v: String = gen.generate(
-            listOf("x"),
-            Wirespec.GeneratorFieldString(
-                Optional.empty(),
-                listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "orderId"))),
-            ),
-        )
-        assertEquals("ORD-JAVA", v)
     }
 
     @Test

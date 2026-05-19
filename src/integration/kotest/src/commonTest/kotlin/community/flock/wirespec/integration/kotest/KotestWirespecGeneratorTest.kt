@@ -1,7 +1,5 @@
 package community.flock.wirespec.integration.kotest
 
-import io.kotest.property.Arb
-import io.kotest.property.arbitrary.constant
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -164,38 +162,6 @@ class KotestWirespecGeneratorTest {
         assertEquals(1, calls)
     }
 
-    // ---------- Named generators (@Generator dispatch) ----------
-
-    @Test
-    fun `Generator annotation routes to a registered Arb`() {
-        val gen = kotestGenerator(seed = 0L) {
-            register("orderId") { Arb.constant("ORD-123") }
-        }
-        val v = gen.generate(
-            path = listOf("orderId"),
-            field = KotestFieldString(
-                regex = null,
-                annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "orderId"))),
-            ),
-        )
-        assertEquals("ORD-123", v)
-    }
-
-    @Test
-    fun `Generator annotation lookup is case-insensitive`() {
-        val gen = kotestGenerator(seed = 0L) {
-            register("orderId") { Arb.constant("ORD-CASE") }
-        }
-        val v = gen.generate(
-            path = listOf("x"),
-            field = KotestFieldString(
-                regex = null,
-                annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "ORDERID"))),
-            ),
-        )
-        assertEquals("ORD-CASE", v)
-    }
-
     // ---------- @Seed (deterministic-array regeneration) ----------
 
     @Test
@@ -326,25 +292,6 @@ class KotestWirespecGeneratorTest {
         )
         val d = (gen2.generate(listOf("a-different-project-id", "owner"), memberShape2))["id"] as String
         assertNotEquals(c, d, "different outer seed must produce a different nested @Seed value")
-    }
-
-    @Test
-    fun `unknown Generator name throws a clear error`() {
-        val gen = kotestGenerator(seed = 0L)
-        val ex = runCatching {
-            gen.generate(
-                path = listOf("x"),
-                field = KotestFieldString(
-                    regex = null,
-                    annotations = listOf(mapOf("name" to "Generator", "parameters" to mapOf("default" to "unregistered"))),
-                ),
-            )
-        }.exceptionOrNull()
-        assertNotNull(ex, "expected an exception for an unregistered @Generator name")
-        assertTrue(
-            ex.message!!.contains("unregistered", ignoreCase = true),
-            "expected error to mention the missing name, got: ${ex.message}",
-        )
     }
 
     // ---------- helpers ----------
