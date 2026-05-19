@@ -85,14 +85,14 @@ class SpringKotlinIrEmitterTest {
     fun `WirespecNativeHints uses pascal-cased class names for underscored identifiers`() {
         // Mirrors what the OpenAPI converter produces for inline _embedded
         // objects inside an allOf composition: a Type definition whose raw
-        // identifier carries an underscore (ContactWithLinks_embedded). The
-        // Kotlin emitter writes that out as ContactWithLinksEmbedded.kt /
-        // class ContactWithLinksEmbedded, so the hints file must register
+        // identifier carries an underscore (Contact_embedded). The
+        // Kotlin emitter writes that out as ContactEmbedded.kt /
+        // class ContactEmbedded, so the hints file must register
         // the same pascal-cased name (not the raw underscored one).
         val inline = Type(
             comment = null,
             annotations = emptyList(),
-            identifier = DefinitionIdentifier("ContactWithLinks_embedded"),
+            identifier = DefinitionIdentifier("Contact_embedded"),
             shape = Type.Shape(
                 listOf(
                     Field(
@@ -113,10 +113,10 @@ class SpringKotlinIrEmitterTest {
             .emit(ast, noLogger)
 
         val hints = emitted.single { it.file.endsWith("WirespecNativeHints.kt") }
-        val file = emitted.single { it.file.endsWith("ContactWithLinksEmbedded.kt") }
+        val file = emitted.single { it.file.endsWith("ContactEmbedded.kt") }
 
-        assertContains(file.result, "data class ContactWithLinksEmbedded")
-        assertContains(hints.result, "import community.flock.wirespec.spring.test.model.ContactWithLinksEmbedded")
-        assertContains(hints.result, "registerWithInnerClasses(hints, ContactWithLinksEmbedded::class.java, allMembers)")
+        assertContains(file.result, "data class ContactEmbedded")
+        assertContains(hints.result, "import community.flock.wirespec.spring.test.model.ContactEmbedded")
+        assertContains(hints.result, "registerWithInnerClasses(hints, ContactEmbedded::class.java, allMembers)")
     }
 }

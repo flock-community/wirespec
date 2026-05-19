@@ -174,16 +174,16 @@ class IrConverterTest {
     fun testReferenceCustomWithUnderscoreMatchesDefinitionName() {
         // Simulates an OpenAPI _embedded inline allOf type. The parser produces
         // both a Type definition and a Reference.Custom that share the same raw
-        // name with an underscore (e.g. "ContactWithLinks_embedded"). After IR
+        // name with an underscore (e.g. "Contact_embedded"). After IR
         // conversion, the struct's emitted class name (Struct.name.pascalCase)
         // and the field's Type.Custom reference (Type.Custom.name.value) must
         // agree so the generated code compiles.
-        val rawName = "ContactWithLinks_embedded"
+        val rawName = "Contact_embedded"
 
         val parent = AstType(
             comment = null,
             annotations = emptyList(),
-            identifier = DefinitionIdentifier("ContactWithLinks"),
+            identifier = DefinitionIdentifier("Contact"),
             shape = AstType.Shape(
                 listOf(
                     Field(
