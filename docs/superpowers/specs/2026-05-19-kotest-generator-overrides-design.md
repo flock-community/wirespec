@@ -10,26 +10,37 @@ Give users a `register*` interface on `KotestWirespecGeneratorBuilder` that lets
 1. **By `(parent type, field name)`** — e.g. always produce a specific value for `User.email`, leaving `Order.email` untouched.
 2. **By absolute path with `*` wildcard** — e.g. `("users", "*", "id")` to override `users[i].id` for every `i`.
 
-The existing `register(name)` (`@Generator("name")` lookup) and `@Seed` machinery stay in place; the new overrides slot into a documented precedence order.
+These two scoped overrides **replace** the existing `register(name)` / `@Generator("name")` lookup. The `@Seed` regeneration machinery stays in place.
+
+## Removal: `@Generator` lookup
+
+The previous `@Generator("name")` mechanism — `register(name) { Arb<String> }` on the builder, the `DEFAULT_ARBS` catalog of preinstalled arbs, and the `annotations.namedGeneratorOrNull()` lookup inside `KotestWirespecGenerator` — is removed. Any `@Generator(...)` annotation that the IR still emits is ignored by this generator. Users who want kotest's `Arb.email()` / `Arb.uuid()` / etc. now wire them up explicitly via `registerField<Parent>("email") { Arb.email() }` or `registerPath("users", "*", "id") { Arb.uuid() }`.
+
+Concretely, this means deleting:
+- `KotestWirespecGeneratorBuilder.register(name, factory)`
+- `KotestWirespecGenerator.namedArbs` and `namedGeneratorOrNull(...)`
+- `DefaultArbs.kt` (the `DEFAULT_ARBS` map and `uuidArb()`)
+- The `@Generator`-related tests in `KotestWirespecGeneratorTest`, `DefaultArbsTest`, and the JVM adapter tests
+
+Existing scoped behavior (`@Seed`) is **not** affected.
 
 ## Non-goals
 
 - Single-axis matching ("any field named `email` everywhere" or "any field of type `EmailAddress`"). Both intentionally rejected — every override is scoped.
 - Path predicates. Rejected in favor of literal segments + `*`.
 - JS ergonomics for reified `Parent`. JS users can fall back to the string-keyed `registerFieldByTypeName(...)` underneath.
-- Mass refactors of the generator. The change is additive: one parent-shape stack and two lookup hooks.
+- Backwards compatibility with `register(name)`. It is removed in this change.
 
 ## Public API
 
-The new methods live on the existing `KotestWirespecGeneratorBuilder`. No nested `overrides { … }` block — methods sit side-by-side with `register`.
+The builder exposes only the two new scoped overrides plus the seed parameter:
 
 ```kotlin
 kotestWirespecKotlinGenerator(seed = 1L) {
-    register("orderId") { Arb.uuid() }                  // existing
-    registerField<User>("email") { Arb.email() }        // new — by (parent type, field name)
-    registerField<User>("age", 42L)                     // new — value shorthand
-    registerPath("users", "*", "id") { Arb.uuid() }     // new — by absolute path
-    registerPath("orders", "0", "total", value = 100L)  // new — value shorthand
+    registerField<User>("email") { Arb.email() }        // by (parent type, field name)
+    registerField<User>("age", 42L)                     // value shorthand
+    registerPath("users", "*", "id") { Arb.uuid() }     // by absolute path
+    registerPath("orders", "0", "total", value = 100L)  // value shorthand
 }
 ```
 
@@ -40,8 +51,6 @@ kotestWirespecKotlinGenerator(seed = 1L) {
 ```kotlin
 class KotestWirespecGeneratorBuilder internal constructor() {
     internal val overrides: OverrideRegistry = OverrideRegistry()
-
-    fun register(name: String, factory: () -> Arb<String>) { /* existing */ }
 
     fun registerFieldByTypeName(
         typeName: String,
@@ -111,9 +120,10 @@ At every `generate(path, field)` call:
 3. @Seed-driven seeded shape       (unchanged)
 4. path override                   NEW — most specific pattern wins
 5. field override                  NEW — keyed by (parentStack.peek(), path.last())
-6. @Generator(name) lookup         (unchanged)
-7. KotestField default leaf        (unchanged)
+6. KotestField default leaf        (unchanged)
 ```
+
+There is no `@Generator(name)` step anymore.
 
 ### Path matching
 
@@ -184,13 +194,14 @@ The JVM `RefinedWrapper` implementation (installed via the SPI described in "Fil
 
 ```kotlin
 internal object JvmRefinedWrapper : RefinedWrapper {
-    override fun wrap(drawn: Any?, field: KotestField<*>): Any? {
+    override fun wrap(drawn: Any?, field: KotestField<*>, path: List<String>): Any? {
         val ctor = (field as? KotestFieldShape<*>)?.type?.let(::refinedCtorFor) ?: return drawn
         return try {
             ctor.call(drawn)
         } catch (e: IllegalArgumentException) {
             error(
-                "Override at <path>: expected Arb<${ctor.parameters[0].type}> for refined " +
+                "Override at ${path.joinToString("/")}: expected " +
+                "Arb<${ctor.parameters[0].type}> for refined " +
                 "${((field.type.classifier) as KClass<*>).qualifiedName}, " +
                 "got value of type ${drawn?.let { it::class.qualifiedName }}",
             )
@@ -199,7 +210,7 @@ internal object JvmRefinedWrapper : RefinedWrapper {
 }
 ```
 
-This is JVM-only because it uses `kotlin.reflect.full`. JS-facade auto-wrap, if needed later, can install its own `RefinedWrapper`. The error message includes the actual `path` — the generator passes it into the SPI in the real implementation (omitted from the snippet for brevity).
+This is JVM-only because it uses `kotlin.reflect.full`. JS-facade auto-wrap, if needed later, can install its own `RefinedWrapper`.
 
 ## File layout
 
@@ -207,18 +218,18 @@ This is JVM-only because it uses `kotlin.reflect.full`. JS-facade auto-wrap, if 
 src/integration/kotest/
 ├─ src/commonMain/.../
 │  ├─ KotestField.kt                  (unchanged)
-│  ├─ KotestWirespecGenerator.kt      (change: parent-shape stack; two lookup
-│  │                                   hooks at the precedence points)
-│  └─ KotestOverrides.kt              NEW — PathSegment, PathPattern, FieldKey,
-│                                     OverrideRegistry (pure data, no reflection)
+│  ├─ KotestWirespecGenerator.kt      (change: parent-shape stack; @Generator
+│  │                                   lookup + namedArbs field removed; two
+│  │                                   new lookup hooks at the precedence points)
+│  ├─ KotestOverrides.kt              NEW — PathSegment, PathPattern, FieldKey,
+│  │                                   OverrideRegistry (pure data, no reflection)
+│  └─ DefaultArbs.kt                  DELETED
 │
 └─ src/jvmMain/.../
    ├─ KotestWirespecKotlinGenerator.kt  (unchanged adapter)
    └─ KotestBuilderJvm.kt               NEW — reified `registerField<Parent>`
                                         extensions + Refined ctor cache + auto-wrap
-                                        hook (called by the common generator via a
-                                        small `RefinedWrapper` SPI installed on
-                                        the builder)
+                                        hook (installed via the RefinedWrapper SPI)
 ```
 
 Auto-wrap crosses the commonMain/jvmMain boundary via an SPI:
@@ -248,7 +259,7 @@ internal object IdentityRefinedWrapper : RefinedWrapper {
 - Field override fires only when the leaf is a direct child of a `KotestFieldShape` whose `type.toString()` matches.
 - Field override does **not** fire for the same field name nested in a different parent type.
 - Field override does **not** fire at the top level (no enclosing shape).
-- Precedence: `@Seed` beats path; path beats field; field beats `@Generator(name)`.
+- Precedence: `@Seed` beats path; path beats field; field beats default leaf.
 
 All commonTest assertions use string-keyed `registerFieldByTypeName(...)` so no reflection is involved.
 
@@ -259,12 +270,23 @@ All commonTest assertions use string-keyed `registerFieldByTypeName(...)` so no 
 - Type mismatch: `registerField<User>("email") { Arb.long(0..10) }` against a `String`-backed Refined throws with the documented error message.
 - Value-shorthand overloads (`registerField<User>("age", 42L)`, `registerPath("users", "0", "id", value = "x")`) work end-to-end through the `WirespecKotlinGeneratorAdapter`.
 
-Existing tests under `KotestWirespecGeneratorTest` stay green — the only existing-code change (parent-shape stack) is structurally equivalent to today's `shapeDepth`.
+### Removed tests
+
+- `DefaultArbsTest` — deleted along with `DefaultArbs.kt`.
+- `@Generator`-related cases in `KotestWirespecGeneratorTest`:
+  - `Generator annotation routes to a registered Arb`
+  - `Generator annotation lookup is case-insensitive`
+  - `unknown Generator name throws a clear error`
+- `@Generator`-related cases in `KotestWirespecKotlinGeneratorJvmTest`:
+  - `adapter routes Wirespec_GeneratorFieldString through the algorithm`
+
+`@Seed`-related tests stay green — that machinery is untouched.
 
 ## Risks & mitigations
 
 | Risk | Mitigation |
 |---|---|
+| Downstream consumers depend on the removed `register(name)` API. | This is a deliberate breaking change. Migration is mechanical: replace `register("orderId") { Arb.uuid() }` with `registerField<Owner>("orderId") { Arb.uuid() }` or `registerPath(...)`. Call out in the change description so consumers update at the same time. |
 | Refined ctor lookup picks up a synthetic constructor on some toolchain. | We require `constructors.singleOrNull() && parameters.size == 1`. Generated Refined classes have exactly one constructor — anything else returns null and we fall through to identity. |
 | Users register a path override that shadows an `@Seed` field unintentionally. | `@Seed` stays at precedence 1–3, above path overrides — by design. Documented in the spec and in the builder's KDoc. |
 | Stringly-typed `parent.type.toString()` differs across Kotlin versions. | Both sides use the same `typeOf<T>().toString()` representation, so they match identically. If this ever breaks, the test `Field override fires only when the leaf is a direct child of a matching KotestFieldShape` will fail loudly. |
