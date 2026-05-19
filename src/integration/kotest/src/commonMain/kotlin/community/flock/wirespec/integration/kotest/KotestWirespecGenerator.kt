@@ -45,6 +45,19 @@ internal class KotestWirespecGenerator(
 
     private var shapeDepth = 0
 
+    private val parentStack = ArrayDeque<ParentFrame>()
+
+    private data class ParentFrame(val typeName: String)
+
+    private inline fun <R> withParentFrame(frame: ParentFrame, block: () -> R): R {
+        parentStack.addLast(frame)
+        return try {
+            block()
+        } finally {
+            parentStack.removeLast()
+        }
+    }
+
     private data class PendingSeed(val value: String, val target: String, val pathPrefix: List<String>)
 
     private class Capture(val shapePath: List<String>, val fieldName: String) {
@@ -159,15 +172,21 @@ internal class KotestWirespecGenerator(
         if (isArrayContext && captures.isEmpty()) {
             val capture = Capture(path, seedFieldName)
             val seed = withFrame(captures, capture) {
-                withShapeDepth { field.generate(path) }
+                withParentFrame(ParentFrame(field.type.toString())) {
+                    withShapeDepth { field.generate(path) }
+                }
                 capture.seed ?: error("Failed to capture @Seed value at $path for field $seedFieldName")
             }
-            return field.generate(listOf(seed))
+            return withParentFrame(ParentFrame(field.type.toString())) {
+                field.generate(listOf(seed))
+            }
         }
 
         val candidate = path.dropLast(1).lastOrNull() ?: return null
         return withFrame(pendingSeeds, PendingSeed(candidate, seedFieldName, path)) {
-            withShapeDepth { field.generate(path) }
+            withParentFrame(ParentFrame(field.type.toString())) {
+                withShapeDepth { field.generate(path) }
+            }
         }
     }
 
@@ -213,7 +232,9 @@ internal class KotestWirespecGenerator(
                 (0 until size).map { i -> field.generate(path + "$i") } as T
             }
             is KotestFieldNullable<*> -> field.generate(path) as T
-            is KotestFieldShape<*> -> field.generate(path) as T
+            is KotestFieldShape<*> -> withParentFrame(ParentFrame(field.type.toString())) {
+                field.generate(path)
+            } as T
             is KotestFieldDict<*> -> mapOf("a" to field.generate(path + "a")) as T
         }
     }
