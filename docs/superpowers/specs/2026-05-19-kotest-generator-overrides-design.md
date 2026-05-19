@@ -99,16 +99,16 @@ Both `registerField` and `registerPath` have a value overload. It wraps in `Arb.
 
 ### Parent-shape stack
 
-`KotestWirespecGenerator` already tracks `shapeDepth: Int`. We replace it with a stack of parent frames:
+`KotestWirespecGenerator` already tracks `shapeDepth: Int` to gate `@Seed`-on-primitive precedence. We **add** an independent `parentStack` of `ParentFrame(typeName)` to track the enclosing shape:
 
 ```kotlin
 private data class ParentFrame(val typeName: String)
 private val parentStack = ArrayDeque<ParentFrame>()
 ```
 
-- Push on entry to `KotestFieldShape` handling, pop on exit.
+- Push on entry to `KotestFieldShape` handling (both `generateLeaf` and `generateSeededShape`), pop on exit.
 - `KotestFieldArray`, `KotestFieldNullable`, `KotestFieldDict` are transparent — they do **not** push. A leaf inside `users[0].address.zip` still sees `Address` as immediate parent, and `User` further up.
-- `shapeDepth` is recoverable as `parentStack.size` — the existing `withShapeDepth { … }` becomes `withParentFrame(frame) { … }`.
+- `shapeDepth` is **not** replaced. It keeps its existing role: it is only incremented in `generateSeededShape` (capture pass + pending-seed branch), which is the precise gate the current `@Seed` semantics rely on. `parentStack` is purely for parent-type lookup.
 
 ### Lookup order
 
