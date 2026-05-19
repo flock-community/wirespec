@@ -86,8 +86,7 @@ internal class KotestWirespecGenerator(
         var seed: String? = null
     }
 
-    private fun rsFor(path: List<String>): RandomSource =
-        RandomSource.seeded(baseSeed xor path.joinToString("/").hashCode().toLong())
+    private fun rsFor(path: List<String>): RandomSource = RandomSource.seeded(baseSeed xor path.joinToString("/").hashCode().toLong())
 
     private inline fun <R> withShapeDepth(block: () -> R): R {
         shapeDepth++

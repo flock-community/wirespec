@@ -46,5 +46,4 @@ class KotestWirespecScalaGeneratorJvmTest {
         for (x in xs.reversed()) acc = acc.prepended(x)
         return acc
     }
-
 }

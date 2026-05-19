@@ -11,17 +11,18 @@ import kotlin.reflect.typeOf
  *
  * ```
  * val gen: Wirespec.Generator = kotestWirespecJavaGenerator(seed = 1L) {
- *     register("orderId") { Arb.uuid().map(java.util.UUID::toString) }
+ *     registerField<Member>("id") { Arb.uuid().map(java.util.UUID::toString) }
+ *     registerPath("users", "*", "email") { Arb.email() }
  * }
  * val member = MemberGenerator.generate(gen, java.util.List.of())
  * ```
  *
- * Same DSL, default arb catalog, and `@Generator` / `@Seed` semantics as the
- * Kotlin sibling [kotestWirespecKotlinGenerator]. The difference is the
- * concrete `Wirespec.GeneratorField*` shape: Java records use
- * `java.util.Optional` for nullable min/max/regex and `java.util.function
- * .Function` for the `generate` callbacks; nullable fields return
- * `Optional<T>` rather than the bare `T?` the commonMain algorithm produces.
+ * Same DSL and `@Seed` semantics as the Kotlin sibling
+ * [kotestWirespecKotlinGenerator]. The difference is the concrete
+ * `Wirespec.GeneratorField*` shape: Java records use `java.util.Optional`
+ * for nullable min/max/regex and `java.util.function.Function` for the
+ * `generate` callbacks; nullable fields return `Optional<T>` rather than
+ * the bare `T?` the commonMain algorithm produces.
  */
 fun kotestWirespecJavaGenerator(
     seed: Long = 0L,
