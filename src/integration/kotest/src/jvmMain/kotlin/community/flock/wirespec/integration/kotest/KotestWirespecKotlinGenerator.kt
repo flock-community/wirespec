@@ -12,7 +12,7 @@ import community.flock.wirespec.kotlin.Wirespec
  *
  * ```
  * val gen = kotestWirespecKotlinGenerator(seed = 1L) {
- *     registerField<Member>("id") { Arb.uuid().map(java.util.UUID::toString) }
+ *     registerField(Member::id) { Arb.uuid().map(java.util.UUID::toString) }
  *     registerPath("users", "*", "email") { Arb.email() }
  * }
  * val member = MemberGenerator.generate(gen, emptyList())

@@ -21,7 +21,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
     @Test
     fun `registerField with reified Parent passes through to a String field`() {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
-            registerField<FakeUser>("email") { Arb.constant("a@b.com") }
+            registerField(FakeUser::email) { Arb.constant("a@b.com") }
         }
         val shape = Wirespec.GeneratorFieldShape<FakeUser>(
             annotations = emptyMap(),
@@ -41,7 +41,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
     @Test
     fun `registerField with Long value works for primitive field`() {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
-            registerField<FakeUser>("age", value = 42L)
+            registerField(FakeUser::age, value = 42L)
         }
         val shape = Wirespec.GeneratorFieldShape<FakeUser>(
             annotations = emptyMap(),
@@ -63,7 +63,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
             // Field's Kotlin type is FakeEmailAddress (a Refined wrapper of String).
             // User provides the inner primitive; the JVM RefinedWrapper wraps it.
-            registerField<FakeUser>("email") { Arb.constant("auto@wrap.com") }
+            registerField(FakeUser::email) { Arb.constant("auto@wrap.com") }
         }
         // The shape for FakeUser's email is a KotestFieldShape<FakeEmailAddress>
         // whose generate callback wraps a String into FakeEmailAddress. The
@@ -95,7 +95,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
     @Test
     fun `Refined auto-wrap type mismatch throws with documented message`() {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
-            registerField<FakeUser>("email") { Arb.long(0L..10L) }
+            registerField(FakeUser::email) { Arb.long(0L..10L) }
         }
         val emailFieldShape = Wirespec.GeneratorFieldShape<FakeEmailAddress>(
             annotations = emptyMap(),
@@ -127,7 +127,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
     @Test
     fun `registerField does not fire for the same field name on a different parent type`() {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
-            registerField<FakeUser>("email") { Arb.constant("user@x") }
+            registerField(FakeUser::email) { Arb.constant("user@x") }
         }
         // FakeOrder also has an `email` field; the override must not match.
         val shape = Wirespec.GeneratorFieldShape<FakeOrder>(

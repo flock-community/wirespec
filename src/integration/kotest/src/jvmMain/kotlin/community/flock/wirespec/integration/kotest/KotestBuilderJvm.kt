@@ -4,28 +4,38 @@ import io.kotest.property.Arb
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /**
- * Reified `(parent type, field name)` override registration. The parent's
- * Kotlin type is captured as `typeOf<Parent>().toString()` and matched
- * against the equivalent string the generator computes from
- * `KotestFieldShape.type` at lookup time. Both sides use the same Kotlin
- * stdlib `KType.toString()` representation, so the strings match.
+ * `(parent type, field name)` override registration using a property
+ * reference. `KProperty1<Parent, V>` supplies the parent type (via
+ * `typeOf<Parent>().toString()`) and the field name (via `property.name`)
+ * in one compile-checked expression — a typo or rename becomes a compile
+ * error. `V` (the property's declared type) is reflected in the call site
+ * but the [factory] still returns `Arb<*>`: when the field is a Refined
+ * wrapper, [JvmRefinedWrapper] auto-wraps the drawn inner primitive into
+ * the wrapper class.
+ *
+ * Example:
+ * ```
+ * registerField(User::email) { Arb.email() }
+ * registerField(User::age, value = 42L)
+ * ```
  */
-inline fun <reified Parent : Any> KotestWirespecGeneratorBuilder.registerField(
-    name: String,
+inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
+    property: KProperty1<Parent, V>,
     noinline factory: () -> Arb<*>,
 ) {
-    registerFieldByTypeName(typeOf<Parent>().toString(), name, factory)
+    registerFieldByTypeName(typeOf<Parent>().toString(), property.name, factory)
 }
 
-inline fun <reified Parent : Any> KotestWirespecGeneratorBuilder.registerField(
-    name: String,
+inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
+    property: KProperty1<Parent, V>,
     value: Any?,
 ) {
-    registerFieldByTypeName(typeOf<Parent>().toString(), name, value)
+    registerFieldByTypeName(typeOf<Parent>().toString(), property.name, value)
 }
 
 /**

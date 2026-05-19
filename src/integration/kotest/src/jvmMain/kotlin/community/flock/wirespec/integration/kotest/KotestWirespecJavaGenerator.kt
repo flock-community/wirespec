@@ -11,7 +11,7 @@ import kotlin.reflect.typeOf
  *
  * ```
  * val gen: Wirespec.Generator = kotestWirespecJavaGenerator(seed = 1L) {
- *     registerField<Member>("id") { Arb.uuid().map(java.util.UUID::toString) }
+ *     registerField(Member::id) { Arb.uuid().map(java.util.UUID::toString) }
  *     registerPath("users", "*", "email") { Arb.email() }
  * }
  * val member = MemberGenerator.generate(gen, java.util.List.of())
