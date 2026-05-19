@@ -296,7 +296,7 @@ object RustTransform {
             "${receiver.toRawCode()}[$idx]"
         }
         is ConstructorStatement -> {
-            val typeName = (type as? Type.Custom)?.name ?: type.toString()
+            val typeName = (type as? Type.Custom)?.name?.pascalCase() ?: type.toString()
             val args = namedArguments.entries.joinToString(", ") { "${it.key.snakeCase()}: ${it.value.toRawCode()}" }
             if (args.isEmpty()) "$typeName {}" else "$typeName { $args }"
         }
