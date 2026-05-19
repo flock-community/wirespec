@@ -92,9 +92,9 @@ object RustGenerator : Generator {
     private fun Package.emit(indent: Int): String = "// package $path\n\n".indentCode(indent)
 
     private fun Import.emit(indent: Int): String = if (path.isEmpty()) {
-        "use ${type.name};\n".indentCode(indent)
+        "use ${type.name.value()};\n".indentCode(indent)
     } else {
-        "use $path::${type.name};\n".indentCode(indent)
+        "use $path::${type.name.value()};\n".indentCode(indent)
     }
 
     private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
@@ -132,7 +132,7 @@ object RustGenerator : Generator {
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val enumDef = if (members.isNotEmpty()) {
-            val variants = members.joinToString("\n") { "${it.name}(${it.name}),".indentCode(1) }
+            val variants = members.joinToString("\n") { "${it.name.pascalCase()}(${it.name.pascalCase()}),".indentCode(1) }
             "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName$typeParamsStr {\n$variants\n}\n\n".indentCode(indent)
         } else {
             "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName$typeParamsStr {}\n\n".indentCode(indent)
@@ -273,10 +273,11 @@ object RustGenerator : Generator {
         is Type.Array -> "Vec<${elementType.emit()}>"
         is Type.Dict -> "std::collections::HashMap<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
+            val rawName = name.value()
             if (generics.isEmpty()) {
-                name
+                rawName
             } else {
-                "$name<${generics.joinToString(", ") { it.emit() }}>"
+                "$rawName<${generics.joinToString(", ") { it.emit() }}>"
             }
         }
         is Type.Nullable -> "Option<${type.emit()}>"

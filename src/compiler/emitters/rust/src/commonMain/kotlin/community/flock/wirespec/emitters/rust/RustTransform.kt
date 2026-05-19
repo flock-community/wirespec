@@ -25,9 +25,9 @@ import community.flock.wirespec.ir.core.transformer
 // `RustIrEmitter` — single source of truth for the `&` spelling.
 // ─────────────────────────────────────────────────────────────────────────────
 
-internal fun Type.Custom.borrow(): Type.Custom = copy(name = "&$name")
-internal fun Type.Custom.borrowDyn(): Type.Custom = copy(name = "&dyn $name")
-internal fun Type.Custom.borrowImpl(): Type.Custom = copy(name = "&impl $name")
+internal fun Type.Custom.borrow(): Type.Custom = copy(name = Name(listOf("&${name.pascalCase()}")))
+internal fun Type.Custom.borrowDyn(): Type.Custom = copy(name = Name(listOf("&dyn ${name.pascalCase()}")))
+internal fun Type.Custom.borrowImpl(): Type.Custom = copy(name = Name(listOf("&impl ${name.pascalCase()}")))
 
 /**
  * Post-convert Rustification pass.
@@ -197,7 +197,7 @@ object RustTransform {
         field { f, tr ->
             val type = f.type
             val transformed = when {
-                type is Type.Custom && predicate(f.name) -> f.copy(type = Type.Custom("Arc<${type.name}>"))
+                type is Type.Custom && predicate(f.name) -> f.copy(type = Type.Custom("Arc<${type.name.pascalCase()}>"))
                 else -> f
             }
             transformed.transformChildren(tr)
@@ -214,10 +214,13 @@ object RustTransform {
      * substitution leaf that survives — rendered as "String".
      */
     fun Type.rustName(): String = when (this) {
-        is Type.Custom -> if (generics.isEmpty()) {
-            name
-        } else {
-            "$name<${generics.joinToString(", ") { it.rustName() }}>"
+        is Type.Custom -> {
+            val pascalName = name.pascalCase()
+            if (generics.isEmpty()) {
+                pascalName
+            } else {
+                "$pascalName<${generics.joinToString(", ") { it.rustName() }}>"
+            }
         }
         Type.String -> "String"
         is Type.Nullable -> "Option<${type.rustName()}>"
@@ -252,12 +255,15 @@ object RustTransform {
     // Predicates and low-level string primitives
     // ─────────────────────────────────────────────────────────────────────────────
 
-    internal fun Type.isAlreadyBorrowed(): Boolean = this is Type.Custom && (name.startsWith("&") || name.startsWith("&dyn ") || name.startsWith("&impl ") || name.startsWith("&mut "))
+    internal fun Type.isAlreadyBorrowed(): Boolean = this is Type.Custom &&
+        name.pascalCase().let {
+            it.startsWith("&") || it.startsWith("&dyn ") || it.startsWith("&impl ") || it.startsWith("&mut ")
+        }
 
-    internal fun Type.Custom.isSerializerLike(): Boolean = name == "Serializer" || name == "Deserializer"
+    internal fun Type.Custom.isSerializerLike(): Boolean = name.pascalCase().let { it == "Serializer" || it == "Deserializer" }
 
     /** `Copy`-like leaves that don't need borrowing in parameter positions. */
-    internal fun Type.Custom.isCopyLike(): Boolean = name in copyLikeCustomNames
+    internal fun Type.Custom.isCopyLike(): Boolean = name.pascalCase() in copyLikeCustomNames
 
     private val copyLikeCustomNames = setOf(
         "i32", "i64", "f32", "f64", "bool", "u8", "u16", "u32", "u64", "usize", "isize", "()",
@@ -290,7 +296,7 @@ object RustTransform {
             "${receiver.toRawCode()}[$idx]"
         }
         is ConstructorStatement -> {
-            val typeName = (type as? Type.Custom)?.name ?: type.toString()
+            val typeName = (type as? Type.Custom)?.name?.pascalCase() ?: type.toString()
             val args = namedArguments.entries.joinToString(", ") { "${it.key.snakeCase()}: ${it.value.toRawCode()}" }
             if (args.isEmpty()) "$typeName {}" else "$typeName { $args }"
         }

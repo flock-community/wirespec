@@ -66,7 +66,21 @@ sealed interface Type {
     object Reflect : Type
     data class Array(val elementType: Type) : Type
     data class Dict(val keyType: Type, val valueType: Type) : Type
-    data class Custom(val name: kotlin.String, val generics: List<Type> = emptyList()) : Type
+    data class Custom(val name: Name, val generics: List<Type> = emptyList()) : Type {
+        // Convenience constructor for raw type expressions (e.g. `Wirespec.Model`,
+        // `List<String>`, `$x.Call`) that contain non-identifier characters and
+        // must be preserved as-is. Names made up of letters, digits, or
+        // underscores are routed through `Name.of(...)` so the generator's
+        // `pascalCase()` normalises them the same way struct names are.
+        constructor(name: kotlin.String, generics: List<Type> = emptyList()) : this(
+            if (name.any { c -> !c.isLetterOrDigit() && c != '_' }) {
+                Name(listOf(name))
+            } else {
+                Name.of(name)
+            },
+            generics,
+        )
+    }
     data class Nullable(val type: Type) : Type
     data class IntegerLiteral(val value: Int) : Type
     data class StringLiteral(val value: kotlin.String) : Type

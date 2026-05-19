@@ -108,7 +108,7 @@ object TypeScriptGenerator : Generator {
 
     private fun Import.emit(indent: Int): String {
         val prefix = "type ".takeIf { isTypeOnly }.orEmpty()
-        return "import {$prefix${type.name}} from '$path'\n".indentCode(indent)
+        return "import {$prefix${type.name.value()}} from '$path'\n".indentCode(indent)
     }
 
     private fun Namespace.emit(indent: Int): String {
@@ -146,7 +146,7 @@ object TypeScriptGenerator : Generator {
     private fun Union.emit(indent: Int): String {
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { "${it.type.emit()} = unknown" }
         return if (members.isNotEmpty()) {
-            val membersStr = members.joinToString(" | ") { it.name }
+            val membersStr = members.joinToString(" | ") { it.name.pascalCase() }
             "export type ${name.pascalCase()}$typeParamsStr = $membersStr\n".indentCode(indent)
         } else {
             val extStr = extends?.emit()?.let { " extends $it" }.orEmpty()
@@ -186,7 +186,7 @@ object TypeScriptGenerator : Generator {
     }
 
     private fun Type.emitWithInlineStructs(inlineStructs: Map<String, Struct>): String = when (this) {
-        is Type.Custom -> inlineStructs[name]?.emitInline() ?: emit()
+        is Type.Custom -> inlineStructs[name.pascalCase()]?.emitInline() ?: emit()
         is Type.Nullable -> "${type.emitWithInlineStructs(inlineStructs)} | undefined"
         is Type.Array -> {
             val element = elementType.emitWithInlineStructs(inlineStructs)
@@ -410,8 +410,8 @@ object TypeScriptGenerator : Generator {
 
     private fun Type.emitWithInlineInterfaces(inlineInterfaces: Map<String, Interface>): String = when {
         inlineInterfaces.isEmpty() -> emit()
-        this is Type.Custom && inlineInterfaces.containsKey(name) -> {
-            val nested = inlineInterfaces[name]!!
+        this is Type.Custom && inlineInterfaces.containsKey(name.pascalCase()) -> {
+            val nested = inlineInterfaces[name.pascalCase()]!!
             if (nested.elements.isEmpty() && nested.extends.isNotEmpty()) {
                 nested.extends.joinToString(" & ") { it.emit() }
             } else if (nested.elements.isEmpty()) {
@@ -444,10 +444,11 @@ object TypeScriptGenerator : Generator {
         }
         is Type.Dict -> "Record<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
+            val rawName = name.value()
             if (generics.isEmpty()) {
-                name
+                rawName
             } else {
-                "$name<${generics.joinToString(", ") { it.emit() }}>"
+                "$rawName<${generics.joinToString(", ") { it.emit() }}>"
             }
         }
         is Type.Nullable -> "${type.emit()} | undefined"
@@ -456,7 +457,7 @@ object TypeScriptGenerator : Generator {
     }
 
     private fun emitConstructorCall(type: Type, namedArguments: Map<Name, Expression>): String {
-        val typeName = (type as? Type.Custom)?.name
+        val typeName = (type as? Type.Custom)?.name?.pascalCase()
         if (typeName != null && typeName in structsWithConstructors) {
             val funcName = typeName.replaceFirstChar { it.lowercaseChar() }
             if (namedArguments.isEmpty()) return "$funcName()"

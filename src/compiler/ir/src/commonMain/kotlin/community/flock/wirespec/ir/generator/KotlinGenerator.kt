@@ -95,7 +95,7 @@ object KotlinGenerator : Generator {
 
     private fun Package.emit(indent: Int): String = "package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "import $path.${type.name}\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "import $path.${type.name.value()}\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element>): String {
         val extStr = extends?.emitGenerics().orEmpty().prefixIfNotEmpty(" : ")
@@ -284,7 +284,7 @@ object KotlinGenerator : Generator {
         Type.Reflect -> "KType"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
-        is Type.Custom -> name
+        is Type.Custom -> name.value()
         is Type.Nullable -> "${type.emitGenerics()}?"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"

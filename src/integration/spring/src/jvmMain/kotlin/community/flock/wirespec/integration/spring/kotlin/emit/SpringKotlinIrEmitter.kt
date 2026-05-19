@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.File as LanguageFile
 
@@ -22,10 +23,10 @@ class SpringKotlinIrEmitter(packageName: PackageName) : KotlinIrEmitter(packageN
         val results = super.emit(ast, logger)
 
         val definitions = ast.modules.toList().flatMap { it.statements }
-        val modelNames = definitions.filterIsInstance<Model>().map { it.identifier.value }
+        val modelNames = definitions.filterIsInstance<Model>().map { Name.of(it.identifier.value).pascalCase() }
         val endpointNames = definitions
             .filter { it is Endpoint || it is Channel }
-            .map { it.identifier.value }
+            .map { Name.of(it.identifier.value).pascalCase() }
 
         if (modelNames.isEmpty() && endpointNames.isEmpty()) return results
 
