@@ -1,0 +1,48 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "v31 nullability",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/items": {
+      "get": {
+        "operationId": "ItemsList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Item": {
+        "type": "object",
+        "required": ["id", "name", "tag"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": ["string", "null"]
+          },
+          "tag": {
+            "type": ["null", "integer"]
+          },
+          "note": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  }
+}

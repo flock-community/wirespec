@@ -4,25 +4,28 @@ import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.InfoObject
 import community.flock.kotlinx.openapi.bindings.MediaType
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Components
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Header
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3HeaderOrReference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Link
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3LinkOrReference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Links
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3MediaType
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Components
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30HeaderOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Link
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30LinkOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Links
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30MediaType
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Model
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Operation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Parameter
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30ParameterLocation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30PathItem
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Reference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30RequestBody
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Response
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SchemaOrReferenceOrBoolean
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SingleType
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Type
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30TypeDefinition
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Operation
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Parameter
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3ParameterLocation
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3PathItem
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Reference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3RequestBody
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Response
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Schema
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3SchemaOrReference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3SchemaOrReferenceOrBoolean
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Type
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.Ref
 import community.flock.kotlinx.openapi.bindings.StatusCode
@@ -72,7 +75,7 @@ object OpenAPIV3Emitter : Emitter {
         }
         .let { nonEmptyListOf(it) }
 
-    fun emitOpenAPIObject(statements: Statements, options: Options? = null, logger: Logger) = OpenAPIV3Model(
+    fun emitOpenAPIObject(statements: Statements, options: Options? = null, logger: Logger): OpenAPIV3Model = OpenAPIV30Model(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
@@ -95,13 +98,13 @@ object OpenAPIV3Emitter : Emitter {
             }
                 .also { logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}") }
         }
-        .let { OpenAPIV3Components(it) }
+        .let { OpenAPIV30Components(it) }
 
     private fun Statements.emitPaths(logger: Logger) = filterIsInstance<Endpoint>()
         .groupBy { it.path }
         .map { (path, endpoints) ->
             logger.info("Emitting endpoints for path ${path.emitSegment()}")
-            Path(path.emitSegment()) to OpenAPIV3PathItem(
+            Path(path.emitSegment()) to OpenAPIV30PathItem(
                 parameters = path
                     .filterIsInstance<Endpoint.Segment.Param>()
                     .map { it.emitParameter() }
@@ -118,36 +121,36 @@ object OpenAPIV3Emitter : Emitter {
         }
         .toMap()
 
-    private fun Refined.emit(): OpenAPIV3Schema = when (val type = reference.type) {
-        is Reference.Primitive.Type.Integer -> OpenAPIV3Schema(
-            type = OpenAPIV3Type.INTEGER,
+    private fun Refined.emit(): OpenAPIV30Schema = when (val type = reference.type) {
+        is Reference.Primitive.Type.Integer -> OpenAPIV30Schema(
+            type = singleType(OpenAPIV30Type.INTEGER),
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
             format = "int32",
         )
 
-        is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
-            type = OpenAPIV3Type.NUMBER,
+        is Reference.Primitive.Type.Number -> OpenAPIV30Schema(
+            type = singleType(OpenAPIV30Type.NUMBER),
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
             format = "float",
         )
 
-        is Reference.Primitive.Type.String -> OpenAPIV3Schema(
-            type = OpenAPIV3Type.STRING,
+        is Reference.Primitive.Type.String -> OpenAPIV30Schema(
+            type = singleType(OpenAPIV30Type.STRING),
             pattern = type.constraint?.value,
         )
 
-        Reference.Primitive.Type.Boolean -> OpenAPIV3Schema(
-            type = OpenAPIV3Type.BOOLEAN,
+        Reference.Primitive.Type.Boolean -> OpenAPIV30Schema(
+            type = singleType(OpenAPIV30Type.BOOLEAN),
         )
 
-        Reference.Primitive.Type.Bytes -> OpenAPIV3Schema(
-            type = OpenAPIV3Type.STRING,
+        Reference.Primitive.Type.Bytes -> OpenAPIV30Schema(
+            type = singleType(OpenAPIV30Type.STRING),
         )
     }
 
-    private fun Type.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
+    private fun Type.emit(): OpenAPIV30Schema = OpenAPIV30Schema(
         description = annotations.findDescription() ?: comment?.value,
         properties = shape.value.associate { it.emitSchema() },
         required = shape.value
@@ -156,34 +159,34 @@ object OpenAPIV3Emitter : Emitter {
             .takeIf { it.isNotEmpty() },
     )
 
-    private fun Enum.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
+    private fun Enum.emit(): OpenAPIV30Schema = OpenAPIV30Schema(
         description = annotations.findDescription() ?: comment?.value,
-        type = OpenAPIV3Type.STRING,
+        type = singleType(OpenAPIV30Type.STRING),
         enum = entries.map { JsonPrimitive(it) },
     )
 
-    private fun Union.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
+    private fun Union.emit(): OpenAPIV30Schema = OpenAPIV30Schema(
         description = annotations.findDescription() ?: comment?.value,
-        type = OpenAPIV3Type.STRING,
+        type = singleType(OpenAPIV30Type.STRING),
         oneOf = entries.map { it.emitSchema() },
     )
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV3Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV30Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
-    private fun Endpoint.emit(): OpenAPIV3Operation = OpenAPIV3Operation(
+    private fun Endpoint.emit(): OpenAPIV30Operation = OpenAPIV30Operation(
         operationId = identifier.value,
         description = annotations.findDescription() ?: comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
-            .map { it.emitParameter() } + queries.map { it.emitParameter(OpenAPIV3ParameterLocation.QUERY) } + headers.map {
+            .map { it.emitParameter() } + queries.map { it.emitParameter(OpenAPIV30ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
-                OpenAPIV3ParameterLocation.HEADER,
+                OpenAPIV30ParameterLocation.HEADER,
             )
         },
         requestBody = requests.mapNotNull { it.content?.emit() }
             .toMap()
             .takeIf { it.isNotEmpty() }
             ?.let { content ->
-                OpenAPIV3RequestBody(
+                OpenAPIV30RequestBody(
                     content = content,
                     required = !requests.any { it.content?.reference?.isNullable == true },
                 )
@@ -191,7 +194,7 @@ object OpenAPIV3Emitter : Emitter {
         responses = responses
             .groupBy { it.status }
             .map { (statusCode, res) ->
-                StatusCode(statusCode) to OpenAPIV3Response(
+                StatusCode(statusCode) to OpenAPIV30Response(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
                     description = res.first().annotations.findDescription()
                         ?: "${identifier.value} $statusCode response",
@@ -199,17 +202,17 @@ object OpenAPIV3Emitter : Emitter {
                         .mapNotNull { it.content }
                         .associate { it.emit() }
                         .ifEmpty { null },
-                    links = res.flatMap { it.annotations.findLinks() }.toOpenAPIV3Links(),
+                    links = res.flatMap { it.annotations.findLinks() }.toOpenAPIV30Links(),
                 )
             }
             .toMap(),
     )
 
-    private fun List<LinkInfo>.toOpenAPIV3Links(): OpenAPIV3Links? {
+    private fun List<LinkInfo>.toOpenAPIV30Links(): OpenAPIV30Links? {
         if (isEmpty()) return null
-        val byName = LinkedHashMap<String, OpenAPIV3LinkOrReference>()
+        val byName = LinkedHashMap<String, OpenAPIV30LinkOrReference>()
         forEach { info ->
-            byName[info.name] = OpenAPIV3Link(
+            byName[info.name] = OpenAPIV30Link(
                 operationRef = info.operationRef,
                 operationId = info.operationId,
                 parameters = info.parameters
@@ -219,7 +222,7 @@ object OpenAPIV3Emitter : Emitter {
                 description = info.description,
             )
         }
-        return OpenAPIV3Links(byName.entries.toSet())
+        return OpenAPIV30Links(byName.entries.toSet())
     }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
@@ -229,7 +232,7 @@ object OpenAPIV3Emitter : Emitter {
         }
     }
 
-    private fun Field.emitParameter(location: OpenAPIV3ParameterLocation): OpenAPIV3Parameter = OpenAPIV3Parameter(
+    private fun Field.emitParameter(location: OpenAPIV30ParameterLocation): OpenAPIV30Parameter = OpenAPIV30Parameter(
         `in` = location,
         name = identifier.value,
         schema = reference.emitSchema(),
@@ -237,47 +240,47 @@ object OpenAPIV3Emitter : Emitter {
         required = !reference.isNullable,
     )
 
-    private fun Endpoint.Segment.Param.emitParameter(): OpenAPIV3Parameter = OpenAPIV3Parameter(
-        `in` = OpenAPIV3ParameterLocation.PATH,
+    private fun Endpoint.Segment.Param.emitParameter(): OpenAPIV30Parameter = OpenAPIV30Parameter(
+        `in` = OpenAPIV30ParameterLocation.PATH,
         name = identifier.value,
         schema = reference.emitSchema(),
         required = !reference.isNullable,
     )
 
-    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> = identifier.value to reference.emitHeader(annotations.findDescription())
+    private fun Field.emitHeader(): Pair<String, OpenAPIV30HeaderOrReference> = identifier.value to reference.emitHeader(annotations.findDescription())
 
-    private fun Field.emitSchema(): Pair<String, OpenAPIV3SchemaOrReference> = identifier.value to reference.emitSchema().let {
+    private fun Field.emitSchema(): Pair<String, OpenAPIV30SchemaOrReference> = identifier.value to reference.emitSchema().let {
         when (it) {
-            is OpenAPIV3Schema -> it.copy(description = annotations.findDescription())
-            is OpenAPIV3Reference -> it
+            is OpenAPIV30Schema -> it.copy(description = annotations.findDescription())
+            is OpenAPIV30Reference -> it
         }
     }
 
     private fun Reference.emitHeader(description: String?) = when (this) {
-        is Reference.Dict -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
-        is Reference.Iterable -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
-        is Reference.Custom -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
-        is Reference.Primitive -> OpenAPIV3Header(schema = emitSchema(), description = description)
+        is Reference.Dict -> OpenAPIV30Reference(ref = Ref("#/components/headers/$value"))
+        is Reference.Iterable -> OpenAPIV30Reference(ref = Ref("#/components/headers/$value"))
+        is Reference.Custom -> OpenAPIV30Reference(ref = Ref("#/components/headers/$value"))
+        is Reference.Primitive -> OpenAPIV30Header(schema = emitSchema(), description = description)
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Reference.emitSchema(): OpenAPIV3SchemaOrReference = when (this) {
-        is Reference.Dict -> OpenAPIV3Schema(
+    private fun Reference.emitSchema(): OpenAPIV30SchemaOrReference = when (this) {
+        is Reference.Dict -> OpenAPIV30Schema(
             nullable = reference.isNullable,
-            type = OpenAPIV3Type.OBJECT,
-            additionalProperties = reference.emitSchema() as OpenAPIV3SchemaOrReferenceOrBoolean,
+            type = singleType(OpenAPIV30Type.OBJECT),
+            additionalProperties = reference.emitSchema() as OpenAPIV30SchemaOrReferenceOrBoolean,
         )
 
-        is Reference.Iterable -> OpenAPIV3Schema(
+        is Reference.Iterable -> OpenAPIV30Schema(
             nullable = reference.isNullable,
-            type = OpenAPIV3Type.ARRAY,
+            type = singleType(OpenAPIV30Type.ARRAY),
             items = reference.emitSchema(),
         )
 
-        is Reference.Custom -> OpenAPIV3Reference(ref = Ref("#/components/schemas/$value"))
-        is Reference.Primitive -> OpenAPIV3Schema(
-            type = type.emitType(),
+        is Reference.Custom -> OpenAPIV30Reference(ref = Ref("#/components/schemas/$value"))
+        is Reference.Primitive -> OpenAPIV30Schema(
+            type = singleType(type.emitType()),
             format = emitFormat(),
             pattern = emitPattern(),
             minimum = emitMinimum(),
@@ -288,15 +291,15 @@ object OpenAPIV3Emitter : Emitter {
         is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Reference.Primitive.Type.emitType(): OpenAPIV3Type = when (this) {
-        is Reference.Primitive.Type.String -> OpenAPIV3Type.STRING
-        is Reference.Primitive.Type.Integer -> OpenAPIV3Type.INTEGER
-        is Reference.Primitive.Type.Number -> OpenAPIV3Type.NUMBER
-        is Reference.Primitive.Type.Boolean -> OpenAPIV3Type.BOOLEAN
-        is Reference.Primitive.Type.Bytes -> OpenAPIV3Type.STRING
+    private fun Reference.Primitive.Type.emitType(): OpenAPIV30Type = when (this) {
+        is Reference.Primitive.Type.String -> OpenAPIV30Type.STRING
+        is Reference.Primitive.Type.Integer -> OpenAPIV30Type.INTEGER
+        is Reference.Primitive.Type.Number -> OpenAPIV30Type.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenAPIV30Type.BOOLEAN
+        is Reference.Primitive.Type.Bytes -> OpenAPIV30Type.STRING
     }
 
-    private fun Endpoint.Content.emit(): Pair<MediaType, OpenAPIV3MediaType> = MediaType(type) to OpenAPIV3MediaType(
+    private fun Endpoint.Content.emit(): Pair<MediaType, OpenAPIV30MediaType> = MediaType(type) to OpenAPIV30MediaType(
         schema = reference.emitSchema(),
     )
 
@@ -333,3 +336,5 @@ object OpenAPIV3Emitter : Emitter {
         else -> null
     }
 }
+
+private fun singleType(type: OpenAPIV30Type): OpenAPIV30TypeDefinition = OpenAPIV30SingleType(type)

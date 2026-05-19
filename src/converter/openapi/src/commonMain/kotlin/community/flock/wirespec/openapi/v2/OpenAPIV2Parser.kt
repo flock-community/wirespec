@@ -5,23 +5,24 @@ import arrow.core.filterIsInstance
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.BooleanValue
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Base
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Boolean
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Header
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2HeaderOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Base
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Boolean
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20HeaderOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Model
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Operation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Parameter
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20ParameterLocation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20ParameterOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20PathItem
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Reference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Response
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20ResponseOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20SchemaOrReferenceOrBoolean
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Operation
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Parameter
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2ParameterLocation
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2ParameterOrReference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2PathItem
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Reference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Response
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2ResponseOrReference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Schema
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2SchemaOrReference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2SchemaOrReferenceOrBoolean
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Type
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -57,7 +58,11 @@ object OpenAPIV2Parser : Parser {
             .parse()
     }
 
-    fun OpenAPIV2Model.parse(): NonEmptyList<Definition> = listOf(
+    fun OpenAPIV2Model.parse(): NonEmptyList<Definition> = when (this) {
+        is OpenAPIV20Model -> parse()
+    }
+
+    fun OpenAPIV20Model.parse(): NonEmptyList<Definition> = listOf(
         parseEndpoints(),
         parseParameters(),
         parseRequestBody(),
@@ -69,22 +74,22 @@ object OpenAPIV2Parser : Parser {
         .let { requireNotNull(it) { "Cannot yield empty AST for OpenAPI v2" } }
 }
 
-private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
+private fun OpenAPIV20Model.parseEndpoints(): List<Definition> = paths
     .flatMap { (path, pathItem) ->
         pathItem.toOperationList()
-            .map { (method, operation) -> method to operation as OpenAPIV2Operation }
+            .map { (method, operation) -> method to operation as OpenAPIV20Operation }
             .flatMap { (method, operation) ->
                 val parameters = resolveParameters(pathItem.parameters) + resolveParameters(operation.parameters)
                 val segments = path.toSegments(parameters)
                 val name = operation.toName() ?: (path.toName() + method.name)
                 val query = parameters
-                    .filter { it.`in` == OpenAPIV2ParameterLocation.QUERY }
+                    .filter { it.`in` == OpenAPIV20ParameterLocation.QUERY }
                     .map { toField(it, name) }
                 val headers = parameters
-                    .filter { it.`in` == OpenAPIV2ParameterLocation.HEADER }
+                    .filter { it.`in` == OpenAPIV20ParameterLocation.HEADER }
                     .map { toField(it, name) }
                 val requests = parameters
-                    .filter { it.`in` == OpenAPIV2ParameterLocation.BODY }
+                    .filter { it.`in` == OpenAPIV20ParameterLocation.BODY }
                     .flatMap { requestBody ->
                         (consumes.orEmpty() + operation.consumes.orEmpty())
                             .distinct()
@@ -95,8 +100,8 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
                                     Endpoint.Content(
                                         type = type,
                                         reference = when (val schema = requestBody.schema) {
-                                            is OpenAPIV2Reference -> toReference(schema, isNullable)
-                                            is OpenAPIV2Schema -> toReference(
+                                            is OpenAPIV20Reference -> toReference(schema, isNullable)
+                                            is OpenAPIV20Schema -> toReference(
                                                 schema,
                                                 className(name, "RequestBody"),
                                                 isNullable,
@@ -125,8 +130,8 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
                                         Endpoint.Content(
                                             type = type,
                                             reference = when (schema) {
-                                                is OpenAPIV2Reference -> toReference(schema, false)
-                                                is OpenAPIV2Schema -> toReference(
+                                                is OpenAPIV20Reference -> toReference(schema, false)
+                                                is OpenAPIV20Schema -> toReference(
                                                     schema,
                                                     className(name, status.value, "ResponseBody"),
                                                     false,
@@ -155,18 +160,18 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
             }
     }
 
-private fun OpenAPIV2Model.parseParameters(): List<Definition> = flatMapRequests {
-    val parameters = resolveParameters((pathItem as OpenAPIV2PathItem).parameters) + resolveParameters((operation as OpenAPIV2Operation).parameters)
+private fun OpenAPIV20Model.parseParameters(): List<Definition> = flatMapRequests {
+    val parameters = resolveParameters((pathItem as OpenAPIV20PathItem).parameters) + resolveParameters((operation as OpenAPIV20Operation).parameters)
     val name = operation.toName() ?: (path.toName() + method.name)
     parameters
-        .filter { it.`in` != OpenAPIV2ParameterLocation.BODY }
+        .filter { it.`in` != OpenAPIV20ParameterLocation.BODY }
         .flatMap { parameter ->
             parameter.schema?.let { flatten(it, className(name, "Parameter", parameter.name)) } ?: emptyList()
         }
 }
 
-private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequests {
-    val parameters = resolveParameters((pathItem as OpenAPIV2PathItem).parameters) + (resolveParameters((operation as OpenAPIV2Operation).parameters))
+private fun OpenAPIV20Model.parseRequestBody(): List<Definition> = flatMapRequests {
+    val parameters = resolveParameters((pathItem as OpenAPIV20PathItem).parameters) + (resolveParameters((operation as OpenAPIV20Operation).parameters))
     val name = operation.toName() ?: (path.toName() + method.name)
     val enums: List<Definition> = parameters.flatMap { parameter ->
         when {
@@ -184,12 +189,12 @@ private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequest
     }
     val types: List<Definition> = operation.parameters
         ?.map { resolve(it) }
-        ?.filter { it.`in` == OpenAPIV2ParameterLocation.BODY }
+        ?.filter { it.`in` == OpenAPIV20ParameterLocation.BODY }
         ?.flatMap { param ->
             when (val schema = param.schema) {
-                is OpenAPIV2Schema -> when (schema.type) {
-                    null, OpenAPIV2Type.OBJECT -> flatten(schema, className(name, "RequestBody"))
-                    OpenAPIV2Type.ARRAY -> schema.items?.let { flatten(it, className(name, "RequestBody")) }.orEmpty()
+                is OpenAPIV20Schema -> when (schema.type) {
+                    null, OpenAPIV20Type.OBJECT -> flatten(schema, className(name, "RequestBody"))
+                    OpenAPIV20Type.ARRAY -> schema.items?.let { flatten(it, className(name, "RequestBody")) }.orEmpty()
                     else -> emptyList()
                 }
 
@@ -201,14 +206,14 @@ private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequest
     enums + types
 }
 
-private fun OpenAPIV2Model.parseResponseBody(): List<Definition> = flatMapResponses {
-    val schema = resolve(response as OpenAPIV2ResponseOrReference).schema
-    val name = (operation as OpenAPIV2Operation).toName() ?: (path.toName() + method.name)
+private fun OpenAPIV20Model.parseResponseBody(): List<Definition> = flatMapResponses {
+    val schema = resolve(response as OpenAPIV20ResponseOrReference).schema
+    val name = (operation as OpenAPIV20Operation).toName() ?: (path.toName() + method.name)
     when (schema) {
-        is OpenAPIV2Schema -> when (schema.type) {
-            null, OpenAPIV2Type.OBJECT -> flatten(schema, className(name, statusCode.value, "ResponseBody"))
+        is OpenAPIV20Schema -> when (schema.type) {
+            null, OpenAPIV20Type.OBJECT -> flatten(schema, className(name, statusCode.value, "ResponseBody"))
 
-            OpenAPIV2Type.ARRAY ->
+            OpenAPIV20Type.ARRAY ->
                 schema.items
                     ?.let { flatten(it, className(name, statusCode.value, "ResponseBody")) }
                     .orEmpty()
@@ -220,65 +225,65 @@ private fun OpenAPIV2Model.parseResponseBody(): List<Definition> = flatMapRespon
     }
 }
 
-private fun OpenAPIV2Model.parseDefinitions(): List<Definition> = definitions.orEmpty()
-    .filterIsInstance<String, OpenAPIV2Schema>()
+private fun OpenAPIV20Model.parseDefinitions(): List<Definition> = definitions.orEmpty()
+    .filterIsInstance<String, OpenAPIV20Schema>()
     .filter {
         when (it.value.additionalProperties) {
-            is OpenAPIV2Boolean -> true
-            is OpenAPIV2Reference -> false
-            is OpenAPIV2Schema -> true
+            is OpenAPIV20Boolean -> true
+            is OpenAPIV20Reference -> false
+            is OpenAPIV20Schema -> true
             null -> true
         }
     }
     .flatMap { flatten(it.value, className(it.key)) }
 
-private fun OpenAPIV2Model.resolveParameters(parameters: List<OpenAPIV2ParameterOrReference>?) = parameters.orEmpty()
+private fun OpenAPIV20Model.resolveParameters(parameters: List<OpenAPIV20ParameterOrReference>?) = parameters.orEmpty()
     .map {
         when (it) {
-            is OpenAPIV2Parameter -> it
-            is OpenAPIV2Reference -> resolveParameterObject(it)
+            is OpenAPIV20Parameter -> it
+            is OpenAPIV20Reference -> resolveParameterObject(it)
         }
     }
 
-private fun OpenAPIV2Model.resolveParameterObject(reference: OpenAPIV2Reference) = parameters
+private fun OpenAPIV20Model.resolveParameterObject(reference: OpenAPIV20Reference) = parameters
     ?.get(reference.getReference())
     ?: error("Cannot resolve ref: ${reference.ref}")
 
-private fun OpenAPIV2Model.resolveResponseObject(reference: OpenAPIV2Reference) = responses
+private fun OpenAPIV20Model.resolveResponseObject(reference: OpenAPIV20Reference) = responses
     ?.get(reference.getReference())
     ?: error("Cannot resolve ref: ${reference.ref}")
 
-private fun OpenAPIV2Model.resolveOpenAPIV2Schema(reference: OpenAPIV2Reference) = definitions
+private fun OpenAPIV20Model.resolveOpenAPIV20Schema(reference: OpenAPIV20Reference) = definitions
     ?.get(reference.getReference())
     ?: error("Cannot resolve ref: ${reference.ref}")
 
-private tailrec fun OpenAPIV2Model.resolve(schemaOrReference: OpenAPIV2SchemaOrReference): OpenAPIV2Schema = when (schemaOrReference) {
-    is OpenAPIV2Schema -> schemaOrReference
-    is OpenAPIV2Reference -> resolve(resolveOpenAPIV2Schema(schemaOrReference))
+private tailrec fun OpenAPIV20Model.resolve(schemaOrReference: OpenAPIV20SchemaOrReference): OpenAPIV20Schema = when (schemaOrReference) {
+    is OpenAPIV20Schema -> schemaOrReference
+    is OpenAPIV20Reference -> resolve(resolveOpenAPIV20Schema(schemaOrReference))
 }
 
-private fun OpenAPIV2Model.resolve(schemaOrReferenceOrBoolean: OpenAPIV2SchemaOrReferenceOrBoolean): OpenAPIV2Schema = when (schemaOrReferenceOrBoolean) {
-    is OpenAPIV2Schema -> schemaOrReferenceOrBoolean
-    is OpenAPIV2Reference -> resolve(resolveOpenAPIV2Schema(schemaOrReferenceOrBoolean))
+private fun OpenAPIV20Model.resolve(schemaOrReferenceOrBoolean: OpenAPIV20SchemaOrReferenceOrBoolean): OpenAPIV20Schema = when (schemaOrReferenceOrBoolean) {
+    is OpenAPIV20Schema -> schemaOrReferenceOrBoolean
+    is OpenAPIV20Reference -> resolve(resolveOpenAPIV20Schema(schemaOrReferenceOrBoolean))
     is BooleanValue -> TODO("Not yet implemented")
 }
 
-private fun OpenAPIV2Model.resolve(responseOrReference: OpenAPIV2ResponseOrReference): OpenAPIV2Response = when (responseOrReference) {
-    is OpenAPIV2Response -> responseOrReference
-    is OpenAPIV2Reference -> resolveResponseObject(responseOrReference)
+private fun OpenAPIV20Model.resolve(responseOrReference: OpenAPIV20ResponseOrReference): OpenAPIV20Response = when (responseOrReference) {
+    is OpenAPIV20Response -> responseOrReference
+    is OpenAPIV20Reference -> resolveResponseObject(responseOrReference)
 }
 
-private fun OpenAPIV2HeaderOrReference.resolve(): OpenAPIV2Header = when (this) {
-    is OpenAPIV2Header -> this
-    is OpenAPIV2Reference -> error("Headers cannot be referenced in OpenAPI v2")
+private fun OpenAPIV20HeaderOrReference.resolve(): OpenAPIV20Header = when (this) {
+    is OpenAPIV20Header -> this
+    is OpenAPIV20Reference -> error("Headers cannot be referenced in OpenAPI v2")
 }
 
-private fun OpenAPIV2Model.resolve(parameterOrReference: OpenAPIV2ParameterOrReference): OpenAPIV2Parameter = when (parameterOrReference) {
-    is OpenAPIV2Parameter -> parameterOrReference
-    is OpenAPIV2Reference -> resolveParameterObject(parameterOrReference)
+private fun OpenAPIV20Model.resolve(parameterOrReference: OpenAPIV20ParameterOrReference): OpenAPIV20Parameter = when (parameterOrReference) {
+    is OpenAPIV20Parameter -> parameterOrReference
+    is OpenAPIV20Reference -> resolveParameterObject(parameterOrReference)
 }
 
-private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String): List<Definition> = when {
+private fun OpenAPIV20Model.flatten(schemaObject: OpenAPIV20Schema, name: String): List<Definition> = when {
     schemaObject.additionalProperties.exists() -> when (schemaObject.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->
@@ -299,8 +304,8 @@ private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String):
                     .orEmpty()
                     .flatMap {
                         when (it) {
-                            is OpenAPIV2Schema -> toField(it, name)
-                            is OpenAPIV2Reference -> toField(resolve(resolveOpenAPIV2Schema(it)), it.getReference())
+                            is OpenAPIV20Schema -> toField(it, name)
+                            is OpenAPIV20Reference -> toField(resolve(resolveOpenAPIV20Schema(it)), it.getReference())
                         }
                     }
                     .distinctBy { it.identifier },
@@ -310,11 +315,11 @@ private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String):
     ).plus(
         schemaObject.allOf!!.flatMap {
             when (it) {
-                is OpenAPIV2Reference -> emptyList()
-                is OpenAPIV2Schema -> it.properties.orEmpty().flatMap { (key, value) ->
+                is OpenAPIV20Reference -> emptyList()
+                is OpenAPIV20Schema -> it.properties.orEmpty().flatMap { (key, value) ->
                     when (value) {
-                        is OpenAPIV2Reference -> emptyList()
-                        is OpenAPIV2Schema -> flatten(value, className(name, key))
+                        is OpenAPIV20Reference -> emptyList()
+                        is OpenAPIV20Schema -> flatten(value, className(name, key))
                     }
                 }
             }
@@ -337,7 +342,7 @@ private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String):
             }
 
     else -> when (schemaObject.type) {
-        null, OpenAPIV2Type.OBJECT -> {
+        null, OpenAPIV20Type.OBJECT -> {
             val fields = schemaObject.properties.orEmpty()
                 .flatMap { (key, value) -> flatten(value, className(name, key)) }
 
@@ -353,9 +358,9 @@ private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String):
             schema + fields
         }
 
-        OpenAPIV2Type.ARRAY -> when (val it = schemaObject.items) {
-            is OpenAPIV2Reference -> emptyList()
-            is OpenAPIV2Schema -> flatten(it, className(name, "Array"))
+        OpenAPIV20Type.ARRAY -> when (val it = schemaObject.items) {
+            is OpenAPIV20Reference -> emptyList()
+            is OpenAPIV20Schema -> flatten(it, className(name, "Array"))
             null -> emptyList()
         }
 
@@ -363,18 +368,18 @@ private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String):
     }
 }
 
-private fun OpenAPIV2Model.flatten(schemaOrReference: OpenAPIV2SchemaOrReference, name: String): List<Definition> = when (schemaOrReference) {
-    is OpenAPIV2Schema -> flatten(schemaOrReference, name)
-    is OpenAPIV2Reference -> emptyList()
+private fun OpenAPIV20Model.flatten(schemaOrReference: OpenAPIV20SchemaOrReference, name: String): List<Definition> = when (schemaOrReference) {
+    is OpenAPIV20Schema -> flatten(schemaOrReference, name)
+    is OpenAPIV20Reference -> emptyList()
 }
 
-private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable: Boolean): Reference = resolveOpenAPIV2Schema(reference).let { refOrSchema ->
+private fun OpenAPIV20Model.toReference(reference: OpenAPIV20Reference, isNullable: Boolean): Reference = resolveOpenAPIV20Schema(reference).let { refOrSchema ->
     val schema = resolve(refOrSchema)
     when {
         schema.additionalProperties.exists() -> when (val additionalProperties = schema.additionalProperties!!) {
             is BooleanValue -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
-            is OpenAPIV2Reference -> toReference(additionalProperties, false).toDict(isNullable)
-            is OpenAPIV2Schema -> toReference(additionalProperties, reference.getReference(), false).toDict(
+            is OpenAPIV20Reference -> toReference(additionalProperties, false).toDict(isNullable)
+            is OpenAPIV20Schema -> toReference(additionalProperties, reference.getReference(), false).toDict(
                 isNullable,
             )
         }
@@ -390,9 +395,9 @@ private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable
         )
 
         else -> when (schema.type) {
-            OpenAPIV2Type.ARRAY -> when (val items = schema.items) {
-                is OpenAPIV2Reference -> toReference(items, false).toIterable(isNullable)
-                is OpenAPIV2Schema -> toReference(
+            OpenAPIV20Type.ARRAY -> when (val items = schema.items) {
+                is OpenAPIV20Reference -> toReference(items, false).toIterable(isNullable)
+                is OpenAPIV20Schema -> toReference(
                     items,
                     className(reference.getReference(), "Array"),
                     isNullable,
@@ -402,8 +407,8 @@ private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable
             }
 
             else -> when (refOrSchema) {
-                is OpenAPIV2Schema -> Reference.Custom(className(reference.getReference()).sanitize(), isNullable)
-                is OpenAPIV2Reference -> Reference.Custom(
+                is OpenAPIV20Schema -> Reference.Custom(className(reference.getReference()).sanitize(), isNullable)
+                is OpenAPIV20Reference -> Reference.Custom(
                     className(refOrSchema.getReference()).sanitize(),
                     isNullable,
                 )
@@ -412,19 +417,19 @@ private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable
     }
 }
 
-private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, isNullable: Boolean): Reference = when {
+private fun OpenAPIV20Model.toReference(schema: OpenAPIV20Schema, name: String, isNullable: Boolean): Reference = when {
     schema.allOf?.size == 1 &&
-        schema.allOf!!.first() is OpenAPIV2Reference &&
+        schema.allOf!!.first() is OpenAPIV20Reference &&
         schema.properties == null &&
         schema.enum == null &&
         schema.type == null &&
         schema.items == null &&
-        schema.additionalProperties == null -> toReference(schema.allOf!!.first() as OpenAPIV2Reference, isNullable)
+        schema.additionalProperties == null -> toReference(schema.allOf!!.first() as OpenAPIV20Reference, isNullable)
 
     schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
         is BooleanValue -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
-        is OpenAPIV2Reference -> toReference(additionalProperties, false).toDict(isNullable)
-        is OpenAPIV2Schema ->
+        is OpenAPIV20Reference -> toReference(additionalProperties, false).toDict(isNullable)
+        is OpenAPIV20Schema ->
             additionalProperties
                 .takeIf { it.type.isPrimitive() || it.properties != null }
                 ?.let { toReference(it, name, false).toDict(isNullable) }
@@ -440,7 +445,7 @@ private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, is
     }
 
     else -> when (schema.type) {
-        OpenAPIV2Type.STRING, OpenAPIV2Type.INTEGER, OpenAPIV2Type.NUMBER, OpenAPIV2Type.BOOLEAN -> {
+        OpenAPIV20Type.STRING, OpenAPIV20Type.INTEGER, OpenAPIV20Type.NUMBER, OpenAPIV20Type.BOOLEAN -> {
             if (schema.additionalProperties != null) {
                 Reference.Dict(Reference.Primitive(schema.toPrimitive(), isNullable = false), isNullable = isNullable)
             } else {
@@ -448,7 +453,7 @@ private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, is
             }
         }
 
-        null, OpenAPIV2Type.OBJECT ->
+        null, OpenAPIV20Type.OBJECT ->
             when {
                 schema.additionalProperties is BooleanValue -> {
                     if (schema.additionalProperties != null) {
@@ -472,20 +477,20 @@ private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, is
                 }
             }
 
-        OpenAPIV2Type.ARRAY -> {
+        OpenAPIV20Type.ARRAY -> {
             when (val items = schema.items) {
-                is OpenAPIV2Reference -> toReference(items, false).toIterable(isNullable)
-                is OpenAPIV2Schema -> toReference(items, name, false).toIterable(isNullable)
+                is OpenAPIV20Reference -> toReference(items, false).toIterable(isNullable)
+                is OpenAPIV20Schema -> toReference(items, name, false).toIterable(isNullable)
                 null -> error("When schema is of type array items cannot be null for name: $name")
             }
         }
 
-        OpenAPIV2Type.FILE -> TODO("Type file not implemented")
+        OpenAPIV20Type.FILE -> TODO("Type file not implemented")
     }
 }
 
-private fun OpenAPIV2Base.toPrimitive() = when (this.type) {
-    OpenAPIV2Type.STRING -> when {
+private fun OpenAPIV20Base.toPrimitive() = when (this.type) {
+    OpenAPIV20Type.STRING -> when {
         pattern != null -> Reference.Primitive.Type.String(
             constraint = Reference.Primitive.Type.Constraint.RegExp(
                 pattern!!,
@@ -495,25 +500,25 @@ private fun OpenAPIV2Base.toPrimitive() = when (this.type) {
         else -> Reference.Primitive.Type.String(null)
     }
 
-    OpenAPIV2Type.INTEGER -> Reference.Primitive.Type.Integer(
+    OpenAPIV20Type.INTEGER -> Reference.Primitive.Type.Integer(
         if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64,
         null,
     )
 
-    OpenAPIV2Type.NUMBER -> Reference.Primitive.Type.Number(
+    OpenAPIV20Type.NUMBER -> Reference.Primitive.Type.Number(
         if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64,
         null,
     )
 
-    OpenAPIV2Type.BOOLEAN -> Reference.Primitive.Type.Boolean
+    OpenAPIV20Type.BOOLEAN -> Reference.Primitive.Type.Boolean
     else -> error("Type is not a primitive")
 }
 
-private fun OpenAPIV2Model.toField(header: OpenAPIV2Header, identifier: String) = Field(
+private fun OpenAPIV20Model.toField(header: OpenAPIV20Header, identifier: String) = Field(
     identifier = FieldIdentifier(identifier),
     annotations = header.description.toDescriptionAnnotationList(),
     reference = when (header.type) {
-        OpenAPIV2Type.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
+        OpenAPIV20Type.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
             ?: error("Item cannot be null")
 
         else -> Reference.Primitive(
@@ -523,16 +528,16 @@ private fun OpenAPIV2Model.toField(header: OpenAPIV2Header, identifier: String) 
     },
 )
 
-private fun OpenAPIV2Model.toField(schema: OpenAPIV2Schema, name: String) = schema.properties.orEmpty().map { (key, value) ->
+private fun OpenAPIV20Model.toField(schema: OpenAPIV20Schema, name: String) = schema.properties.orEmpty().map { (key, value) ->
     val isNullable = !(schema.required?.contains(key) ?: false)
     when (value) {
-        is OpenAPIV2Schema -> {
+        is OpenAPIV20Schema -> {
             Field(
                 identifier = FieldIdentifier(key),
                 annotations = emptyList(),
                 reference = when {
                     value.enum != null -> toReference(value, className(name, key), isNullable)
-                    value.type == OpenAPIV2Type.ARRAY -> toReference(
+                    value.type == OpenAPIV20Type.ARRAY -> toReference(
                         value,
                         className(name, key, "Array"),
                         isNullable,
@@ -543,7 +548,7 @@ private fun OpenAPIV2Model.toField(schema: OpenAPIV2Schema, name: String) = sche
             )
         }
 
-        is OpenAPIV2Reference -> {
+        is OpenAPIV20Reference -> {
             Field(
                 identifier = FieldIdentifier(key),
                 annotations = emptyList(),
@@ -553,7 +558,7 @@ private fun OpenAPIV2Model.toField(schema: OpenAPIV2Schema, name: String) = sche
     }
 }
 
-private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String) = resolve(parameter)
+private fun OpenAPIV20Model.toField(parameter: OpenAPIV20Parameter, name: String) = resolve(parameter)
     .let { schema ->
         val isNullable = !(parameter.required ?: false)
         when {
@@ -563,12 +568,12 @@ private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String) 
             )
 
             else -> when (schema.type) {
-                OpenAPIV2Type.STRING, OpenAPIV2Type.NUMBER, OpenAPIV2Type.INTEGER, OpenAPIV2Type.BOOLEAN ->
+                OpenAPIV20Type.STRING, OpenAPIV20Type.NUMBER, OpenAPIV20Type.INTEGER, OpenAPIV20Type.BOOLEAN ->
                     schema
                         .toPrimitive()
                         .let { primitive -> Reference.Primitive(primitive, isNullable = isNullable) }
 
-                OpenAPIV2Type.ARRAY -> schema.items?.let { items -> resolve(items) }
+                OpenAPIV20Type.ARRAY -> schema.items?.let { items -> resolve(items) }
                     ?.toPrimitive()
                     ?.let { primitive ->
                         Reference.Iterable(
@@ -578,8 +583,8 @@ private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String) 
                     }
                     ?: TODO("Not yet implemented")
 
-                OpenAPIV2Type.OBJECT -> TODO("Not yet implemented")
-                OpenAPIV2Type.FILE -> TODO("Not yet implemented")
+                OpenAPIV20Type.OBJECT -> TODO("Not yet implemented")
+                OpenAPIV20Type.FILE -> TODO("Not yet implemented")
                 null -> TODO("Not yet implemented")
             }
         }
@@ -591,7 +596,7 @@ private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String) 
         )
     }
 
-private fun Path.toSegments(parameters: List<OpenAPIV2Parameter>) = value.split("/").drop(1).map { segment ->
+private fun Path.toSegments(parameters: List<OpenAPIV20Parameter>) = value.split("/").drop(1).map { segment ->
     val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'
     when (isParam) {
         true -> {
@@ -612,20 +617,20 @@ private fun Path.toSegments(parameters: List<OpenAPIV2Parameter>) = value.split(
     }
 }
 
-private fun OpenAPIV2Type?.isPrimitive() = when (this) {
-    OpenAPIV2Type.STRING -> true
-    OpenAPIV2Type.NUMBER -> true
-    OpenAPIV2Type.INTEGER -> true
-    OpenAPIV2Type.BOOLEAN -> true
-    OpenAPIV2Type.ARRAY -> false
-    OpenAPIV2Type.OBJECT -> false
-    OpenAPIV2Type.FILE -> false
+private fun OpenAPIV20Type?.isPrimitive() = when (this) {
+    OpenAPIV20Type.STRING -> true
+    OpenAPIV20Type.NUMBER -> true
+    OpenAPIV20Type.INTEGER -> true
+    OpenAPIV20Type.BOOLEAN -> true
+    OpenAPIV20Type.ARRAY -> false
+    OpenAPIV20Type.OBJECT -> false
+    OpenAPIV20Type.FILE -> false
     null -> false
 }
 
-private fun OpenAPIV2SchemaOrReferenceOrBoolean?.exists() = when (this) {
-    is OpenAPIV2SchemaOrReference -> true
+private fun OpenAPIV20SchemaOrReferenceOrBoolean?.exists() = when (this) {
+    is OpenAPIV20SchemaOrReference -> true
     is BooleanValue -> this.value
-    is OpenAPIV2Reference -> true
+    is OpenAPIV20Reference -> true
     else -> false
 }

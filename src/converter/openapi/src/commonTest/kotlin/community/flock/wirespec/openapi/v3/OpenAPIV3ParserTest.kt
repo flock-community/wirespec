@@ -1627,4 +1627,30 @@ class OpenAPIV3ParserTest {
         created.annotations shouldContain expectedGetLink
         created.annotations shouldContain expectedDeleteLink
     }
+
+    @Test
+    fun openApiV31TypeArrayNullability() {
+        val path = Path("src/commonTest/resources/v3/v31-nullable.json")
+        val json = SystemFileSystem.source(path).buffered().readString()
+
+        val ast = OpenAPIV3Parser.parse(ModuleContent(FileUri(""), json), strict = false)
+        val item = ast.modules.head.statements.filterIsInstance<Type>().single { it.identifier.value == "Item" }
+        val byName = item.shape.value.associateBy { it.identifier.value }
+
+        // "id" is required + has no null-in-type → non-nullable.
+        byName.getValue("id").reference.shouldBeInstanceOf<Primitive>().isNullable shouldBe false
+
+        // "name": type ["string", "null"] → string + nullable.
+        val name = byName.getValue("name").reference.shouldBeInstanceOf<Primitive>()
+        name.type.shouldBeInstanceOf<Primitive.Type.String>()
+        name.isNullable shouldBe true
+
+        // "tag": type ["null", "integer"] → integer + nullable.
+        val tag = byName.getValue("tag").reference.shouldBeInstanceOf<Primitive>()
+        tag.type.shouldBeInstanceOf<Primitive.Type.Integer>()
+        tag.isNullable shouldBe true
+
+        // "note": type "null" → modeled as nullable Any.
+        byName.getValue("note").reference.isNullable shouldBe true
+    }
 }
