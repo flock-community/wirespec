@@ -27,16 +27,21 @@ import io.kotest.property.arbitrary.next
  */
 fun kotestGenerator(
     seed: Long = 0L,
+    refinedWrapper: RefinedWrapper = IdentityRefinedWrapper,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
 ): KotestGenerator {
     val builder = KotestWirespecGeneratorBuilder().apply(block)
-    return KotestWirespecGenerator(seed)
+    return KotestWirespecGenerator(seed, builder.overrides, refinedWrapper)
 }
 
-class KotestWirespecGeneratorBuilder internal constructor()
+class KotestWirespecGeneratorBuilder internal constructor() {
+    internal val overrides: OverrideRegistry = OverrideRegistry()
+}
 
 internal class KotestWirespecGenerator(
     private val baseSeed: Long,
+    private val overrides: OverrideRegistry,
+    private val refinedWrapper: RefinedWrapper,
 ) : KotestGenerator {
 
     private val pendingSeeds = ArrayDeque<PendingSeed>()

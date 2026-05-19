@@ -25,7 +25,7 @@ import java.lang.reflect.Proxy
 fun kotestWirespecScalaGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
-): Any = WirespecScalaGeneratorAdapter.create(kotestGenerator(seed, block))
+): Any = WirespecScalaGeneratorAdapter.create(kotestGenerator(seed, block = block))
 
 /**
  * Eager-proxy Scala adapter. The classpath lookup is performed once at factory

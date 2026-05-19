@@ -23,7 +23,7 @@ import community.flock.wirespec.kotlin.Wirespec
 fun kotestWirespecKotlinGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
-): Wirespec.Generator = WirespecKotlinGeneratorAdapter(kotestGenerator(seed, block))
+): Wirespec.Generator = WirespecKotlinGeneratorAdapter(kotestGenerator(seed, block = block))
 
 /**
  * Bridge between Wirespec's Kotlin `Generator` / `GeneratorField*` (which live

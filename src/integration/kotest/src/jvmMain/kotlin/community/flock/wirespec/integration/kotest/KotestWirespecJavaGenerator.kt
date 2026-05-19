@@ -26,7 +26,7 @@ import kotlin.reflect.typeOf
 fun kotestWirespecJavaGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
-): Wirespec.Generator = WirespecJavaGeneratorAdapter(kotestGenerator(seed, block))
+): Wirespec.Generator = WirespecJavaGeneratorAdapter(kotestGenerator(seed, block = block))
 
 /**
  * Bridge between the Java `Wirespec.GeneratorField*` records and the kotest
