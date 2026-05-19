@@ -6,6 +6,7 @@ import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.boolean
 import io.kotest.property.arbitrary.byte
 import io.kotest.property.arbitrary.byteArray
+import io.kotest.property.arbitrary.constant
 import io.kotest.property.arbitrary.double
 import io.kotest.property.arbitrary.element
 import io.kotest.property.arbitrary.float
@@ -36,6 +37,14 @@ fun kotestGenerator(
 
 class KotestWirespecGeneratorBuilder internal constructor() {
     internal val overrides: OverrideRegistry = OverrideRegistry()
+
+    fun registerPath(vararg segments: String, factory: () -> Arb<*>) {
+        overrides.addPath(segments, factory)
+    }
+
+    fun registerPath(vararg segments: String, value: Any?) {
+        overrides.addPath(segments) { Arb.constant(value) }
+    }
 }
 
 internal class KotestWirespecGenerator(
@@ -102,6 +111,11 @@ internal class KotestWirespecGenerator(
             seedFieldNameOf(field)?.let { seedFieldName ->
                 generateSeededShape(path, field, seedFieldName)?.let { return it as T }
             }
+        }
+
+        overrides.findPath(path)?.let { factory ->
+            val drawn = factory().next(rsFor(path))
+            return refinedWrapper.wrap(drawn, field, path) as T
         }
 
         return generateLeaf(field, path)
