@@ -84,10 +84,10 @@ internal fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = 
     type { type, _ ->
         when {
             type !is LanguageType.Custom -> type
-            !type.name.startsWith("$endpointName.") -> type
+            !type.name.pascalCase().startsWith("$endpointName.") -> type
             else -> {
-                val suffix = type.name.removePrefix("$endpointName.")
-                if (suffix == "Call" || suffix == "Handler") type else type.copy(name = suffix)
+                val suffix = type.name.pascalCase().removePrefix("$endpointName.")
+                if (suffix == "Call" || suffix == "Handler") type else type.copy(name = Name.of(suffix))
             }
         }
     }

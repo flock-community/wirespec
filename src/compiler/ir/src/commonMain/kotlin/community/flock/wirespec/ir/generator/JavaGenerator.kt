@@ -122,7 +122,7 @@ object JavaGenerator : Generator {
 
     private fun Package.emit(indent: Int): String = "package $path;\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "import $path.${type.name};\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "import $path.${type.name.value()};\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element>): String {
         val extStr = extends?.let { " extends ${it.emitGenerics()}" } ?: ""
@@ -147,14 +147,14 @@ object JavaGenerator : Generator {
 
     private fun Union.emit(indent: Int, parents: List<Element>): String {
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
-        val extendsName = extends?.name
+        val extendsName = extends?.name?.pascalCase()
         val ext = (
             listOfNotNull(extends?.emitGenerics()) +
                 parents.filterIsInstance<Union>().filter { it.name.pascalCase() != extendsName }.map { it.name.pascalCase() }
             )
             .distinct()
         val extStr = ext.joinNonEmpty(", ", " extends ")
-        val permitsStr = members.joinNonEmpty(", ", " permits ") { it.name }
+        val permitsStr = members.joinNonEmpty(", ", " permits ") { it.name.pascalCase() }
         return "public sealed interface ${name.pascalCase()}$typeParamsStr$extStr$permitsStr {}\n\n".indentCode(indent)
     }
 
@@ -275,7 +275,7 @@ object JavaGenerator : Generator {
         Type.Reflect -> "Type"
         is Type.Array -> "java.util.List"
         is Type.Dict -> "java.util.Map"
-        is Type.Custom -> name
+        is Type.Custom -> name.value()
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
         is Type.IntegerLiteral -> "Integer"
         is Type.StringLiteral -> "String"

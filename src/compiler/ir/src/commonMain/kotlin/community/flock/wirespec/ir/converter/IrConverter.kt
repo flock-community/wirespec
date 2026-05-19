@@ -936,7 +936,7 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Unit -> "Unit"
     is Type.Wildcard -> "Wildcard"
     is Type.Reflect -> "Type"
-    is Type.Custom -> name
+    is Type.Custom -> name.pascalCase()
     is Type.Array -> "List${elementType.toTypeName()}"
     is Type.Nullable -> "Optional${type.toTypeName()}"
     is Type.String -> "String"

@@ -175,8 +175,9 @@ class IrConverterTest {
         // Simulates an OpenAPI _embedded inline allOf type. The parser produces
         // both a Type definition and a Reference.Custom that share the same raw
         // name with an underscore (e.g. "ContactWithLinks_embedded"). After IR
-        // conversion + pascalCase emit, the struct's name and the field's
-        // Type.Custom reference must agree so the generated code compiles.
+        // conversion, the struct's emitted class name (Struct.name.pascalCase)
+        // and the field's Type.Custom reference (Type.Custom.name.value) must
+        // agree so the generated code compiles.
         val rawName = "ContactWithLinks_embedded"
 
         val parent = AstType(
@@ -207,7 +208,7 @@ class IrConverterTest {
 
         val emittedStructName = inlineStruct.name.pascalCase()
         val embeddedField = parentStruct.fields.single()
-        val customRef = ((embeddedField.type as Type.Nullable).type as Type.Custom).name
+        val customRef = ((embeddedField.type as Type.Nullable).type as Type.Custom).name.value()
 
         assertEquals(emittedStructName, customRef)
     }
