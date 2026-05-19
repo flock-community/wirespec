@@ -16,13 +16,15 @@ fun String.addBackticks() = "`$this`"
 
 fun String.orNull() = ifBlank { null }
 
-fun String.concatGenerics() = removeJavaPrefix().removeAngularBrackets().removeCommasAndSpaces()
+fun String.concatGenerics() = removeJavaPrefix().removeAngularBrackets().removeCommasAndSpaces().removePackageDots()
 
 fun String.removeJavaPrefix() = removePrefix("java.util.")
 
 fun String.removeAngularBrackets() = filterNot { it == '<' || it == '>' }
 
 fun String.removeCommasAndSpaces() = filterNot { it == ',' || it == ' ' }
+
+fun String.removePackageDots() = filterNot { it == '.' }
 
 fun String.removeCommentMarkers(): String = if (startsWith("//")) {
     removePrefix("//")

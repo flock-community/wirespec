@@ -15,7 +15,10 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class SpringKotlinEmitterTest {
 
@@ -524,5 +527,58 @@ class SpringKotlinEmitterTest {
         """.trimMargin()
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `Should emit Resource body, null serialize body and STREAMING marker for streaming response`() {
+        val source = """
+            |endpoint DownloadReport GET /api/report -> {
+            |    @Streaming
+            |    200 -> Bytes
+            |}
+        """.trimMargin()
+
+        val ast = parse(source)
+        val actual = SpringKotlinEmitter(PackageName("community.flock.wirespec.spring.test"))
+            .emit(ast, noLogger)
+            .joinToString("\n") { it.result }
+
+        assertContains(actual, "override val body: org.springframework.core.io.Resource")
+        assertContains(actual, "Response<org.springframework.core.io.Resource>")
+        assertContains(actual, "body = null,")
+        assertContains(actual, "body = org.springframework.core.io.ByteArrayResource(requireNotNull(response.body) { \"body is null\" })")
+        assertContains(actual, "const val STREAMING = true")
+    }
+
+    @Test
+    fun `Should not emit STREAMING marker when no response is annotated`() {
+        val source = """
+            |endpoint Plain GET /api/plain -> {
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        val ast = parse(source)
+        val actual = SpringKotlinEmitter(PackageName("community.flock.wirespec.spring.test"))
+            .emit(ast, noLogger)
+            .joinToString("\n") { it.result }
+
+        assertTrue("STREAMING" !in actual, "expected no STREAMING marker, got:\n$actual")
+    }
+
+    @Test
+    fun `Should fail when Streaming is applied to a non-Bytes response`() {
+        val source = """
+            |endpoint BadStream GET /api/bad -> {
+            |    @Streaming
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        val ast = parse(source)
+        val emitter = SpringKotlinEmitter(PackageName("community.flock.wirespec.spring.test"))
+        assertFailsWith<IllegalArgumentException> {
+            emitter.emit(ast, noLogger)
+        }
     }
 }

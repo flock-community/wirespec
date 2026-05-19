@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SpringJavaEmitterTest {
 
@@ -504,5 +507,60 @@ public class SpringJavaEmitterTest {
         }
 
         assertEquals(expected.stream().sorted().toList(), actual.stream().sorted().toList());
+    }
+
+    @Test
+    public void shouldEmitResourceBodyAndStreamingMarkerForStreamingResponse() {
+        String source = """
+                endpoint DownloadReport GET /api/report -> {
+                    @Streaming
+                    200 -> Bytes
+                }
+                """;
+
+        Root ast = JavaInteropTestHelper.parse(source);
+        SpringJavaEmitter emitter = new SpringJavaEmitter(new PackageName("community.flock.wirespec.spring.test", false));
+        String joined = JavaInteropTestHelper.emit(emitter, ast, LoggerKt.getNoLogger())
+                .stream()
+                .map(Emitted::getResult)
+                .collect(Collectors.joining("\n"));
+
+        assertTrue(joined.contains("org.springframework.core.io.Resource body"),
+                "expected Resource body type, got:\n" + joined);
+        assertTrue(joined.contains("public static final boolean STREAMING = true;"),
+                "expected STREAMING marker, got:\n" + joined);
+        assertTrue(joined.contains("java.util.Optional.empty()"),
+                "expected Optional.empty serialize body, got:\n" + joined);
+        assertTrue(joined.contains("new org.springframework.core.io.ByteArrayResource(body)"),
+                "expected ByteArrayResource fallback, got:\n" + joined);
+    }
+
+    @Test
+    public void shouldNotEmitStreamingMarkerWhenNoResponseIsAnnotated() {
+        String source = "endpoint Plain GET /api/plain -> { 200 -> String }\n";
+
+        Root ast = JavaInteropTestHelper.parse(source);
+        SpringJavaEmitter emitter = new SpringJavaEmitter(new PackageName("community.flock.wirespec.spring.test", false));
+        String joined = JavaInteropTestHelper.emit(emitter, ast, LoggerKt.getNoLogger())
+                .stream()
+                .map(Emitted::getResult)
+                .collect(Collectors.joining("\n"));
+
+        assertFalse(joined.contains("STREAMING"),
+                "expected no STREAMING marker, got:\n" + joined);
+    }
+
+    @Test
+    public void shouldFailWhenStreamingIsAppliedToANonBytesResponse() {
+        String source = """
+                endpoint BadStream GET /api/bad -> {
+                    @Streaming
+                    200 -> String
+                }
+                """;
+
+        Root ast = JavaInteropTestHelper.parse(source);
+        SpringJavaEmitter emitter = new SpringJavaEmitter(new PackageName("community.flock.wirespec.spring.test", false));
+        assertThrows(IllegalArgumentException.class, () -> JavaInteropTestHelper.emit(emitter, ast, LoggerKt.getNoLogger()));
     }
 }
