@@ -138,4 +138,109 @@ class KotestOverrideTest {
         val result = gen.generate(listOf("my-project-id"), shape)
         assertEquals("my-project-id", result["id"], "@Seed must win over path override")
     }
+
+    // ---------- registerFieldByTypeName ----------
+
+    @Test
+    fun `registerFieldByTypeName fires when the leaf is a direct child of a matching shape`() {
+        val gen = kotestGenerator(seed = 0L) {
+            registerFieldByTypeName(typeOf<Map<String, String>>().toString(), "email") {
+                Arb.constant("a@b.com")
+            }
+        }
+        val shape = KotestFieldShape<Map<String, String>>(
+            annotations = emptyMap(),
+            generate = { p ->
+                val email = gen.generate(
+                    p + "email",
+                    KotestFieldString(regex = null, annotations = emptyList()),
+                )
+                mapOf("email" to email)
+            },
+            type = typeOf<Map<String, String>>(),
+        )
+        val result = gen.generate(listOf("u"), shape)
+        assertEquals("a@b.com", result["email"])
+    }
+
+    @Test
+    fun `registerFieldByTypeName does not fire for a different parent type`() {
+        val gen = kotestGenerator(seed = 0L) {
+            registerFieldByTypeName(typeOf<Map<String, String>>().toString(), "email") {
+                Arb.constant("a@b.com")
+            }
+        }
+        // Parent is List<String>, not Map<String, String> — override must not fire.
+        val shape = KotestFieldShape<List<String>>(
+            annotations = emptyMap(),
+            generate = { p ->
+                val email = gen.generate(
+                    p + "email",
+                    KotestFieldString(regex = null, annotations = emptyList()),
+                )
+                listOf(email)
+            },
+            type = typeOf<List<String>>(),
+        )
+        val result = gen.generate(listOf("u"), shape)
+        assertNotEquals("a@b.com", result.first(), "different parent type should not match")
+    }
+
+    @Test
+    fun `registerFieldByTypeName does not fire at the top level (no enclosing shape)`() {
+        val gen = kotestGenerator(seed = 0L) {
+            registerFieldByTypeName(typeOf<Map<String, String>>().toString(), "email") {
+                Arb.constant("a@b.com")
+            }
+        }
+        val v = gen.generate(
+            path = listOf("email"),
+            field = KotestFieldString(regex = null, annotations = emptyList()),
+        )
+        assertNotEquals("a@b.com", v, "field override must require an enclosing shape")
+    }
+
+    @Test
+    fun `path override beats field override`() {
+        val gen = kotestGenerator(seed = 0L) {
+            registerFieldByTypeName(typeOf<Map<String, String>>().toString(), "email") {
+                Arb.constant("FIELD")
+            }
+            registerPath("u", "email") { Arb.constant("PATH") }
+        }
+        val shape = KotestFieldShape<Map<String, String>>(
+            annotations = emptyMap(),
+            generate = { p ->
+                mapOf(
+                    "email" to gen.generate(
+                        p + "email",
+                        KotestFieldString(regex = null, annotations = emptyList()),
+                    ),
+                )
+            },
+            type = typeOf<Map<String, String>>(),
+        )
+        val result = gen.generate(listOf("u"), shape)
+        assertEquals("PATH", result["email"], "path override must win over field override")
+    }
+
+    @Test
+    fun `field value shorthand wraps in Arb constant`() {
+        val gen = kotestGenerator(seed = 0L) {
+            registerFieldByTypeName(typeOf<Map<String, String>>().toString(), "email", value = "v@x")
+        }
+        val shape = KotestFieldShape<Map<String, String>>(
+            annotations = emptyMap(),
+            generate = { p ->
+                mapOf(
+                    "email" to gen.generate(
+                        p + "email",
+                        KotestFieldString(regex = null, annotations = emptyList()),
+                    ),
+                )
+            },
+            type = typeOf<Map<String, String>>(),
+        )
+        assertEquals("v@x", gen.generate(listOf("u"), shape)["email"])
+    }
 }

@@ -45,6 +45,14 @@ class KotestWirespecGeneratorBuilder internal constructor() {
     fun registerPath(vararg segments: String, value: Any?) {
         overrides.addPath(segments) { Arb.constant(value) }
     }
+
+    fun registerFieldByTypeName(typeName: String, name: String, factory: () -> Arb<*>) {
+        overrides.addField(FieldKey(typeName, name), factory)
+    }
+
+    fun registerFieldByTypeName(typeName: String, name: String, value: Any?) {
+        overrides.addField(FieldKey(typeName, name)) { Arb.constant(value) }
+    }
 }
 
 internal class KotestWirespecGenerator(
@@ -116,6 +124,15 @@ internal class KotestWirespecGenerator(
         overrides.findPath(path)?.let { factory ->
             val drawn = factory().next(rsFor(path))
             return refinedWrapper.wrap(drawn, field, path) as T
+        }
+
+        val parent = parentStack.lastOrNull()
+        val leafName = path.lastOrNull()
+        if (parent != null && leafName != null) {
+            overrides.findField(FieldKey(parent.typeName, leafName))?.let { factory ->
+                val drawn = factory().next(rsFor(path))
+                return refinedWrapper.wrap(drawn, field, path) as T
+            }
         }
 
         return generateLeaf(field, path)
