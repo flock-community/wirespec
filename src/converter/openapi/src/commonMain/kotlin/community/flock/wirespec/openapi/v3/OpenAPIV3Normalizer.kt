@@ -59,7 +59,8 @@ internal object OpenAPIV3Normalizer {
                     // 3.1/3.2 redefined them as numeric bounds. Strip numeric values so
                     // the V30 decoder does not fail on a type mismatch.
                     (key == "exclusiveMinimum" || key == "exclusiveMaximum") &&
-                        value is JsonPrimitive && value.booleanOrNull == null -> Unit
+                        value is JsonPrimitive &&
+                        value.booleanOrNull == null -> Unit
                     else -> put(key, normalizeElement(value))
                 }
             }
