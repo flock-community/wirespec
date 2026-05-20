@@ -247,6 +247,10 @@ class UnionBuilder(private val name: Name, private val extends: Type.Custom? = n
         members.add(Type.Custom(name))
     }
 
+    fun member(name: Name) {
+        members.add(Type.Custom(name))
+    }
+
     fun typeParam(type: Type, vararg extends: Type) {
         typeParameters.add(TypeParameter(type, extends.toList()))
     }
