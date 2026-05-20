@@ -33,7 +33,7 @@ class WirespecResponseBodyAdvice(
     ): Any? {
         val declaringClass = returnType.parameterType.declaringClass
         val toResponse = toResponseCache.computeIfAbsent(declaringClass) { cls ->
-            cls.declaredMethods.first { it.name == "toResponse" }
+            cls.declaredMethods.first { it.name == "toRawResponse" || it.name == "toResponse" }
         }
         val instance = declaringClass.getDeclaredField("INSTANCE").get(null)
         return when (body) {

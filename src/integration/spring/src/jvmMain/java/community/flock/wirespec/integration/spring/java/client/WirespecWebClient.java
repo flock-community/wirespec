@@ -38,9 +38,9 @@ public class WirespecWebClient {
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
                 return Arrays.stream(handlerClass.getDeclaredMethods())
-                        .filter(m -> m.getName().equals("toRequest") && Modifier.isStatic(m.getModifiers()))
+                        .filter(m -> (m.getName().equals("toRawRequest") || m.getName().equals("toRequest")) && Modifier.isStatic(m.getModifiers()))
                         .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("toRequest method not found in " + handlerClass));
+                        .orElseThrow(() -> new IllegalStateException("toRawRequest method not found in " + handlerClass));
             });
             Method fromResponse = fromResponseCache.computeIfAbsent(declaringClass, cls -> {
                 Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
@@ -48,9 +48,9 @@ public class WirespecWebClient {
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
                 return Arrays.stream(handlerClass.getDeclaredMethods())
-                        .filter(m -> m.getName().equals("fromResponse") && Modifier.isStatic(m.getModifiers()))
+                        .filter(m -> (m.getName().equals("fromRawResponse") || m.getName().equals("fromResponse")) && Modifier.isStatic(m.getModifiers()))
                         .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("fromResponse method not found in " + handlerClass));
+                        .orElseThrow(() -> new IllegalStateException("fromRawResponse method not found in " + handlerClass));
             });
 
             Wirespec.RawRequest rawRequest = (Wirespec.RawRequest) toRequest.invoke(null, wirespecSerde, request);
