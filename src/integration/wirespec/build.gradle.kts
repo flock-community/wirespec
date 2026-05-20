@@ -17,7 +17,6 @@ kotlin {
         // Pinned to 2.0 — not the project-wide 1.9, because the K2 native metadata
         // compiler rejects 1.9; and not 2.1, because metadata produced at 2.1 cannot
         // be read by the project's existing 1.9-compiler consumers (e.g. examples/gradle-ktor).
-        // 2.0 is the floor for native compilation and the ceiling for 1.9-compiler readers.
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
     }
@@ -28,10 +27,8 @@ kotlin {
             }
         }
     }
-    // iOS targets enable Kotlin Multiplatform consumers (e.g. Compose Multiplatform mobile
-    // apps) to link against the Wirespec runtime. Android consumes the jvm artifact.
-    // Only Wirespec.kt (in commonMain) is platform-neutral — serde defaults remain JVM-only
-    // because they use Jackson and kotlin.reflect.KClass.java.
+    // KMP consumers (e.g. flock-app Compose Multiplatform) link against the iOS klibs.
+    // Android consumes the existing jvm artifact.
     iosX64()
     iosArm64()
     iosSimulatorArm64()
