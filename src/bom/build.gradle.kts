@@ -22,6 +22,7 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("bom") {
+            artifactId = "wirespec-bom"
             from(components["javaPlatform"])
         }
     }

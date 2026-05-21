@@ -24,7 +24,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>community.flock.wirespec</groupId>
-				<artifactId>bom</artifactId>
+				<artifactId>wirespec-bom</artifactId>
 				<version>${wirespec.version}</version>
 				<type>pom</type>
 				<scope>import</scope>

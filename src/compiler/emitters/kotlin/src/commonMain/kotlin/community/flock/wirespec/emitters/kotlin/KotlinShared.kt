@@ -15,7 +15,10 @@ data object KotlinShared : Shared {
         |object Wirespec {
         |${Spacer}interface Enum { val label: String }
         |${Spacer}interface Endpoint
-        |${Spacer}interface Refined<T> { val value: T }
+        |${Spacer}interface Refined<T> {
+        |${Spacer(2)}val value: T
+        |${Spacer(2)}fun validate(): Boolean
+        |$Spacer}
         |${Spacer}interface Path
         |${Spacer}interface Queries
         |${Spacer}interface Headers
