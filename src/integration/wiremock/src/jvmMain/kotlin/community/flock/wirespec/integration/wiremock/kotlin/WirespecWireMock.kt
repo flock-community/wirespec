@@ -1,26 +1,32 @@
 package community.flock.wirespec.integration.wiremock.kotlin
 
+import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.matching.UrlPattern
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import community.flock.wirespec.kotlin.Wirespec
 
 /**
- * Build a WireMock stub for a Wirespec endpoint, with a typed response.
+ * Register a WireMock stub for a Wirespec endpoint, with a typed response.
  *
  * Usage:
  * ```
- * wireMockServer.stubFor(
- *     stubFor(GetTodos.Handler, GetTodos.Response200(listOf(TodoDto("hi"))), serialization)
- * )
+ * wireMockServer.stubFor(GetTodos.Handler, GetTodos.Response200(listOf(TodoDto("hi"))), serialization)
  * ```
  *
- * The returned [MappingBuilder] matches the endpoint's HTTP method and path template
- * (path parameters are matched as any non-slash segment) and replies with the response
- * serialized through the supplied [Wirespec.Serialization].
+ * The endpoint's method and path template drive the WireMock request matcher (path
+ * parameters match any non-slash segment), and the response is serialized through
+ * the supplied [Wirespec.Serialization] into the stub's body, status, and headers.
  */
-fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> stubFor(
+fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> WireMockServer.stubFor(
+    endpoint: Wirespec.Server<Req, Res>,
+    response: Res,
+    serialization: Wirespec.Serialization,
+): StubMapping = stubFor(mappingBuilder(endpoint, response, serialization))
+
+internal fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> mappingBuilder(
     endpoint: Wirespec.Server<Req, Res>,
     response: Res,
     serialization: Wirespec.Serialization,

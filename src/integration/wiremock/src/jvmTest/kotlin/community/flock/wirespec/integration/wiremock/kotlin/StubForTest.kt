@@ -39,7 +39,7 @@ class StubForTest {
     fun `stubs a static-path endpoint with the typed response`() {
         val todos = listOf(TodoDto(id = "1", name = "Buy milk", done = false))
 
-        server.stubFor(stubFor(GetTodos.Handler, GetTodos.Response200(todos), serialization))
+        server.stubFor(GetTodos.Handler, GetTodos.Response200(todos), serialization)
 
         val response = get("/api/todos")
 
@@ -51,7 +51,7 @@ class StubForTest {
     fun `stubs a templated-path endpoint with the typed response`() {
         val todo = TodoDto(id = "abc", name = "Walk dog", done = true)
 
-        server.stubFor(stubFor(GetTodoById.Handler, GetTodoById.Response200(todo), serialization))
+        server.stubFor(GetTodoById.Handler, GetTodoById.Response200(todo), serialization)
 
         val response = get("/api/todos/abc")
 
@@ -63,7 +63,7 @@ class StubForTest {
     fun `stubs a non-2xx typed response with the correct status code`() {
         val err = Error(code = 404, description = "not found")
 
-        server.stubFor(stubFor(GetTodoById.Handler, GetTodoById.Response404(err), serialization))
+        server.stubFor(GetTodoById.Handler, GetTodoById.Response404(err), serialization)
 
         val response = get("/api/todos/anything")
 

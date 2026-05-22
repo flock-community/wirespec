@@ -12,6 +12,37 @@ repositories {
     mavenLocal()
 }
 
+val codegenClasspath by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
+dependencies {
+    codegenClasspath(project(":src:integration:wiremock-codegen"))
+}
+
+val generatedWirespecDir = layout.buildDirectory.dir("generated/sources/wirespec")
+
+val generateWirespecTestSources by tasks.registering(JavaExec::class) {
+    group = "build"
+    description = "Generate Java + Kotlin Wirespec test sources from .ws files in src/jvmTest/resources/wirespec."
+    classpath = codegenClasspath
+    mainClass.set("community.flock.wirespec.integration.wiremock.codegen.MainKt")
+    val inputDir = layout.projectDirectory.dir("src/jvmTest/resources/wirespec")
+    val outDir = generatedWirespecDir
+    inputs.dir(inputDir).withPropertyName("wirespecSources")
+    outputs.dir(outDir).withPropertyName("generatedSources")
+    argumentProviders.add(
+        org.gradle.process.CommandLineArgumentProvider {
+            listOf(
+                inputDir.asFile.absolutePath,
+                outDir.get().asFile.absolutePath,
+                "community.flock.wirespec.integration.wiremock",
+            )
+        },
+    )
+}
+
 kotlin {
     compilerOptions {
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
@@ -45,10 +76,8 @@ kotlin {
             }
         }
         jvmTest {
+            kotlin.srcDir(generatedWirespecDir.map { it.dir("kotlin") })
             dependencies {
-                implementation(project(":src:compiler:core"))
-                implementation(project(":src:compiler:emitters:kotlin"))
-                implementation(project(":src:compiler:emitters:java"))
                 implementation(project(":src:integration:jackson"))
                 implementation(libs.bundles.jackson)
                 implementation(libs.kotlin.reflect)
@@ -58,4 +87,14 @@ kotlin {
             }
         }
     }
+}
+
+// Add the generated Java directory to the jvm test compilation. The KMP plugin doesn't
+// expose Java source dirs via the sourceSets DSL, so we wire it on the underlying compile task.
+tasks.named<JavaCompile>("compileJvmTestJava") {
+    source(generatedWirespecDir.map { it.dir("java") })
+}
+
+listOf("compileTestKotlinJvm", "compileJvmTestJava").forEach { name ->
+    tasks.named(name) { dependsOn(generateWirespecTestSources) }
 }

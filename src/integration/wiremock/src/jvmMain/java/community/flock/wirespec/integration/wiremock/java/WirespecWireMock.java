@@ -1,26 +1,26 @@
 package community.flock.wirespec.integration.wiremock.java;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
+import com.github.tomakehurst.wiremock.stubbing.StubMapping;
 import community.flock.wirespec.java.Wirespec;
 
 import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Build a WireMock stub for a Wirespec endpoint, with a typed response.
+ * Register a WireMock stub for a Wirespec endpoint, with a typed response.
  *
  * <pre>
- *     wireMockServer.stubFor(
- *         WirespecWireMock.stubFor(new GetTodos.Handler.Handlers(), response, serialization)
- *     );
+ *     WirespecWireMock.stubFor(server, new GetTodos.Handler.Handlers(), response, serialization);
  * </pre>
  *
- * The returned {@link MappingBuilder} matches the endpoint's HTTP method and path
- * template (path parameters are matched as any non-slash segment) and replies with
- * the response serialized through the supplied {@link Wirespec.Serialization}.
+ * The endpoint's method and path template drive the WireMock request matcher (path
+ * parameters match any non-slash segment), and the response is serialized through
+ * the supplied {@link Wirespec.Serialization} into the stub's body, status, and headers.
  */
 public final class WirespecWireMock {
 
@@ -28,7 +28,16 @@ public final class WirespecWireMock {
 
     private WirespecWireMock() {}
 
-    public static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> MappingBuilder stubFor(
+    public static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> StubMapping stubFor(
+            WireMockServer server,
+            Wirespec.Server<Req, Res> endpoint,
+            Res response,
+            Wirespec.Serialization serialization
+    ) {
+        return server.stubFor(mappingBuilder(endpoint, response, serialization));
+    }
+
+    static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> MappingBuilder mappingBuilder(
             Wirespec.Server<Req, Res> endpoint,
             Res response,
             Wirespec.Serialization serialization
