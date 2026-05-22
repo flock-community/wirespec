@@ -1,9 +1,11 @@
 package community.flock.wirespec.integration.wiremock.java;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
+import community.flock.wirespec.integration.jackson.java.WirespecSerialization;
 import community.flock.wirespec.java.Wirespec;
 
 import java.util.Map;
@@ -30,6 +32,7 @@ import java.util.regex.Pattern;
 public final class WirespecWireMock {
 
     private static final Pattern PATH_PARAM_PATTERN = Pattern.compile("\\{[^/}]+}");
+    private static final Wirespec.Serialization DEFAULT_SERIALIZATION = new WirespecSerialization(new ObjectMapper());
 
     private WirespecWireMock() {}
 
@@ -37,6 +40,47 @@ public final class WirespecWireMock {
             Wirespec.Server<Req, Res> endpoint
     ) {
         return new WirespecMappingBuilder<>(endpoint, requestBuilder(endpoint));
+    }
+
+    /**
+     * Reflection-based overload that locates the {@link Wirespec.Server} implementation generated
+     * inside the given endpoint class. Lets callers write {@code wirespec(GetTodos.class)} instead
+     * of {@code wirespec(new GetTodos.Handler.Handlers())}.
+     *
+     * <p>The Res type is unchecked — pass the wrong response type and you'll get a runtime error.
+     * Prefer the typed {@link #wirespec(Wirespec.Server)} overload when the extra characters are fine.
+     */
+    public static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> WirespecMappingBuilder<Req, Res> wirespec(
+            Class<?> endpointClass
+    ) {
+        Wirespec.Server<Req, Res> server = findServer(endpointClass);
+        if (server == null) {
+            throw new IllegalArgumentException(
+                    "No Wirespec.Server implementation with a no-arg constructor found inside " + endpointClass.getName()
+                            + ". Expected the generated <EndpointClass>.Handler.Handlers structure.");
+        }
+        return new WirespecMappingBuilder<>(server, requestBuilder(server));
+    }
+
+    private static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> Wirespec.Server<Req, Res> findServer(
+            Class<?> klass
+    ) {
+        if (Wirespec.Server.class.isAssignableFrom(klass) && !klass.isInterface()) {
+            try {
+                @SuppressWarnings("unchecked")
+                Wirespec.Server<Req, Res> server = (Wirespec.Server<Req, Res>) klass.getDeclaredConstructor().newInstance();
+                return server;
+            } catch (ReflectiveOperationException ignored) {
+                // Fall through and keep searching.
+            }
+        }
+        for (Class<?> nested : klass.getDeclaredClasses()) {
+            Wirespec.Server<Req, Res> found = findServer(nested);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     public static final class WirespecMappingBuilder<Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> {
@@ -49,9 +93,19 @@ public final class WirespecWireMock {
         }
 
         /**
+         * Serialize {@code response} through a Jackson-backed {@link Wirespec.Serialization}
+         * and attach it as this stub's response. Returns the underlying {@link MappingBuilder}
+         * so callers can keep chaining WireMock methods (e.g. {@code .atPriority(...)},
+         * {@code .inScenario(...)}).
+         */
+        public MappingBuilder willReturn(Res response) {
+            return willReturn(response, DEFAULT_SERIALIZATION);
+        }
+
+        /**
          * Serialize {@code response} through {@code serialization} and attach it as this stub's response.
-         * Returns the underlying {@link MappingBuilder} so callers can keep chaining WireMock methods
-         * (e.g. {@code .atPriority(...)}, {@code .inScenario(...)}).
+         * Pass your own {@link Wirespec.Serialization} to customize the ObjectMapper or swap in a
+         * different serializer.
          */
         public MappingBuilder willReturn(Res response, Wirespec.Serialization serialization) {
             Wirespec.RawResponse raw = endpoint.getServer(serialization).to(response);

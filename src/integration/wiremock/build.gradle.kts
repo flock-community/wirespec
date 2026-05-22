@@ -72,6 +72,8 @@ kotlin {
             dependencies {
                 implementation(libs.kotlin.stdlib)
                 api(project(":src:integration:wirespec"))
+                implementation(project(":src:integration:jackson"))
+                implementation(libs.bundles.jackson)
                 compileOnly(libs.wiremock)
             }
         }

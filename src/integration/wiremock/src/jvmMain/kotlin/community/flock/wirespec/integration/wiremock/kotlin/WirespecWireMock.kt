@@ -1,9 +1,11 @@
 package community.flock.wirespec.integration.wiremock.kotlin
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.matching.UrlPattern
+import community.flock.wirespec.integration.jackson.kotlin.WirespecSerialization
 import community.flock.wirespec.kotlin.Wirespec
 
 /**
@@ -31,11 +33,15 @@ class WirespecMappingBuilder<Req : Wirespec.Request<*>, Res : Wirespec.Response<
 ) {
     /**
      * Serialize [response] through [serialization] and attach it as this stub's response.
-     * Returns the underlying [MappingBuilder] so callers can keep chaining WireMock methods
-     * (e.g. `.atPriority(...)`, `.inScenario(...)`).
+     * Defaults to a Jackson-backed [Wirespec.Serialization]; pass your own to customize
+     * the ObjectMapper or swap in a different serializer. Returns the underlying
+     * [MappingBuilder] so callers can keep chaining WireMock methods (e.g. `.atPriority(...)`,
+     * `.inScenario(...)`).
      */
-    fun willReturn(response: Res, serialization: Wirespec.Serialization): MappingBuilder = mapping.willReturn(responseBuilder(endpoint.server(serialization).to(response)))
+    fun willReturn(response: Res, serialization: Wirespec.Serialization = defaultSerialization): MappingBuilder = mapping.willReturn(responseBuilder(endpoint.server(serialization).to(response)))
 }
+
+private val defaultSerialization: Wirespec.Serialization by lazy { WirespecSerialization(ObjectMapper()) }
 
 private fun requestBuilder(endpoint: Wirespec.Server<*, *>): MappingBuilder {
     val urlPattern = urlPatternFor(endpoint.pathTemplate)

@@ -26,7 +26,6 @@ public class StubForTest {
 
     private WireMockServer server;
     private final HttpClient client = HttpClient.newHttpClient();
-    private final WirespecSerialization serialization = new WirespecSerialization(new ObjectMapper());
 
     @BeforeEach
     public void startServer() {
@@ -40,10 +39,10 @@ public class StubForTest {
     }
 
     @Test
-    public void stubsStaticPathEndpoint() throws Exception {
+    public void stubsStaticPathEndpointWithReflection() throws Exception {
         List<TodoDto> todos = List.of(new TodoDto("1", "Buy milk", false));
 
-        server.stubFor(wirespec(new GetTodos.Handler.Handlers()).willReturn(new GetTodos.Response200(todos), serialization));
+        server.stubFor(wirespec(GetTodos.class).willReturn(new GetTodos.Response200(todos)));
 
         HttpResponse<String> response = get("/api/todos");
 
@@ -52,10 +51,12 @@ public class StubForTest {
     }
 
     @Test
-    public void stubsTemplatedPathEndpoint() throws Exception {
+    public void stubsTemplatedPathEndpointWithExplicitServerAndCustomSerialization() throws Exception {
         TodoDto todo = new TodoDto("abc", "Walk dog", true);
+        var serialization = new WirespecSerialization(new ObjectMapper());
 
-        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response200(todo), serialization));
+        server.stubFor(wirespec(new GetTodoById.Handler.Handlers())
+                .willReturn(new GetTodoById.Response200(todo), serialization));
 
         HttpResponse<String> response = get("/api/todos/abc");
 
@@ -67,7 +68,7 @@ public class StubForTest {
     public void stubsNon2xxResponse() throws Exception {
         Error err = new Error(404L, "not found");
 
-        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response404(err), serialization));
+        server.stubFor(wirespec(GetTodoById.class).willReturn(new GetTodoById.Response404(err)));
 
         HttpResponse<String> response = get("/api/todos/anything");
 
