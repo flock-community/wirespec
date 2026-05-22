@@ -1,4 +1,6 @@
 package community.flock.wirespec.generated.channel
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
 trait Queue extends Wirespec.Channel {
   def invoke(message: String): Unit
 }
