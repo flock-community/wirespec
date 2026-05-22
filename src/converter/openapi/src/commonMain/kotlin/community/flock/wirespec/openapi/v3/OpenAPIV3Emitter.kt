@@ -12,7 +12,6 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV30LinkOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Links
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30MediaType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Model
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Operation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30ParameterLocation
@@ -26,6 +25,7 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV30SchemaOrReferenceOrBoo
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30SingleType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30TypeDefinition
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.Ref
 import community.flock.kotlinx.openapi.bindings.StatusCode

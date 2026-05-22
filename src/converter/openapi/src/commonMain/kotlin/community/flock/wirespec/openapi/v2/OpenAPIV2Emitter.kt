@@ -5,7 +5,6 @@ import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.InfoObject
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Header
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Model
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Operation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20ParameterLocation
@@ -15,6 +14,7 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV20Response
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Schema
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20SchemaOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Type
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.Ref
 import community.flock.kotlinx.openapi.bindings.StatusCode

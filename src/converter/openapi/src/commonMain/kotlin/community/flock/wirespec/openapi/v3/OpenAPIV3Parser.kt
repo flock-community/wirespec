@@ -3,7 +3,6 @@ package community.flock.wirespec.openapi.v3
 import arrow.core.NonEmptyList
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.BooleanValue
-import community.flock.kotlinx.openapi.bindings.Components
 import community.flock.kotlinx.openapi.bindings.Header
 import community.flock.kotlinx.openapi.bindings.HeaderOrReference
 import community.flock.kotlinx.openapi.bindings.Link
