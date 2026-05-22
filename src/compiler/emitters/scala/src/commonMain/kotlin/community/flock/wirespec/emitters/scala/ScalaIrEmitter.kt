@@ -8,7 +8,7 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.HasPackageName
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.needImports
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.irNeedsWirespecImport
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
@@ -180,7 +180,7 @@ open class ScalaIrEmitter(
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
         return file
-            .prependImports(wirespecImports.takeIf { module.needImports() })
+            .prependImports(wirespecImports.takeIf { module.irNeedsWirespecImport() })
             .placeInPackage(packageName = packageName, definition = definition)
     }
 

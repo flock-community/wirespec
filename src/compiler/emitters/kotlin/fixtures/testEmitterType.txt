@@ -1,4 +1,6 @@
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
 data class Todo(
   val name: String,
   val description: String?,

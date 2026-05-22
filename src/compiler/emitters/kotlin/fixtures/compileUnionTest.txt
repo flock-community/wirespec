@@ -1,7 +1,11 @@
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
 sealed interface UserAccount
 
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
 data class UserAccountPassword(
   val username: String,
   val password: String
@@ -11,6 +15,8 @@ data class UserAccountPassword(
 }
 
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
 data class UserAccountToken(
   val token: String
 ) : Wirespec.Model, UserAccount {
@@ -19,6 +25,8 @@ data class UserAccountToken(
 }
 
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
 data class User(
   val username: String,
   val account: UserAccount
