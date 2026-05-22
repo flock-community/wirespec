@@ -12,54 +12,8 @@ repositories {
     mavenLocal()
 }
 
-val wirespecCli by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-}
-
-dependencies {
-    wirespecCli(project(mapOf("path" to ":src:plugin:cli", "configuration" to "jvmRuntimeElements")))
-}
-
 val generatedWirespecDir = layout.buildDirectory.dir("generated/sources/wirespec")
 val wirespecTestSourcesDir = layout.projectDirectory.dir("src/jvmTest/resources/wirespec")
-
-fun TaskContainer.registerWirespecGen(name: String, language: String, packageName: String, outputSubdir: String) = register<JavaExec>(name) {
-    group = "build"
-    description = "Generate $language Wirespec test sources from .ws files in src/jvmTest/resources/wirespec."
-    classpath = wirespecCli
-    mainClass.set("community.flock.wirespec.plugin.cli.MainKt")
-    val inDir = wirespecTestSourcesDir
-    val outDir = generatedWirespecDir.map { it.dir(outputSubdir) }
-    inputs.dir(inDir).withPropertyName("wirespecSources")
-    outputs.dir(outDir).withPropertyName("generatedSources")
-    val inputAbsolutePath = inDir.asFile.absolutePath
-    argumentProviders.add(
-        org.gradle.process.CommandLineArgumentProvider {
-            listOf(
-                "compile",
-                "-i", inputAbsolutePath,
-                "-l", language,
-                "-p", packageName,
-                "-o", outDir.get().asFile.absolutePath,
-            )
-        },
-    )
-}
-
-val generateWirespecJavaTestSources by tasks.registerWirespecGen(
-    name = "generateWirespecJavaTestSources",
-    language = "Java",
-    packageName = "community.flock.wirespec.integration.wiremock.java.generated",
-    outputSubdir = "java",
-)
-
-val generateWirespecKotlinTestSources by tasks.registerWirespecGen(
-    name = "generateWirespecKotlinTestSources",
-    language = "Kotlin",
-    packageName = "community.flock.wirespec.integration.wiremock.kotlin.generated",
-    outputSubdir = "kotlin",
-)
 
 kotlin {
     compilerOptions {
@@ -67,6 +21,16 @@ kotlin {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
     }
     jvm {
+        // Private build-time compilation that hosts the Wirespec emitter Main. Kept out
+        // of the published artifact, used only by the generateWirespecTestSources tasks.
+        compilations.create("codegen") {
+            defaultSourceSet.dependencies {
+                implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:emitters:java"))
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(libs.kotlin.stdlib)
+            }
+        }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
@@ -109,11 +73,36 @@ kotlin {
     }
 }
 
+val codegenCompilation = kotlin.jvm().compilations.named("codegen")
+
+val generateWirespecTestSources by tasks.registering(JavaExec::class) {
+    group = "build"
+    description = "Generate Java + Kotlin Wirespec test sources from .ws files in src/jvmTest/resources/wirespec."
+    val compilation = codegenCompilation.get()
+    classpath = files(compilation.output.classesDirs) + compilation.runtimeDependencyFiles
+    mainClass.set("community.flock.wirespec.integration.wiremock.codegen.MainKt")
+    val inDir = wirespecTestSourcesDir
+    val outDir = generatedWirespecDir
+    inputs.dir(inDir).withPropertyName("wirespecSources")
+    outputs.dir(outDir).withPropertyName("generatedSources")
+    val inputAbsolutePath = inDir.asFile.absolutePath
+    argumentProviders.add(
+        org.gradle.process.CommandLineArgumentProvider {
+            listOf(
+                inputAbsolutePath,
+                outDir.get().asFile.absolutePath,
+                "community.flock.wirespec.integration.wiremock",
+            )
+        },
+    )
+    dependsOn(compilation.compileTaskProvider)
+}
+
 tasks.named<JavaCompile>("compileJvmTestJava") {
     source(generatedWirespecDir.map { it.dir("java") })
-    dependsOn(generateWirespecJavaTestSources)
+    dependsOn(generateWirespecTestSources)
 }
 
 tasks.named("compileTestKotlinJvm") {
-    dependsOn(generateWirespecKotlinTestSources)
+    dependsOn(generateWirespecTestSources)
 }
