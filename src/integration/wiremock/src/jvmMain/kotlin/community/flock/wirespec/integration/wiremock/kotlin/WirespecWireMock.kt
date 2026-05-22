@@ -1,52 +1,55 @@
 package community.flock.wirespec.integration.wiremock.kotlin
 
-import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.matching.UrlPattern
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import community.flock.wirespec.kotlin.Wirespec
 
 /**
- * Register a WireMock stub for a Wirespec endpoint, with a typed response.
+ * Start building a WireMock stub for a Wirespec endpoint. Mirrors WireMock's own
+ * `get(urlEqualTo(...))` / `post(urlEqualTo(...))` factories — the returned builder
+ * then accepts a typed Wirespec [Wirespec.Response] via [WirespecMappingBuilder.willReturn].
  *
- * Usage:
  * ```
- * wireMockServer.stubFor(GetTodos.Handler, GetTodos.Response200(listOf(TodoDto("hi"))), serialization)
+ * server.stubFor(
+ *     wirespec(GetTodos.Handler)
+ *         .willReturn(GetTodos.Response200(listOf(TodoDto("hi"))), serialization)
+ * )
  * ```
  *
- * The endpoint's method and path template drive the WireMock request matcher (path
- * parameters match any non-slash segment), and the response is serialized through
- * the supplied [Wirespec.Serialization] into the stub's body, status, and headers.
+ * The endpoint's HTTP method and path template drive the WireMock request matcher
+ * (path parameters match any non-slash segment).
  */
-fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> WireMockServer.stubFor(
+fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> wirespec(
     endpoint: Wirespec.Server<Req, Res>,
-    response: Res,
-    serialization: Wirespec.Serialization,
-): StubMapping = stubFor(mappingBuilder(endpoint, response, serialization))
+): WirespecMappingBuilder<Req, Res> = WirespecMappingBuilder(endpoint, requestBuilder(endpoint))
 
-internal fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> mappingBuilder(
-    endpoint: Wirespec.Server<Req, Res>,
-    response: Res,
-    serialization: Wirespec.Serialization,
-): MappingBuilder {
-    val rawResponse = endpoint.server(serialization).to(response)
-    val urlPattern = urlPatternFor(endpoint.pathTemplate)
-    return requestBuilder(endpoint.method, urlPattern)
-        .willReturn(responseBuilder(rawResponse))
+class WirespecMappingBuilder<Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> internal constructor(
+    private val endpoint: Wirespec.Server<Req, Res>,
+    private val mapping: MappingBuilder,
+) {
+    /**
+     * Serialize [response] through [serialization] and attach it as this stub's response.
+     * Returns the underlying [MappingBuilder] so callers can keep chaining WireMock methods
+     * (e.g. `.atPriority(...)`, `.inScenario(...)`).
+     */
+    fun willReturn(response: Res, serialization: Wirespec.Serialization): MappingBuilder = mapping.willReturn(responseBuilder(endpoint.server(serialization).to(response)))
 }
 
-private fun requestBuilder(method: String, urlPattern: UrlPattern): MappingBuilder = when (method.uppercase()) {
-    "GET" -> WireMock.get(urlPattern)
-    "PUT" -> WireMock.put(urlPattern)
-    "POST" -> WireMock.post(urlPattern)
-    "DELETE" -> WireMock.delete(urlPattern)
-    "PATCH" -> WireMock.patch(urlPattern)
-    "HEAD" -> WireMock.head(urlPattern)
-    "OPTIONS" -> WireMock.options(urlPattern)
-    "TRACE" -> WireMock.trace(urlPattern)
-    else -> WireMock.any(urlPattern)
+private fun requestBuilder(endpoint: Wirespec.Server<*, *>): MappingBuilder {
+    val urlPattern = urlPatternFor(endpoint.pathTemplate)
+    return when (endpoint.method.uppercase()) {
+        "GET" -> WireMock.get(urlPattern)
+        "PUT" -> WireMock.put(urlPattern)
+        "POST" -> WireMock.post(urlPattern)
+        "DELETE" -> WireMock.delete(urlPattern)
+        "PATCH" -> WireMock.patch(urlPattern)
+        "HEAD" -> WireMock.head(urlPattern)
+        "OPTIONS" -> WireMock.options(urlPattern)
+        "TRACE" -> WireMock.trace(urlPattern)
+        else -> WireMock.any(urlPattern)
+    }
 }
 
 private fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilder {

@@ -18,7 +18,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
-import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.stubFor;
+import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.wirespec;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,7 +43,7 @@ public class StubForTest {
     public void stubsStaticPathEndpoint() throws Exception {
         List<TodoDto> todos = List.of(new TodoDto("1", "Buy milk", false));
 
-        stubFor(server, new GetTodos.Handler.Handlers(), new GetTodos.Response200(todos), serialization);
+        server.stubFor(wirespec(new GetTodos.Handler.Handlers()).willReturn(new GetTodos.Response200(todos), serialization));
 
         HttpResponse<String> response = get("/api/todos");
 
@@ -55,7 +55,7 @@ public class StubForTest {
     public void stubsTemplatedPathEndpoint() throws Exception {
         TodoDto todo = new TodoDto("abc", "Walk dog", true);
 
-        stubFor(server, new GetTodoById.Handler.Handlers(), new GetTodoById.Response200(todo), serialization);
+        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response200(todo), serialization));
 
         HttpResponse<String> response = get("/api/todos/abc");
 
@@ -67,7 +67,7 @@ public class StubForTest {
     public void stubsNon2xxResponse() throws Exception {
         Error err = new Error(404L, "not found");
 
-        stubFor(server, new GetTodoById.Handler.Handlers(), new GetTodoById.Response404(err), serialization);
+        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response404(err), serialization));
 
         HttpResponse<String> response = get("/api/todos/anything");
 

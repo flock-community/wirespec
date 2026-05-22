@@ -1,26 +1,31 @@
 package community.flock.wirespec.integration.wiremock.java;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
-import com.github.tomakehurst.wiremock.stubbing.StubMapping;
 import community.flock.wirespec.java.Wirespec;
 
 import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Register a WireMock stub for a Wirespec endpoint, with a typed response.
+ * Start building a WireMock stub for a Wirespec endpoint. Mirrors WireMock's own
+ * {@code get(urlEqualTo(...))} / {@code post(urlEqualTo(...))} factories — the returned
+ * builder then accepts a typed Wirespec {@link Wirespec.Response} via
+ * {@link WirespecMappingBuilder#willReturn(Wirespec.Response, Wirespec.Serialization)}.
  *
  * <pre>
- *     WirespecWireMock.stubFor(server, new GetTodos.Handler.Handlers(), response, serialization);
+ *     import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.wirespec;
+ *
+ *     server.stubFor(
+ *         wirespec(new GetTodos.Handler.Handlers())
+ *             .willReturn(new GetTodos.Response200(todos), serialization)
+ *     );
  * </pre>
  *
- * The endpoint's method and path template drive the WireMock request matcher (path
- * parameters match any non-slash segment), and the response is serialized through
- * the supplied {@link Wirespec.Serialization} into the stub's body, status, and headers.
+ * The endpoint's HTTP method and path template drive the WireMock request matcher
+ * (path parameters match any non-slash segment).
  */
 public final class WirespecWireMock {
 
@@ -28,28 +33,35 @@ public final class WirespecWireMock {
 
     private WirespecWireMock() {}
 
-    public static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> StubMapping stubFor(
-            WireMockServer server,
-            Wirespec.Server<Req, Res> endpoint,
-            Res response,
-            Wirespec.Serialization serialization
+    public static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> WirespecMappingBuilder<Req, Res> wirespec(
+            Wirespec.Server<Req, Res> endpoint
     ) {
-        return server.stubFor(mappingBuilder(endpoint, response, serialization));
+        return new WirespecMappingBuilder<>(endpoint, requestBuilder(endpoint));
     }
 
-    static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> MappingBuilder mappingBuilder(
-            Wirespec.Server<Req, Res> endpoint,
-            Res response,
-            Wirespec.Serialization serialization
-    ) {
-        Wirespec.RawResponse rawResponse = endpoint.getServer(serialization).to(response);
+    public static final class WirespecMappingBuilder<Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> {
+        private final Wirespec.Server<Req, Res> endpoint;
+        private final MappingBuilder mapping;
+
+        WirespecMappingBuilder(Wirespec.Server<Req, Res> endpoint, MappingBuilder mapping) {
+            this.endpoint = endpoint;
+            this.mapping = mapping;
+        }
+
+        /**
+         * Serialize {@code response} through {@code serialization} and attach it as this stub's response.
+         * Returns the underlying {@link MappingBuilder} so callers can keep chaining WireMock methods
+         * (e.g. {@code .atPriority(...)}, {@code .inScenario(...)}).
+         */
+        public MappingBuilder willReturn(Res response, Wirespec.Serialization serialization) {
+            Wirespec.RawResponse raw = endpoint.getServer(serialization).to(response);
+            return mapping.willReturn(responseBuilder(raw));
+        }
+    }
+
+    private static MappingBuilder requestBuilder(Wirespec.Server<?, ?> endpoint) {
         UrlPattern urlPattern = urlPatternFor(endpoint.getPathTemplate());
-        return requestBuilder(endpoint.getMethod(), urlPattern)
-                .willReturn(responseBuilder(rawResponse));
-    }
-
-    private static MappingBuilder requestBuilder(String method, UrlPattern urlPattern) {
-        return switch (method.toUpperCase()) {
+        return switch (endpoint.getMethod().toUpperCase()) {
             case "GET" -> WireMock.get(urlPattern);
             case "PUT" -> WireMock.put(urlPattern);
             case "POST" -> WireMock.post(urlPattern);

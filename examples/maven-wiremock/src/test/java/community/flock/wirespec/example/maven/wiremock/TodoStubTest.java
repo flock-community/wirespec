@@ -1,6 +1,6 @@
 package community.flock.wirespec.example.maven.wiremock;
 
-import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.stubFor;
+import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.wirespec;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,9 +23,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Demonstrates how the wiremock integration turns a Wirespec endpoint plus a typed Response
- * into a WireMock stub. The endpoint's pathTemplate and method drive the request matcher;
- * the Response is serialized into the stub body via Wirespec.Serialization.
+ * Demonstrates the wiremock integration. The {@code wirespec(endpoint)} factory mirrors
+ * WireMock's own {@code get(urlEqualTo(...))} pattern: it returns a stub builder driven by
+ * the endpoint's path template and HTTP method. {@code willReturn(response, serialization)}
+ * then turns a typed Wirespec response into the stub's body, status, and headers.
  */
 class TodoStubTest {
 
@@ -49,7 +50,7 @@ class TodoStubTest {
     void stubsTheListEndpoint() throws Exception {
         var todos = List.of(new Todo("1", "Buy milk", false));
 
-        stubFor(server, new GetTodos.Handler.Handlers(), new GetTodos.Response200(todos), serialization);
+        server.stubFor(wirespec(new GetTodos.Handler.Handlers()).willReturn(new GetTodos.Response200(todos), serialization));
 
         var response = get("/api/todos");
 
@@ -61,7 +62,7 @@ class TodoStubTest {
     void stubsAPathParamEndpoint() throws Exception {
         var todo = new Todo("abc", "Walk dog", true);
 
-        stubFor(server, new GetTodoById.Handler.Handlers(), new GetTodoById.Response200(todo), serialization);
+        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response200(todo), serialization));
 
         var response = get("/api/todos/abc");
 
@@ -73,7 +74,7 @@ class TodoStubTest {
     void stubsAnErrorResponse() throws Exception {
         var error = new Error(404L, "not found");
 
-        stubFor(server, new GetTodoById.Handler.Handlers(), new GetTodoById.Response404(error), serialization);
+        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response404(error), serialization));
 
         var response = get("/api/todos/missing");
 
