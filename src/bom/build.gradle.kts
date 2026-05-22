@@ -15,6 +15,7 @@ dependencies {
         api("$group.integration:avro-jvm:$version")
         api("$group.integration:jackson-jvm:$version")
         api("$group.integration:spring-jvm:$version")
+        api("$group.integration:wiremock-jvm:$version")
         api("$group.integration:wirespec-jvm:$version")
     }
 }
