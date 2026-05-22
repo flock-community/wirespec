@@ -12,8 +12,6 @@ repositories {
     mavenLocal()
 }
 
-// Use the Wirespec CLI's bundled JVM jar to emit Java + Kotlin test sources at build time —
-// avoids checking generated code into git and avoids a dedicated codegen module.
 val wirespecCli by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
@@ -111,8 +109,6 @@ kotlin {
     }
 }
 
-// Add the generated Java directory to the jvm test compilation. The KMP plugin doesn't
-// expose Java source dirs via the sourceSets DSL, so we wire it on the underlying compile task.
 tasks.named<JavaCompile>("compileJvmTestJava") {
     source(generatedWirespecDir.map { it.dir("java") })
     dependsOn(generateWirespecJavaTestSources)
