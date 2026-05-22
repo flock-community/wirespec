@@ -47,11 +47,13 @@ public final class WirespecWireMock {
      * inside the given endpoint class. Lets callers write {@code wirespec(GetTodos.class)} instead
      * of {@code wirespec(new GetTodos.Handler.Handlers())}.
      *
-     * <p>The Res type is unchecked — pass the wrong response type and you'll get a runtime error.
-     * Prefer the typed {@link #wirespec(Wirespec.Server)} overload when the extra characters are fine.
+     * <p>The Res type is inferred from the subsequent {@code willReturn(...)} call; the cast back
+     * to {@code Wirespec.Server<Req, Res>} is unchecked, so passing a response from a different
+     * endpoint will fail at runtime. Prefer the typed {@link #wirespec(Wirespec.Server)} overload
+     * when the extra characters are fine.
      */
-    public static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> WirespecMappingBuilder<Req, Res> wirespec(
-            Class<?> endpointClass
+    public static <E extends Wirespec.Endpoint, Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> WirespecMappingBuilder<Req, Res> wirespec(
+            Class<E> endpointClass
     ) {
         Wirespec.Server<Req, Res> server = findServer(endpointClass);
         if (server == null) {
