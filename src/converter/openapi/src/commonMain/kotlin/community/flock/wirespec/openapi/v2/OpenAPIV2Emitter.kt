@@ -3,17 +3,18 @@ package community.flock.wirespec.openapi.v2
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.InfoObject
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Model
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Operation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Parameter
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20ParameterLocation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20PathItem
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Reference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Response
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Operation
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Parameter
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2ParameterLocation
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2PathItem
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Reference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Response
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Schema
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2SchemaOrReference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Type
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.Ref
 import community.flock.kotlinx.openapi.bindings.StatusCode
@@ -56,7 +57,7 @@ object OpenAPIV2Emitter : Emitter {
         }
         .let { nonEmptyListOf(it) }
 
-    fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = OpenAPIV2Model(
+    fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = OpenAPIV20Model(
         swagger = "2.0",
         info = InfoObject(
             title = "Wirespec",
@@ -68,31 +69,31 @@ object OpenAPIV2Emitter : Emitter {
         definitions = statements.emitDefinitions(logger),
     )
 
-    private fun Statements.emitDefinitions(logger: Logger): Map<String, OpenAPIV2Schema> {
+    private fun Statements.emitDefinitions(logger: Logger): Map<String, OpenAPIV20Schema> {
         val refined = filterIsInstance<Refined>()
             .associate { refined ->
                 when (val type = refined.reference.type) {
                     Reference.Primitive.Type.Boolean ->
-                        refined.identifier.value to OpenAPIV2Schema(
-                            type = OpenAPIV2Type.BOOLEAN,
+                        refined.identifier.value to OpenAPIV20Schema(
+                            type = OpenAPIV20Type.BOOLEAN,
                         )
 
                     Reference.Primitive.Type.Bytes ->
-                        refined.identifier.value to OpenAPIV2Schema(
-                            type = OpenAPIV2Type.FILE,
+                        refined.identifier.value to OpenAPIV20Schema(
+                            type = OpenAPIV20Type.FILE,
                         )
 
                     is Reference.Primitive.Type.Integer ->
-                        refined.identifier.value to OpenAPIV2Schema(
-                            type = OpenAPIV2Type.INTEGER,
+                        refined.identifier.value to OpenAPIV20Schema(
+                            type = OpenAPIV20Type.INTEGER,
                             minimum = type.constraint?.min?.toDouble(),
                             maximum = type.constraint?.max?.toDouble(),
                             format = "int32",
                         )
 
                     is Reference.Primitive.Type.Number ->
-                        refined.identifier.value to OpenAPIV2Schema(
-                            type = OpenAPIV2Type.NUMBER,
+                        refined.identifier.value to OpenAPIV20Schema(
+                            type = OpenAPIV20Type.NUMBER,
                             minimum = type.constraint?.min?.toDouble(),
                             maximum = type.constraint?.max?.toDouble(),
                             format = "float",
@@ -100,13 +101,13 @@ object OpenAPIV2Emitter : Emitter {
 
                     is Reference.Primitive.Type.String ->
                         refined.identifier.value to when (val pattern = type.constraint) {
-                            is Reference.Primitive.Type.Constraint.RegExp -> OpenAPIV2Schema(
-                                type = OpenAPIV2Type.STRING,
+                            is Reference.Primitive.Type.Constraint.RegExp -> OpenAPIV20Schema(
+                                type = OpenAPIV20Type.STRING,
                                 pattern = pattern.value,
                             )
 
-                            null -> OpenAPIV2Schema(
-                                type = OpenAPIV2Type.STRING,
+                            null -> OpenAPIV20Schema(
+                                type = OpenAPIV20Type.STRING,
                             )
                         }
                 }
@@ -115,7 +116,7 @@ object OpenAPIV2Emitter : Emitter {
 
         val types = filterIsInstance<Type>()
             .associate { type ->
-                type.identifier.value to OpenAPIV2Schema(
+                type.identifier.value to OpenAPIV20Schema(
                     description = type.annotations.findDescription() ?: type.comment?.value,
                     properties = type.shape.value.associate { it.toProperties() },
                     required = type.shape.value
@@ -128,8 +129,8 @@ object OpenAPIV2Emitter : Emitter {
 
         val enums = filterIsInstance<Enum>()
             .associate { enum ->
-                enum.identifier.value to OpenAPIV2Schema(
-                    type = OpenAPIV2Type.STRING,
+                enum.identifier.value to OpenAPIV20Schema(
+                    type = OpenAPIV20Type.STRING,
                     enum = enum.entries.map { JsonPrimitive(it) },
                     description = enum.annotations.findDescription(),
                 )
@@ -139,14 +140,14 @@ object OpenAPIV2Emitter : Emitter {
         return refined + types + enums
     }
 
-    private fun Statements.emitPaths(logger: Logger): Map<Path, OpenAPIV2PathItem> = filterIsInstance<Endpoint>()
+    private fun Statements.emitPaths(logger: Logger): Map<Path, OpenAPIV20PathItem> = filterIsInstance<Endpoint>()
         .groupBy { it.path }
         .map { (path, endpoints) ->
             logger.info("Emitting endpoints for path ${path.emitSegment()}")
-            Path(path.emitSegment()) to OpenAPIV2PathItem(
+            Path(path.emitSegment()) to OpenAPIV20PathItem(
                 parameters = path.filterIsInstance<Endpoint.Segment.Param>().map {
-                    OpenAPIV2Parameter(
-                        `in` = OpenAPIV2ParameterLocation.PATH,
+                    OpenAPIV20Parameter(
+                        `in` = OpenAPIV20ParameterLocation.PATH,
                         name = it.identifier.value,
                         type = it.reference.emitType(),
                         format = it.reference.emitFormat(),
@@ -166,16 +167,16 @@ object OpenAPIV2Emitter : Emitter {
             )
         }.toMap()
 
-    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
+    private fun Field.toProperties(): Pair<String, OpenAPIV20SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
         when (it) {
-            is OpenAPIV2Schema -> it.copy(description = annotations.findDescription())
-            is OpenAPIV2Reference -> it
+            is OpenAPIV20Schema -> it.copy(description = annotations.findDescription())
+            is OpenAPIV20Reference -> it
         }
     }
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV20Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
-    private fun Endpoint.emit() = OpenAPIV2Operation(
+    private fun Endpoint.emit() = OpenAPIV20Operation(
         operationId = identifier.value,
         description = annotations.findDescription() ?: comment?.value,
         consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
@@ -184,24 +185,24 @@ object OpenAPIV2Emitter : Emitter {
             .mapNotNull { it.content }
             .take(1)
             .map {
-                OpenAPIV2Parameter(
-                    `in` = OpenAPIV2ParameterLocation.BODY,
+                OpenAPIV20Parameter(
+                    `in` = OpenAPIV20ParameterLocation.BODY,
                     name = "RequestBody",
                     schema = it.reference.toSchemaOrReference(),
                     required = !it.reference.isNullable,
                 )
-            } + queries.map { it.emitParameter(OpenAPIV2ParameterLocation.QUERY) } + headers.map {
+            } + queries.map { it.emitParameter(OpenAPIV20ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
-                OpenAPIV2ParameterLocation.HEADER,
+                OpenAPIV20ParameterLocation.HEADER,
             )
         },
         responses = responses
             .associate { response ->
-                StatusCode(response.status) to OpenAPIV2Response(
+                StatusCode(response.status) to OpenAPIV20Response(
                     description = response.annotations.findDescription()
                         ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
-                        it.identifier.value to OpenAPIV2Header(
+                        it.identifier.value to OpenAPIV20Header(
                             description = it.annotations.findDescription(),
                             type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
@@ -213,8 +214,8 @@ object OpenAPIV2Emitter : Emitter {
                         ?.takeIf { content -> content.reference !is Reference.Unit }
                         ?.let { content ->
                             when (val ref = content.reference) {
-                                is Reference.Iterable -> OpenAPIV2Schema(
-                                    type = OpenAPIV2Type.ARRAY,
+                                is Reference.Iterable -> OpenAPIV20Schema(
+                                    type = OpenAPIV20Type.ARRAY,
                                     items = ref.reference.toSchemaOrReference(),
                                 )
 
@@ -232,7 +233,7 @@ object OpenAPIV2Emitter : Emitter {
         }
     }
 
-    private fun Field.emitParameter(location: OpenAPIV2ParameterLocation) = OpenAPIV2Parameter(
+    private fun Field.emitParameter(location: OpenAPIV20ParameterLocation) = OpenAPIV20Parameter(
         `in` = location,
         name = identifier.value,
         type = reference.emitType(),
@@ -240,8 +241,8 @@ object OpenAPIV2Emitter : Emitter {
         pattern = reference.emitPattern(),
         items = when (val ref = reference) {
             is Reference.Iterable -> when (val emit = ref.toSchemaOrReference()) {
-                is OpenAPIV2Reference -> emit
-                is OpenAPIV2Schema -> emit.items
+                is OpenAPIV20Reference -> emit
+                is OpenAPIV20Schema -> emit.items
             }
 
             else -> null
@@ -250,19 +251,19 @@ object OpenAPIV2Emitter : Emitter {
         description = annotations.findDescription(),
     )
 
-    private fun Reference.toSchemaOrReference(): OpenAPIV2SchemaOrReference = when (this) {
-        is Reference.Dict -> OpenAPIV2Schema(
-            type = OpenAPIV2Type.OBJECT,
+    private fun Reference.toSchemaOrReference(): OpenAPIV20SchemaOrReference = when (this) {
+        is Reference.Dict -> OpenAPIV20Schema(
+            type = OpenAPIV20Type.OBJECT,
             items = reference.toSchemaOrReference(),
         )
 
-        is Reference.Iterable -> OpenAPIV2Schema(
-            type = OpenAPIV2Type.ARRAY,
+        is Reference.Iterable -> OpenAPIV20Schema(
+            type = OpenAPIV20Type.ARRAY,
             items = reference.toSchemaOrReference(),
         )
 
-        is Reference.Custom -> OpenAPIV2Reference(ref = Ref("#/definitions/$value"))
-        is Reference.Primitive -> OpenAPIV2Schema(
+        is Reference.Custom -> OpenAPIV20Reference(ref = Ref("#/definitions/$value"))
+        is Reference.Primitive -> OpenAPIV20Schema(
             type = type.emitType(),
             format = emitFormat(),
             pattern = emitPattern(),
@@ -272,21 +273,21 @@ object OpenAPIV2Emitter : Emitter {
         is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Reference.Primitive.Type.emitType(): OpenAPIV2Type = when (this) {
-        is Reference.Primitive.Type.String -> OpenAPIV2Type.STRING
-        is Reference.Primitive.Type.Integer -> OpenAPIV2Type.INTEGER
-        is Reference.Primitive.Type.Number -> OpenAPIV2Type.NUMBER
-        is Reference.Primitive.Type.Boolean -> OpenAPIV2Type.BOOLEAN
-        is Reference.Primitive.Type.Bytes -> OpenAPIV2Type.STRING
+    private fun Reference.Primitive.Type.emitType(): OpenAPIV20Type = when (this) {
+        is Reference.Primitive.Type.String -> OpenAPIV20Type.STRING
+        is Reference.Primitive.Type.Integer -> OpenAPIV20Type.INTEGER
+        is Reference.Primitive.Type.Number -> OpenAPIV20Type.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenAPIV20Type.BOOLEAN
+        is Reference.Primitive.Type.Bytes -> OpenAPIV20Type.STRING
     }
 
-    private fun Reference.emitType(): OpenAPIV2Type = when (this) {
-        is Reference.Dict -> OpenAPIV2Type.OBJECT
-        is Reference.Iterable -> OpenAPIV2Type.ARRAY
+    private fun Reference.emitType(): OpenAPIV20Type = when (this) {
+        is Reference.Dict -> OpenAPIV20Type.OBJECT
+        is Reference.Iterable -> OpenAPIV20Type.ARRAY
         is Reference.Primitive -> type.emitType()
-        is Reference.Custom -> OpenAPIV2Type.OBJECT
-        is Reference.Any -> OpenAPIV2Type.OBJECT
-        is Reference.Unit -> OpenAPIV2Type.OBJECT
+        is Reference.Custom -> OpenAPIV20Type.OBJECT
+        is Reference.Any -> OpenAPIV20Type.OBJECT
+        is Reference.Unit -> OpenAPIV20Type.OBJECT
     }
 
     private fun Reference.emitPattern() = when (this) {
