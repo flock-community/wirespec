@@ -12,36 +12,56 @@ repositories {
     mavenLocal()
 }
 
-val codegenClasspath by configurations.creating {
+// Use the Wirespec CLI's bundled JVM jar to emit Java + Kotlin test sources at build time —
+// avoids checking generated code into git and avoids a dedicated codegen module.
+val wirespecCli by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
 
 dependencies {
-    codegenClasspath(project(":src:integration:wiremock-codegen"))
+    wirespecCli(project(mapOf("path" to ":src:plugin:cli", "configuration" to "jvmRuntimeElements")))
 }
 
 val generatedWirespecDir = layout.buildDirectory.dir("generated/sources/wirespec")
+val wirespecTestSourcesDir = layout.projectDirectory.dir("src/jvmTest/resources/wirespec")
 
-val generateWirespecTestSources by tasks.registering(JavaExec::class) {
+fun TaskContainer.registerWirespecGen(name: String, language: String, packageName: String, outputSubdir: String) = register<JavaExec>(name) {
     group = "build"
-    description = "Generate Java + Kotlin Wirespec test sources from .ws files in src/jvmTest/resources/wirespec."
-    classpath = codegenClasspath
-    mainClass.set("community.flock.wirespec.integration.wiremock.codegen.MainKt")
-    val inputDir = layout.projectDirectory.dir("src/jvmTest/resources/wirespec")
-    val outDir = generatedWirespecDir
-    inputs.dir(inputDir).withPropertyName("wirespecSources")
+    description = "Generate $language Wirespec test sources from .ws files in src/jvmTest/resources/wirespec."
+    classpath = wirespecCli
+    mainClass.set("community.flock.wirespec.plugin.cli.MainKt")
+    val inDir = wirespecTestSourcesDir
+    val outDir = generatedWirespecDir.map { it.dir(outputSubdir) }
+    inputs.dir(inDir).withPropertyName("wirespecSources")
     outputs.dir(outDir).withPropertyName("generatedSources")
+    val inputAbsolutePath = inDir.asFile.absolutePath
     argumentProviders.add(
         org.gradle.process.CommandLineArgumentProvider {
             listOf(
-                inputDir.asFile.absolutePath,
-                outDir.get().asFile.absolutePath,
-                "community.flock.wirespec.integration.wiremock",
+                "compile",
+                "-i", inputAbsolutePath,
+                "-l", language,
+                "-p", packageName,
+                "-o", outDir.get().asFile.absolutePath,
             )
         },
     )
 }
+
+val generateWirespecJavaTestSources by tasks.registerWirespecGen(
+    name = "generateWirespecJavaTestSources",
+    language = "Java",
+    packageName = "community.flock.wirespec.integration.wiremock.java.generated",
+    outputSubdir = "java",
+)
+
+val generateWirespecKotlinTestSources by tasks.registerWirespecGen(
+    name = "generateWirespecKotlinTestSources",
+    language = "Kotlin",
+    packageName = "community.flock.wirespec.integration.wiremock.kotlin.generated",
+    outputSubdir = "kotlin",
+)
 
 kotlin {
     compilerOptions {
@@ -95,8 +115,9 @@ kotlin {
 // expose Java source dirs via the sourceSets DSL, so we wire it on the underlying compile task.
 tasks.named<JavaCompile>("compileJvmTestJava") {
     source(generatedWirespecDir.map { it.dir("java") })
+    dependsOn(generateWirespecJavaTestSources)
 }
 
-listOf("compileTestKotlinJvm", "compileJvmTestJava").forEach { name ->
-    tasks.named(name) { dependsOn(generateWirespecTestSources) }
+tasks.named("compileTestKotlinJvm") {
+    dependsOn(generateWirespecKotlinTestSources)
 }

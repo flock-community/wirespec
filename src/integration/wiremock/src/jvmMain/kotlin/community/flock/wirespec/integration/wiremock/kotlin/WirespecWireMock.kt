@@ -13,22 +13,29 @@ import community.flock.wirespec.kotlin.Wirespec
  * `get(urlEqualTo(...))` / `post(urlEqualTo(...))` factories — the returned builder
  * then accepts a typed Wirespec [Wirespec.Response] via [WirespecMappingBuilder.willReturn].
  *
+ * Two calling styles:
+ *
  * ```
- * server.stubFor(
- *     wirespec(GetTodos.Handler)
- *         .willReturn(GetTodos.Response200(listOf(TodoDto("hi"))), serialization)
- * )
+ * // Pass the endpoint's Server companion directly:
+ * server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
+ *
+ * // Or use the reified-type overload to skip the .Handler:
+ * server.stubFor(wirespec<GetTodos>().willReturn(GetTodos.Response200(todos)))
  * ```
  *
  * The endpoint's HTTP method and path template drive the WireMock request matcher
  * (path parameters match any non-slash segment).
  */
-fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> wirespec(
-    endpoint: Wirespec.Server<Req, Res>,
-): WirespecMappingBuilder<Req, Res> = WirespecMappingBuilder(endpoint, requestBuilder(endpoint))
+fun wirespec(endpoint: Wirespec.Server<*, *>): WirespecMappingBuilder = WirespecMappingBuilder(endpoint, requestBuilder(endpoint))
 
-class WirespecMappingBuilder<Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> internal constructor(
-    private val endpoint: Wirespec.Server<Req, Res>,
+/**
+ * Reified-type overload — `wirespec<GetTodos>()` reflectively locates the
+ * [Wirespec.Server] implementation generated inside the endpoint type.
+ */
+inline fun <reified E : Wirespec.Endpoint> wirespec(): WirespecMappingBuilder = wirespec(findServer(E::class.java))
+
+class WirespecMappingBuilder internal constructor(
+    private val endpoint: Wirespec.Server<*, *>,
     private val mapping: MappingBuilder,
 ) {
     /**
@@ -38,7 +45,44 @@ class WirespecMappingBuilder<Req : Wirespec.Request<*>, Res : Wirespec.Response<
      * [MappingBuilder] so callers can keep chaining WireMock methods (e.g. `.atPriority(...)`,
      * `.inScenario(...)`).
      */
-    fun willReturn(response: Res, serialization: Wirespec.Serialization = defaultSerialization): MappingBuilder = mapping.willReturn(responseBuilder(endpoint.server(serialization).to(response)))
+    @Suppress("UNCHECKED_CAST")
+    fun willReturn(
+        response: Wirespec.Response<*>,
+        serialization: Wirespec.Serialization = defaultSerialization,
+    ): MappingBuilder {
+        val typed = endpoint as Wirespec.Server<*, Wirespec.Response<*>>
+        return mapping.willReturn(responseBuilder(typed.server(serialization).to(response)))
+    }
+}
+
+@PublishedApi
+internal fun findServer(endpointClass: Class<*>): Wirespec.Server<*, *> = findServerRecursive(endpointClass)
+    ?: throw IllegalArgumentException(
+        "No Wirespec.Server implementation with a no-arg constructor found inside ${endpointClass.name}. " +
+            "Expected the generated <Endpoint>.Handler structure.",
+    )
+
+private fun findServerRecursive(klass: Class<*>): Wirespec.Server<*, *>? {
+    if (Wirespec.Server::class.java.isAssignableFrom(klass) && !klass.isInterface) {
+        // Kotlin companion objects expose a static INSTANCE field; Java-emitted Handlers
+        // are records with a public no-arg constructor.
+        runCatching {
+            val instanceField = klass.getDeclaredField("INSTANCE")
+            instanceField.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            return instanceField.get(null) as Wirespec.Server<*, *>
+        }
+        runCatching {
+            val constructor = klass.getDeclaredConstructor()
+            constructor.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            return constructor.newInstance() as Wirespec.Server<*, *>
+        }
+    }
+    klass.declaredClasses.forEach { nested ->
+        findServerRecursive(nested)?.let { return it }
+    }
+    return null
 }
 
 private val defaultSerialization: Wirespec.Serialization by lazy { WirespecSerialization(ObjectMapper()) }

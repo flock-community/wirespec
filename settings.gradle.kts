@@ -43,7 +43,6 @@ include(
     "src:integration:jackson",
     "src:integration:wirespec",
     "src:integration:wiremock",
-    "src:integration:wiremock-codegen",
     "src:integration:spring",
     "src:tools:generator",
     "src:compiler:ir",
