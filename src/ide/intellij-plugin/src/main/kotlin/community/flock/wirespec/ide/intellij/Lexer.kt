@@ -30,6 +30,7 @@ import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
+import community.flock.wirespec.compiler.core.tokenize.Spread
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TokenizeOptions
@@ -98,6 +99,7 @@ class Lexer : IntellijLexer() {
             RightCurly::class to Types.RIGHT_CURLY,
             Colon::class to Types.COLON,
             Comma::class to Types.COMMA,
+            Spread::class to Types.SPREAD,
             QuestionMark::class to Types.QUESTION_MARK,
             Hash::class to Types.HASH,
             Annotation::class to Types.ANNOTATION,
