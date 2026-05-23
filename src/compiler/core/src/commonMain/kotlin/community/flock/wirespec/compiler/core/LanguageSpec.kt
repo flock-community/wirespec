@@ -37,6 +37,7 @@ import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.Spread
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
@@ -80,6 +81,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\|") to Pipe,
         Regex("^:") to Colon,
         Regex("^,") to Comma,
+        Regex("^\\.\\.\\.") to Spread,
         Regex("^\\?") to QuestionMark,
         Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
