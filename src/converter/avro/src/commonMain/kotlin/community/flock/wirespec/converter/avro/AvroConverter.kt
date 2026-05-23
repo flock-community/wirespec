@@ -1,5 +1,6 @@
 package community.flock.wirespec.converter.avro
 
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -8,6 +9,10 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.longOrNull
 
 object AvroConverter {
 
@@ -61,10 +66,22 @@ object AvroConverter {
                     identifier = FieldIdentifier(it.name),
                     annotations = emptyList(),
                     reference = it.type.toReference(),
+                    defaultValue = it.default?.toDefaultValue(),
                 )
             },
         ),
     )
+
+    private fun kotlinx.serialization.json.JsonElement.toDefaultValue(): DefaultValue? {
+        val primitive = this as? JsonPrimitive ?: return null
+        return when {
+            primitive is JsonNull -> null
+            primitive.isString -> DefaultValue.StringValue(primitive.content)
+            primitive.booleanOrNull != null -> DefaultValue.BooleanValue(primitive.booleanOrNull!!)
+            primitive.longOrNull != null -> DefaultValue.IntegerValue(primitive.content)
+            else -> DefaultValue.NumberValue(primitive.content)
+        }
+    }
 
     private fun AvroModel.EnumType.toEnum() = Enum(
         comment = null,

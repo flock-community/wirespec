@@ -8,6 +8,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import community.flock.wirespec.converter.common.Parser
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 
 object AvroIdlParser : Parser {
 
@@ -113,24 +117,29 @@ object AvroIdlParser : Parser {
             )
         }
 
-        private fun parseDefaultValue(): String {
+        private fun parseDefaultValue(): JsonElement {
             val token = peekToken() ?: error("Expected default value")
             return when (token) {
                 is AvroIdlToken.StringLiteral -> {
                     advance()
-                    token.value
+                    JsonPrimitive(token.value)
                 }
                 is AvroIdlToken.NumberLiteral -> {
                     advance()
-                    token.value
+                    Json.parseToJsonElement(token.value)
                 }
                 is AvroIdlToken.Identifier -> {
                     advance()
-                    token.value
+                    when (token.value) {
+                        "true" -> JsonPrimitive(true)
+                        "false" -> JsonPrimitive(false)
+                        "null" -> JsonNull
+                        else -> JsonPrimitive(token.value)
+                    }
                 }
                 is AvroIdlToken.Symbol -> when (token.value) {
-                    '[' -> readMatchedBlock('[', ']')
-                    '{' -> readMatchedBlock('{', '}')
+                    '[' -> Json.parseToJsonElement(readMatchedBlock('[', ']'))
+                    '{' -> Json.parseToJsonElement(readMatchedBlock('{', '}'))
                     else -> error("Unexpected symbol in default value: ${token.value}")
                 }
                 else -> error("Unexpected token in default value: $token")

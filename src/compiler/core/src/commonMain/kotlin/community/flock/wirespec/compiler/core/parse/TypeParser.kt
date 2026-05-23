@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.TypeParser.parseType
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseTypeShape
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Comment
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
@@ -24,6 +25,7 @@ import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision
@@ -296,20 +298,39 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
         else -> raiseWrongToken<Colon>().bind()
     }
 
-    when (token.type) {
-        is LeftCurly -> Field(
-            identifier = identifier,
-            reference = parseDict().bind(),
-            annotations = annotations,
-        )
-
-        is WirespecType -> Field(
-            identifier = identifier,
-            reference = parseType().bind(),
-            annotations = annotations,
-        )
-
+    val reference = when (token.type) {
+        is LeftCurly -> parseDict().bind()
+        is WirespecType -> parseType().bind()
         else -> raiseWrongToken<WirespecType>().bind()
+    }
+
+    val defaultValue = when (token.type) {
+        is Equals -> {
+            eatToken().bind()
+            parseDefaultValue().bind()
+        }
+        else -> null
+    }
+
+    Field(
+        identifier = identifier,
+        reference = reference,
+        annotations = annotations,
+        defaultValue = defaultValue,
+    )
+}
+
+private fun TokenProvider.parseDefaultValue() = parseToken { previousToken ->
+    when (previousToken.type) {
+        is LiteralString -> DefaultValue.StringValue(previousToken.value.removeSurrounding("\""))
+        is Integer -> DefaultValue.IntegerValue(previousToken.value)
+        is Number -> DefaultValue.NumberValue(previousToken.value)
+        is WirespecIdentifier -> when (previousToken.value) {
+            "true" -> DefaultValue.BooleanValue(true)
+            "false" -> DefaultValue.BooleanValue(false)
+            else -> raiseWrongToken<LiteralString>(previousToken).bind()
+        }
+        else -> raiseWrongToken<LiteralString>(previousToken).bind()
     }
 }
 

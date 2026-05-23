@@ -641,6 +641,41 @@ class AvroJsonEmitterTest {
     }
 
     @Test
+    fun testDefaultValues() {
+        val source =
+            // language=ws
+            """
+            |type Defaults {
+            |  name: String = "anonymous",
+            |  count: Integer = 0,
+            |  ratio: Number = 1.5,
+            |  active: Boolean = true
+            |}
+            """.trimMargin()
+
+        val ast = parse(source)
+        val actual = AvroJsonEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
+        val expected =
+            // language=json
+            """
+            |[
+            |    {
+            |        "type": "record",
+            |        "name": "Defaults",
+            |        "fields": [
+            |            { "name": "name", "type": "string", "default": "anonymous" },
+            |            { "name": "count", "type": "long", "default": 0 },
+            |            { "name": "ratio", "type": "double", "default": 1.5 },
+            |            { "name": "active", "type": "boolean", "default": true }
+            |        ]
+            |    }
+            |]
+            """.trimMargin()
+
+        actual shouldEqualJson expected
+    }
+
+    @Test
     fun compileTypeTest() {
         val result = CompileTypeTest.compiler { AvroJsonEmitter }
         val expect =

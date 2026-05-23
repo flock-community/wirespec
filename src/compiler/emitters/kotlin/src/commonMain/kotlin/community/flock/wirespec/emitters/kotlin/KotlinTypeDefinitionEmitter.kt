@@ -2,6 +2,7 @@ package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -20,7 +21,24 @@ interface KotlinTypeDefinitionEmitter : TypeDefinitionEmitter, KotlinIdentifierE
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}"
+    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${defaultValue.emit(reference)}"
+
+    private fun DefaultValue?.emit(reference: Reference): String {
+        val precision = (reference as? Reference.Primitive)?.let {
+            when (val t = it.type) {
+                is Reference.Primitive.Type.Integer -> t.precision
+                is Reference.Primitive.Type.Number -> t.precision
+                else -> null
+            }
+        }
+        return when (this) {
+            null -> ""
+            is DefaultValue.StringValue -> " = \"$value\""
+            is DefaultValue.BooleanValue -> " = $value"
+            is DefaultValue.IntegerValue -> if (precision == Reference.Primitive.Type.Precision.P64) " = ${value}L" else " = $value"
+            is DefaultValue.NumberValue -> if (precision == Reference.Primitive.Type.Precision.P32) " = ${value}f" else " = $value"
+        }
+    }
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Dict -> "Map<String, ${reference.emit()}>"

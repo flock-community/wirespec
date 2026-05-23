@@ -18,10 +18,12 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
+import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.ir.generator.ScalaGenerator
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
 
 class ScalaIrEmitterTest {
@@ -75,6 +77,26 @@ class ScalaIrEmitterTest {
         val scala = EmitterFixtures.compileTypeTest
 
         CompileTypeTest.compiler { ScalaIrEmitter() } shouldBeRight scala
+    }
+
+    @Test
+    fun compileDefaultValuesTest() {
+        val source =
+            // language=ws
+            """
+            |type Defaults {
+            |  name: String = "anonymous",
+            |  count: Integer = 0,
+            |  ratio32: Number32 = 1.5,
+            |  active: Boolean = true
+            |}
+            """.trimMargin()
+
+        val result = compile(source)({ ScalaIrEmitter() }).shouldBeRight()
+        result shouldContain "= \"anonymous\""
+        result shouldContain "= 0L"
+        result shouldContain "= 1.5f"
+        result shouldContain "= true"
     }
 
     @Test

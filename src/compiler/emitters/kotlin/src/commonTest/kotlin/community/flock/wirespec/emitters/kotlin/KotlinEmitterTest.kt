@@ -16,9 +16,11 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
+import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
 
 class KotlinEmitterTest {
@@ -595,6 +597,30 @@ class KotlinEmitterTest {
         """.trimMargin()
 
         CompileTypeTest.compiler { KotlinEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun compileDefaultValuesTest() {
+        val source =
+            // language=ws
+            """
+            |type Defaults {
+            |  name: String = "anonymous",
+            |  count: Integer = 0,
+            |  count32: Integer32 = 0,
+            |  ratio: Number = 1.5,
+            |  ratio32: Number32 = 1.5,
+            |  active: Boolean = true
+            |}
+            """.trimMargin()
+
+        val result = compile(source)({ KotlinEmitter() }).shouldBeRight()
+        result shouldContain "val name: String = \"anonymous\""
+        result shouldContain "val count: Long = 0L"
+        result shouldContain "val count32: Int = 0"
+        result shouldContain "val ratio: Double = 1.5"
+        result shouldContain "val ratio32: Float = 1.5f"
+        result shouldContain "val active: Boolean = true"
     }
 
     @Test
