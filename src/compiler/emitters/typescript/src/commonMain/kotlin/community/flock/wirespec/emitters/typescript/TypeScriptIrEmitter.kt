@@ -202,7 +202,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         }.sanitizeNames(sanitizationConfig).transform {
             expression { expr, t ->
                 if (expr is ConstructorStatement) {
-                    val typeName = (expr.type as? LanguageType.Custom)?.name?.removePrefix("Wirespec.")
+                    val typeName = (expr.type as? LanguageType.Custom)?.name?.value()?.removePrefix("Wirespec.")
                     val kind = typeName?.let { GENERATOR_FIELD_KINDS[it] }
                     if (kind != null) {
                         ConstructorStatement(

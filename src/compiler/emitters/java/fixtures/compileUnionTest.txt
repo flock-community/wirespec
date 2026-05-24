@@ -1,7 +1,9 @@
 package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
 public sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
 
 package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
 public record UserAccountPassword (
   String username,
   String password
@@ -13,6 +15,7 @@ public record UserAccountPassword (
 };
 
 package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
 public record UserAccountToken (
   String token
 ) implements Wirespec.Shape, UserAccount {
@@ -23,6 +26,7 @@ public record UserAccountToken (
 };
 
 package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
 public record User (
   String username,
   UserAccount account

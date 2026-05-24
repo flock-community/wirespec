@@ -38,10 +38,10 @@ internal val rustSelfParam = Parameter(Name.of("&self"), LanguageType.Custom("")
 internal val rustResponsePattern = Regex("Response(\\d+|Default)")
 
 internal fun AstType.buildModelImports(): List<Element> = importReferences().distinctBy { it.value }
-    .map { import("super::${it.value.toRustSnakeCase()}", it.value) }
+    .map { import("super::${it.value.toRustSnakeCase()}", Name.of(it.value).pascalCase()) }
 
 internal fun Endpoint.buildEndpointImports(): List<Element> = importReferences().distinctBy { it.value }
-    .map { import("super::super::model::${it.value.toRustSnakeCase()}", it.value) }
+    .map { import("super::super::model::${it.value.toRustSnakeCase()}", Name.of(it.value).pascalCase()) }
 
 internal fun <T : Element> T.convertSimpleRawExpressionsToVariableRefs(): T = transform {
     val identifierPattern = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
@@ -56,8 +56,9 @@ internal fun <T : Element> T.convertSimpleRawExpressionsToVariableRefs(): T = tr
 
 internal fun <T : Element> T.stripWirespecPrefix(): T = transform {
     matching<LanguageType.Custom> { type ->
-        if (type.name.startsWith("Wirespec.")) {
-            type.copy(name = type.name.removePrefix("Wirespec."))
+        val pascalName = type.name.pascalCase()
+        if (pascalName.startsWith("Wirespec.")) {
+            type.copy(name = Name.of(pascalName.removePrefix("Wirespec.")))
         } else {
             type
         }
@@ -131,7 +132,7 @@ internal fun fixResponseSwitchPatterns(): Transformer = transformer {
     statement { s, t ->
         if (s !is Switch || s.variable?.camelCase() != "r") return@statement s.transformChildren(t)
         val transformedCases = s.cases.map { case ->
-            val typeName = (case.type as? LanguageType.Custom)?.name
+            val typeName = (case.type as? LanguageType.Custom)?.name?.pascalCase()
             if (typeName != null && rustResponsePattern.matches(typeName)) {
                 Case(
                     value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
@@ -157,7 +158,7 @@ internal fun fixResponseSwitchPatterns(): Transformer = transformer {
 internal fun fixConstructorCalls(): Transformer = transformer {
     statementAndExpression { s, t ->
         if (s !is ConstructorStatement) return@statementAndExpression s.transformChildren(t)
-        val typeName = (s.type as? LanguageType.Custom)?.name
+        val typeName = (s.type as? LanguageType.Custom)?.name?.pascalCase()
         val transformedArgs = s.namedArguments.mapValues { t.transformExpression(it.value) }
         when {
             typeName != null && rustResponsePattern.matches(typeName) -> FunctionCall(
@@ -186,7 +187,7 @@ internal fun <T : Element> T.stripHandlerExtends(): T = transform {
 
 internal fun <T : Element> T.stripResponseGenerics(): T = transform {
     matching<LanguageType.Custom> { type ->
-        if (type.name.startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
+        if (type.name.pascalCase().startsWith("Response") && type.generics.isNotEmpty()) type.copy(generics = emptyList()) else type
     }
 }
 
@@ -235,7 +236,8 @@ internal fun <T : Element> T.injectResponseFromImpls(): T = transform {
             elements = file.elements.flatMap { element ->
                 if (element is LanguageUnion && element.name.pascalCase() == "Response" && element.members.isNotEmpty()) {
                     listOf(element) + element.members.map { member ->
-                        RawElement("impl From<${member.name}> for Response { fn from(value: ${member.name}) -> Self { Response::${member.name}(value) } }\n")
+                        val memberName = member.name.pascalCase()
+                        RawElement("impl From<$memberName> for Response { fn from(value: $memberName) -> Self { Response::$memberName(value) } }\n")
                     }
                 } else {
                     listOf(element)

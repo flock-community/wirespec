@@ -51,9 +51,9 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
                 return Arrays.stream(handlerClass.getDeclaredMethods())
-                        .filter(m -> m.getName().equals("toResponse") && Modifier.isStatic(m.getModifiers()))
+                        .filter(m -> (m.getName().equals("toRawResponse") || m.getName().equals("toResponse")) && Modifier.isStatic(m.getModifiers()))
                         .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("toResponse method not found in " + handlerClass));
+                        .orElseThrow(() -> new IllegalStateException("toRawResponse method not found in " + handlerClass));
             });
 
             if (body instanceof Wirespec.Response<?> wirespecResponse) {

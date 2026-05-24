@@ -34,7 +34,7 @@ class WirespecMethodArgumentResolver(
         val servletRequest = webRequest.nativeRequest as HttpServletRequest
         val declaringClass = parameter.parameterType.declaringClass
         val fromRequest = fromRequestCache.computeIfAbsent(declaringClass) { cls ->
-            cls.declaredMethods.first { it.name == "fromRequest" }
+            cls.declaredMethods.first { it.name == "fromRawRequest" || it.name == "fromRequest" }
         }
         val instance = declaringClass.getDeclaredField("INSTANCE").get(null)
         val rawRequest = servletRequest.toRawRequest()

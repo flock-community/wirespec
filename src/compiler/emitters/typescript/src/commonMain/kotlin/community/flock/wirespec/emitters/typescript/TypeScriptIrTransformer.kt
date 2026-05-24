@@ -38,7 +38,7 @@ internal fun <T : Element> T.renameValidateAndBindObjReceiver(
             statementAndExpression { s, t ->
                 when {
                     s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
-                        val tn = (s.typeArguments.first() as? LanguageType.Custom)?.name ?: ""
+                        val tn = (s.typeArguments.first() as? LanguageType.Custom)?.name?.pascalCase() ?: ""
                         FunctionCall(name = Name.of("validate$tn"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
                     }
                     s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
@@ -86,7 +86,7 @@ internal fun transformPatternSwitchToValueSwitch(): Transformer = transformer {
         if (stmt !is Switch || stmt.cases.none { it.type != null }) return@statement stmt.transformChildren(tr)
         val varName = stmt.variable?.camelCase() ?: "r"
         val transformedCases = stmt.cases.map { case ->
-            val typeName = (case.type as? LanguageType.Custom)?.name
+            val typeName = (case.type as? LanguageType.Custom)?.name?.pascalCase()
             val statusNum = typeName
                 ?.substringAfterLast(".")
                 ?.removePrefix("Response")

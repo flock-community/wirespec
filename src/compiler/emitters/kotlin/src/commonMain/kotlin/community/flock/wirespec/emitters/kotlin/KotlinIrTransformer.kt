@@ -15,7 +15,7 @@ import community.flock.wirespec.ir.core.transform
 
 internal fun Definition.buildModelImports(packageName: PackageName): List<Import> = importReferences()
     .distinctBy { it.value }
-    .map { import("${packageName.value}.model", it.value) }
+    .map { import("${packageName.value}.model", Name.of(it.value).pascalCase()) }
 
 internal fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace = transform {
     injectAfter { iface: Interface ->

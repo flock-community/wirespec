@@ -70,11 +70,11 @@ object PythonGenerator : Generator {
             val element = elements[i]
             if (element is Import && element.path != "." && element.path.isNotEmpty()) {
                 val path = element.path
-                val types = mutableListOf(element.type.name)
+                val types = mutableListOf(element.type.name.value())
                 while (i + 1 < elements.size) {
                     val next = elements[i + 1] as? Import ?: break
                     if (next.path != path) break
-                    types.add(next.type.name)
+                    types.add(next.type.name.value())
                     i++
                 }
                 add(RawElement("from $path import ${types.joinToString(", ")}"))
@@ -114,9 +114,9 @@ object PythonGenerator : Generator {
     private fun Package.emit(indent: Int): String = "# package $path\n\n".indentCode(indent)
 
     private fun Import.emit(indent: Int): String = if (path.isEmpty()) {
-        "import ${type.name}\n".indentCode(indent)
+        "import ${type.name.value()}\n".indentCode(indent)
     } else {
-        "from $path import ${type.name}\n".indentCode(indent)
+        "from $path import ${type.name.value()}\n".indentCode(indent)
     }
 
     private fun Namespace.emit(indent: Int, parents: List<Element> = emptyList()): String {
@@ -262,7 +262,8 @@ object PythonGenerator : Generator {
         is Type.Array -> "list[${elementType.emit(qualifier)}]"
         is Type.Dict -> "dict[${keyType.emit(qualifier)}, ${valueType.emit(qualifier)}]"
         is Type.Custom -> {
-            val qualifiedName = qualifier?.invoke(name) ?: name
+            val rawName = name.value()
+            val qualifiedName = qualifier?.invoke(rawName) ?: rawName
             if (generics.isEmpty()) {
                 qualifiedName
             } else {

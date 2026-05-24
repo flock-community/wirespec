@@ -1,4 +1,6 @@
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
 object TodoWithoutProperties extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]

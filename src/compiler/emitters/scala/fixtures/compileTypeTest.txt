@@ -1,4 +1,6 @@
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
 case class Request(
   val `type`: String,
   val url: String,

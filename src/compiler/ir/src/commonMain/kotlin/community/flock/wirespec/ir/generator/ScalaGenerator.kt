@@ -115,7 +115,7 @@ object ScalaGenerator : Generator {
         return names
     }
 
-    private fun Struct.isModelStruct(): Boolean = interfaces.any { it.name == "Wirespec.Model" }
+    private fun Struct.isModelStruct(): Boolean = interfaces.any { it.name.pascalCase() == "Wirespec.Model" }
 
     private fun collectPrimaryFieldNames(elements: List<Element>): Map<String, Set<String>> {
         val result = mutableMapOf<String, Set<String>>()
@@ -134,7 +134,7 @@ object ScalaGenerator : Generator {
     }
 
     private fun ConstructorStatement.needsNew(): Boolean {
-        val typeName = (type as? Type.Custom)?.name ?: return false
+        val typeName = (type as? Type.Custom)?.name?.pascalCase() ?: return false
         if (namedArguments.isEmpty()) return false
         // Default to true for unknown types - `new CaseClass(args)` is always valid in Scala
         val primaryFields = primaryFieldNames[typeName] ?: return true
@@ -177,7 +177,7 @@ object ScalaGenerator : Generator {
 
     private fun Package.emit(indent: Int): String = "package $path\n\n".indentCode(indent)
 
-    private fun Import.emit(indent: Int): String = "import $path.${type.name}\n".indentCode(indent)
+    private fun Import.emit(indent: Int): String = "import $path.${type.name.value()}\n".indentCode(indent)
 
     private fun Namespace.emit(indent: Int, parents: List<Element>): String {
         val extStr = extends?.emitTypeAnnotation()?.let { " extends $it" }.orEmpty()
@@ -374,7 +374,7 @@ object ScalaGenerator : Generator {
         Type.Reflect -> "scala.reflect.ClassTag[?]"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
-        is Type.Custom -> name
+        is Type.Custom -> name.value()
         is Type.Nullable -> "Option[${type.emitGenerics()}]"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
@@ -403,10 +403,11 @@ object ScalaGenerator : Generator {
         is Type.Array -> "List[${elementType.emitTypeAnnotation()}]"
         is Type.Dict -> "Map[${keyType.emitTypeAnnotation()}, ${valueType.emitTypeAnnotation()}]"
         is Type.Custom -> {
+            val rawName = name.value()
             if (generics.isEmpty()) {
-                if (name in objectNames) "$name.type" else name
+                if (rawName in objectNames) "$rawName.type" else rawName
             } else {
-                "$name[${generics.joinToString(", ") { it.emitTypeAnnotation() }}]"
+                "$rawName[${generics.joinToString(", ") { it.emitTypeAnnotation() }}]"
             }
         }
         is Type.Nullable -> "Option[${type.emitTypeAnnotation()}]"
@@ -427,7 +428,7 @@ object ScalaGenerator : Generator {
     // Wirespec.Model case classes with no fields are still emitted as `case class Foo()`,
     // so they fall through to receive `()` apply-syntax below.
     private fun ConstructorStatement.isSingletonObject(): Boolean {
-        val typeName = (type as? Type.Custom)?.name ?: return false
+        val typeName = (type as? Type.Custom)?.name?.pascalCase() ?: return false
         return typeName in objectNames
     }
 
