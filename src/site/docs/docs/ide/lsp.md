@@ -35,21 +35,23 @@ See the [IDE page](./ide.md) for installation instructions.
 
 ## Using it from another editor
 
-The server is a standalone process that speaks LSP over stdio. To use it from Neovim, Helix, Emacs, Sublime, or any other LSP-capable editor:
+The server is a standalone process that speaks LSP over stdio, so any LSP-capable editor (Neovim, Helix, Emacs, Sublime, …) can drive it. Two prebuilt distributions are published with every Wirespec release: a Node-runnable npm package and a self-contained JVM fat-jar. Pick whichever fits your toolchain — both expose identical capabilities and the same wire format.
 
-### Option 1 — Node (recommended)
+### Option 1 — npm (recommended)
 
-Build the JS executable once:
-
-```bash
-./gradlew :src:ide:lsp:assemble
-```
-
-This produces a Node ES-module bundle under `src/ide/lsp/build/compileSync/js/main/productionExecutable/kotlin/`. Configure your editor to launch it with `--stdio`:
+If you already have a Node runtime around, install the language server from npm:
 
 ```bash
-node /path/to/wirespec/src/ide/lsp/build/compileSync/js/main/productionExecutable/kotlin/wirespec-src-ide-lsp.mjs --stdio
+npm install -g @flock/wirespec-lsp
 ```
+
+This puts a `wirespec-lsp` binary on your `PATH`. Point your editor at it with `--stdio`:
+
+```bash
+wirespec-lsp --stdio
+```
+
+For one-shot use without a global install, `npx --yes @flock/wirespec-lsp@{{WIRESPEC_VERSION}} --stdio` also works — useful for editor configs that spawn the LSP per project.
 
 For example, in Neovim with `nvim-lspconfig`:
 
@@ -60,11 +62,7 @@ local configs = require("lspconfig.configs")
 if not configs.wirespec then
   configs.wirespec = {
     default_config = {
-      cmd = {
-        "node",
-        "/abs/path/to/wirespec/src/ide/lsp/build/compileSync/js/main/productionExecutable/kotlin/wirespec-src-ide-lsp.mjs",
-        "--stdio",
-      },
+      cmd = { "wirespec-lsp", "--stdio" },
       filetypes = { "wirespec" },
       root_dir = lspconfig.util.root_pattern(".git", "pom.xml", "build.gradle.kts"),
     },
@@ -74,14 +72,27 @@ end
 lspconfig.wirespec.setup({})
 ```
 
-### Option 2 — JVM
+### Option 2 — JVM jar
+
+If you'd rather not depend on a Node runtime, download the fat-jar attached to the [latest Wirespec release on GitHub](https://github.com/flock-community/wirespec/releases/latest):
 
 ```bash
-./gradlew :src:ide:lsp:jvmJar
-java -jar src/ide/lsp/build/libs/lsp-jvm-*.jar
+curl -L -o wirespec-lsp.jar \
+  https://github.com/flock-community/wirespec/releases/download/{{WIRESPEC_VERSION}}/wirespec-lsp-{{WIRESPEC_VERSION}}.jar
+java -jar wirespec-lsp.jar
 ```
 
-The JVM build reads from `System.in` and writes to `System.out`, also using `Content-Length` framing. Useful when you don't want a Node runtime in your toolchain — for example, when embedding the server inside another JVM process such as the IntelliJ plugin.
+The jar reads from `System.in` and writes to `System.out`, framed with `Content-Length` headers — the same protocol the Node build speaks. This is the build the IntelliJ plugin will consume in a follow-up release.
+
+### Option 3 — Build from source
+
+Cloning the repository and running
+
+```bash
+./gradlew :src:ide:lsp:assemble
+```
+
+produces both artifacts locally: `src/ide/lsp/build/libs/lsp-jvm-*.jar` and a Node-runnable bundle under `src/ide/lsp/build/compileSync/js/main/productionExecutable/kotlin/wirespec-src-ide-lsp.mjs`. Useful when you're hacking on the server itself.
 
 ## Using it from a coding agent
 
@@ -108,15 +119,12 @@ The full request/response model is documented in the [LSP specification](https:/
 
 ### Minimal Node example
 
-The following script spawns the server, opens a document, and prints whatever the server pushes back. It uses no external libraries:
+The following script spawns the server (via `npx`, no build step required), opens a document, and prints whatever the server pushes back. It uses no external libraries:
 
 ```js
 import { spawn } from "node:child_process";
 
-const child = spawn("node", [
-  "/abs/path/to/wirespec/src/ide/lsp/build/compileSync/js/main/productionExecutable/kotlin/wirespec-src-ide-lsp.mjs",
-  "--stdio",
-]);
+const child = spawn("npx", ["--yes", "@flock/wirespec-lsp", "--stdio"]);
 
 const send = (msg) => {
   const json = JSON.stringify(msg);
