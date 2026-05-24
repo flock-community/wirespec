@@ -1,7 +1,11 @@
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
 sealed trait UserAccount
 
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
 case class UserAccountPassword(
   val username: String,
   val password: String
@@ -11,6 +15,8 @@ case class UserAccountPassword(
 }
 
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
 case class UserAccountToken(
   val token: String
 ) extends Wirespec.Shape with UserAccount {
@@ -19,6 +25,8 @@ case class UserAccountToken(
 }
 
 package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
 case class User(
   val username: String,
   val account: UserAccount

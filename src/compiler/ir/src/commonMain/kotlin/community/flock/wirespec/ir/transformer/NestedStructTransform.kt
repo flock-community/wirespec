@@ -10,7 +10,8 @@ fun Struct.qualifyNestedRefs(nestedNames: Set<String>): Struct {
     val prefix = name.pascalCase()
     return transform {
         matching<Type.Custom> { type ->
-            if (type.name in nestedNames) type.copy(name = "$prefix${type.name}") else type
+            val typeName = type.name.pascalCase()
+            if (typeName in nestedNames) type.copy(name = Name.of("$prefix$typeName")) else type
         }
     }.copy(elements = elements.filterNot { it is Struct })
 }

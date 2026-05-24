@@ -172,8 +172,8 @@ class Language(
                 val imports = resolved.elements.filterIsInstance<Import>()
                 val hasEndpointImports = imports.any { it.path.contains("endpoint") }
                 val useStatements = imports.flatMap { imp ->
-                    val typeName = imp.type.name
-                    val snakeName = Name.of(typeName).snakeCase()
+                    val typeName = imp.type.name.pascalCase()
+                    val snakeName = imp.type.name.snakeCase()
                     when {
                         imp.path.contains("endpoint") -> listOf(
                             "use generated::endpoint::${snakeName}::*;",
@@ -259,7 +259,7 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     for (stmt in body) {
         if (stmt !is Assignment) continue
         when (val value = stmt.value) {
-            is ConstructorStatement -> (value.type as? Type.Custom)?.let { variableTypes[stmt.name] = it.name }
+            is ConstructorStatement -> (value.type as? Type.Custom)?.let { variableTypes[stmt.name] = it.name.pascalCase() }
             is FunctionCall -> if (value.name == Name("validate") && value.receiver is VariableReference)
                 validateTargets.add((value.receiver as VariableReference).name)
 

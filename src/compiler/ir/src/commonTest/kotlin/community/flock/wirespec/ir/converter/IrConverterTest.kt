@@ -9,7 +9,11 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Function
@@ -24,6 +28,7 @@ import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.enum
 import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.union
 import kotlin.test.Test
@@ -168,6 +173,49 @@ class IrConverterTest {
         }
 
         assertEquals(expected, result)
+    }
+
+    @Test
+    fun testReferenceCustomWithUnderscoreMatchesDefinitionName() {
+        // Simulates an OpenAPI _embedded inline allOf type. The parser produces
+        // both a Type definition and a Reference.Custom that share the same raw
+        // name with an underscore (e.g. "Contact_embedded"). After IR
+        // conversion, the struct's emitted class name (Struct.name.pascalCase)
+        // and the field's Type.Custom reference (Type.Custom.name.value) must
+        // agree so the generated code compiles.
+        val rawName = "Contact_embedded"
+
+        val parent = AstType(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Contact"),
+            shape = AstType.Shape(
+                listOf(
+                    Field(
+                        identifier = FieldIdentifier("_embedded"),
+                        annotations = emptyList(),
+                        reference = Reference.Custom(rawName, isNullable = true),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        )
+        val inline = AstType(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier(rawName),
+            shape = AstType.Shape(emptyList()),
+            extends = emptyList(),
+        )
+
+        val parentStruct = parent.convert().findElement<Struct>()!!
+        val inlineStruct = inline.convert().findElement<Struct>()!!
+
+        val emittedStructName = inlineStruct.name.pascalCase()
+        val embeddedField = parentStruct.fields.single()
+        val customRef = ((embeddedField.type as Type.Nullable).type as Type.Custom).name.value()
+
+        assertEquals(emittedStructName, customRef)
     }
 
     @Test

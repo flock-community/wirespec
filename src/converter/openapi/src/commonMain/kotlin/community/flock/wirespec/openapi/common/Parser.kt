@@ -2,8 +2,7 @@ package community.flock.wirespec.openapi.common
 
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIModel
-import community.flock.kotlinx.openapi.bindings.OpenAPIV2Reference
-import community.flock.kotlinx.openapi.bindings.OpenAPIV3Reference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20Reference
 import community.flock.kotlinx.openapi.bindings.Operation
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.PathItem
@@ -51,7 +50,7 @@ internal fun PathItem.toOperationList() = Endpoint.Method.entries
 
 internal fun String.isParam() = this[0] == '{' && this[length - 1] == '}'
 
-internal fun OpenAPIModel.flatMapRequests(f: FlattenRequest.() -> List<Definition>) = paths
+internal fun OpenAPIModel.flatMapRequests(f: FlattenRequest.() -> List<Definition>) = paths.orEmpty()
     .flatMap { (path, pathItem) ->
         pathItem.toOperationList()
             .map { (method, operation) ->
@@ -67,7 +66,7 @@ internal data class FlattenRequest(
     val operation: Operation,
 )
 
-internal fun OpenAPIModel.flatMapResponses(f: FlattenResponse.() -> List<Definition>) = paths
+internal fun OpenAPIModel.flatMapResponses(f: FlattenResponse.() -> List<Definition>) = paths.orEmpty()
     .flatMap { (path, pathItem) ->
         pathItem.toOperationList()
             .flatMap { (method, operation) ->
@@ -112,8 +111,8 @@ internal fun Reference.toDict(isNullable: Boolean) = Reference.Dict(reference = 
 
 internal fun OpenAPIReference.getReference() = ref.value.split("/").let {
     when (this) {
-        is OpenAPIV2Reference -> it.getOrNull(2)
-        is OpenAPIV3Reference -> it.getOrNull(3)
+        is OpenAPIV20Reference -> it.getOrNull(2)
+        else -> it.getOrNull(3)
     }
 } ?: error("Wrong reference: ${ref.value}")
 

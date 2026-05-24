@@ -23,7 +23,7 @@ import community.flock.wirespec.ir.core.Type as LanguageType
 
 internal fun Definition.buildModelImports(packageName: PackageName): List<LanguageImport> = importReferences()
     .distinctBy { it.value }
-    .map { import("${packageName.value}.model", it.value) }
+    .map { import("${packageName.value}.model", Name.of(it.value).pascalCase()) }
 
 internal fun <T : Element> T.convertToStringCallsToFieldAccess(): T = transform {
     expression { expr, tr ->
@@ -39,7 +39,7 @@ internal fun <T : Element> T.addIdentityTypeToCall(): T = transform {
     matchingElements { struct: Struct ->
         struct.copy(
             interfaces = struct.interfaces.map { type ->
-                (type as? LanguageType.Custom)?.takeIf { it.name.endsWith(".Call") }
+                (type as? LanguageType.Custom)?.takeIf { it.name.pascalCase().endsWith(".Call") }
                     ?.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
                     ?: type
             },

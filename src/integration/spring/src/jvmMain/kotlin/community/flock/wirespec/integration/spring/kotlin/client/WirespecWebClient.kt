@@ -24,10 +24,10 @@ class WirespecWebClient(
     suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
         val declaringClass = request::class.java.declaringClass
         val toRequest = toRequestCache.computeIfAbsent(declaringClass) { cls ->
-            cls.declaredMethods.first { it.name == "toRequest" }
+            cls.declaredMethods.first { it.name == "toRawRequest" || it.name == "toRequest" }
         }
         val fromResponse = fromResponseCache.computeIfAbsent(declaringClass) { cls ->
-            cls.declaredMethods.first { it.name == "fromResponse" }
+            cls.declaredMethods.first { it.name == "fromRawResponse" || it.name == "fromResponse" }
         }
         val instance = declaringClass.getDeclaredField("INSTANCE").get(null)
         val rawRequest = toRequest.invoke(instance, wirespecSerde, request) as Wirespec.RawRequest

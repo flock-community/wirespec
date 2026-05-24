@@ -235,7 +235,7 @@ have access to a curated set of dependencies:
     <dependencies>
         <dependency>
             <groupId>community.flock.wirespec</groupId>
-            <artifactId>bom</artifactId>
+            <artifactId>wirespec-bom</artifactId>
             <version>{{WIRESPEC_VERSION}}</version>
             <type>pom</type>
             <scope>import</scope>

@@ -1029,7 +1029,7 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Unit -> "Unit"
     is Type.Wildcard -> "Wildcard"
     is Type.Reflect -> "Type"
-    is Type.Custom -> name
+    is Type.Custom -> name.pascalCase()
     is Type.Array -> "List${elementType.toTypeName()}"
     is Type.Nullable -> "Optional${type.toTypeName()}"
     is Type.String -> "String"
@@ -1045,7 +1045,7 @@ private fun Type.toTypeName(): String = when (this) {
 
 fun ReferenceWirespec.convert(): Type = when (this) {
     is ReferenceWirespec.Any -> Type.Custom("Any")
-    is ReferenceWirespec.Custom -> Type.Custom(value)
+    is ReferenceWirespec.Custom -> Type.Custom(Name.of(value).pascalCase())
     is ReferenceWirespec.Dict -> Type.Dict(Type.String, reference.convert())
     is ReferenceWirespec.Iterable -> Type.Array(reference.convert())
     is ReferenceWirespec.Primitive -> when (val t = type) {

@@ -32,7 +32,7 @@ import community.flock.wirespec.ir.core.Function as LanguageFunction
 
 internal fun Definition.buildModelImports(packageName: PackageName): List<Import> = importReferences()
     .filter { identifier.value != it.value }
-    .map { import("${packageName.value}.model", it.value) }
+    .map { import("${packageName.value}.model", Name.of(it.value).pascalCase()) }
 
 internal fun File.applyRefinedStructShape(refined: Refined): File = transform {
     matchingElements { struct: Struct ->
@@ -163,7 +163,7 @@ internal fun Interface.withFullyQualifiedPrefix(prefix: String): Interface = if 
             predicate = { it.name == Name.of("message") },
             transform = { param ->
                 when (val t = param.type) {
-                    is Type.Custom -> param.copy(type = t.copy(name = prefix + t.name))
+                    is Type.Custom -> param.copy(type = t.copy(name = Name.of(prefix + t.name.pascalCase())))
                     else -> param
                 }
             },
@@ -218,6 +218,6 @@ private fun Type.toJavaName(): String = when (this) {
     Type.Bytes -> "byte[]"
     Type.Any -> "Object"
     Type.Unit -> "Void"
-    is Type.Custom -> name
+    is Type.Custom -> name.pascalCase()
     else -> "Object"
 }

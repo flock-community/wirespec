@@ -52,9 +52,9 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
             return Arrays.stream(handlerClass.getDeclaredMethods())
-                    .filter(m -> m.getName().equals("fromRequest") && Modifier.isStatic(m.getModifiers()))
+                    .filter(m -> (m.getName().equals("fromRawRequest") || m.getName().equals("fromRequest")) && Modifier.isStatic(m.getModifiers()))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("fromRequest method not found in " + handlerClass));
+                    .orElseThrow(() -> new IllegalStateException("fromRawRequest method not found in " + handlerClass));
         });
 
         Wirespec.RawRequest req = toRawRequest(servletRequest);
