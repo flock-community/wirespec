@@ -16,17 +16,7 @@ kotlin {
     js(IR) {
         nodejs()
         useEsModules()
-        binaries.executable()
-        compilations["main"].packageJson {
-            customField("name", "@flock/wirespec-lsp")
-            customField(
-                "description",
-                "Wirespec Language Server Protocol implementation. Editor-agnostic; runs on Node.",
-            )
-            customField("bin", mapOf("wirespec-lsp" to "wirespec-lsp.mjs"))
-            customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
-            customField("license", "Apache-2.0")
-        }
+        binaries.library()
     }
     jvm {
         java {
@@ -45,10 +35,10 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(libs.kotlin.stdlib)
-                implementation(libs.arrow.core)
-                implementation(libs.kotlinx.serialization)
-                implementation(project(":src:compiler:core"))
+                api(libs.kotlin.stdlib)
+                api(libs.arrow.core)
+                api(libs.kotlinx.serialization)
+                api(project(":src:compiler:core"))
             }
         }
         commonTest {

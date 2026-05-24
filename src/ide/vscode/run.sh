@@ -14,8 +14,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 VSCODE_DIR="${REPO_ROOT}/src/ide/vscode"
 
 if [[ "${1:-}" != "--no-build" ]]; then
-  echo "==> Building @flock/wirespec (Kotlin/JS npm library) and @flock/wirespec-lsp (KMP)"
-  (cd "${REPO_ROOT}" && ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution :src:ide:lsp:assemble)
+  echo "==> Building @flock/wirespec (Kotlin/JS library, ships the LSP bin)"
+  (cd "${REPO_ROOT}" && ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution)
 
   echo "==> Building VS Code extension"
   (cd "${VSCODE_DIR}" && npm install && npm run esbuild)

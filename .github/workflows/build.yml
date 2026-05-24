@@ -175,7 +175,7 @@ jobs:
         with:
           node-version: 20
       - name: Build npm library and LSP for VSCode
-        run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution :src:ide:lsp:assemble
+        run: ./gradlew :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build VSCode extension
         working-directory: src/ide/vscode
         run: |
@@ -495,8 +495,7 @@ jobs:
       - name: Build lib
         run: |
           ./gradlew --no-configuration-cache publishToMavenLocal \
-                    :src:plugin:npm:jsNodeProductionLibraryDistribution \
-                    :src:ide:lsp:assemble
+                    :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build vscode extension
         working-directory: ./src/ide/vscode
         run: |
