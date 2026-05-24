@@ -1,14 +1,26 @@
 # Wirespec Language Server
 
-Editor-agnostic implementation of the Language Server Protocol for Wirespec. Provides diagnostics, semantic highlighting, and go-to-definition by delegating to the Wirespec compiler.
+Editor-agnostic implementation of the Language Server Protocol for Wirespec, written in Kotlin Multiplatform.
 
-This module was extracted from `src/ide/vscode` and is currently consumed by the VS Code extension via a local `file:` link. It is planned to be rebuilt as a Kotlin Multiplatform module (JS + JVM targets) so that it can also serve the IntelliJ plugin and be published to npm for other LSP-capable editors. See [`docs/superpowers/specs/2026-05-24-extract-lsp-module-design.md`](../../../docs/superpowers/specs/2026-05-24-extract-lsp-module-design.md) for the migration plan.
+This module produces two artifacts:
+
+- **JS (Node)** — published to `build/compileSync/js/main/productionExecutable/kotlin/` and re-bundled into the VS Code extension. See `src/ide/vscode`.
+- **JVM** — a fat-jar built by the `:src:ide:lsp:jvmJar` task, runnable as `java -jar lsp-jvm-<version>.jar`. Intended to be consumed by the IntelliJ plugin in a follow-up.
+
+The server speaks JSON-RPC 2.0 over either:
+
+- **Node IPC** (default for the VS Code extension, selected with `--node-ipc` on the JS bin)
+- **stdio** (default for everything else, including the JVM build)
+
+## Capabilities
+
+- `textDocument/publishDiagnostics` — surfaces parser errors as squiggles.
+- `textDocument/semanticTokens/full` — colorizes keywords, types, identifiers, and HTTP methods.
+- `textDocument/definition` — for a type identifier, returns every occurrence in the same document.
 
 ## Build
 
 ```bash
-npm install
-npm run build
+./gradlew :src:ide:lsp:assemble     # builds JS + JVM
+./gradlew :src:ide:lsp:jvmJar       # JVM fat-jar only
 ```
-
-Produces `build/server.js`, a single CommonJS bundle that can be spawned as a Node subprocess by an LSP client.

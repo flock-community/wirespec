@@ -2,41 +2,14 @@
   "name": "@flock/wirespec-lsp",
   "version": "0.0.0",
   "private": true,
-  "description": "Wirespec Language Server Protocol implementation. Editor-agnostic; currently consumed by the VS Code extension.",
+  "description": "Wirespec Language Server Protocol implementation. Editor-agnostic; runs on Node.",
   "repository": {
     "type": "git",
     "url": "https://github.com/flock-community/wirespec"
   },
-  "main": "build/server.js",
-  "bin": {
-    "wirespec-lsp": "build/server.js"
-  },
+  "main": "build/compileSync/js/main/productionExecutable/kotlin/wirespec-src-ide-lsp.mjs",
+  "type": "module",
   "files": [
-    "build"
-  ],
-  "dependencies": {
-    "@flock/wirespec": "file:../../plugin/npm/build/dist/js/productionLibrary/",
-    "format-util": "^1.0.5",
-    "source-map-support": "^0.5.21",
-    "vscode-languageserver": "9.0.1",
-    "vscode-languageserver-textdocument": "1.0.11"
-  },
-  "devDependencies": {
-    "@types/node": "^20.12.12",
-    "esbuild": "^0.21.4",
-    "prettier": "^3.2.5",
-    "rimraf": "^5.0.7",
-    "typescript": "^5.4.5"
-  },
-  "scripts": {
-    "build": "npm run esbuild",
-    "clean": "npm run clean:build && npm run clean:node_modules",
-    "clean:build": "npx --yes rimraf build",
-    "clean:node_modules": "npx --yes rimraf node_modules",
-    "compile": "tsc",
-    "esbuild": "esbuild src/server.ts --bundle --outfile=build/server.js --external:vscode --format=cjs --platform=node"
-  },
-  "prettier": {
-    "printWidth": 120
-  }
+    "build/compileSync/js/main/productionExecutable/kotlin"
+  ]
 }
