@@ -20,11 +20,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Demonstrates the wiremock integration. The {@code wirespec(GetTodos.class)} factory mirrors
- * WireMock's own {@code get(urlEqualTo(...))} pattern: it returns a stub builder driven by the
- * endpoint's path template and HTTP method. {@code willReturn(response)} then turns a typed
- * Wirespec response into the stub's body, status, and headers — using a Jackson-backed
- * serializer by default.
+ * Demonstrates the wiremock integration. The {@code wirespec(GetTodos.class)} factory mirrors WireMock's own
+ * {@code get(urlEqualTo(...))} pattern: it returns a stub builder driven by the endpoint's path template and HTTP
+ * method. {@code willReturn(response)} then turns a typed Wirespec response into the stub's body, status, and headers —
+ * using a Jackson-backed serializer by default.
  */
 class TodoStubTest {
 
