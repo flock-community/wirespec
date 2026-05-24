@@ -14,13 +14,9 @@
   ],
   "main": "./build/extension",
   "dependencies": {
-    "@flock/wirespec": "file:../../plugin/npm/build/dist/js/productionLibrary/",
-    "format-util": "^1.0.5",
-    "source-map-support": "^0.5.21",
+    "@flock/wirespec-lsp": "file:../lsp",
     "typescript": "^5.4.5",
-    "vscode-languageclient": "9.0.1",
-    "vscode-languageserver": "9.0.1",
-    "vscode-languageserver-textdocument": "1.0.11"
+    "vscode-languageclient": "9.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
@@ -39,7 +35,7 @@
     "compile": "tsc",
     "esbuild": "npm run esbuild:extension && npm run esbuild:server",
     "esbuild:extension": "esbuild src/extension.ts --bundle --outfile=build/extension.js --external:vscode --format=cjs --platform=node",
-    "esbuild:server": "esbuild src/server.ts --bundle --outfile=build/server.js --external:vscode --format=cjs --platform=node",
+    "esbuild:server": "esbuild node_modules/@flock/wirespec-lsp/build/server.js --bundle --outfile=build/server.js --external:vscode --format=cjs --platform=node",
     "start": "npm run build",
     "update": "update-ruecksichtslos && npm i",
     "vscode:prepublish": "npm run esbuild",
