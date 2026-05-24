@@ -22,17 +22,30 @@ object SemanticTokenLegend {
     val tokenModifiers = listOf<String>()
 }
 
-fun TokenType.toSemanticType(): Int? = when (this) {
-    is Keyword -> SemanticTokenLegend.TYPE_KEYWORD
-    is SpecificType -> SemanticTokenLegend.TYPE_TYPE
-    is TypeIdentifier, is PascalCaseIdentifier -> SemanticTokenLegend.TYPE_TYPE
-    is Method -> SemanticTokenLegend.TYPE_METHOD
+enum class TokenKind { KEYWORD, BUILT_IN_TYPE, USER_TYPE, FIELD, METHOD }
+
+fun TokenType.toTokenKind(): TokenKind? = when (this) {
+    is Keyword -> TokenKind.KEYWORD
+    is SpecificType -> TokenKind.BUILT_IN_TYPE
+    is PascalCaseIdentifier -> TokenKind.USER_TYPE
+    // TypeIdentifier is the unrefined identifier that hasn't been narrowed to a specific built-in;
+    // for our purposes treat it as a user-defined type (renameable).
+    is TypeIdentifier -> TokenKind.USER_TYPE
+    is Method -> TokenKind.METHOD
     is DromedaryCaseIdentifier,
     is KebabCaseIdentifier,
     is ScreamingKebabCaseIdentifier,
     is SnakeCaseIdentifier,
     is ScreamingSnakeCaseIdentifier,
-        -> SemanticTokenLegend.TYPE_VARIABLE
+        -> TokenKind.FIELD
 
     else -> null
+}
+
+fun TokenKind.toSemanticType(): Int = when (this) {
+    TokenKind.KEYWORD -> SemanticTokenLegend.TYPE_KEYWORD
+    TokenKind.BUILT_IN_TYPE -> SemanticTokenLegend.TYPE_TYPE
+    TokenKind.USER_TYPE -> SemanticTokenLegend.TYPE_TYPE
+    TokenKind.FIELD -> SemanticTokenLegend.TYPE_VARIABLE
+    TokenKind.METHOD -> SemanticTokenLegend.TYPE_METHOD
 }

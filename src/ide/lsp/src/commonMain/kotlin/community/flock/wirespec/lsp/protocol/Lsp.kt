@@ -114,10 +114,27 @@ object TextDocumentSyncKind {
 }
 
 @Serializable
+data class RenameOptions(val prepareProvider: Boolean = false)
+
+@Serializable
+data class RenameParams(
+    val textDocument: TextDocumentIdentifier,
+    val position: Position,
+    val newName: String,
+)
+
+@Serializable
+data class TextEdit(val range: Range, val newText: String)
+
+@Serializable
+data class WorkspaceEdit(val changes: Map<String, List<TextEdit>>)
+
+@Serializable
 data class ServerCapabilities(
     val textDocumentSync: TextDocumentSyncOptions = TextDocumentSyncOptions(),
     val semanticTokensProvider: SemanticTokensOptions? = null,
     val definitionProvider: Boolean = false,
+    val renameProvider: RenameOptions? = null,
 )
 
 @Serializable

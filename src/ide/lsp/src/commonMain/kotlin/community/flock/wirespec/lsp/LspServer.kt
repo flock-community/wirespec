@@ -7,12 +7,15 @@ import community.flock.wirespec.lsp.protocol.InitializeResult
 import community.flock.wirespec.lsp.protocol.JsonRpcError
 import community.flock.wirespec.lsp.protocol.JsonRpcMessage
 import community.flock.wirespec.lsp.protocol.PublishDiagnosticsParams
+import community.flock.wirespec.lsp.protocol.RenameOptions
+import community.flock.wirespec.lsp.protocol.RenameParams
 import community.flock.wirespec.lsp.protocol.SemanticTokensLegend
 import community.flock.wirespec.lsp.protocol.SemanticTokensOptions
 import community.flock.wirespec.lsp.protocol.SemanticTokensParams
 import community.flock.wirespec.lsp.protocol.ServerCapabilities
 import community.flock.wirespec.lsp.protocol.ServerInfo
 import community.flock.wirespec.lsp.protocol.TextDocumentPositionParams
+import community.flock.wirespec.lsp.protocol.WorkspaceEdit
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -87,6 +90,26 @@ class LspServer(private val transport: Transport) {
                 }
             }
 
+            "textDocument/prepareRename" -> {
+                val params = decodeOrNull<TextDocumentPositionParams>(message.params) ?: run {
+                    respondError(id, JsonRpcError.INVALID_PARAMS, "Invalid params for textDocument/prepareRename")
+                    return
+                }
+                val doc = documents[params.textDocument.uri]
+                val range = doc?.let { LanguageService.prepareRename(it, params.position) }
+                if (range == null) respond(id, JsonNull) else respond(id, range)
+            }
+
+            "textDocument/rename" -> {
+                val params = decodeOrNull<RenameParams>(message.params) ?: run {
+                    respondError(id, JsonRpcError.INVALID_PARAMS, "Invalid params for textDocument/rename")
+                    return
+                }
+                val doc = documents[params.textDocument.uri]
+                val edit: WorkspaceEdit? = doc?.let { LanguageService.rename(it, params.position, params.newName) }
+                if (edit == null) respond(id, JsonNull) else respond(id, edit)
+            }
+
             else -> respondError(id, JsonRpcError.METHOD_NOT_FOUND, "Method not found: ${message.method}")
         }
     }
@@ -140,6 +163,7 @@ class LspServer(private val transport: Transport) {
                 full = true,
             ),
             definitionProvider = true,
+            renameProvider = RenameOptions(prepareProvider = true),
         ),
         serverInfo = ServerInfo(name = "wirespec-lsp"),
     )

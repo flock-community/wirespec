@@ -1,6 +1,5 @@
 package community.flock.wirespec.lsp
 
-import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
@@ -16,14 +15,18 @@ import community.flock.wirespec.lsp.protocol.Location
 import community.flock.wirespec.lsp.protocol.Position
 import community.flock.wirespec.lsp.protocol.Range
 import community.flock.wirespec.lsp.protocol.SemanticTokens
+import community.flock.wirespec.lsp.protocol.TextEdit
+import community.flock.wirespec.lsp.protocol.WorkspaceEdit
 
 data class LspToken(
     val line: Int,
     val character: Int,
     val length: Int,
-    val type: Int,
+    val kind: TokenKind,
     val value: String,
-)
+) {
+    val range: Range get() = Range(Position(line, character), Position(line, character + length))
+}
 
 object LanguageService {
 
@@ -50,7 +53,7 @@ object LanguageService {
             data += deltaLine
             data += deltaChar
             data += t.length
-            data += t.type
+            data += t.kind.toSemanticType()
             data += 0 // no modifiers in this legend
             prevLine = t.line
             prevChar = t.character
@@ -59,33 +62,53 @@ object LanguageService {
     }
 
     fun definition(document: Document, position: Position): List<Location> {
-        val tokens = tokenize(document)
-        val hit = tokens.firstOrNull { t ->
-            t.line == position.line && position.character >= t.character && position.character <= t.character + t.length
-        } ?: return emptyList()
-        if (hit.type != SemanticTokenLegend.TYPE_TYPE) return emptyList()
-        return tokens
-            .filter { it.value == hit.value }
-            .map { t ->
-                Location(
-                    uri = document.uri,
-                    range = Range(
-                        start = Position(t.line, t.character),
-                        end = Position(t.line, t.character + t.length),
-                    ),
-                )
-            }
+        val hit = tokenAt(document, position) ?: return emptyList()
+        if (hit.kind != TokenKind.USER_TYPE) return emptyList()
+        return tokenize(document)
+            .filter { it.kind == TokenKind.USER_TYPE && it.value == hit.value }
+            .map { Location(uri = document.uri, range = it.range) }
+    }
+
+    /**
+     * Returns the range of the identifier at [position] if it can be renamed, or null otherwise.
+     * Only user-defined type names (PascalCase identifiers introduced by `type` / `enum` / `endpoint`
+     * / `channel`) are renameable.
+     */
+    fun prepareRename(document: Document, position: Position): Range? {
+        val hit = tokenAt(document, position) ?: return null
+        return if (hit.kind == TokenKind.USER_TYPE) hit.range else null
+    }
+
+    /**
+     * Returns a [WorkspaceEdit] that renames every occurrence of the user-defined type identifier
+     * at [position] to [newName] within [document]. Returns null when the position is not on a
+     * renameable token or when [newName] is not a valid Wirespec PascalCase identifier.
+     */
+    fun rename(document: Document, position: Position, newName: String): WorkspaceEdit? {
+        if (!isValidPascalCaseIdentifier(newName)) return null
+        val hit = tokenAt(document, position) ?: return null
+        if (hit.kind != TokenKind.USER_TYPE) return null
+        if (newName == hit.value) return WorkspaceEdit(emptyMap())
+        val edits = tokenize(document)
+            .filter { it.kind == TokenKind.USER_TYPE && it.value == hit.value }
+            .map { TextEdit(range = it.range, newText = newName) }
+        if (edits.isEmpty()) return null
+        return WorkspaceEdit(changes = mapOf(document.uri to edits))
+    }
+
+    private fun tokenAt(document: Document, position: Position): LspToken? = tokenize(document).firstOrNull { t ->
+        t.line == position.line && position.character >= t.character && position.character <= t.character + t.length
     }
 
     private fun Token.toLspToken(): LspToken? {
-        val semanticType = type.toSemanticType() ?: return null
+        val kind = type.toTokenKind() ?: return null
         val length = coordinates.idxAndLength.length
         if (length == 0) return null
         val line = coordinates.line - 1
         // coordinates.position is 1-based and points just past the token; subtract length to reach the start, then -1 for 0-indexing.
         val character = coordinates.position - 1 - length
         if (line < 0 || character < 0) return null
-        return LspToken(line = line, character = character, length = length, type = semanticType, value = value)
+        return LspToken(line = line, character = character, length = length, kind = kind, value = value)
     }
 
     private fun community.flock.wirespec.compiler.core.exceptions.WirespecException.toDiagnostic(document: Document): Diagnostic {
@@ -101,7 +124,8 @@ object LanguageService {
             source = "wirespec",
         )
     }
-
-    @Suppress("unused")
-    private fun NonEmptyList<community.flock.wirespec.compiler.core.exceptions.WirespecException>.firstError() = first()
 }
+
+private val PASCAL_CASE_REGEX = Regex("^[A-Z][A-Za-z0-9_]*$")
+
+private fun isValidPascalCaseIdentifier(name: String): Boolean = PASCAL_CASE_REGEX.matches(name)
