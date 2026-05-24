@@ -55,8 +55,8 @@ public class SpringJavaEmitter extends SpringJavaEmitterHelper {
             case PUT -> "@org.springframework.web.bind.annotation.PutMapping(\"" + path + "\")";
             case DELETE -> "@org.springframework.web.bind.annotation.DeleteMapping(\"" + path + "\")";
             case OPTIONS -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"" + path + "\", method = org.springframework.web.bind.annotation.RequestMethod.OPTIONS)";
-            case HEAD -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"" + path + "\", method = org.springframework.web.bind.annotation.RequestMethod.HEAD)";
             case PATCH -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"" + path + "\", method = org.springframework.web.bind.annotation.RequestMethod.PATCH)";
+            case HEAD -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"" + path + "\", method = org.springframework.web.bind.annotation.RequestMethod.HEAD)";
             case TRACE -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"" + path + "\", method = org.springframework.web.bind.annotation.RequestMethod.TRACE)";
         };
 

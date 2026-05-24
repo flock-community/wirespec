@@ -17,7 +17,8 @@ public class Controller implements
         DeletePet.Handler,
         FindPetsByTags.Handler,
         UploadFile.Handler,
-        RequestParrot.Handler {
+        RequestParrot.Handler,
+        DownloadReport.Handler {
 
     private final Service service;
 
@@ -87,6 +88,13 @@ public class Controller implements
                         request.queries().QueryParam(),
                         request.queries().RanDoMQueRY(),
                         request.body())
+        );
+    }
+
+    @Override
+    public CompletableFuture<DownloadReport.Response<?>> downloadReport(DownloadReport.Request request) {
+        return CompletableFuture.completedFuture(
+                new DownloadReport.Response200(new byte[]{0x50, 0x4B, 0x03, 0x04})
         );
     }
 }
