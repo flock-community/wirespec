@@ -42,6 +42,7 @@ include(
     "src:integration:avro",
     "src:integration:jackson",
     "src:integration:wirespec",
+    "src:integration:wiremock",
     "src:integration:spring",
     "src:tools:generator",
     "src:compiler:ir",
