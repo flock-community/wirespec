@@ -7,3 +7,4 @@ build/
 .env
 *.iml
 .claude/settings.local.json
+docs/superpowers
