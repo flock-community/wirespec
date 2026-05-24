@@ -40,6 +40,10 @@ kotlin {
                         "types" to "./wirespec-serialization.d.ts",
                         "default" to "./wirespec-serialization.mjs",
                     ),
+                    "./generator" to mapOf(
+                        "types" to "./wirespec-generator.d.ts",
+                        "default" to "./wirespec-generator.mjs",
+                    ),
                 ),
             )
             customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
@@ -63,6 +67,11 @@ kotlin {
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:tools:generator"))
+                // :src:integration:wirespec is JVM-only (Kotlin 1.9 metadata
+                // pin for downstream binary compat). The npm bundle reaches
+                // its kotest-based generator types via :src:integration:kotest
+                // alone — kotest's commonMain mirrors the field hierarchy.
+                implementation(project(":src:integration:kotest"))
                 implementation(libs.kotlinx.openapi.bindings)
                 implementation(libs.kotlinx.serialization)
             }

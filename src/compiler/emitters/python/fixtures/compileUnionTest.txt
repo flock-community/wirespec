@@ -6,7 +6,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 @dataclass
-class UserAccountPassword(Wirespec.Model, UserAccount):
+class UserAccountPassword(Wirespec.Shape, UserAccount):
     username: str
     password: str
     def validate(self) -> list[str]:
@@ -20,7 +20,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 @dataclass
-class UserAccountToken(Wirespec.Model, UserAccount):
+class UserAccountToken(Wirespec.Shape, UserAccount):
     token: str
     def validate(self) -> list[str]:
         return []
@@ -34,7 +34,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 from .UserAccount import UserAccount
 @dataclass
-class User(Wirespec.Model):
+class User(Wirespec.Shape):
     username: str
     account: UserAccount
     def validate(self) -> list[str]:
@@ -49,6 +49,68 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 class UserAccount:
     pass
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.UserAccountPassword import UserAccountPassword
+class UserAccountPasswordGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccountPassword:
+        return UserAccountPassword(username=generator.generate(path + ['username'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), password=generator.generate(path + ['password'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.UserAccountToken import UserAccountToken
+class UserAccountTokenGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccountToken:
+        return UserAccountToken(token=generator.generate(path + ['token'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.User import User
+from ..model.UserAccount import UserAccount
+from .UserAccountGenerator import UserAccountGenerator
+class UserGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> User:
+        return User(username=generator.generate(path + ['username'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), account=generator.generate(path + ['account'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: UserAccountGenerator.generate(generator, p0), type=UserAccount)))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.UserAccount import UserAccount
+from .UserAccountPasswordGenerator import UserAccountPasswordGenerator
+from .UserAccountTokenGenerator import UserAccountTokenGenerator
+class UserAccountGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccount:
+        variant = generator.generate(path + ['variant'], Wirespec.GeneratorFieldUnion(variants=['UserAccountPassword', 'UserAccountToken'], annotations=[], type=UserAccount))
+        match variant:
+            case 'UserAccountPassword':
+                return UserAccountPasswordGenerator.generate(generator, path + ['UserAccountPassword'])
+            case 'UserAccountToken':
+                return UserAccountTokenGenerator.generate(generator, path + ['UserAccountToken'])
+        raise Exception('Unknown variant')
 
 from . import model
 from . import endpoint

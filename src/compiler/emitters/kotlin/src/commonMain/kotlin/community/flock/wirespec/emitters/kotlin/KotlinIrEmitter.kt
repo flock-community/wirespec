@@ -38,11 +38,13 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.transform
@@ -111,7 +113,7 @@ open class KotlinIrEmitter(
             }
 
         return if (emitShared.value) {
-            wirespecShared
+            wirespecShared.copy(name = Name.of(packageName.toDir() + wirespecShared.name.value()))
         } else {
             null
         }
@@ -122,6 +124,29 @@ open class KotlinIrEmitter(
         return file
             .prependImports(wirespecImports.takeIf { module.irNeedsWirespecImport() })
             .placeInPackage(packageName = packageName, definition = definition)
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): LanguageFile? {
+        val generatorFile = when (definition) {
+            is Type -> definition.convertToGenerator(module)
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val modelImports = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .map { import("${packageName.value}.model", it) }
+            .toList()
+        return sanitized
+            .prependImports(wirespecImports + modelImports)
+            .placeInPackage(packageName = packageName, subPackage = "generator")
     }
 
     override fun emit(type: Type, module: Module): File =

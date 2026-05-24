@@ -21,8 +21,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.collectCustomTypeNames
+import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
@@ -137,6 +140,29 @@ open class JavaIrEmitter(
         return file.copy(name = Name.of(file.name.pascalCase().sanitizeSymbol()))
             .prependImports(wirespecImports.takeIf { module.irNeedsWirespecImport() })
             .placeInPackage(packageName = packageName, definition = definition)
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is AstType -> definition.convertToGenerator(module)
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val modelImports = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .map { import("${packageName.value}.model", it) }
+            .toList()
+        return sanitized
+            .prependImports(wirespecImports + modelImports)
+            .placeInPackage(packageName = packageName, subPackage = "generator")
     }
 
     override fun emit(type: AstType, module: Module): File =

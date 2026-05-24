@@ -6,7 +6,7 @@ case class Todo(
   val description: Option[String],
   val notes: List[String],
   val done: Boolean
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }

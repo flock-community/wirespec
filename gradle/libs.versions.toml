@@ -11,6 +11,7 @@ java = "17"
 junit_launcher = "1.11.3"
 kafka_avro = "7.7.1"
 kotest = "6.1.4"
+kotest_property_arbs = "3.0.0"
 ksp = "2.3.6"
 kotlin = "2.3.10"
 kotlin_api = "1.9"
@@ -47,6 +48,8 @@ kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref =
 kotest_assertions_arrow = { module = "io.kotest:kotest-assertions-arrow", version.ref = "kotest" }
 kotest_assertions_json = { module = "io.kotest:kotest-assertions-json", version.ref = "kotest" }
 kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest_property_arbs = { module = "io.kotest:kotest-property-arbs", version.ref = "kotest_property_arbs" }
 kotlin_compiler_embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin_embedded"}
 kotlin_gradle_plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
@@ -76,6 +79,7 @@ spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.re
 jackson = ["jackson_databind", "jackson_jdk8", "jackson_kotlin"]
 kotlin_test = ["kotlin_test_common", "kotlin_test_annotations_common", "kotlin_test_junit"]
 kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_json", "kotest_assertions_arrow"]
+kotest_property = ["kotest_property", "kotest_property_arbs"]
 maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
 [plugins]

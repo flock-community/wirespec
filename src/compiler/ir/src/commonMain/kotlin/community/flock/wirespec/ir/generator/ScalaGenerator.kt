@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -21,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -58,25 +61,54 @@ object ScalaGenerator : Generator {
     private var objectNames: Set<String> = emptySet()
     private var primaryFieldNames: Map<String, Set<String>> = emptyMap()
 
+    // Global object-name registry, populated by the emitter from all files before
+    // per-file generation. Lets cross-file references (e.g. `GetTodos.Request` referenced
+    // from a separate Client file) emit without parens, since Scala objects can't be `apply`d.
+    private var globalObjectNames: Set<String> = emptySet()
+
+    /**
+     * Pre-populate the cross-file object-name registry from all files in the AST.
+     * Call this before generating any individual file so cross-file constructor expressions
+     * can distinguish a singleton object reference (`Foo`) from an empty case class (`Foo()`).
+     *
+     * Only qualified names are tracked globally: unqualified name collisions across files are
+     * common (e.g. each endpoint defines its own `Request`, which may be either an object or a
+     * case class) and a local lookup must reflect the local file only.
+     */
+    fun setGlobalObjectNames(files: List<File>) {
+        globalObjectNames = files.fold(emptySet()) { acc, f ->
+            acc + collectObjectNames(f.elements).filter { '.' in it }
+        }
+    }
+
     override fun generate(element: Element): String {
         val file = if (element is File) element else File(Name.of(""), listOf(element))
-        objectNames = collectObjectNames(file.elements)
+        objectNames = collectObjectNames(file.elements) + globalObjectNames
         primaryFieldNames = collectPrimaryFieldNames(file.elements)
         return emitFile(file)
     }
 
-    private fun collectObjectNames(elements: List<Element>): Set<String> {
+    private fun collectObjectNames(elements: List<Element>, prefix: String = ""): Set<String> {
         val names = mutableSetOf<String>()
         for (element in elements) {
             when (element) {
                 is Struct -> {
+                    val pascal = element.name.pascalCase()
+                    val qualified = if (prefix.isEmpty()) pascal else "$prefix.$pascal"
                     val isObject = (element.constructors.size == 1 && element.constructors.single().parameters.isEmpty()) ||
                         (element.fields.isEmpty() && element.constructors.isEmpty())
-                    if (isObject && !element.isModelStruct()) names.add(element.name.pascalCase())
-                    names.addAll(collectObjectNames(element.elements))
+                    if (isObject && !element.isModelStruct()) {
+                        names.add(pascal)
+                        names.add(qualified)
+                    }
+                    names.addAll(collectObjectNames(element.elements, qualified))
                 }
-                is Namespace -> names.addAll(collectObjectNames(element.elements))
-                is Interface -> names.addAll(collectObjectNames(element.elements))
+                is Namespace -> {
+                    val nsName = element.name.pascalCase()
+                    val nsQualified = if (prefix.isEmpty()) nsName else "$prefix.$nsName"
+                    names.addAll(collectObjectNames(element.elements, nsQualified))
+                }
+                is Interface -> names.addAll(collectObjectNames(element.elements, prefix))
                 else -> {}
             }
         }
@@ -217,6 +249,7 @@ object ScalaGenerator : Generator {
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitTypeAnnotation() }.distinct().joinNonEmpty(" with ", " extends ")
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "[", "]") { it.type.emitGenerics() }
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
@@ -263,9 +296,9 @@ object ScalaGenerator : Generator {
         }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
-            "case class $pascal$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+            "case class $pascal$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "case class $pascal$paramsStr$implStr\n\n".indentCode(indent)
+            "case class $pascal$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -309,10 +342,15 @@ object ScalaGenerator : Generator {
 
     private fun TypeParameter.emit(): String {
         val typeStr = type.emitGenerics()
-        return if (extends.isEmpty()) {
+        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — emitting
+        // `T <: Option[Any]` would force every type argument (String, Long, Boolean, …)
+        // to also subtype Option[Any], which they don't, and break `GeneratorField[String]`
+        // implementations. Mirrors Java's handling in JavaGenerator.TypeParameter.emit.
+        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
+        return if (effectiveExtends.isEmpty()) {
             typeStr
         } else {
-            "$typeStr <: ${extends.joinToString(" with ") { it.emitGenerics() }}"
+            "$typeStr <: ${effectiveExtends.joinToString(" with ") { it.emitGenerics() }}"
         }
     }
 
@@ -340,6 +378,7 @@ object ScalaGenerator : Generator {
         is Type.Nullable -> "Option[${type.emitGenerics()}]"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) => ${returnType.emitGenerics()}"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -354,6 +393,7 @@ object ScalaGenerator : Generator {
         }
 
         is Type.Nullable -> "Option[${type.emitGenerics()}]"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) => ${returnType.emitGenerics()}"
         else -> emit()
     }
 
@@ -371,6 +411,7 @@ object ScalaGenerator : Generator {
             }
         }
         is Type.Nullable -> "Option[${type.emitTypeAnnotation()}]"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitTypeAnnotation() }}) => ${returnType.emitTypeAnnotation()}"
         else -> emit()
     }
 
@@ -383,9 +424,18 @@ object ScalaGenerator : Generator {
         }
     }
 
+    // True when the named type is a Scala `object` (singleton) — those don't take parens.
+    // Wirespec.Model case classes with no fields are still emitted as `case class Foo()`,
+    // so they fall through to receive `()` apply-syntax below.
+    private fun ConstructorStatement.isSingletonObject(): Boolean {
+        val typeName = (type as? Type.Custom)?.name?.pascalCase() ?: return false
+        return typeName in objectNames
+    }
+
     private fun ConstructorStatement.emitConstructorExpression(): String {
         val prefix = "new ".takeIf { needsNew() }.orEmpty()
-        return "$prefix${type.emitGenerics()}${formatArgs()}"
+        val args = formatArgs().ifEmpty { if (isSingletonObject()) "" else "()" }
+        return "$prefix${type.emitGenerics()}$args"
     }
 
     private fun Switch.emitMatch(caseIndent: Int): String {
@@ -436,6 +486,7 @@ object ScalaGenerator : Generator {
         is EnumValueCall -> "${emit()}\n".indentCode(indent)
         is BinaryOp -> "${emit()}\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()}.asInstanceOf[${targetType.emitGenerics()}]\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -448,12 +499,14 @@ object ScalaGenerator : Generator {
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
+        is Lambda -> "${emit()}\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toScala(): String = when (this) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> "until"
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -464,6 +517,7 @@ object ScalaGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "scala.reflect.classTag[${type.emitGenerics()}]"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "None"
@@ -486,6 +540,7 @@ object ScalaGenerator : Generator {
         is EnumValueCall -> "${expression.emit()}.toString"
         is BinaryOp -> "(${left.emit()} ${operator.toScala()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()
+        is Cast -> "${expression.emit()}.asInstanceOf[${targetType.emitGenerics()}]"
         is NullCheck -> "(${expression.emit()}.map(it => ${body.emit()})${alternative?.emit()?.let { ".getOrElse($it)" } ?: ""})"
         is NullableMap -> "(${expression.emit()}.map(it => ${body.emit()}).getOrElse(${alternative.emit()}))"
         is NullableOf -> "Some(${expression.emit()})"
@@ -507,7 +562,7 @@ object ScalaGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Scala")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "if (${condition.emit()}) ${thenExpr.emit()} else ${elseExpr.emit()}"
-        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()})"
+        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()}).toList"
         is FlatMapIndexed -> "${receiver.emit()}.zipWithIndex.flatMap { case (${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emit()} }"
         is ListConcat -> when {
             lists.isEmpty() -> "List.empty[String]"
@@ -523,6 +578,10 @@ object ScalaGenerator : Generator {
                 is StringTemplate.Part.Expr -> "\${${it.expression.emit()}}"
             }
         }}\""
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            "($params) => ${body.emit()}"
+        }
     }
 
     private fun LiteralList.emit(): String {
@@ -540,9 +599,22 @@ object ScalaGenerator : Generator {
     }
 
     private fun Literal.emit(): String = when (type) {
-        Type.String -> "\"$value\""
+        Type.String -> "\"${value.toString().escapeScalaString()}\""
         is Type.Integer -> if (type.precision == Precision.P64) "${value}L" else value.toString()
         else -> value.toString()
+    }
+
+    private fun String.escapeScalaString(): String = buildString {
+        for (c in this@escapeScalaString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
+        }
     }
 
     private fun ArrayIndexCall.emitArrayIndex(): String {

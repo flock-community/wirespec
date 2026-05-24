@@ -41,6 +41,7 @@ include(
     "src:converter:openapi",
     "src:integration:avro",
     "src:integration:jackson",
+    "src:integration:kotest",
     "src:integration:wirespec",
     "src:integration:wiremock",
     "src:integration:spring",

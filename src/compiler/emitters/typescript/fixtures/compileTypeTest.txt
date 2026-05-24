@@ -11,4 +11,12 @@ export function validateRequest(obj: Request): string[] {
   return [] as string[];
 }
 
+import {Wirespec} from '../Wirespec'
+import {Request} from '../model/Request'
+export namespace RequestGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Request {
+    return { type: generator.generate([...path, ...['type']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), url: generator.generate([...path, ...['url']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), BODY_TYPE: generator.generate([...path, ...['BODY_TYPE']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), params: generator.generate([...path, ...['params']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), headers: generator.generate([...path, ...['headers']], { kind: 'dict', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), body: generator.generate([...path, ...['body']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'dict', generate: (p1: string[]) => generator.generate(p1, { kind: 'array', generate: (p2: string[]) => generator.generate(p2, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }) }) }) };
+  }
+}
+
 export {Request} from './Request'
