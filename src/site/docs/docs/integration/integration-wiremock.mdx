@@ -10,6 +10,9 @@ The WireMock integration lets you stub Wirespec endpoints in tests with **typed*
 URL patterns and JSON bodies, you pass a generated endpoint and a typed `Response` instance — the integration derives
 the HTTP method, URL pattern, status code, and serialized body for you.
 
+`willReturn` only accepts responses that belong to the endpoint you passed to `wirespec(...)`, so a mismatch — say,
+returning a `GetTodos.Response200` from a `GetUsers` stub — is a compile error rather than a runtime surprise.
+
 The result is a stub that stays in sync with your contract: change the endpoint or response shape and the
 stub stops compiling, rather than silently drifting from production.
 
@@ -82,7 +85,7 @@ Stubbing those endpoints in a JUnit test:
     void stubsTheListEndpoint() throws Exception {
         var todos = List.of(new Todo("1", "Buy milk", false));
 
-        server.stubFor(wirespec(GetTodos.class).willReturn(new GetTodos.Response200(todos)));
+        server.stubFor(wirespec(new GetTodos.Handler.Handlers()).willReturn(new GetTodos.Response200(todos)));
 
         var response = http.send(
             HttpRequest.newBuilder().uri(URI.create(server.baseUrl() + "/api/todos")).GET().build(),
@@ -101,7 +104,7 @@ Stubbing those endpoints in a JUnit test:
     fun `stubs the list endpoint`() {
         val todos = listOf(Todo(id = "1", name = "Buy milk", done = false))
 
-        server.stubFor(wirespec<GetTodos>().willReturn(GetTodos.Response200(todos)))
+        server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
 
         val response = client.send(
             HttpRequest.newBuilder().uri(URI.create("${server.baseUrl()}/api/todos")).GET().build(),
@@ -123,41 +126,37 @@ returns a `MappingBuilder`-compatible value that plugs straight into `server.stu
 
 ### `wirespec(...)` — start a stub
 
-Two calling styles, both return a `WirespecMappingBuilder`:
+Pass the generated `Server` instance for your endpoint:
 
 <Tabs groupId="language">
   <TabItem value="java" label="Java">
     ```java
-    // Reflection: pass the endpoint class, the integration locates the generated Server.
-    wirespec(GetTodos.class)
-
-    // Explicit: pass a Server instance directly.
     wirespec(new GetTodos.Handler.Handlers())
     ```
   </TabItem>
   <TabItem value="kotlin" label="Kotlin">
     ```kotlin
-    // Reified: locate the generated Server via the endpoint type parameter.
-    wirespec<GetTodos>()
-
-    // Explicit: pass the Handler companion directly.
     wirespec(GetTodos.Handler)
     ```
   </TabItem>
 </Tabs>
 
-The endpoint's HTTP method and path template drive the WireMock request matcher. Path parameters such as `{id}` are
-translated into a `[^/]+` segment, so the stub matches any single-segment value but won't accidentally match across
-slashes.
+The returned `WirespecMappingBuilder<Res>` is parameterized by the endpoint's response type, which is what gives
+`willReturn` its compile-time check. The endpoint's HTTP method and path template drive the WireMock request matcher;
+path parameters such as `{id}` are translated into a `[^/]+` segment, so the stub matches any single-segment value but
+won't accidentally match across slashes.
 
 ### `willReturn(response)` — attach a typed response
 
-Pass any typed `Response` from the generated endpoint:
+Pass any typed `Response` from the same endpoint:
 
 ```kotlin
-wirespec<GetTodoById>().willReturn(GetTodoById.Response200(todo))
-wirespec<GetTodoById>().willReturn(GetTodoById.Response404(Error(404, "not found")))
+wirespec(GetTodoById.Handler).willReturn(GetTodoById.Response200(todo))
+wirespec(GetTodoById.Handler).willReturn(GetTodoById.Response404(Error(404, "not found")))
 ```
+
+Passing a response from a different endpoint, e.g. `wirespec(GetTodoById.Handler).willReturn(GetTodos.Response200(...))`,
+fails to compile.
 
 The integration:
 
@@ -169,7 +168,7 @@ The integration:
 
 ```kotlin
 server.stubFor(
-    wirespec<GetTodos>()
+    wirespec(GetTodos.Handler)
         .willReturn(GetTodos.Response200(todos))
         .atPriority(1)
         .inScenario("happy path")
@@ -186,7 +185,7 @@ customize the mapper (for example, to register additional modules or change nami
     ```java
     var serialization = new WirespecSerialization(new ObjectMapper().registerModule(new JavaTimeModule()));
 
-    server.stubFor(wirespec(GetTodoById.class)
+    server.stubFor(wirespec(new GetTodoById.Handler.Handlers())
         .willReturn(new GetTodoById.Response200(todo), serialization));
     ```
   </TabItem>
