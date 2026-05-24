@@ -47,7 +47,8 @@ class LspServer(private val transport: Transport) {
             when {
                 message.isRequest -> handleRequest(message)
                 message.isNotification -> handleNotification(message)
-                else -> { /* responses from client are not expected; ignore */
+                else -> {
+                    /* responses from client are not expected; ignore */
                 }
             }
         } catch (t: Throwable) {
@@ -64,7 +65,7 @@ class LspServer(private val transport: Transport) {
             "shutdown" -> respond(id, JsonNull)
             "textDocument/semanticTokens/full",
             "textDocument/semanticTokens/full/delta",
-                -> {
+            -> {
                 val params = decodeOrNull<SemanticTokensParams>(message.params) ?: run {
                     respondError(id, JsonRpcError.INVALID_PARAMS, "Invalid params for ${message.method}")
                     return
@@ -188,4 +189,3 @@ class LspServer(private val transport: Transport) {
         transport.send(json.encodeToString(message))
     }
 }
-

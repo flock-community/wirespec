@@ -19,7 +19,10 @@ class TestTransport : Transport {
     private var handler: ((String) -> Unit)? = null
     private val outbox = mutableListOf<JsonElement>()
     private var nextId = 1
-    private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+    }
 
     override fun start(onMessage: (String) -> Unit) {
         handler = onMessage

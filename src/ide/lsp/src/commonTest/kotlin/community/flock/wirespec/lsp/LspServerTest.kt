@@ -15,7 +15,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LspServerTest {
@@ -146,10 +145,13 @@ class LspServerTest {
             "textDocument/rename",
             buildJsonObject {
                 put("textDocument", buildJsonObject { put("uri", URI) })
-                put("position", buildJsonObject {
-                    put("line", 2)
-                    put("character", 7)
-                })
+                put(
+                    "position",
+                    buildJsonObject {
+                        put("line", 2)
+                        put("character", 7)
+                    },
+                )
                 put("newName", "User")
             },
         )
@@ -172,10 +174,13 @@ class LspServerTest {
             "textDocument/rename",
             buildJsonObject {
                 put("textDocument", buildJsonObject { put("uri", URI) })
-                put("position", buildJsonObject {
-                    put("line", 2)
-                    put("character", 7)
-                })
+                put(
+                    "position",
+                    buildJsonObject {
+                        put("line", 2)
+                        put("character", 7)
+                    },
+                )
                 put("newName", "lowercase")
             },
         )
@@ -193,10 +198,13 @@ class LspServerTest {
         transport.notify(
             "textDocument/didChange",
             buildJsonObject {
-                put("textDocument", buildJsonObject {
-                    put("uri", URI)
-                    put("version", 2)
-                })
+                put(
+                    "textDocument",
+                    buildJsonObject {
+                        put("uri", URI)
+                        put("version", 2)
+                    },
+                )
                 put("contentChanges", JsonArray(listOf(buildJsonObject { put("text", Fixtures.BROKEN) })))
             },
         )
@@ -216,22 +224,28 @@ class LspServerTest {
         transport.notify(
             "textDocument/didOpen",
             buildJsonObject {
-                put("textDocument", buildJsonObject {
-                    put("uri", uri)
-                    put("languageId", "wirespec")
-                    put("version", 1)
-                    put("text", text)
-                })
+                put(
+                    "textDocument",
+                    buildJsonObject {
+                        put("uri", uri)
+                        put("languageId", "wirespec")
+                        put("version", 1)
+                        put("text", text)
+                    },
+                )
             },
         )
     }
 
     private fun positionParams(line: Int, character: Int): JsonObject = buildJsonObject {
         put("textDocument", buildJsonObject { put("uri", URI) })
-        put("position", buildJsonObject {
-            put("line", line)
-            put("character", character)
-        })
+        put(
+            "position",
+            buildJsonObject {
+                put("line", line)
+                put("character", character)
+            },
+        )
     }
 
     private fun assertNullResult(response: JsonObject) {

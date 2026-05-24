@@ -24,7 +24,7 @@ class NodeStdioTransport : Transport {
             if (headerEnd < 0) return
             val header = buffer.substring(0, headerEnd)
             contentLength = parseContentLength(header) ?: -2
-            buffer.deleteRange(0,headerEnd + 4)
+            buffer.deleteRange(0, headerEnd + 4)
             if (contentLength == -2) {
                 // Malformed header; reset and try again next chunk.
                 contentLength = -1
@@ -33,7 +33,7 @@ class NodeStdioTransport : Transport {
         }
         if (buffer.length < contentLength) return
         val body = buffer.substring(0, contentLength)
-        buffer.deleteRange(0,contentLength)
+        buffer.deleteRange(0, contentLength)
         contentLength = -1
         onMessage(body)
         drainFrames(onMessage)

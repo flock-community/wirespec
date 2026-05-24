@@ -37,7 +37,7 @@ fun TokenType.toTokenKind(): TokenKind? = when (this) {
     is ScreamingKebabCaseIdentifier,
     is SnakeCaseIdentifier,
     is ScreamingSnakeCaseIdentifier,
-        -> TokenKind.FIELD
+    -> TokenKind.FIELD
 
     else -> null
 }
