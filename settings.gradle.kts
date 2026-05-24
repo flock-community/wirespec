@@ -31,6 +31,7 @@ include(
     "src:compiler:emitters:scala",
     "src:compiler:emitters:wirespec",
     "src:ide:intellij-plugin",
+    "src:ide:lsp",
     "src:plugin:arguments",
     "src:plugin:cli",
     "src:plugin:maven",

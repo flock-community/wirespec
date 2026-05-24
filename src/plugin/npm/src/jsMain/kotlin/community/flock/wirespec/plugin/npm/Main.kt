@@ -73,6 +73,9 @@ enum class Converters {
 fun cli(args: Array<String>) = main(args)
 
 @JsExport
+fun startLsp(useNodeIpc: Boolean) = community.flock.wirespec.lsp.startLsp(useNodeIpc)
+
+@JsExport
 fun tokenize(source: String) = WirespecSpec
     .tokenize(source)
     .map { it.produce() }

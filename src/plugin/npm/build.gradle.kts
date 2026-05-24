@@ -19,7 +19,13 @@ kotlin {
         binaries.library()
         compilations["main"].packageJson {
             customField("name", "@flock/wirespec")
-            customField("bin", mapOf("wirespec" to "wirespec-bin.mjs"))
+            customField(
+                "bin",
+                mapOf(
+                    "wirespec" to "wirespec-bin.mjs",
+                    "wirespec-lsp" to "wirespec-lsp.mjs",
+                ),
+            )
             customField(
                 "description",
                 "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence " +
@@ -58,6 +64,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
+                implementation(project(":src:ide:lsp"))
                 implementation(project(":src:plugin:arguments"))
                 implementation(project(":src:plugin:cli"))
                 implementation(project(":src:converter:openapi"))
