@@ -1,0 +1,225 @@
+---
+title: WireMock
+slug: /integration/wiremock
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+The WireMock integration lets you stub Wirespec endpoints in tests with **typed** responses. Instead of hand-writing
+URL patterns and JSON bodies, you pass a generated endpoint and a typed `Response` instance — the integration derives
+the HTTP method, URL pattern, status code, and serialized body for you.
+
+The result is a stub that stays in sync with your contract: change the endpoint or response shape and the
+stub stops compiling, rather than silently drifting from production.
+
+## Setup
+
+<Tabs>
+  <TabItem value="maven" label="Maven">
+    ```xml title="pom.xml"
+    <dependency>
+      <groupId>community.flock.wirespec.integration</groupId>
+      <artifactId>wiremock-jvm</artifactId>
+      <version>{{WIRESPEC_VERSION}}</version>
+    </dependency>
+    ```
+  </TabItem>
+  <TabItem value="gradle" label="Gradle">
+    ```gradle title="build.gradle.kts"
+    testImplementation("community.flock.wirespec.integration:wiremock-jvm:{{WIRESPEC_VERSION}}")
+    ```
+  </TabItem>
+</Tabs>
+
+:::warning
+This package depends on the Wirespec Jackson integration for default serialization but does **not** bring WireMock
+itself as a transitive dependency — add `org.wiremock:wiremock-standalone` (or `wiremock`) to your test scope yourself.
+:::
+
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
+
+---
+
+## Quick start
+
+Given the following Wirespec contract:
+
+```wirespec title="src/main/wirespec/todo.ws"
+type Todo {
+    id: String,
+    name: String,
+    done: Boolean
+}
+
+type Error {
+    code: Integer,
+    description: String
+}
+
+endpoint GetTodos GET /api/todos -> {
+    200 -> Todo[]
+}
+
+endpoint GetTodoById GET /api/todos/{id: String} -> {
+    200 -> Todo
+    404 -> Error
+}
+```
+
+Stubbing those endpoints in a JUnit test:
+
+<Tabs groupId="language">
+  <TabItem value="java" label="Java">
+    ```java
+    import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.wirespec;
+
+    @Test
+    void stubsTheListEndpoint() throws Exception {
+        var todos = List.of(new Todo("1", "Buy milk", false));
+
+        server.stubFor(wirespec(GetTodos.class).willReturn(new GetTodos.Response200(todos)));
+
+        var response = http.send(
+            HttpRequest.newBuilder().uri(URI.create(server.baseUrl() + "/api/todos")).GET().build(),
+            HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(200, response.statusCode());
+        assertEquals("[{\"id\":\"1\",\"name\":\"Buy milk\",\"done\":false}]", response.body());
+    }
+    ```
+  </TabItem>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    import community.flock.wirespec.integration.wiremock.kotlin.wirespec
+
+    @Test
+    fun `stubs the list endpoint`() {
+        val todos = listOf(Todo(id = "1", name = "Buy milk", done = false))
+
+        server.stubFor(wirespec<GetTodos>().willReturn(GetTodos.Response200(todos)))
+
+        val response = client.send(
+            HttpRequest.newBuilder().uri(URI.create("${server.baseUrl()}/api/todos")).GET().build(),
+            HttpResponse.BodyHandlers.ofString())
+
+        assertEquals(200, response.statusCode())
+        assertEquals("""[{"id":"1","name":"Buy milk","done":false}]""", response.body())
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+The `wirespec(...)` factory mirrors WireMock's own `get(urlEqualTo(...))` / `post(urlEqualTo(...))` builders — it
+returns a `MappingBuilder`-compatible value that plugs straight into `server.stubFor(...)`.
+
+---
+
+## API
+
+### `wirespec(...)` — start a stub
+
+Two calling styles, both return a `WirespecMappingBuilder`:
+
+<Tabs groupId="language">
+  <TabItem value="java" label="Java">
+    ```java
+    // Reflection: pass the endpoint class, the integration locates the generated Server.
+    wirespec(GetTodos.class)
+
+    // Explicit: pass a Server instance directly.
+    wirespec(new GetTodos.Handler.Handlers())
+    ```
+  </TabItem>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    // Reified: locate the generated Server via the endpoint type parameter.
+    wirespec<GetTodos>()
+
+    // Explicit: pass the Handler companion directly.
+    wirespec(GetTodos.Handler)
+    ```
+  </TabItem>
+</Tabs>
+
+The endpoint's HTTP method and path template drive the WireMock request matcher. Path parameters such as `{id}` are
+translated into a `[^/]+` segment, so the stub matches any single-segment value but won't accidentally match across
+slashes.
+
+### `willReturn(response)` — attach a typed response
+
+Pass any typed `Response` from the generated endpoint:
+
+```kotlin
+wirespec<GetTodoById>().willReturn(GetTodoById.Response200(todo))
+wirespec<GetTodoById>().willReturn(GetTodoById.Response404(Error(404, "not found")))
+```
+
+The integration:
+
+1. Serializes the response through a `Wirespec.Serialization` (Jackson-backed by default).
+2. Reads the status code from the response variant (`Response200`, `Response404`, ...).
+3. Copies any headers declared on the response into the WireMock stub.
+
+`willReturn` returns the underlying WireMock `MappingBuilder`, so you can keep chaining native WireMock methods:
+
+```kotlin
+server.stubFor(
+    wirespec<GetTodos>()
+        .willReturn(GetTodos.Response200(todos))
+        .atPriority(1)
+        .inScenario("happy path")
+)
+```
+
+### Custom serialization
+
+By default the integration uses a Jackson `ObjectMapper` wrapped in `WirespecSerialization`. Pass your own to
+customize the mapper (for example, to register additional modules or change naming strategies):
+
+<Tabs groupId="language">
+  <TabItem value="java" label="Java">
+    ```java
+    var serialization = new WirespecSerialization(new ObjectMapper().registerModule(new JavaTimeModule()));
+
+    server.stubFor(wirespec(GetTodoById.class)
+        .willReturn(new GetTodoById.Response200(todo), serialization));
+    ```
+  </TabItem>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val serialization = WirespecSerialization(ObjectMapper().registerModule(JavaTimeModule()))
+
+    server.stubFor(wirespec(GetTodoById.Handler)
+        .willReturn(GetTodoById.Response200(todo), serialization))
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## How it works
+
+Each generated endpoint exposes a `Wirespec.Server` that knows its HTTP method, path template, and how to serialize
+typed responses to a `Wirespec.RawResponse`. The integration:
+
+1. Reads `endpoint.method` and selects the matching WireMock factory (`WireMock.get(...)`, `post(...)`, etc.).
+2. Reads `endpoint.pathTemplate` and either:
+   - returns `urlPathEqualTo(path)` when there are no path parameters, or
+   - replaces every `{param}` with `[^/]+` and returns `urlPathMatching(regex)`.
+3. Routes the typed response through `endpoint.server(serialization).to(response)` to get a `RawResponse`.
+4. Copies `statusCode`, headers, and body onto a WireMock `ResponseDefinitionBuilder`.
+
+The whole thing is a thin adapter over WireMock — your tests still create a `WireMockServer`, register stubs via
+`server.stubFor(...)`, and make assertions with WireMock's own verification API.
+
+---
+
+## A full example
+
+A runnable Maven project is available in the repository:
+[examples/maven-wiremock](https://github.com/flock-community/wirespec/tree/master/examples/maven-wiremock).
