@@ -28,3 +28,44 @@ Install the [Wirespec extension](./ide.md#vs-code) and the server runs in the ba
 - **Diagnostics** appear as red squiggles when you have a syntax error.
 - **Cmd-click** (or **F12**) on a type identifier jumps between its declaration and its usages.
 - **F2** (or "Rename Symbol" in the context menu) on a user-defined type renames it everywhere in the current file.
+
+## Using it from another editor
+
+The language server ships inside the [`@flock/wirespec`](https://www.npmjs.com/package/@flock/wirespec) npm package as a `wirespec-lsp` bin. Install the package globally:
+
+```bash
+npm install -g @flock/wirespec
+```
+
+This puts a `wirespec-lsp` binary on your `PATH` (alongside the `wirespec` CLI). Point your editor at it with `--stdio`:
+
+```bash
+wirespec-lsp --stdio
+```
+
+### Zed
+
+[Zed](https://zed.dev) discovers language servers from its settings file (`~/.config/zed/settings.json`, or `.zed/settings.json` per project). Map `.ws` files to a language and bind the `wirespec-lsp` binary to that language:
+
+```json
+{
+  "file_types": {
+    "Wirespec": ["ws"]
+  },
+  "languages": {
+    "Wirespec": {
+      "language_servers": ["wirespec-lsp"]
+    }
+  },
+  "lsp": {
+    "wirespec-lsp": {
+      "binary": {
+        "path": "wirespec-lsp",
+        "arguments": ["--stdio"]
+      }
+    }
+  }
+}
+```
+
+After saving, open any `.ws` file in Zed — diagnostics, semantic highlighting, go-to-definition (`F12`), and rename (`F2`) all light up the same way they do in VS Code.
