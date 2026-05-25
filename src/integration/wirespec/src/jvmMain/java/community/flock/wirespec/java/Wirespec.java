@@ -7,13 +7,16 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface Wirespec {
+    interface Model { List<String> validate(); }
     interface Enum { String label(); }
     interface Endpoint {}
+    interface Channel {}
     interface Refined<T> { T value(); }
     interface Path {}
     interface Queries {}
     interface Headers {}
     interface Handler {}
+    interface Call {}
     interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
         Req from(RawRequest request);
         RawResponse to(Res response);

@@ -8,31 +8,22 @@ import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import community.flock.wirespec.integration.jackson.java.WirespecSerialization;
 import community.flock.wirespec.java.Wirespec;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
  * Start building a WireMock stub for a Wirespec endpoint. Mirrors WireMock's own
  * {@code get(urlEqualTo(...))} / {@code post(urlEqualTo(...))} factories — the returned
- * builder then accepts a typed Wirespec {@link Wirespec.Response} via
- * {@link WirespecMappingBuilder#willReturn(Wirespec.Response)}.
- *
- * <p>Two calling styles:
+ * builder accepts only {@link Wirespec.Response} values that belong to the same endpoint:
  *
  * <pre>
  *     import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.wirespec;
  *
- *     // Pass an explicit Server instance:
  *     server.stubFor(wirespec(new GetTodos.Handler.Handlers())
  *             .willReturn(new GetTodos.Response200(todos)));
- *
- *     // Or pass the endpoint class and let the integration find the Server reflectively
- *     // (the Java equivalent of Kotlin's reified wirespec&lt;GetTodos&gt;()):
- *     server.stubFor(wirespec(GetTodos.class)
- *             .willReturn(new GetTodos.Response200(todos)));
  * </pre>
+ *
+ * Passing a response from a different endpoint is a compile error.
  *
  * The endpoint's HTTP method and path template drive the WireMock request matcher
  * (path parameters match any non-slash segment).
@@ -44,29 +35,16 @@ public final class WirespecWireMock {
 
     private WirespecWireMock() {}
 
-    public static WirespecMappingBuilder wirespec(Wirespec.Server<?, ?> endpoint) {
-        return new WirespecMappingBuilder(endpoint, requestBuilder(endpoint));
+    public static <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> WirespecMappingBuilder<Res> wirespec(
+            Wirespec.Server<Req, Res> endpoint) {
+        return new WirespecMappingBuilder<>(endpoint, requestBuilder(endpoint));
     }
 
-    /**
-     * Reflection-based overload — {@code wirespec(GetTodos.class)} locates the
-     * {@link Wirespec.Server} implementation generated inside the endpoint class.
-     */
-    public static <E extends Wirespec.Endpoint> WirespecMappingBuilder wirespec(Class<E> endpointClass) {
-        Wirespec.Server<?, ?> server = findServer(endpointClass);
-        if (server == null) {
-            throw new IllegalArgumentException(
-                    "No Wirespec.Server implementation found inside " + endpointClass.getName()
-                            + ". Expected the generated <Endpoint>.Handler structure.");
-        }
-        return wirespec(server);
-    }
-
-    public static final class WirespecMappingBuilder {
-        private final Wirespec.Server<?, ?> endpoint;
+    public static final class WirespecMappingBuilder<Res extends Wirespec.Response<?>> {
+        private final Wirespec.Server<?, Res> endpoint;
         private final MappingBuilder mapping;
 
-        WirespecMappingBuilder(Wirespec.Server<?, ?> endpoint, MappingBuilder mapping) {
+        WirespecMappingBuilder(Wirespec.Server<?, Res> endpoint, MappingBuilder mapping) {
             this.endpoint = endpoint;
             this.mapping = mapping;
         }
@@ -77,7 +55,7 @@ public final class WirespecWireMock {
          * so callers can keep chaining WireMock methods (e.g. {@code .atPriority(...)},
          * {@code .inScenario(...)}).
          */
-        public MappingBuilder willReturn(Wirespec.Response<?> response) {
+        public MappingBuilder willReturn(Res response) {
             return willReturn(response, DEFAULT_SERIALIZATION);
         }
 
@@ -86,39 +64,9 @@ public final class WirespecWireMock {
          * Pass your own {@link Wirespec.Serialization} to customize the ObjectMapper or swap in a
          * different serializer.
          */
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        public MappingBuilder willReturn(Wirespec.Response<?> response, Wirespec.Serialization serialization) {
-            Wirespec.Server typed = endpoint;
-            return mapping.willReturn(responseBuilder(typed.getServer(serialization).to(response)));
+        public MappingBuilder willReturn(Res response, Wirespec.Serialization serialization) {
+            return mapping.willReturn(responseBuilder(endpoint.getServer(serialization).to(response)));
         }
-    }
-
-    private static Wirespec.Server<?, ?> findServer(Class<?> klass) {
-        if (Wirespec.Server.class.isAssignableFrom(klass) && !klass.isInterface()) {
-            // Kotlin companion objects expose a static INSTANCE field; Java-emitted Handlers
-            // are records with a public no-arg constructor.
-            try {
-                Field instanceField = klass.getDeclaredField("INSTANCE");
-                instanceField.setAccessible(true);
-                return (Wirespec.Server<?, ?>) instanceField.get(null);
-            } catch (ReflectiveOperationException ignored) {
-                // fall through
-            }
-            try {
-                Constructor<?> ctor = klass.getDeclaredConstructor();
-                ctor.setAccessible(true);
-                return (Wirespec.Server<?, ?>) ctor.newInstance();
-            } catch (ReflectiveOperationException ignored) {
-                // fall through
-            }
-        }
-        for (Class<?> nested : klass.getDeclaredClasses()) {
-            Wirespec.Server<?, ?> found = findServer(nested);
-            if (found != null) {
-                return found;
-            }
-        }
-        return null;
     }
 
     private static MappingBuilder requestBuilder(Wirespec.Server<?, ?> endpoint) {

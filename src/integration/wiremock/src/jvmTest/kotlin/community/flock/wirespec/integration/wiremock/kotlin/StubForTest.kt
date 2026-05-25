@@ -35,19 +35,7 @@ class StubForTest {
     }
 
     @Test
-    fun `stubs a static-path endpoint via the reified wirespec form`() {
-        val todos = listOf(TodoDto(id = "1", name = "Buy milk", done = false))
-
-        server.stubFor(wirespec<GetTodos>().willReturn(GetTodos.Response200(todos)))
-
-        val response = get("/api/todos")
-
-        assertEquals(200, response.statusCode())
-        assertEquals("""[{"id":"1","name":"Buy milk","done":false}]""", response.body())
-    }
-
-    @Test
-    fun `stubs a static-path endpoint via the explicit-server form`() {
+    fun `stubs a static-path endpoint`() {
         val todos = listOf(TodoDto(id = "1", name = "Buy milk", done = false))
 
         server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
