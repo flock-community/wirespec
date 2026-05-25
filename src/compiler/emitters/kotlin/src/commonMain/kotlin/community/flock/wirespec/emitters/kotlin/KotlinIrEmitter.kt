@@ -147,7 +147,7 @@ open class KotlinIrEmitter(
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.buildModelImports(packageName)
         val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
-        val body = endpointNamespace.injectCompanionObject(endpoint)
+        val body = endpointNamespace.injectCompanionObject(endpoint).injectApiAlias()
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
             .prependImports(imports.takeIf { it.isNotEmpty() })

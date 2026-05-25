@@ -75,6 +75,7 @@ object GetTodos : Wirespec.Endpoint {
   interface Call : Wirespec.Call {
       suspend fun getTodos(): Response<*>
   }
+  val api = Handler
 }
 
 package community.flock.wirespec.generated.model
