@@ -13,6 +13,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Precision
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
@@ -70,6 +71,12 @@ internal fun <T : Element> T.injectHandleFunction(endpoint: Endpoint): T {
                 iface
             }
         }
+    }
+}
+
+internal fun <T : Element> T.injectApiField(): T = transform {
+    injectAfter { _: Namespace ->
+        listOf(RawElement("Handler.Handlers api = new Handler.Handlers();\n"))
     }
 }
 

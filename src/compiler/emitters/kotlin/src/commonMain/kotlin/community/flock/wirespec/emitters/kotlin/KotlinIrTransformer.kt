@@ -23,6 +23,12 @@ internal fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace = tr
     }
 }
 
+internal fun Namespace.injectApiAlias(): Namespace = transform {
+    injectAfter { _: Namespace ->
+        listOf(raw("val api = Handler"))
+    }
+}
+
 private fun buildCompanionObject(endpoint: Endpoint): RawElement {
     val pathTemplate = "/" + endpoint.path.joinToString("/") {
         when (it) {

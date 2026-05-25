@@ -104,6 +104,7 @@ public interface GetTodos extends Wirespec.Endpoint {
   public interface Call extends Wirespec.Call {
     public java.util.concurrent.CompletableFuture<Response<?>> getTodos();
   }
+  Handler.Handlers api = new Handler.Handlers();
 }
 
 package community.flock.wirespec.generated.model;

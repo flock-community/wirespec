@@ -181,6 +181,7 @@ public interface PutTodo extends Wirespec.Endpoint {
   public interface Call extends Wirespec.Call {
     public java.util.concurrent.CompletableFuture<Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body);
   }
+  Handler.Handlers api = new Handler.Handlers();
 }
 
 package community.flock.wirespec.generated.model;
