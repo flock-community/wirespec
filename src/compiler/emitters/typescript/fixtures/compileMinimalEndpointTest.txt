@@ -22,9 +22,10 @@ export namespace GetTodos {
   export type Response<T = unknown> = Response2XX | ResponseListTodoDto
   export type Response2XX<T = unknown> = Response200
   export type ResponseListTodoDto = Response200
+  export type Response200Headers = {}
   export type Response200 = {
     "status": 200,
-    "headers": {},
+    "headers": Response200Headers,
     "body": TodoDto[],
   }
   export type Response200Params = {"body": TodoDto[]}

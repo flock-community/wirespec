@@ -22,16 +22,16 @@ public interface GetTodos extends Wirespec.Endpoint {
   public sealed interface Response<T> extends Wirespec.Response<T> permits Response2XX, ResponseListTodoDto {}
   public sealed interface Response2XX<T> extends Response<T> permits Response200 {}
   public sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> permits Response200 {}
+  public static record Response200Headers () implements Wirespec.Response.Headers {
+  };
   public static record Response200 (
     Integer status,
-    Headers headers,
+    Response200Headers headers,
     java.util.List<TodoDto> body
   ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
     public Response200(java.util.List<TodoDto> body) {
-      this(200, new Headers(), body);
+      this(200, new Response200Headers(), body);
     }
-    public static record Headers () implements Wirespec.Response.Headers {
-    };
   };
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
     return new Wirespec.RawRequest(

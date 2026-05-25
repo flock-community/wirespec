@@ -18,7 +18,6 @@ import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Type as LanguageType
@@ -59,8 +58,7 @@ internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
 
 internal fun File.splitEndpointStructsToModuleLevel(): File {
     val namespace = findElement<Namespace>()!!
-    val flattened = namespace.flattenNestedStructs()
-    val (moduleElements, classElements) = flattened.elements.partition { it is Struct || it is LanguageUnion }
+    val (moduleElements, classElements) = namespace.elements.partition { it is Struct || it is LanguageUnion }
     val endpointClass = Namespace(
         name = namespace.name,
         elements = classElements,

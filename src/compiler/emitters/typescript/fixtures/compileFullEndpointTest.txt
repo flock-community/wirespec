@@ -35,9 +35,10 @@ export namespace PutTodo {
   export type Response5XX<T = unknown> = Response500
   export type ResponseTodoDto = Response200 | Response201
   export type ResponseError = Response500
+  export type Response200Headers = {}
   export type Response200 = {
     "status": 200,
-    "headers": {},
+    "headers": Response200Headers,
     "body": TodoDto,
   }
   export type Response200Params = {"body": TodoDto}
@@ -46,9 +47,13 @@ export namespace PutTodo {
     headers: {},
     body: params.body,
   })
+  export type Response201Headers = {
+    "token": Token,
+    "refreshToken": Token | undefined,
+  }
   export type Response201 = {
     "status": 201,
-    "headers": {"token": Token, "refreshToken": Token | undefined},
+    "headers": Response201Headers,
     "body": TodoDto,
   }
   export type Response201Params = {"token": Token, "refreshToken"?: Token, "body": TodoDto}
@@ -57,9 +62,10 @@ export namespace PutTodo {
     headers: {"token": params["token"], "refreshToken": params["refreshToken"]},
     body: params.body,
   })
+  export type Response500Headers = {}
   export type Response500 = {
     "status": 500,
-    "headers": {},
+    "headers": Response500Headers,
     "body": Error,
   }
   export type Response500Params = {"body": Error}

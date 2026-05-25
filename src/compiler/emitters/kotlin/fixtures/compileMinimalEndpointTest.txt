@@ -15,13 +15,13 @@ object GetTodos : Wirespec.Endpoint {
   sealed interface Response<T: Any> : Wirespec.Response<T>
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface ResponseListTodoDto : Response<List<TodoDto>>
+  object Response200Headers : Wirespec.Response.Headers
   data class Response200(
       override val status: Int,
-      override val headers: Headers,
+      override val headers: Response200Headers,
       override val body: List<TodoDto>
     ) : Response2XX<List<TodoDto>>, ResponseListTodoDto {
-      constructor(body: List<TodoDto>) : this(200, Headers, body)
-      object Headers : Wirespec.Response.Headers
+      constructor(body: List<TodoDto>) : this(200, Response200Headers, body)
     }
   fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
