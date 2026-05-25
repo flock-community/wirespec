@@ -27,7 +27,6 @@ import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.core.transformer
-import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Function as LanguageFunction
@@ -102,14 +101,13 @@ private fun buildToStringFunction(refined: Refined): LanguageFunction {
 
 internal fun File.flattenForRust(): File {
     val namespace = findElement<Namespace>()!!
-    val flattened = namespace.flattenNestedStructs()
 
-    val moduleElements = flattened.elements
+    val moduleElements = namespace.elements
         .filter { it is Struct || it is LanguageUnion }
         .map { element ->
             when {
                 element is LanguageUnion && element.name.pascalCase() == "Response" -> {
-                    val members = flattened.elements
+                    val members = namespace.elements
                         .filterIsInstance<Struct>()
                         .map { it.name.pascalCase() }
                         .filter { rustResponsePattern.matches(it) }
@@ -120,7 +118,7 @@ internal fun File.flattenForRust(): File {
                 else -> element
             }
         }
-    val classElements = flattened.elements.filterNot { it is Struct || it is LanguageUnion }
+    val classElements = namespace.elements.filterNot { it is Struct || it is LanguageUnion }
 
     return LanguageFile(
         namespace.name,

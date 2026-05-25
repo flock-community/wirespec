@@ -609,29 +609,30 @@ fun EndpointWirespec.convert(): File {
                 }
             }
 
-            // Individual response records (Response200, Response201, etc.)
+            // Individual response records (Response200, Response201, etc.) with hoisted Response<Status>Headers
             endpoint.responses.distinctBy { it.status }.forEach { response ->
                 val bodyType = response.content?.reference?.convert() ?: Type.Unit
                 val statusCode = response.status.toIntOrNull() ?: 0
                 val statusClassName = response.status.replaceFirstChar { it.uppercaseChar() }
                 val statusPrefix = response.status.first()
                 val contentTypeName = bodyType.toTypeName()
+                val headersName = "Response${statusClassName}Headers"
+                struct(headersName) {
+                    implements(type("Wirespec.Response.Headers"))
+                    response.headers.forEach { field(it.identifier.toName(), it.reference.convert()) }
+                }
                 struct("Response$statusClassName") {
                     implements(type("Response${statusPrefix}XX", bodyType))
                     implements(type("Response$contentTypeName"))
                     field("status", Type.IntegerLiteral(statusCode), isOverride = true)
-                    field("headers", type("Headers"), isOverride = true)
+                    field("headers", type(headersName), isOverride = true)
                     field("body", bodyType, isOverride = true)
-                    struct("Headers") {
-                        implements(type("Wirespec.Response.Headers"))
-                        response.headers.forEach { field(it.identifier.toName(), it.reference.convert()) }
-                    }
                     constructo {
                         response.responseParameters().forEach { (name, type) -> arg(name, type) }
                         assign("status", Literal(statusCode, Type.Integer(Precision.P32)))
                         assign(
                             "headers",
-                            construct(type("Headers")) {
+                            construct(type(headersName)) {
                                 response.headers.forEach {
                                     arg(
                                         it.identifier.toName(),

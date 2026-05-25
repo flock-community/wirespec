@@ -42,44 +42,44 @@ public interface PutTodo extends Wirespec.Endpoint {
   public sealed interface Response5XX<T> extends Response<T> permits Response500 {}
   public sealed interface ResponseTodoDto extends Response<TodoDto> permits Response200, Response201 {}
   public sealed interface ResponseError extends Response<Error> permits Response500 {}
+  public static record Response200Headers () implements Wirespec.Response.Headers {
+  };
   public static record Response200 (
     Integer status,
-    Headers headers,
+    Response200Headers headers,
     TodoDto body
   ) implements Response2XX<TodoDto>, ResponseTodoDto {
     public Response200(TodoDto body) {
-      this(200, new Headers(), body);
+      this(200, new Response200Headers(), body);
     }
-    public static record Headers () implements Wirespec.Response.Headers {
-    };
+  };
+  public static record Response201Headers (
+    Token token,
+    java.util.Optional<Token> refreshToken
+  ) implements Wirespec.Response.Headers {
   };
   public static record Response201 (
     Integer status,
-    Headers headers,
+    Response201Headers headers,
     TodoDto body
   ) implements Response2XX<TodoDto>, ResponseTodoDto {
     public Response201(Token token, java.util.Optional<Token> refreshToken, TodoDto body) {
-      this(201, new Headers(
+      this(201, new Response201Headers(
         token,
         refreshToken
       ), body);
     }
-    public static record Headers (
-      Token token,
-      java.util.Optional<Token> refreshToken
-    ) implements Wirespec.Response.Headers {
-    };
+  };
+  public static record Response500Headers () implements Wirespec.Response.Headers {
   };
   public static record Response500 (
     Integer status,
-    Headers headers,
+    Response500Headers headers,
     Error body
   ) implements Response5XX<Error>, ResponseError {
     public Response500(Error body) {
-      this(500, new Headers(), body);
+      this(500, new Response500Headers(), body);
     }
-    public static record Headers () implements Wirespec.Response.Headers {
-    };
   };
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
     return new Wirespec.RawRequest(

@@ -52,7 +52,6 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
-import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
@@ -208,10 +207,9 @@ open class ScalaIrEmitter(
 
     override fun emit(endpoint: Endpoint): File {
         val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
-        val flattened = endpointNamespace.flattenNestedStructs()
-        val body = flattened
+        val body = endpointNamespace
             .injectHandleFunction()
-            .appendClientServerObjects(endpoint, isRequestObject(flattened))
+            .appendClientServerObjects(endpoint, isRequestObject(endpointNamespace))
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
             .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })
