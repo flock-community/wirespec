@@ -3,6 +3,7 @@ package community.flock.wirespec.emitters.python
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -29,7 +30,15 @@ interface PythonTypeDefinitionEmitter : TypeDefinitionEmitter, PythonIdentifierE
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}" }
 
-    override fun Field.emit() = "${emit(identifier)}: '${reference.emit()}'"
+    override fun Field.emit() = "${emit(identifier)}: '${reference.emit()}'${defaultValue.emit()}"
+
+    private fun DefaultValue?.emit() = when (this) {
+        null -> ""
+        is DefaultValue.StringValue -> " = '$value'"
+        is DefaultValue.IntegerValue -> " = $value"
+        is DefaultValue.NumberValue -> " = $value"
+        is DefaultValue.BooleanValue -> " = ${value.toString().replaceFirstChar { it.uppercase() }}"
+    }
 
     override fun Reference.emit() = emitType().let { if (isNullable) "Optional[$it]" else it }
 

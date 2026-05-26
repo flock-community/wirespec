@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.compile
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
@@ -212,5 +213,22 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileComplexModelTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileDefaultValuesTest() {
+        val source =
+            // language=ws
+            """
+            |type Defaults {
+            |  name: String = "anonymous",
+            |  count: Integer = 0,
+            |  ratio: Number = 1.5,
+            |  active: Boolean = true
+            |}
+            |
+        """.trimMargin()
+
+        compile(source)({ WirespecEmitter() }) shouldBeRight source
     }
 }

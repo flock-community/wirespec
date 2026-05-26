@@ -219,7 +219,10 @@ object PythonGenerator : Generator {
         return "def __init__(\n$selfParam$paramLines,\n$closeParen$content\n".indentCode(indent)
     }
 
-    private fun Field.emit(indent: Int, qualifier: ((String) -> String)? = null): String = "${name.value()}: ${type.emit(qualifier)}\n".indentCode(indent)
+    private fun Field.emit(indent: Int, qualifier: ((String) -> String)? = null): String {
+        val default = defaultValue?.let { " = ${it.emit()}" }.orEmpty()
+        return "${name.value()}: ${type.emit(qualifier)}$default\n".indentCode(indent)
+    }
 
     private fun AstFunction.emit(indent: Int, isInClass: Boolean = false, isStaticScope: Boolean = false, isInInterface: Boolean = false, qualifier: ((String) -> String)? = null): String {
         val params = parameters.joinToString(", ") {

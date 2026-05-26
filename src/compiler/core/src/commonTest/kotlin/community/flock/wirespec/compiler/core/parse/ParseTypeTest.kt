@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -256,5 +257,53 @@ class ParseTypeTest {
                     ),
                 )
             }
+    }
+
+    @Test
+    fun testDefaultValueParser() {
+        val source =
+            // language=ws
+            """
+            |type Foo {
+            |    name: String = "anonymous",
+            |    count: Integer = 0,
+            |    ratio: Number = 1.5,
+            |    active: Boolean = true
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .shape.value
+            .also { it shouldHaveSize 4 }
+            .map { it.identifier.value to it.defaultValue }
+            .let { defaults ->
+                defaults shouldBe listOf(
+                    "name" to DefaultValue.StringValue("anonymous"),
+                    "count" to DefaultValue.IntegerValue("0"),
+                    "ratio" to DefaultValue.NumberValue("1.5"),
+                    "active" to DefaultValue.BooleanValue(true),
+                )
+            }
+    }
+
+    @Test
+    fun testFieldWithoutDefaultValueIsNull() {
+        val source =
+            // language=ws
+            """
+            |type Foo { name: String }
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .shape.value
+            .first()
+            .defaultValue shouldBe null
     }
 }

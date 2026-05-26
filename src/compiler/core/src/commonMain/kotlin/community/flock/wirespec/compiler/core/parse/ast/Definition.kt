@@ -12,7 +12,15 @@ data class Field(
     override val annotations: List<Annotation>,
     val identifier: FieldIdentifier,
     val reference: Reference,
+    val defaultValue: DefaultValue? = null,
 ) : HasAnnotations
+
+sealed interface DefaultValue {
+    data class StringValue(val value: String) : DefaultValue
+    data class IntegerValue(val value: String) : DefaultValue
+    data class NumberValue(val value: String) : DefaultValue
+    data class BooleanValue(val value: Boolean) : DefaultValue
+}
 
 data class Endpoint(
     override val comment: Comment?,

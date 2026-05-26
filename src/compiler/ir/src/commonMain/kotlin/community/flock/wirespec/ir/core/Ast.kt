@@ -130,6 +130,7 @@ data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
+    val defaultValue: Literal? = null,
 )
 
 data class Function(

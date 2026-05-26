@@ -39,6 +39,7 @@ import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.`interface`
 import community.flock.wirespec.ir.core.transformMatchingElements
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue as DefaultValueWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint as EndpointWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
@@ -270,7 +271,7 @@ fun TypeWirespec.convert() = file(identifier.toName()) {
         implements(Type.Custom("Wirespec.Model"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
         shape.value.forEach {
-            field(it.identifier.toName(), it.reference.convert())
+            field(it.identifier.toName(), it.reference.convert(), defaultValue = it.defaultValue?.toLiteral(it.reference))
         }
         function("validate", isOverride = true) {
             returnType(Type.Array(Type.String))
@@ -948,6 +949,16 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Dict -> "Map"
     is Type.IntegerLiteral -> "Integer"
     is Type.StringLiteral -> "String"
+}
+
+fun DefaultValueWirespec.toLiteral(reference: ReferenceWirespec): Literal {
+    val irType = reference.convert().let { if (it is Type.Nullable) it.type else it }
+    return when (this) {
+        is DefaultValueWirespec.StringValue -> Literal(value, Type.String)
+        is DefaultValueWirespec.BooleanValue -> Literal(value, Type.Boolean)
+        is DefaultValueWirespec.IntegerValue -> Literal(value, irType as? Type.Integer ?: Type.Integer(Precision.P64))
+        is DefaultValueWirespec.NumberValue -> Literal(value, irType as? Type.Number ?: Type.Number(Precision.P64))
+    }
 }
 
 fun ReferenceWirespec.convert(): Type = when (this) {
