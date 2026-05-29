@@ -56,8 +56,14 @@ data class Type(
     override val identifier: DefinitionIdentifier,
     val shape: Shape,
     val extends: List<Reference>,
+    val spread: List<Spread> = emptyList(),
 ) : Model {
     data class Shape(override val value: List<Field>) : Value<List<Field>>
+
+    // Carries `...Type` spread targets from the parser until the validator flattens them
+    // into `shape`. `index` is the number of own fields preceding the spread, which
+    // preserves the textual ordering of fields once the referenced fields are spliced in.
+    data class Spread(val reference: Reference, val index: Int)
 }
 
 data class Enum(

@@ -188,6 +188,64 @@ class ParseTypeTest {
     }
 
     @Test
+    fun testTypeSpread() {
+        val source =
+            // language=ws
+            """
+            |type Pagination { page: Integer?, size: Integer? }
+            |type SomeQuery { ...Pagination, query: String? }
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(2)[1]
+            .shouldBeInstanceOf<Type>()
+            .also { it.identifier.value shouldBe "SomeQuery" }
+            .shape.value
+            .map { it.identifier.value }
+            .shouldBe(listOf("page", "size", "query"))
+    }
+
+    @Test
+    fun testTypeSpreadPreservesFieldOrder() {
+        val source =
+            // language=ws
+            """
+            |type Base { a: String }
+            |type Mixed { x: String, ...Base, y: String }
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(2)[1]
+            .shouldBeInstanceOf<Type>()
+            .also { it.identifier.value shouldBe "Mixed" }
+            .shape.value
+            .map { it.identifier.value }
+            .shouldBe(listOf("x", "a", "y"))
+    }
+
+    @Test
+    fun testTypeSpreadIsTransitive() {
+        val source =
+            // language=ws
+            """
+            |type A { a: String }
+            |type B { ...A, b: String }
+            |type C { ...B, c: String }
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(3)[2]
+            .shouldBeInstanceOf<Type>()
+            .also { it.identifier.value shouldBe "C" }
+            .shape.value
+            .map { it.identifier.value }
+            .shouldBe(listOf("a", "b", "c"))
+    }
+
+    @Test
     fun testIntegerNumberParser() {
         val source =
             // language=ws
