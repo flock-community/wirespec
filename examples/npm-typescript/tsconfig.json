@@ -5,6 +5,8 @@
     "target": "ES2015",
     "lib": ["es6", "WebWorker"],
     "strict": true,
-    "moduleResolution": "bundler"
-  }
+    "moduleResolution": "bundler",
+    "preserveSymlinks": true
+  },
+  "include": ["src"]
 }

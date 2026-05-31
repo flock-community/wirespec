@@ -46,8 +46,14 @@ kotlin {
                         "types" to "./wirespec-serialization.d.ts",
                         "default" to "./wirespec-serialization.mjs",
                     ),
+                    "./msw" to mapOf(
+                        "types" to "./wirespec-msw.d.ts",
+                        "default" to "./wirespec-msw.mjs",
+                    ),
                 ),
             )
+            customField("peerDependencies", mapOf("msw" to "^2.0.0"))
+            customField("peerDependenciesMeta", mapOf("msw" to mapOf("optional" to true)))
             customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
             customField("license", "Apache-2.0")
         }

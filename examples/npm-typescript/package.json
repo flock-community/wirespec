@@ -21,6 +21,7 @@
   "description": "",
   "devDependencies": {
     "@flock/wirespec": "file://../../src/plugin/npm/build/dist/js/productionLibrary",
+    "msw": "^2.6.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2",
     "vitest": "^3.2.4"
