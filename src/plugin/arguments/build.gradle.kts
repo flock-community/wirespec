@@ -48,6 +48,7 @@ kotlin {
                 api(project(":src:compiler:emitters:wirespec"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
+                implementation(project(":src:converter:protobuf"))
                 implementation(libs.kotlinx.io.core)
             }
         }

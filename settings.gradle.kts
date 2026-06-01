@@ -40,6 +40,7 @@ include(
     "src:converter:common",
     "src:converter:avro",
     "src:converter:openapi",
+    "src:converter:protobuf",
     "src:integration:avro",
     "src:integration:jackson",
     "src:integration:wirespec",
