@@ -13,7 +13,7 @@ impl Todo {
 use super::super::wirespec::*;
 use regex;
 pub trait CreateTodo {
-    fn invoke(todo: Todo) -> Todo;
+    fn create_todo(todo: Todo) -> Todo;
 }
 
 #![allow(warnings)]

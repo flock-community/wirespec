@@ -67,6 +67,12 @@ internal fun File.splitEndpointStructsToModuleLevel(): File {
     return LanguageFile(namespace.name, moduleElements + endpointClass)
 }
 
+internal fun <T : Element> T.snakeCaseFunctionNames(): T = transform {
+    matchingElements { func: LanguageFunction ->
+        func.copy(name = Name.of(func.name.snakeCase()))
+    }
+}
+
 internal fun <T : Element> T.snakeCaseHandlerAndCallMethods(): T = transform {
     matchingElements { iface: Interface ->
         if (iface.name != Name.of("Handler") && iface.name != Name.of("Call")) return@matchingElements iface

@@ -13,5 +13,5 @@ package community.flock.wirespec.generated.rpc;
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Todo;
 public interface CreateTodo {
-  public Todo invoke(Todo todo);
+  public Todo createTodo(Todo todo);
 }

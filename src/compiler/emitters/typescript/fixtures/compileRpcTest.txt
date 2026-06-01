@@ -8,7 +8,7 @@ export function validateTodo(obj: Todo): string[] {
 
 import {Wirespec} from '../Wirespec'
 export interface CreateTodo {
-  invoke(todo: Todo): Todo;
+  createTodo(todo: Todo): Todo;
 }
 
 export {Todo} from './Todo'

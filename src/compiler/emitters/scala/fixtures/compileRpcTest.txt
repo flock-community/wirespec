@@ -13,5 +13,5 @@ import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.Todo
 trait CreateTodo {
-  def invoke(todo: Todo): Todo
+  def createTodo(todo: Todo): Todo
 }

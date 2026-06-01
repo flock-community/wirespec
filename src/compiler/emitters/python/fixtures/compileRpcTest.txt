@@ -20,7 +20,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 class CreateTodo(ABC):
     @abstractmethod
-    def invoke(self, todo: Todo) -> Todo:
+    def create_todo(self, todo: Todo) -> Todo:
         ...
 
 from . import model

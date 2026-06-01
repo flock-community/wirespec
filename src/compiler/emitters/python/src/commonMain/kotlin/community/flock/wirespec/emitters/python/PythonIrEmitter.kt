@@ -198,6 +198,7 @@ open class PythonIrEmitter(
 
     override fun emit(rpc: Rpc): File =
         rpc.convert()
+            .snakeCaseFunctionNames()
             .sanitizeNames(sanitizationConfig)
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
