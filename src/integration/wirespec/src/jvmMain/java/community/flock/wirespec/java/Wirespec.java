@@ -11,6 +11,7 @@ public interface Wirespec {
     interface Enum { String label(); }
     interface Endpoint {}
     interface Channel {}
+    interface Rpc {}
     interface Refined<T> { T value(); }
     interface Path {}
     interface Queries {}

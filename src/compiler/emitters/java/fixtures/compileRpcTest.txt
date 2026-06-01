@@ -12,6 +12,6 @@ public record Todo (
 package community.flock.wirespec.generated.rpc;
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Todo;
-public interface CreateTodo {
+public interface CreateTodo extends Wirespec.Rpc {
   public Todo createTodo(Todo todo);
 }

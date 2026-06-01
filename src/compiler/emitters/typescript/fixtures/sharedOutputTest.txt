@@ -8,6 +8,7 @@ export namespace Wirespec {
   }
   export interface Endpoint {}
   export interface Channel {}
+  export interface Rpc {}
   export interface Refined<T> {
     value: T;
     validate(): boolean;

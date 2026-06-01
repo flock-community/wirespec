@@ -7,7 +7,7 @@ export function validateTodo(obj: Todo): string[] {
 }
 
 import {Wirespec} from '../Wirespec'
-export interface CreateTodo {
+export interface CreateTodo extends Wirespec.Rpc {
   createTodo(todo: Todo): Todo;
 }
 

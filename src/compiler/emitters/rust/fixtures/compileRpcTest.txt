@@ -12,7 +12,7 @@ impl Todo {
 
 use super::super::wirespec::*;
 use regex;
-pub trait CreateTodo {
+pub trait CreateTodo: Wirespec.Rpc {
     fn create_todo(todo: Todo) -> Todo;
 }
 

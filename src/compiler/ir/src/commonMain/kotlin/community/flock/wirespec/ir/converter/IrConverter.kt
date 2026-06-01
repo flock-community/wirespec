@@ -74,6 +74,7 @@ fun PackageName.convert(): File = file("Wirespec") {
         }
         `interface`("Endpoint")
         `interface`("Channel")
+        `interface`("Rpc")
         `interface`("Refined") {
             typeParam(type("T"))
             field("value", type("T"))
@@ -505,6 +506,7 @@ fun ChannelWirespec.convert() = file(identifier.toName()) {
 
 fun RpcWirespec.convert() = file(identifier.toName()) {
     `interface`(identifier.toName()) {
+        extends(type("Wirespec.Rpc"))
         function(identifier.toName()) {
             requestParameters.forEach { arg(it.identifier.toName(), it.reference.convert()) }
             returnType(response.convert())

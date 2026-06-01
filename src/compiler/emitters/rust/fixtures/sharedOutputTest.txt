@@ -9,6 +9,7 @@ pub trait Enum: Sized {
 }
 pub trait Endpoint {}
 pub trait Channel {}
+pub trait Rpc {}
 pub trait Refined<T> {
     fn value(&self) -> &T;
     fn validate(&self) -> bool;

@@ -18,6 +18,8 @@ class Wirespec:
         pass
     class Channel(ABC):
         pass
+    class Rpc(ABC):
+        pass
     class Refined(ABC, Generic[T]):
         value: T
         @abstractmethod

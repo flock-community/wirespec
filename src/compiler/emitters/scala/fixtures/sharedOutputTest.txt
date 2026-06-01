@@ -8,6 +8,7 @@ object Wirespec {
   }
   trait Endpoint
   trait Channel
+  trait Rpc
   trait Refined[T] {
       def value: T
       def validate(): Boolean
