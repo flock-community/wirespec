@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.ir.core.Constructor
@@ -95,4 +96,5 @@ fun Definition.sortKey(): Int = when (this) {
     is Union -> 4
     is Endpoint -> 5
     is Channel -> 6
+    is Rpc -> 7
 }

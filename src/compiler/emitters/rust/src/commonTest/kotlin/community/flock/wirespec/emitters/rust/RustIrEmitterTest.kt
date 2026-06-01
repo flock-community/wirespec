@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.ir.generator.RustGenerator
@@ -36,6 +37,13 @@ class RustIrEmitterTest {
         val rust = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { RustIrEmitter() } shouldBeRight rust
+    }
+
+    @Test
+    fun compileRpcTest() {
+        val rust = EmitterFixtures.compileRpcTest
+
+        CompileRpcTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
 
     @Test

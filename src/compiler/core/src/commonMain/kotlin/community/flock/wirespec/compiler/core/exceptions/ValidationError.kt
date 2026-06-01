@@ -39,3 +39,9 @@ class DuplicateChannelError(typeName: String) :
         coordinates = Token.Coordinates(),
         message = "Channel '$typeName' is already defined",
     )
+
+class DuplicateRpcError(typeName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Rpc '$typeName' is already defined",
+    )

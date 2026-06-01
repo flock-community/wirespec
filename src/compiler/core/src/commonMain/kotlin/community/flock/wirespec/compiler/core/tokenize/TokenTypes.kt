@@ -59,6 +59,7 @@ data object TypeDefinition : WirespecDefinition
 data object EnumTypeDefinition : WirespecDefinition
 data object ChannelDefinition : WirespecDefinition
 data object EndpointDefinition : WirespecDefinition
+data object RpcDefinition : WirespecDefinition
 
 sealed interface ChannelTokenType : TokenType
 data object Method : ChannelTokenType

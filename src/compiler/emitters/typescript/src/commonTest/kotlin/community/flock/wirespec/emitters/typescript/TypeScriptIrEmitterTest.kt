@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.ir.generator.TypeScriptGenerator
@@ -28,6 +29,13 @@ class TypeScriptIrEmitterTest {
         val typescript = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileRpcTest() {
+        val typescript = EmitterFixtures.compileRpcTest
+
+        CompileRpcTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
 
     @Test

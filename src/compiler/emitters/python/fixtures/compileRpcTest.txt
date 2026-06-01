@@ -1,0 +1,34 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class Todo(Wirespec.Model):
+    name: str
+    def validate(self) -> list[str]:
+        return []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+class CreateTodo(ABC):
+    @abstractmethod
+    def invoke(self, todo: Todo) -> Todo:
+        ...
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+

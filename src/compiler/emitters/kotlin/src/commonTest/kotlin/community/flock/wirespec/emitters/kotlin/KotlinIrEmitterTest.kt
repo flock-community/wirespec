@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
@@ -82,6 +83,13 @@ class KotlinIrEmitterTest {
         val kotlin = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun compileRpcTest() {
+        val kotlin = EmitterFixtures.compileRpcTest
+
+        CompileRpcTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
 
     @Test

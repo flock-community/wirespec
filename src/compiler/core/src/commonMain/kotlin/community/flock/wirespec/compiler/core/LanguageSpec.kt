@@ -34,6 +34,7 @@ import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
+import community.flock.wirespec.compiler.core.tokenize.RpcDefinition
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
@@ -69,6 +70,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\benum\\b") to EnumTypeDefinition,
         Regex("^\\bendpoint\\b") to EndpointDefinition,
         Regex("^\\bchannel\\b") to ChannelDefinition,
+        Regex("^\\brpc\\b") to RpcDefinition,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,

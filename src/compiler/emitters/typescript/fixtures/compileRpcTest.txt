@@ -1,0 +1,15 @@
+import {Wirespec} from '../Wirespec'
+export type Todo = {
+  "name": string,
+}
+export function validateTodo(obj: Todo): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+export interface CreateTodo {
+  invoke(todo: Todo): Todo;
+}
+
+export {Todo} from './Todo'
+export {CreateTodo} from './CreateTodo'

@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
@@ -185,6 +186,10 @@ open class JavaIrEmitter(
             .sanitizeNames(sanitizationConfig)
             .applyFunctionalInterface(fullyQualifiedPrefix)
     }
+
+    override fun emit(rpc: Rpc): File = rpc.convert()
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(rpc.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildModelImports(packageName)

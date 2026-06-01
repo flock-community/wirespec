@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.ir.generator.PythonGenerator
@@ -29,6 +30,13 @@ class PythonIrEmitterTest {
         val python = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { PythonIrEmitter() } shouldBeRight python
+    }
+
+    @Test
+    fun compileRpcTest() {
+        val python = EmitterFixtures.compileRpcTest
+
+        CompileRpcTest.compiler { PythonIrEmitter() } shouldBeRight python
     }
 
     @Test
