@@ -5,6 +5,7 @@ build:
 	(cd maven-preprocessor && ./mvnw verify) && \
 	(cd maven-spring-avro && ./mvnw verify) && \
 	(cd maven-spring-boot-4-integration && ./mvnw verify) && \
+	(cd maven-spring-boot-4-grpc && ./mvnw verify) && \
 	(cd maven-spring-compile && ./mvnw verify) && \
 	(cd maven-spring-convert && ./mvnw verify) && \
 	(cd maven-spring-custom && ./mvnw verify) && \
@@ -20,6 +21,7 @@ clean:
 	(cd maven-preprocessor && ./mvnw clean) && \
 	(cd maven-spring-avro && ./mvnw clean) && \
 	(cd maven-spring-boot-4-integration && ./mvnw clean) && \
+	(cd maven-spring-boot-4-grpc && ./mvnw clean) && \
 	(cd maven-spring-compile && ./mvnw clean) && \
 	(cd maven-spring-convert && ./mvnw clean) && \
 	(cd maven-spring-custom && ./mvnw clean) && \
@@ -47,6 +49,7 @@ yolo:
 	(cd maven-preprocessor && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-avro && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-boot-4-integration && ./mvnw verify -DskipTests) && \
+	(cd maven-spring-boot-4-grpc && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-compile && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-convert && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-custom && ./mvnw verify -DskipTests) && \
