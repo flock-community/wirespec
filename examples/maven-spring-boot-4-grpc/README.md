@@ -12,10 +12,18 @@ those stubs are implemented as Spring beans on top of the official
 type Todo      { id: String, name: String, done: Boolean }
 type TodoInput { name: String, done: Boolean }
 type TodoList  { todos: Todo[] }
+type Error     { code: String, message: String }
 
-rpc CreateTodo(todo: TodoInput) -> Todo
+rpc CreateTodo(todo: TodoInput) -> Todo ! Error
 rpc ListTodos() -> TodoList
 ```
+
+The `! Error` declares the failure payload. gRPC reports failures out-of-band as a
+**status**, so Wirespec realizes `! Error` in the generated `.proto` as a comment on the
+service, and the server returns it via `responseObserver.onError(Status...)` — see
+[`CreateTodoService`](src/main/java/community/flock/wirespec/examples/grpc/service/CreateTodoService.java).
+(In the non-gRPC code emitters the same `! Error` instead produces a `Wirespec.Either<Error, Todo>`
+return type.)
 
 ## The build pipeline
 

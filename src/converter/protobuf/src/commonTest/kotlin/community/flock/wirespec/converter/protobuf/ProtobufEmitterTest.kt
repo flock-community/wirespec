@@ -77,6 +77,44 @@ class ProtobufEmitterTest {
     }
 
     @Test
+    fun testRpcWithError() {
+        val source =
+            // language=ws
+            """
+            |type Todo { id: String }
+            |type Error { code: String }
+            |rpc CreateTodo(todo: Todo) -> Todo ! Error
+            """.trimMargin()
+
+        emit(source) shouldBe
+            """
+            |syntax = "proto3";
+            |
+            |package community.flock.wirespec.generated.proto;
+            |
+            |option java_multiple_files = true;
+            |option java_package = "community.flock.wirespec.generated.proto";
+            |
+            |message Todo {
+            |  string id = 1;
+            |}
+            |
+            |message Error {
+            |  string code = 1;
+            |}
+            |
+            |message CreateTodoRequest {
+            |  Todo todo = 1;
+            |}
+            |
+            |service CreateTodo {
+            |  // error: Error (returned as a gRPC status)
+            |  rpc CreateTodo (CreateTodoRequest) returns (Todo);
+            |}
+            """.trimMargin()
+    }
+
+    @Test
     fun testCollectionsAndNullable() {
         val source =
             // language=ws

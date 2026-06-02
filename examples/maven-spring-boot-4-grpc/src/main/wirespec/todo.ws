@@ -13,5 +13,10 @@ type TodoList {
   todos: Todo[]
 }
 
-rpc CreateTodo(todo: TodoInput) -> Todo
+type Error {
+  code: String,
+  message: String
+}
+
+rpc CreateTodo(todo: TodoInput) -> Todo ! Error
 rpc ListTodos() -> TodoList

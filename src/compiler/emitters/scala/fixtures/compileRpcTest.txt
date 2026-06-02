@@ -8,10 +8,20 @@ case class Todo(
     List.empty[String]
 }
 
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class Error(
+  val code: String
+) extends Wirespec.Model {
+  override def validate(): List[String] =
+    List.empty[String]
+}
+
 package community.flock.wirespec.generated.rpc
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.Todo
 trait CreateTodo extends Wirespec.Rpc {
-  def createTodo(todo: Todo): Todo
+  def createTodo(todo: Todo): Wirespec.Either[Error, Todo]
 }

@@ -9,6 +9,10 @@ object Wirespec {
   trait Endpoint
   trait Channel
   trait Rpc
+  trait Either[L, R] {
+      def error: Option[L]
+      def value: Option[R]
+  }
   trait Refined[T] {
       def value: T
       def validate(): Boolean

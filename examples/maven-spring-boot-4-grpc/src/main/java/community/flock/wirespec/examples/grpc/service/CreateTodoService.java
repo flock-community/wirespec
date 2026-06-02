@@ -4,6 +4,7 @@ import community.flock.wirespec.examples.grpc.proto.CreateTodoGrpc;
 import community.flock.wirespec.examples.grpc.proto.CreateTodoRequest;
 import community.flock.wirespec.examples.grpc.proto.Todo;
 import community.flock.wirespec.examples.grpc.proto.TodoInput;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,13 @@ public class CreateTodoService extends CreateTodoGrpc.CreateTodoImplBase {
     @Override
     public void createTodo(CreateTodoRequest request, StreamObserver<Todo> responseObserver) {
         TodoInput input = request.getTodo();
+        // The `! Error` in todo.ws documents the failure contract; in gRPC it surfaces as a status.
+        if (input.getName().isBlank()) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("name must not be blank")
+                    .asRuntimeException());
+            return;
+        }
         Todo todo = Todo.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setName(input.getName())

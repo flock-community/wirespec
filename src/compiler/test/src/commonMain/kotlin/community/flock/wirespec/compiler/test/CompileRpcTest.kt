@@ -6,7 +6,8 @@ object CompileRpcTest : Fixture {
         // language=ws
         """
         |type Todo { name: String }
-        |rpc CreateTodo(todo: Todo) -> Todo
+        |type Error { code: String }
+        |rpc CreateTodo(todo: Todo) -> Todo ! Error
         """.trimMargin()
 
     override val compiler = source.let(::compile)

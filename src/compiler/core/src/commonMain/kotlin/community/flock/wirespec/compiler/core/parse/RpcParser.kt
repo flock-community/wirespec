@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.tokenize.Arrow
+import community.flock.wirespec.compiler.core.tokenize.Bang
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
@@ -45,12 +46,28 @@ object RpcParser {
             }
         }
 
+        val error = when (token.type) {
+            is Bang -> {
+                eatToken().bind()
+                with(TypeParser) {
+                    when (token.type) {
+                        is LeftCurly -> parseDict().bind()
+                        is WirespecType -> parseType().bind()
+                        else -> raiseWrongToken<WirespecType>().bind()
+                    }
+                }
+            }
+
+            else -> null
+        }
+
         Rpc(
             comment = comment,
             annotations = annotations,
             identifier = identifier,
             requestParameters = requestParameters,
             response = response,
+            error = error,
         )
     }
 

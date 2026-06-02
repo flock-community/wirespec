@@ -10,6 +10,10 @@ pub trait Enum: Sized {
 pub trait Endpoint {}
 pub trait Channel {}
 pub trait Rpc {}
+pub trait Either<L, R> {
+    fn error(&self) -> Option<L>;
+    fn value(&self) -> Option<R>;
+}
 pub trait Refined<T> {
     fn value(&self) -> &T;
     fn validate(&self) -> bool;

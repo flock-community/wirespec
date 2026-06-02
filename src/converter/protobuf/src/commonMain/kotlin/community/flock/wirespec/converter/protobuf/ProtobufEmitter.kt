@@ -122,6 +122,7 @@ class ProtobufEmitter(
             else -> responseMessageName()
         }
         appendLine("service ${identifier.value} {")
+        error?.let { appendLine("  // error: ${it.protoType(module)} (returned as a gRPC status)") }
         appendLine("  rpc ${identifier.value} (${requestMessageName()}) returns ($responseType);")
         appendLine("}")
     }

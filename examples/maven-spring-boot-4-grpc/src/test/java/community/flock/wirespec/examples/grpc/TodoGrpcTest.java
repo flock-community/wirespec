@@ -1,6 +1,7 @@
 package community.flock.wirespec.examples.grpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import community.flock.wirespec.examples.grpc.proto.CreateTodoGrpc;
 import community.flock.wirespec.examples.grpc.proto.CreateTodoRequest;
@@ -13,6 +14,7 @@ import community.flock.wirespec.examples.grpc.service.CreateTodoService;
 import community.flock.wirespec.examples.grpc.service.ListTodosService;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
+import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import java.io.IOException;
@@ -77,5 +79,17 @@ class TodoGrpcTest {
 
         assertThat(todos.getTodosList()).hasSize(1);
         assertThat(todos.getTodos(0).getName()).isEqualTo("Buy milk");
+    }
+
+    @Test
+    void surfacesTheDeclaredErrorAsAGrpcStatus() {
+        var createStub = CreateTodoGrpc.newBlockingStub(channel);
+
+        // `rpc CreateTodo(...) -> Todo ! Error` — the failure path is returned as a gRPC status.
+        assertThatThrownBy(() -> createStub.createTodo(CreateTodoRequest.newBuilder()
+                        .setTodo(TodoInput.newBuilder().setName("").setDone(false).build())
+                        .build()))
+                .isInstanceOf(StatusRuntimeException.class)
+                .hasMessageContaining("INVALID_ARGUMENT");
     }
 }
