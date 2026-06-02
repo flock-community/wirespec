@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -48,9 +49,18 @@ object AvroIdlEmitter : Emitter {
     private fun renderRecord(type: Type): String {
         val doc = type.comment?.value?.let { renderDoc(it, INDENT) }.orEmpty()
         val fields = type.shape.value.joinToString("") { field ->
-            "$INDENT$INDENT${renderReference(field.reference)} ${field.identifier.value};\n"
+            val default = if (field.reference.isNullable) "" else field.defaultValue.renderDefault()
+            "$INDENT$INDENT${renderReference(field.reference)} ${field.identifier.value}$default;\n"
         }
         return "$doc${INDENT}record ${type.identifier.value} {\n$fields$INDENT}\n"
+    }
+
+    private fun DefaultValue?.renderDefault() = when (this) {
+        null -> ""
+        is DefaultValue.StringValue -> " = \"$value\""
+        is DefaultValue.IntegerValue -> " = $value"
+        is DefaultValue.NumberValue -> " = $value"
+        is DefaultValue.BooleanValue -> " = $value"
     }
 
     private fun renderEnum(enum: Enum): String {

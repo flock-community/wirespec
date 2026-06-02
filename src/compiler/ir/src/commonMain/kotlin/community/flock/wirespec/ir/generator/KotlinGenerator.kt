@@ -199,7 +199,8 @@ object KotlinGenerator : Generator {
 
         val paramsStr = fields.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") {
             val overridePrefix = "override ".takeIf { _ -> it.isOverride }.orEmpty()
-            "${overridePrefix}val ${it.name.value().sanitize()}: ${it.type.emitGenerics()}".indentCode(indent + 1)
+            val default = it.defaultValue?.let { d -> " = ${d.emitDefaultValue()}" }.orEmpty()
+            "${overridePrefix}val ${it.name.value().sanitize()}: ${it.type.emitGenerics()}$default".indentCode(indent + 1)
         }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
@@ -483,6 +484,14 @@ object KotlinGenerator : Generator {
 
     private fun Literal.emit(): String = when (type) {
         Type.String -> "\"$value\""
+        else -> value.toString()
+    }
+
+    private fun Literal.emitDefaultValue(): String = when (val t = type) {
+        Type.String -> "\"$value\""
+        Type.Boolean -> value.toString()
+        is Type.Integer -> if (t.precision == Precision.P64) "${value}L" else value.toString()
+        is Type.Number -> if (t.precision == Precision.P32) "${value}f" else value.toString()
         else -> value.toString()
     }
 

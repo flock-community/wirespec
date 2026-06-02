@@ -305,8 +305,8 @@ class StructBuilder(private val name: Name) : ContainerBuilder {
         fields.add(Field(Name.of(name), type, isOverride))
     }
 
-    fun field(name: Name, type: Type, isOverride: Boolean = false) {
-        fields.add(Field(name, type, isOverride))
+    fun field(name: Name, type: Type, isOverride: Boolean = false, defaultValue: Literal? = null) {
+        fields.add(Field(name, type, isOverride, defaultValue))
     }
 
     fun construct(type: Type, block: ConstructorBuilder.() -> Unit = {}): ConstructorStatement {

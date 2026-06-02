@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
@@ -16,6 +17,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 
 object AvroJsonEmitter : Emitter {
 
@@ -105,9 +108,19 @@ object AvroJsonEmitter : Emitter {
                 } else {
                     AvroModel.TypeList(field.emit(module, hasEmitted))
                 },
+                // Avro requires a union default to match its first branch (null for nullable
+                // fields), so a scalar default is only valid on a non-nullable field.
+                default = if (field.reference.isNullable) null else field.defaultValue?.toAvroDefault(),
             )
         },
     )
+
+    private fun DefaultValue.toAvroDefault(): JsonElement = when (this) {
+        is DefaultValue.StringValue -> JsonPrimitive(value)
+        is DefaultValue.BooleanValue -> JsonPrimitive(value)
+        is DefaultValue.IntegerValue -> JsonPrimitive(value.toLong())
+        is DefaultValue.NumberValue -> JsonPrimitive(value.toDouble())
+    }
 
     fun emit(module: Module): List<AvroModel.Type> {
         val hasEmitted = mutableListOf<String>()

@@ -47,6 +47,15 @@ class AvroIdlEmitterTest {
     }
 
     @Test
+    fun emitsDefaultValues() {
+        val ast = parse("type Pet { name: String = \"Rex\", age: Integer = 3, active: Boolean = true }")
+        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        output shouldContain "string name = \"Rex\";"
+        output shouldContain "long age = 3;"
+        output shouldContain "boolean active = true;"
+    }
+
+    @Test
     fun emitsAllPrimitives() {
         val ast = parse(
             """
