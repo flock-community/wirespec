@@ -131,6 +131,16 @@ impl<'a, S: Serialization, T: Transportation> get_todos::GetTodos::Call for GetT
     }
 }
 
+use super::super::wirespec::*;
+use regex;
+use super::super::model::todo_dto::TodoDto;
+pub struct TodoDtoGenerator;
+impl TodoDtoGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoDto {
+        return TodoDto { description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;

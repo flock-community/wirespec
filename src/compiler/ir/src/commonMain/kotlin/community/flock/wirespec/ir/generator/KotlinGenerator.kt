@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -21,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -168,6 +171,7 @@ object KotlinGenerator : Generator {
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitKotlin(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
@@ -203,9 +207,9 @@ object KotlinGenerator : Generator {
         }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
-            "data class $pascal$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+            "data class $pascal$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "data class $pascal$paramsStr$implStr\n\n".indentCode(indent)
+            "data class $pascal$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -288,6 +292,7 @@ object KotlinGenerator : Generator {
         is Type.Nullable -> "${type.emitGenerics()}?"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -302,6 +307,7 @@ object KotlinGenerator : Generator {
         }
 
         is Type.Nullable -> "${type.emitGenerics()}?"
+        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
         else -> emit()
     }
 
@@ -350,6 +356,7 @@ object KotlinGenerator : Generator {
         is EnumValueCall -> "${expression.emit()}.name\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})\n".indentCode(indent)
         is TypeDescriptor -> "${emitTypeDescriptor()}\n".indentCode(indent)
+        is Cast -> "${expression.emit()} as ${targetType.emitGenerics()}\n".indentCode(indent)
         is NullCheck -> "${emit()}\n".indentCode(indent)
         is NullableMap -> "${emit()}\n".indentCode(indent)
         is NullableOf -> "${emit()}\n".indentCode(indent)
@@ -362,12 +369,14 @@ object KotlinGenerator : Generator {
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
+        is Lambda -> "${emit()}\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toKotlin(): String = when (this) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> "until"
     }
 
     private fun Switch.emitWhen(caseIndent: Int): String {
@@ -402,6 +411,7 @@ object KotlinGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "typeOf<${type.emitGenerics()}>()"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "null"
@@ -428,6 +438,7 @@ object KotlinGenerator : Generator {
         is EnumValueCall -> "${expression.emit()}.name"
         is BinaryOp -> "(${left.emit()} ${operator.toKotlin()} ${right.emit()})"
         is TypeDescriptor -> emitTypeDescriptor()
+        is Cast -> "${expression.emit()} as ${targetType.emitGenerics()}"
         is NullCheck -> "(${expression.emit()}?.let { ${body.emit()} }${alternative?.emit()?.let { " ?: $it" } ?: ""})"
         is NullableMap -> "(${expression.emit()}?.let { ${body.emit()} } ?: ${alternative.emit()})"
         is NullableOf -> expression.emit()
@@ -465,6 +476,10 @@ object KotlinGenerator : Generator {
                 is StringTemplate.Part.Expr -> "\${${it.expression.emit()}}"
             }
         }}\""
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            if (params.isEmpty()) "{ ${body.emit()} }" else "{ $params -> ${body.emit()} }"
+        }
     }
 
     private fun LiteralList.emit(): String {
@@ -474,16 +489,31 @@ object KotlinGenerator : Generator {
     }
 
     private fun LiteralMap.emit(): String {
-        if (values.isEmpty()) return "emptyMap()"
+        if (values.isEmpty()) return "emptyMap<${keyType.emitGenerics()}, ${valueType.emitGenerics()}>()"
         val map = values.entries.joinToString(", ") {
             "${Literal(it.key, keyType).emit()} to ${it.value.emit()}"
         }
         return "mapOf($map)"
     }
 
-    private fun Literal.emit(): String = when (type) {
-        Type.String -> "\"$value\""
+    private fun Literal.emit(): String = when (val t = type) {
+        Type.String -> "\"${value.toString().escapeKotlinString()}\""
+        is Type.Integer -> if (t.precision == Precision.P64) "${value}L" else value.toString()
         else -> value.toString()
+    }
+
+    private fun String.escapeKotlinString(): String = buildString {
+        for (c in this@escapeKotlinString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '$' -> append("\\$")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
+        }
     }
 
     private fun TypeDescriptor.emitTypeDescriptor(): String = "typeOf<${type.emitGenerics()}>()"

@@ -17,7 +17,7 @@ data class Address(
   val street: String,
   val houseNumber: Long,
   val postalCode: DutchPostalCode
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     if (!postalCode.validate()) listOf("postalCode") else emptyList<String>()
 }
@@ -29,7 +29,68 @@ data class Person(
   val name: String,
   val address: Address,
   val tags: List<String>
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     address.validate().map { e -> "address.${e}" }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.DutchPostalCode
+object DutchPostalCodeGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): DutchPostalCode =
+    DutchPostalCode(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+      regex = "^([0-9]{4}[A-Z]{2})\$",
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Address
+import community.flock.wirespec.generated.model.DutchPostalCode
+object AddressGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Address =
+    Address(
+      street = generator.generate(path + listOf("street"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      houseNumber = generator.generate(path + listOf("houseNumber"), Wirespec.GeneratorFieldInteger64(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      postalCode = generator.generate(path + listOf("postalCode"), Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p0 -> DutchPostalCodeGenerator.generate(generator, p0) },
+        type = typeOf<DutchPostalCode>()
+      ))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Person
+import community.flock.wirespec.generated.model.Address
+object PersonGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Person =
+    Person(
+      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      address = generator.generate(path + listOf("address"), Wirespec.GeneratorFieldShape(
+        annotations = mapOf("street" to emptyList<Map<String, Any>>(), "houseNumber" to emptyList<Map<String, Any>>(), "postalCode" to emptyList<Map<String, Any>>()),
+        generate = { p0 -> AddressGenerator.generate(generator, p0) },
+        type = typeOf<Address>()
+      )),
+      tags = generator.generate(path + listOf("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) }))
+    )
 }

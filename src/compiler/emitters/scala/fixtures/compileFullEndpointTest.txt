@@ -164,7 +164,7 @@ import scala.reflect.ClassTag
 case class PotentialTodoDto(
   val name: String,
   val done: Boolean
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -174,7 +174,7 @@ import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 case class Token(
   val iss: String
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -186,7 +186,7 @@ case class TodoDto(
   val id: String,
   val name: String,
   val done: Boolean
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -197,7 +197,7 @@ import scala.reflect.ClassTag
 case class Error(
   val code: Long,
   val description: String
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -227,6 +227,71 @@ case class PutTodoClient(
     val rawResponse = transportation.transport(rawRequest)
     PutTodo.fromRawResponse(serialization, rawResponse)
   }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.PotentialTodoDto
+object PotentialTodoDtoGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): PotentialTodoDto =
+    new PotentialTodoDto(
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      done = generator.generate(path ++ List("done"), new Wirespec.GeneratorFieldBoolean(annotations = List.empty[Map[String, Any]]))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Token
+object TokenGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Token =
+    new Token(iss = generator.generate(path ++ List("iss"), new Wirespec.GeneratorFieldString(
+      regex = None,
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.TodoDto
+object TodoDtoGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): TodoDto =
+    new TodoDto(
+      id = generator.generate(path ++ List("id"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      done = generator.generate(path ++ List("done"), new Wirespec.GeneratorFieldBoolean(annotations = List.empty[Map[String, Any]]))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Error
+object ErrorGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Error =
+    new Error(
+      code = generator.generate(path ++ List("code"), new Wirespec.GeneratorFieldInteger64(
+        min = None,
+        max = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      description = generator.generate(path ++ List("description"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      ))
+    )
 }
 
 package community.flock.wirespec.generated

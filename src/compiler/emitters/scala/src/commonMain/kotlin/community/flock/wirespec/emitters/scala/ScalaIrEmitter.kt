@@ -26,6 +26,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
@@ -41,6 +42,7 @@ import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.TypeParameter
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
@@ -52,6 +54,7 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
+import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
@@ -74,6 +77,14 @@ open class ScalaIrEmitter(
     override val generator = ScalaGenerator
 
     override val extension = FileExtension.Scala
+
+    // Pre-scan all generated files so cross-file constructor expressions can distinguish a
+    // singleton object reference (`GetTodos.Request`) from an empty case class (`Foo()`).
+    // Scala objects can't be `apply`d but empty Wirespec.Model case classes require parens —
+    // the IR uses the same `ConstructorStatement(type, emptyMap())` for both.
+    override fun beforeGenerate(allFiles: List<LanguageFile>) {
+        ScalaGenerator.setGlobalObjectNames(allFiles)
+    }
 
     private val wirespecImports = listOf(
         import("$DEFAULT_SHARED_PACKAGE_STRING.scala", "Wirespec"),
@@ -183,6 +194,31 @@ open class ScalaIrEmitter(
             .placeInPackage(packageName = packageName, definition = definition)
     }
 
+    override fun emitGenerator(definition: Definition, module: Module): LanguageFile? {
+        val generatorFile = when (definition) {
+            is Type -> definition.convertToGenerator(module)
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val customNames = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .toList()
+        val modelImports = customNames
+            .filterNot { it.endsWith("Generator") }
+            .map { import("${packageName.value}.model", it) }
+        return sanitized
+            .prependImports(wirespecImports + modelImports)
+            .placeInPackage(packageName = packageName, subPackage = "generator")
+    }
+
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .sanitizeNames(sanitizationConfig)
@@ -207,9 +243,10 @@ open class ScalaIrEmitter(
 
     override fun emit(endpoint: Endpoint): File {
         val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
-        val body = endpointNamespace
+        val flattened = endpointNamespace.flattenNestedStructs()
+        val body = flattened
             .injectHandleFunction()
-            .appendClientServerObjects(endpoint, isRequestObject(endpointNamespace))
+            .appendClientServerObjects(endpoint, isRequestObject(flattened))
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
             .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })

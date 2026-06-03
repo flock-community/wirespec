@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -21,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -186,6 +189,7 @@ object JavaGenerator : Generator {
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " implements ")
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emitGenerics() }
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
         val typeModifier = when {
             indent == 0 -> "public record"
@@ -202,7 +206,7 @@ object JavaGenerator : Generator {
             fields.joinToString(",\n", " (\n", "\n)") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
         }
 
-        return "$typeModifier ${name.pascalCase()}$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
+        return "$typeModifier ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
     }
 
     private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int, isRecord: Boolean, modifier: String = "public"): String {
@@ -253,7 +257,11 @@ object JavaGenerator : Generator {
 
     private fun TypeParameter.emit(): String {
         val typeStr = type.emitGenerics()
-        val bounds = extends.joinNonEmpty(" & ", " extends ") { it.emitGenerics() }
+        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — Java has no
+        // analogue to Kotlin's nullable upper bound, and `T extends Optional<Object>` excludes
+        // every primitive wrapper so primitive type arguments fail to compile.
+        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
+        val bounds = effectiveExtends.joinNonEmpty(" & ", " extends ") { it.emitGenerics() }
         return "$typeStr$bounds"
     }
 
@@ -279,6 +287,25 @@ object JavaGenerator : Generator {
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
         is Type.IntegerLiteral -> "Integer"
         is Type.StringLiteral -> "String"
+        is Type.Function -> when (parameterTypes.size) {
+            0 -> "java.util.function.Supplier<${returnType.emitGenerics()}>"
+            1 -> "java.util.function.Function<${parameterTypes[0].emitGenerics()}, ${returnType.emitGenerics()}>"
+            2 -> "java.util.function.BiFunction<${parameterTypes[0].emitGenerics()}, ${parameterTypes[1].emitGenerics()}, ${returnType.emitGenerics()}>"
+            else -> error("Java emitter only supports 0-, 1-, or 2-arg function types, got ${parameterTypes.size}")
+        }
+    }
+
+    /**
+     * Emit a type for use as a constructor target (`new X...`). For Wirespec runtime
+     * generic records (`GeneratorFieldArray`, `GeneratorFieldNullable`, `GeneratorFieldShape`,
+     * `GeneratorFieldDict`) we append `<>` so javac infers the type argument from the
+     * constructor's lambda; without the diamond the type is raw and `Generator.generate`
+     * returns `Object`, which fails to assign to the surrounding record component.
+     */
+    private fun Type.emitConstructorType(): String {
+        val str = emitGenerics()
+        val needsDiamond = this is Type.Custom && generics.isEmpty() && str in PARAMETRIC_RUNTIME_TYPES
+        return if (needsDiamond) "$str<>" else str
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -292,6 +319,7 @@ object JavaGenerator : Generator {
             }
         }
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
+        is Type.Function -> emit()
         else -> emit()
     }
 
@@ -306,12 +334,18 @@ object JavaGenerator : Generator {
 
     private fun Statement.emit(indent: Int, isInsideConstructor: Boolean = false): String = when (this) {
         is PrintStatement -> "System.out.println(${expression.emit()});\n".indentCode(indent)
-        is ReturnStatement -> "return ${expression.emit()};\n".indentCode(indent)
+        is ReturnStatement -> when (val expr = expression) {
+            // Java has no switch-expression with type patterns; rewrite each
+            // branch's terminal expression into `return X` so the existing
+            // if/else-if/instanceof Switch emit handles it.
+            is Switch -> expr.rewriteAsReturnChain().emit(indent)
+            else -> "return ${expression.emit()};\n".indentCode(indent)
+        }
         is ConstructorStatement -> {
             val expr = when {
                 type == Type.Unit -> "null"
                 isInsideConstructor -> "this${formatArgs()}"
-                else -> "new ${type.emitGenerics()}${formatArgs()}"
+                else -> "new ${type.emitConstructorType()}${formatArgs()}"
             }
             "$expr;\n".indentCode(indent)
         }
@@ -320,7 +354,7 @@ object JavaGenerator : Generator {
         is LiteralMap -> "${emit()};\n".indentCode(indent)
         is Assignment -> {
             val expr = (value as? ConstructorStatement)?.let { c ->
-                if (c.type == Type.Unit) "null" else "new ${c.type.emitGenerics()}${c.formatArgs()}"
+                if (c.type == Type.Unit) "null" else "new ${c.type.emitConstructorType()}${c.formatArgs()}"
             } ?: value.emit()
             val lhs = if (isProperty) name.value().sanitize() else "final var ${name.camelCase().sanitize()}"
             "$lhs = $expr;\n".indentCode(indent)
@@ -334,7 +368,11 @@ object JavaGenerator : Generator {
                 val casesStr = cases.mapIndexed { index, case ->
                     val bodyStr = case.body.joinToString("") { it.emit(1) }
                     val typeStr = case.type?.emitGenerics() ?: "Object"
-                    val varName = variable?.camelCase() ?: "_"
+                    // Java reserves `_` as an identifier, so fall back to a
+                    // synthesized name when no pattern variable is supplied.
+                    // Callers that need to use the narrowed binding inside case
+                    // bodies must set Switch.variable and reference it there.
+                    val varName = variable?.camelCase() ?: "__matched"
                     val prefix = if (index == 0) "if" else " else if"
                     "$prefix (${expression.emit()} instanceof $typeStr $varName) {\n$bodyStr}"
                 }.joinToString("")
@@ -367,6 +405,9 @@ object JavaGenerator : Generator {
         is EnumValueCall -> "${emit()};\n".indentCode(indent)
         is BinaryOp -> "${emit()};\n".indentCode(indent)
         is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        // Route primitive expressions through Object: Java won't auto-box
+        // during an unchecked cast to a type parameter T.
+        is Cast -> "((${targetType.emitGenerics()}) (Object) ${expression.emit()});\n".indentCode(indent)
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -379,12 +420,14 @@ object JavaGenerator : Generator {
         is FlatMapIndexed -> "${emit()};\n".indentCode(indent)
         is ListConcat -> "${emit()};\n".indentCode(indent)
         is StringTemplate -> "${emit()};\n".indentCode(indent)
+        is Lambda -> "${emit()};\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toJava(): String = when (this) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in Java")
     }
 
     private fun BinaryOp.isPrimitiveLiteral(): Boolean = left is Literal &&
@@ -394,11 +437,12 @@ object JavaGenerator : Generator {
 
     private fun Expression.emit(): String = when (this) {
         is ConstructorStatement -> {
-            if (type == Type.Unit) "null" else "new ${type.emitGenerics()}${formatArgs()}"
+            if (type == Type.Unit) "null" else "new ${type.emitConstructorType()}${formatArgs()}"
         }
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "${type.emitGenerics()}.class"
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "java.util.Optional.empty()"
@@ -433,6 +477,7 @@ object JavaGenerator : Generator {
             else -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
         }
         is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        is Cast -> "((${targetType.emitGenerics()}) (Object) ${expression.emit()})"
         is NullCheck -> {
             val orElse = when (val alt = alternative) {
                 is ErrorStatement -> ".orElseThrow(() -> new IllegalStateException(${alt.message.emit()}))"
@@ -466,7 +511,16 @@ object JavaGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Java")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "(${condition.emit()} ? ${thenExpr.emit()} : ${elseExpr.emit()})"
-        is MapExpression -> "${receiver.emit()}.stream().map(${variable.camelCase()} -> ${body.emit()}).toList()"
+        is MapExpression -> {
+            // `(0 until N).map { i -> ... }` from the generator converter becomes
+            // `IntStream.range(0, N).mapToObj(i -> ...).toList()` in Java.
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                "java.util.stream.IntStream.range(${recv.left.emit()}, ${recv.right.emit()}).mapToObj(${variable.camelCase()} -> ${body.emit()}).toList()"
+            } else {
+                "${receiver.emit()}.stream().map(${variable.camelCase()} -> ${body.emit()}).toList()"
+            }
+        }
         is FlatMapIndexed -> {
             val recv = receiver.emit()
             val bodyWithSubstitution = body.emitWithSubstitution(elementVar, "$recv.get(${indexVar.camelCase()})")
@@ -482,6 +536,10 @@ object JavaGenerator : Generator {
                 is StringTemplate.Part.Text -> "\"${it.value}\""
                 is StringTemplate.Part.Expr -> it.expression.emit()
             }
+        }
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            "($params) -> ${body.emit()}"
         }
     }
 
@@ -504,7 +562,7 @@ object JavaGenerator : Generator {
         is MapExpression -> "${receiver.emitWithSubstitution(varName, replacement)}.stream().map(${variable.camelCase()} -> ${body.emitWithSubstitution(varName, replacement)}).toList()"
         is LiteralList -> {
             if (values.isEmpty()) {
-                "java.util.List.<${type.emit()}>of()"
+                "java.util.List.<${type.emitGenerics()}>of()"
             } else {
                 val list = values.map { it.emitWithSubstitution(varName, replacement) }.joinToString(", ")
                 "java.util.List.of($list)"
@@ -520,7 +578,7 @@ object JavaGenerator : Generator {
     }
 
     private fun LiteralList.emit(): String {
-        if (values.isEmpty()) return "java.util.List.<${type.emit()}>of()"
+        if (values.isEmpty()) return "java.util.List.<${type.emitGenerics()}>of()"
         val list = values.joinToString(", ") { it.emit() }
         return "java.util.List.of($list)"
     }
@@ -534,10 +592,44 @@ object JavaGenerator : Generator {
     }
 
     private fun Literal.emit(): String = when {
-        type is Type.String -> "\"$value\""
+        type is Type.String -> "\"${value.toString().escapeJavaString()}\""
         value is Long -> "${value}L"
         else -> value.toString()
     }
+
+    private fun String.escapeJavaString(): String = buildString {
+        for (c in this@escapeJavaString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
+        }
+    }
+
+    private fun Switch.rewriteAsReturnChain(): Switch = copy(
+        cases = cases.map { it.copy(body = it.body.asReturn()) },
+        default = default?.asReturn() ?: listOf(
+            ErrorStatement(Literal("switch expression must be exhaustive", Type.String)),
+        ),
+    )
+
+    private fun List<Statement>.asReturn(): List<Statement> {
+        if (isEmpty()) return this
+        val last = last()
+        if (last is ReturnStatement) return this
+        return dropLast(1) + ReturnStatement(last as Expression)
+    }
+
+    private val PARAMETRIC_RUNTIME_TYPES = setOf(
+        "Wirespec.GeneratorFieldArray",
+        "Wirespec.GeneratorFieldNullable",
+        "Wirespec.GeneratorFieldShape",
+        "Wirespec.GeneratorFieldDict",
+    )
 }
 
 private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "_$this" else this

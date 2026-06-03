@@ -37,35 +37,35 @@ object PutTodo : Wirespec.Endpoint {
   sealed interface Response5XX<T: Any> : Response<T>
   sealed interface ResponseTodoDto : Response<TodoDto>
   sealed interface ResponseError : Response<Error>
-  object Response200Headers : Wirespec.Response.Headers
   data class Response200(
       override val status: Int,
-      override val headers: Response200Headers,
+      override val headers: Headers,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(body: TodoDto) : this(200, Response200Headers, body)
+      constructor(body: TodoDto) : this(200, Headers, body)
+      object Headers : Wirespec.Response.Headers
     }
-  data class Response201Headers(
-      val token: Token,
-      val refreshToken: Token?
-    ) : Wirespec.Response.Headers
   data class Response201(
       override val status: Int,
-      override val headers: Response201Headers,
+      override val headers: Headers,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(token: Token, refreshToken: Token?, body: TodoDto) : this(201, Response201Headers(
+      constructor(token: Token, refreshToken: Token?, body: TodoDto) : this(201, Headers(
         token = token,
         refreshToken = refreshToken
       ), body)
+      data class Headers(
+            val token: Token,
+            val refreshToken: Token?
+          ) : Wirespec.Response.Headers
     }
-  object Response500Headers : Wirespec.Response.Headers
   data class Response500(
       override val status: Int,
-      override val headers: Response500Headers,
+      override val headers: Headers,
       override val body: Error
     ) : Response5XX<Error>, ResponseError {
-      constructor(body: Error) : this(500, Response500Headers, body)
+      constructor(body: Error) : this(500, Headers, body)
+      object Headers : Wirespec.Response.Headers
     }
   fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
@@ -89,7 +89,7 @@ object PutTodo : Wirespec.Endpoint {
         is Response200 -> {
           return Wirespec.RawResponse(
             statusCode = r.status,
-            headers = emptyMap(),
+            headers = emptyMap<String, List<String>>(),
             body = serialization.serializeBody(r.body, typeOf<TodoDto>())
           )
         }
@@ -103,7 +103,7 @@ object PutTodo : Wirespec.Endpoint {
         is Response500 -> {
           return Wirespec.RawResponse(
             statusCode = r.status,
-            headers = emptyMap(),
+            headers = emptyMap<String, List<String>>(),
             body = serialization.serializeBody(r.body, typeOf<Error>())
           )
         }
@@ -159,7 +159,7 @@ import kotlin.reflect.typeOf
 data class PotentialTodoDto(
   val name: String,
   val done: Boolean
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -169,7 +169,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 data class Token(
   val iss: String
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -181,7 +181,7 @@ data class TodoDto(
   val id: String,
   val name: String,
   val done: Boolean
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -192,7 +192,7 @@ import kotlin.reflect.typeOf
 data class Error(
   val code: Long,
   val description: String
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -222,6 +222,71 @@ data class PutTodoClient(
     val rawResponse = transportation.transport(rawRequest)
     return PutTodo.fromRawResponse(serialization, rawResponse)
   }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.PotentialTodoDto
+object PotentialTodoDtoGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): PotentialTodoDto =
+    PotentialTodoDto(
+      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      done = generator.generate(path + listOf("done"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>()))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Token
+object TokenGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Token =
+    Token(iss = generator.generate(path + listOf("iss"), Wirespec.GeneratorFieldString(
+      regex = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TodoDto
+object TodoDtoGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TodoDto =
+    TodoDto(
+      id = generator.generate(path + listOf("id"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      done = generator.generate(path + listOf("done"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>()))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Error
+object ErrorGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Error =
+    Error(
+      code = generator.generate(path + listOf("code"), Wirespec.GeneratorFieldInteger64(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      description = generator.generate(path + listOf("description"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      ))
+    )
 }
 
 package community.flock.wirespec.generated

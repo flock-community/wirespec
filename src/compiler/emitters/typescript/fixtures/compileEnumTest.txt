@@ -1,4 +1,12 @@
 import {Wirespec} from '../Wirespec'
 export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE" | "UnitedKingdom" | "-1" | "0" | "10" | "-999" | "88"
 
+import {Wirespec} from '../Wirespec'
+import {MyAwesomeEnum} from '../model/MyAwesomeEnum'
+export namespace MyAwesomeEnumGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): MyAwesomeEnum {
+    return generator.generate([...path, ...['value']], { kind: 'enum', values: ['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'], annotations: [] as Record<string, any>[], type: "MyAwesomeEnum" });
+  }
+}
+
 export {MyAwesomeEnum} from './MyAwesomeEnum'

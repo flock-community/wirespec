@@ -42,44 +42,44 @@ public interface PutTodo extends Wirespec.Endpoint {
   public sealed interface Response5XX<T> extends Response<T> permits Response500 {}
   public sealed interface ResponseTodoDto extends Response<TodoDto> permits Response200, Response201 {}
   public sealed interface ResponseError extends Response<Error> permits Response500 {}
-  public static record Response200Headers () implements Wirespec.Response.Headers {
-  };
   public static record Response200 (
     Integer status,
-    Response200Headers headers,
+    Headers headers,
     TodoDto body
   ) implements Response2XX<TodoDto>, ResponseTodoDto {
     public Response200(TodoDto body) {
-      this(200, new Response200Headers(), body);
+      this(200, new Headers(), body);
     }
-  };
-  public static record Response201Headers (
-    Token token,
-    java.util.Optional<Token> refreshToken
-  ) implements Wirespec.Response.Headers {
+    public static record Headers () implements Wirespec.Response.Headers {
+    };
   };
   public static record Response201 (
     Integer status,
-    Response201Headers headers,
+    Headers headers,
     TodoDto body
   ) implements Response2XX<TodoDto>, ResponseTodoDto {
     public Response201(Token token, java.util.Optional<Token> refreshToken, TodoDto body) {
-      this(201, new Response201Headers(
+      this(201, new Headers(
         token,
         refreshToken
       ), body);
     }
-  };
-  public static record Response500Headers () implements Wirespec.Response.Headers {
+    public static record Headers (
+      Token token,
+      java.util.Optional<Token> refreshToken
+    ) implements Wirespec.Response.Headers {
+    };
   };
   public static record Response500 (
     Integer status,
-    Response500Headers headers,
+    Headers headers,
     Error body
   ) implements Response5XX<Error>, ResponseError {
     public Response500(Error body) {
-      this(500, new Response500Headers(), body);
+      this(500, new Headers(), body);
     }
+    public static record Headers () implements Wirespec.Response.Headers {
+    };
   };
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
     return new Wirespec.RawRequest(
@@ -189,7 +189,7 @@ import community.flock.wirespec.java.Wirespec;
 public record PotentialTodoDto (
   String name,
   Boolean done
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -200,7 +200,7 @@ package community.flock.wirespec.generated.model;
 import community.flock.wirespec.java.Wirespec;
 public record Token (
   String iss
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -213,7 +213,7 @@ public record TodoDto (
   String id,
   String name,
   Boolean done
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -225,7 +225,7 @@ import community.flock.wirespec.java.Wirespec;
 public record Error (
   Long code,
   String description
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -258,6 +258,71 @@ public record PutTodoClient (
     return transportation().transport(rawRequest).thenApply(rawResponse -> PutTodo.fromRawResponse(serialization(), rawResponse));
   }
 };
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.PotentialTodoDto;
+public interface PotentialTodoDtoGenerator {
+  public static PotentialTodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new PotentialTodoDto(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Token;
+public interface TokenGenerator {
+  public static Token generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Token(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("iss")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.empty(),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.TodoDto;
+public interface TodoDtoGenerator {
+  public static TodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new TodoDto(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("id")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Error;
+public interface ErrorGenerator {
+  public static Error generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Error(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("code")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
+        java.util.Optional.empty(),
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))
+    );
+  }
+}
 
 package community.flock.wirespec.generated;
 import community.flock.wirespec.java.Wirespec;

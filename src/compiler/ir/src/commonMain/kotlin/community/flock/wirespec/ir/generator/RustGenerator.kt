@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -21,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -187,6 +190,7 @@ object RustGenerator : Generator {
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList()): String {
         val rustName = name.pascalCase()
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emit() }}>"
         val functions = elements.filterIsInstance<AstFunction>()
         val nonFunctions = elements.filterNot { it is AstFunction }
         val nestedContent = nonFunctions.joinToString("") { it.emit(indent, parents = parents + this, isStaticScope = false) }
@@ -199,7 +203,7 @@ object RustGenerator : Generator {
         }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
-            val structDef = "pub struct $rustName;\n\n".indentCode(indent)
+            val structDef = "pub struct $rustName$typeParamsStr;\n\n".indentCode(indent)
             return "$structDef$implBlock$nestedContent"
         }
 
@@ -207,7 +211,7 @@ object RustGenerator : Generator {
             val fieldName = it.name.snakeCase().sanitize()
             "pub $fieldName: ${it.type.emit()},".indentCode(1)
         }
-        val structDef = "pub struct $rustName {\n$fieldsStr\n}\n\n".indentCode(indent)
+        val structDef = "pub struct $rustName$typeParamsStr {\n$fieldsStr\n}\n\n".indentCode(indent)
 
         val customConstructors = constructors.joinToString("") { it.emit(rustName, fields, indent) }
 
@@ -233,24 +237,30 @@ object RustGenerator : Generator {
             val paramName = it.name.value()
             if (paramName == "self" || paramName == "&self") paramName else "${it.name.snakeCase().sanitize()}: ${it.type.emit()}"
         }
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.emit() }}>"
         val rType = returnType?.takeIf { it != Type.Unit }?.emit()
         val returnTypeStr = if (rType != null) " -> $rType" else ""
         val prefix = if (isInInterface && body.isEmpty()) "" else "pub "
         val asyncPrefix = if (isAsync) "async " else ""
         val content = if (body.isEmpty()) {
-            return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr;\n".indentCode(indent)
+            return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}$typeParamsStr($params)$returnTypeStr;\n".indentCode(indent)
         } else {
             body.joinToString("") { it.emit(1) }
         }
-        return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}($params)$returnTypeStr {\n$content}\n\n".indentCode(indent)
+        return "${prefix}${asyncPrefix}fn ${name.snakeCase().sanitize()}$typeParamsStr($params)$returnTypeStr {\n$content}\n\n".indentCode(indent)
     }
 
     private fun TypeParameter.emit(): String {
         val typeStr = type.emit()
-        return if (extends.isEmpty()) {
+        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — Rust trait
+        // bounds must be traits, but `Type.Nullable(Type.Any)` would render as the enum
+        // `Option<Box<dyn std::any::Any>>` and fail to compile (E0404). Mirrors Java's
+        // handling in JavaGenerator.TypeParameter.emit.
+        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
+        return if (effectiveExtends.isEmpty()) {
             typeStr
         } else {
-            "$typeStr: ${extends.joinToString(" + ") { it.emit() }}"
+            "$typeStr: ${effectiveExtends.joinToString(" + ") { it.emit() }}"
         }
     }
 
@@ -276,6 +286,8 @@ object RustGenerator : Generator {
             val rawName = name.value()
             if (generics.isEmpty()) {
                 rawName
+            } else if (generics.any { it == Type.Wildcard || (it is Type.Custom && it.name.value() == "_") }) {
+                "Box<dyn std::any::Any>"
             } else {
                 "$rawName<${generics.joinToString(", ") { it.emit() }}>"
             }
@@ -283,6 +295,7 @@ object RustGenerator : Generator {
         is Type.Nullable -> "Option<${type.emit()}>"
         is Type.IntegerLiteral -> "i32"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "Box<dyn Fn(${parameterTypes.joinToString(", ") { it.emit() }}) -> ${returnType.emit()}>"
     }
 
     private fun emitArrayIndex(receiver: Expression, index: Expression, caseSensitive: Boolean = true): String = when {
@@ -390,10 +403,11 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()});\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()});\n".indentCode(indent)
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>();\n".indentCode(indent)
+        is Cast -> "(${expression.emit()} as ${targetType.emit()});\n".indentCode(indent)
         is NullCheck, is NullableMap, is NullableOf, is NullableGet,
         is Constraint.RegexMatch, is Constraint.BoundCheck,
         is IfExpression, is MapExpression, is FlatMapIndexed,
-        is ListConcat, is StringTemplate,
+        is ListConcat, is StringTemplate, is Lambda,
         -> "${emit()};\n".indentCode(indent)
         is NotExpression -> "!${expression.emit()};\n".indentCode(indent)
     }
@@ -402,6 +416,7 @@ object RustGenerator : Generator {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "=="
         BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in Rust")
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -420,6 +435,7 @@ object RustGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "std::any::TypeId::of::<${type.emit()}>()"
         is RawExpression -> code
         is NullLiteral, is NullableEmpty -> "None"
         is VariableReference -> name.snakeCase().sanitize()
@@ -442,6 +458,7 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emit()})"
         is BinaryOp -> "(${left.emit()} ${operator.toRust()} ${right.emit()})"
         is TypeDescriptor -> "std::any::TypeId::of::<${type.emit()}>()"
+        is Cast -> "(${expression.emit()} as ${targetType.emit()})"
         is NullCheck -> {
             val exprStr = expression.emit()
             val bodyStr = body.emit()
@@ -467,7 +484,14 @@ object RustGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Rust")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "if ${condition.emit()} { ${thenExpr.emit()} } else { ${elseExpr.emit()} }"
-        is MapExpression -> "${receiver.emit()}.iter().map(|${variable.snakeCase()}| ${body.emit()}).collect::<Vec<_>>()"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emit()
+            } else {
+                "${receiver.emit()}.iter().map(|${variable.snakeCase()}| ${body.emit()}).collect::<Vec<_>>()"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emit()}.iter().enumerate().flat_map(|(${indexVar.snakeCase()}, ${elementVar.snakeCase()})| ${body.emit()}).collect::<Vec<_>>()"
         is ListConcat -> when {
             lists.isEmpty() -> "vec![]"
@@ -488,6 +512,10 @@ object RustGenerator : Generator {
             } else {
                 "format!(\"$formatStr\", ${args.joinToString(", ")})"
             }
+        }
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.snakeCase().sanitize() }
+            "Box::new(|$params| ${body.emit()})"
         }
     }
 
@@ -524,7 +552,14 @@ object RustGenerator : Generator {
         is EnumValueCall -> "format!(\"{:?}\", ${expression.emitWithInlinedIt(replacement)})"
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "if ${condition.emitWithInlinedIt(replacement)} { ${thenExpr.emitWithInlinedIt(replacement)} } else { ${elseExpr.emitWithInlinedIt(replacement)} }"
-        is MapExpression -> "${receiver.emitWithInlinedIt(replacement)}.iter().map(|${variable.snakeCase()}| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emitWithInlinedIt(replacement)
+            } else {
+                "${receiver.emitWithInlinedIt(replacement)}.iter().map(|${variable.snakeCase()}| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emitWithInlinedIt(replacement)}.iter().enumerate().flat_map(|(${indexVar.snakeCase()}, ${elementVar.snakeCase()})| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
         is ListConcat -> when {
             lists.isEmpty() -> "vec![]"

@@ -29,6 +29,12 @@ interface BaseBuilder {
     fun literal(value: Boolean) = Literal(value, Type.Boolean)
     fun literal(value: Float) = Literal(value, Type.Number(Precision.P32))
     fun literal(value: Double) = Literal(value, Type.Number(Precision.P64))
+
+    fun classRef(type: Type): ClassReference = ClassReference(type)
+    fun classRef(typeName: String): ClassReference = ClassReference(Type.Custom(typeName))
+
+    fun cast(expression: Expression, targetType: Type): Cast = Cast(expression, targetType)
+    fun cast(expression: Expression, targetTypeName: String): Cast = Cast(expression, Type.Custom(targetTypeName))
 }
 
 @Dsl
@@ -296,9 +302,14 @@ class StructBuilder(private val name: Name) : ContainerBuilder {
     private val constructors = mutableListOf<Constructor>()
     private val interfaces = mutableListOf<Type.Custom>()
     override val elements = mutableListOf<Element>()
+    private val typeParameters = mutableListOf<TypeParameter>()
 
     fun implements(type: Type.Custom) {
         interfaces.add(type)
+    }
+
+    fun typeParam(type: Type, vararg extends: Type) {
+        typeParameters.add(TypeParameter(type, extends.toList()))
     }
 
     fun field(name: String, type: Type, isOverride: Boolean = false) {
@@ -321,7 +332,7 @@ class StructBuilder(private val name: Name) : ContainerBuilder {
         constructors.add(builder.build())
     }
 
-    fun build(): Struct = Struct(name, fields, constructors, interfaces, elements)
+    fun build(): Struct = Struct(name, fields, constructors, interfaces, elements, typeParameters)
 }
 
 @Dsl

@@ -18,10 +18,41 @@ import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.transformer.flattenNestedStructs
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.Union as LanguageUnion
+
+/**
+ * `Type.Reflect` emits as `type[T]` in Python, which is only legal where `T` is in scope —
+ * inside a `Generic[T]` class or a method that declares its own typeParam `T`. Structs like
+ * `GeneratorFieldEnum` / `GeneratorFieldUnion` bind `GeneratorField[str]` and have no free
+ * `T`; `type: type[T]` there is a mypy "Type variable T is unbound" error. Rewrite the
+ * field type on those structs to a `type[Any]` opaque-class marker, leaving function
+ * parameter types (which provide the typeParam binding mypy needs) untouched.
+ */
+internal fun File.replaceReflectInNonGenericStructFields(): File = transform {
+    matchingElements { struct: Struct ->
+        if (struct.typeParameters.isNotEmpty()) return@matchingElements struct
+        struct.copy(
+            fields = struct.fields.map { field ->
+                field.copy(type = field.type.replaceReflectAsTypeAny())
+            },
+        )
+    }
+}
+
+private fun LanguageType.replaceReflectAsTypeAny(): LanguageType = when (this) {
+    LanguageType.Reflect -> LanguageType.Custom("type", generics = listOf(LanguageType.Any))
+    is LanguageType.Nullable -> copy(type = type.replaceReflectAsTypeAny())
+    is LanguageType.Array -> copy(elementType = elementType.replaceReflectAsTypeAny())
+    is LanguageType.Dict -> copy(
+        keyType = keyType.replaceReflectAsTypeAny(),
+        valueType = valueType.replaceReflectAsTypeAny(),
+    )
+    else -> this
+}
 
 internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
     matchingElements { struct: Struct ->
@@ -58,7 +89,8 @@ internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
 
 internal fun File.splitEndpointStructsToModuleLevel(): File {
     val namespace = findElement<Namespace>()!!
-    val (moduleElements, classElements) = namespace.elements.partition { it is Struct || it is LanguageUnion }
+    val flattened = namespace.flattenNestedStructs()
+    val (moduleElements, classElements) = flattened.elements.partition { it is Struct || it is LanguageUnion }
     val endpointClass = Namespace(
         name = namespace.name,
         elements = classElements,

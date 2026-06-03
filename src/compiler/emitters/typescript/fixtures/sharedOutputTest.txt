@@ -1,17 +1,18 @@
 export namespace Wirespec {
   export type Type = string
-  export interface Model {
+  export interface Model {}
+  export interface Shape extends Model {
     validate(): string[];
   }
-  export interface Enum {
+  export interface Enum extends Model {
     label: string;
   }
-  export interface Endpoint {}
-  export interface Channel {}
-  export interface Refined<T> {
+  export interface Refined<T> extends Model {
     value: T;
     validate(): boolean;
   }
+  export interface Endpoint {}
+  export interface Channel {}
   export interface Path {}
   export interface Queries {}
   export interface Headers {}
@@ -68,6 +69,77 @@ export namespace Wirespec {
   }
   export interface Transportation {
     transport(request: RawRequest): Promise<RawResponse>;
+  }
+  export interface GeneratorField<T extends any | undefined> {}
+  export type GeneratorFieldString = {
+    "kind": "string",
+    "regex": string | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldInteger64 = {
+    "kind": "integer64",
+    "min": number | undefined,
+    "max": number | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldInteger32 = {
+    "kind": "integer32",
+    "min": number | undefined,
+    "max": number | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldNumber64 = {
+    "kind": "number64",
+    "min": number | undefined,
+    "max": number | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldNumber32 = {
+    "kind": "number32",
+    "min": number | undefined,
+    "max": number | undefined,
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldBoolean = {
+    "kind": "boolean",
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldBytes = {
+    "kind": "bytes",
+    "annotations": Record<string, any>[],
+  }
+  export type GeneratorFieldEnum = {
+    "kind": "enum",
+    "values": string[],
+    "annotations": Record<string, any>[],
+    "type": Type,
+  }
+  export type GeneratorFieldUnion = {
+    "kind": "union",
+    "variants": string[],
+    "annotations": Record<string, any>[],
+    "type": Type,
+  }
+  export type GeneratorFieldArray<T> = {
+    "kind": "array",
+    "generate": (p0: string[]) => T,
+  }
+  export type GeneratorFieldNullable<T> = {
+    "kind": "nullable",
+    "generate": (p0: string[]) => T,
+  }
+  export type GeneratorFieldShape<T> = {
+    "kind": "shape",
+    "annotations": Record<string, Record<string, any>[]>,
+    "generate": (p0: string[]) => T,
+    "type": Type,
+  }
+  export type GeneratorFieldDict<V> = {
+    "kind": "dict",
+    "generate": (p0: string[]) => V,
+  }
+  export interface Generator {
+    generate<T extends any | undefined>(path: string[], field: GeneratorField<T>): T;
   }
   export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
     to: (request: REQ) => RawRequest;

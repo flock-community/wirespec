@@ -22,3 +22,16 @@ public enum MyAwesomeEnum implements Wirespec.Enum {
     return label;
   }
 }
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.MyAwesomeEnum;
+public interface MyAwesomeEnumGenerator {
+  public static MyAwesomeEnum generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return MyAwesomeEnum.valueOf(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldEnum(
+      java.util.List.of("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"),
+      java.util.List.<java.util.Map<String, Object>>of(),
+      MyAwesomeEnum.class
+    )));
+  }
+}

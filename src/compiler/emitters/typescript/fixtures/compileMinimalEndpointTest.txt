@@ -22,10 +22,9 @@ export namespace GetTodos {
   export type Response<T = unknown> = Response2XX | ResponseListTodoDto
   export type Response2XX<T = unknown> = Response200
   export type ResponseListTodoDto = Response200
-  export type Response200Headers = {}
   export type Response200 = {
     "status": 200,
-    "headers": Response200Headers,
+    "headers": {},
     "body": TodoDto[],
   }
   export type Response200Params = {"body": TodoDto[]}
@@ -102,6 +101,14 @@ export const getTodosClient = (serialization: Wirespec.Serialization, transporta
     return GetTodos.fromRawResponse(serialization, rawResponse);
   }
 })
+
+import {Wirespec} from '../Wirespec'
+import {TodoDto} from '../model/TodoDto'
+export namespace TodoDtoGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): TodoDto {
+    return { description: generator.generate([...path, ...['description']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
 
 import {Wirespec} from './Wirespec'
 import {getTodosClient} from './client/GetTodosClient'

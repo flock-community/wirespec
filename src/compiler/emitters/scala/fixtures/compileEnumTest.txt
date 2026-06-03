@@ -15,3 +15,16 @@ enum MyAwesomeEnum(override val label: String) extends Wirespec.Enum {
     label
   }
 }
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.MyAwesomeEnum
+object MyAwesomeEnumGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): MyAwesomeEnum =
+    MyAwesomeEnum.valueOf(generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldEnum(
+      values = List("ONE", "Two", "THREE_MORE", "UnitedKingdom", "-1", "0", "10", "-999", "88"),
+      annotations = List.empty[Map[String, Any]],
+      `type` = scala.reflect.classTag[MyAwesomeEnum]
+    )))
+}

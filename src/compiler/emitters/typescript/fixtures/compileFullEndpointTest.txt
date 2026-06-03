@@ -35,10 +35,9 @@ export namespace PutTodo {
   export type Response5XX<T = unknown> = Response500
   export type ResponseTodoDto = Response200 | Response201
   export type ResponseError = Response500
-  export type Response200Headers = {}
   export type Response200 = {
     "status": 200,
-    "headers": Response200Headers,
+    "headers": {},
     "body": TodoDto,
   }
   export type Response200Params = {"body": TodoDto}
@@ -47,13 +46,9 @@ export namespace PutTodo {
     headers: {},
     body: params.body,
   })
-  export type Response201Headers = {
-    "token": Token,
-    "refreshToken": Token | undefined,
-  }
   export type Response201 = {
     "status": 201,
-    "headers": Response201Headers,
+    "headers": {"token": Token, "refreshToken": Token | undefined},
     "body": TodoDto,
   }
   export type Response201Params = {"token": Token, "refreshToken"?: Token, "body": TodoDto}
@@ -62,10 +57,9 @@ export namespace PutTodo {
     headers: {"token": params["token"], "refreshToken": params["refreshToken"]},
     body: params.body,
   })
-  export type Response500Headers = {}
   export type Response500 = {
     "status": 500,
-    "headers": Response500Headers,
+    "headers": {},
     "body": Error,
   }
   export type Response500Params = {"body": Error}
@@ -187,6 +181,38 @@ export const putTodoClient = (serialization: Wirespec.Serialization, transportat
     return PutTodo.fromRawResponse(serialization, rawResponse);
   }
 })
+
+import {Wirespec} from '../Wirespec'
+import {PotentialTodoDto} from '../model/PotentialTodoDto'
+export namespace PotentialTodoDtoGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): PotentialTodoDto {
+    return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), done: generator.generate([...path, ...['done']], { kind: 'boolean', annotations: [] as Record<string, any>[] }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Token} from '../model/Token'
+export namespace TokenGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Token {
+    return { iss: generator.generate([...path, ...['iss']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {TodoDto} from '../model/TodoDto'
+export namespace TodoDtoGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): TodoDto {
+    return { id: generator.generate([...path, ...['id']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), done: generator.generate([...path, ...['done']], { kind: 'boolean', annotations: [] as Record<string, any>[] }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Error} from '../model/Error'
+export namespace ErrorGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Error {
+    return { code: generator.generate([...path, ...['code']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), description: generator.generate([...path, ...['description']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
 
 import {Wirespec} from './Wirespec'
 import {putTodoClient} from './client/PutTodoClient'

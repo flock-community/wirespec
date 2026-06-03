@@ -28,6 +28,7 @@ import community.flock.wirespec.ir.core.transformer
 internal fun Type.Custom.borrow(): Type.Custom = copy(name = Name(listOf("&${name.pascalCase()}")))
 internal fun Type.Custom.borrowDyn(): Type.Custom = copy(name = Name(listOf("&dyn ${name.pascalCase()}")))
 internal fun Type.Custom.borrowImpl(): Type.Custom = copy(name = Name(listOf("&impl ${name.pascalCase()}")))
+internal fun Type.Custom.ownedImpl(): Type.Custom = copy(name = Name(listOf("impl ${name.pascalCase()}")))
 
 /**
  * Post-convert Rustification pass.
@@ -127,6 +128,7 @@ object RustTransform {
         is Type.Custom -> when {
             type.isAlreadyBorrowed() -> type
             type.isSerializerLike() -> type.borrowImpl()
+            type.isGeneratorFieldTrait() -> type.ownedImpl()
             else -> type
         }
         else -> type
@@ -242,6 +244,7 @@ object RustTransform {
         }
         is Type.IntegerLiteral -> "i32"
         is Type.StringLiteral -> "String"
+        is Type.Function -> "Box<dyn Fn(${parameterTypes.joinToString(", ") { it.rustName() }}) -> ${returnType.rustName()}>"
     }
 
     /**
@@ -261,6 +264,8 @@ object RustTransform {
         }
 
     internal fun Type.Custom.isSerializerLike(): Boolean = name.pascalCase().let { it == "Serializer" || it == "Deserializer" }
+
+    internal fun Type.Custom.isGeneratorFieldTrait(): Boolean = name.pascalCase() == "GeneratorField"
 
     /** `Copy`-like leaves that don't need borrowing in parameter positions. */
     internal fun Type.Custom.isCopyLike(): Boolean = name.pascalCase() in copyLikeCustomNames
