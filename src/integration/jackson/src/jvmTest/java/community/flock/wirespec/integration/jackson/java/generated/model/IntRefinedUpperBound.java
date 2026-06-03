@@ -5,7 +5,7 @@ import community.flock.wirespec.java.Wirespec;
 public record IntRefinedUpperBound (Long value) implements Wirespec.Refined<Long> {
   @Override
   public String toString() { return value.toString(); }
-  public boolean validate() {
+  public Boolean validate() {
     return value < 2;
   }
   @Override
