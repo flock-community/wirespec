@@ -67,9 +67,15 @@ open class TypeScriptIrEmitter : IrEmitter {
         SanitizationConfig(
             reservedKeywords = reservedKeywords,
             escapeKeyword = { "$it" },
-            fieldNameCase = { name -> Name(listOf(name.value())) },
-            parameterNameCase = { name -> Name(listOf(name.value())) },
-            sanitizeSymbol = { it },
+            fieldNameCase = { name ->
+                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
+                Name(listOf(sanitized))
+            },
+            parameterNameCase = { name ->
+                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
+                Name(listOf(sanitized))
+            },
+            sanitizeSymbol = { it.filter { ch -> ch.isLetterOrDigit() || ch == '_' } },
             escapeFieldKeywords = false,
             extraStatementTransforms = { stmt, tr ->
                 when (stmt) {

@@ -254,7 +254,12 @@ fun PackageName.convertClientServer(): List<Element> = listOf(
 )
 
 private fun Identifier.toName(): Name = when (this) {
-    is FieldIdentifier -> Name(Regex("[^.\\s-]+|[.\\s-]+").findAll(value).map { it.value }.toList())
+    is FieldIdentifier -> {
+        // Split on invalid identifier characters (dashes, dots, spaces) to produce word parts.
+        // The emitter's transform phase is responsible for applying language-specific casing.
+        val parts = value.split(Regex("[.\\s-]+")).filter { it.isNotEmpty() }
+        Name(parts)
+    }
     is DefinitionIdentifier -> Name(
         Name.of(value).parts.filter { part -> part.any { it.isLetterOrDigit() } },
     )
