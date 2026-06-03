@@ -13,7 +13,7 @@ export namespace PutTodo {
   }
   export type RequestHeaders = {
     "token": Token,
-    "refreshToken": Token | undefined,
+    "Refresh-Token": Token | undefined,
   }
   export type Request = {
     "path": Path,
@@ -22,12 +22,12 @@ export namespace PutTodo {
     "headers": RequestHeaders,
     "body": PotentialTodoDto,
   }
-  export type RequestParams = {"id": string, "done": boolean, "name"?: string, "token": Token, "refreshToken"?: Token, "body": PotentialTodoDto}
+  export type RequestParams = {"id": string, "done": boolean, "name"?: string, "token": Token, "Refresh-Token"?: Token, "body": PotentialTodoDto}
   export const request = (params: RequestParams): Request => ({
     path: {"id": params["id"]},
     method: "PUT",
     queries: {"done": params["done"], "name": params["name"]},
-    headers: {"token": params["token"], "refreshToken": params["refreshToken"]},
+    headers: {"token": params["token"], "Refresh-Token": params["Refresh-Token"]},
     body: params.body,
   })
   export type Response<T = unknown> = Response2XX | Response5XX | ResponseTodoDto | ResponseError
@@ -75,10 +75,10 @@ export namespace PutTodo {
     body: params.body,
   })
   export function toRawRequest(serialization: Wirespec.Serializer, _request: Request): Wirespec.RawRequest {
-    return { method: _request.method, path: ['todos', serialization.serializePath(_request.path.id, "string")], queries: { 'done': serialization.serializeParam(_request.queries.done, "boolean"), 'name': _request.queries.name != null ? serialization.serializeParam(_request.queries.name, "string") : [] as string[] }, headers: { 'token': serialization.serializeParam(_request.headers.token, "Token"), 'Refresh-Token': _request.headers.refreshToken != null ? serialization.serializeParam(_request.headers.refreshToken, "Token") : [] as string[] }, body: serialization.serializeBody(_request.body, "PotentialTodoDto") };
+    return { method: _request.method, path: ['todos', serialization.serializePath(_request.path.id, "string")], queries: { 'done': serialization.serializeParam(_request.queries.done, "boolean"), 'name': _request.queries.name != null ? serialization.serializeParam(_request.queries.name, "string") : [] as string[] }, headers: { 'token': serialization.serializeParam(_request.headers.token, "Token"), 'Refresh-Token': _request.headers["Refresh-Token"] != null ? serialization.serializeParam(_request.headers["Refresh-Token"], "Token") : [] as string[] }, body: serialization.serializeBody(_request.body, "PotentialTodoDto") };
   }
   export function fromRawRequest(serialization: Wirespec.Deserializer, _request: Wirespec.RawRequest): Request {
-    return request({"id": serialization.deserializePath(_request.path[1], "string"), "done": _request.queries['done'] != null ? serialization.deserializeParam(_request.queries['done'], "boolean") : (() => { throw new Error('Param done cannot be null') })(), "name": _request.queries['name'] != null ? serialization.deserializeParam(_request.queries['name'], "string") : undefined, "token": Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'token'.toLowerCase())?.[1] != null ? serialization.deserializeParam(Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'token'.toLowerCase())?.[1]!, "Token") : (() => { throw new Error('Param token cannot be null') })(), "refreshToken": Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'Refresh-Token'.toLowerCase())?.[1] != null ? serialization.deserializeParam(Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'Refresh-Token'.toLowerCase())?.[1]!, "Token") : undefined, "body": _request.body != null ? serialization.deserializeBody(_request.body, "PotentialTodoDto") : (() => { throw new Error('body is null') })()});
+    return request({"id": serialization.deserializePath(_request.path[1], "string"), "done": _request.queries['done'] != null ? serialization.deserializeParam(_request.queries['done'], "boolean") : (() => { throw new Error('Param done cannot be null') })(), "name": _request.queries['name'] != null ? serialization.deserializeParam(_request.queries['name'], "string") : undefined, "token": Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'token'.toLowerCase())?.[1] != null ? serialization.deserializeParam(Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'token'.toLowerCase())?.[1]!, "Token") : (() => { throw new Error('Param token cannot be null') })(), "Refresh-Token": Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'Refresh-Token'.toLowerCase())?.[1] != null ? serialization.deserializeParam(Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'Refresh-Token'.toLowerCase())?.[1]!, "Token") : undefined, "body": _request.body != null ? serialization.deserializeBody(_request.body, "PotentialTodoDto") : (() => { throw new Error('body is null') })()});
   }
   export function toRawResponse(serialization: Wirespec.Serializer, response: Response<unknown>): Wirespec.RawResponse {
     switch (response.status) {

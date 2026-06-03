@@ -241,7 +241,10 @@ object TypeScriptGenerator : Generator {
             else -> expr.code
         }
         is VariableReference -> when {
-            expr.name.value() in paramNames -> "params.${expr.name.value()}"
+            expr.name.value() in paramNames -> {
+                val n = expr.name.value()
+                if (n.needsBracketNotation()) "params[\"$n\"]" else "params.$n"
+            }
             else -> expr.name.value()
         }
         is EnumReference -> "\"${expr.entry.value()}\""
@@ -512,8 +515,13 @@ object TypeScriptGenerator : Generator {
         is NullableEmpty -> "undefined;\n".indentCode(indent)
         is VariableReference -> "${name.camelCase()};\n".indentCode(indent)
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.value()};\n".indentCode(indent)
+            val fieldStr = field.value()
+            if (fieldStr.needsBracketNotation()) {
+                "${receiver?.emit() ?: ""}[\"$fieldStr\"];\n".indentCode(indent)
+            } else {
+                val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+                "$receiverStr$fieldStr;\n".indentCode(indent)
+            }
         }
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
@@ -563,8 +571,13 @@ object TypeScriptGenerator : Generator {
         is NullableEmpty -> "undefined"
         is VariableReference -> name.camelCase()
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.value()}"
+            val fieldStr = field.value()
+            if (fieldStr.needsBracketNotation()) {
+                "${receiver?.emit() ?: ""}[\"$fieldStr\"]"
+            } else {
+                val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+                "$receiverStr$fieldStr"
+            }
         }
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
@@ -644,8 +657,13 @@ object TypeScriptGenerator : Generator {
             }
         }
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
-            "$receiverStr${field.value()}"
+            val fieldStr = field.value()
+            if (fieldStr.needsBracketNotation()) {
+                "${receiver?.let { it.emitWithInlinedIt(replacement) } ?: ""}[\"$fieldStr\"]"
+            } else {
+                val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
+                "$receiverStr$fieldStr"
+            }
         }
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
@@ -667,6 +685,8 @@ object TypeScriptGenerator : Generator {
         is LiteralList -> emit()
         else -> emit()
     }
+
+    private fun String.needsBracketNotation(): Boolean = any { !it.isLetterOrDigit() && it != '_' && it != '$' }
 
     private fun LiteralList.emit(): String {
         if (values.isEmpty()) return "[] as ${type.emit()}[]"

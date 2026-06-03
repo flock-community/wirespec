@@ -68,14 +68,22 @@ open class TypeScriptIrEmitter : IrEmitter {
             reservedKeywords = reservedKeywords,
             escapeKeyword = { "$it" },
             fieldNameCase = { name ->
-                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
-                Name(listOf(sanitized))
+                val original = name.value()
+                if (original.contains('-')) Name(listOf(original))
+                else {
+                    val sanitized = if (name.parts.size > 1) name.camelCase() else original.sanitizeSymbol()
+                    Name(listOf(sanitized))
+                }
             },
             parameterNameCase = { name ->
-                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
-                Name(listOf(sanitized))
+                val original = name.value()
+                if (original.contains('-')) Name(listOf(original))
+                else {
+                    val sanitized = if (name.parts.size > 1) name.camelCase() else original.sanitizeSymbol()
+                    Name(listOf(sanitized))
+                }
             },
-            sanitizeSymbol = { it.filter { ch -> ch.isLetterOrDigit() || ch == '_' } },
+            sanitizeSymbol = { it.filter { ch -> ch.isLetterOrDigit() || ch == '_' || ch == '-' } },
             escapeFieldKeywords = false,
             extraStatementTransforms = { stmt, tr ->
                 when (stmt) {
