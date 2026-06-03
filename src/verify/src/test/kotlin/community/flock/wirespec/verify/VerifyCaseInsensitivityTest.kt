@@ -2,6 +2,7 @@ package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.emitters.rust.RustIrEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.ir.core.BinaryOp
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Expression
@@ -41,6 +42,7 @@ class VerifyCaseInsensitivityTest : FunSpec({
     languages.values.forEach { lang ->
         test("header case insensitivity - $lang") {
             val isRust = lang.emitter is RustIrEmitter
+            val refreshTokenField = if (lang.emitter is TypeScriptIrEmitter) "Refresh-Token" else "refreshToken"
             val endpointRef: Expression = RawExpression("PutTodo")
 
             val testFile = file("CaseInsensitivityTest") {
@@ -108,7 +110,7 @@ class VerifyCaseInsensitivityTest : FunSpec({
                     // Assert refreshToken is present
                     assertThat(
                         BinaryOp(
-                            VariableReference("fromRaw").fieldCall("headers").fieldCall("refreshToken"),
+                            VariableReference("fromRaw").fieldCall("headers").fieldCall(refreshTokenField),
                             BinaryOp.Operator.NOT_EQUALS,
                             NullableEmpty
                         ),
@@ -118,7 +120,7 @@ class VerifyCaseInsensitivityTest : FunSpec({
                     // Assert refreshToken.iss == "refreshIssValue" — unwrap then access
                     assertThat(
                         BinaryOp(
-                            NullableGet(VariableReference("fromRaw").fieldCall("headers").fieldCall("refreshToken")).fieldCall("iss"),
+                            NullableGet(VariableReference("fromRaw").fieldCall("headers").fieldCall(refreshTokenField)).fieldCall("iss"),
                             BinaryOp.Operator.EQUALS,
                             Literal("refreshIssValue", Type.String)
                         ),
@@ -133,4 +135,3 @@ class VerifyCaseInsensitivityTest : FunSpec({
         }
     }
 })
-
