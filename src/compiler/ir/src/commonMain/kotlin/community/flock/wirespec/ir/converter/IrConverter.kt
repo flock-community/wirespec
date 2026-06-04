@@ -348,9 +348,12 @@ fun PackageName.convertClientServer(): List<Element> = listOf(
 
 private fun Identifier.toName(): Name = when (this) {
     is FieldIdentifier -> {
-        // Split on invalid identifier characters (dashes, dots, spaces) to produce word parts.
-        // The emitter's transform phase is responsible for applying language-specific casing.
-        val parts = value.split(Regex("[.\\s-]+")).filter { it.isNotEmpty() }
+        // Tokenize into runs of separators (dashes, dots, spaces) and runs of non-separators,
+        // keeping the separators as their own parts. This lets `Name.value()` reconstruct the
+        // original wire name (e.g. `house-number`) so emitters that preserve it can, while the
+        // casing helpers (camelCase/pascalCase/snakeCase) still work because they operate on
+        // `wordParts()`, which ignores separator-only parts.
+        val parts = Regex("[.\\s-]+|[^.\\s-]+").findAll(value).map { it.value }.toList()
         Name(parts)
     }
     is DefinitionIdentifier -> Name(

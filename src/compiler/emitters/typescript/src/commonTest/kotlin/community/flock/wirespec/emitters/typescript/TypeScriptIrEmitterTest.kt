@@ -3,6 +3,7 @@ package community.flock.wirespec.emitters.typescript
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
+import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
@@ -63,6 +64,13 @@ class TypeScriptIrEmitterTest {
         val typescript = EmitterFixtures.compileTypeTest
 
         CompileTypeTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileFieldNameSanitizationTest() {
+        val typescript = EmitterFixtures.compileFieldNameSanitizationTest
+
+        CompileFieldNameSanitizationTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
 
     @Test

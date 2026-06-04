@@ -89,7 +89,9 @@ open class RustIrEmitter(
                 if (value == "self" || value == "&self") name
                 else Name.of(Name(name.parts).snakeCase())
             },
-            sanitizeSymbol = { it },
+            // Rust identifiers may not start with a digit; prefix an underscore when they do
+            // (e.g. a `1st-line` field becomes `_1st_line`).
+            sanitizeSymbol = { if (it.firstOrNull()?.isDigit() == true) "_$it" else it },
             extraStatementTransforms = { stmt, tr ->
                 when (stmt) {
                     is ConstructorStatement -> ConstructorStatement(

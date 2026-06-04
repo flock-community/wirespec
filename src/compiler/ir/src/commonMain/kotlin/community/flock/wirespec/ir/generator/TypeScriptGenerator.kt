@@ -189,6 +189,18 @@ object TypeScriptGenerator : Generator {
         return "\"${name.value()}\": $typeStr,\n".indentCode(indent)
     }
 
+    // Field access: dot notation for bare identifiers, bracket notation otherwise (e.g. wire
+    // names like `house-number` that are valid object keys but not valid identifiers).
+    private fun tsFieldAccess(receiverStr: String?, field: String): String = when {
+        receiverStr == null -> field
+        field.isBareTsIdentifier() -> "$receiverStr.$field"
+        else -> "$receiverStr[\"$field\"]"
+    }
+
+    private fun String.isBareTsIdentifier(): Boolean = isNotEmpty() &&
+        (first().isLetter() || first() == '_' || first() == '$') &&
+        all { it.isLetterOrDigit() || it == '_' || it == '$' }
+
     private fun Type.emitWithInlineStructs(inlineStructs: Map<String, Struct>): String = when (this) {
         is Type.Custom -> inlineStructs[name.pascalCase()]?.emitInline() ?: emit()
         is Type.Nullable -> "${type.emitWithInlineStructs(inlineStructs)} | undefined"
@@ -520,8 +532,7 @@ object TypeScriptGenerator : Generator {
         is NullableEmpty -> "undefined;\n".indentCode(indent)
         is VariableReference -> "${name.camelCase()};\n".indentCode(indent)
         is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.value()};\n".indentCode(indent)
+            "${tsFieldAccess(receiver?.emit(), field.value())};\n".indentCode(indent)
         }
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
@@ -574,10 +585,7 @@ object TypeScriptGenerator : Generator {
         is NullLiteral -> "undefined"
         is NullableEmpty -> "undefined"
         is VariableReference -> name.camelCase()
-        is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
-            "$receiverStr${field.value()}"
-        }
+        is FieldCall -> tsFieldAccess(receiver?.emit(), field.value())
         is FunctionCall -> {
             val awaitPrefix = if (isAwait) "await " else ""
             val recv = receiver
@@ -667,10 +675,7 @@ object TypeScriptGenerator : Generator {
                 "${name.value()}(${inlinedArgs.values.joinToString(", ")})"
             }
         }
-        is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
-            "$receiverStr${field.value()}"
-        }
+        is FieldCall -> tsFieldAccess(receiver?.emitWithInlinedIt(replacement), field.value())
         is ArrayIndexCall -> if (caseSensitive) {
             "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
         } else {
