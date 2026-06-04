@@ -1,0 +1,24 @@
+import {Wirespec} from '../Wirespec'
+export type Todo = {
+  "name": string,
+}
+export function validateTodo(obj: Todo): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+export type Error = {
+  "code": string,
+}
+export function validateError(obj: Error): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+export interface CreateTodo extends Wirespec.Rpc {
+  createTodo(todo: Todo): Wirespec.Either<Error, Todo>;
+}
+
+export {Todo} from './Todo'
+export {Error} from './Error'
+export {CreateTodo} from './CreateTodo'

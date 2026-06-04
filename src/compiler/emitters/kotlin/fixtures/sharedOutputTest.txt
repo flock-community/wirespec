@@ -9,6 +9,11 @@ object Wirespec {
   }
   interface Endpoint
   interface Channel
+  interface Rpc
+  interface Either<L: Any, R: Any> {
+      val error: L?
+      val value: R?
+  }
   interface Refined<T: Any> {
       val value: T
       fun validate(): Boolean

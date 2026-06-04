@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
@@ -235,6 +236,10 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emit(channel: Channel): File =
         channel.convert()
+            .sanitizeNames(sanitizationConfig)
+
+    override fun emit(rpc: Rpc): File =
+        rpc.convert()
             .sanitizeNames(sanitizationConfig)
 
     override fun emitEndpointClient(endpoint: Endpoint): File {

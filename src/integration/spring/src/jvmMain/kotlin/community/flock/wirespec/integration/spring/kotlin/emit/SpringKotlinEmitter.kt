@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Model
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 
@@ -44,7 +45,7 @@ class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName,
                 val name = definition.identifier.value
                 when (definition) {
                     is Model -> modelNames.add(name)
-                    is Endpoint, is Channel -> endpointNames.add(name)
+                    is Endpoint, is Channel, is Rpc -> endpointNames.add(name)
                 }
             }
         }

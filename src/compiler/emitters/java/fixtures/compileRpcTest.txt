@@ -1,0 +1,28 @@
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Todo (
+  String name
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Error (
+  String code
+) implements Wirespec.Model {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.rpc;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Todo;
+public interface CreateTodo extends Wirespec.Rpc {
+  public Wirespec.Either<Error, Todo> createTodo(Todo todo);
+}

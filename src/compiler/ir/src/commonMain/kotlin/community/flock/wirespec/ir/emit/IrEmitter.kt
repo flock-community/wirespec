@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -55,6 +56,7 @@ interface IrEmitter : Emitter {
             is Refined -> emit(definition)
             is Union -> emit(definition)
             is Channel -> emit(definition)
+            is Rpc -> emit(definition)
         }
     }
 
@@ -75,6 +77,7 @@ interface IrEmitter : Emitter {
     fun emit(endpoint: Endpoint): File
     fun emit(union: Union): File
     fun emit(channel: Channel): File
+    fun emit(rpc: Rpc): File
 
     fun transformTestFile(file: File): File = file
 }

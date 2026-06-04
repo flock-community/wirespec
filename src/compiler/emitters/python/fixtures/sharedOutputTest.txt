@@ -18,6 +18,11 @@ class Wirespec:
         pass
     class Channel(ABC):
         pass
+    class Rpc(ABC):
+        pass
+    class Either(ABC, Generic[L, R]):
+        error: Optional[L]
+        value: Optional[R]
     class Refined(ABC, Generic[T]):
         value: T
         @abstractmethod

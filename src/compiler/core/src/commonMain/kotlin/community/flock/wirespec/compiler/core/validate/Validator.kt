@@ -9,6 +9,7 @@ import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
+import community.flock.wirespec.compiler.core.exceptions.DuplicateRpcError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -20,6 +21,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -31,7 +33,8 @@ object Validator {
         validateEndpoints(ast),
         validateTypes(ast),
         validateChannels(ast),
-    ) { a, _, _, _ -> a }
+        validateRpcs(ast),
+    ) { a, _, _, _, _ -> a }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
@@ -46,6 +49,7 @@ object Validator {
         map { definition ->
             when (definition) {
                 is Channel -> definition
+                is Rpc -> definition
                 is Endpoint -> definition
                 is Enum -> definition
                 is Refined -> definition
@@ -97,6 +101,16 @@ object Validator {
         .groupBy { it.identifier.value }
         .filter { it.value.size > 1 }
         .map { (name, channels) -> channels.map { DuplicateChannelError(name) } }
+        .flatten()
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
+
+    private fun validateRpcs(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
+        .flatMap { it.statements.filterIsInstance<Rpc>() }
+        .groupBy { it.identifier.value }
+        .filter { it.value.size > 1 }
+        .map { (name, rpcs) -> rpcs.map { DuplicateRpcError(name) } }
         .flatten()
         .toNonEmptyListOrNull()
         ?.left()

@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -59,6 +60,7 @@ open class PythonEmitter(
         is Union -> 4
         is Endpoint -> 5
         is Channel -> 6
+        is Rpc -> 7
     }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {

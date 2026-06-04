@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -193,6 +194,11 @@ open class PythonIrEmitter(
 
     override fun emit(channel: Channel): File =
         channel.convert()
+            .sanitizeNames(sanitizationConfig)
+
+    override fun emit(rpc: Rpc): File =
+        rpc.convert()
+            .snakeCaseFunctionNames()
             .sanitizeNames(sanitizationConfig)
 
     override fun emitEndpointClient(endpoint: Endpoint): File {

@@ -20,6 +20,7 @@ data object Integer : TokenType
 data object Underscore : TokenType
 data object Character : TokenType
 data object Arrow : TokenType
+data object Bang : TokenType
 data object Pipe : TokenType
 data object LiteralString : TokenType
 data object EndOfProgram : TokenType {
@@ -59,6 +60,7 @@ data object TypeDefinition : WirespecDefinition
 data object EnumTypeDefinition : WirespecDefinition
 data object ChannelDefinition : WirespecDefinition
 data object EndpointDefinition : WirespecDefinition
+data object RpcDefinition : WirespecDefinition
 
 sealed interface ChannelTokenType : TokenType
 data object Method : ChannelTokenType

@@ -8,6 +8,11 @@ export namespace Wirespec {
   }
   export interface Endpoint {}
   export interface Channel {}
+  export interface Rpc {}
+  export interface Either<L, R> {
+    error: L | undefined;
+    value: R | undefined;
+  }
   export interface Refined<T> {
     value: T;
     validate(): boolean;

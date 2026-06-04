@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
@@ -111,6 +112,13 @@ class ScalaIrEmitterTest {
         val scala = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { ScalaIrEmitter() } shouldBeRight scala
+    }
+
+    @Test
+    fun compileRpcTest() {
+        val scala = EmitterFixtures.compileRpcTest
+
+        CompileRpcTest.compiler { ScalaIrEmitter() } shouldBeRight scala
     }
 
     @Test

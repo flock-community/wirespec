@@ -45,6 +45,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Field as FieldWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
+import community.flock.wirespec.compiler.core.parse.ast.Rpc as RpcWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionWirespec
 import community.flock.wirespec.ir.core.Constraint as LanguageConstraint
@@ -55,6 +56,7 @@ fun DefinitionWirespec.convert(): File = when (this) {
     is UnionWirespec -> convert()
     is RefinedWirespec -> convert()
     is ChannelWirespec -> convert()
+    is RpcWirespec -> convert()
     is EndpointWirespec -> convert()
 }
 
@@ -72,6 +74,13 @@ fun PackageName.convert(): File = file("Wirespec") {
         }
         `interface`("Endpoint")
         `interface`("Channel")
+        `interface`("Rpc")
+        `interface`("Either") {
+            typeParam(type("L"))
+            typeParam(type("R"))
+            field("error", type("L").nullable())
+            field("value", type("R").nullable())
+        }
         `interface`("Refined") {
             typeParam(type("T"))
             field("value", type("T"))
@@ -500,6 +509,19 @@ fun ChannelWirespec.convert() = file(identifier.toName()) {
         function("invoke") {
             arg("message", reference.convert())
             returnType(unit)
+        }
+    }
+}
+
+fun RpcWirespec.convert() = file(identifier.toName()) {
+    `interface`(identifier.toName()) {
+        extends(type("Wirespec.Rpc"))
+        function(identifier.toName()) {
+            requestParameters.forEach { arg(it.identifier.toName(), it.reference.convert()) }
+            returnType(
+                error?.let { type("Wirespec.Either", it.convert(), response.convert()) }
+                    ?: response.convert(),
+            )
         }
     }
 }

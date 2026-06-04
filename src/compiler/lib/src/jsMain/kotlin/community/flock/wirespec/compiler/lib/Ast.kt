@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P32
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
@@ -37,6 +38,7 @@ fun WsDefinition.consume(): Definition = when (this) {
     is WsType -> consume()
     is WsUnion -> consume()
     is WsChannel -> consume()
+    is WsRpc -> consume()
 }
 
 fun WsEndpoint.consume(): Endpoint = Endpoint(
@@ -107,6 +109,15 @@ private fun WsChannel.consume() = Channel(
     annotations = emptyList(),
     identifier = DefinitionIdentifier(identifier),
     reference = reference.consume(),
+)
+
+private fun WsRpc.consume() = Rpc(
+    comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
+    requestParameters = requestParameters.map { it.consume() },
+    response = response.consume(),
+    error = error?.consume(),
 )
 
 private fun WsField.consume() = Field(
@@ -217,6 +228,14 @@ fun Definition.produce(): WsDefinition = when (this) {
         identifier = identifier.value,
         comment = comment?.value,
         reference = reference.produce(),
+    )
+
+    is Rpc -> WsRpc(
+        identifier = identifier.value,
+        comment = comment?.value,
+        requestParameters = requestParameters.produce(),
+        response = response.produce(),
+        error = error?.produce(),
     )
 }
 
@@ -349,6 +368,15 @@ data class WsChannel(
     override val identifier: String,
     override val comment: String?,
     val reference: WsReference,
+) : WsDefinition
+
+@JsExport
+data class WsRpc(
+    override val identifier: String,
+    override val comment: String?,
+    val requestParameters: Array<WsField>,
+    val response: WsReference,
+    val error: WsReference?,
 ) : WsDefinition
 
 @JsExport

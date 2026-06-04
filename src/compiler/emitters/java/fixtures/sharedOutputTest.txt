@@ -14,6 +14,12 @@ public interface Wirespec {
   }
   public interface Channel {
   }
+  public interface Rpc {
+  }
+  public interface Either<L, R> {
+    java.util.Optional<L> error();
+    java.util.Optional<R> value();
+  }
   public interface Refined<T> {
     T value();
     public Boolean validate();
