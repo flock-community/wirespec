@@ -1,0 +1,17 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class FieldNames(
+  val street: String,
+  val postalCode: String,
+  val snake_cased: String,
+  val houseNumber: String,
+  val xApiKey: String,
+  val hTTPVersion: String,
+  val _1stLine: String,
+  val BODY_TYPE: String,
+  val `type`: String
+) extends Wirespec.Model {
+  override def validate(): List[String] =
+    List.empty[String]
+}

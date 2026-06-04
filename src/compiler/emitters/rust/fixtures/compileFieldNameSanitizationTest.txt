@@ -1,0 +1,24 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct FieldNames {
+    pub street: String,
+    pub postal_code: String,
+    pub snake_cased: String,
+    pub house_number: String,
+    pub x_api_key: String,
+    pub http_version: String,
+    pub _1st_line: String,
+    pub body_type: String,
+    pub r#type: String,
+}
+impl FieldNames {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

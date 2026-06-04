@@ -99,6 +99,15 @@ open class TypeScriptIrEmitter : IrEmitter {
         )
     }
 
+    // Model bodies serialize with their property names as JSON keys, so keep the wire name verbatim
+    // (`house-number`) in the quoted key; endpoint structs keep camelCase.
+    private val modelSanitizationConfig: SanitizationConfig by lazy {
+        sanitizationConfig.copy(
+            fieldNameCase = { name -> Name(listOf(name.value())) },
+            sanitizeSymbol = { it },
+        )
+    }
+
     override fun transformTestFile(file: File): File = file.transform {
         apply(transformPatternSwitchToValueSwitch())
     }
@@ -170,7 +179,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         val allImports = typeImports + validateImports
         val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
-            .sanitizeNames(sanitizationConfig)
+            .sanitizeNames(modelSanitizationConfig)
             .renameValidateAndBindObjReceiver(type.identifier.value, fieldNames)
         return if (allImports.isNotEmpty()) file.copy(elements = allImports + file.elements)
         else file
