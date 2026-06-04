@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
+import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
@@ -29,6 +30,13 @@ class RustIrEmitterTest {
         val rust = EmitterFixtures.compileTypeTest
 
         CompileTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
+    }
+
+    @Test
+    fun compileFieldNameSanitizationTest() {
+        val rust = EmitterFixtures.compileFieldNameSanitizationTest
+
+        CompileFieldNameSanitizationTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
 
     @Test

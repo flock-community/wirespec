@@ -1,0 +1,17 @@
+import {Wirespec} from '../Wirespec'
+export type FieldNames = {
+  "street": string,
+  "postalCode": string,
+  "snake_cased": string,
+  "house-number": string,
+  "x-api-key": string,
+  "HTTP-version": string,
+  "1st-line": string,
+  "BODY_TYPE": string,
+  "type": string,
+}
+export function validateFieldNames(obj: FieldNames): string[] {
+  return [] as string[];
+}
+
+export {FieldNames} from './FieldNames'

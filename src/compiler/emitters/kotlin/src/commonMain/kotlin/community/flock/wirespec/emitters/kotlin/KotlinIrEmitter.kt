@@ -93,6 +93,15 @@ open class KotlinIrEmitter(
         )
     }
 
+    // Model bodies serialize by reflection on the property name, so keep the wire name verbatim
+    // and backtick-escape non-identifier names (`house-number`); endpoints keep camelCase.
+    private val modelSanitizationConfig: SanitizationConfig by lazy {
+        sanitizationConfig.copy(
+            fieldNameCase = { name -> Name(listOf(name.value())) },
+            sanitizeSymbol = { it.sanitizeFieldSymbol() },
+        )
+    }
+
     override fun emitShared(): File? {
 
         val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.kotlin")
@@ -126,7 +135,7 @@ open class KotlinIrEmitter(
 
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
-            .sanitizeNames(sanitizationConfig)
+            .sanitizeNames(modelSanitizationConfig)
             .ensureEmptyStructHasConstructor()
 
     override fun emit(enum: Enum, module: Module): File = enum
@@ -213,6 +222,16 @@ open class KotlinIrEmitter(
         .joinToString("")
         .filter { it.isLetterOrDigit() || it == '_' }
         .sanitizeFirstIsDigit()
+
+    /**
+     * Field-name sanitizer for model bodies: preserve the name verbatim (it is the JSON wire key)
+     * and only backtick-escape it when it is not a bare Kotlin identifier. Kotlin/JVM allow
+     * backtick identifiers containing `-` or starting with a digit, which reflect to the exact name.
+     */
+    private fun String.sanitizeFieldSymbol(): String = if (isBareIdentifier()) this else addBackticks()
+
+    private fun String.isBareIdentifier(): Boolean =
+        isNotEmpty() && (first().isLetter() || first() == '_') && all { it.isLetterOrDigit() || it == '_' }
 
     private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
         .joinToString("_")

@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
+import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
@@ -117,6 +118,13 @@ class KotlinIrEmitterTest {
         val kotlin = EmitterFixtures.compileTypeTest
 
         CompileTypeTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun compileFieldNameSanitizationTest() {
+        val kotlin = EmitterFixtures.compileFieldNameSanitizationTest
+
+        CompileFieldNameSanitizationTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
 
     @Test
