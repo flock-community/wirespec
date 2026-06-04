@@ -37,35 +37,35 @@ object PutTodo : Wirespec.Endpoint {
   sealed interface Response5XX<T: Any> : Response<T>
   sealed interface ResponseTodoDto : Response<TodoDto>
   sealed interface ResponseError : Response<Error>
+  object Response200Headers : Wirespec.Response.Headers
   data class Response200(
       override val status: Int,
-      override val headers: Headers,
+      override val headers: Response200Headers,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(body: TodoDto) : this(200, Headers, body)
-      object Headers : Wirespec.Response.Headers
+      constructor(body: TodoDto) : this(200, Response200Headers, body)
     }
+  data class Response201Headers(
+      val token: Token,
+      val refreshToken: Token?
+    ) : Wirespec.Response.Headers
   data class Response201(
       override val status: Int,
-      override val headers: Headers,
+      override val headers: Response201Headers,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(token: Token, refreshToken: Token?, body: TodoDto) : this(201, Headers(
+      constructor(token: Token, refreshToken: Token?, body: TodoDto) : this(201, Response201Headers(
         token = token,
         refreshToken = refreshToken
       ), body)
-      data class Headers(
-            val token: Token,
-            val refreshToken: Token?
-          ) : Wirespec.Response.Headers
     }
+  object Response500Headers : Wirespec.Response.Headers
   data class Response500(
       override val status: Int,
-      override val headers: Headers,
+      override val headers: Response500Headers,
       override val body: Error
     ) : Response5XX<Error>, ResponseError {
-      constructor(body: Error) : this(500, Headers, body)
-      object Headers : Wirespec.Response.Headers
+      constructor(body: Error) : this(500, Response500Headers, body)
     }
   fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
