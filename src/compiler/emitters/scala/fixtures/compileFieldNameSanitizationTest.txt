@@ -11,7 +11,53 @@ case class FieldNames(
   val _1stLine: String,
   val BODY_TYPE: String,
   val `type`: String
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.FieldNames
+object FieldNamesGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): FieldNames =
+    new FieldNames(
+      street = generator.generate(path ++ List("street"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      postalCode = generator.generate(path ++ List("postalCode"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      snake_cased = generator.generate(path ++ List("snake_cased"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      houseNumber = generator.generate(path ++ List("house-number"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      xApiKey = generator.generate(path ++ List("x-api-key"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      hTTPVersion = generator.generate(path ++ List("HTTP-version"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      _1stLine = generator.generate(path ++ List("1st-line"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      BODY_TYPE = generator.generate(path ++ List("BODY_TYPE"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      `type` = generator.generate(path ++ List("type"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      ))
+    )
 }

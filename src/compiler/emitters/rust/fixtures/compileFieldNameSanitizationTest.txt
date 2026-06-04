@@ -18,6 +18,16 @@ impl FieldNames {
     }
 }
 
+use super::super::wirespec::*;
+use regex;
+use super::super::model::field_names::FieldNames;
+pub struct FieldNamesGenerator;
+impl FieldNamesGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> FieldNames {
+        return FieldNames { street: generator.generate(vec![path.as_slice(), vec![String::from("street")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), postal_code: generator.generate(vec![path.as_slice(), vec![String::from("postalCode")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), snake_cased: generator.generate(vec![path.as_slice(), vec![String::from("snake_cased")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), house_number: generator.generate(vec![path.as_slice(), vec![String::from("house-number")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), x_api_key: generator.generate(vec![path.as_slice(), vec![String::from("x-api-key")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), http_version: generator.generate(vec![path.as_slice(), vec![String::from("HTTP-version")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), _1st_line: generator.generate(vec![path.as_slice(), vec![String::from("1st-line")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), body_type: generator.generate(vec![path.as_slice(), vec![String::from("BODY_TYPE")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), r#type: generator.generate(vec![path.as_slice(), vec![String::from("type")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
