@@ -57,7 +57,7 @@ test("baseUrl option matches requests under an absolute origin", async () => {
   const scoped = setupServer(
     wirespec(
       GetTodos.api,
-      async () => GetTodos.response200({ "X-Total": 0, body: [] }),
+      async () => GetTodos.response200({ xTotal: 0, body: [] }),
       { baseUrl: "https://api.example.com" },
     ),
   );

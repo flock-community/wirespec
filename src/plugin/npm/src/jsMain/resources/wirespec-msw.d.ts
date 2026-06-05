@@ -8,15 +8,15 @@ type Method = 'GET' | 'PUT' | 'POST' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'PATCH' |
 type RawRequest = {
     method: Method
     path: string[]
-    queries: Record<string, string>
-    headers: Record<string, string>
-    body?: string
+    queries: Record<string, string[]>
+    headers: Record<string, string[]>
+    body: Uint8Array | undefined
 }
 
 type RawResponse = {
-    status: number
-    headers: Record<string, string>
-    body?: string
+    statusCode: number
+    headers: Record<string, string[]>
+    body: Uint8Array | undefined
 }
 
 /**

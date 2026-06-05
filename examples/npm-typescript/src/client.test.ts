@@ -1,7 +1,10 @@
-import { HandleFetch, wirespecFetch } from "@flock/wirespec/fetch";
+import { HandleFetch, wirespecFetchIr } from "@flock/wirespec/fetch";
 import { wirespecSerialization } from "@flock/wirespec/serialization";
 import { expect, test, vi } from "vitest";
 import { client } from "./gen/client";
+
+const arrayBufferOf = (text: string) =>
+  Promise.resolve(new TextEncoder().encode(text).buffer);
 
 test("testGetTodoById", async () => {
   // @ts-ignore
@@ -12,14 +15,14 @@ test("testGetTodoById", async () => {
         ["Content-Type", "application/json"],
         ["Content-Length", "2"],
       ]),
-      text: () =>
-        Promise.resolve(`{"id": 123, "title": "test", "completed": false}`),
+      arrayBuffer: () =>
+        arrayBufferOf(`{"id": 123, "title": "test", "completed": false}`),
     }),
   );
-  const apiClient = client(wirespecSerialization, (req) =>
-    wirespecFetch(req, mockHandler),
-  );
-  const res = await apiClient.GetTodoById({ id: "123" });
+  const apiClient = client(wirespecSerialization, {
+    transport: (req) => wirespecFetchIr(req, mockHandler),
+  });
+  const res = await apiClient.getTodoById({ id: "123" });
 
   expect(res.status).toEqual(200);
   expect(res.headers).toEqual({});
@@ -40,17 +43,17 @@ test("testGetTodos", async () => {
         ["Content-Length", "2"],
         ["X-Total", "2"],
       ]),
-      text: () =>
-        Promise.resolve(`[{"id": 123, "title": "test", "completed": false}]`),
+      arrayBuffer: () =>
+        arrayBufferOf(`[{"id": 123, "title": "test", "completed": false}]`),
     }),
   );
-  const apiClient = client(wirespecSerialization, (req) =>
-    wirespecFetch(req, mockHandler),
-  );
-  const res = await apiClient.GetTodos({ done: undefined });
+  const apiClient = client(wirespecSerialization, {
+    transport: (req) => wirespecFetchIr(req, mockHandler),
+  });
+  const res = await apiClient.getTodos({ done: undefined });
 
   expect(res.status).toEqual(200);
-  expect(res.headers).toEqual({ "X-Total": "2" });
+  expect(res.headers).toEqual({ xTotal: "2" });
   expect(res.body).toEqual([
     {
       completed: false,
