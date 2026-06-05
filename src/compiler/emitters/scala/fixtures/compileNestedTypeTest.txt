@@ -17,7 +17,7 @@ case class Address(
   val street: String,
   val houseNumber: Long,
   val postalCode: DutchPostalCode
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     if (!postalCode.validate()) List("postalCode") else List.empty[String]
 }
@@ -29,7 +29,68 @@ case class Person(
   val name: String,
   val address: Address,
   val tags: List[String]
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
-    address.validate().map(e => s"address.${e}")
+    address.validate().map(e => s"address.${e}").toList
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.DutchPostalCode
+object DutchPostalCodeGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): DutchPostalCode =
+    new DutchPostalCode(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldString(
+      regex = Some("^([0-9]{4}[A-Z]{2})$"),
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Address
+import community.flock.wirespec.generated.model.DutchPostalCode
+object AddressGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Address =
+    new Address(
+      street = generator.generate(path ++ List("street"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      houseNumber = generator.generate(path ++ List("houseNumber"), new Wirespec.GeneratorFieldInteger64(
+        min = None,
+        max = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      postalCode = generator.generate(path ++ List("postalCode"), new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p0) => DutchPostalCodeGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[DutchPostalCode]
+      ))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Person
+import community.flock.wirespec.generated.model.Address
+object PersonGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Person =
+    new Person(
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      address = generator.generate(path ++ List("address"), new Wirespec.GeneratorFieldShape(
+        annotations = Map("street" -> List.empty[Map[String, Any]], "houseNumber" -> List.empty[Map[String, Any]], "postalCode" -> List.empty[Map[String, Any]]),
+        generate = (p0) => AddressGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[Address]
+      )),
+      tags = generator.generate(path ++ List("tags"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      ))))
+    )
 }

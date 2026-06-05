@@ -16,6 +16,19 @@ class MyAwesomeEnum(Wirespec.Enum, enum.Enum):
     _999 = "-999"
     _88 = "88"
 
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.MyAwesomeEnum import MyAwesomeEnum
+class MyAwesomeEnumGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> MyAwesomeEnum:
+        return MyAwesomeEnum.valueOf(generator.generate(path + ['value'], Wirespec.GeneratorFieldEnum(values=['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'], annotations=[], type=MyAwesomeEnum)))
+
 from . import model
 from . import endpoint
 from . import wirespec

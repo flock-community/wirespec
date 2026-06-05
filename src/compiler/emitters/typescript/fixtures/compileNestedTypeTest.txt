@@ -27,6 +27,34 @@ export function validatePerson(obj: Person): string[] {
   return validateAddress(obj.address).map(e => `address.${e}`);
 }
 
+import {Wirespec} from '../Wirespec'
+import {DutchPostalCode} from '../model/DutchPostalCode'
+export namespace DutchPostalCodeGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): DutchPostalCode {
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^([0-9]{4}[A-Z]{2})$', annotations: [] as Record<string, any>[] });
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Address} from '../model/Address'
+import {DutchPostalCode} from '../model/DutchPostalCode'
+import {DutchPostalCodeGenerator} from './DutchPostalCodeGenerator'
+export namespace AddressGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Address {
+    return { street: generator.generate([...path, ...['street']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), houseNumber: generator.generate([...path, ...['houseNumber']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] }), postalCode: generator.generate([...path, ...['postalCode']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => DutchPostalCodeGenerator.generate(generator, p0), type: "DutchPostalCode" }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Person} from '../model/Person'
+import {Address} from '../model/Address'
+import {AddressGenerator} from './AddressGenerator'
+export namespace PersonGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Person {
+    return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), address: generator.generate([...path, ...['address']], { kind: 'shape', annotations: { 'street': [] as Record<string, any>[], 'houseNumber': [] as Record<string, any>[], 'postalCode': [] as Record<string, any>[] }, generate: (p0: string[]) => AddressGenerator.generate(generator, p0), type: "Address" }), tags: generator.generate([...path, ...['tags']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }) };
+  }
+}
+
 export {DutchPostalCode} from './DutchPostalCode'
 export {Address} from './Address'
 export {Person} from './Person'

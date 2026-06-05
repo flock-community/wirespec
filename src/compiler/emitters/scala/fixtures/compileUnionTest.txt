@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 case class UserAccountPassword(
   val username: String,
   val password: String
-) extends Wirespec.Model with UserAccount {
+) extends Wirespec.Shape with UserAccount {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -19,7 +19,7 @@ import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 case class UserAccountToken(
   val token: String
-) extends Wirespec.Model with UserAccount {
+) extends Wirespec.Shape with UserAccount {
   override def validate(): List[String] =
     List.empty[String]
 }
@@ -30,7 +30,80 @@ import scala.reflect.ClassTag
 case class User(
   val username: String,
   val account: UserAccount
-) extends Wirespec.Model {
+) extends Wirespec.Shape {
   override def validate(): List[String] =
     List.empty[String]
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.UserAccount
+object UserAccountGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): UserAccount = {
+    val variant = generator.generate(path ++ List("variant"), new Wirespec.GeneratorFieldUnion(
+      variants = List("UserAccountPassword", "UserAccountToken"),
+      annotations = List.empty[Map[String, Any]],
+      `type` = scala.reflect.classTag[UserAccount]
+    ))
+    variant match {
+        case "UserAccountPassword" => {
+          UserAccountPasswordGenerator.generate(generator, path ++ List("UserAccountPassword"))
+        }
+        case "UserAccountToken" => {
+          UserAccountTokenGenerator.generate(generator, path ++ List("UserAccountToken"))
+        }
+    }
+    throw new IllegalStateException("Unknown variant")
+  }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.UserAccountPassword
+object UserAccountPasswordGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): UserAccountPassword =
+    new UserAccountPassword(
+      username = generator.generate(path ++ List("username"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      password = generator.generate(path ++ List("password"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      ))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.UserAccountToken
+object UserAccountTokenGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): UserAccountToken =
+    new UserAccountToken(token = generator.generate(path ++ List("token"), new Wirespec.GeneratorFieldString(
+      regex = None,
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.User
+import community.flock.wirespec.generated.model.UserAccount
+object UserGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): User =
+    new User(
+      username = generator.generate(path ++ List("username"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      account = generator.generate(path ++ List("account"), new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p0) => UserAccountGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[UserAccount]
+      ))
+    )
 }

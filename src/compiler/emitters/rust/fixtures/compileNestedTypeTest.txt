@@ -43,6 +43,40 @@ impl Person {
     }
 }
 
+use super::super::wirespec::*;
+use regex;
+use super::super::model::dutch_postal_code::DutchPostalCode;
+pub struct DutchPostalCodeGenerator;
+impl DutchPostalCodeGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> DutchPostalCode {
+        return DutchPostalCode { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^([0-9]{4}[A-Z]{2})$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::address::Address;
+use super::super::model::dutch_postal_code::DutchPostalCode;
+use super::dutch_postal_code_generator::DutchPostalCodeGenerator;
+pub struct AddressGenerator;
+impl AddressGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Address {
+        return Address { street: generator.generate(vec![path.as_slice(), vec![String::from("street")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), house_number: generator.generate(vec![path.as_slice(), vec![String::from("houseNumber")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: None, max: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), postal_code: generator.generate(vec![path.as_slice(), vec![String::from("postalCode")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| DutchPostalCodeGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<DutchPostalCode>() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::person::Person;
+use super::super::model::address::Address;
+use super::address_generator::AddressGenerator;
+pub struct PersonGenerator;
+impl PersonGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Person {
+        return Person { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), address: generator.generate(vec![path.as_slice(), vec![String::from("address")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("street"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("houseNumber"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("postalCode"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p0| AddressGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<Address>() }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+    }
+}
+
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;

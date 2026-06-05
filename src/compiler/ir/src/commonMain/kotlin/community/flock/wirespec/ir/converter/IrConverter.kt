@@ -60,25 +60,28 @@ fun DefinitionWirespec.convert(): File = when (this) {
 
 fun PackageName.convert(): File = file("Wirespec") {
     `package`(value)
-
     namespace("Wirespec") {
-        `interface`("Model") {
+        `interface`("Model")
+        `interface`("Shape") {
+            extends(Type.Custom("Model"))
             function("validate") {
                 returnType(list(string))
             }
         }
         `interface`("Enum") {
+            extends(Type.Custom("Model"))
             field("label", string)
         }
-        `interface`("Endpoint")
-        `interface`("Channel")
         `interface`("Refined") {
+            extends(Type.Custom("Model"))
             typeParam(type("T"))
             field("value", type("T"))
             function("validate") {
                 returnType(boolean)
             }
         }
+        `interface`("Endpoint")
+        `interface`("Channel")
         `interface`("Path")
         `interface`("Queries")
         `interface`("Headers")
@@ -203,6 +206,96 @@ fun PackageName.convert(): File = file("Wirespec") {
                 arg("request", type("RawRequest"))
             }
         }
+        `interface`("GeneratorField", isSealed = true) {
+            // T is upper-bounded at `Any?` (i.e. unbounded) so GeneratorFieldNullable<T>
+            // can extend GeneratorField<T?>.
+            typeParam(type("T"), Type.Nullable(Type.Any))
+        }
+        struct("GeneratorFieldString") {
+            implements(type("GeneratorField", string))
+            field("regex", string.nullable())
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldInteger64") {
+            implements(type("GeneratorField", integer64))
+            field("min", integer64.nullable())
+            field("max", integer64.nullable())
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldInteger32") {
+            implements(type("GeneratorField", integer32))
+            field("min", integer32.nullable())
+            field("max", integer32.nullable())
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldNumber64") {
+            implements(type("GeneratorField", number64))
+            field("min", number64.nullable())
+            field("max", number64.nullable())
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldNumber32") {
+            implements(type("GeneratorField", number32))
+            field("min", number32.nullable())
+            field("max", number32.nullable())
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldBoolean") {
+            implements(type("GeneratorField", boolean))
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldBytes") {
+            implements(type("GeneratorField", bytes))
+            field("annotations", list(dict(string, Type.Any)))
+        }
+        struct("GeneratorFieldEnum") {
+            implements(type("GeneratorField", string))
+            field("values", list(string))
+            field("annotations", list(dict(string, Type.Any)))
+            field("type", reflect)
+        }
+        struct("GeneratorFieldUnion") {
+            implements(type("GeneratorField", string))
+            field("variants", list(string))
+            field("annotations", list(dict(string, Type.Any)))
+            field("type", reflect)
+        }
+        struct("GeneratorFieldArray") {
+            // `generate` takes the path-for-this-element and returns a single
+            // element; the seeded generator decides how many elements to put in
+            // the resulting List<T> and what indices to attach to their paths.
+            typeParam(type("T"))
+            implements(type("GeneratorField", list(type("T"))))
+            field("generate", Type.Function(listOf(list(string)), type("T")))
+        }
+        struct("GeneratorFieldNullable") {
+            typeParam(type("T"))
+            implements(type("GeneratorField", type("T").nullable()))
+            field("generate", Type.Function(listOf(list(string)), type("T")))
+        }
+        struct("GeneratorFieldShape") {
+            typeParam(type("T"))
+            implements(type("GeneratorField", type("T")))
+            field("annotations", dict(string, list(dict(string, Type.Any))))
+            field("generate", Type.Function(listOf(list(string)), type("T")))
+            field("type", reflect)
+        }
+        struct("GeneratorFieldDict") {
+            // `generate` takes the path-for-this-entry and returns a single
+            // value; the seeded generator decides keys and entry count.
+            typeParam(type("V"))
+            implements(type("GeneratorField", dict(string, type("V"))))
+            field("generate", Type.Function(listOf(list(string)), type("V")))
+        }
+        `interface`("Generator") {
+            function("generate") {
+                // T is unbounded (`Any?`) so the result type can be nullable.
+                typeParam(type("T"), Type.Nullable(Type.Any))
+                returnType(type("T"))
+                arg("path", list(string))
+                arg("field", type("GeneratorField", type("T")))
+            }
+        }
     }
 }
 
@@ -270,7 +363,7 @@ private fun Identifier.toName(): Name = when (this) {
 
 fun TypeWirespec.convert() = file(identifier.toName()) {
     struct(identifier.toName()) {
-        implements(Type.Custom("Wirespec.Model"))
+        implements(Type.Custom("Wirespec.Shape"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
         shape.value.forEach {
             field(it.identifier.toName(), it.reference.convert())
@@ -951,6 +1044,7 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Dict -> "Map"
     is Type.IntegerLiteral -> "Integer"
     is Type.StringLiteral -> "String"
+    is Type.Function -> "Function"
 }
 
 fun ReferenceWirespec.convert(): Type = when (this) {

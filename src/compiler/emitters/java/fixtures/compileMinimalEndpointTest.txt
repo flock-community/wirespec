@@ -111,7 +111,7 @@ package community.flock.wirespec.generated.model;
 import community.flock.wirespec.java.Wirespec;
 public record TodoDto (
   String description
-) implements Wirespec.Model {
+) implements Wirespec.Shape {
   @Override
   public java.util.List<String> validate() {
     return java.util.List.<String>of();
@@ -133,6 +133,18 @@ public record GetTodosClient (
     return transportation().transport(rawRequest).thenApply(rawResponse -> GetTodos.fromRawResponse(serialization(), rawResponse));
   }
 };
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.TodoDto;
+public interface TodoDtoGenerator {
+  public static TodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new TodoDto(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.empty(),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
 
 package community.flock.wirespec.generated;
 import community.flock.wirespec.java.Wirespec;

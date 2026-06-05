@@ -8,7 +8,41 @@ data class Request(
   val params: List<String>,
   val headers: Map<String, String>,
   val body: Map<String, List<String?>?>?
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Request
+object RequestGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Request =
+    Request(
+      type = generator.generate(path + listOf("type"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      url = generator.generate(path + listOf("url"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      BODY_TYPE = generator.generate(path + listOf("BODY_TYPE"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) })),
+      params = generator.generate(path + listOf("params"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) })),
+      headers = generator.generate(path + listOf("headers"), Wirespec.GeneratorFieldDict(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) })),
+      body = generator.generate(path + listOf("body"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldDict(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldArray(generate = { p2 -> generator.generate(p2, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) })) })) }))
+    )
 }

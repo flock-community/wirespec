@@ -1,18 +1,19 @@
 package community.flock.wirespec.kotlin
 import kotlin.reflect.KType
 object Wirespec {
-  interface Model {
+  interface Model
+  interface Shape : Model {
       fun validate(): List<String>
   }
-  interface Enum {
+  interface Enum : Model {
       val label: String
   }
-  interface Endpoint
-  interface Channel
-  interface Refined<T: Any> {
+  interface Refined<T: Any> : Model {
       val value: T
       fun validate(): Boolean
   }
+  interface Endpoint
+  interface Channel
   interface Path
   interface Queries
   interface Headers
@@ -79,6 +80,64 @@ object Wirespec {
     )
   interface Transportation {
       suspend fun transport(request: RawRequest): RawResponse
+  }
+  sealed interface GeneratorField<T: Any?>
+  data class GeneratorFieldString(
+      val regex: String?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<String>
+  data class GeneratorFieldInteger64(
+      val min: Long?,
+      val max: Long?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Long>
+  data class GeneratorFieldInteger32(
+      val min: Int?,
+      val max: Int?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Int>
+  data class GeneratorFieldNumber64(
+      val min: Double?,
+      val max: Double?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Double>
+  data class GeneratorFieldNumber32(
+      val min: Float?,
+      val max: Float?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Float>
+  data class GeneratorFieldBoolean(
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Boolean>
+  data class GeneratorFieldBytes(
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<ByteArray>
+  data class GeneratorFieldEnum(
+      val values: List<String>,
+      val annotations: List<Map<String, Any>>,
+      val type: KType
+    ) : GeneratorField<String>
+  data class GeneratorFieldUnion(
+      val variants: List<String>,
+      val annotations: List<Map<String, Any>>,
+      val type: KType
+    ) : GeneratorField<String>
+  data class GeneratorFieldArray<T: Any>(
+      val generate: (List<String>) -> T
+    ) : GeneratorField<List<T>>
+  data class GeneratorFieldNullable<T: Any>(
+      val generate: (List<String>) -> T
+    ) : GeneratorField<T?>
+  data class GeneratorFieldShape<T: Any>(
+      val annotations: Map<String, List<Map<String, Any>>>,
+      val generate: (List<String>) -> T,
+      val type: KType
+    ) : GeneratorField<T>
+  data class GeneratorFieldDict<V: Any>(
+      val generate: (List<String>) -> V
+    ) : GeneratorField<Map<String, V>>
+  interface Generator {
+      fun <T: Any?> generate(path: List<String>, field: GeneratorField<T>): T
   }
   interface ServerEdge<Req: Request<*>, Res: Response<*>> {
       fun from(request: RawRequest): Req

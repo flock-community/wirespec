@@ -103,6 +103,14 @@ export const getTodosClient = (serialization: Wirespec.Serialization, transporta
   }
 })
 
+import {Wirespec} from '../Wirespec'
+import {TodoDto} from '../model/TodoDto'
+export namespace TodoDtoGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): TodoDto {
+    return { description: generator.generate([...path, ...['description']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
+
 import {Wirespec} from './Wirespec'
 import {getTodosClient} from './client/GetTodosClient'
 export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({

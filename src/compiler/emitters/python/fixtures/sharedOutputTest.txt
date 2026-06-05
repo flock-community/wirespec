@@ -2,27 +2,30 @@ from __future__ import annotations
 import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Generic, Optional, Type, TypeVar
+from typing import Any, Callable, Generic, Optional, Type, TypeVar
 T = TypeVar('T')
+V = TypeVar('V')
 def _raise(msg: str) -> Any:
     raise Exception(msg)
 # package shared
 class Wirespec:
     class Model(ABC):
+        pass
+    class Shape(Model, ABC):
         @abstractmethod
         def validate(self) -> list[str]:
             ...
-    class Enum(ABC):
+    class Enum(Model, ABC):
         label: str
-    class Endpoint(ABC):
-        pass
-    class Channel(ABC):
-        pass
-    class Refined(ABC, Generic[T]):
+    class Refined(Model, ABC, Generic[T]):
         value: T
         @abstractmethod
         def validate(self) -> bool:
             ...
+    class Endpoint(ABC):
+        pass
+    class Channel(ABC):
+        pass
     class Path(ABC):
         pass
     class Queries(ABC):
@@ -107,4 +110,64 @@ class Wirespec:
     class Transportation(ABC):
         @abstractmethod
         async def transport(self, request: Wirespec.RawRequest) -> Wirespec.RawResponse:
+            ...
+    class GeneratorField(ABC, Generic[T]):
+        pass
+    @dataclass
+    class GeneratorFieldString(GeneratorField[str]):
+        regex: Optional[str]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldInteger64(GeneratorField[int]):
+        min: Optional[int]
+        max: Optional[int]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldInteger32(GeneratorField[int]):
+        min: Optional[int]
+        max: Optional[int]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldNumber64(GeneratorField[float]):
+        min: Optional[float]
+        max: Optional[float]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldNumber32(GeneratorField[float]):
+        min: Optional[float]
+        max: Optional[float]
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldBoolean(GeneratorField[bool]):
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldBytes(GeneratorField[bytes]):
+        annotations: list[dict[str, Any]]
+    @dataclass
+    class GeneratorFieldEnum(GeneratorField[str]):
+        values: list[str]
+        annotations: list[dict[str, Any]]
+        type: type[Any]
+    @dataclass
+    class GeneratorFieldUnion(GeneratorField[str]):
+        variants: list[str]
+        annotations: list[dict[str, Any]]
+        type: type[Any]
+    @dataclass
+    class GeneratorFieldArray(GeneratorField[list[T]], Generic[T]):
+        generate: Callable[[list[str]], T]
+    @dataclass
+    class GeneratorFieldNullable(GeneratorField[Optional[T]], Generic[T]):
+        generate: Callable[[list[str]], T]
+    @dataclass
+    class GeneratorFieldShape(GeneratorField[T], Generic[T]):
+        annotations: dict[str, list[dict[str, Any]]]
+        generate: Callable[[list[str]], T]
+        type: type[T]
+    @dataclass
+    class GeneratorFieldDict(GeneratorField[dict[str, V]], Generic[V]):
+        generate: Callable[[list[str]], V]
+    class Generator(ABC):
+        @abstractmethod
+        def generate(self, path: list[str], field: Wirespec.GeneratorField[T]) -> T:
             ...

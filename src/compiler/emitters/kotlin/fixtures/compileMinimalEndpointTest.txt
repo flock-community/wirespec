@@ -27,8 +27,8 @@ object GetTodos : Wirespec.Endpoint {
     Wirespec.RawRequest(
       method = request.method.name,
       path = listOf("todos"),
-      queries = emptyMap(),
-      headers = emptyMap(),
+      queries = emptyMap<String, List<String>>(),
+      headers = emptyMap<String, List<String>>(),
       body = null
     )
   fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
@@ -38,7 +38,7 @@ object GetTodos : Wirespec.Endpoint {
         is Response200 -> {
           return Wirespec.RawResponse(
             statusCode = r.status,
-            headers = emptyMap(),
+            headers = emptyMap<String, List<String>>(),
             body = serialization.serializeBody(r.body, typeOf<List<TodoDto>>())
           )
         }
@@ -83,7 +83,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 data class TodoDto(
   val description: String
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
@@ -103,6 +103,18 @@ data class GetTodosClient(
     val rawResponse = transportation.transport(rawRequest)
     return GetTodos.fromRawResponse(serialization, rawResponse)
   }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TodoDto
+object TodoDtoGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TodoDto =
+    TodoDto(description = generator.generate(path + listOf("description"), Wirespec.GeneratorFieldString(
+      regex = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
 }
 
 package community.flock.wirespec.generated

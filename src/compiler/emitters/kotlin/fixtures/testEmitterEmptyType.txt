@@ -1,7 +1,7 @@
 package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
-data object TodoWithoutProperties : Wirespec.Model {
+data object TodoWithoutProperties : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }

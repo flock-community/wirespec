@@ -6,7 +6,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 @dataclass
-class FieldNames(Wirespec.Model):
+class FieldNames(Wirespec.Shape):
     street: str
     postalCode: str
     snake_cased: str
@@ -18,6 +18,19 @@ class FieldNames(Wirespec.Model):
     type: str
     def validate(self) -> list[str]:
         return []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.FieldNames import FieldNames
+class FieldNamesGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> FieldNames:
+        return FieldNames(street=generator.generate(path + ['street'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), postalCode=generator.generate(path + ['postalCode'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), snake_cased=generator.generate(path + ['snake_cased'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), houseNumber=generator.generate(path + ['house-number'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), xApiKey=generator.generate(path + ['x-api-key'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), hTTPVersion=generator.generate(path + ['HTTP-version'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), 1stLine=generator.generate(path + ['1st-line'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), BODY_TYPE=generator.generate(path + ['BODY_TYPE'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), type=generator.generate(path + ['type'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
 
 from . import model
 from . import endpoint

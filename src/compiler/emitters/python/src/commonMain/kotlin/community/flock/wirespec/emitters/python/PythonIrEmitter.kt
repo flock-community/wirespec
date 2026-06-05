@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convert
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
@@ -30,6 +31,8 @@ import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.plus
 import community.flock.wirespec.ir.core.raw
@@ -86,9 +89,10 @@ open class PythonIrEmitter(
         |import enum
         |from abc import ABC, abstractmethod
         |from dataclasses import dataclass
-        |from typing import Any, Generic, Optional, Type, TypeVar
+        |from typing import Any, Callable, Generic, Optional, Type, TypeVar
         |
         |T = TypeVar('T')
+        |V = TypeVar('V')
         |
         |
         |def _raise(msg: str) -> Any:
@@ -98,13 +102,11 @@ open class PythonIrEmitter(
     """.trimMargin()
 
     override fun emitShared(): File? {
-
-        val source = PackageName("shared").convert()
-
+        val source = PackageName("shared").convert().replaceReflectInNonGenericStructFields()
         return if (emitShared.value) {
             File(
                 Name.of(packageName.toDir() + "wirespec"),
-                listOf(raw(sharedSource + PythonGenerator.generate(source)))
+                listOf(raw(sharedSource + PythonGenerator.generate(source))),
             )
         } else {
             null
@@ -155,6 +157,43 @@ open class PythonIrEmitter(
         return file
             .prependImports(buildImports("..wirespec"))
             .placeInModule(packageName = packageName, definition = definition)
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is Type -> definition.convertToGenerator(module)
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val customNames = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .toList()
+        val generatorRefs = mutableSetOf<String>()
+        sanitized.transform {
+            expression { expr, t ->
+                if (expr is RawExpression && expr.code.endsWith("Generator") && expr.code != generatorOwnName) {
+                    generatorRefs.add(expr.code)
+                }
+                expr.transformChildren(t)
+            }
+        }
+        val generatorImports = (customNames.filter { it.endsWith("Generator") } + generatorRefs)
+            .distinct()
+            .map { import(".$it", it) }
+        val modelImports = customNames
+            .filterNot { it.endsWith("Generator") }
+            .map { import("..model.$it", it) }
+        return sanitized
+            .prependImports(buildImports("..wirespec") + modelImports + generatorImports)
+            .placeInModule(packageName = packageName, subPackage = "generator")
     }
 
     override fun emit(type: Type, module: Module): File {

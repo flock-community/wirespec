@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -23,19 +24,23 @@ interface IrEmitter : Emitter {
     val generator: Generator
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        val moduleEmitted = ast.modules
-            .flatMap { m ->
-                logger.info("Emitting Nodes from ${m.fileUri.value} ")
-                emit(m, logger)
-            }
-            .plus(emitShared()?.let { listOf(it) } ?: emptyList())
-            .map { it.toEmitted() }
-
+        val moduleFiles = ast.modules.flatMap { m ->
+            logger.info("Emitting Nodes from ${m.fileUri.value} ")
+            emit(m, logger)
+        }
+        val sharedFile = emitShared()
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
-        return allEndpoints.takeIf { it.isNotEmpty() }
-            ?.let { moduleEmitted + emitClient(it, logger).toEmitted() }
-            ?: moduleEmitted
+        val mainClientFile = allEndpoints.takeIf { it.isNotEmpty() }?.let { emitClient(it, logger) }
+
+        val allFiles = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
+        beforeGenerate(allFiles)
+
+        val moduleEmitted = (moduleFiles + listOfNotNull(sharedFile)).map { it.toEmitted() }
+        return mainClientFile?.let { moduleEmitted + it.toEmitted() } ?: moduleEmitted
     }
+
+    /** Hook for emitters that need to inspect the full set of files before per-file generation. */
+    fun beforeGenerate(allFiles: List<File>) {}
 
     fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val definitionFiles = module.statements.map { emit(it, module, logger) }
@@ -43,8 +48,16 @@ interface IrEmitter : Emitter {
             logger.info("Emitting Client for endpoint ${endpoint.identifier.value}")
             emitEndpointClient(endpoint)
         }
-        return definitionFiles + clientFiles
+        val generatorFiles = module.statements.toList()
+            .filterIsInstance<Model>()
+            .mapNotNull { model ->
+                logger.info("Emitting Generator for ${model::class.simpleName} ${model.identifier.value}")
+                emitGenerator(model, module)
+            }
+        return definitionFiles + clientFiles + generatorFiles
     }
+
+    fun emitGenerator(definition: Definition, module: Module): File? = null
 
     fun emit(definition: Definition, module: Module, logger: Logger): File {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")

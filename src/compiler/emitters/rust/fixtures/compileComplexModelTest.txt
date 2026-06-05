@@ -119,6 +119,100 @@ impl Company {
     }
 }
 
+use super::super::wirespec::*;
+use regex;
+use super::super::model::email::Email;
+pub struct EmailGenerator;
+impl EmailGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Email {
+        return Email { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::phone_number::PhoneNumber;
+pub struct PhoneNumberGenerator;
+impl PhoneNumberGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PhoneNumber {
+        return PhoneNumber { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^\+[1-9]\d{1,14}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::tag::Tag;
+pub struct TagGenerator;
+impl TagGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Tag {
+        return Tag { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-z][a-z0-9-]{0,19}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::employee_age::EmployeeAge;
+pub struct EmployeeAgeGenerator;
+impl EmployeeAgeGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> EmployeeAge {
+        return EmployeeAge { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: Some(18_i64), max: Some(65_i64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::contact_info::ContactInfo;
+use super::super::model::email::Email;
+use super::super::model::phone_number::PhoneNumber;
+use super::email_generator::EmailGenerator;
+use super::phone_number_generator::PhoneNumberGenerator;
+pub struct ContactInfoGenerator;
+impl ContactInfoGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> ContactInfo {
+        return ContactInfo { email: generator.generate(vec![path.as_slice(), vec![String::from("email")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| EmailGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<Email>() }), phone: generator.generate(vec![path.as_slice(), vec![String::from("phone")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| PhoneNumberGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<PhoneNumber>() })) }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::employee::Employee;
+use super::super::model::employee_age::EmployeeAge;
+use super::super::model::contact_info::ContactInfo;
+use super::super::model::tag::Tag;
+use super::employee_age_generator::EmployeeAgeGenerator;
+use super::contact_info_generator::ContactInfoGenerator;
+use super::tag_generator::TagGenerator;
+pub struct EmployeeGenerator;
+impl EmployeeGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Employee {
+        return Employee { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), age: generator.generate(vec![path.as_slice(), vec![String::from("age")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| EmployeeAgeGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<EmployeeAge>() }), contact_info: generator.generate(vec![path.as_slice(), vec![String::from("contactInfo")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("email"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("phone"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p0| ContactInfoGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<ContactInfo>() }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| TagGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Tag>() })) }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::department::Department;
+use super::super::model::employee::Employee;
+use super::employee_generator::EmployeeGenerator;
+pub struct DepartmentGenerator;
+impl DepartmentGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Department {
+        return Department { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), employees: generator.generate(vec![path.as_slice(), vec![String::from("employees")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("age"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("contactInfo"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("tags"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| EmployeeGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Employee>() })) }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::company::Company;
+use super::super::model::department::Department;
+use super::department_generator::DepartmentGenerator;
+pub struct CompanyGenerator;
+impl CompanyGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Company {
+        return Company { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), departments: generator.generate(vec![path.as_slice(), vec![String::from("departments")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("employees"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| DepartmentGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Department>() })) }) };
+    }
+}
+
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;

@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -15,9 +16,12 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.ir.core.Constraint
+import community.flock.wirespec.ir.core.Function
 import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.LiteralList
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Precision
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Type
@@ -29,6 +33,7 @@ import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.union
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.fail
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 import community.flock.wirespec.compiler.core.parse.ast.Refined as AstRefined
@@ -62,7 +67,7 @@ class IrConverterTest {
 
         val expected = file("Foo") {
             struct("Foo") {
-                implements(Type.Custom("Wirespec.Model"))
+                implements(Type.Custom("Wirespec.Shape"))
                 field(Name(listOf("bar")), string)
                 function("validate", isOverride = true) {
                     returnType(Type.Array(Type.String))
@@ -113,7 +118,7 @@ class IrConverterTest {
             },
             file("Foo") {
                 struct("Foo") {
-                    implements(Type.Custom("Wirespec.Model"))
+                    implements(Type.Custom("Wirespec.Shape"))
                     implements(Type.Custom("MyUnion"))
                     field(Name(listOf("a")), string)
                     function("validate", isOverride = true) {
@@ -124,7 +129,7 @@ class IrConverterTest {
             },
             file("Bar") {
                 struct("Bar") {
-                    implements(Type.Custom("Wirespec.Model"))
+                    implements(Type.Custom("Wirespec.Shape"))
                     implements(Type.Custom("MyUnion"))
                     field(Name(listOf("b")), string)
                     function("validate", isOverride = true) {
@@ -248,5 +253,42 @@ class IrConverterTest {
         }
 
         assertEquals(expected, result)
+    }
+
+    @Test
+    fun testSharedContainsGeneratorField() {
+        val file = PackageName("com.example").convert()
+        val wirespecNamespace = file.elements
+            .filterIsInstance<Namespace>()
+            .first { it.name == Name.of("Wirespec") }
+        val interfaces = wirespecNamespace.elements
+            .filterIsInstance<Interface>()
+        val structs = wirespecNamespace.elements
+            .filterIsInstance<Struct>()
+
+        val generatorField = interfaces.first { it.name == Name.of("GeneratorField") }
+        assertTrue(generatorField.isSealed, "GeneratorField should be sealed")
+
+        val generator = interfaces.first { it.name == Name.of("Generator") }
+        val generateFn = generator.elements
+            .filterIsInstance<Function>()
+            .first { it.name == Name.of("generate") }
+        assertEquals(2, generateFn.parameters.size, "generate() should take path and field")
+        assertEquals(Name.of("path"), generateFn.parameters[0].name, "first param must be 'path'")
+        assertEquals(Name.of("field"), generateFn.parameters[1].name, "second param must be 'field'")
+
+        val expectedVariants = setOf(
+            "GeneratorFieldString",
+            "GeneratorFieldInteger64", "GeneratorFieldInteger32",
+            "GeneratorFieldNumber64", "GeneratorFieldNumber32",
+            "GeneratorFieldBoolean", "GeneratorFieldBytes", "GeneratorFieldEnum",
+            "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
+            "GeneratorFieldDict",
+        )
+        val actualVariants = structs.map { it.name.value() }.toSet()
+        assertTrue(
+            expectedVariants.all { it in actualVariants },
+            "Missing variants: ${expectedVariants - actualVariants}",
+        )
     }
 }

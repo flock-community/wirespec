@@ -4,6 +4,8 @@ import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
 import community.flock.wirespec.ir.core.BinaryOp
+import community.flock.wirespec.ir.core.Cast
+import community.flock.wirespec.ir.core.ClassReference
 import community.flock.wirespec.ir.core.Constraint
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.ConstructorStatement
@@ -21,6 +23,7 @@ import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
 import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Interface
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -167,12 +170,13 @@ object TypeScriptGenerator : Generator {
         val nestedContent = nonStructElements.joinToString("") { it.emit(indent) }
         val closingBrace = "}".indentCode(indent)
         val pascalName = name.pascalCase()
+        val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emit() }}>"
         val typeStr = if (fields.isEmpty() && nonStructElements.isEmpty()) {
-            "export type $pascalName = {}\n".indentCode(indent)
+            "export type $pascalName$typeParamsStr = {}\n".indentCode(indent)
         } else if (fields.isEmpty()) {
-            "export type $pascalName = {}\n".indentCode(indent) + nestedContent
+            "export type $pascalName$typeParamsStr = {}\n".indentCode(indent) + nestedContent
         } else {
-            "export type $pascalName = {\n$fieldsContent$closingBrace\n".indentCode(indent) + nestedContent
+            "export type $pascalName$typeParamsStr = {\n$fieldsContent$closingBrace\n".indentCode(indent) + nestedContent
         }
         val constructorFunctions = constructors.joinToString("") { constructor ->
             emitStructConstructor(pascalName, constructor, indent)
@@ -466,6 +470,10 @@ object TypeScriptGenerator : Generator {
         is Type.Nullable -> "${type.emit()} | undefined"
         is Type.IntegerLiteral -> value.toString()
         is Type.StringLiteral -> "\"$value\""
+        is Type.Function -> {
+            val params = parameterTypes.mapIndexed { i, t -> "p$i: ${t.emit()}" }.joinToString(", ")
+            "($params) => ${returnType.emit()}"
+        }
     }
 
     private fun emitConstructorCall(type: Type, namedArguments: Map<Name, Expression>): String {
@@ -544,6 +552,7 @@ object TypeScriptGenerator : Generator {
         is EnumValueCall -> "${expression.emit()};\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()});\n".indentCode(indent)
         is TypeDescriptor -> "\"${type.emit()}\";\n".indentCode(indent)
+        is Cast -> "(${expression.emit()} as ${targetType.emit()});\n".indentCode(indent)
         is NullCheck -> "${emit()};\n".indentCode(indent)
         is NullableMap -> "${emit()};\n".indentCode(indent)
         is NullableOf -> "${emit()};\n".indentCode(indent)
@@ -556,12 +565,14 @@ object TypeScriptGenerator : Generator {
         is FlatMapIndexed -> "${emit()};\n".indentCode(indent)
         is ListConcat -> "${emit()};\n".indentCode(indent)
         is StringTemplate -> "${emit()};\n".indentCode(indent)
+        is Lambda -> "${emit()};\n".indentCode(indent)
     }
 
     private fun BinaryOp.Operator.toTypeScript(): String = when (this) {
         BinaryOp.Operator.PLUS -> "+"
         BinaryOp.Operator.EQUALS -> "==="
         BinaryOp.Operator.NOT_EQUALS -> "!=="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in TypeScript")
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -569,6 +580,7 @@ object TypeScriptGenerator : Generator {
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()
+        is ClassReference -> "\"${type.emit()}\""
         is RawExpression -> code
         is NullLiteral -> "undefined"
         is NullableEmpty -> "undefined"
@@ -592,6 +604,7 @@ object TypeScriptGenerator : Generator {
         is EnumValueCall -> expression.emit()
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()})"
         is TypeDescriptor -> "\"${type.emit()}\""
+        is Cast -> "(${expression.emit()} as ${targetType.emit()})"
         is NullCheck -> {
             val exprStr = expression.emit()
             // When expression might be undefined (e.g. case-insensitive header lookup),
@@ -625,7 +638,14 @@ object TypeScriptGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in TypeScript")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "(${condition.emit()} ? ${thenExpr.emit()} : ${elseExpr.emit()})"
-        is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()})"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emit()
+            } else {
+                "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()})"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emit()}.flatMap((${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emit()})"
         is ListConcat -> when {
             lists.isEmpty() -> "[] as string[]"
@@ -638,6 +658,10 @@ object TypeScriptGenerator : Generator {
                 is StringTemplate.Part.Expr -> "\${${it.expression.emit()}}"
             }
         }}`"
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { "${it.name.camelCase()}: ${it.type.emit()}" }
+            "($params) => ${body.emit()}"
+        }
     }
 
     private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {
@@ -660,7 +684,14 @@ object TypeScriptGenerator : Generator {
         is EnumValueCall -> expression.emitWithInlinedIt(replacement)
         is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
         is IfExpression -> "(${condition.emitWithInlinedIt(replacement)} ? ${thenExpr.emitWithInlinedIt(replacement)} : ${elseExpr.emitWithInlinedIt(replacement)})"
-        is MapExpression -> "${receiver.emitWithInlinedIt(replacement)}.map(${variable.camelCase()} => ${body.emitWithInlinedIt(replacement)})"
+        is MapExpression -> {
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                recv.right.emitWithInlinedIt(replacement)
+            } else {
+                "${receiver.emitWithInlinedIt(replacement)}.map(${variable.camelCase()} => ${body.emitWithInlinedIt(replacement)})"
+            }
+        }
         is FlatMapIndexed -> "${receiver.emitWithInlinedIt(replacement)}.flatMap((${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emitWithInlinedIt(replacement)})"
         is ListConcat -> "[${lists.joinToString(", ") { "...${it.emitWithInlinedIt(replacement)}" }}]"
         is StringTemplate -> "`${parts.joinToString("") {

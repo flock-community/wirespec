@@ -5,7 +5,7 @@ import community.flock.wirespec.java.Wirespec;
 public record NumberRefinedLowerBound (Double value) implements Wirespec.Refined<Double> {
   @Override
   public String toString() { return value.toString(); }
-  public boolean validate() {
+  public Boolean validate() {
     return -1.0 < value;
   }
   @Override

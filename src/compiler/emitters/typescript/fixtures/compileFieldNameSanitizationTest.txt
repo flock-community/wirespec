@@ -14,4 +14,12 @@ export function validateFieldNames(obj: FieldNames): string[] {
   return [] as string[];
 }
 
+import {Wirespec} from '../Wirespec'
+import {FieldNames} from '../model/FieldNames'
+export namespace FieldNamesGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): FieldNames {
+    return { street: generator.generate([...path, ...['street']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), postalCode: generator.generate([...path, ...['postalCode']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), snake_cased: generator.generate([...path, ...['snake_cased']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), houseNumber: generator.generate([...path, ...['house-number']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), xApiKey: generator.generate([...path, ...['x-api-key']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), hTTPVersion: generator.generate([...path, ...['HTTP-version']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), 1stLine: generator.generate([...path, ...['1st-line']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), BODY_TYPE: generator.generate([...path, ...['BODY_TYPE']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), type: generator.generate([...path, ...['type']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
+
 export {FieldNames} from './FieldNames'

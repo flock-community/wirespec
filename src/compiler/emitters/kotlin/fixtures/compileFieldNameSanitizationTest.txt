@@ -11,7 +11,53 @@ data class FieldNames(
   val `1st-line`: String,
   val BODY_TYPE: String,
   val type: String
-) : Wirespec.Model {
+) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.FieldNames
+object FieldNamesGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): FieldNames =
+    FieldNames(
+      street = generator.generate(path + listOf("street"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      postalCode = generator.generate(path + listOf("postalCode"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      snake_cased = generator.generate(path + listOf("snake_cased"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      houseNumber = generator.generate(path + listOf("house-number"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      xApiKey = generator.generate(path + listOf("x-api-key"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      hTTPVersion = generator.generate(path + listOf("HTTP-version"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      _1stLine = generator.generate(path + listOf("1st-line"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      BODY_TYPE = generator.generate(path + listOf("BODY_TYPE"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      type = generator.generate(path + listOf("type"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      ))
+    )
 }

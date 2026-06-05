@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.classifyValidatableFields
 import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertConstraint
+import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.converter.requestParameters
 import community.flock.wirespec.compiler.core.emit.Keywords
@@ -38,11 +39,14 @@ import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.Case
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Transformer
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.plus
@@ -144,6 +148,13 @@ open class TypeScriptIrEmitter : IrEmitter {
                     if (namespace.name == Name.of("Wirespec")) listOf(RawElement(api))
                     else emptyList()
                 }
+                matchingElements<Struct> { struct ->
+                    GENERATOR_FIELD_KINDS[struct.name.value()]?.let { kind ->
+                        struct.copy(
+                            fields = listOf(Field(Name.of("kind"), LanguageType.StringLiteral(kind))) + struct.fields,
+                        )
+                    } ?: struct
+                }
             }
     }
 
@@ -166,6 +177,81 @@ open class TypeScriptIrEmitter : IrEmitter {
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
             elements = listOf(import("../Wirespec", "Wirespec")) + file.elements
+        )
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is AstType -> definition.convertToGenerator(module)
+            // TypeScript emits Wirespec enums as string-literal type aliases
+            // (`type X = "A" | "B"`), so the language-neutral `<EnumType>.valueOf(label=<expr>)`
+            // wrapper produced by GeneratorConverter has no runtime presence. Strip it —
+            // the inner generator.generate(...) call already returns a string that
+            // structurally conforms to the literal-union return type.
+            is AstEnum -> definition.convertToGenerator().transform {
+                expression { expr, t ->
+                    if (expr is FunctionCall &&
+                        expr.receiver is RawExpression &&
+                        (expr.receiver as RawExpression).code == definition.identifier.value &&
+                        expr.name == Name.of("valueOf")
+                    ) {
+                        expr.arguments[Name.of("label")] ?: expr
+                    } else expr.transformChildren(t)
+                }
+            }
+            is Refined -> definition.convertToGenerator().transform {
+                expression { expr, t ->
+                    if (expr is ConstructorStatement && expr.type == LanguageType.Custom(definition.identifier.value)) {
+                        expr.namedArguments[Name.of("value")] ?: expr
+                    } else expr.transformChildren(t)
+                }
+            }
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }.sanitizeNames(sanitizationConfig).transform {
+            expression { expr, t ->
+                if (expr is ConstructorStatement) {
+                    val typeName = (expr.type as? LanguageType.Custom)?.name?.value()?.removePrefix("Wirespec.")
+                    val kind = typeName?.let { GENERATOR_FIELD_KINDS[it] }
+                    if (kind != null) {
+                        ConstructorStatement(
+                            type = expr.type,
+                            namedArguments = mapOf(Name.of("kind") to Literal(kind, LanguageType.String)) +
+                                expr.namedArguments.mapValues { (_, v) -> t.transformExpression(v) },
+                        )
+                    } else expr.transformChildren(t)
+                } else expr.transformChildren(t)
+            }
+        }
+
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val customNames = generatorFile.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .toList()
+        val generatorRefs = mutableSetOf<String>()
+        generatorFile.transform {
+            expression { expr, t ->
+                if (expr is RawExpression && expr.code.endsWith("Generator") && expr.code != generatorOwnName) {
+                    generatorRefs.add(expr.code)
+                }
+                expr.transformChildren(t)
+            }
+        }
+        val generatorImports = (customNames.filter { it.endsWith("Generator") } + generatorRefs)
+            .distinct()
+            .map { import("./$it", it) }
+        val modelImports = customNames
+            .filterNot { it.endsWith("Generator") }
+            .map { import("../model/$it", it) }
+
+        val subPackageName = PackageName("") + "generator"
+        return File(
+            name = Name.of(subPackageName.toDir() + generatorFile.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(import("../Wirespec", "Wirespec")) + modelImports + generatorImports + generatorFile.elements,
         )
     }
 
@@ -346,6 +432,15 @@ open class TypeScriptIrEmitter : IrEmitter {
     private data class EndpointParam(val name: String, val type: String, val nullable: Boolean)
 
     companion object : Keywords {
+        private val GENERATOR_FIELD_KINDS: Map<String, String> = listOf(
+            "GeneratorFieldString",
+            "GeneratorFieldInteger64", "GeneratorFieldInteger32",
+            "GeneratorFieldNumber64", "GeneratorFieldNumber32",
+            "GeneratorFieldBoolean", "GeneratorFieldBytes", "GeneratorFieldEnum",
+            "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
+            "GeneratorFieldShape", "GeneratorFieldDict",
+        ).associateWith { it.removePrefix("GeneratorField").lowercase() }
+
         override val reservedKeywords = setOf(
             "break", "case", "catch", "continue", "debugger",
             "default", "delete", "do", "else", "finally",

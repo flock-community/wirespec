@@ -15,6 +15,16 @@ impl Request {
     }
 }
 
+use super::super::wirespec::*;
+use regex;
+use super::super::model::request::Request;
+pub struct RequestGenerator;
+impl RequestGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Request {
+        return Request { r#type: generator.generate(vec![path.as_slice(), vec![String::from("type")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), url: generator.generate(vec![path.as_slice(), vec![String::from("url")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), body_type: generator.generate(vec![path.as_slice(), vec![String::from("BODY_TYPE")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), params: generator.generate(vec![path.as_slice(), vec![String::from("params")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), headers: generator.generate(vec![path.as_slice(), vec![String::from("headers")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), body: generator.generate(vec![path.as_slice(), vec![String::from("body")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldDict { generate: Box::new(|p1| generator.generate(p1, Wirespec.GeneratorFieldArray { generate: Box::new(|p2| generator.generate(p2, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) })) })) }) };
+    }
+}
+
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
