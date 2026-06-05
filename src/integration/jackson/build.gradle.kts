@@ -55,14 +55,14 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:emitters:java"))
-                compileOnly(libs.bundles.jackson)
+                compileOnly(libs.bundles.jackson2)
                 compileOnly(libs.bundles.jackson3)
             }
         }
         jvmTest {
             kotlin.srcDir(generatedWirespecDir.map { it.dir("kotlin") })
             dependencies {
-                implementation(libs.bundles.jackson)
+                implementation(libs.bundles.jackson2)
                 implementation(libs.bundles.jackson3)
             }
         }

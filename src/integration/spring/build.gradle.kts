@@ -66,7 +66,7 @@ kotlin {
                 // Both Jackson versions are compileOnly: the consumer's Spring Boot
                 // (3 → Jackson 2, 4 → Jackson 3) supplies the one actually used. The
                 // Wirespec serializer is selected conditionally at runtime, v3 preferred.
-                compileOnly(libs.bundles.jackson)
+                compileOnly(libs.bundles.jackson2)
                 compileOnly(libs.bundles.jackson3)
                 implementation(libs.kotlin.reflect)
                 implementation(libs.kotlinx.coroutines.reactor)
@@ -81,7 +81,7 @@ kotlin {
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.spring.boot.test)
-                implementation(libs.bundles.jackson)
+                implementation(libs.bundles.jackson2)
                 implementation(libs.kotlin.junit)
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.wiremock)

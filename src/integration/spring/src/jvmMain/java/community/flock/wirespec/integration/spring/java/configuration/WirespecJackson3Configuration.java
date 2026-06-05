@@ -18,15 +18,15 @@ import tools.jackson.databind.json.JsonMapper;
 @ConditionalOnClass(name = "tools.jackson.databind.json.JsonMapper")
 public class WirespecJackson3Configuration {
 
-    private final ObjectMapper objectMapper = JsonMapper.builder().build();
+    private final ObjectMapper jsonMapper = JsonMapper.builder().build();
 
     @Bean
     public Serialization wirespecSerialization() {
-        return new WirespecSerialization(objectMapper);
+        return new WirespecSerialization(jsonMapper);
     }
 
     @Bean
     public WirespecJsonMapper wirespecJsonMapper() {
-        return new Jackson3JsonMapper(objectMapper);
+        return new Jackson3JsonMapper(jsonMapper);
     }
 }

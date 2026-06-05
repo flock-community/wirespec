@@ -38,7 +38,7 @@ kotlin {
         }
         jvmMain {
             dependencies {
-                implementation(libs.bundles.jackson)
+                implementation(libs.bundles.jackson2)
                 // Compile-only so consumers of this module aren't forced onto
                 // the Scala runtime; only Scala-emitted user code needs it on
                 // its own classpath (the kotest integration brings it in test
