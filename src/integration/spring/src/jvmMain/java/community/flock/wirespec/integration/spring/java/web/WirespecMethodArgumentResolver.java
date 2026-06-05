@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.java.web;
 
 import community.flock.wirespec.integration.spring.shared.UtilsKt;
+import community.flock.wirespec.integration.spring.shared.WirespecJsonMapper;
 import community.flock.wirespec.java.Wirespec;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
@@ -20,15 +21,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static community.flock.wirespec.integration.spring.java.configuration.WirespecSerializationConfiguration.objectMapper;
-
 public class WirespecMethodArgumentResolver implements HandlerMethodArgumentResolver {
 
     private final Wirespec.Serialization wirespecSerialization;
+    private final WirespecJsonMapper jsonMapper;
     private final Map<Class<?>, Method> fromRequestCache = new ConcurrentHashMap<>();
 
-    public WirespecMethodArgumentResolver(Wirespec.Serialization wirespecSerialization) {
+    public WirespecMethodArgumentResolver(Wirespec.Serialization wirespecSerialization, WirespecJsonMapper jsonMapper) {
         this.wirespecSerialization = wirespecSerialization;
+        this.jsonMapper = jsonMapper;
     }
 
     @Override
@@ -76,7 +77,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
                     byte[] bytes = file.getInputStream().readAllBytes();
 
                     if (MediaType.APPLICATION_JSON.equals(mediaType)) {
-                        map.put(file.getName(), objectMapper.readTree(bytes));
+                        map.put(file.getName(), jsonMapper.readTree(bytes));
                     } else {
                         map.put(file.getName(), bytes);
                     }
@@ -88,7 +89,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
                 UtilsKt.extractPath(request),
                 UtilsKt.extractQueries(request),
                 getHeadersMap(request),
-                java.util.Optional.of(objectMapper.writeValueAsBytes(map))
+                java.util.Optional.of(jsonMapper.writeValueAsBytes(map))
             );
         }
 
