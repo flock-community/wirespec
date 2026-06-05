@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.jackson.java;
+package community.flock.wirespec.integration.jackson.v2.java;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;

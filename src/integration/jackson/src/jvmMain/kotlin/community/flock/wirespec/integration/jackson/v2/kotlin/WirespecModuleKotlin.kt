@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.jackson.kotlin
+package community.flock.wirespec.integration.jackson.v2.kotlin
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.PropertyAccessor

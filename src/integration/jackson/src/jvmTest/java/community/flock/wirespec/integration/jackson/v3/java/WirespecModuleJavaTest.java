@@ -1,12 +1,9 @@
-package community.flock.wirespec.integration.jackson.java;
+package community.flock.wirespec.integration.jackson.v3.java;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.PrettyPrinter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import community.flock.wirespec.integration.jackson.java.generated.model.*;
 import org.junit.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.junit.Assert.assertEquals;
 
@@ -61,30 +58,31 @@ public class WirespecModuleJavaTest {
                     }""";
 
 
-    ObjectMapper objectMapper = new ObjectMapper()
-            .registerModules(new WirespecModuleJava());
+    ObjectMapper objectMapper = JsonMapper.builder()
+            .propertyNamingStrategy(new WirespecModuleJava.JavaReservedKeywordNamingStrategy())
+            .addModule(new WirespecModuleJava())
+            .build();
 
     @Test
-    public void serializeJavaRefined() throws JsonProcessingException {
+    public void serializeJavaRefined() {
         var res = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(todo);
         assertEquals(todoJson, res);
-
     }
 
     @Test
-    public void deserializeJavaRefined() throws JsonProcessingException {
+    public void deserializeJavaRefined() {
         var res = objectMapper.readValue(todoJson, Todo.class);
         assertEquals(todo, res);
     }
 
     @Test
-    public void serializeJavaRefined2() throws JsonProcessingException {
+    public void serializeJavaRefined2() {
         var res = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(typeWithAllRefined);
         assertEquals(typeJson, res);
     }
 
     @Test
-    public void deserializeJavaRefined2() throws JsonProcessingException {
+    public void deserializeJavaRefined2() {
         var res = objectMapper.readValue(typeJson, TypeWithAllRefined.class);
         assertEquals(typeWithAllRefined, res);
     }
