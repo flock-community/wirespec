@@ -1,6 +1,19 @@
 package community.flock.wirespec.integration.jackson;
 
-import community.flock.wirespec.integration.jackson.java.generated.model.*;
+import community.flock.wirespec.integration.jackson.java.generated.model.IntRefinedLowerAndUpper;
+import community.flock.wirespec.integration.jackson.java.generated.model.IntRefinedLowerBound;
+import community.flock.wirespec.integration.jackson.java.generated.model.IntRefinedNoBound;
+import community.flock.wirespec.integration.jackson.java.generated.model.IntRefinedUpperBound;
+import community.flock.wirespec.integration.jackson.java.generated.model.NumberRefinedLowerAndUpper;
+import community.flock.wirespec.integration.jackson.java.generated.model.NumberRefinedLowerBound;
+import community.flock.wirespec.integration.jackson.java.generated.model.NumberRefinedNoBound;
+import community.flock.wirespec.integration.jackson.java.generated.model.NumberRefinedUpperBound;
+import community.flock.wirespec.integration.jackson.java.generated.model.StringRefined;
+import community.flock.wirespec.integration.jackson.java.generated.model.StringRefinedRegex;
+import community.flock.wirespec.integration.jackson.java.generated.model.Todo;
+import community.flock.wirespec.integration.jackson.java.generated.model.TodoCategory;
+import community.flock.wirespec.integration.jackson.java.generated.model.TodoId;
+import community.flock.wirespec.integration.jackson.java.generated.model.TypeWithAllRefined;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

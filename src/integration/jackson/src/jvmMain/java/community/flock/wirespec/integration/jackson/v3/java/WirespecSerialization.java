@@ -4,7 +4,6 @@ import community.flock.wirespec.java.Wirespec.Serialization;
 import community.flock.wirespec.java.serde.DefaultParamSerialization;
 import community.flock.wirespec.java.serde.DefaultPathSerialization;
 import tools.jackson.databind.JavaType;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.Type;
@@ -13,19 +12,19 @@ import java.nio.charset.StandardCharsets;
 /**
  * A reusable implementation of Wirespec.Serialization backed by Jackson 3.
  *
- * It rebuilds the supplied (immutable) {@link ObjectMapper} with the
+ * It rebuilds the supplied (immutable) {@link JsonMapper} with the
  * {@link WirespecModuleJava} registered. Java records expose their components through
  * accessors, so no visibility configuration is required. Parameter and path
  * serialization are delegated to the default Wirespec serializers.
  */
 public class WirespecSerialization implements Serialization, DefaultParamSerialization, DefaultPathSerialization {
 
-    private final ObjectMapper wirespecObjectMapper;
+    private final JsonMapper wirespecObjectMapper;
 
-    public WirespecSerialization(ObjectMapper objectMapper) {
-        // JSON body (de)serialization always uses a JsonMapper. The reserved-keyword
-        // naming strategy must be set on the builder (Jackson 3 modules cannot register one).
-        this.wirespecObjectMapper = ((JsonMapper) objectMapper).rebuild()
+    public WirespecSerialization(JsonMapper jsonMapper) {
+        // The reserved-keyword naming strategy must be set on the builder
+        // (Jackson 3 modules cannot register one).
+        this.wirespecObjectMapper = jsonMapper.rebuild()
                 .propertyNamingStrategy(new WirespecModuleJava.JavaReservedKeywordNamingStrategy())
                 .addModule(new WirespecModuleJava())
                 .build();

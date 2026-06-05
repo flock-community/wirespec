@@ -7,7 +7,6 @@ import community.flock.wirespec.java.Wirespec.Serialization;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -15,10 +14,12 @@ import tools.jackson.databind.json.JsonMapper;
  * {@link WirespecJackson2Configuration}, which backs off whenever Jackson 3 is present.
  */
 @Configuration
+// Referenced by name (not JsonMapper.class): the selection tests register this config by
+// class on a Jackson-3-free classpath, where resolving a Class-valued condition would fail.
 @ConditionalOnClass(name = "tools.jackson.databind.json.JsonMapper")
 public class WirespecJackson3Configuration {
 
-    private final ObjectMapper jsonMapper = JsonMapper.builder().build();
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     @Bean
     public Serialization wirespecSerialization() {
