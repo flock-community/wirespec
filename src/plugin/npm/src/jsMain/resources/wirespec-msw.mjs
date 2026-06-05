@@ -41,10 +41,35 @@ const buildPath = (templatePath, params) =>
         return Array.isArray(value) ? value[0] : value
     })
 
+// The generated `from()` reads queries/headers as `Record<string, string[]>` (it pulls
+// `values[0]` through `deserializeParam`), so collect every value per key into an array.
+const readParams = (entries) => {
+    const params = {}
+    for (const [key, value] of entries) {
+        if (params[key]) params[key].push(value)
+        else params[key] = [value]
+    }
+    return params
+}
+
+// The generated `from()` reads the body as a `Uint8Array` (`deserializeBody` does
+// `TextDecoder().decode(raw)`), so hand it the raw bytes rather than decoded text.
 const readBody = async (request) => {
     if (request.method === 'GET' || request.method === 'HEAD') return undefined
-    const text = await request.text()
-    return text.length > 0 ? text : undefined
+    const buffer = await request.arrayBuffer()
+    return buffer.byteLength > 0 ? new Uint8Array(buffer) : undefined
+}
+
+// The generated `to()` emits headers as `Record<string, string[]>`; flatten them into a
+// `Headers` (each value appended) so they form a valid HeadersInit for MSW's HttpResponse.
+const toHeaders = (rawHeaders) => {
+    const headers = new Headers()
+    for (const [key, values] of Object.entries(rawHeaders ?? {})) {
+        for (const value of Array.isArray(values) ? values : [values]) {
+            headers.append(key, String(value))
+        }
+    }
+    return headers
 }
 
 /**
@@ -68,16 +93,16 @@ export function wirespec(api, resolver, options = {}) {
         const rawRequest = {
             method: request.method,
             path: buildPath(api.path, params),
-            queries: Object.fromEntries(url.searchParams),
-            headers: Object.fromEntries(request.headers),
+            queries: readParams(url.searchParams),
+            headers: readParams(request.headers),
             body: await readBody(request),
         }
         const typedRequest = endpoint.from(rawRequest)
         const response = await resolver(typedRequest)
         const rawResponse = endpoint.to(response)
         return new HttpResponse(rawResponse.body ?? null, {
-            status: rawResponse.status,
-            headers: rawResponse.headers,
+            status: rawResponse.statusCode,
+            headers: toHeaders(rawResponse.headers),
         })
     })
 }

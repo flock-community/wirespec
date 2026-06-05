@@ -12,7 +12,7 @@
     "compile": "tsc",
     "format": "npm run format:prettier",
     "format:prettier": "npx --yes prettier --write --ignore-unknown .",
-    "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared",
+    "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared --ir",
     "test": "vitest --run",
     "update": "npx --yes update-ruecksichtslos"
   },
