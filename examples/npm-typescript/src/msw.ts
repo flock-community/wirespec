@@ -23,7 +23,7 @@ export const todo: TodoDto = {
 
 export const handlers = [
   wirespec(GetTodos.api, async () =>
-    GetTodos.response200({ "X-Total": 1, body: [todo] }),
+    GetTodos.response200({ xTotal: 1, body: [todo] }),
   ),
 
   wirespec(GetTodoById.api, async (req) =>
