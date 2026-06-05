@@ -1,7 +1,7 @@
 import { HandleFetch, wirespecFetchIr } from "@flock/wirespec/fetch";
 import { wirespecSerialization } from "@flock/wirespec/serialization";
 import { expect, test, vi } from "vitest";
-import { client } from "./gen/client";
+import { client } from "./gen/Client";
 
 const arrayBufferOf = (text: string) =>
   Promise.resolve(new TextEncoder().encode(text).buffer);
