@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
+import community.flock.kotlinx.openapi.bindings.Version
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
@@ -29,12 +30,15 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlin.test.Test
 
-class OpenAPIV3ParserTest {
+abstract class GenericOpenApiV3XParserTestCases(private val version: Version) {
+    init {
+        require(version.isOpenApiVersion()) { "Should be OpenAPI 3.x version" }
+    }
 
     @Test
     fun petstore() {
         val path = Path("src/commonTest/resources/v3/petstore.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -461,7 +465,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun pizza() {
         val path = Path("src/commonTest/resources/v3/pizza.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -541,7 +545,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun todo() {
         val path = Path("src/commonTest/resources/v3/todo.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
 
@@ -803,7 +807,7 @@ class OpenAPIV3ParserTest {
                     listOf(
                         Field(
                             identifier =
-                            FieldIdentifier("id"),
+                                FieldIdentifier("id"),
                             annotations = emptyList(),
                             reference = Primitive(Primitive.Type.String(null), true),
                         ),
@@ -849,7 +853,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun objectInRequest() {
         val path = Path("src/commonTest/resources/v3/object-in-request.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -860,7 +864,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun objectInResponse() {
         val path = Path("src/commonTest/resources/v3/object-in-response.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -871,7 +875,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun additionalProperties() {
         val path = Path("src/commonTest/resources/v3/additionalproperties.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
@@ -881,7 +885,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun array() {
         val path = Path("src/commonTest/resources/v3/array.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -892,7 +896,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun allOf() {
         val path = Path("src/commonTest/resources/v3/allof.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -903,7 +907,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun oneOf() {
         val path = Path("src/commonTest/resources/v3/oneof.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -917,7 +921,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun enum() {
         val path = Path("src/commonTest/resources/v3/enum.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -928,7 +932,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun responseref() {
         val path = Path("src/commonTest/resources/v3/responseref.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -1037,7 +1041,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun queryref() {
         val path = Path("src/commonTest/resources/v3/queryref.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -1129,7 +1133,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun refarray() {
         val path = Path("src/commonTest/resources/v3/refarray.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -1249,7 +1253,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun refprimary() {
         val path = Path("src/commonTest/resources/v3/refprimary.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -1308,7 +1312,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun deeparraysimpl() {
         val path = Path("src/commonTest/resources/v3/deeparraysimple.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -1360,7 +1364,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun componentsResponses() {
         val path = Path("src/commonTest/resources/v3/components-responses.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -1443,7 +1447,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun emptyResponses() {
         val path = Path("src/commonTest/resources/v3/empty-response.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
@@ -1480,7 +1484,7 @@ class OpenAPIV3ParserTest {
         val json =
             """
             |{
-            |    "openapi": "3.0.0",
+            |    "openapi": "${version.versionString}",
             |    "info": {
             |        "title": "Test API",
             |        "version": "1.0.0"
@@ -1543,7 +1547,7 @@ class OpenAPIV3ParserTest {
         val json =
             """
             |{
-            |    "openapi": "3.0.0",
+            |    "openapi": "${version.versionString}",
             |    "info": {
             |        "title": "Test API",
             |        "version": "1.0.0"
@@ -1588,7 +1592,7 @@ class OpenAPIV3ParserTest {
     @Test
     fun links() {
         val path = Path("src/commonTest/resources/v3/links.json")
-        val json = SystemFileSystem.source(path).buffered().readString()
+        val json = SystemFileSystem.source(path).buffered().readString().replaceOpenApiVersionInSpec(version)
 
         val openApi = OpenAPIV3.decodeFromString(json)
         val ast = openApi.parse().shouldNotBeNull()
