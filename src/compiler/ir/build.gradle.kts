@@ -31,7 +31,7 @@ kotlin {
 
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = libs.versions.kotlin.compiler.get()
+            languageVersion = libs.versions.kotlin.runtime.language.get()
         }
     }
 
