@@ -166,7 +166,7 @@ class Language(
         val runCommand: String = when (emitter) {
             is JavaIrEmitter -> "java -ea -cp /tmp/out $fileName"
             is KotlinIrEmitter -> "java -ea -cp /tmp/run.jar ${fileName}Kt"
-            is PythonIrEmitter -> "cd /app/gen && python -O ${fileName}.py"
+            is PythonIrEmitter -> "cd /app/gen && python ${fileName}.py"
             is RustIrEmitter -> {
                 // Build use statements from the test file's imports
                 val imports = resolved.elements.filterIsInstance<Import>()

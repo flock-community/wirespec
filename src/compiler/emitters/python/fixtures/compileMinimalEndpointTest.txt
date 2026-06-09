@@ -80,7 +80,7 @@ class GetTodos(Wirespec.Endpoint):
     def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> Response[Any]:
         match response.statusCode:
             case 200:
-                return Response200(body=serialization.deserializeBody(response.body, list[TodoDto]) if response.body is not None else _raise('body is null'))
+                return Response200(body=(serialization.deserializeBody(response.body, list[TodoDto]) if response.body is not None else _raise('body is null')))
             case _:
                 raise Exception(('Cannot match response with status: ' + str(response.statusCode)))
     class Handler(Wirespec.Handler, ABC):
