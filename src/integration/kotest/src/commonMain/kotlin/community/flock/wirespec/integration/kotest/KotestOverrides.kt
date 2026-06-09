@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
-import io.kotest.property.Arb
+import io.kotest.property.Gen
 
 internal sealed interface PathSegment {
     data class Literal(val value: String) : PathSegment
@@ -40,21 +40,21 @@ internal data class FieldKey(val parentTypeName: String, val fieldName: String)
 
 internal class OverrideRegistry {
 
-    private val pathOverrides: MutableList<Pair<PathPattern, () -> Arb<*>>> = mutableListOf()
-    private val fieldOverrides: MutableMap<FieldKey, () -> Arb<*>> = mutableMapOf()
+    private val pathOverrides: MutableList<Pair<PathPattern, () -> Gen<*>>> = mutableListOf()
+    private val fieldOverrides: MutableMap<FieldKey, () -> Gen<*>> = mutableMapOf()
 
-    fun addPath(segments: Array<out String>, factory: () -> Arb<*>) {
+    fun addPath(segments: Array<out String>, factory: () -> Gen<*>) {
         pathOverrides += PathPattern.compile(segments) to factory
     }
 
-    fun addField(key: FieldKey, factory: () -> Arb<*>) {
+    fun addField(key: FieldKey, factory: () -> Gen<*>) {
         check(key !in fieldOverrides) {
             "Field override already registered for $key"
         }
         fieldOverrides[key] = factory
     }
 
-    fun findPath(path: List<String>): (() -> Arb<*>)? {
+    fun findPath(path: List<String>): (() -> Gen<*>)? {
         val matches = pathOverrides.filter { (pattern, _) -> pattern.matches(path) }
         if (matches.isEmpty()) return null
         val maxSpec = matches.maxOf { it.first.specificity }
@@ -68,7 +68,7 @@ internal class OverrideRegistry {
         return best.single().second
     }
 
-    fun findField(key: FieldKey): (() -> Arb<*>)? = fieldOverrides[key]
+    fun findField(key: FieldKey): (() -> Gen<*>)? = fieldOverrides[key]
 }
 
 fun interface RefinedWrapper {

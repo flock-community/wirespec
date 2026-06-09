@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.kotest
 
 import community.flock.kotlinx.rgxgen.RgxGen
 import io.kotest.property.Arb
+import io.kotest.property.Gen
 import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.boolean
 import io.kotest.property.arbitrary.byte
@@ -38,7 +39,7 @@ fun kotestGenerator(
 class KotestWirespecGeneratorBuilder internal constructor() {
     internal val overrides: OverrideRegistry = OverrideRegistry()
 
-    fun registerPath(vararg segments: String, factory: () -> Arb<*>) {
+    fun registerPath(vararg segments: String, factory: () -> Gen<*>) {
         overrides.addPath(segments, factory)
     }
 
@@ -46,7 +47,7 @@ class KotestWirespecGeneratorBuilder internal constructor() {
         overrides.addPath(segments) { Arb.constant(value) }
     }
 
-    fun registerFieldByTypeName(typeName: String, name: String, factory: () -> Arb<*>) {
+    fun registerFieldByTypeName(typeName: String, name: String, factory: () -> Gen<*>) {
         overrides.addField(FieldKey(typeName, name), factory)
     }
 
@@ -121,7 +122,7 @@ internal class KotestWirespecGenerator(
         }
 
         overrides.findPath(path)?.let { factory ->
-            val drawn = factory().next(rsFor(path))
+            val drawn = factory().drawOne(rsFor(path))
             return refinedWrapper.wrap(drawn, field, path) as T
         }
 
@@ -129,7 +130,7 @@ internal class KotestWirespecGenerator(
         val leafName = path.lastOrNull()
         if (parent != null && leafName != null) {
             overrides.findField(FieldKey(parent.typeName, leafName))?.let { factory ->
-                val drawn = factory().next(rsFor(path))
+                val drawn = factory().drawOne(rsFor(path))
                 return refinedWrapper.wrap(drawn, field, path) as T
             }
         }
@@ -287,6 +288,9 @@ internal class KotestWirespecGenerator(
         else -> emptyList()
     }
 }
+
+/** Draws a single value from any [Gen] (both [Arb] and `Exhaustive`), seeded by [rs]. */
+private fun <A> Gen<A>.drawOne(rs: RandomSource): A = generate(rs).first().value
 
 private inline fun <F, R> withFrame(stack: ArrayDeque<F>, frame: F, block: () -> R): R {
     val mark = stack.size
