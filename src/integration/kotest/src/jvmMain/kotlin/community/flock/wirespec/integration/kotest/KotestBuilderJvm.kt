@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
-import io.kotest.property.Arb
+import io.kotest.property.Gen
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -14,7 +14,7 @@ import kotlin.reflect.typeOf
  * `typeOf<Parent>().toString()`) and the field name (via `property.name`)
  * in one compile-checked expression — a typo or rename becomes a compile
  * error. `V` (the property's declared type) is reflected in the call site
- * but the [factory] still returns `Arb<*>`: when the field is a Refined
+ * but the [factory] still returns `Gen<*>`: when the field is a Refined
  * wrapper, [JvmRefinedWrapper] auto-wraps the drawn inner primitive into
  * the wrapper class.
  *
@@ -26,7 +26,7 @@ import kotlin.reflect.typeOf
  */
 inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
     property: KProperty1<Parent, V>,
-    noinline factory: () -> Arb<*>,
+    noinline factory: () -> Gen<*>,
 ) {
     registerFieldByTypeName(typeOf<Parent>().toString(), property.name, factory)
 }
