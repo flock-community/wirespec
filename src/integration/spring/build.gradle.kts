@@ -68,7 +68,12 @@ kotlin {
                 // Wirespec serializer is selected conditionally at runtime, v3 preferred.
                 compileOnly(libs.bundles.jackson2)
                 compileOnly(libs.bundles.jackson3)
-                implementation(libs.kotlin.reflect)
+                // Pinned to the Kotlin backwards-compatibility floor: kotlin-reflect
+                // ships metadata at its own version, and the 2.3.x artifact cannot be
+                // read by a Kotlin 2.0 compiler. Declaring the 2.0 floor keeps Spring
+                // consumers on Kotlin 2.0+ buildable while still resolving upward for
+                // consumers already on a newer Kotlin.
+                implementation(libs.kotlin.reflect.compat)
                 implementation(libs.kotlinx.coroutines.reactor)
                 implementation(libs.spring.boot.web)
                 implementation(libs.spring.webflux)

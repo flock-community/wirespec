@@ -7,15 +7,34 @@ import community.flock.kotlinx.openapi.bindings.Header
 import community.flock.kotlinx.openapi.bindings.HeaderOrReference
 import community.flock.kotlinx.openapi.bindings.Link
 import community.flock.kotlinx.openapi.bindings.LinkOrReference
+import community.flock.kotlinx.openapi.bindings.MediaType
+import community.flock.kotlinx.openapi.bindings.MediaTypeObject
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Header
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30ParameterLocation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Response
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SchemaOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30SingleType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30TypeArray
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31Parameter
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31Response
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31SingleType
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31Type
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31TypeArray
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32Parameter
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32Response
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32SingleType
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32Type
+import community.flock.kotlinx.openapi.bindings.OpenAPIV32TypeArray
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.kotlinx.openapi.bindings.Parameter
 import community.flock.kotlinx.openapi.bindings.ParameterOrReference
@@ -118,7 +137,7 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
 
                 val responses = operation.responses.orEmpty().flatMap { (status, res) ->
                     resolve(res).let { response ->
-                        val content = (response as? OpenAPIV30Response)?.content
+                        val content = response.content
                         if (content.isNullOrEmpty()) {
                             listOf(
                                 Endpoint.Response(
@@ -133,7 +152,7 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                             )
                         } else {
                             content.map { (contentType, media) ->
-                                val isNullable = media.schema?.let { resolve(it) }?.let { (it as? OpenAPIV30Schema)?.nullable } ?: false
+                                val isNullable = media.schema?.let { resolve(it) }?.isNullable ?: false
                                 Endpoint.Response(
                                     annotations = response.description.toDescriptionAnnotationList() +
                                         toLinkAnnotationList(response.links),
@@ -204,7 +223,7 @@ private fun OpenAPIV3Model.flatMapResponse(
     response: Response,
     name: String,
     statusCode: StatusCode,
-): List<Definition> = (response as? OpenAPIV30Response)?.content.orEmpty()
+): List<Definition> = response.content.orEmpty()
     .flatMap { (_, mediaObject) ->
         when (val schema = mediaObject.schema) {
             is Schema -> when (schema.primitiveType) {
@@ -252,7 +271,7 @@ private fun OpenAPIV3Model.parseDefinitions(): List<Definition> = components?.sc
 
 private fun OpenAPIV3Model.toSegments(
     path: Path,
-    parameters: List<OpenAPIV30Parameter>,
+    parameters: List<Parameter>,
     name: String,
 ) = path.value.split("/").drop(1).filter { it.isNotBlank() }.map { segment ->
     when (segment.isParam()) {
@@ -276,20 +295,20 @@ private fun OpenAPIV3Model.toSegments(
     }
 }
 
-private fun OpenAPIV3Model.resolveParameters(parameters: List<ParameterOrReference>?): List<OpenAPIV30Parameter> = parameters.orEmpty()
+private fun OpenAPIV3Model.resolveParameters(parameters: List<ParameterOrReference>?): List<Parameter> = parameters.orEmpty()
     .mapNotNull {
         when (it) {
             is OpenAPIReference -> resolveParameter(it)
-            is Parameter -> it as? OpenAPIV30Parameter
+            is Parameter -> it
         }
     }
 
-private fun OpenAPIV3Model.resolveParameter(reference: OpenAPIReference): OpenAPIV30Parameter? = components?.parameters
+private fun OpenAPIV3Model.resolveParameter(reference: OpenAPIReference): Parameter? = components?.parameters
     ?.get(reference.getReference())
     ?.let {
         when (it) {
             is OpenAPIReference -> resolveParameter(it)
-            is Parameter -> it as? OpenAPIV30Parameter
+            is Parameter -> it
         }
     }
 
@@ -391,9 +410,8 @@ private fun Link.toLinkInfo(name: String): LinkInfo = LinkInfo(
 private fun JsonElement.asLinkExpression(): String = (this as? JsonPrimitive)?.contentOrNull ?: toString()
 
 private fun OpenAPIV3Model.flatten(schemaObject: Schema, name: String): List<Definition> {
-    val v30 = schemaObject as? OpenAPIV30Schema
-    val oneOf = v30?.oneOf
-    val anyOf = v30?.anyOf
+    val oneOf = schemaObject.oneOf
+    val anyOf = schemaObject.anyOf
     return when {
         schemaObject.additionalProperties.exists() -> when (schemaObject.additionalProperties) {
             is BooleanValue -> emptyList()
@@ -510,7 +528,7 @@ private fun OpenAPIV3Model.flattenSchemaOrRef(schemaOrReference: SchemaOrReferen
 }
 
 private fun OpenAPIV3Model.toReference(reference: OpenAPIReference, isNullable: Boolean): Reference = resolveSchemaRef(reference).let { (referencingObject, schema) ->
-    val nullable = (schema as? OpenAPIV30Schema)?.nullable ?: false
+    val nullable = schema.isNullable
     when {
         schema.additionalProperties.exists() -> when (val additionalProperties = schema.additionalProperties!!) {
             is BooleanValue -> Reference.Dict(
@@ -558,7 +576,7 @@ private fun OpenAPIV3Model.toReference(
     isNullable: Boolean,
     name: String = "",
 ): Reference {
-    val nullable = (schema as? OpenAPIV30Schema)?.nullable ?: false
+    val nullable = schema.isNullable
     return when {
         schema.primitiveType == OpenAPIV30Type.ARRAY -> {
             when (val items = schema.items) {
@@ -673,7 +691,7 @@ private fun OpenAPIV3Model.toField(schema: Schema, name: String) = schema.proper
     }
 }
 
-private fun OpenAPIV3Model.toField(parameter: OpenAPIV30Parameter, name: String): Field {
+private fun OpenAPIV3Model.toField(parameter: Parameter, name: String): Field {
     val isNullable = !(parameter.required ?: false)
     return when (val s = parameter.schema) {
         is OpenAPIReference -> toReference(s, isNullable)
@@ -692,9 +710,8 @@ private fun OpenAPIV3Model.toField(parameter: OpenAPIV30Parameter, name: String)
 }
 
 private fun OpenAPIV3Model.toField(header: Header, identifier: String, name: String): Field {
-    val v30 = header as? OpenAPIV30Header
-    val isNullable = !(v30?.required ?: false)
-    return when (val s = v30?.schema) {
+    val isNullable = !(header.required ?: false)
+    return when (val s = header.schema) {
         is OpenAPIReference -> toReference(s, isNullable)
         is Schema -> toReference(s, isNullable, name)
         null -> Reference.Primitive(
@@ -721,17 +738,124 @@ private fun OpenAPIV30Type?.isPrimitive() = when (this) {
     null -> false
 }
 
+// The kotlin-openapi-bindings 0.3.1 split the single V3 model into version-specific
+// 3.0 / 3.1 / 3.2 type families that only share a handful of common interfaces
+// (Parameter, Schema, Response, Header, ...). The accessors below normalize the
+// version-specific properties that are NOT exposed on those common interfaces, so the
+// parser works for every OpenAPI 3.x version instead of only 3.0.
+
+private fun OpenAPIV31Type.toV30() = OpenAPIV30Type.valueOf(name)
+private fun OpenAPIV32Type.toV30() = OpenAPIV30Type.valueOf(name)
+
 private val Schema.primitiveType: OpenAPIV30Type?
-    get() = when (val s = this as? OpenAPIV30Schema) {
-        null -> null
-        else -> when (val t = s.type) {
+    get() = when (this) {
+        is OpenAPIV30Schema -> when (val t = type) {
             is OpenAPIV30SingleType -> t.value
             is OpenAPIV30TypeArray -> t.values.firstOrNull { it != OpenAPIV30Type.NULL }
             null -> null
         }
+
+        is OpenAPIV31Schema -> when (val t = type) {
+            is OpenAPIV31SingleType -> t.value.toV30()
+            is OpenAPIV31TypeArray -> t.values.firstOrNull { it != OpenAPIV31Type.NULL }?.toV30()
+            null -> null
+        }
+
+        is OpenAPIV32Schema -> when (val t = type) {
+            is OpenAPIV32SingleType -> t.value.toV30()
+            is OpenAPIV32TypeArray -> t.values.firstOrNull { it != OpenAPIV32Type.NULL }?.toV30()
+            null -> null
+        }
+
+        else -> null
     }
 
-private val OpenAPIV30Parameter.location: OpenAPIV30ParameterLocation get() = `in`
+private val Schema.isNullable: Boolean
+    get() = when (this) {
+        is OpenAPIV30Schema -> nullable ?: false
+        is OpenAPIV31Schema -> (type as? OpenAPIV31TypeArray)?.values?.contains(OpenAPIV31Type.NULL) ?: false
+        is OpenAPIV32Schema -> (type as? OpenAPIV32TypeArray)?.values?.contains(OpenAPIV32Type.NULL) ?: false
+        else -> false
+    }
+
+private fun OpenAPIV30SchemaOrReference.toCommon(): SchemaOrReference = when (this) {
+    is Schema -> this
+    is OpenAPIReference -> this
+}
+
+private fun OpenAPIV31SchemaOrReference.toCommon(): SchemaOrReference = when (this) {
+    is Schema -> this
+    is OpenAPIReference -> this
+}
+
+private fun OpenAPIV32SchemaOrReference.toCommon(): SchemaOrReference = when (this) {
+    is Schema -> this
+    is OpenAPIReference -> this
+}
+
+private val Schema.oneOf: List<SchemaOrReference>?
+    get() = when (this) {
+        is OpenAPIV30Schema -> oneOf?.map { it.toCommon() }
+        is OpenAPIV31Schema -> oneOf?.map { it.toCommon() }
+        is OpenAPIV32Schema -> oneOf?.map { it.toCommon() }
+        else -> null
+    }
+
+private val Schema.anyOf: List<SchemaOrReference>?
+    get() = when (this) {
+        is OpenAPIV30Schema -> anyOf?.map { it.toCommon() }
+        is OpenAPIV31Schema -> anyOf?.map { it.toCommon() }
+        is OpenAPIV32Schema -> anyOf?.map { it.toCommon() }
+        else -> null
+    }
+
+private val Response.content: Map<MediaType, MediaTypeObject>?
+    get() = when (this) {
+        is OpenAPIV30Response -> content
+        is OpenAPIV31Response -> content
+        is OpenAPIV32Response -> content
+        else -> null
+    }
+
+private val Header.schema: SchemaOrReference?
+    get() = when (this) {
+        is OpenAPIV30Header -> schema
+        is OpenAPIV31Header -> schema
+        is OpenAPIV32Header -> schema
+        else -> null
+    }
+
+private val Header.required: Boolean?
+    get() = when (this) {
+        is OpenAPIV30Header -> required
+        is OpenAPIV31Header -> required
+        is OpenAPIV32Header -> required
+        else -> null
+    }
+
+private val Parameter.required: Boolean?
+    get() = when (this) {
+        is OpenAPIV30Parameter -> required
+        is OpenAPIV31Parameter -> required
+        is OpenAPIV32Parameter -> required
+        else -> null
+    }
+
+private val Parameter.description: String?
+    get() = when (this) {
+        is OpenAPIV30Parameter -> description
+        is OpenAPIV31Parameter -> description
+        is OpenAPIV32Parameter -> description
+        else -> null
+    }
+
+private val Parameter.location: OpenAPIV30ParameterLocation
+    get() = when (this) {
+        is OpenAPIV30Parameter -> `in`
+        is OpenAPIV31Parameter -> OpenAPIV30ParameterLocation.valueOf(`in`.name)
+        is OpenAPIV32Parameter -> OpenAPIV30ParameterLocation.valueOf(`in`.name)
+        else -> error("Unsupported parameter type: $this")
+    }
 
 private fun SchemaOrReferenceOrBoolean?.exists() = when (this) {
     is Schema -> true

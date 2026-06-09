@@ -9,6 +9,7 @@ build:
 	(cd maven-spring-convert && ./mvnw verify) && \
 	(cd maven-spring-custom && ./mvnw verify) && \
 	(cd maven-spring-integration && ./mvnw verify) && \
+	(cd maven-spring-kotlin && ./mvnw verify) && \
 	(cd maven-spring-native && ./mvnw verify) && \
 	(cd maven-wiremock && ./mvnw verify) && \
 	(cd npm-typescript && npm ci && npm run build) && \
@@ -24,6 +25,7 @@ clean:
 	(cd maven-spring-convert && ./mvnw clean) && \
 	(cd maven-spring-custom && ./mvnw clean) && \
 	(cd maven-spring-integration && ./mvnw clean) && \
+	(cd maven-spring-kotlin && ./mvnw clean) && \
 	(cd maven-spring-native && ./mvnw clean) && \
 	(cd maven-wiremock && ./mvnw clean) && \
 	(cd npm-typescript && npm run clean) && \
@@ -51,5 +53,6 @@ yolo:
 	(cd maven-spring-convert && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-custom && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-integration && ./mvnw verify -DskipTests) && \
+	(cd maven-spring-kotlin && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-native && ./mvnw verify -DskipTests) && \
 	(cd maven-wiremock && ./mvnw verify -DskipTests)
