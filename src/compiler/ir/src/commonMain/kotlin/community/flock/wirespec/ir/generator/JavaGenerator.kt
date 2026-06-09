@@ -283,7 +283,7 @@ object JavaGenerator : Generator {
         Type.Reflect -> "Type"
         is Type.Array -> "java.util.List"
         is Type.Dict -> "java.util.Map"
-        is Type.Custom -> name.value()
+        is Type.Custom -> name.referenceName()
         is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
         is Type.IntegerLiteral -> "Integer"
         is Type.StringLiteral -> "String"
