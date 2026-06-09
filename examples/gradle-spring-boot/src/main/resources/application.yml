@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: gradle-spring-boot
+  jackson:
+    default-property-inclusion: non_null
+server:
+  port: 8080
