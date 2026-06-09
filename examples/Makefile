@@ -14,7 +14,6 @@ build:
 	(cd gradle-spring-boot && ./gradlew check) && \
 	(cd maven-wiremock && ./mvnw verify) && \
 	(cd npm-typescript && npm ci && npm run build) && \
-	(cd npm-typescript-ir && npm ci && npm run build) && \
 	(cd rust-petstore && bash gen.sh && cargo build) && \
 	(cd scala-zio && sbt compile)
 
@@ -32,7 +31,6 @@ clean:
 	(cd gradle-spring-boot && ./gradlew clean) && \
 	(cd maven-wiremock && ./mvnw clean) && \
 	(cd npm-typescript && npm run clean) && \
-	(cd npm-typescript-ir && npm run clean) && \
 	(cd scala-zio && sbt clean)
 
 format:
