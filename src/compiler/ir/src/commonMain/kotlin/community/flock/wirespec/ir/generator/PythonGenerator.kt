@@ -421,17 +421,17 @@ object PythonGenerator : Generator {
             val exprStr = expression.emit()
             val bodyStr = body.emitWithInlinedIt(exprStr)
             val altStr = alternative?.emit() ?: "None"
-            "$bodyStr if $exprStr is not None else $altStr"
+            "($bodyStr if $exprStr is not None else $altStr)"
         }
         is NullableMap -> {
             val exprStr = expression.emit()
             val bodyStr = body.emitWithInlinedIt(exprStr)
             val altStr = alternative.emit()
-            "$bodyStr if $exprStr is not None else $altStr"
+            "($bodyStr if $exprStr is not None else $altStr)"
         }
         is NullableOf -> expression.emit()
         is NullableGet -> expression.emit()
-        is Constraint.RegexMatch -> "bool(re.match(r\"${rawValue}\", ${value.emit()}))"
+        is Constraint.RegexMatch -> "bool(re.match(r\"${pattern}\", ${value.emit()}))"
         is Constraint.BoundCheck -> {
             val checks = listOfNotNull(
                 min?.let { "$it <= ${value.emit()}" },
