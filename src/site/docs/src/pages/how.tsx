@@ -4,16 +4,8 @@ import styles from "./contract.module.css";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
-import useBrokenLinks from "@docusaurus/useBrokenLinks";
 
 export default function ContractPage() {
-  // Register the page's <div id="..."> anchors so Docusaurus's broken-anchor
-  // checker recognizes links like /how#contract. Only theme <Heading> elements
-  // self-register; raw <div id="..."> targets must be collected explicitly.
-  const brokenLinks = useBrokenLinks();
-  brokenLinks.collectAnchor("contract");
-  brokenLinks.collectAnchor("generate");
-  brokenLinks.collectAnchor("validate");
   return (
     <Layout
       title="Wirespec your APIs"
