@@ -46,6 +46,14 @@ internal fun FieldIdentifier.toFieldName(): Name {
     return Name(parts)
 }
 
+// A cross-reference to another definition's `*Generator` object. Its name must
+// match that object's emitted namespace, which every generator renders by
+// pascal-casing the `toGeneratorName()` parts. Mirror that here so a synthetic
+// type like `Foo_bar` resolves to `FooBarGenerator`, not `Foo_barGenerator`.
+internal fun generatorReceiver(typeName: String): RawExpression = RawExpression(
+    Name(Name.of(typeName).parts.filter { part -> part.any(Char::isLetterOrDigit) } + "Generator").pascalCase(),
+)
+
 // List-append: use ListConcat so Java emits `Stream.concat(...)` instead of a
 // bogus `path + "segment"` (which Kotlin accepts but Java evaluates as
 // List.toString() + String).
@@ -268,7 +276,7 @@ private fun shapeConstructor(
         Name.of("generate") to Lambda(
             parameters = lambdaPathParam(depth),
             body = FunctionCall(
-                receiver = RawExpression("${downstreamGeneratorName}Generator"),
+                receiver = generatorReceiver(downstreamGeneratorName),
                 name = Name.of("generate"),
                 arguments = mapOf(
                     Name.of("generator") to VariableReference(Name.of("generator")),
@@ -500,7 +508,7 @@ fun UnionWirespec.convertToGenerator(): File {
                         case(Literal(variantName, Type.String)) {
                             returns(
                                 FunctionCall(
-                                    receiver = RawExpression("${variantName}Generator"),
+                                    receiver = generatorReceiver(variantName),
                                     name = Name.of("generate"),
                                     arguments = mapOf(
                                         Name.of("generator") to VariableReference(Name.of("generator")),

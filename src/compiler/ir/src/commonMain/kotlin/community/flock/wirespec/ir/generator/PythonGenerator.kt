@@ -262,7 +262,7 @@ object PythonGenerator : Generator {
         is Type.Array -> "list[${elementType.emit(qualifier)}]"
         is Type.Dict -> "dict[${keyType.emit(qualifier)}, ${valueType.emit(qualifier)}]"
         is Type.Custom -> {
-            val rawName = name.value()
+            val rawName = name.referenceName()
             val qualifiedName = qualifier?.invoke(rawName) ?: rawName
             if (generics.isEmpty()) {
                 qualifiedName
