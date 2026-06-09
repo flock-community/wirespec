@@ -47,7 +47,7 @@ class KotestOverrideRegistryTest {
 
         val factory = registry.findPath(listOf("users", "0", "id"))
         assertNotNull(factory)
-        assertEquals("EXACT", factory().sample(io.kotest.property.RandomSource.default()).value)
+        assertEquals("EXACT", factory().generate(io.kotest.property.RandomSource.default()).first().value)
     }
 
     @Test
@@ -57,7 +57,7 @@ class KotestOverrideRegistryTest {
 
         val factory = registry.findPath(listOf("users", "42", "id"))
         assertNotNull(factory)
-        assertEquals("WILD", factory().sample(io.kotest.property.RandomSource.default()).value)
+        assertEquals("WILD", factory().generate(io.kotest.property.RandomSource.default()).first().value)
     }
 
     @Test
@@ -86,7 +86,7 @@ class KotestOverrideRegistryTest {
         registry.addField(key) { Arb.constant("a@b.com") }
         val factory = registry.findField(key)
         assertNotNull(factory)
-        assertEquals("a@b.com", factory().sample(io.kotest.property.RandomSource.default()).value)
+        assertEquals("a@b.com", factory().generate(io.kotest.property.RandomSource.default()).first().value)
     }
 
     @Test
