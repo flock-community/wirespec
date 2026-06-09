@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.application
 
 import org.slf4j.LoggerFactory.getLogger
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.reactive.function.client.WebClient
@@ -14,8 +15,10 @@ open class Configuration {
     }
 
     @Bean("wirespecSpringWebClient")
-    open fun webClientForWirespec(): WebClient {
-        log.info("Creating custom webClient")
-        return WebClient.create("http://localhost:8080")
+    open fun webClientForWirespec(
+        @Value("\${wirespec.spring.webclient.base-url}") baseUrl: String,
+    ): WebClient {
+        log.info("Creating custom webClient with base URL {}", baseUrl)
+        return WebClient.create(baseUrl)
     }
 }
