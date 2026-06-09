@@ -121,7 +121,7 @@ public record Name(String value) implements Wirespec.Refined {
         return value;
     }
 
-    public boolean validate() {
+    public Boolean validate() {
         return java.util.regex.Pattern.compile("^[0-9a-zA-Z]{1,50}$").matcher(value).find();
     }
 
