@@ -43,6 +43,7 @@ include(
     "src:integration:avro",
     "src:integration:jackson",
     "src:integration:kotlinx-serialization",
+    "src:integration:kotest",
     "src:integration:wirespec",
     "src:integration:wiremock",
     "src:integration:spring",

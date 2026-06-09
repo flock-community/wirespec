@@ -7,4 +7,5 @@ build/
 .env
 *.iml
 .claude/settings.local.json
+.worktrees/
 docs/superpowers

@@ -1,0 +1,32 @@
+[versions]
+java = "21"
+kotest = "6.1.4"
+kotestPropertyArbs = "3.0.0"
+kotlin = "2.3.10"
+springBoot = "3.4.1"
+springDependencyManagement = "1.1.7"
+wirespec = "0.0.0-SNAPSHOT"
+
+[libraries]
+spring_boot_starter_web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring_boot_starter_test = { module = "org.springframework.boot:spring-boot-starter-test" }
+kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin_test_junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+kotlinx_coroutines_reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version = "1.8.1" }
+kotlinx_coroutines_test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.8.1" }
+jackson_module_kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+wirespec_compiler = { module = "community.flock.wirespec.compiler:core-jvm", version.ref = "wirespec" }
+wirespec_emitters_kotlin = { module = "community.flock.wirespec.compiler.emitters:kotlin-jvm", version.ref = "wirespec" }
+wirespec_integration_jackson = { module = "community.flock.wirespec.integration:jackson-jvm", version.ref = "wirespec" }
+wirespec_integration_spring = { module = "community.flock.wirespec.integration:spring-jvm", version.ref = "wirespec" }
+wirespec_integration_wirespec = { module = "community.flock.wirespec.integration:wirespec-jvm", version.ref = "wirespec" }
+wirespec_integration_kotest = { module = "community.flock.wirespec.integration:kotest-jvm", version.ref = "wirespec" }
+kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest_property_arbs = { module = "io.kotest:kotest-property-arbs", version.ref = "kotestPropertyArbs" }
+
+[plugins]
+kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin_spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+spring_boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+wirespec = { id = "community.flock.wirespec.plugin.gradle", version.ref = "wirespec" }
