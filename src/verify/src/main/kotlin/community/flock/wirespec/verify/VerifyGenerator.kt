@@ -7,6 +7,9 @@ import community.flock.wirespec.emitters.scala.ScalaIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.ir.core.ContainerBuilder
 
+private const val WIRESPEC = "Wirespec"
+private const val GENERATOR_PACKAGE = "community.flock.wirespec.generated.generator"
+
 /**
  * Imports for a test file that exercises the emitted test-data Generators.
  * Pulls in the shared Wirespec runtime plus a `<name>Generator` per given definition name.
@@ -14,24 +17,24 @@ import community.flock.wirespec.ir.core.ContainerBuilder
 internal fun ContainerBuilder.generatorImports(lang: Language, definitionNames: List<String>) {
     when (lang.emitter) {
         is JavaIrEmitter -> {
-            import("community.flock.wirespec.java", "Wirespec")
-            definitionNames.forEach { import("community.flock.wirespec.generated.generator", "${it}Generator") }
+            import("community.flock.wirespec.java", WIRESPEC)
+            definitionNames.forEach { import(GENERATOR_PACKAGE, "${it}Generator") }
         }
         is KotlinIrEmitter -> {
-            import("community.flock.wirespec.kotlin", "Wirespec")
-            definitionNames.forEach { import("community.flock.wirespec.generated.generator", "${it}Generator") }
+            import("community.flock.wirespec.kotlin", WIRESPEC)
+            definitionNames.forEach { import(GENERATOR_PACKAGE, "${it}Generator") }
         }
         is ScalaIrEmitter -> {
-            import("community.flock.wirespec.scala", "Wirespec")
-            definitionNames.forEach { import("community.flock.wirespec.generated.generator", "${it}Generator") }
+            import("community.flock.wirespec.scala", WIRESPEC)
+            definitionNames.forEach { import(GENERATOR_PACKAGE, "${it}Generator") }
         }
         is TypeScriptIrEmitter -> {
-            import("./Wirespec", "Wirespec")
+            import("./Wirespec", WIRESPEC)
             definitionNames.forEach { import("./generator/${it}Generator", "${it}Generator") }
         }
         is PythonIrEmitter -> {
-            import("community.flock.wirespec.generated.wirespec", "Wirespec")
-            definitionNames.forEach { import("community.flock.wirespec.generated.generator.${it}Generator", "${it}Generator") }
+            import("community.flock.wirespec.generated.wirespec", WIRESPEC)
+            definitionNames.forEach { import("$GENERATOR_PACKAGE.${it}Generator", "${it}Generator") }
         }
         else -> error("Generators are not verified for: ${lang.emitter::class.simpleName}")
     }
