@@ -55,7 +55,6 @@ class JacksonWirespecSerialization(
             Float::class -> raw.toFloat() as T
             Boolean::class -> raw.toBoolean() as T
             else -> {
-                // Refined wrappers and enums delegate to Jackson.
                 val javaType = objectMapper.constructType(type.javaType)
                 objectMapper.readValue("\"$raw\"", javaType)
             }
