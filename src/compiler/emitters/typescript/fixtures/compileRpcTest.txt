@@ -15,8 +15,10 @@ export function validateError(obj: Error): string[] {
 }
 
 import {Wirespec} from '../Wirespec'
-export interface CreateTodo extends Wirespec.Rpc {
-  createTodo(todo: Todo): Wirespec.Either<Error, Todo>;
+export namespace CreateTodo {
+  export interface Service extends Wirespec.Rpc {
+    createTodo(todo: Todo): Wirespec.Either<Error, Todo>;
+  }
 }
 
 export {Todo} from './Todo'

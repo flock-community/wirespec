@@ -24,8 +24,11 @@ impl Error {
 
 use super::super::wirespec::*;
 use regex;
-pub trait CreateTodo: Wirespec.Rpc {
-    fn create_todo(todo: Todo) -> Wirespec.Either<Error, Todo>;
+pub mod CreateTodo {
+    use super::*;
+    pub trait Service: Wirespec.Rpc {
+        fn create_todo(todo: Todo) -> Wirespec.Either<Error, Todo>;
+    }
 }
 
 #![allow(warnings)]

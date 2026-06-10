@@ -23,6 +23,8 @@ public record Error (
 package community.flock.wirespec.generated.rpc;
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Todo;
-public interface CreateTodo extends Wirespec.Rpc {
-  public Wirespec.Either<Error, Todo> createTodo(Todo todo);
+public interface CreateTodo {
+  public interface Service extends Wirespec.Rpc {
+    public Wirespec.Either<Error, Todo> createTodo(Todo todo);
+  }
 }

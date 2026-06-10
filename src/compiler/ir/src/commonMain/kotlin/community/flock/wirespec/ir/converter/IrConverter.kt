@@ -511,14 +511,16 @@ fun ChannelWirespec.convert() = file(identifier.toName()) {
 }
 
 fun RpcWirespec.convert() = file(identifier.toName()) {
-    `interface`(identifier.toName()) {
-        extends(type("Wirespec.Rpc"))
-        function(identifier.toName()) {
-            requestParameters.forEach { arg(it.identifier.toName(), it.reference.convert()) }
-            returnType(
-                error?.let { type("Wirespec.Either", it.convert(), response.convert()) }
-                    ?: response.convert(),
-            )
+    namespace(identifier.toName()) {
+        `interface`("Service") {
+            extends(type("Wirespec.Rpc"))
+            function(identifier.toName()) {
+                requestParameters.forEach { arg(it.identifier.toName(), it.reference.convert()) }
+                returnType(
+                    error?.let { type("Wirespec.Either", it.convert(), response.convert()) }
+                        ?: response.convert(),
+                )
+            }
         }
     }
 }
