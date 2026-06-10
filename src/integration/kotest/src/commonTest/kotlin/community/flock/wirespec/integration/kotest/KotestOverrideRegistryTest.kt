@@ -90,6 +90,16 @@ class KotestOverrideRegistryTest {
     }
 
     @Test
+    fun `OverrideRegistry rejects duplicate path pattern registration`() {
+        val registry = OverrideRegistry()
+        registry.addPath(arrayOf("users", "*", "id")) { Arb.constant("A") }
+        val ex = assertFailsWith<IllegalStateException> {
+            registry.addPath(arrayOf("users", "*", "id")) { Arb.constant("B") }
+        }
+        assertEquals(true, ex.message!!.contains("already registered"))
+    }
+
+    @Test
     fun `OverrideRegistry rejects duplicate FieldKey registration`() {
         val registry = OverrideRegistry()
         val key = FieldKey("com.example.User", "email")

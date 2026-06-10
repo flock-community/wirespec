@@ -4,6 +4,6 @@
 // of the same root name in commonMain.
 import { kotestWirespecGeneratorJs } from './wirespec-src-integration-kotest.mjs';
 
-export function kotestWirespecGenerator(seed = 0, registrations) {
-    return kotestWirespecGeneratorJs(seed, registrations);
+export function kotestWirespecGenerator(seed = 0, configure) {
+    return kotestWirespecGeneratorJs(seed, configure);
 }

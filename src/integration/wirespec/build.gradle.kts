@@ -43,7 +43,7 @@ kotlin {
                 // the Scala runtime; only Scala-emitted user code needs it on
                 // its own classpath (the kotest integration brings it in test
                 // scope for the Scala-adapter coverage).
-                compileOnly("org.scala-lang:scala3-library_3:3.3.4")
+                compileOnly(libs.scala3.library)
             }
         }
     }
@@ -71,8 +71,8 @@ val emitterRuntimeClasspath: Configuration by configurations.creating {
 }
 
 dependencies {
-    scalaToolClasspath("org.scala-lang:scala3-compiler_3:3.3.4")
-    scalaToolClasspath("org.scala-lang:scala3-sbt-bridge:3.3.4")
+    scalaToolClasspath(libs.scala3.compiler)
+    scalaToolClasspath(libs.scala3.sbt.bridge)
 
     emitterRuntimeClasspath(project(":src:compiler:test"))
     emitterRuntimeClasspath(project(":src:compiler:emitters:java"))

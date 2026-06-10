@@ -33,7 +33,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotest.property)
-                implementation(libs.kotest.property.arbs)
                 implementation(libs.kotlinx.rgxgen)
             }
         }
@@ -50,12 +49,18 @@ kotlin {
                 // facade adapts the commonMain KotestGenerator into a
                 // Wirespec.Generator for IR-emitted callers.
                 implementation(project(":src:integration:wirespec"))
+                // Full reflection: KClass.constructors / KFunction.call in
+                // JvmRefinedWrapper and Class → KType conversion in the
+                // Java/Scala adapters. Pinned to the Kotlin backwards-
+                // compatibility floor so this published integration doesn't
+                // force consumers onto a newer Kotlin than they target.
+                implementation(libs.kotlin.reflect.compat)
             }
         }
         jvmTest {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
-                implementation("org.scala-lang:scala3-library_3:3.3.4")
+                implementation(libs.scala3.library)
             }
         }
     }
