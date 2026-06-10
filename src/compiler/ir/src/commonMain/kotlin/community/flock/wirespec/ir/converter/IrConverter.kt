@@ -75,6 +75,12 @@ fun PackageName.convert(): File = file("Wirespec") {
         `interface`("Endpoint")
         `interface`("Channel")
         `interface`("Rpc")
+        `interface`("Either") {
+            typeParam(type("L"))
+            typeParam(type("R"))
+            field("error", type("L").nullable())
+            field("value", type("R").nullable())
+        }
         `interface`("Refined") {
             typeParam(type("T"))
             field("value", type("T"))
@@ -509,7 +515,10 @@ fun RpcWirespec.convert() = file(identifier.toName()) {
         extends(type("Wirespec.Rpc"))
         function(identifier.toName()) {
             requestParameters.forEach { arg(it.identifier.toName(), it.reference.convert()) }
-            returnType(response.convert())
+            returnType(
+                error?.let { type("Wirespec.Either", it.convert(), response.convert()) }
+                    ?: response.convert(),
+            )
         }
     }
 }

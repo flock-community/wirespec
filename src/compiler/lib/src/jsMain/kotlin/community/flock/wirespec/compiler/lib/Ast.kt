@@ -117,6 +117,7 @@ private fun WsRpc.consume() = Rpc(
     identifier = DefinitionIdentifier(identifier),
     requestParameters = requestParameters.map { it.consume() },
     response = response.consume(),
+    error = error?.consume(),
 )
 
 private fun WsField.consume() = Field(
@@ -234,6 +235,7 @@ fun Definition.produce(): WsDefinition = when (this) {
         comment = comment?.value,
         requestParameters = requestParameters.produce(),
         response = response.produce(),
+        error = error?.produce(),
     )
 }
 
@@ -374,6 +376,7 @@ data class WsRpc(
     override val comment: String?,
     val requestParameters: Array<WsField>,
     val response: WsReference,
+    val error: WsReference?,
 ) : WsDefinition
 
 @JsExport

@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.tokenize.Annotation
 import community.flock.wirespec.compiler.core.tokenize.Arrow
+import community.flock.wirespec.compiler.core.tokenize.Bang
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.CaseVariant
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
@@ -78,6 +79,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\(") to LeftParenthesis,
         Regex("^\\)") to RightParenthesis,
         Regex("^->") to Arrow,
+        Regex("^!") to Bang,
         Regex("^=") to Equals,
         Regex("^\\|") to Pipe,
         Regex("^:") to Colon,

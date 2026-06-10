@@ -72,6 +72,44 @@ class ParseRpcTest {
     }
 
     @Test
+    fun testRpcParserWithError() {
+        val source =
+            // language=ws
+            """
+            |type Todo { name: String }
+            |type Error { code: String }
+            |rpc CreateTodo(todo: Todo) -> Todo ! Error
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .shouldHaveSize(3)[2]
+            .shouldBeInstanceOf<Rpc>()
+            .run {
+                identifier.value shouldBe "CreateTodo"
+                response.value shouldBe "Todo"
+                error?.value shouldBe "Error"
+                error?.isNullable shouldBe false
+            }
+    }
+
+    @Test
+    fun testRpcParserWithoutErrorHasNullError() {
+        val source =
+            // language=ws
+            """
+            |type Todo { name: String }
+            |rpc CreateTodo(todo: Todo) -> Todo
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .shouldHaveSize(2)[1]
+            .shouldBeInstanceOf<Rpc>()
+            .run { error shouldBe null }
+    }
+
+    @Test
     fun testRpcParserNoParametersAndUnitResponse() {
         val source =
             // language=ws

@@ -54,6 +54,7 @@ data class Rpc(
     override val identifier: DefinitionIdentifier,
     val requestParameters: List<Field>,
     val response: Reference,
+    val error: Reference? = null,
 ) : Definition
 
 sealed interface Model : Definition

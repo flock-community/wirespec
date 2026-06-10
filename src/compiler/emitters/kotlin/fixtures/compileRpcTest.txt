@@ -8,10 +8,20 @@ data class Todo(
     emptyList<String>()
 }
 
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Error(
+  val code: String
+) : Wirespec.Model {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
 package community.flock.wirespec.generated.rpc
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Todo
 interface CreateTodo : Wirespec.Rpc {
-  fun createTodo(todo: Todo): Todo
+  fun createTodo(todo: Todo): Wirespec.Either<Error, Todo>
 }

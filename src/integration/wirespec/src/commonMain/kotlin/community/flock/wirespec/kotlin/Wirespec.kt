@@ -10,6 +10,7 @@ object Wirespec {
     interface Endpoint
     interface Channel
     interface Rpc
+    data class Either<L, R>(val error: L?, val value: R?)
     interface Refined<T : Any> {
         val value: T
         fun validate(): Boolean
