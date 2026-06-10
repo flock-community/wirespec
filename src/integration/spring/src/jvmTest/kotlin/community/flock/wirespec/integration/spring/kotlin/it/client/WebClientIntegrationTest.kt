@@ -16,31 +16,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
-import java.net.ServerSocket
 import kotlin.test.Test
 
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    classes = [Application::class, WirespecPetstoreWebClient::class],
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = [Application::class, WirespecPetstoreWebClient::class])
 @EnableConfigurationProperties
 class WebClientIntegrationTest {
-    companion object {
-        // Pre-allocate a random free port so the embedded Tomcat (DEFINED_PORT)
-        // and the WirespecWebClient base URL agree on the same port without
-        // colliding with whatever else is bound to 8080 on the developer's machine.
-        private val randomPort: Int = ServerSocket(0).use { it.localPort }
-
-        @JvmStatic
-        @DynamicPropertySource
-        fun registerDynamicProperties(registry: DynamicPropertyRegistry) {
-            registry.add("server.port") { randomPort }
-            registry.add("wirespec.spring.webclient.base-url") { "http://localhost:$randomPort" }
-        }
-    }
-
     @Autowired
     lateinit var wirespecPetstoreWebClient: WirespecPetstoreWebClient
 
