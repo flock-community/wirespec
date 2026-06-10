@@ -3,7 +3,7 @@ package community.flock.wirespec.integration.wiremock.java;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import community.flock.wirespec.integration.jackson.java.WirespecSerialization;
+import community.flock.wirespec.integration.jackson.v2.java.WirespecSerialization;
 import community.flock.wirespec.integration.wiremock.java.generated.endpoint.GetTodoById;
 import community.flock.wirespec.integration.wiremock.java.generated.endpoint.GetTodos;
 import community.flock.wirespec.integration.wiremock.java.generated.model.Error;

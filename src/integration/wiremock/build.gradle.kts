@@ -55,7 +55,7 @@ kotlin {
                 implementation(libs.kotlin.stdlib)
                 api(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
-                implementation(libs.bundles.jackson)
+                implementation(libs.bundles.jackson2)
                 compileOnly(libs.wiremock)
             }
         }
@@ -63,7 +63,7 @@ kotlin {
             kotlin.srcDir(generatedWirespecDir.map { it.dir("kotlin") })
             dependencies {
                 implementation(project(":src:integration:jackson"))
-                implementation(libs.bundles.jackson)
+                implementation(libs.bundles.jackson2)
                 implementation(libs.kotlin.reflect)
                 implementation(libs.kotlin.junit)
                 implementation(libs.wiremock)

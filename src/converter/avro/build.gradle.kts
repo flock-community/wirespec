@@ -49,7 +49,7 @@ kotlin {
         }
         jvmTest {
             dependencies {
-                implementation(libs.bundles.jackson)
+                implementation(libs.bundles.jackson2)
             }
         }
     }
