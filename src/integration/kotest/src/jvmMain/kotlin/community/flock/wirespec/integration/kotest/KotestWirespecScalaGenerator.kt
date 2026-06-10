@@ -13,6 +13,10 @@ import java.lang.reflect.Proxy
  * val member = MemberGenerator.generate(gen, scala.collection.immutable.List.empty())
  * ```
  *
+ * Scala callers should prefer the typed `KotestWirespec.generator(...)` facade
+ * (compiled into this artifact), which hides the cast and the Kotlin block
+ * parameter.
+ *
  * Unlike the Kotlin and Java siblings, this factory has **zero compile-time
  * dependency on Scala types** — the kotest module ships no Scala. The Scala
  * `Wirespec` interface is resolved at construction from the runtime classpath,

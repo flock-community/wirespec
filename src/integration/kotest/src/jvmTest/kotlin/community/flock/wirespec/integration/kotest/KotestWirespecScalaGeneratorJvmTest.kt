@@ -14,8 +14,9 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Cover the Scala adapter against a Java fixture (in jvmTest/java) that
- * stands in for the user's emit-shared `Wirespec.scala`. Confirms:
+ * Cover the Scala adapter against the Scala `Wirespec` runtime compiled into
+ * `:src:integration:wirespec`, which stands in for the user's emit-shared
+ * `Wirespec.scala`. Confirms:
  *   1. `kotestWirespecScalaGenerator(...)` returns something castable to the
  *      Scala `Wirespec.Generator` declared by the fixture.
  *   2. The reflective decoding routes a `GeneratorFieldString` through the
