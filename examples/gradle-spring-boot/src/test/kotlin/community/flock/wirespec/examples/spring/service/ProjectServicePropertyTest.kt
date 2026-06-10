@@ -1,9 +1,11 @@
 package community.flock.wirespec.examples.spring.service
 
 import community.flock.wirespec.examples.spring.generated.generator.ProjectInputGenerator
+import community.flock.wirespec.examples.spring.generated.model.Project
 import community.flock.wirespec.examples.spring.generated.model.ProjectInput
 import community.flock.wirespec.examples.spring.repository.MemberRepository
 import community.flock.wirespec.examples.spring.repository.ProjectRepository
+import community.flock.wirespec.examples.spring.testutil.TestGenerators
 import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 import io.kotest.property.Arb
 import io.kotest.property.PropTestConfig
@@ -25,6 +27,7 @@ import kotlin.test.assertTrue
  */
 class ProjectServicePropertyTest {
 
+    private lateinit var memberRepository: MemberRepository
     private lateinit var service: ProjectService
 
     @BeforeTest
@@ -32,7 +35,18 @@ class ProjectServicePropertyTest {
         // Fresh in-memory state per @Test method. Iterations within a single
         // property share state, which is fine — each iteration operates on
         // its own service-generated id.
-        service = ProjectService(ProjectRepository(), MemberRepository())
+        memberRepository = MemberRepository()
+        service = ProjectService(ProjectRepository(), memberRepository)
+    }
+
+    // The generator draws null for ~20% of nullable paths, so `input.owner`
+    // may be absent; the service then resolves `ownerId` against the member
+    // repository. Seed it so the lookup succeeds.
+    private suspend fun createProject(input: ProjectInput): Project {
+        if (input.owner == null) {
+            memberRepository.save(TestGenerators.member(id = input.ownerId.value))
+        }
+        return service.create(input)
     }
 
     /**
@@ -53,7 +67,7 @@ class ProjectServicePropertyTest {
     @Test
     fun `create then get returns the same project`() = runTest {
         checkAll(config, projectInputArb) { input ->
-            val created = service.create(input)
+            val created = createProject(input)
             val fetched = service.get(created.id)
 
             assertNotNull(fetched)
@@ -66,7 +80,7 @@ class ProjectServicePropertyTest {
     @Test
     fun `update replaces fields but keeps the id`() = runTest {
         checkAll(config, projectInputArb, projectInputArb) { original, replacement ->
-            val created = service.create(original)
+            val created = createProject(original)
             val updated = service.update(created.id, replacement)
 
             assertNotNull(updated)
@@ -79,7 +93,7 @@ class ProjectServicePropertyTest {
     @Test
     fun `delete then get returns null`() = runTest {
         checkAll(config, projectInputArb) { input ->
-            val created = service.create(input)
+            val created = createProject(input)
 
             assertTrue(service.delete(created.id))
             assertNull(service.get(created.id))
