@@ -1,0 +1,241 @@
+---
+title: Kotest
+slug: /integration/kotest
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+The Kotest integration generates **deterministic test data** for your Wirespec types, backed by
+[Kotest property-test generators](https://kotest.io/docs/proptest/property-test-generators.html) (`Arb`s). Every
+Wirespec type comes with an emitted `*Generator` factory; this integration provides the `Wirespec.Generator`
+implementation that drives those factories — a drop-in replacement for hand-written fixture builders.
+
+Generated values respect your contract: regex-refined strings match their pattern, bounded integers stay within
+bounds, enums draw from their declared entries. Same seed, same type → identical output, on every run and every
+platform.
+
+## Setup
+
+<Tabs>
+  <TabItem value="maven" label="Maven">
+    ```xml title="pom.xml"
+    <dependency>
+      <groupId>community.flock.wirespec.integration</groupId>
+      <artifactId>kotest-jvm</artifactId>
+      <version>{{WIRESPEC_VERSION}}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.kotest</groupId>
+      <artifactId>kotest-property-jvm</artifactId>
+      <version>6.1.4</version>
+      <scope>test</scope>
+    </dependency>
+    ```
+  </TabItem>
+  <TabItem value="gradle" label="Gradle">
+    ```gradle title="build.gradle.kts"
+    testImplementation("community.flock.wirespec.integration:kotest-jvm:{{WIRESPEC_VERSION}}")
+    testImplementation("io.kotest:kotest-property:6.1.4")
+    ```
+  </TabItem>
+  <TabItem value="js" label="JS / Multiplatform">
+    ```gradle title="build.gradle.kts"
+    testImplementation("community.flock.wirespec.integration:kotest-js:{{WIRESPEC_VERSION}}")
+    testImplementation("io.kotest:kotest-property:6.1.4")
+    ```
+  </TabItem>
+</Tabs>
+
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
+
+---
+
+## Quick start
+
+Given the following Wirespec contract:
+
+```wirespec title="src/main/wirespec/project.ws"
+type Member {
+    id: String,
+    email: String,
+    age: Integer
+}
+
+type Project {
+    @Seed id: String,
+    name: String,
+    owner: Member,
+    tags: String[]
+}
+```
+
+Generate fully populated instances in a test:
+
+```kotlin
+import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
+
+val gen = kotestWirespecKotlinGenerator(seed = 1L)
+
+val member: Member = MemberGenerator.generate(gen, emptyList())
+val project: Project = ProjectGenerator.generate(gen, emptyList())
+```
+
+Every field is filled with a deterministic value derived from the seed and the field's path — strings get readable
+`fieldName-XXXXXXXX` tokens (or regex-conforming values for refined types), arrays get 1–10 elements, and nullable
+fields draw `null` for roughly 20% of paths so your null-handling branches actually get exercised.
+
+:::warning
+A generator instance keeps per-call traversal state and is **not thread-safe**. Instances are cheap — create one per
+test instead of sharing across concurrently running tests.
+:::
+
+---
+
+## Overrides
+
+Pin or customize generated values via the builder block. Three forms, listed from highest to lowest precedence
+(`@Seed` always wins, see below):
+
+```kotlin
+val gen = kotestWirespecKotlinGenerator(seed = 1L) {
+    // 1. By path — exact segments; `*` matches any single segment
+    //    (e.g. an array index). The most specific pattern wins.
+    registerPath("users", "*", "email") { Arb.email() }
+    registerPath("users", "0", "id", value = "FIXED-ID")
+
+    // 2. By parent type + field — compile-checked property reference (JVM).
+    registerField(Member::id) { Arb.uuid().map(java.util.UUID::toString) }
+    registerField(Member::age, value = 42L)
+
+    // 3. By parent type name + field name (multiplatform, stringly).
+    registerFieldByTypeName("com.example.Member", "email", value = "a@b.com")
+}
+```
+
+- Factories accept any Kotest `Gen` — both `Arb` and `Exhaustive`.
+- In the `value = …` form the argument **must be passed by name**: `registerPath("users", "id", "FIXED")` would
+  register the three-segment path `users/id/FIXED`, because the vararg swallows positional strings.
+- Registering the same path pattern or field key twice fails fast at registration; two equally specific patterns
+  matching the same path fail at lookup with an `Ambiguous` error.
+
+### Refined fields auto-wrap
+
+When an override fires on a field whose type is a Wirespec `Refined` wrapper, provide the **inner primitive** — the
+integration wraps it into the refined type for you:
+
+```kotlin
+// Member.id is a refined `MemberId(value: String)`
+registerField(Member::id) { Arb.constant("m-1") }   // becomes MemberId("m-1")
+```
+
+A type mismatch (say, an `Arb<Long>` for a `String`-backed wrapper) raises an error naming the path, the expected
+inner type, and the actual value type. Auto-wrap works for Kotlin-, Java-, and Scala-emitted code alike.
+
+---
+
+## `@Seed` — reproducible identity
+
+Annotate a field with `@Seed` in your `.ws` source and the generator takes its value from the parent path, letting
+you regenerate the same record deterministically from just an ID:
+
+```kotlin
+val project = ProjectGenerator.generate(gen, listOf("proj-42"))
+// project.id == "proj-42"
+```
+
+For arrays of records, the integration runs a two-pass capture/replay: the first pass auto-generates each element's
+seed, the second pass propagates it through nested refined wrappers — so every array element has a stable,
+reproducible identity. `@Seed` takes precedence over any registered override at the same path.
+
+---
+
+## Java-emitted code
+
+The Java emitter produces `*Generator.java` factories that take a `community.flock.wirespec.java.Wirespec.Generator`.
+Use the Java sibling factory — same DSL and `@Seed` semantics:
+
+```kotlin
+import community.flock.wirespec.integration.kotest.kotestWirespecJavaGenerator
+import community.flock.wirespec.java.Wirespec
+
+val gen: Wirespec.Generator = kotestWirespecJavaGenerator(seed = 1L) {
+    registerPath("users", "*", "email") { Arb.email() }
+}
+val member = MemberGenerator.generate(gen, java.util.List.of())
+```
+
+The differences are JVM-flavoured: optional constraints arrive as `java.util.Optional<X>` instead of `X?`, and
+nullable fields come back as `Optional<T>` (Java semantics) rather than a bare `T?`.
+
+## Scala-emitted code
+
+The Scala emitter produces `*Generator.scala` factories taking a `community.flock.wirespec.scala.Wirespec.Generator`.
+The kotest module has **zero compile-time Scala dependency** — the factory returns `Any` and you cast at the call
+site:
+
+```kotlin
+import community.flock.wirespec.integration.kotest.kotestWirespecScalaGenerator
+import community.flock.wirespec.scala.Wirespec  // from your --emit-shared output
+
+val gen = kotestWirespecScalaGenerator(seed = 1L) {
+    registerPath("users", "*", "id") { Arb.constant("FIXED") }
+} as Wirespec.Generator
+
+val member = MemberGenerator.generate(gen, scala.collection.immutable.List.empty())
+```
+
+:::warning
+Your codegen must run with `--emit-shared` so the generated `Wirespec.scala` (which declares `Wirespec.Generator`)
+is on the test classpath. If it's missing, the factory fails at construction with a message pointing here.
+:::
+
+Internally the adapter is a `java.lang.reflect.Proxy` that resolves the Scala interface from the runtime classpath
+and converts Scala collections, `Option`s, and functions on the fly — no Scala library lands on your classpath via
+this integration.
+
+## TypeScript / JS-emitted code
+
+The JS facade accepts plain-object fields with a `kind` discriminator, plus an optional builder callback for
+constant-value path overrides:
+
+```ts
+import { kotestWirespecGenerator } from "@flock/wirespec/generator";
+
+const gen = kotestWirespecGenerator(1, (b) => {
+    b.registerPath(["users", "*", "id"], "FIXED-ID");
+});
+
+const member = MemberGenerator.generate(gen, []);
+```
+
+`Arb`-backed overrides are JVM-only — Kotest generators can't cross the JS export boundary, so JS consumers pin
+constant values.
+
+---
+
+## How it works
+
+Each emitted `*Generator` walks the type's shape and asks the `Wirespec.Generator` for a value per field, passing the
+field's **path** (e.g. `["users", "0", "email"]`) and a typed field descriptor (its kind, constraints, and
+annotations). The integration:
+
+1. Checks `@Seed` capture/replay state for the path.
+2. Looks for a matching path override, then a field override.
+3. Otherwise draws a default value from a Kotest `Arb` seeded by `baseSeed` mixed with a 64-bit hash of the path —
+   which is what makes every value reproducible per seed + path, independent of generation order.
+
+Regex-refined strings are generated with the multiplatform
+[`kotlin-rgxgen`](https://github.com/flock-community/kotlin-rgxgen) library, so the same patterns work on JVM and JS.
+
+---
+
+## A full example
+
+A runnable project using the integration for service-layer property tests is available in the repository:
+[examples/gradle-spring-boot](https://github.com/flock-community/wirespec/tree/master/examples/gradle-spring-boot).
