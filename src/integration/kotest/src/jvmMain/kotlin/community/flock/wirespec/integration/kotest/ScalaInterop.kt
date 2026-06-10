@@ -1,6 +1,9 @@
 package community.flock.wirespec.integration.kotest
 
 import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KType
+import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 /**
@@ -55,6 +58,16 @@ internal object ScalaInterop {
         cl.loadClass("scala.Option").getMethod("get")
     }
 
+    private val scalaMapClass: Class<*> by lazy {
+        cl.loadClass("scala.collection.Map")
+    }
+
+    // Per-receiver-class lookups (`apply` on runtime Function1 lambdas,
+    // `toList` on converted iterables) are on the hot per-field path; cache
+    // them so repeated generation pays only Method.invoke.
+    private val applyMethods = ConcurrentHashMap<Class<*>, Method>()
+    private val toListMethods = ConcurrentHashMap<Class<*>, Method>()
+
     // --- Public dispatch ----------------------------------------------------
 
     fun dispatch(inner: KotestGenerator, method: Method, args: Array<Any?>): Any? {
@@ -85,7 +98,7 @@ internal object ScalaInterop {
         val javaList = ArrayList<Any?>(xs)
         val scalaIterable = convertersAsScala.invoke(convertersModule, javaList)
         // scalaIterable is a scala.collection.Iterable; call `.toList()`.
-        val toList = scalaIterable.javaClass.getMethod("toList")
+        val toList = toListMethods.getOrPut(scalaIterable.javaClass) { scalaIterable.javaClass.getMethod("toList") }
         return toList.invoke(scalaIterable)
     }
 
@@ -155,12 +168,12 @@ internal object ScalaInterop {
             "GeneratorFieldEnum" -> {
                 val values = scalaListToKotlin(cls.getMethod("values").invoke(field))
                 val annotations = decodeAnnotations(cls.getMethod("annotations").invoke(field))
-                KotestFieldEnum(values, annotations, typeOf<Any>()) as KotestField<Any?>
+                KotestFieldEnum(values, annotations, classTagToKType(field)) as KotestField<Any?>
             }
             "GeneratorFieldUnion" -> {
                 val variants = scalaListToKotlin(cls.getMethod("variants").invoke(field))
                 val annotations = decodeAnnotations(cls.getMethod("annotations").invoke(field))
-                KotestFieldUnion(variants, annotations, typeOf<Any>()) as KotestField<Any?>
+                KotestFieldUnion(variants, annotations, classTagToKType(field)) as KotestField<Any?>
             }
             "GeneratorFieldArray" -> {
                 val scalaFn = cls.getMethod("generate").invoke(field)!!
@@ -174,7 +187,7 @@ internal object ScalaInterop {
                 val scalaFn = cls.getMethod("generate").invoke(field)!!
                 val scalaAnnotations = cls.getMethod("annotations").invoke(field)
                 val annotations = decodeShapeAnnotations(scalaAnnotations)
-                KotestFieldShape<Any>(annotations, { p -> invokeScalaFunction1(scalaFn, p) }, typeOf<Any>()) as KotestField<Any?>
+                KotestFieldShape<Any>(annotations, { p -> invokeScalaFunction1(scalaFn, p) }, classTagToKType(field)) as KotestField<Any?>
             }
             "GeneratorFieldDict" -> {
                 val scalaFn = cls.getMethod("generate").invoke(field)!!
@@ -201,11 +214,25 @@ internal object ScalaInterop {
 
     // --- Helpers ------------------------------------------------------------
 
+    /**
+     * Extract the `type: scala.reflect.ClassTag[T]` component of a Scala
+     * `GeneratorField*` case class and convert its `runtimeClass` to a `KType`,
+     * so field overrides by parent type and the Refined auto-wrap work the
+     * same as for Kotlin-emitted code. Falls back to `typeOf<Any>()` when the
+     * component is missing or not a ClassTag.
+     */
+    private fun classTagToKType(field: Any): KType = runCatching {
+        val tag = field.javaClass.getMethod("type").invoke(field)!!
+        val runtimeClass = tag.javaClass.getMethod("runtimeClass").invoke(tag) as Class<*>
+        runtimeClass.kotlin.starProjectedType
+    }.getOrDefault(typeOf<Any>())
+
     /** scala.Function1.apply(kotlinList) — wraps the kotlin list back as Scala first. */
     private fun invokeScalaFunction1(scalaFn: Any, kotlinPath: List<String>): Any {
         val scalaArg = kotlinListToScala(kotlinPath)
-        val applyMethod = scalaFn.javaClass.getMethod("apply", Any::class.java)
-        applyMethod.isAccessible = true
+        val applyMethod = applyMethods.getOrPut(scalaFn.javaClass) {
+            scalaFn.javaClass.getMethod("apply", Any::class.java).also { it.isAccessible = true }
+        }
         return applyMethod.invoke(scalaFn, scalaArg)
     }
 
@@ -235,8 +262,9 @@ internal object ScalaInterop {
     private fun decodeScalaMap(scalaMap: Any): Map<String, Any> {
         val asJava = convertersAsJavaMap.invoke(convertersModule, scalaMap) as MutableMap<String, Any>
         return asJava.mapValues { (_, v) ->
-            val cls = v.javaClass.name
-            if (cls.startsWith("scala.collection.immutable.Map")) decodeScalaMap(v) else v
+            // isInstance, not a class-name prefix check: small maps are
+            // Map$.MapN but 5+ entries become immutable.HashMap.
+            if (scalaMapClass.isInstance(v)) decodeScalaMap(v) else v
         }
     }
 }

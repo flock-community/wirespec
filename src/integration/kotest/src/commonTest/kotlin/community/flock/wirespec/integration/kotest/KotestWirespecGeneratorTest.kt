@@ -40,6 +40,17 @@ class KotestWirespecGeneratorTest {
     }
 
     @Test
+    fun `paths with colliding string hashCodes produce different values`() {
+        // "Aa" and "BB" have identical JVM-style String.hashCode values; the
+        // per-path seed mixing must still distinguish them.
+        val gen = kotestGenerator(seed = 0L)
+        val field = KotestFieldInteger64(min = null, max = null, annotations = emptyList())
+        val a = gen.generate(listOf("Aa"), field)
+        val b = gen.generate(listOf("BB"), field)
+        assertNotEquals(a, b, "colliding path hashCodes must not produce identical values")
+    }
+
+    @Test
     fun `KotestFieldInteger64 with bounds stays within bounds`() {
         repeat(20) { i ->
             val field = KotestFieldInteger64(min = 10, max = 20, annotations = emptyList())
@@ -129,6 +140,19 @@ class KotestWirespecGeneratorTest {
         // Either null or the callback's return value:
         assertTrue(v == null || v == "y")
         assertTrue(calls in 0..1)
+    }
+
+    @Test
+    fun `KotestFieldNullable produces both null and non-null values deterministically`() {
+        fun draw(gen: KotestGenerator): List<String?> = (0 until 50).map { i ->
+            gen.generate(listOf("field$i"), KotestFieldNullable<String> { "v" })
+        }
+        val a = draw(kotestGenerator(seed = 0L))
+        assertTrue(a.any { it == null }, "expected at least one null across 50 paths")
+        assertTrue(a.any { it == "v" }, "expected at least one non-null across 50 paths")
+
+        val b = draw(kotestGenerator(seed = 0L))
+        assertEquals(a, b, "same seed and paths must reproduce the same null pattern")
     }
 
     @Test

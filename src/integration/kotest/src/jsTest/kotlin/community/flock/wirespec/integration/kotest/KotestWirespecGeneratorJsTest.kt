@@ -26,6 +26,26 @@ class KotestWirespecGeneratorJsTest {
     }
 
     @Test
+    fun `registerPath value override pins the value at a matching path`() {
+        val gen = kotestWirespecGeneratorJs(seed = 1) { builder ->
+            builder.registerPath(arrayOf("users", "*", "id"), "FIXED-ID")
+        }
+        val field: dynamic = js("({kind: 'string', regex: undefined, annotations: []})")
+        assertEquals("FIXED-ID", gen.generate(arrayOf("users", "0", "id"), field) as String)
+        assertEquals("FIXED-ID", gen.generate(arrayOf("users", "7", "id"), field) as String)
+    }
+
+    @Test
+    fun `registerPath override does not fire at other paths`() {
+        val gen = kotestWirespecGeneratorJs(seed = 1) { builder ->
+            builder.registerPath(arrayOf("users", "*", "id"), "FIXED-ID")
+        }
+        val field: dynamic = js("({kind: 'string', regex: undefined, annotations: []})")
+        val other = gen.generate(arrayOf("orders", "0", "id"), field) as String
+        assertTrue(other != "FIXED-ID", "override must not fire at non-matching paths")
+    }
+
+    @Test
     fun `shape kind translates to Wirespec_GeneratorFieldShape and invokes the JS generate callback`() {
         val gen = kotestWirespecGeneratorJs(seed = 1)
         val field: dynamic = js("({kind: 'shape', annotations: {}, generate: function(p) { return { ok: true, path: p.join('/') }; }, type: 'X'})")
