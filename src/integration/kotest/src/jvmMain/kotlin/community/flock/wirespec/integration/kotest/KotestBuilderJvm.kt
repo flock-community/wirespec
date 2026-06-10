@@ -46,15 +46,20 @@ inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerFiel
  */
 internal object JvmRefinedWrapper : RefinedWrapper {
 
-    private val cache = ConcurrentHashMap<KType, KFunction<Any>?>()
+    // ConcurrentHashMap rejects null values, so non-wrappable types are
+    // cached as the NotRefined sentinel instead.
+    private object NotRefined
+
+    private val cache = ConcurrentHashMap<KType, Any>()
 
     @Suppress("UNCHECKED_CAST")
     private fun ctorFor(type: KType): KFunction<Any>? = cache.getOrPut(type) {
-        val cls = (type.classifier as? KClass<*>) ?: return@getOrPut null
+        val cls = (type.classifier as? KClass<*>) ?: return@getOrPut NotRefined
         cls.constructors.singleOrNull()
             ?.takeIf { it.parameters.size == 1 }
             ?.let { it as? KFunction<Any> }
-    }
+            ?: NotRefined
+    } as? KFunction<Any>
 
     override fun wrap(drawn: Any?, field: KotestField<*>, path: List<String>): Any? {
         val shape = field as? KotestFieldShape<*> ?: return drawn

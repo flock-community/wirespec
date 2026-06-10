@@ -1,7 +1,11 @@
 package community.flock.wirespec.integration.kotest
 
 import community.flock.wirespec.java.Wirespec
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 import java.util.Optional
+import kotlin.reflect.KType
+import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 /**
@@ -38,8 +42,10 @@ fun kotestWirespecJavaGenerator(
  * Differences from the Kotlin adapter:
  * - `Optional<X>` ⇄ `X?` for `regex` / `min` / `max`.
  * - `java.util.function.Function<List<String>, T>` ⇄ `(List<String>) -> T`.
- * - `KotestField*` carries `kotlin.reflect.KType` for Enum/Union/Shape, but
- *   the kotest impl never reads it; pass `typeOf<Any>()` as a placeholder.
+ * - `KotestField*` carries `kotlin.reflect.KType` for Enum/Union/Shape; the
+ *   Java records carry `java.lang.reflect.Type` (e.g. `Email.class`), which
+ *   is converted via [toKType] so field overrides by parent type and the
+ *   Refined auto-wrap work the same as for Kotlin-emitted code.
  * - For `GeneratorFieldNullable<T>`, wrap the inner `T?` result in
  *   `Optional.ofNullable(...)` on return.
  */
@@ -70,8 +76,8 @@ internal class WirespecJavaGeneratorAdapter(private val inner: KotestGenerator) 
         is Wirespec.GeneratorFieldNumber32 -> KotestFieldNumber32(min.orElse(null), max.orElse(null), annotations)
         is Wirespec.GeneratorFieldBoolean -> KotestFieldBoolean(annotations)
         is Wirespec.GeneratorFieldBytes -> KotestFieldBytes(annotations)
-        is Wirespec.GeneratorFieldEnum -> KotestFieldEnum(values, annotations, typeOf<Any>())
-        is Wirespec.GeneratorFieldUnion -> KotestFieldUnion(variants, annotations, typeOf<Any>())
+        is Wirespec.GeneratorFieldEnum -> KotestFieldEnum(values, annotations, type.toKType())
+        is Wirespec.GeneratorFieldUnion -> KotestFieldUnion(variants, annotations, type.toKType())
         is Wirespec.GeneratorFieldArray<*> -> {
             val arr = this as Wirespec.GeneratorFieldArray<Any>
             KotestFieldArray<Any> { p -> arr.generate.apply(p) }
@@ -80,11 +86,22 @@ internal class WirespecJavaGeneratorAdapter(private val inner: KotestGenerator) 
             error("GeneratorFieldNullable handled in generate(...) above")
         is Wirespec.GeneratorFieldShape<*> -> {
             val shape = this as Wirespec.GeneratorFieldShape<Any>
-            KotestFieldShape<Any>(shape.annotations, { p -> shape.generate.apply(p) }, typeOf<Any>())
+            KotestFieldShape<Any>(shape.annotations, { p -> shape.generate.apply(p) }, shape.type.toKType())
         }
         is Wirespec.GeneratorFieldDict<*> -> {
             val dict = this as Wirespec.GeneratorFieldDict<Any>
             KotestFieldDict<Any> { p -> dict.generate.apply(p) }
         }
     }
+}
+
+/**
+ * `java.lang.reflect.Type` (what Java-emitted fields carry, e.g. `Email.class`
+ * or a `ParameterizedType` from `Wirespec.getType`) → `KType`. Falls back to
+ * `typeOf<Any>()` for exotic `Type` implementations.
+ */
+private fun Type.toKType(): KType = when (this) {
+    is Class<*> -> kotlin.starProjectedType
+    is ParameterizedType -> (rawType as? Class<*>)?.kotlin?.starProjectedType ?: typeOf<Any>()
+    else -> typeOf<Any>()
 }
