@@ -22,9 +22,6 @@ import kotlin.test.assertTrue
  *      commonMain algorithm.
  *   3. `GeneratorFieldNullable<T>` returns a `scala.Option<T>`, not a bare
  *      Kotlin `T?`.
- *
- * Wider variant coverage is left for an integration test against
- * `examples/scala-zio` (follow-up).
  */
 class KotestWirespecScalaGeneratorJvmTest {
 

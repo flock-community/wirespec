@@ -18,9 +18,8 @@ class ProjectServiceTest {
     private val memberRepository = MemberRepository()
     private val service = ProjectService(ProjectRepository(), memberRepository)
 
-    // The generator draws null for ~20% of nullable paths, so `input.owner`
-    // may be absent; the service then resolves `ownerId` against the member
-    // repository. Seed it so the lookup succeeds.
+    // When the generator draws a null owner, the service resolves ownerId
+    // against the member repository — seed it so the lookup succeeds.
     private suspend fun createProject(input: ProjectInput): Project {
         if (input.owner == null) {
             memberRepository.save(TestGenerators.member(id = input.ownerId.value))

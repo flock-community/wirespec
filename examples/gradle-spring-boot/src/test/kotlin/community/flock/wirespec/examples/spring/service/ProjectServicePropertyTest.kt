@@ -32,16 +32,12 @@ class ProjectServicePropertyTest {
 
     @BeforeTest
     fun setUp() {
-        // Fresh in-memory state per @Test method. Iterations within a single
-        // property share state, which is fine — each iteration operates on
-        // its own service-generated id.
         memberRepository = MemberRepository()
         service = ProjectService(ProjectRepository(), memberRepository)
     }
 
-    // The generator draws null for ~20% of nullable paths, so `input.owner`
-    // may be absent; the service then resolves `ownerId` against the member
-    // repository. Seed it so the lookup succeeds.
+    // When the generator draws a null owner, the service resolves ownerId
+    // against the member repository — seed it so the lookup succeeds.
     private suspend fun createProject(input: ProjectInput): Project {
         if (input.owner == null) {
             memberRepository.save(TestGenerators.member(id = input.ownerId.value))
@@ -50,18 +46,15 @@ class ProjectServicePropertyTest {
     }
 
     /**
-     * Bridge: a kotest `Arb` that draws a fresh per-iteration seed from the
-     * `RandomSource` and feeds it to `kotestWirespecKotlinGenerator`, which then
-     * drives the IR-emitted `ProjectInputGenerator`. No schema duplication —
-     * the Arb is a thin wrapper around the existing generator.
+     * A kotest `Arb` that draws a fresh per-iteration seed from the
+     * `RandomSource` and feeds it to `kotestWirespecKotlinGenerator`, which
+     * drives the IR-emitted `ProjectInputGenerator`.
      */
     private val projectInputArb: Arb<ProjectInput> = arbitrary { rs ->
         val gen = kotestWirespecKotlinGenerator(seed = rs.random.nextLong())
         ProjectInputGenerator.generate(gen, emptyList())
     }
 
-    // 50 iterations is enough for variety + shrinking on this in-memory
-    // service. Default kotest is 1000; that's overkill here.
     private val config = PropTestConfig(iterations = 50)
 
     @Test
