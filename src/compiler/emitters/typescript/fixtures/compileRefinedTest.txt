@@ -52,7 +52,7 @@ import {Wirespec} from '../Wirespec'
 import {TodoId} from '../model/TodoId'
 export namespace TodoIdGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TodoId {
-    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$', annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$', annotations: [] as Record<string, any>[] });
   }
 }
 
