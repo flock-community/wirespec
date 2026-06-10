@@ -21,54 +21,63 @@ interface KotestGenerator {
  */
 sealed interface KotestField<T : Any?>
 
+/**
+ * Leaf variants that carry Wirespec field annotations (e.g. `@Seed`).
+ * Container variants (Array/Nullable/Dict) don't; Shape carries them per
+ * child field instead.
+ */
+sealed interface KotestLeafField<T : Any?> : KotestField<T> {
+    val annotations: List<Map<String, Any>>
+}
+
 data class KotestFieldString(
     val regex: String?,
-    val annotations: List<Map<String, Any>>,
-) : KotestField<String>
+    override val annotations: List<Map<String, Any>>,
+) : KotestLeafField<String>
 
 data class KotestFieldInteger64(
     val min: Long?,
     val max: Long?,
-    val annotations: List<Map<String, Any>>,
-) : KotestField<Long>
+    override val annotations: List<Map<String, Any>>,
+) : KotestLeafField<Long>
 
 data class KotestFieldInteger32(
     val min: Int?,
     val max: Int?,
-    val annotations: List<Map<String, Any>>,
-) : KotestField<Int>
+    override val annotations: List<Map<String, Any>>,
+) : KotestLeafField<Int>
 
 data class KotestFieldNumber64(
     val min: Double?,
     val max: Double?,
-    val annotations: List<Map<String, Any>>,
-) : KotestField<Double>
+    override val annotations: List<Map<String, Any>>,
+) : KotestLeafField<Double>
 
 data class KotestFieldNumber32(
     val min: Float?,
     val max: Float?,
-    val annotations: List<Map<String, Any>>,
-) : KotestField<Float>
+    override val annotations: List<Map<String, Any>>,
+) : KotestLeafField<Float>
 
 data class KotestFieldBoolean(
-    val annotations: List<Map<String, Any>>,
-) : KotestField<Boolean>
+    override val annotations: List<Map<String, Any>>,
+) : KotestLeafField<Boolean>
 
 data class KotestFieldBytes(
-    val annotations: List<Map<String, Any>>,
-) : KotestField<ByteArray>
+    override val annotations: List<Map<String, Any>>,
+) : KotestLeafField<ByteArray>
 
 data class KotestFieldEnum(
     val values: List<String>,
-    val annotations: List<Map<String, Any>>,
+    override val annotations: List<Map<String, Any>>,
     val type: KType,
-) : KotestField<String>
+) : KotestLeafField<String>
 
 data class KotestFieldUnion(
     val variants: List<String>,
-    val annotations: List<Map<String, Any>>,
+    override val annotations: List<Map<String, Any>>,
     val type: KType,
-) : KotestField<String>
+) : KotestLeafField<String>
 
 data class KotestFieldArray<T : Any>(
     val generate: (List<String>) -> T,

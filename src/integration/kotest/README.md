@@ -1,31 +1,27 @@
 # Wirespec ↔ Kotest integration
 
-`Wirespec.Generator` implementation backed by [Kotest][kotest] [`Arb`][arb]s and
-the [Extra Arbs][extras]. Drives the IR-emitted `*Generator.generate(...)`
-factories with deterministic, configurable test data — drop-in replacement for
-hand-written `SeededGenerator` classes.
+`Wirespec.Generator` implementation backed by [Kotest][kotest] [`Arb`][arb]s.
+Drives the IR-emitted `*Generator.generate(...)` factories with deterministic,
+configurable test data — drop-in replacement for hand-written
+`SeededGenerator` classes.
 
 [kotest]: https://kotest.io
 [arb]: https://kotest.io/docs/proptest/property-test-generators.html
-[extras]: https://kotest.io/docs/proptest/property-test-extra-arbs.html
 
 ## Targets
 
-The integration is multiplatform (JVM + JS/IR). All defaults live in
-`commonMain` since `kotest-property-arbs` 3.0.0 ships an IR-compatible
-multiplatform artifact under the new `io.kotest` group.
+The integration is multiplatform (JVM + JS/IR).
 
-| Capability                                                      | JVM | JS  |
-| --------------------------------------------------------------- | :-: | :-: |
-| `Wirespec.Generator` impl, `@Seed`, DSL                         | ✅  | ✅  |
-| Regex-validated `String` fields                                 | ✅  | ✅  |
-| Default `email`, `ipAddress`, `uuid`                            | ✅  | ✅  |
-| `kotest-property-arbs` extras (`firstName`, `color`, …)         | ✅  | ✅  |
+| Capability                                       | JVM | JS  |
+| ------------------------------------------------ | :-: | :-: |
+| `Wirespec.Generator` impl, `@Seed`               | ✅  | ✅  |
+| Regex-validated `String` fields                  | ✅  | ✅  |
+| Path overrides (`registerPath`)                  | ✅  | ✅ (constant values) |
+| Field overrides (`registerField`, by parent type)| ✅  | ❌  |
+| Refined auto-wrap on overrides                   | ✅  | ❌  |
 
 Regex generation uses [`community.flock.kotlinx.rgxgen`][rgxgen] (multiplatform),
-not `Arb.stringPattern` (which is JVM-only in kotest 6.x). The default `uuid`
-arb is an in-house portable RFC 4122 v4 generator (kotest core's `Arb.uuid()`
-wraps `java.util.UUID` and is JVM-only).
+not `Arb.stringPattern` (which is JVM-only in kotest 6.x).
 
 [rgxgen]: https://github.com/flock-community/kotlin-rgxgen
 
@@ -41,9 +37,6 @@ testImplementation("community.flock.wirespec.integration:kotest-js:<version>")
 testImplementation("io.kotest:kotest-property:<version>")
 ```
 
-`kotest-property-arbs` is pulled in transitively — the integration depends on
-`io.kotest:kotest-property-arbs:3.0.0` directly, no separate declaration needed.
-
 ## Basic usage — Kotlin-emitted code
 
 ```kotlin
@@ -54,8 +47,58 @@ val member: Member = MemberGenerator.generate(gen, emptyList())
 val project: Project = ProjectGenerator.generate(gen, emptyList())
 ```
 
-Each `kotestWirespecKotlinGenerator(seed = …)` is deterministic: same seed → same
-output for the same generated type.
+Each `kotestWirespecKotlinGenerator(seed = …)` is deterministic: same seed →
+same output for the same generated type. Nullable fields draw `null` for ~20%
+of paths (also deterministic per seed + path), so null branches get exercised.
+
+The generator keeps per-call traversal state and is **not thread-safe** —
+instances are cheap, create one per test rather than sharing across
+concurrently running tests.
+
+## Overrides
+
+Pin or customize generated values via the builder block. Three forms, in
+precedence order (`@Seed` always wins, see below):
+
+```kotlin
+val gen = kotestWirespecKotlinGenerator(seed = 1L) {
+    // 1. By path — exact segments; `*` matches any single segment
+    //    (e.g. an array index). Most specific pattern wins.
+    registerPath("users", "*", "email") { Arb.email() }
+    registerPath("users", "0", "id", value = "FIXED-ID")
+
+    // 2. By parent type + field — compile-checked property reference (JVM).
+    registerField(Member::id) { Arb.uuid().map(java.util.UUID::toString) }
+    registerField(Member::age, value = 42L)
+
+    // 3. By parent type name + field name (multiplatform, stringly).
+    registerFieldByTypeName("com.example.Member", "email", value = "a@b.com")
+}
+```
+
+- Factories accept any Kotest `Gen` (`Arb` or `Exhaustive`).
+- In the `value = …` form the argument **must be passed by name**:
+  `registerPath("users", "id", "FIXED")` would register the three-segment
+  path `users/id/FIXED` because the vararg swallows positional strings.
+- Registering the same path pattern or field key twice fails fast; two
+  equally-specific patterns matching the same path fail at lookup with an
+  "Ambiguous" error.
+
+### Refined fields auto-wrap
+
+When an override fires on a field whose type is a Wirespec `Refined` wrapper
+(single-arg constructor), provide the **inner primitive** — the integration
+wraps it for you:
+
+```kotlin
+// Member.id is a refined `MemberId(value: String)`
+registerField(Member::id) { Arb.constant("m-1") }   // becomes MemberId("m-1")
+```
+
+A type mismatch (e.g. an `Arb<Long>` for a `String`-backed wrapper) raises an
+error naming the path, the expected inner type, and the actual value type.
+This works for Kotlin-, Java- and Scala-emitted code: all three adapters
+propagate the field's target class.
 
 ## Java-emitted code
 
@@ -69,13 +112,13 @@ import community.flock.wirespec.java.Wirespec
 import com.example.generated.MemberGenerator
 
 val gen: Wirespec.Generator = kotestWirespecJavaGenerator(seed = 1L) {
-    register("orderId") { Arb.uuid().map(java.util.UUID::toString) }
+    registerPath("users", "*", "email") { Arb.email() }
 }
 val member = MemberGenerator.generate(gen, java.util.List.of())
 ```
 
-Same DSL, default arb catalog, and `@Generator` / `@Seed` semantics as the
-Kotlin sibling. The two differences are JVM-flavoured:
+Same DSL and `@Seed` semantics as the Kotlin sibling. The two differences are
+JVM-flavoured:
 
 - `GeneratorFieldString.regex`, `GeneratorFieldInteger.min`/`max`, etc. carry
   `java.util.Optional<X>` instead of Kotlin's `X?` — the adapter handles the
@@ -97,7 +140,7 @@ import com.example.generated.generator.MemberGenerator
 
 val gen: Wirespec.Generator =
     kotestWirespecScalaGenerator(seed = 1L) {
-        register("orderId") { Arb.uuid().map(java.util.UUID::toString) }
+        registerPath("users", "*", "id") { Arb.constant("FIXED") }
     } as Wirespec.Generator
 
 val member = MemberGenerator.generate(gen, scala.collection.immutable.List.empty())
@@ -105,7 +148,7 @@ val member = MemberGenerator.generate(gen, scala.collection.immutable.List.empty
 
 **Requirement:** the user's codegen MUST run with `--emit-shared` so the
 generated `Wirespec.scala` (which declares `Wirespec.Generator`) lands on the
-test classpath. If it's missing, the first call raises:
+test classpath. If it's missing, the factory raises:
 
 > *Scala-emitted Wirespec.scala not found on classpath. Run your codegen with
 > --emit-shared and make sure the generated source set is on the test
@@ -115,48 +158,20 @@ Internally the Scala adapter is a `java.lang.reflect.Proxy` that resolves
 `Wirespec.Generator` reflectively at construction time. Reflective Scala ↔
 Kotlin conversions live in `ScalaInterop.kt`.
 
-## Default `@Generator(...)` registrations
+## JS-emitted code
 
-Annotate fields in your `.ws` file with `@Generator("name")` to route them to
-named arbs. The integration ships these defaults (all matched
-case-insensitively):
+The JS facade accepts plain-object fields with a `kind` discriminator and an
+optional builder callback for constant-value path overrides:
 
-| Name        | Arb source                      | JVM | JS  | Notes                          |
-| ----------- | ------------------------------- | :-: | :-: | ------------------------------ |
-| `email`     | `Arb.email()`                   | ✅  | ✅  | `local@domain` style strings   |
-| `ipAddress` | `Arb.ipAddressV4()`             | ✅  | ✅  | Dotted-quad IPv4               |
-| `uuid`      | in-house RFC 4122 v4            | ✅  | ✅  | Portable, seed-respecting      |
-| `firstName` | `Arb.firstName()`               | ✅  | ✅  | Extra Arbs                     |
-| `lastName`  | `Arb.lastName()`                | ✅  | ✅  | Extra Arbs                     |
-| `fullName`  | `Arb.name()`                    | ✅  | ✅  | First + last; alias of `name`  |
-| `name`      | `Arb.name()`                    | ✅  | ✅  | Same as `fullName`             |
-| `username`  | `Arb.usernames()`               | ✅  | ✅  | Extra Arbs                     |
-| `domain`    | `Arb.domain()`                  | ✅  | ✅  | e.g. `www.wibble.co.uk`        |
-| `color`     | `Arb.color()`                   | ✅  | ✅  | Named colors                   |
-
-Wirespec definition:
-
-```wirespec
-type Member {
-    @Generator("email")    email: String,
-    @Generator("fullName") name: String
-}
+```ts
+const gen = kotestWirespecGeneratorJs(1, (b) => {
+    b.registerPath(["users", "*", "id"], "FIXED-ID")
+})
+const value = gen.generate(["path"], { kind: "string", regex: undefined, annotations: [] })
 ```
 
-## Custom registrations
-
-Register your own `Arb<String>`s (or override the defaults) via the builder
-block:
-
-```kotlin
-val gen = kotestWirespecKotlinGenerator(seed = 1L) {
-    register("orderId") { Arb.int(0..999_999).map { "ORD-%06d".format(it) } }
-    register("email")   { Arb.constant("test@example.com") }   // overrides default
-}
-```
-
-Names are matched **case-insensitively**: `@Generator("orderId")` and
-`@Generator("ORDERID")` resolve to the same registration.
+Arb-backed overrides are JVM-only — Kotest `Gen` factories are not
+`@JsExport`-able.
 
 ## `@Seed` semantics
 
@@ -172,3 +187,5 @@ val byId = ProjectGenerator.generate(gen, listOf("proj-42"))
 For arrays of records, the integration runs a two-pass capture/replay: the
 first pass auto-generates the seed; the second pass propagates it through
 nested refined wrappers so each element has stable, reproducible identity.
+
+`@Seed` takes precedence over any registered override at the same path.

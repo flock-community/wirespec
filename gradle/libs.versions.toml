@@ -39,6 +39,7 @@ kotlinx_openapi_bindings = "0.3.1"
 kotlinx_rgxgen = "0.0.1"
 kotlinx_serialization = "1.7.0"
 maven_plugin = "1.0.3"
+scala3 = "3.3.4"
 maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
@@ -87,6 +88,9 @@ kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
+scala3_library = { module = "org.scala-lang:scala3-library_3", version.ref = "scala3" }
+scala3_compiler = { module = "org.scala-lang:scala3-compiler_3", version.ref = "scala3" }
+scala3_sbt_bridge = { module = "org.scala-lang:scala3-sbt-bridge", version.ref = "scala3" }
 vanniktech_maven_publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktech-maven-publish" }
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
 spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }

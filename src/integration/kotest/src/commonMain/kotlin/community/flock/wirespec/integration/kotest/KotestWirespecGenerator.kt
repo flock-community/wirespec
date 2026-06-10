@@ -24,8 +24,15 @@ import io.kotest.property.arbitrary.next
  *
  * `@Seed` annotations are honored for deterministic regeneration of array
  * elements from their seed value. Any `@Generator(...)` annotation that the
- * IR still emits is ignored — replace it with a scoped override (see the
- * `registerField` / `registerPath` extensions added in later tasks).
+ * IR still emits is ignored — replace it with a scoped override
+ * ([KotestWirespecGeneratorBuilder.registerPath] /
+ * [KotestWirespecGeneratorBuilder.registerFieldByTypeName], or the JVM
+ * `registerField(Parent::field)` extension).
+ *
+ * The returned generator keeps per-call traversal state (`@Seed`
+ * capture/replay, parent-type tracking) and is therefore **not thread-safe**:
+ * don't share one instance across concurrently running tests — instances are
+ * cheap, create one per test.
  */
 fun kotestGenerator(
     seed: Long = 0L,
@@ -39,10 +46,20 @@ fun kotestGenerator(
 class KotestWirespecGeneratorBuilder internal constructor() {
     internal val overrides: OverrideRegistry = OverrideRegistry()
 
+    /**
+     * Override the value generated at an exact path. `*` matches any single
+     * segment (e.g. an array index): `registerPath("users", "*", "id") { ... }`.
+     */
     fun registerPath(vararg segments: String, factory: () -> Gen<*>) {
         overrides.addPath(segments, factory)
     }
 
+    /**
+     * Constant-value form of [registerPath]. The `value` argument **must be
+     * named** — `registerPath("users", "id", "FIXED")` would register the
+     * three-segment path `users/id/FIXED` instead, because the vararg
+     * swallows positional strings.
+     */
     fun registerPath(vararg segments: String, value: Any?) {
         overrides.addPath(segments) { Arb.constant(value) }
     }
@@ -87,7 +104,23 @@ internal class KotestWirespecGenerator(
         var seed: String? = null
     }
 
-    private fun rsFor(path: List<String>): RandomSource = RandomSource.seeded(baseSeed xor path.joinToString("/").hashCode().toLong())
+    // FNV-1a (64-bit) over the joined path: String.hashCode is only 32 bits
+    // and collides easily ("Aa"/"BB"), which would give unrelated fields
+    // identical values.
+    private fun pathHash(path: List<String>): Long {
+        var hash = -3750763034362895579L // FNV-1a 64-bit offset basis
+        for (segment in path) {
+            for (ch in segment) {
+                hash = hash xor ch.code.toLong()
+                hash *= 1099511628211L // FNV-1a 64-bit prime
+            }
+            hash = hash xor '/'.code.toLong()
+            hash *= 1099511628211L
+        }
+        return hash
+    }
+
+    private fun rsFor(path: List<String>): RandomSource = RandomSource.seeded(baseSeed xor pathHash(path))
 
     private inline fun <R> withShapeDepth(block: () -> R): R {
         shapeDepth++
@@ -145,13 +178,7 @@ internal class KotestWirespecGenerator(
         if (path.size < expectedPrefix.size || path.subList(0, expectedPrefix.size) != expectedPrefix) return null
         val rs = rsFor(path)
         return when (field) {
-            is KotestFieldString -> {
-                val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
-                val regex = field.regex ?: "\\w{8}"
-                val value = prefix + RgxGen.parse(regex).generate(rs.random)
-                capture.seed = value
-                value
-            }
+            is KotestFieldString -> generateString(field, path, rs).also { capture.seed = it }
             is KotestFieldInteger64 -> {
                 val lo = field.min ?: 0
                 val hi = field.max ?: Long.MAX_VALUE
@@ -230,15 +257,21 @@ internal class KotestWirespecGenerator(
         .firstOrNull { (_, anns) -> anns.any { it["name"] == "Seed" } }
         ?.key
 
+    /**
+     * Default string generation: with a regex constraint the value matches it
+     * verbatim; without one, a readable `<fieldName>-XXXXXXXX` token.
+     */
+    private fun generateString(field: KotestFieldString, path: List<String>, rs: RandomSource): String {
+        val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
+        val regex = field.regex ?: "\\w{8}"
+        return prefix + RgxGen.parse(regex).generate(rs.random)
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun <T> generateLeaf(field: KotestField<T>, path: List<String>): T {
         val rs = rsFor(path)
         return when (field) {
-            is KotestFieldString -> {
-                val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
-                val regex = field.regex ?: "\\w{8}"
-                (prefix + RgxGen.parse(regex).generate(rs.random)) as T
-            }
+            is KotestFieldString -> generateString(field, path, rs) as T
             is KotestFieldInteger64 -> {
                 val lo = field.min ?: Long.MIN_VALUE
                 val hi = field.max ?: Long.MAX_VALUE
@@ -267,7 +300,9 @@ internal class KotestWirespecGenerator(
                 val size = Arb.int(1..10).next(rs)
                 (0 until size).map { i -> field.generate(path + "$i") } as T
             }
-            is KotestFieldNullable<*> -> field.generate(path) as T
+            // Deterministic ~20% null chance so consumers' null branches are
+            // exercised; same seed + path always reproduces the same choice.
+            is KotestFieldNullable<*> -> if (Arb.int(0..4).next(rs) == 0) null as T else field.generate(path) as T
             is KotestFieldShape<*> -> withParentFrame(ParentFrame(field.type.toString())) {
                 field.generate(path)
             } as T
@@ -275,18 +310,7 @@ internal class KotestWirespecGenerator(
         }
     }
 
-    private fun KotestField<*>.fieldAnnotations(): List<Map<String, Any>> = when (this) {
-        is KotestFieldString -> annotations
-        is KotestFieldInteger64 -> annotations
-        is KotestFieldInteger32 -> annotations
-        is KotestFieldNumber64 -> annotations
-        is KotestFieldNumber32 -> annotations
-        is KotestFieldBoolean -> annotations
-        is KotestFieldBytes -> annotations
-        is KotestFieldEnum -> annotations
-        is KotestFieldUnion -> annotations
-        else -> emptyList()
-    }
+    private fun KotestField<*>.fieldAnnotations(): List<Map<String, Any>> = (this as? KotestLeafField<*>)?.annotations ?: emptyList()
 }
 
 /** Draws a single value from any [Gen] (both [Arb] and `Exhaustive`), seeded by [rs]. */

@@ -44,7 +44,11 @@ internal class OverrideRegistry {
     private val fieldOverrides: MutableMap<FieldKey, () -> Gen<*>> = mutableMapOf()
 
     fun addPath(segments: Array<out String>, factory: () -> Gen<*>) {
-        pathOverrides += PathPattern.compile(segments) to factory
+        val pattern = PathPattern.compile(segments)
+        check(pathOverrides.none { (existing, _) -> existing == pattern }) {
+            "Path override already registered for $pattern"
+        }
+        pathOverrides += pattern to factory
     }
 
     fun addField(key: FieldKey, factory: () -> Gen<*>) {
