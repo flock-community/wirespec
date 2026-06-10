@@ -137,7 +137,6 @@ class KotestWirespecGeneratorTest {
             "y"
         }
         val v = generate(seed = 0L, field) as String?
-        // Either null or the callback's return value:
         assertTrue(v == null || v == "y")
         assertTrue(calls in 0..1)
     }
