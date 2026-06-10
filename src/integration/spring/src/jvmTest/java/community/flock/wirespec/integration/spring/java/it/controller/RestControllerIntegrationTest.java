@@ -118,6 +118,18 @@ public class RestControllerIntegrationTest {
         assertArrayEquals(service.getFiles().get(0), file.getBytes());
     }
 
+    @Test
+    public void binaryResponseDownload() throws Exception {
+        byte[] expected = new byte[]{0x50, 0x4B, 0x03, 0x04};
+        byte[] actual = asyncDispatch(mockMvc
+            .perform(get("/api/report")))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsByteArray();
+        assertArrayEquals(expected, actual);
+    }
+
     private ResultActions asyncDispatch(ResultActions resultActions) throws Exception {
         if (resultActions.andReturn().getRequest().isAsyncStarted()) {
             return mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(resultActions.andReturn()));

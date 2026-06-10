@@ -8,6 +8,7 @@ import community.flock.wirespec.integration.spring.kotlin.generated.model.Error
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.RequestParrot
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.GetTodos
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.PatchTodos
+import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.DownloadReport
 
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints
@@ -30,6 +31,7 @@ open class WirespecNativeHints {
       registerWithInnerClasses(hints, RequestParrot::class.java, allMembers)
       registerWithInnerClasses(hints, GetTodos::class.java, allMembers)
       registerWithInnerClasses(hints, PatchTodos::class.java, allMembers)
+      registerWithInnerClasses(hints, DownloadReport::class.java, allMembers)
     }
 
     private fun registerWithInnerClasses(hints: RuntimeHints, clazz: Class<*>, categories: Array<MemberCategory>) {

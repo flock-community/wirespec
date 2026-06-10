@@ -58,10 +58,22 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
             if (body instanceof Wirespec.Response<?> wirespecResponse) {
                 Wirespec.RawResponse rawResponse = (Wirespec.RawResponse) toResponse.invoke(null, wirespecSerialization, wirespecResponse);
-                
+
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode()));
                 for (Map.Entry<String, List<String>> entry : rawResponse.headers().entrySet()) {
                     response.getHeaders().put(entry.getKey(), entry.getValue());
+                }
+                if (wirespecResponse.body() instanceof byte[]) {
+                    response.getHeaders().set("Content-Type", MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                    rawResponse.body().ifPresent(bytes -> {
+                        try {
+                            response.getBody().write(bytes);
+                            response.getBody().flush();
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to write binary response body", e);
+                        }
+                    });
+                    return null;
                 }
                 return rawResponse.body().map(RawJsonBody::new).orElse(null);
             }
