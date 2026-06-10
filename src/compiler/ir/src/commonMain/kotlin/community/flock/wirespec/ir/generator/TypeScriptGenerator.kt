@@ -719,7 +719,20 @@ object TypeScriptGenerator : Generator {
     }
 
     private fun Literal.emit(): String = when (type) {
-        Type.String -> "'$value'"
+        Type.String -> "'${value.toString().escapeTypeScriptString()}'"
         else -> value.toString()
+    }
+
+    private fun String.escapeTypeScriptString(): String = buildString {
+        for (c in this@escapeTypeScriptString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '\'' -> append("\\'")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
+        }
     }
 }
