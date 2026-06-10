@@ -460,7 +460,7 @@ object TypeScriptGenerator : Generator {
         }
         is Type.Dict -> "Record<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
-            val rawName = name.value()
+            val rawName = name.referenceName()
             if (generics.isEmpty()) {
                 rawName
             } else {

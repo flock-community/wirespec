@@ -283,7 +283,7 @@ object RustGenerator : Generator {
         is Type.Array -> "Vec<${elementType.emit()}>"
         is Type.Dict -> "std::collections::HashMap<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
-            val rawName = name.value()
+            val rawName = name.referenceName()
             if (generics.isEmpty()) {
                 rawName
             } else if (generics.any { it == Type.Wildcard || (it is Type.Custom && it.name.value() == "_") }) {

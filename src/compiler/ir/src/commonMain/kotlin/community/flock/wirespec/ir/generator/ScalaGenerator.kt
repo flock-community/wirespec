@@ -374,7 +374,7 @@ object ScalaGenerator : Generator {
         Type.Reflect -> "scala.reflect.ClassTag[?]"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
-        is Type.Custom -> name.value()
+        is Type.Custom -> name.referenceName()
         is Type.Nullable -> "Option[${type.emitGenerics()}]"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
@@ -403,7 +403,7 @@ object ScalaGenerator : Generator {
         is Type.Array -> "List[${elementType.emitTypeAnnotation()}]"
         is Type.Dict -> "Map[${keyType.emitTypeAnnotation()}, ${valueType.emitTypeAnnotation()}]"
         is Type.Custom -> {
-            val rawName = name.value()
+            val rawName = name.referenceName()
             if (generics.isEmpty()) {
                 if (rawName in objectNames) "$rawName.type" else rawName
             } else {
