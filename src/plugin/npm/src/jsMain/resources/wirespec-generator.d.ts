@@ -1,13 +1,6 @@
 /**
  * Wirespec.Generator backed by Kotest Arbs (Kotlin/JS), with a
- * deterministic seed and an optional name registry for `@Generator("name")`
- * fields.
- *
- * Default catalog (preinstalled): `email`, `ipAddress`. JVM-only extras
- * (`uuid`, `firstName`, `lastName`, `fullName`/`name`, `username`, `domain`,
- * `color`) are not available in the npm distribution because
- * `kotest-property-arbs` doesn't ship a Kotlin/JS-IR-compatible artifact.
- * Register custom names via the second argument.
+ * deterministic seed and optional constant-value path overrides.
  *
  * Integer-typed fields without explicit min/max bounds are drawn from the
  * full Kotlin Long range and converted to JS numbers, so values can exceed
@@ -38,15 +31,21 @@ export interface WirespecGenerator {
   generate<T>(path: string[], field: GeneratorField<T>): T;
 }
 
-export type GeneratorRegistrations = Record<string, (seed: number) => string>;
+export interface GeneratorBuilder {
+  /**
+   * Pin the value generated at an exact path. `"*"` matches any single
+   * segment (e.g. an array index): `registerPath(["users", "*", "id"], "X")`.
+   */
+  registerPath(segments: string[], value: any): void;
+}
 
 /**
  * @param seed   Deterministic seed (0..2^31-1). Same seed + same generated
  *               type → identical output.
- * @param registrations  Optional `@Generator("name")` registry. Names are
- *               matched case-insensitively. Overrides defaults.
+ * @param configure  Optional callback to register constant-value path
+ *               overrides on the builder.
  */
 export declare function kotestWirespecGenerator(
   seed?: number,
-  registrations?: GeneratorRegistrations,
+  configure?: (builder: GeneratorBuilder) => void,
 ): WirespecGenerator;

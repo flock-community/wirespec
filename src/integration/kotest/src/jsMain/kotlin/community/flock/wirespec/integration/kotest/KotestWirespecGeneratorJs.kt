@@ -24,7 +24,9 @@ import kotlin.reflect.typeOf
  *
  * From TypeScript:
  * ```ts
- * const gen = kotestWirespecGeneratorJs(1, { orderId: (s) => `ORD-${s}` })
+ * const gen = kotestWirespecGeneratorJs(1, (b) => {
+ *     b.registerPath(["users", "*", "id"], "FIXED-ID")
+ * })
  * const value = gen.generate(["path"], { kind: "string", regex: undefined, annotations: [] })
  * ```
  */
@@ -39,10 +41,27 @@ class KotestWirespecGeneratorJs internal constructor(private val inner: KotestGe
     }
 }
 
+/**
+ * JS-facing override registration. Only the constant-value form is exposed:
+ * Kotest `Gen`/`Arb` factories are not `@JsExport`-able, so JS consumers pin
+ * values rather than plug in arbitraries. `*` in a segment matches any single
+ * path segment (e.g. an array index).
+ */
+class KotestWirespecGeneratorJsBuilder internal constructor(
+    private val inner: KotestWirespecGeneratorBuilder,
+) {
+    fun registerPath(segments: Array<String>, value: dynamic) {
+        inner.registerPath(*segments, value = value)
+    }
+}
+
 fun kotestWirespecGeneratorJs(
     seed: Int,
+    configure: ((KotestWirespecGeneratorJsBuilder) -> Unit)? = null,
 ): KotestWirespecGeneratorJs {
-    val inner = kotestGenerator(seed.toLong())
+    val inner = kotestGenerator(seed.toLong()) {
+        configure?.invoke(KotestWirespecGeneratorJsBuilder(this))
+    }
     return KotestWirespecGeneratorJs(inner)
 }
 
