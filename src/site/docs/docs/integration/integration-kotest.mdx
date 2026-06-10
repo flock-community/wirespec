@@ -176,8 +176,23 @@ nullable fields come back as `Optional<T>` (Java semantics) rather than a bare `
 ## Scala-emitted code
 
 The Scala emitter produces `*Generator.scala` factories taking a `community.flock.wirespec.scala.Wirespec.Generator`.
-The kotest module has **zero compile-time Scala dependency** — the factory returns `Any` and you cast at the call
-site:
+From Scala 3, use the typed `KotestWirespec` facade compiled into the artifact — no casts, no Kotlin interop:
+
+```scala
+import community.flock.wirespec.integration.kotest.KotestWirespec
+
+val gen = KotestWirespec.generator(seed = 1L)
+val member = MemberGenerator.generate(gen, List.empty)
+
+// constant-value path overrides:
+val pinned = KotestWirespec.generator(
+  seed = 1L,
+  configure = b => b.registerPath(Array("users", "*", "id"), "FIXED"),
+)
+```
+
+The underlying Kotlin factory stays available (e.g. for Scala 2.13, which cannot consume the Scala 3 facade).
+It returns `Any` and you cast at the call site:
 
 ```kotlin
 import community.flock.wirespec.integration.kotest.kotestWirespecScalaGenerator

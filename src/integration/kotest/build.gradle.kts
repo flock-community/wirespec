@@ -1,7 +1,11 @@
+import org.gradle.api.tasks.scala.ScalaCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id("module.publication")
     id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
+    `scala-base`
 }
 
 group = "${libs.versions.group.id.get()}.integration"
@@ -55,6 +59,9 @@ kotlin {
                 // compatibility floor so this published integration doesn't
                 // force consumers onto a newer Kotlin than they target.
                 implementation(libs.kotlin.reflect.compat)
+                // Compile-only: needed by the KotestWirespec Scala facade, but
+                // consumers bring their own Scala runtime.
+                compileOnly(libs.scala3.library)
             }
         }
         jvmTest {
@@ -64,4 +71,57 @@ kotlin {
             }
         }
     }
+}
+
+// `scala-base` attaches a Scala compile to every JVM source set that has a
+// `src/<sourceSet>/scala` directory (here: the KotestWirespec facade in
+// jvmMain and its smoke test in jvmTest), but the Scala tool classpath has to
+// be wired in by hand — the full `scala` plugin would do this automatically,
+// but it pulls in `java`, which Kotlin Multiplatform rejects.
+val scalaToolClasspath: Configuration by configurations.creating {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+}
+
+dependencies {
+    scalaToolClasspath(libs.scala3.compiler)
+    scalaToolClasspath(libs.scala3.sbt.bridge)
+}
+
+tasks.withType<ScalaCompile>().configureEach {
+    scalaClasspath = scalaToolClasspath
+}
+
+// Unlike :src:integration:wirespec (whose generated Wirespec.scala is
+// self-contained), the facade calls Kotlin code, so the Scala compiles need
+// the Kotlin outputs and the KMP compile classpaths.
+val compileKotlinJvm = tasks.named<KotlinCompile>("compileKotlinJvm")
+val compileJvmMainScala = tasks.named<ScalaCompile>("compileJvmMainScala") {
+    dependsOn(compileKotlinJvm)
+    classpath += files(compileKotlinJvm.flatMap { it.destinationDirectory }) +
+        configurations["jvmCompileClasspath"]
+}
+
+tasks.named<Jar>("jvmJar") {
+    dependsOn(compileJvmMainScala)
+    from(compileJvmMainScala.flatMap { it.destinationDirectory })
+}
+
+val compileTestKotlinJvm = tasks.named<KotlinCompile>("compileTestKotlinJvm")
+val compileJvmTestScala = tasks.named<ScalaCompile>("compileJvmTestScala") {
+    dependsOn(compileKotlinJvm, compileTestKotlinJvm, compileJvmMainScala)
+    classpath += files(
+        compileKotlinJvm.flatMap { it.destinationDirectory },
+        compileTestKotlinJvm.flatMap { it.destinationDirectory },
+        compileJvmMainScala.flatMap { it.destinationDirectory },
+    ) + configurations["jvmTestCompileClasspath"]
+}
+
+tasks.named<Test>("jvmTest") {
+    dependsOn(compileJvmTestScala)
+    testClassesDirs += files(compileJvmTestScala.flatMap { it.destinationDirectory })
+    classpath += files(
+        compileJvmTestScala.flatMap { it.destinationDirectory },
+        compileJvmMainScala.flatMap { it.destinationDirectory },
+    )
 }
