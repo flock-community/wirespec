@@ -3,7 +3,7 @@ package community.flock.wirespec.integration.wiremock.kotlin
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
-import community.flock.wirespec.integration.jackson.kotlin.WirespecSerialization
+import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.wiremock.kotlin.generated.endpoint.GetTodoById
 import community.flock.wirespec.integration.wiremock.kotlin.generated.endpoint.GetTodos
 import community.flock.wirespec.integration.wiremock.kotlin.generated.model.Error

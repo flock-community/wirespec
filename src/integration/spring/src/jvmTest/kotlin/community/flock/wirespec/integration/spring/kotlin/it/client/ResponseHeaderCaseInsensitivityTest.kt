@@ -1,14 +1,14 @@
 package community.flock.wirespec.integration.spring.kotlin.it.client
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import community.flock.wirespec.integration.jackson.kotlin.WirespecSerialization
+import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.spring.java.application.Application
 import community.flock.wirespec.integration.spring.kotlin.client.WirespecWebClient
-import community.flock.wirespec.integration.spring.kotlin.configuration.WirespecSerializationConfiguration.Companion.objectMapper
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.RequestParrot
 import community.flock.wirespec.integration.spring.kotlin.generated.model.RequestBodyParrot
 import kotlinx.coroutines.runBlocking
@@ -126,6 +126,6 @@ open class TestConfig {
         val client = builder()
             .baseUrl("http://localhost:8089")
             .build()
-        return WirespecWebClient(client, WirespecSerialization(objectMapper))
+        return WirespecWebClient(client, WirespecSerialization(jacksonObjectMapper()))
     }
 }

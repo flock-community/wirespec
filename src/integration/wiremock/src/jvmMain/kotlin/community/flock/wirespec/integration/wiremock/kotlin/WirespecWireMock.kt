@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.matching.UrlPattern
-import community.flock.wirespec.integration.jackson.kotlin.WirespecSerialization
+import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.kotlin.Wirespec
 
 /**

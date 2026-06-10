@@ -11,11 +11,47 @@ This library exposes a jackson module which adds specific serializers and deseri
 </dependency>
 ```
 
-Register the Wirespec module
+This single artifact supports both **Jackson 2** (`com.fasterxml.jackson`) and **Jackson 3**
+(`tools.jackson`). Pick the package matching the Jackson version on your classpath; the
+consumer supplies the Jackson runtime (both are `compileOnly` here).
+
+| Jackson | Package |
+|---|---|
+| 2.x | `community.flock.wirespec.integration.jackson.v2.{java,kotlin}` |
+| 3.x | `community.flock.wirespec.integration.jackson.v3.{java,kotlin}` |
+
+> **Migration note:** the Jackson 2 classes moved from `…jackson.{java,kotlin}` to
+> `…jackson.v2.{java,kotlin}`. Update existing imports accordingly.
+
+Register the Wirespec module (Jackson 2):
 
 ```java
+import community.flock.wirespec.integration.jackson.v2.java.WirespecModuleJava;
+
 ObjectMapper objectMapper = new ObjectMapper()
-        .registerModules(new WirespecModule());
+        .registerModules(new WirespecModuleJava());
+```
+
+For Jackson 3 the mapper is immutable, so field visibility and the reserved-keyword naming
+strategy are configured on the builder. The simplest path is `WirespecSerialization`, which
+wraps your mapper and applies everything:
+
+```java
+import community.flock.wirespec.integration.jackson.v3.java.WirespecSerialization;
+
+var serialization = new WirespecSerialization(JsonMapper.builder().build());
+```
+
+Or register the module manually, configuring the naming strategy on the builder (the Kotlin
+module additionally needs field visibility — see `WirespecSerialization`):
+
+```java
+import community.flock.wirespec.integration.jackson.v3.java.WirespecModuleJava;
+
+ObjectMapper objectMapper = JsonMapper.builder()
+        .propertyNamingStrategy(new WirespecModuleJava.JavaReservedKeywordNamingStrategy())
+        .addModule(new WirespecModuleJava())
+        .build();
 ```
 
 ## Docs
