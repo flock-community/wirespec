@@ -5,11 +5,14 @@ import arrow.core.EitherNel
 import arrow.core.left
 import arrow.core.nel
 import arrow.core.raise.either
+import arrow.core.raise.ensure
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
+import community.flock.wirespec.compiler.core.exceptions.SpreadCycleError
+import community.flock.wirespec.compiler.core.exceptions.SpreadTypeError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
@@ -17,6 +20,7 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -26,12 +30,52 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 
 object Validator {
 
-    fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = zipOrAccumulate(
-        validateWithOptions(ast, options),
-        validateEndpoints(ast),
-        validateTypes(ast),
-        validateChannels(ast),
-    ) { a, _, _, _ -> a }
+    fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = either {
+        val validated = zipOrAccumulate(
+            validateWithOptions(ast, options),
+            validateEndpoints(ast),
+            validateTypes(ast),
+            validateChannels(ast),
+        ) { a, _, _, _ -> a }.bind()
+        validated.resolveSpreads().bind()
+    }
+
+    private fun AST.resolveSpreads(): EitherNel<WirespecException, AST> = either {
+        val typesByName = modules
+            .flatMap { it.statements }
+            .filterIsInstance<Type>()
+            .associateBy { it.identifier.value }
+        AST(
+            modules.map { module ->
+                module.copy(
+                    statements = module.statements.map { definition ->
+                        when (definition) {
+                            is Type -> definition.flattenSpread(typesByName, emptySet()).bind()
+                            else -> definition
+                        }
+                    },
+                )
+            },
+        )
+    }
+
+    private fun Type.flattenSpread(typesByName: Map<String, Type>, visiting: Set<String>): EitherNel<WirespecException, Type> = either {
+        if (spread.isEmpty()) {
+            this@flattenSpread
+        } else {
+            ensure(identifier.value !in visiting) { SpreadCycleError(identifier.value).nel() }
+            val ownFields = shape.value
+            val merged = mutableListOf<Field>()
+            (0..ownFields.size).forEach { position ->
+                spread.filter { it.index == position }.forEach { sp ->
+                    val target = typesByName[sp.reference.value] ?: raise(SpreadTypeError(sp.reference.value).nel())
+                    merged.addAll(target.flattenSpread(typesByName, visiting + identifier.value).bind().shape.value)
+                }
+                if (position < ownFields.size) merged.add(ownFields[position])
+            }
+            copy(shape = Type.Shape(merged), spread = emptyList())
+        }
+    }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
