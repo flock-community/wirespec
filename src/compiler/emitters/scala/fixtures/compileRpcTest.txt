@@ -22,8 +22,8 @@ package community.flock.wirespec.generated.rpc
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.Todo
-object CreateTodo {
-  trait Service extends Wirespec.Rpc {
+object CreateTodo extends Wirespec.Rpc {
+  trait Service {
       def createTodo(todo: Todo): Wirespec.Either[Error, Todo]
   }
 }

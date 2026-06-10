@@ -22,8 +22,8 @@ package community.flock.wirespec.generated.rpc
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Todo
-object CreateTodo {
-  interface Service : Wirespec.Rpc {
+object CreateTodo : Wirespec.Rpc {
+  interface Service {
       fun createTodo(todo: Todo): Wirespec.Either<Error, Todo>
   }
 }

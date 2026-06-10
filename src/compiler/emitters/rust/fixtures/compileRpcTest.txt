@@ -26,7 +26,7 @@ use super::super::wirespec::*;
 use regex;
 pub mod CreateTodo {
     use super::*;
-    pub trait Service: Wirespec.Rpc {
+    pub trait Service {
         fn create_todo(todo: Todo) -> Wirespec.Either<Error, Todo>;
     }
 }

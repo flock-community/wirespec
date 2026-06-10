@@ -31,8 +31,8 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
-class CreateTodo:
-    class Service(Wirespec.Rpc, ABC):
+class CreateTodo(Wirespec.Rpc):
+    class Service(ABC):
         @abstractmethod
         def create_todo(self, todo: Todo) -> Wirespec.Either[Error, Todo]:
             ...

@@ -511,9 +511,8 @@ fun ChannelWirespec.convert() = file(identifier.toName()) {
 }
 
 fun RpcWirespec.convert() = file(identifier.toName()) {
-    namespace(identifier.toName()) {
+    namespace(identifier.toName(), type("Wirespec.Rpc")) {
         `interface`("Service") {
-            extends(type("Wirespec.Rpc"))
             function(identifier.toName()) {
                 requestParameters.forEach { arg(it.identifier.toName(), it.reference.convert()) }
                 returnType(
