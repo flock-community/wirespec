@@ -93,11 +93,8 @@ internal object ScalaInterop {
 
     /** kotlin List<X> → scala.collection.immutable.List<X>. */
     private fun kotlinListToScala(xs: List<*>): Any {
-        // Build a java.util.List, then ask CollectionConverters to turn it into
-        // a scala Seq, then `.toList`.
         val javaList = ArrayList<Any?>(xs)
         val scalaIterable = convertersAsScala.invoke(convertersModule, javaList)
-        // scalaIterable is a scala.collection.Iterable; call `.toList()`.
         val toList = toListMethods.getOrPut(scalaIterable.javaClass) { scalaIterable.javaClass.getMethod("toList") }
         return toList.invoke(scalaIterable)
     }
@@ -107,7 +104,6 @@ internal object ScalaInterop {
         val javaMap = HashMap<Any?, Any?>(m)
         val scalaMutableMap = convertersAsScalaMap.invoke(convertersModule, javaMap)
         val toMap = scalaMutableMap.javaClass.getMethod("toMap", cl.loadClass("scala.\$less\$colon\$less"))
-        // scala.<:< has a `refl()` factory.
         val lessColonLessModule = cl.loadClass("scala.\$less\$colon\$less\$").getField("MODULE\$").get(null)
         val refl = lessColonLessModule.javaClass.getMethod("refl").invoke(lessColonLessModule)
         return toMap.invoke(scalaMutableMap, refl)
