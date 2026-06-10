@@ -9,7 +9,7 @@ from ..wirespec import T, Wirespec, _raise
 class TodoId(Wirespec.Refined[str]):
     value: str
     def validate(self) -> bool:
-        return bool(re.match(r"/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g", self.value))
+        return bool(re.match(r"^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$", self.value))
     def __str__(self) -> str:
         return self.value
 
