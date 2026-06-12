@@ -1,5 +1,7 @@
 package community.flock.wirespec.ir.core
 
+typealias IR = List<Element>
+
 data class Name(val parts: List<String>) {
     constructor(vararg parts: String) : this(parts.toList())
 
