@@ -1,6 +1,7 @@
 package community.flock.wirespec.ir.emit
 
 import arrow.core.NonEmptyList
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -17,11 +18,16 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.convertClient
 import community.flock.wirespec.ir.converter.convertEndpointClient
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.IR
 import community.flock.wirespec.ir.generator.Generator
+import community.flock.wirespec.ir.transformer.IrTransformer
 
 interface IrEmitter : Emitter {
 
     val generator: Generator
+
+    /** Transformers applied to the complete IR before code generation. */
+    val transformers: List<IrTransformer> get() = emptyList()
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
         val moduleFiles = ast.modules.flatMap { m ->
@@ -32,11 +38,14 @@ interface IrEmitter : Emitter {
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
         val mainClientFile = allEndpoints.takeIf { it.isNotEmpty() }?.let { emitClient(it, logger) }
 
-        val allFiles = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
-        beforeGenerate(allFiles)
+        val allFiles: IR = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
+        val transformedFiles = transformers
+            .fold(allFiles) { ir, transformer -> transformer.transform(ir, ast) }
+            .filterIsInstance<File>()
+        beforeGenerate(transformedFiles)
 
-        val moduleEmitted = (moduleFiles + listOfNotNull(sharedFile)).map { it.toEmitted() }
-        return mainClientFile?.let { moduleEmitted + it.toEmitted() } ?: moduleEmitted
+        return transformedFiles.map { it.toEmitted() }.toNonEmptyListOrNull()
+            ?: error("Transformers must leave at least one File in the IR")
     }
 
     /** Hook for emitters that need to inspect the full set of files before per-file generation. */

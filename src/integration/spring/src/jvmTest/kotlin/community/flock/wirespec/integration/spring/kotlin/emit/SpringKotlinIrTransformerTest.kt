@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -16,6 +17,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.ir.transformer.applyTransformers
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -24,11 +27,14 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-class SpringKotlinIrEmitterTest {
+class SpringKotlinIrTransformerTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
+
+    private fun springEmitter(packageName: PackageName) = KotlinIrEmitter(packageName, EmitShared(false))
+        .applyTransformers(listOf(SpringKotlinIrTransformer(packageName)))
 
     @Test
     fun `Should add Spring mapping annotations to handler methods`() {
@@ -36,7 +42,7 @@ class SpringKotlinIrEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val emitted = SpringKotlinIrEmitter(PackageName("community.flock.wirespec.spring.test"))
+        val emitted = springEmitter(PackageName("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
 
         val postEndpoint = emitted.single { it.file.endsWith("RequestParrot.kt") }.result
@@ -54,7 +60,7 @@ class SpringKotlinIrEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val emitted = SpringKotlinIrEmitter(PackageName("community.flock.wirespec.spring.test"))
+        val emitted = springEmitter(PackageName("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
 
         val hints = emitted.single { it.file.endsWith("WirespecNativeHints.kt") }
@@ -109,7 +115,7 @@ class SpringKotlinIrEmitterTest {
         )
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(inline))))
 
-        val emitted = SpringKotlinIrEmitter(PackageName("community.flock.wirespec.spring.test"))
+        val emitted = springEmitter(PackageName("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
 
         val hints = emitted.single { it.file.endsWith("WirespecNativeHints.kt") }
