@@ -53,8 +53,8 @@ abstract class BaseWirespecTask : DefaultTask() {
 
     @get:Input
     @get:Optional
-    @get:Option(option = "transformerClasses", description = "IR transformer classes applied when an emitter is an IrEmitter")
-    abstract val transformerClasses: ListProperty<Class<*>>
+    @get:Option(option = "transformers", description = "IR transformer classes applied when an emitter is an IrEmitter")
+    abstract val transformers: ListProperty<Class<*>>
 
     @get:Input
     @get:Optional
@@ -100,7 +100,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         throw e
     }
 
-    protected fun transformers() = transformerClasses.getOrElse(emptyList()).map { transformerClass ->
+    protected fun irTransformers() = transformers.getOrElse(emptyList()).map { transformerClass ->
         try {
             val constructor = transformerClass.declaredConstructors.first()
             val args: List<Any> = constructor.parameters
@@ -118,7 +118,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    protected fun emitters() = transformers().let { transformers ->
+    protected fun emitters() = irTransformers().let { transformers ->
         languages.get()
             .map { if (ir.getOrElse(false)) it.toIrEmitter(packageNameValue(), sharedValue()) else it.toEmitter(packageNameValue(), sharedValue()) }
             .plus(emitter())

@@ -67,7 +67,7 @@ abstract class BaseMojo : AbstractMojo() {
      * Specifies IR transformer classes to apply when an emitter is an [IrEmitter].
      */
     @Parameter
-    protected var transformerClasses: List<String> = listOf()
+    protected var transformers: List<String> = listOf()
 
     /**
      * Specifies package name, default [DEFAULT_GENERATED_PACKAGE_STRING]
@@ -121,8 +121,8 @@ abstract class BaseMojo : AbstractMojo() {
             null
         }
 
-    private val transformers
-        get() = transformerClasses.map { transformerClass ->
+    private val irTransformers
+        get() = transformers.map { transformerClass ->
             try {
                 val clazz = getClassLoader(project).loadClass(transformerClass)
                 val constructor = clazz.constructors.first()
@@ -142,7 +142,7 @@ abstract class BaseMojo : AbstractMojo() {
         }
 
     val emitters
-        get() = transformers.let { transformers ->
+        get() = irTransformers.let { transformers ->
             languages
                 .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
                 .plus(emitter)
