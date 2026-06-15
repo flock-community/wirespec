@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -18,6 +19,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.integration.spring.emit.SpringMappingAnnotationsSupportTransformer
+import community.flock.wirespec.integration.spring.emit.SpringMappingNativeSupportTransformer
 import community.flock.wirespec.ir.transformer.applyTransformers
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -34,7 +37,12 @@ class SpringKotlinIrTransformerTest {
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
     private fun springEmitter(packageName: PackageName) = KotlinIrEmitter(packageName, EmitShared(false))
-        .applyTransformers(listOf(SpringKotlinIrTransformer(packageName)))
+        .applyTransformers(
+            listOf(
+                SpringMappingAnnotationsSupportTransformer(FileExtension.Kotlin),
+                SpringMappingNativeSupportTransformer(packageName, FileExtension.Kotlin),
+            ),
+        )
 
     @Test
     fun `Should add Spring mapping annotations to handler methods`() {
