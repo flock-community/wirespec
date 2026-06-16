@@ -1,4 +1,4 @@
-package community.flock.wirespec.ir.transformer
+package community.flock.wirespec.ir.extension
 
 import arrow.core.getOrElse
 import arrow.core.nonEmptyListOf

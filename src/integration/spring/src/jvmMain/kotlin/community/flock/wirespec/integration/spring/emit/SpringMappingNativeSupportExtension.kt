@@ -25,7 +25,7 @@ open class SpringMappingNativeSupportExtension(
     private val language: FileExtension,
 ) : IrExtension {
 
-    override fun transform(ir: IR, ast: AST): IR = ir + listOfNotNull(nativeHintsFile(ast))
+    override fun extend(ir: IR, ast: AST): IR = ir + listOfNotNull(nativeHintsFile(ast))
 
     private fun nativeHintsFile(ast: AST): LanguageFile? {
         val definitions = ast.modules.toList().flatMap { it.statements }

@@ -19,8 +19,8 @@ import community.flock.wirespec.ir.converter.convertClient
 import community.flock.wirespec.ir.converter.convertEndpointClient
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.generator.Generator
 import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.ir.generator.Generator
 
 interface IrEmitter : Emitter {
 
@@ -40,7 +40,7 @@ interface IrEmitter : Emitter {
 
         val allFiles: IR = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
         val transformedFiles = extensions
-            .fold(allFiles) { ir, extension -> extension.transform(ir, ast) }
+            .fold(allFiles) { ir, extension -> extension.extend(ir, ast) }
             .filterIsInstance<File>()
         beforeGenerate(transformedFiles)
 

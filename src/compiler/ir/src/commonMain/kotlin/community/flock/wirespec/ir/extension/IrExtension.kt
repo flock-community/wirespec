@@ -4,5 +4,5 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.ir.core.IR
 
 fun interface IrExtension {
-    fun transform(ir: IR, ast: AST): IR
+    fun extend(ir: IR, ast: AST): IR
 }

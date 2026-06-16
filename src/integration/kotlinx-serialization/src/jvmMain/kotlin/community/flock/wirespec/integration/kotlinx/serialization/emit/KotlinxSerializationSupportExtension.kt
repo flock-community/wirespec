@@ -34,7 +34,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  */
 open class KotlinxSerializationSupportExtension : IrExtension {
 
-    override fun transform(ir: IR, ast: AST): IR {
+    override fun extend(ir: IR, ast: AST): IR {
         val definitions = ast.modules.toList().flatMap { it.statements }
         val serialNames = definitions
             .filter { it is TypeDefinition || it is Refined }

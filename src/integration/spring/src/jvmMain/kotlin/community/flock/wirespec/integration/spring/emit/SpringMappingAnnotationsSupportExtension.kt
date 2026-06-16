@@ -26,7 +26,7 @@ open class SpringMappingAnnotationsSupportExtension(
     private val language: FileExtension,
 ) : IrExtension {
 
-    override fun transform(ir: IR, ast: AST): IR {
+    override fun extend(ir: IR, ast: AST): IR {
         val endpoints = ast.modules.toList().flatMap { it.statements }.filterIsInstance<Endpoint>()
         return ir.map { element ->
             if (element is LanguageFile) element.annotateEndpointHandler(endpoints) else element
