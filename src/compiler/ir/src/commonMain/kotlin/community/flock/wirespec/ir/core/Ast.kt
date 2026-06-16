@@ -1,6 +1,8 @@
 package community.flock.wirespec.ir.core
 
-typealias IR = List<Element>
+import arrow.core.NonEmptyList
+
+typealias IR = NonEmptyList<Element>
 
 data class Name(val parts: List<String>) {
     constructor(vararg parts: String) : this(parts.toList())
