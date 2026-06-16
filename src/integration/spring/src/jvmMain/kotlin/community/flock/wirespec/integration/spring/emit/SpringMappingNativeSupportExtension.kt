@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.ir.core.IR
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.transformer.IrExtension
+import community.flock.wirespec.ir.extension.IrExtension
 import community.flock.wirespec.ir.core.File as LanguageFile
 
 /**

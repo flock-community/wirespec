@@ -9,7 +9,7 @@ import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Union
-import community.flock.wirespec.ir.transformer.IrExtension
+import community.flock.wirespec.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition

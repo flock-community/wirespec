@@ -1,4 +1,4 @@
-package community.flock.wirespec.ir.transformer
+package community.flock.wirespec.ir.extension
 
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.Emitted

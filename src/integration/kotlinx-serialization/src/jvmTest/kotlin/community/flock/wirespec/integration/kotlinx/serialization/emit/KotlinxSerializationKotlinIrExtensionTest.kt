@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.ir.transformer.applyExtensions
+import community.flock.wirespec.ir.extension.applyExtensions
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse

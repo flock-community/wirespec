@@ -20,7 +20,7 @@ import community.flock.wirespec.ir.converter.convertEndpointClient
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.IR
 import community.flock.wirespec.ir.generator.Generator
-import community.flock.wirespec.ir.transformer.IrExtension
+import community.flock.wirespec.ir.extension.IrExtension
 
 interface IrEmitter : Emitter {
 

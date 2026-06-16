@@ -10,8 +10,8 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.transformer.IrExtension
-import community.flock.wirespec.ir.transformer.applyExtensions
+import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory

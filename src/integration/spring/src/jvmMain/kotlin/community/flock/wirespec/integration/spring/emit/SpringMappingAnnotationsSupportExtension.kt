@@ -10,7 +10,7 @@ import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.findAll
 import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.transformer.IrExtension
+import community.flock.wirespec.ir.extension.IrExtension
 import community.flock.wirespec.ir.core.File as LanguageFile
 
 /**
