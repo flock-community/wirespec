@@ -16,8 +16,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
 import community.flock.wirespec.ir.core.File as LanguageFile
 
 /**
- * Adds kotlinx.serialization annotations to every generated model declaration,
- * mirroring the legacy `SerializableKotlinEmitter`:
+ * Adds kotlinx.serialization annotations to every generated model declaration:
  *
  * - records and refined types get `@Serializable` + `@SerialName("<wirespec name>")`
  * - unions and enums get `@Serializable`
@@ -28,8 +27,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  *
  * Only the top-level model declarations of each [LanguageFile] are annotated;
  * endpoint-internal structs live nested inside their endpoint `Namespace` and are
- * left untouched, just as the legacy emitter only overrode `emit(type)`,
- * `emit(refined)` and `emit(union)`. Register on a Kotlin
+ * left untouched. Register on a Kotlin
  * [community.flock.wirespec.ir.emit.IrEmitter] built with `EmitShared(false)`, so
  * the runtime classes come from the wirespec-jvm dependency rather than being
  * re-emitted as source.
