@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotlinx.serialization.emit
+package community.flock.wirespec.integration.kotlinx_serialization.extension
 
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Refined

@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.spring.kotlin.emit
+package community.flock.wirespec.integration.spring.extension
 
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
@@ -15,12 +15,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Root
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.integration.spring.emit.SpringMappingAnnotationsSupportExtension
-import community.flock.wirespec.integration.spring.emit.SpringMappingNativeSupportExtension
 import community.flock.wirespec.ir.extension.applyExtensions
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -50,7 +49,7 @@ class SpringKotlinIrExtensionTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val emitted = springEmitter(PackageName("community.flock.wirespec.spring.test"))
+        val emitted = springEmitter(PackageName.Companion("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
 
         val postEndpoint = emitted.single { it.file.endsWith("RequestParrot.kt") }.result
@@ -64,11 +63,11 @@ class SpringKotlinIrExtensionTest {
 
     @Test
     fun `Should emit a WirespecNativeHints file with registrations for all models and endpoints`() {
-        val path = Path("src/jvmTest/resources/todo.ws")
+        val path = kotlinx.io.files.Path("src/jvmTest/resources/todo.ws")
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val emitted = springEmitter(PackageName("community.flock.wirespec.spring.test"))
+        val emitted = springEmitter(PackageName.Companion("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
 
         val hints = emitted.single { it.file.endsWith("WirespecNativeHints.kt") }
@@ -123,7 +122,7 @@ class SpringKotlinIrExtensionTest {
         )
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(inline))))
 
-        val emitted = springEmitter(PackageName("community.flock.wirespec.spring.test"))
+        val emitted = springEmitter(PackageName.Companion("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
 
         val hints = emitted.single { it.file.endsWith("WirespecNativeHints.kt") }

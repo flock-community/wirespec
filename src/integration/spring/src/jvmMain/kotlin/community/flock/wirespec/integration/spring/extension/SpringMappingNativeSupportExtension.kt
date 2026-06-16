@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.spring.emit
+package community.flock.wirespec.integration.spring.extension
 
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
