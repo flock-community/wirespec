@@ -10,8 +10,8 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.transformer.IrTransformer
-import community.flock.wirespec.ir.transformer.applyTransformers
+import community.flock.wirespec.ir.transformer.IrExtension
+import community.flock.wirespec.ir.transformer.applyExtensions
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -64,10 +64,10 @@ abstract class BaseMojo : AbstractMojo() {
     protected var emitterClass: String? = null
 
     /**
-     * Specifies IR transformer classes to apply when an emitter is an [IrEmitter].
+     * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
      */
     @Parameter
-    protected var transformers: List<String> = listOf()
+    protected var extensions: List<String> = listOf()
 
     /**
      * Specifies package name, default [DEFAULT_GENERATED_PACKAGE_STRING]
@@ -121,10 +121,10 @@ abstract class BaseMojo : AbstractMojo() {
             null
         }
 
-    private val irTransformers
-        get() = transformers.map { transformerClass ->
+    private val irExtensions
+        get() = extensions.map { extensionClass ->
             try {
-                val clazz = getClassLoader(project).loadClass(transformerClass)
+                val clazz = getClassLoader(project).loadClass(extensionClass)
                 val constructor = clazz.constructors.first()
                 val args: List<Any> = constructor.parameters
                     .map {
@@ -134,19 +134,19 @@ abstract class BaseMojo : AbstractMojo() {
                             else -> error("Cannot map constructor parameter")
                         }
                     }
-                constructor.newInstance(*args.toTypedArray()) as IrTransformer
+                constructor.newInstance(*args.toTypedArray()) as IrExtension
             } catch (e: Exception) {
-                logger.error("Cannot create instance of transformer: $transformerClass")
+                logger.error("Cannot create instance of extension: $extensionClass")
                 throw e
             }
         }
 
     val emitters
-        get() = irTransformers.let { transformers ->
+        get() = irExtensions.let { extensions ->
             languages
                 .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
                 .plus(emitter)
-                .mapNotNull { it?.applyTransformers(transformers) }
+                .mapNotNull { it?.applyExtensions(extensions) }
                 .toNonEmptySetOrNull()
                 ?: throw PickAtLeastOneLanguageOrEmitter()
         }

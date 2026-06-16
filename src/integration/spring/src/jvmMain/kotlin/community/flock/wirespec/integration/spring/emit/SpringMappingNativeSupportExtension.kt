@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.ir.core.IR
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.transformer.IrTransformer
+import community.flock.wirespec.ir.transformer.IrExtension
 import community.flock.wirespec.ir.core.File as LanguageFile
 
 /**
@@ -17,13 +17,13 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * GraalVM native images.
  *
  * The hints class body is hand-written source and so differs per [language].
- * Register alongside [SpringMappingAnnotationsSupportTransformer] on a Kotlin
+ * Register alongside [SpringMappingAnnotationsSupportExtension] on a Kotlin
  * or Java [community.flock.wirespec.ir.emit.IrEmitter].
  */
-open class SpringMappingNativeSupportTransformer(
+open class SpringMappingNativeSupportExtension(
     private val packageName: PackageName,
     private val language: FileExtension,
-) : IrTransformer {
+) : IrExtension {
 
     override fun transform(ir: IR, ast: AST): IR = ir + listOfNotNull(nativeHintsFile(ast))
 
@@ -53,7 +53,7 @@ open class SpringMappingNativeSupportTransformer(
     private fun nativeHintsClassBody(names: List<String>): String = when (language) {
         FileExtension.Kotlin -> kotlinNativeHintsClassBody(names)
         FileExtension.Java -> javaNativeHintsClassBody(names)
-        else -> error("SpringMappingNativeSupportTransformer supports Kotlin and Java targets only, got $language")
+        else -> error("SpringMappingNativeSupportExtension supports Kotlin and Java targets only, got $language")
     }
 
     private fun kotlinNativeHintsClassBody(names: List<String>): String {

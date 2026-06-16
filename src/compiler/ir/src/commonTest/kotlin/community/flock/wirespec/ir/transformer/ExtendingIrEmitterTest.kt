@@ -30,7 +30,7 @@ import kotlin.test.assertSame
 import kotlin.test.fail
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 
-class TransformingIrEmitterTest {
+class ExtendingIrEmitterTest {
 
     private fun parseAst(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
@@ -61,43 +61,43 @@ class TransformingIrEmitterTest {
     )
 
     @Test
-    fun shouldApplyTransformersToIrBeforeGeneration() {
+    fun shouldApplyExtensionsToIrBeforeGeneration() {
         var seenAst: AST? = null
-        val rename = IrTransformer { ir, ast ->
+        val rename = IrExtension { ir, ast ->
             seenAst = ast
             ir.map { element ->
                 if (element is File) element.copy(name = Name(element.name.parts + "Transformed")) else element
             }
         }
 
-        val emitted = TransformingIrEmitter(TestEmitter, listOf(rename)).emit(ast, noLogger)
+        val emitted = ExtendingIrEmitter(TestEmitter, listOf(rename)).emit(ast, noLogger)
 
         assertEquals(listOf("FooTransformed.kt"), emitted.map { it.file })
         assertSame(ast, seenAst)
     }
 
     @Test
-    fun shouldApplyTransformersInOrder() {
-        val first = IrTransformer { ir, _ -> ir.map { (it as File).copy(name = Name(it.name.parts + "A")) } }
-        val second = IrTransformer { ir, _ -> ir.map { (it as File).copy(name = Name(it.name.parts + "B")) } }
+    fun shouldApplyExtensionsInOrder() {
+        val first = IrExtension { ir, _ -> ir.map { (it as File).copy(name = Name(it.name.parts + "A")) } }
+        val second = IrExtension { ir, _ -> ir.map { (it as File).copy(name = Name(it.name.parts + "B")) } }
 
-        val emitted = TransformingIrEmitter(TestEmitter, listOf(first, second)).emit(ast, noLogger)
+        val emitted = ExtendingIrEmitter(TestEmitter, listOf(first, second)).emit(ast, noLogger)
 
         assertEquals(listOf("FooAB.kt"), emitted.map { it.file })
     }
 
     @Test
-    fun shouldEmitUnchangedWithoutTransformers() {
+    fun shouldEmitUnchangedWithoutExtensions() {
         val emitted = TestEmitter.emit(ast, noLogger)
 
         assertEquals(listOf("Foo.kt"), emitted.map { it.file })
     }
 
     @Test
-    fun applyTransformersShouldOnlyWrapIrEmitters() {
-        val transformer = IrTransformer { ir, _ -> ir }
+    fun applyExtensionsShouldOnlyWrapIrEmitters() {
+        val extension = IrExtension { ir, _ -> ir }
 
-        assertIs<TransformingIrEmitter>(TestEmitter.applyTransformers(listOf(transformer)))
-        assertSame(TestEmitter, TestEmitter.applyTransformers(emptyList()))
+        assertIs<ExtendingIrEmitter>(TestEmitter.applyExtensions(listOf(extension)))
+        assertSame(TestEmitter, TestEmitter.applyExtensions(emptyList()))
     }
 }

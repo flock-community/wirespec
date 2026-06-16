@@ -10,7 +10,7 @@ import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.RawElement
 import community.flock.wirespec.ir.core.findAll
 import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.transformer.IrTransformer
+import community.flock.wirespec.ir.transformer.IrExtension
 import community.flock.wirespec.ir.core.File as LanguageFile
 
 /**
@@ -19,12 +19,12 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  *
  * The IR is language-neutral, so the matching is shared across targets; only
  * the array-valued `@RequestMapping` syntax for OPTIONS/HEAD/TRACE differs per
- * [language]. Register alongside [SpringMappingNativeSupportTransformer] on a
+ * [language]. Register alongside [SpringMappingNativeSupportExtension] on a
  * Kotlin or Java [community.flock.wirespec.ir.emit.IrEmitter].
  */
-open class SpringMappingAnnotationsSupportTransformer(
+open class SpringMappingAnnotationsSupportExtension(
     private val language: FileExtension,
-) : IrTransformer {
+) : IrExtension {
 
     override fun transform(ir: IR, ast: AST): IR {
         val endpoints = ast.modules.toList().flatMap { it.statements }.filterIsInstance<Endpoint>()

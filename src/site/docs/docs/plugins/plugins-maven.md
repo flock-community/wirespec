@@ -105,7 +105,7 @@ The compile mojo supports the following parameters:
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
 - **emitterClass**: Specifies a custom emitter class to use for code generation.
-- **transformers**: List of fully qualified `IrTransformer` class names. The transformers are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`.
+- **extensions**: List of fully qualified `IrExtension` class names. The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`.
 
 ### Running the Compile Goal
 

@@ -20,14 +20,14 @@ import community.flock.wirespec.ir.converter.convertEndpointClient
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.IR
 import community.flock.wirespec.ir.generator.Generator
-import community.flock.wirespec.ir.transformer.IrTransformer
+import community.flock.wirespec.ir.transformer.IrExtension
 
 interface IrEmitter : Emitter {
 
     val generator: Generator
 
-    /** Transformers applied to the complete IR before code generation. */
-    val transformers: List<IrTransformer> get() = emptyList()
+    /** Extensions applied to the complete IR before code generation. */
+    val extensions: List<IrExtension> get() = emptyList()
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
         val moduleFiles = ast.modules.flatMap { m ->
@@ -39,13 +39,13 @@ interface IrEmitter : Emitter {
         val mainClientFile = allEndpoints.takeIf { it.isNotEmpty() }?.let { emitClient(it, logger) }
 
         val allFiles: IR = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
-        val transformedFiles = transformers
-            .fold(allFiles) { ir, transformer -> transformer.transform(ir, ast) }
+        val transformedFiles = extensions
+            .fold(allFiles) { ir, extension -> extension.transform(ir, ast) }
             .filterIsInstance<File>()
         beforeGenerate(transformedFiles)
 
         return transformedFiles.map { it.toEmitted() }.toNonEmptyListOrNull()
-            ?: error("Transformers must leave at least one File in the IR")
+            ?: error("Extensions must leave at least one File in the IR")
     }
 
     /** Hook for emitters that need to inspect the full set of files before per-file generation. */

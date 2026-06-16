@@ -8,16 +8,16 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.emit.IrEmitter
 
 /**
- * Wraps an [IrEmitter] so the given [transformers] are applied to the IR
+ * Wraps an [IrEmitter] so the given [extensions] are applied to the IR
  * before code generation, without modifying the wrapped emitter.
  */
-class TransformingIrEmitter(
+class ExtendingIrEmitter(
     delegate: IrEmitter,
-    override val transformers: List<IrTransformer>,
+    override val extensions: List<IrExtension>,
 ) : IrEmitter by delegate {
     // Route through the IrEmitter default pipeline so this wrapper's
-    // transformers are picked up; all other members delegate.
+    // extensions are picked up; all other members delegate.
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger)
 }
 
-fun Emitter.applyTransformers(transformers: List<IrTransformer>): Emitter = if (this is IrEmitter && transformers.isNotEmpty()) TransformingIrEmitter(this, transformers) else this
+fun Emitter.applyExtensions(extensions: List<IrExtension>): Emitter = if (this is IrEmitter && extensions.isNotEmpty()) ExtendingIrEmitter(this, extensions) else this
