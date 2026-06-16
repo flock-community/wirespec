@@ -54,7 +54,7 @@ abstract class BaseWirespecTask : DefaultTask() {
     @get:Input
     @get:Optional
     @get:Option(option = "extensions", description = "IR extension classes applied when an emitter is an IrEmitter")
-    abstract val extensions: ListProperty<Class<*>>
+    abstract val irExtensions: ListProperty<Class<*>>
 
     @get:Input
     @get:Optional
@@ -100,7 +100,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         throw e
     }
 
-    protected fun irExtensions() = extensions.getOrElse(emptyList()).map { extensionClass ->
+    protected fun extensionInstances() = irExtensions.getOrElse(emptyList()).map { extensionClass ->
         try {
             val constructor = extensionClass.declaredConstructors.first()
             val args: List<Any> = constructor.parameters
@@ -118,7 +118,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    protected fun emitters() = irExtensions().let { extensions ->
+    protected fun emitters() = extensionInstances().let { extensions ->
         languages.get()
             .map { if (ir.getOrElse(false)) it.toIrEmitter(packageNameValue(), sharedValue()) else it.toEmitter(packageNameValue(), sharedValue()) }
             .plus(emitter())
