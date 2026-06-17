@@ -19,7 +19,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  *
  * The IR is language-neutral, so the matching is shared across targets; only
  * the array-valued `@RequestMapping` syntax for OPTIONS/HEAD/TRACE differs per
- * [language]. Register alongside [SpringMappingNativeExtension] on a
+ * [language]. Register alongside [SpringNativeHintsExtension] on a
  * Kotlin or Java [community.flock.wirespec.ir.emit.IrEmitter].
  */
 open class SpringMappingAnnotationsExtension(

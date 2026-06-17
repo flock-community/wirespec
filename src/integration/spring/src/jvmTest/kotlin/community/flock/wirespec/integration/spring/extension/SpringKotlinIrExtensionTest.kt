@@ -39,7 +39,7 @@ class SpringKotlinIrExtensionTest {
         .applyExtensions(
             listOf(
                 SpringMappingAnnotationsExtension(FileExtension.Kotlin),
-                SpringMappingNativeExtension(packageName, FileExtension.Kotlin),
+                SpringNativeHintsExtension(packageName, FileExtension.Kotlin),
             ),
         )
 

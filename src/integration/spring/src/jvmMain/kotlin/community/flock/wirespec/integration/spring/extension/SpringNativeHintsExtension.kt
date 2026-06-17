@@ -20,7 +20,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * Register alongside [SpringMappingAnnotationsExtension] on a Kotlin
  * or Java [community.flock.wirespec.ir.emit.IrEmitter].
  */
-open class SpringMappingNativeExtension(
+open class SpringNativeHintsExtension(
     private val packageName: PackageName,
     private val language: FileExtension,
 ) : IrExtension {
@@ -53,7 +53,7 @@ open class SpringMappingNativeExtension(
     private fun nativeHintsClassBody(names: List<String>): String = when (language) {
         FileExtension.Kotlin -> kotlinNativeHintsClassBody(names)
         FileExtension.Java -> javaNativeHintsClassBody(names)
-        else -> error("SpringMappingNativeExtension supports Kotlin and Java targets only, got $language")
+        else -> error("SpringNativeHintsExtension supports Kotlin and Java targets only, got $language")
     }
 
     private fun kotlinNativeHintsClassBody(names: List<String>): String {
