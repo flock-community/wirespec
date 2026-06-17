@@ -42,7 +42,7 @@ internal data class EndpointShape(
         )
     }
 
-    data class NamedTypedField(val name: String, val kotlinType: String)
+    data class NamedTypedField(val name: String, val kotlinType: String, val isNullable: Boolean = false)
 
     enum class BodyKind { None, Object, List }
 
@@ -70,11 +70,11 @@ internal data class EndpointShape(
         ): EndpointShape {
             val pathFields = endpoint.path
                 .filterIsInstance<Endpoint.Segment.Param>()
-                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference)) }
+                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable) }
             val queryFields = endpoint.queries
-                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference)) }
+                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable) }
             val headerFields = endpoint.headers
-                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference)) }
+                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable) }
             val bodyRef = endpoint.requests.firstOrNull()?.content?.reference
             val bodyType = bodyRef?.let { if (it is Reference.Unit) null else KotlinTypeMapper.map(it) }
 
