@@ -42,11 +42,20 @@ internal object EndpointDslFile {
             if (needsGen) {
                 import("io.kotest.property", "Gen")
             }
-            if (shape.bodyKind == EndpointShape.BodyKind.List) {
+            val isListBody = shape.bodyKind == EndpointShape.BodyKind.List
+            // Nullable path/query/header params default to `Arb.constant(null)` so callers
+            // may omit them; non-nullable params are required (no default).
+            val needsArbConstant = (shape.pathFields + shape.queryFields + shape.headerFields).any { it.isNullable }
+            if (isListBody || needsArbConstant) {
+                import("io.kotest.property", "Arb")
+            }
+            if (isListBody) {
                 // List body builder samples its element count with `Arb.int(count)`.
                 // Arb.int is an extension on Arb.Companion in io.kotest.property.arbitrary.
-                import("io.kotest.property", "Arb")
                 import("io.kotest.property.arbitrary", "int")
+            }
+            if (needsArbConstant) {
+                import("io.kotest.property.arbitrary", "constant")
             }
             shape.modelImports.forEach { import(modelPkg, it) }
 
@@ -76,32 +85,38 @@ internal object EndpointDslFile {
         append("\n}")
     }
 
-    private fun renderHeaderSlot(shape: EndpointShape): String = buildString {
-        val call = "${shape.name}Call"
-        val params = shape.headerFields.joinToString(", ") { "${it.name}: Gen<${it.kotlinType}>? = null" }
-        appendLine("    public fun header($params): $call = apply {")
-        shape.headerFields.forEach { f ->
-            appendLine("        ${f.name}?.let { inner.headerGen(\"${f.name}\", it) }")
-        }
-        appendLine("    }")
-    }
+    private fun renderHeaderSlot(shape: EndpointShape): String =
+        renderParamSlot("header", "headerGen", shape, shape.headerFields)
 
-    private fun renderQuerySlot(shape: EndpointShape): String = buildString {
-        val call = "${shape.name}Call"
-        val params = shape.queryFields.joinToString(", ") { "${it.name}: Gen<${it.kotlinType}>? = null" }
-        appendLine("    public fun query($params): $call = apply {")
-        shape.queryFields.forEach { f ->
-            appendLine("        ${f.name}?.let { inner.queryGen(\"${f.name}\", it) }")
-        }
-        appendLine("    }")
-    }
+    private fun renderQuerySlot(shape: EndpointShape): String =
+        renderParamSlot("query", "queryGen", shape, shape.queryFields)
 
-    private fun renderPathSlot(shape: EndpointShape): String = buildString {
+    private fun renderPathSlot(shape: EndpointShape): String =
+        renderParamSlot("path", "pathGen", shape, shape.pathFields)
+
+    /**
+     * Renders a `header` / `query` / `path` slot function. Nullable fields default to
+     * `Arb.constant(null)` (callers may omit them); non-nullable fields are required
+     * parameters with no default. Either way each field is always registered, since
+     * every parameter now resolves to a concrete generator.
+     */
+    private fun renderParamSlot(
+        slot: String,
+        genFn: String,
+        shape: EndpointShape,
+        fields: List<EndpointShape.NamedTypedField>,
+    ): String = buildString {
         val call = "${shape.name}Call"
-        val params = shape.pathFields.joinToString(", ") { "${it.name}: Gen<${it.kotlinType}>? = null" }
-        appendLine("    public fun path($params): $call = apply {")
-        shape.pathFields.forEach { f ->
-            appendLine("        ${f.name}?.let { inner.pathGen(\"${f.name}\", it) }")
+        val params = fields.joinToString(", ") { f ->
+            if (f.isNullable) {
+                "${f.name}: Gen<${f.kotlinType}> = Arb.constant(null)"
+            } else {
+                "${f.name}: Gen<${f.kotlinType}>"
+            }
+        }
+        appendLine("    public fun $slot($params): $call = apply {")
+        fields.forEach { f ->
+            appendLine("        inner.$genFn(\"${f.name}\", ${f.name})")
         }
         appendLine("    }")
     }
