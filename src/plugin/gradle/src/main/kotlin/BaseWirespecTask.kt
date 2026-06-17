@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.extension.IrExtension
@@ -100,7 +101,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         throw e
     }
 
-    protected fun extensionInstances() = extensionClasses.getOrElse(emptyList()).map { extensionClass ->
+    protected fun extensionInstances(fileExtension: FileExtension) = extensionClasses.getOrElse(emptyList()).map { extensionClass ->
         try {
             val constructor = extensionClass.declaredConstructors.first()
             val args: List<Any> = constructor.parameters
@@ -108,6 +109,7 @@ abstract class BaseWirespecTask : DefaultTask() {
                     when (it.type) {
                         PackageName::class.java -> packageNameValue()
                         EmitShared::class.java -> sharedValue()
+                        FileExtension::class.java -> fileExtension
                         else -> error("Cannot map constructor parameter")
                     }
                 }
@@ -118,14 +120,13 @@ abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    protected fun emitters() = extensionInstances().let { instances ->
-        languages.get()
-            .map { if (ir.getOrElse(false)) it.toIrEmitter(packageNameValue(), sharedValue()) else it.toEmitter(packageNameValue(), sharedValue()) }
-            .plus(emitter())
-            .mapNotNull { it?.applyExtensions(instances) }
-            .toNonEmptySetOrNull()
-            ?: throw PickAtLeastOneLanguageOrEmitter()
-    }
+    protected fun emitters() = languages.get()
+        .map { if (ir.getOrElse(false)) it.toIrEmitter(packageNameValue(), sharedValue()) else it.toEmitter(packageNameValue(), sharedValue()) }
+        .plus(emitter())
+        .filterNotNull()
+        .map { it.applyExtensions(extensionInstances(it.extension)) }
+        .toNonEmptySetOrNull()
+        ?: throw PickAtLeastOneLanguageOrEmitter()
 
     protected fun writer(directory: Directory): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
         emittedList.forEach { emitted ->

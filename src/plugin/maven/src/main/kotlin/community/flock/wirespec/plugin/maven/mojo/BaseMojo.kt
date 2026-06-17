@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
@@ -121,35 +122,34 @@ abstract class BaseMojo : AbstractMojo() {
             null
         }
 
-    private val extensionInstances
-        get() = extensionClasses.map { extensionClass ->
-            try {
-                val clazz = getClassLoader(project).loadClass(extensionClass)
-                val constructor = clazz.constructors.first()
-                val args: List<Any> = constructor.parameters
-                    .map {
-                        when (it.type) {
-                            PackageName::class.java -> PackageName(packageName)
-                            EmitShared::class.java -> EmitShared(shared)
-                            else -> error("Cannot map constructor parameter")
-                        }
+    private fun irExtensionInstances(fileExtension: FileExtension) = extensionClasses.map { extensionClass ->
+        try {
+            val clazz = getClassLoader(project).loadClass(extensionClass)
+            val constructor = clazz.constructors.first()
+            val args: List<Any> = constructor.parameters
+                .map {
+                    when (it.type) {
+                        PackageName::class.java -> PackageName(packageName)
+                        EmitShared::class.java -> EmitShared(shared)
+                        FileExtension::class.java -> fileExtension
+                        else -> error("Cannot map constructor parameter")
                     }
-                constructor.newInstance(*args.toTypedArray()) as IrExtension
-            } catch (e: Exception) {
-                logger.error("Cannot create instance of extension: $extensionClass")
-                throw e
-            }
+                }
+            constructor.newInstance(*args.toTypedArray()) as IrExtension
+        } catch (e: Exception) {
+            logger.error("Cannot create instance of extension: $extensionClass")
+            throw e
         }
+    }
 
     val emitters
-        get() = extensionInstances.let { instances ->
-            languages
-                .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-                .plus(emitter)
-                .mapNotNull { it?.applyExtensions(instances) }
-                .toNonEmptySetOrNull()
-                ?: throw PickAtLeastOneLanguageOrEmitter()
-        }
+        get() = languages
+            .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
+            .plus(emitter)
+            .filterNotNull()
+            .map { it.applyExtensions(irExtensionInstances(it.extension)) }
+            .toNonEmptySetOrNull()
+            ?: throw PickAtLeastOneLanguageOrEmitter()
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements
