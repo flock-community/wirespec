@@ -53,6 +53,10 @@ kotlin {
                 // facade adapts the commonMain KotestGenerator into a
                 // Wirespec.Generator for IR-emitted callers.
                 implementation(project(":src:integration:wirespec"))
+                // KotestDslIrExtension builds IR File nodes (file{}/raw) over the
+                // parser AST and plugs into the IrEmitter pipeline as an IrExtension.
+                implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:ir"))
                 // Full reflection: KClass.constructors / KFunction.call in
                 // JvmRefinedWrapper and Class → KType conversion in the
                 // Java/Scala adapters. Pinned to the Kotlin backwards-
@@ -68,6 +72,11 @@ kotlin {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.scala3.library)
+                // KotestDslIrExtension smoke test: compile a .ws fixture through
+                // KotlinIrEmitter + the extension and assert the emitted DSL files.
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:compiler:test"))
+                implementation(libs.bundles.kotest)
             }
         }
     }
