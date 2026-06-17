@@ -40,6 +40,57 @@ Make sure to use the latest version, found here:
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 :::
 
+## Registering the module
+
+A single artifact supports both **Jackson 2** (`com.fasterxml.jackson`) and **Jackson 3** (`tools.jackson`).
+Pick the package matching the Jackson version on your classpath:
+
+| Jackson | Package |
+|---|---|
+| 2.x | `community.flock.wirespec.integration.jackson.v2.{java,kotlin}` |
+| 3.x | `community.flock.wirespec.integration.jackson.v3.{java,kotlin}` |
+
+:::caution Migration note
+The Jackson 2 classes moved from `…jackson.{java,kotlin}` to `…jackson.v2.{java,kotlin}`. Update existing
+imports accordingly.
+:::
+
+<Tabs>
+  <TabItem value="jackson2" label="Jackson 2">
+    Register the Wirespec module on a mutable `ObjectMapper`:
+
+    ```java
+    import community.flock.wirespec.integration.jackson.v2.java.WirespecModuleJava;
+
+    ObjectMapper objectMapper = new ObjectMapper()
+            .registerModules(new WirespecModuleJava());
+    ```
+  </TabItem>
+  <TabItem value="jackson3" label="Jackson 3">
+    In Jackson 3 the mapper is immutable, so field visibility and the reserved-keyword naming strategy are
+    configured on the builder. The simplest path is `WirespecSerialization`, which wraps your mapper and applies
+    everything:
+
+    ```java
+    import community.flock.wirespec.integration.jackson.v3.java.WirespecSerialization;
+
+    var serialization = new WirespecSerialization(JsonMapper.builder().build());
+    ```
+
+    Or register the module manually, configuring the naming strategy on the builder (the Kotlin module
+    additionally needs field visibility — see `WirespecSerialization`):
+
+    ```java
+    import community.flock.wirespec.integration.jackson.v3.java.WirespecModuleJava;
+
+    ObjectMapper objectMapper = JsonMapper.builder()
+            .propertyNamingStrategy(new WirespecModuleJava.JavaReservedKeywordNamingStrategy())
+            .addModule(new WirespecModuleJava())
+            .build();
+    ```
+  </TabItem>
+</Tabs>
+
 ---
 
 :::note
@@ -128,3 +179,40 @@ public record Document(
     Boolean _final
 ) {}
 ```
+
+## Polymorphic unions
+
+A Wirespec `union` maps to a sealed interface with a record per member. Jackson needs to know how to pick
+the right concrete subtype when deserializing such a value. Rather than requiring a discriminator field in
+your contract, Wirespec ships an [IR extension](../plugins/plugins.md#ir-extensions),
+`JacksonSupportExtension`, that annotates every generated union so the subtype is **deduced from the JSON
+shape**:
+
+```wirespec
+type UserAccount = UserAccountPassword | UserAccountToken
+type UserAccountPassword { username: String, password: String }
+type UserAccountToken { token: String }
+```
+
+is emitted with the polymorphism annotations injected before the sealed interface:
+
+```java
+@com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.DEDUCTION)
+@com.fasterxml.jackson.annotation.JsonSubTypes({
+    @com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = UserAccountPassword.class),
+    @com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = UserAccountToken.class)
+})
+public sealed interface UserAccount {}
+```
+
+Because `Id.DEDUCTION` is used, Jackson selects the member whose fields match the incoming JSON — no
+type discriminator is added to the wire format. The annotations are emitted fully qualified, so the
+generated code only needs `jackson-annotations` on its classpath. Records, refined types and enums need no
+extra annotations here — those cases are handled by the Wirespec Jackson module described above.
+
+:::note
+`JacksonSupportExtension` works for both the Java and Kotlin targets and runs as part of the IR pipeline.
+Unlike the no-argument extensions, it takes the target language as a constructor argument, so it is wired
+into a custom `IrEmitter` rather than registered directly through the plugin's `extensionClasses` list.
+See [IR extensions](../plugins/plugins.md#ir-extensions) for the general mechanism.
+:::

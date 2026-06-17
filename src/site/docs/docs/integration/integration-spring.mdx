@@ -10,7 +10,10 @@ This document describes how to integrate Wirespec-generated code with Spring Boo
 creation of type-safe and well-defined APIs, and this integration provides a seamless way to use those APIs within your
 Spring applications.
 
-The integration is compatible with Spring Boot 3 and 4, and relies on Jackson 2 for serialization and deserialization.
+The integration is compatible with Spring Boot 3 and 4. It works with both Jackson 2 (the default on
+Spring Boot 3) and Jackson 3 (the default on Spring Boot 4) for serialization and deserialization; the
+right one is selected automatically based on what is on your classpath, with Jackson 3 taking precedence
+when both are present.
 
 The integration works for both [producers](#restcontroller) (RestController) and [consumers](#webclient)
 (WebClient).
