@@ -38,8 +38,8 @@ class SpringKotlinIrExtensionTest {
     private fun springEmitter(packageName: PackageName) = KotlinIrEmitter(packageName, EmitShared(false))
         .applyExtensions(
             listOf(
-                SpringMappingAnnotationsSupportExtension(FileExtension.Kotlin),
-                SpringMappingNativeSupportExtension(packageName, FileExtension.Kotlin),
+                SpringMappingAnnotationsExtension(FileExtension.Kotlin),
+                SpringMappingNativeExtension(packageName, FileExtension.Kotlin),
             ),
         )
 

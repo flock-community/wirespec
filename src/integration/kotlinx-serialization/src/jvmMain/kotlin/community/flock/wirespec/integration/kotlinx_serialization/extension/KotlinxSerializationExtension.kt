@@ -32,7 +32,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * the runtime classes come from the wirespec-jvm dependency rather than being
  * re-emitted as source.
  */
-open class KotlinxSerializationSupportExtension : IrExtension {
+open class KotlinxSerializationExtension : IrExtension {
 
     override fun extend(ir: IR, ast: AST): IR {
         val definitions = ast.modules.toList().flatMap { it.statements }

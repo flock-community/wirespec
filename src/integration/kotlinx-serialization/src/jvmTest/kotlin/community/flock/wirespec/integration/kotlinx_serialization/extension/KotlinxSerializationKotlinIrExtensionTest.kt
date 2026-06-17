@@ -24,7 +24,7 @@ class KotlinxSerializationKotlinIrExtensionTest {
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
     private fun serializableEmitter(packageName: PackageName) = KotlinIrEmitter(packageName, EmitShared(false))
-        .applyExtensions(listOf(KotlinxSerializationSupportExtension()))
+        .applyExtensions(listOf(KotlinxSerializationExtension()))
 
     private val source =
         """

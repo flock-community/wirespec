@@ -25,7 +25,7 @@ class JacksonJavaIrExtensionTest {
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
     private fun jacksonEmitter(packageName: PackageName) = JavaIrEmitter(packageName, EmitShared(false))
-        .applyExtensions(listOf(JacksonSupportExtension(FileExtension.Java)))
+        .applyExtensions(listOf(JacksonExtension(FileExtension.Java)))
 
     private val source =
         """

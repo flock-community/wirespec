@@ -69,11 +69,11 @@ Wirespec ships several IR extensions in its integration modules:
 
 | Extension | Module | Effect |
 |---|---|---|
-| `KotlinxSerializationSupportExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
-| `JacksonSupportExtension` | `jackson` | Adds Jackson polymorphism annotations to `union` types — see [Jackson](../integration/integration-jackson.mdx#polymorphic-unions) |
+| `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+| `JacksonExtension` | `jackson` | Adds Jackson polymorphism annotations to `union` types — see [Jackson](../integration/integration-jackson.mdx#polymorphic-unions) |
 
 Extensions whose constructor only needs `packageName`/`shared` (or nothing at all), such as
-`KotlinxSerializationSupportExtension`, can be registered directly through `extensionClasses`. Extensions
+`KotlinxSerializationExtension`, can be registered directly through `extensionClasses`. Extensions
 that need other arguments — for instance the target language — are typically wired into a custom
 `IrEmitter` instead.
 

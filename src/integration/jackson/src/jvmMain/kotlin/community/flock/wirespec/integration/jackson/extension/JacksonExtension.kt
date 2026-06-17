@@ -29,7 +29,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * (`[ ]` vs `{ }`) differ. Register on a Kotlin or Java
  * [community.flock.wirespec.ir.emit.IrEmitter] built with `EmitShared(false)`.
  */
-open class JacksonSupportExtension(
+open class JacksonExtension(
     private val language: FileExtension,
 ) : IrExtension {
 

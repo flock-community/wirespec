@@ -17,10 +17,10 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * GraalVM native images.
  *
  * The hints class body is hand-written source and so differs per [language].
- * Register alongside [SpringMappingAnnotationsSupportExtension] on a Kotlin
+ * Register alongside [SpringMappingAnnotationsExtension] on a Kotlin
  * or Java [community.flock.wirespec.ir.emit.IrEmitter].
  */
-open class SpringMappingNativeSupportExtension(
+open class SpringMappingNativeExtension(
     private val packageName: PackageName,
     private val language: FileExtension,
 ) : IrExtension {
@@ -53,7 +53,7 @@ open class SpringMappingNativeSupportExtension(
     private fun nativeHintsClassBody(names: List<String>): String = when (language) {
         FileExtension.Kotlin -> kotlinNativeHintsClassBody(names)
         FileExtension.Java -> javaNativeHintsClassBody(names)
-        else -> error("SpringMappingNativeSupportExtension supports Kotlin and Java targets only, got $language")
+        else -> error("SpringMappingNativeExtension supports Kotlin and Java targets only, got $language")
     }
 
     private fun kotlinNativeHintsClassBody(names: List<String>): String {
