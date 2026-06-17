@@ -39,6 +39,8 @@ data class Name(val parts: List<String>) {
         }
     }
 
+    fun referenceName(): String = if (parts.size > 1) pascalCase() else value()
+
     override fun toString(): String = camelCase()
 
     companion object {

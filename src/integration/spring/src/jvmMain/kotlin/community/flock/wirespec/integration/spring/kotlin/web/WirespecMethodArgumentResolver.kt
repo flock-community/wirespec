@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.web
 
-import community.flock.wirespec.integration.spring.kotlin.configuration.WirespecSerializationConfiguration.Companion.objectMapper
+import community.flock.wirespec.integration.spring.shared.WirespecJsonMapper
 import community.flock.wirespec.integration.spring.shared.extractPath
 import community.flock.wirespec.integration.spring.shared.extractQueries
 import community.flock.wirespec.kotlin.Wirespec
@@ -19,6 +19,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 
 class WirespecMethodArgumentResolver(
     private val wirespecSerialization: Wirespec.Serialization,
+    private val jsonMapper: WirespecJsonMapper,
 ) : HandlerMethodArgumentResolver {
 
     private val fromRequestCache = ConcurrentHashMap<Class<*>, Method>()
@@ -50,7 +51,7 @@ class WirespecMethodArgumentResolver(
                 val mediaType = MediaType.valueOf(contentType)
                 val bytes = it.inputStream.readAllBytes()
                 it.name to when (mediaType) {
-                    MediaType.APPLICATION_JSON -> objectMapper.readTree(bytes)
+                    MediaType.APPLICATION_JSON -> jsonMapper.readTree(bytes)
                     else -> bytes
                 }
             }
@@ -59,7 +60,7 @@ class WirespecMethodArgumentResolver(
                 path = extractPath(),
                 queries = extractQueries(),
                 headers = headerNames.toList().associateWith { getHeaders(it).toList() },
-                body = objectMapper.writeValueAsBytes(map),
+                body = jsonMapper.writeValueAsBytes(map),
             )
         }
         return Wirespec.RawRequest(

@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.java.configuration;
 
 import community.flock.wirespec.integration.spring.java.web.WirespecMethodArgumentResolver;
+import community.flock.wirespec.integration.spring.shared.WirespecJsonMapper;
 import community.flock.wirespec.java.Wirespec;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -12,13 +13,15 @@ import java.util.List;
 public class WirespecWebMvcConfiguration implements WebMvcConfigurer {
 
     private final Wirespec.Serialization wirespecSerialization;
+    private final WirespecJsonMapper wirespecJsonMapper;
 
-    public WirespecWebMvcConfiguration(Wirespec.Serialization wirespecSerialization) {
+    public WirespecWebMvcConfiguration(Wirespec.Serialization wirespecSerialization, WirespecJsonMapper wirespecJsonMapper) {
         this.wirespecSerialization = wirespecSerialization;
+        this.wirespecJsonMapper = wirespecJsonMapper;
     }
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-        argumentResolvers.add(new WirespecMethodArgumentResolver(wirespecSerialization));
+        argumentResolvers.add(new WirespecMethodArgumentResolver(wirespecSerialization, wirespecJsonMapper));
     }
 }

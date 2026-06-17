@@ -9,7 +9,7 @@ from ..wirespec import T, Wirespec, _raise
 class DutchPostalCode(Wirespec.Refined[str]):
     value: str
     def validate(self) -> bool:
-        return bool(re.match(r"/^([0-9]{4}[A-Z]{2})$/g", self.value))
+        return bool(re.match(r"^([0-9]{4}[A-Z]{2})$", self.value))
     def __str__(self) -> str:
         return self.value
 

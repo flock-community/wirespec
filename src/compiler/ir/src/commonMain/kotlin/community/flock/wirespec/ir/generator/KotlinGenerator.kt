@@ -288,7 +288,7 @@ object KotlinGenerator : Generator {
         Type.Reflect -> "KType"
         is Type.Array -> "List"
         is Type.Dict -> "Map"
-        is Type.Custom -> name.value()
+        is Type.Custom -> name.referenceName()
         is Type.Nullable -> "${type.emitGenerics()}?"
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"

@@ -9,7 +9,7 @@ from ..wirespec import T, Wirespec, _raise
 class Email(Wirespec.Refined[str]):
     value: str
     def validate(self) -> bool:
-        return bool(re.match(r"/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/g", self.value))
+        return bool(re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", self.value))
     def __str__(self) -> str:
         return self.value
 
@@ -24,7 +24,7 @@ from ..wirespec import T, Wirespec, _raise
 class PhoneNumber(Wirespec.Refined[str]):
     value: str
     def validate(self) -> bool:
-        return bool(re.match(r"/^\+[1-9]\d{1,14}$/g", self.value))
+        return bool(re.match(r"^\+[1-9]\d{1,14}$", self.value))
     def __str__(self) -> str:
         return self.value
 
@@ -39,7 +39,7 @@ from ..wirespec import T, Wirespec, _raise
 class Tag(Wirespec.Refined[str]):
     value: str
     def validate(self) -> bool:
-        return bool(re.match(r"/^[a-z][a-z0-9-]{0,19}$/g", self.value))
+        return bool(re.match(r"^[a-z][a-z0-9-]{0,19}$", self.value))
     def __str__(self) -> str:
         return self.value
 
@@ -72,7 +72,7 @@ class ContactInfo(Wirespec.Shape):
     email: Email
     phone: Optional[PhoneNumber]
     def validate(self) -> list[str]:
-        return (['email'] if not self.email.validate() else []) + (['phone'] if not self.phone.validate() else []) if self.phone is not None else []
+        return (['email'] if not self.email.validate() else []) + ((['phone'] if not self.phone.validate() else []) if self.phone is not None else [])
 
 from __future__ import annotations
 import re
