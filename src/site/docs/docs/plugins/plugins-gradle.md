@@ -122,7 +122,7 @@ integration artifact that provides the extension on the `buildscript` classpath,
 directly. Remember to set `ir = true` so the built-in language targets emit through the IR pipeline:
 
 ```gradle title="build.gradle.kts"
-import community.flock.wirespec.integration.kotlinx_serialization.extension.KotlinxSerializationExtension
+import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import community.flock.wirespec.plugin.Language
 

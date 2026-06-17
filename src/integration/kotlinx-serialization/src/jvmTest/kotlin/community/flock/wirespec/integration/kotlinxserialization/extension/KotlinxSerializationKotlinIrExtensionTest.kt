@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotlinx_serialization.extension
+package community.flock.wirespec.integration.kotlinxserialization.extension
 
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri

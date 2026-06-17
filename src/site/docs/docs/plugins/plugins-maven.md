@@ -151,7 +151,7 @@ class name. Set `<ir>true</ir>` so the built-in language targets emit through th
                 <ir>true</ir>
                 <shared>false</shared>
                 <extensionClasses>
-                    <extensionClass>community.flock.wirespec.integration.kotlinx_serialization.extension.KotlinxSerializationExtension</extensionClass>
+                    <extensionClass>community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension</extensionClass>
                 </extensionClasses>
             </configuration>
         </execution>
