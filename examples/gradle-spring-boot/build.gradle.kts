@@ -1,4 +1,6 @@
-import community.flock.wirespec.integration.spring.kotlin.emit.SpringKotlinEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
+import community.flock.wirespec.integration.spring.extension.SpringMappingNativeExtension
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -54,7 +56,12 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.examples.spring.generated"
-    emitterClass = SpringKotlinEmitter::class.java
+    emitterClass = KotlinIrEmitter::class.java
+    extensionClasses = listOf(
+        SpringMappingAnnotationsExtension::class.java,
+        SpringMappingNativeExtension::class.java,
+    )
+    shared = true
 }
 
 tasks.withType<KotlinCompile> {
