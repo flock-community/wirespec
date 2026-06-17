@@ -83,7 +83,16 @@ private fun Token.nextToken(type: TokenType, value: String): Token = this.copy(
 
 private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (type) {
     is NewLine -> Coordinates(line = line + 1, idxAndLength = idxAndLength + value.length)
-    else -> this + value.length
+    else -> when (val newLineCount = value.count { it == '\n' }) {
+        0 -> this + value.length
+        // Tokens such as comments may span multiple lines; advance the line counter for each
+        // embedded newline and reset the position to the column after the final newline.
+        else -> Coordinates(
+            line = line + newLineCount,
+            position = value.length - value.lastIndexOf('\n'),
+            idxAndLength = idxAndLength + value.length,
+        )
+    }
 }
 
 private fun endToken(previousTokenCoordinates: Coordinates = Coordinates()) = Token(

@@ -197,6 +197,28 @@ class ParserReferenceTest {
     }
 
     @Test
+    fun shouldReportCorrectLineAfterMultiLineComment() {
+        val source =
+            // language=ws
+            """
+            |/*
+            | multi
+            | line
+            | comment
+            |*/
+            |type Foo = Bar
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeLeft()
+            .apply { size shouldBe 1 }
+            .apply {
+                first().message shouldBe "Cannot find reference: Bar"
+                first().coordinates.line shouldBe 6
+            }
+    }
+
+    @Test
     fun afterRegex() {
         val source = """
             |/* This is a comment */
