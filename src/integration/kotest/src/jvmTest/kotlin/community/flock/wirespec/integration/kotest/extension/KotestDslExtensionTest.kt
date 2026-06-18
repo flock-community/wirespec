@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.ir.extension.applyExtensions
@@ -25,11 +26,43 @@ class KotestDslExtensionTest {
         // `endpoint GetTodos GET /todos -> { 200 -> TodoDto[] }`
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
 
-        output shouldContain "public class GetTodosCall internal constructor()"
+        output shouldContain "public class GetTodosScope internal constructor()"
         output shouldContain "endpointCall(GetTodos.Handler, GetTodos)"
         output shouldContain "inline fun <reified R : GetTodos.Response<*>> expecting(): R"
-        // One catalog object per source module exposes the endpoint as a `val`.
-        output shouldContain "public val getTodos: GetTodosCall"
+        // One catalog object per source module exposes the endpoint as a block-style function.
+        output shouldContain "public suspend fun <R> getTodos(block: suspend GetTodosScope.() -> R): R"
+    }
+
+    @Test
+    fun blockStyleSlotsAreVarsValidatedOnFlush() {
+        // `PutTodo PUT … /todos/{id: String} ?{done: Boolean, name: String?} #{token: Token, …}`
+        // has a required path (id), query (done) and header (token) slot — each non-nullable.
+        val output = CompileFullEndpointTest.compiler(::emitter).shouldBeRight()
+
+        // The scope exposes each slot as an assignable builder-lambda `var`.
+        output shouldContain "public class PutTodoScope internal constructor()"
+        output shouldContain "public var path: (PutTodoPathBuilder.() -> Unit)? = null"
+        output shouldContain "public var query: (PutTodoQueryBuilder.() -> Unit)? = null"
+        output shouldContain "public var header: (PutTodoHeaderBuilder.() -> Unit)? = null"
+        output shouldContain "public var body: (PutTodoPotentialTodoDtoBodyBuilder.() -> Unit)? = null"
+
+        // Slot builders carry one `var` per field; nullable/invalid names are backtick-escaped.
+        output shouldContain "public class PutTodoPathBuilder {"
+        output shouldContain "public var id: Gen<String>? = null"
+        output shouldContain "public var done: Gen<Boolean>? = null"
+        output shouldContain "public var name: Gen<String?>? = null"
+        output shouldContain "public var `Refresh-Token`: Gen<Token?>? = null"
+
+        // flush() validates required slots/fields and defaults nullable ones; the wire name
+        // stays raw while the Kotlin reference is escaped.
+        output shouldContain "PutTodoPathBuilder().apply(path ?: error(\"PutTodo: required `path` block is missing\"))"
+        output shouldContain "inner.pathGen(\"id\", pathBuilder.id ?: error(\"PutTodo.path: required `id` is missing\"))"
+        output shouldContain "inner.queryGen(\"name\", queryBuilder.name ?: Arb.constant(null))"
+        output shouldContain "inner.headerGen(\"Refresh-Token\", headerBuilder.`Refresh-Token` ?: Arb.constant(null))"
+
+        // Terminals flush before executing; the catalog opens the scope as a block function.
+        output shouldContain "public suspend inline fun <reified R : PutTodo.Response<*>> expecting(): R {"
+        output shouldContain "public suspend fun <R> putTodo(block: suspend PutTodoScope.() -> R): R"
     }
 
     @Test
