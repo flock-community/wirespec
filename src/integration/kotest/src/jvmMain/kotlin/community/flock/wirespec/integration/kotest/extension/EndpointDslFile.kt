@@ -60,7 +60,7 @@ internal object EndpointDslFile {
             import("io.kotest.extensions.wirespec.dsl", "WirespecScenarioDsl")
             import("kotlin.time", "Duration")
             import(endpointPkg, shape.name)
-            val needsGen = shape.bodyType != null || present.isNotEmpty()
+            val needsGen = shape.bodyFieldShapes.isNotEmpty() || present.isNotEmpty()
             if (needsGen) {
                 import("io.kotest.property", "Gen")
             }
@@ -129,7 +129,6 @@ internal object EndpointDslFile {
             appendLine("    public var ${slot.name}: (${slotBuilderName(shape, slot)}.() -> Unit)? = null")
         }
         if (shape.bodyType != null) {
-            appendLine("    public var bodyGen: Gen<${shape.bodyType}>? = null")
             if (shape.bodyFieldShapes.isNotEmpty()) {
                 val builderName = "${shape.name}${shape.bodyElementType}BodyBuilder"
                 appendLine("    public var body: ($builderName.() -> Unit)? = null")
@@ -167,7 +166,6 @@ internal object EndpointDslFile {
             }
         }
         if (shape.bodyType != null) {
-            appendLine("        bodyGen?.let { inner.body(it) }")
             if (shape.bodyFieldShapes.isNotEmpty()) {
                 val builderName = "${shape.name}${shape.bodyElementType}BodyBuilder"
                 val isList = shape.bodyKind == EndpointShape.BodyKind.List
