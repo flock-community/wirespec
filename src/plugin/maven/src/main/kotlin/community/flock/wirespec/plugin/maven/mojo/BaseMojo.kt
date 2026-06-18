@@ -67,7 +67,7 @@ abstract class BaseMojo : AbstractMojo() {
      * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
      */
     @Parameter
-    protected var irExtensions: List<String> = listOf()
+    protected var extensionClasses: List<String> = listOf()
 
     /**
      * Specifies package name, default [DEFAULT_GENERATED_PACKAGE_STRING]
@@ -121,8 +121,8 @@ abstract class BaseMojo : AbstractMojo() {
             null
         }
 
-    private val irExtensionInstances
-        get() = irExtensions.map { extensionClass ->
+    private val extensionInstances
+        get() = extensionClasses.map { extensionClass ->
             try {
                 val clazz = getClassLoader(project).loadClass(extensionClass)
                 val constructor = clazz.constructors.first()
@@ -142,7 +142,7 @@ abstract class BaseMojo : AbstractMojo() {
         }
 
     val emitters
-        get() = irExtensionInstances.let { instances ->
+        get() = extensionInstances.let { instances ->
             languages
                 .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
                 .plus(emitter)
