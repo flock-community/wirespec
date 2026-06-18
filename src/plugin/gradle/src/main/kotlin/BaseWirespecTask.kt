@@ -54,7 +54,7 @@ abstract class BaseWirespecTask : DefaultTask() {
     @get:Input
     @get:Optional
     @get:Option(option = "extensions", description = "IR extension classes applied when an emitter is an IrEmitter")
-    abstract val extensions: ListProperty<Class<*>>
+    abstract val extensionClasses: ListProperty<Class<*>>
 
     @get:Input
     @get:Optional
@@ -100,7 +100,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         throw e
     }
 
-    protected fun extensionInstances() = extensions.getOrElse(emptyList()).map { extensionClass ->
+    protected fun extensionInstances() = extensionClasses.getOrElse(emptyList()).map { extensionClass ->
         try {
             val constructor = extensionClass.declaredConstructors.first()
             val args: List<Any> = constructor.parameters
