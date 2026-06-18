@@ -110,19 +110,19 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
             OpenAPIV2Emitter
                 .emitSwaggerObject(ast.modules.flatMap { it.statements }, noLogger)
                 .let(encode(OpenAPIV2ModelSerializer))
-                .let { Emitted("openapi", it) }
+                .let { Emitted("openapi.json", it) }
                 .let { nonEmptyListOf(it) }
         Emitters.OPENAPI_V3 ->
             OpenAPIV3Emitter
                 .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null, noLogger)
                 .let(encode(OpenAPIV3ModelSerializer))
-                .let { Emitted("openapi", it) }
+                .let { Emitted("openapi.json", it) }
                 .let { nonEmptyListOf(it) }
         Emitters.AVRO ->
             ast.modules
                 .map { ast -> AvroJsonEmitter.emit(ast) }
                 .map { Json.encodeToString(it) }
-                .map { Emitted("avro", it) }
+                .map { Emitted("avro.json", it) }
     }
         .map { it.produce() }
         .toTypedArray()
