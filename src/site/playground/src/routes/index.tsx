@@ -5,6 +5,7 @@ import { WsError, WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
 import { Box, Button } from "@mui/material";
 import { PlayGround } from "../components/PlayGround";
+import { OutputView } from "../components/OutputView";
 import { SpecificationSelector } from "../components/SpecificationSelector";
 import { EmitterSelector } from "../components/EmitterSelector";
 import { initializeMonaco } from "../utils/InitializeMonaco";
@@ -225,8 +226,9 @@ function RouteComponent() {
           borderTop="1px solid var(--border-primary)"
           borderLeft={{ sm: "1px solid var(--border-primary)" }}
         >
-          <PlayGround
-            code={wirespecResult}
+          <OutputView
+            files={wirespecOutput?.result || []}
+            allCode={wirespecResult}
             language={wirespecOutput?.language || "wirespec"}
           />
         </Box>
