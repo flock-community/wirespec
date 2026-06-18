@@ -1,6 +1,6 @@
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
-import community.flock.wirespec.integration.spring.extension.SpringMappingNativeExtension
+import community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -59,7 +59,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     emitterClass = KotlinIrEmitter::class.java
     extensionClasses = listOf(
         SpringMappingAnnotationsExtension::class.java,
-        SpringMappingNativeExtension::class.java,
+        SpringNativeHintsExtension::class.java,
     )
     shared = true
 }
