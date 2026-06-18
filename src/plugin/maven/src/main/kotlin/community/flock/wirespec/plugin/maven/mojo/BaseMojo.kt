@@ -9,6 +9,9 @@ import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -59,6 +62,12 @@ abstract class BaseMojo : AbstractMojo() {
      */
     @Parameter
     protected var emitterClass: String? = null
+
+    /**
+     * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
+     */
+    @Parameter
+    protected var irExtensions: List<String> = listOf()
 
     /**
      * Specifies package name, default [DEFAULT_GENERATED_PACKAGE_STRING]
@@ -112,13 +121,35 @@ abstract class BaseMojo : AbstractMojo() {
             null
         }
 
+    private val irExtensionInstances
+        get() = irExtensions.map { extensionClass ->
+            try {
+                val clazz = getClassLoader(project).loadClass(extensionClass)
+                val constructor = clazz.constructors.first()
+                val args: List<Any> = constructor.parameters
+                    .map {
+                        when (it.type) {
+                            PackageName::class.java -> PackageName(packageName)
+                            EmitShared::class.java -> EmitShared(shared)
+                            else -> error("Cannot map constructor parameter")
+                        }
+                    }
+                constructor.newInstance(*args.toTypedArray()) as IrExtension
+            } catch (e: Exception) {
+                logger.error("Cannot create instance of extension: $extensionClass")
+                throw e
+            }
+        }
+
     val emitters
-        get() = languages
-            .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-            .plus(emitter)
-            .mapNotNull { it }
-            .toNonEmptySetOrNull()
-            ?: throw PickAtLeastOneLanguageOrEmitter()
+        get() = irExtensionInstances.let { instances ->
+            languages
+                .map { if (ir) it.toIrEmitter(PackageName(packageName), EmitShared(shared)) else it.toEmitter(PackageName(packageName), EmitShared(shared)) }
+                .plus(emitter)
+                .mapNotNull { it?.applyExtensions(instances) }
+                .toNonEmptySetOrNull()
+                ?: throw PickAtLeastOneLanguageOrEmitter()
+        }
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements

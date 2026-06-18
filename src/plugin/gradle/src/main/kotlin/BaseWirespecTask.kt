@@ -8,6 +8,8 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -48,6 +50,11 @@ abstract class BaseWirespecTask : DefaultTask() {
     @get:Optional
     @get:Option(option = "emitterClass", description = "custom emitter class")
     abstract val emitterClass: Property<Class<*>>
+
+    @get:Input
+    @get:Optional
+    @get:Option(option = "irExtensions", description = "IR extension classes applied when an emitter is an IrEmitter")
+    abstract val irExtensions: ListProperty<Class<*>>
 
     @get:Input
     @get:Optional
@@ -93,12 +100,32 @@ abstract class BaseWirespecTask : DefaultTask() {
         throw e
     }
 
-    protected fun emitters() = languages.get()
-        .map { if (ir.getOrElse(false)) it.toIrEmitter(packageNameValue(), sharedValue()) else it.toEmitter(packageNameValue(), sharedValue()) }
-        .plus(emitter())
-        .mapNotNull { it }
-        .toNonEmptySetOrNull()
-        ?: throw PickAtLeastOneLanguageOrEmitter()
+    protected fun extensionInstances() = irExtensions.getOrElse(emptyList()).map { extensionClass ->
+        try {
+            val constructor = extensionClass.declaredConstructors.first()
+            val args: List<Any> = constructor.parameters
+                .map {
+                    when (it.type) {
+                        PackageName::class.java -> packageNameValue()
+                        EmitShared::class.java -> sharedValue()
+                        else -> error("Cannot map constructor parameter")
+                    }
+                }
+            constructor.newInstance(*args.toTypedArray()) as IrExtension
+        } catch (e: Exception) {
+            logger.error("Cannot create instance of extension: ${extensionClass.simpleName}", e)
+            throw e
+        }
+    }
+
+    protected fun emitters() = extensionInstances().let { instances ->
+        languages.get()
+            .map { if (ir.getOrElse(false)) it.toIrEmitter(packageNameValue(), sharedValue()) else it.toEmitter(packageNameValue(), sharedValue()) }
+            .plus(emitter())
+            .mapNotNull { it?.applyExtensions(instances) }
+            .toNonEmptySetOrNull()
+            ?: throw PickAtLeastOneLanguageOrEmitter()
+    }
 
     protected fun writer(directory: Directory): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
         emittedList.forEach { emitted ->

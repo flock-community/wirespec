@@ -40,6 +40,57 @@ Make sure to use the latest version, found here:
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 :::
 
+## Registering the module
+
+A single artifact supports both **Jackson 2** (`com.fasterxml.jackson`) and **Jackson 3** (`tools.jackson`).
+Pick the package matching the Jackson version on your classpath:
+
+| Jackson | Package |
+|---|---|
+| 2.x | `community.flock.wirespec.integration.jackson.v2.{java,kotlin}` |
+| 3.x | `community.flock.wirespec.integration.jackson.v3.{java,kotlin}` |
+
+:::caution Migration note
+The Jackson 2 classes moved from `…jackson.{java,kotlin}` to `…jackson.v2.{java,kotlin}`. Update existing
+imports accordingly.
+:::
+
+<Tabs>
+  <TabItem value="jackson2" label="Jackson 2">
+    Register the Wirespec module on a mutable `ObjectMapper`:
+
+    ```java
+    import community.flock.wirespec.integration.jackson.v2.java.WirespecModuleJava;
+
+    ObjectMapper objectMapper = new ObjectMapper()
+            .registerModules(new WirespecModuleJava());
+    ```
+  </TabItem>
+  <TabItem value="jackson3" label="Jackson 3">
+    In Jackson 3 the mapper is immutable, so field visibility and the reserved-keyword naming strategy are
+    configured on the builder. The simplest path is `WirespecSerialization`, which wraps your mapper and applies
+    everything:
+
+    ```java
+    import community.flock.wirespec.integration.jackson.v3.java.WirespecSerialization;
+
+    var serialization = new WirespecSerialization(JsonMapper.builder().build());
+    ```
+
+    Or register the module manually, configuring the naming strategy on the builder (the Kotlin module
+    additionally needs field visibility — see `WirespecSerialization`):
+
+    ```java
+    import community.flock.wirespec.integration.jackson.v3.java.WirespecModuleJava;
+
+    ObjectMapper objectMapper = JsonMapper.builder()
+            .propertyNamingStrategy(new WirespecModuleJava.JavaReservedKeywordNamingStrategy())
+            .addModule(new WirespecModuleJava())
+            .build();
+    ```
+  </TabItem>
+</Tabs>
+
 ---
 
 :::note

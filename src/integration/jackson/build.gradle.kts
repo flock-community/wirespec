@@ -62,6 +62,9 @@ kotlin {
         jvmTest {
             kotlin.srcDir(generatedWirespecDir.map { it.dir("kotlin") })
             dependencies {
+                implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:compiler:emitters:java"))
                 implementation(libs.bundles.jackson2)
                 implementation(libs.bundles.jackson3)
             }
