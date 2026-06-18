@@ -28,13 +28,24 @@ internal object CatalogFile {
 
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
-            raw(renderCatalogObject(catalogName, endpointNames + channelNames))
+            raw(renderCatalogObject(catalogName, endpointNames, channelNames))
         }
     }
 
-    private fun renderCatalogObject(catalogName: String, names: List<String>): String = buildString {
+    private fun renderCatalogObject(
+        catalogName: String,
+        endpointNames: List<String>,
+        channelNames: List<String>,
+    ): String = buildString {
         appendLine("public object $catalogName {")
-        names.forEach { name ->
+        // Endpoints are block-style: `runs.putTodo { … }` opens a `<Endpoint>Scope` receiver.
+        endpointNames.forEach { name ->
+            val fn = name.replaceFirstChar(Char::lowercaseChar)
+            appendLine("    public suspend fun <R> $fn(block: suspend ${name}Scope.() -> R): R =")
+            appendLine("        ${name}Scope().block()")
+        }
+        // Channels keep the fluent `<Channel>Call` accessor.
+        channelNames.forEach { name ->
             val dslName = name.replaceFirstChar(Char::lowercaseChar)
             appendLine("    public val $dslName: ${name}Call")
             appendLine("        get() = ${name}Call()")

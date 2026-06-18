@@ -59,7 +59,7 @@ internal object ChannelDslFile {
             appendLine("        val builder = ${payload}PayloadBuilder().apply(block)")
             appendLine("        return inner.sendFields {")
             shape.payloadFields.forEach { f ->
-                appendLine("            builder.${f.name}?.let { registerPath(\"${f.name}\") { it } }")
+                appendLine("            builder.${KotlinIdentifier.escape(f.name)}?.let { registerPath(\"${f.name}\") { it } }")
             }
             appendLine("        }")
             appendLine("    }")
@@ -80,7 +80,7 @@ internal object ChannelDslFile {
         appendLine("@WirespecScenarioDsl")
         appendLine("public class ${payloadType}PayloadBuilder {")
         fields.forEach { f ->
-            appendLine("    public var ${f.name}: Gen<${f.kotlinType}>? = null")
+            appendLine("    public var ${KotlinIdentifier.escape(f.name)}: Gen<${f.kotlinType}>? = null")
         }
         append("}")
     }
