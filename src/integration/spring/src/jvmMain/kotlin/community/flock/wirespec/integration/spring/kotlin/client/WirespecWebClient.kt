@@ -97,8 +97,7 @@ class WirespecWebClient(
      * Framework 7 it no longer does. Iterating via [HttpHeaders.forEach] works on both versions, so
      * a jar compiled against Spring 6 keeps working at runtime on Spring 7.
      */
-    private fun HttpHeaders.toRawHeaders(): Map<String, List<String>> =
-        LinkedMultiValueMap<String, String>().also { map ->
-            forEach { name, values -> map[name] = values }
-        }
+    private fun HttpHeaders.toRawHeaders(): Map<String, List<String>> = LinkedMultiValueMap<String, String>().also { map ->
+        forEach { name, values -> map[name] = values }
+    }
 }
