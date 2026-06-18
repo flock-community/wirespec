@@ -6,40 +6,47 @@ import { Language } from "../routes";
 
 interface OutputViewProps {
   files: WsEmitted[];
-  allCode: string;
   language: Language;
 }
 
-const ALL = "__all__";
+// Derive a short, readable tab label from an emitted file path
+// (e.g. "/model/TodoIdentifier.ts" -> "TodoIdentifier.ts").
+const fileLabel = (path: string) => path.split("/").pop() || path;
 
-export function OutputView({ files, allCode, language }: OutputViewProps) {
-  const [selected, setSelected] = useState<string>(ALL);
+export function OutputView({ files, language }: OutputViewProps) {
+  const [selected, setSelected] = useState<string>();
 
-  // Resolve the currently selected file by name so the selection survives
+  // Resolve the currently selected file by path so the selection survives
   // recompilation (which produces a fresh `files` array on every edit). When
-  // the selected file no longer exists, fall back to the combined view.
+  // the selected file no longer exists, fall back to the first file.
   const activeFile = useMemo(
-    () =>
-      selected === ALL
-        ? undefined
-        : files.find((file) => file.typeName === selected),
+    () => files.find((file) => file.file === selected) ?? files[0],
     [files, selected],
   );
 
-  const tabValue = activeFile ? activeFile.typeName : ALL;
-  const code = activeFile ? activeFile.result : allCode;
-
   return (
     <Box>
-      {files.length > 1 && (
+      {files.length > 0 && (
         <Tabs
-          value={tabValue}
+          value={activeFile?.file ?? false}
           onChange={(_, value: string) => setSelected(value)}
-          variant="scrollable"
-          scrollButtons="auto"
           sx={{
             minHeight: 36,
             borderBottom: "1px solid var(--border-primary)",
+            // Cap the strip height; when tabs overflow they wrap onto
+            // additional rows and the scroller scrolls vertically.
+            "& .MuiTabs-scroller": {
+              maxHeight: 36 * 3,
+              overflowX: "hidden !important",
+              overflowY: "auto !important",
+            },
+            "& .MuiTabs-flexContainer": {
+              flexWrap: "wrap",
+            },
+            // Hide the sliding indicator, which mispositions once tabs wrap.
+            "& .MuiTabs-indicator": {
+              display: "none",
+            },
             "& .MuiTab-root": {
               color: "var(--color-primary)",
               minHeight: 36,
@@ -47,17 +54,16 @@ export function OutputView({ files, allCode, language }: OutputViewProps) {
             },
           }}
         >
-          <Tab value={ALL} label="All" />
           {files.map((file) => (
             <Tab
-              key={file.typeName}
-              value={file.typeName}
-              label={file.typeName}
+              key={file.file}
+              value={file.file}
+              label={fileLabel(file.file)}
             />
           ))}
         </Tabs>
       )}
-      <PlayGround code={code} language={language} />
+      <PlayGround code={activeFile?.result ?? ""} language={language} />
     </Box>
   );
 }

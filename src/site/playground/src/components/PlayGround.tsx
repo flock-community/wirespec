@@ -22,7 +22,7 @@ export function PlayGround({ code, setCode, language }: PlayGroundProps) {
         language={language}
         theme="vs-dark"
         height="100vh"
-        options={{ minimap: { enabled: false } }}
+        options={{ minimap: { enabled: false }, fontSize: 14 }}
         value={code}
         onChange={
           setCode
