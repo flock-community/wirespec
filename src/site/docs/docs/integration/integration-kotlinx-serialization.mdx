@@ -62,7 +62,7 @@ The extension applies to the **Kotlin** target only, and runs as part of the IR 
 need to:
 
 1. Add the integration artifact to the plugin's classpath.
-2. Register `KotlinxSerializationExtension` via `extensionClasses`.
+2. Register `KotlinxSerializationExtension` via `extensions`.
 3. Enable the IR pipeline (`ir = true`) and disable shared-code emission (`shared = false`) so the
    Wirespec runtime classes come from the `wirespec-jvm` dependency rather than being re-emitted as
    source.
@@ -96,7 +96,7 @@ need to:
         languages = listOf(Language.Kotlin)
         ir = true
         shared = false
-        extensionClasses = listOf(KotlinxSerializationExtension::class.java)
+        extensions = listOf(KotlinxSerializationExtension::class.java)
     }
     ```
   </TabItem>
@@ -127,9 +127,9 @@ need to:
                     </languages>
                     <ir>true</ir>
                     <shared>false</shared>
-                    <extensionClasses>
-                        <extensionClass>community.flock.wirespec.integration.kotlinx_serialization.extension.KotlinxSerializationExtension</extensionClass>
-                    </extensionClasses>
+                    <extensions>
+                        <extension>community.flock.wirespec.integration.kotlinx_serialization.extension.KotlinxSerializationExtension</extension>
+                    </extensions>
                 </configuration>
             </execution>
         </executions>
