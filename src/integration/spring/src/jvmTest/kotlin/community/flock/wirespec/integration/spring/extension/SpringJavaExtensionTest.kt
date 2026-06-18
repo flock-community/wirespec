@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.spring.java.emit
+package community.flock.wirespec.integration.spring.extension
 
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
@@ -24,7 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-class SpringJavaIrExtensionTest {
+class SpringJavaExtensionTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec

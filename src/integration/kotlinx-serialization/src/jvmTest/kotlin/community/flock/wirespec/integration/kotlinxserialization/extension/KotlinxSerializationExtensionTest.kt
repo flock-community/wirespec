@@ -17,7 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 
-class KotlinxSerializationKotlinIrExtensionTest {
+class KotlinxSerializationExtensionTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec

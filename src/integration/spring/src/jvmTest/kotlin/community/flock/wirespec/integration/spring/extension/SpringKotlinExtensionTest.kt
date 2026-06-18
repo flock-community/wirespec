@@ -15,7 +15,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
-import community.flock.wirespec.compiler.core.parse.ast.Root
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
@@ -29,7 +28,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-class SpringKotlinIrExtensionTest {
+class SpringKotlinExtensionTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
