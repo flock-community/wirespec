@@ -53,7 +53,7 @@ abstract class BaseWirespecTask : DefaultTask() {
 
     @get:Input
     @get:Optional
-    @get:Option(option = "extensions", description = "IR extension classes applied when an emitter is an IrEmitter")
+    @get:Option(option = "extensionClasses", description = "IR extension classes applied when an emitter is an IrEmitter")
     abstract val extensionClasses: ListProperty<Class<*>>
 
     @get:Input

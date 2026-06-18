@@ -55,10 +55,9 @@ representation** (IR). An `IrExtension` lets you reshape that IR — for example
 annotations — without forking an emitter. The transformed IR is then handed to the normal code generator,
 so the output stays idiomatic for the target language.
 
-You register extensions through the plugin's extensions configuration — the `extensions` parameter in
-Maven and the `extensionClasses` property in Gradle. The Maven and Gradle plugins accept a list of
-`IrExtension` classes and instantiate them for you, injecting the `packageName` and `shared` settings into
-the constructor when the extension needs them.
+You register extensions with the `extensionClasses` parameter of the compile/custom operations. The
+Maven and Gradle plugins accept a list of `IrExtension` classes and instantiate them for you, injecting the
+`packageName` and `shared` settings into the constructor when the extension needs them.
 
 :::note
 Extensions only run when the emitter is an `IrEmitter`. For the built-in language targets this means you
@@ -73,7 +72,7 @@ Wirespec ships several IR extensions in its integration modules:
 | `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
 
 Extensions whose constructor only needs `packageName`/`shared` (or nothing at all), such as
-`KotlinxSerializationExtension`, can be registered directly through that configuration. Extensions
+`KotlinxSerializationExtension`, can be registered directly through `extensionClasses`. Extensions
 that need other arguments — for instance the target language — are typically wired into a custom
 `IrEmitter` instead.
 
