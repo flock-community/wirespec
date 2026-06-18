@@ -91,6 +91,7 @@ object JavaGenerator : Generator {
             "public class $fileName {\n$staticContent  public static void main(String[] args) {\n$content  }\n}\n"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
+        is Field -> ""
         is RawElement -> code.indentCode(indent)
     }
 
@@ -188,6 +189,8 @@ object JavaGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
+        val fieldElements = fields
+        val fields = fields.filterIsInstance<Field>()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " implements ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emitGenerics() }
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
@@ -200,11 +203,21 @@ object JavaGenerator : Generator {
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
-        val paramsStr = if (fields.isEmpty()) {
-            " ()"
-        } else {
-            fields.joinToString(",\n", " (\n", "\n)") { "${it.type.emitGenerics()} ${it.name.value().sanitize()}".indentCode(1) }
+        val paramParts = buildList {
+            val pendingAnnotations = mutableListOf<String>()
+            fieldElements.forEach { element ->
+                when (element) {
+                    is RawElement -> pendingAnnotations.add(element.code)
+                    is Field -> {
+                        val annotationPrefix = pendingAnnotations.joinToString("") { "$it " }
+                        pendingAnnotations.clear()
+                        add("$annotationPrefix${element.type.emitGenerics()} ${element.name.value().sanitize()}".indentCode(1))
+                    }
+                    else -> Unit
+                }
+            }
         }
+        val paramsStr = if (paramParts.isEmpty()) " ()" else paramParts.joinToString(",\n", " (\n", "\n)")
 
         return "$typeModifier ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
     }

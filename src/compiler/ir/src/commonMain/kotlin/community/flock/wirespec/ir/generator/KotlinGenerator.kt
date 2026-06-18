@@ -93,6 +93,7 @@ object KotlinGenerator : Generator {
             staticContent + "${modifier}fun main() {\n$content}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
+        is Field -> ""
         is RawElement -> "$code\n".indentCode(indent)
     }
 
@@ -169,6 +170,8 @@ object KotlinGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
+        val fieldElements = fields
+        val fields = fields.filterIsInstance<Field>()
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
@@ -201,11 +204,22 @@ object KotlinGenerator : Generator {
             }
         }
 
-        val paramsStr = fields.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") {
-            val overridePrefix = "override ".takeIf { _ -> it.isOverride }.orEmpty()
-            val annotationsPrefix = it.annotations.joinToString("") { annotation -> "$annotation " }
-            "$annotationsPrefix${overridePrefix}val ${it.name.value().sanitize()}: ${it.type.emitGenerics()}".indentCode(indent + 1)
+        val paramParts = buildList {
+            val pendingAnnotations = mutableListOf<String>()
+            fieldElements.forEach { element ->
+                when (element) {
+                    is RawElement -> pendingAnnotations.add(element.code)
+                    is Field -> {
+                        val annotationPrefix = pendingAnnotations.joinToString("") { "$it " }
+                        pendingAnnotations.clear()
+                        val overridePrefix = "override ".takeIf { _ -> element.isOverride }.orEmpty()
+                        add("$annotationPrefix${overridePrefix}val ${element.name.value().sanitize()}: ${element.type.emitGenerics()}".indentCode(indent + 1))
+                    }
+                    else -> Unit
+                }
+            }
         }
+        val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
             "data class $pascal$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)

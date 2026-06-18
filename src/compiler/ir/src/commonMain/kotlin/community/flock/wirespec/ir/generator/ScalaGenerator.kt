@@ -122,7 +122,7 @@ object ScalaGenerator : Generator {
         for (element in elements) {
             when (element) {
                 is Struct -> {
-                    result[element.name.pascalCase()] = element.fields.map { it.name.value() }.toSet()
+                    result[element.name.pascalCase()] = element.fields.filterIsInstance<Field>().map { it.name.value() }.toSet()
                     result.putAll(collectPrimaryFieldNames(element.elements))
                 }
                 is Namespace -> result.putAll(collectPrimaryFieldNames(element.elements))
@@ -172,6 +172,7 @@ object ScalaGenerator : Generator {
             "object $fileName {\n$staticContent  def main(args: Array[String]): Unit = {\n$content  }\n}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
+        is Field -> ""
         is RawElement -> "$code\n".indentCode(indent)
     }
 
@@ -247,6 +248,7 @@ object ScalaGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
+        val fields = fields.filterIsInstance<Field>()
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitTypeAnnotation() }.distinct().joinNonEmpty(" with ", " extends ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "[", "]") { it.type.emitGenerics() }

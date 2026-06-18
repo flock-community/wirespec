@@ -121,13 +121,20 @@ data class Import(
 
 data class Struct(
     override val name: Name,
-    val fields: List<Field>,
+    val fields: List<Element>,
     val constructors: List<Constructor> = emptyList(),
     val interfaces: List<Type.Custom> = emptyList(),
     override val elements: List<Element> = emptyList(),
     val typeParameters: List<TypeParameter> = emptyList(),
 ) : HasName,
     HasElements
+
+/**
+ * The [Field] entries of this struct's parameter list. A struct's [Struct.fields] may also
+ * contain other elements (such as [RawElement] annotations injected before a field by an IR
+ * extension); this helper filters those out when only the declared fields are needed.
+ */
+val Struct.fieldList: List<Field> get() = fields.filterIsInstance<Field>()
 
 data class Constructor(
     val parameters: List<Parameter>,
@@ -138,8 +145,7 @@ data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
-    val annotations: List<String> = emptyList(),
-)
+) : Element
 
 data class Function(
     override val name: Name,

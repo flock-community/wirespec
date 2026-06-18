@@ -27,6 +27,7 @@ import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.enum
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.struct
@@ -212,7 +213,7 @@ class IrConverterTest {
         val inlineStruct = inline.convert().findElement<Struct>()!!
 
         val emittedStructName = inlineStruct.name.pascalCase()
-        val embeddedField = parentStruct.fields.single()
+        val embeddedField = parentStruct.fieldList.single()
         val customRef = ((embeddedField.type as Type.Nullable).type as Type.Custom).name.value()
 
         assertEquals(emittedStructName, customRef)

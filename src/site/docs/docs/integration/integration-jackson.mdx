@@ -98,12 +98,14 @@ annotations directly into the generated code. This integration ships an
 [IR extension](../plugins/plugins.md#ir-extensions) that adds the annotations during compilation, so
 polymorphic `union` types round-trip without any extra mapper configuration.
 
-The extension annotates the top-level model declarations of each generated Kotlin file:
+The extension annotates the top-level model declarations of each generated file:
 
 - record fields get `@JsonProperty("<wirespec name>")`, preserving the original field name even when the
   emitter has to sanitize a reserved keyword.
-- `union` types get `@JsonTypeInfo` and `@JsonSubTypes`, mapping each member to its wirespec name through a
-  `type` discriminator.
+- `union` types get `@JsonTypeInfo(... property = "type")`, and each union member gets
+  `@JsonTypeName("<wirespec name>")`, so polymorphic values round-trip through a `type` discriminator.
+  Subtypes are resolved from the sealed hierarchy that the Java (`permits`) and Kotlin (`sealed interface`)
+  emitters generate.
 
 For example, this definition:
 
@@ -115,7 +117,8 @@ type Todo {
 type UserAccount = UserAccountPassword | UserAccountToken
 ```
 
-is emitted as:
+is emitted as (Kotlin shown; the Java emitter produces the same annotations on records and the sealed
+interface):
 
 ```kotlin
 data class Todo(
@@ -124,24 +127,23 @@ data class Todo(
 )
 
 @com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME, include = com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY, property = "type")
-@com.fasterxml.jackson.annotation.JsonSubTypes(
-    com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = UserAccountPassword::class, name = "UserAccountPassword"),
-    com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = UserAccountToken::class, name = "UserAccountToken"),
-)
 sealed interface UserAccount
+
+@com.fasterxml.jackson.annotation.JsonTypeName("UserAccountPassword")
+data class UserAccountPassword(/* ... */)
 ```
 
 The annotations are emitted fully qualified against `com.fasterxml.jackson.annotation` (shared by Jackson 2
-and 3), so the generated code stays dependency-free apart from the jackson-annotations runtime — no imports
-are added.
+and 3) and use only syntax that is valid in **both Java and Kotlin**, so the generated code stays
+dependency-free apart from the jackson-annotations runtime — no imports are added.
 
 :::note
 Endpoint-internal structs (the `Path`, `Request`, `Response` types nested inside an endpoint) are left
 untouched; only the top-level models are annotated.
 :::
 
-The extension applies to the **Kotlin** target only, and runs as part of the IR pipeline. Enable the IR
-pipeline (`ir = true`) and disable shared-code emission (`shared = false`) so the Wirespec runtime classes
+The extension works for the **Java** and **Kotlin** targets and runs as part of the IR pipeline. Enable the
+IR pipeline (`ir = true`) and disable shared-code emission (`shared = false`) so the Wirespec runtime classes
 come from the `wirespec-jvm` dependency, then register `JacksonExtension` via `irExtensions`.
 
 <Tabs>
@@ -159,7 +161,8 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` via `i
     tasks.register<CompileWirespecTask>("wirespec-compile") {
         input = layout.projectDirectory.dir("src/main/wirespec")
         output = layout.buildDirectory.dir("generated")
-        packageName = "community.flock.wirespec.generated.kotlin"
+        packageName = "community.flock.wirespec.generated"
+        // Works for both Java and Kotlin
         languages = listOf(Language.Kotlin)
         ir = true
         shared = false
@@ -182,7 +185,7 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` via `i
         </dependencies>
         <executions>
             <execution>
-                <id>kotlin</id>
+                <id>generate</id>
                 <goals>
                     <goal>compile</goal>
                 </goals>
@@ -190,6 +193,7 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` via `i
                     <input>${project.basedir}/src/main/wirespec</input>
                     <output>${project.build.directory}/generated-sources</output>
                     <languages>
+                        <!-- Works for both Java and Kotlin -->
                         <language>Kotlin</language>
                     </languages>
                     <ir>true</ir>

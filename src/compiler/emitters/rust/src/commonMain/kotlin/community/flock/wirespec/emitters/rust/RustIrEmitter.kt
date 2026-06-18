@@ -34,6 +34,7 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.Expression
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
@@ -269,9 +270,10 @@ open class RustIrEmitter(
             .let { file ->
                 LanguageFile(file.name, file.elements.flatMap { element ->
                     if (element !is Struct) return@flatMap listOf(element)
+                    val structFields = element.fields.filterIsInstance<Field>()
                     val derive = when {
-                        element.fields.any { containsUnderiveable(it.type) } -> ""
-                        element.fields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"
+                        structFields.any { containsUnderiveable(it.type) } -> ""
+                        structFields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"
                         element.name.pascalCase() in setOf("RawRequest", "RawResponse") -> "#[derive(Debug, Clone, PartialEq)]"
                         else -> "#[derive(Debug, Clone, Default, PartialEq)]"
                     }

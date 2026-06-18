@@ -103,6 +103,7 @@ object TypeScriptGenerator : Generator {
             "$staticContent${";(async () => {\n$content${"})();".indentCode(indent)}\n".indentCode(indent)}"
         }
         is File -> elements.joinToString("") { it.emit(indent) }
+        is Field -> ""
         is RawElement -> code.lines().joinToString("\n") { if (it.isEmpty()) it else it.indentCode(indent) } + "\n"
     }
 
@@ -160,6 +161,7 @@ object TypeScriptGenerator : Generator {
     private fun Enum.emit(indent: Int): String = "export type ${name.pascalCase()} = ${entries.joinToString(" | ") { "\"${it.name.value()}\"" }}\n".indentCode(indent)
 
     private fun Struct.emit(indent: Int): String {
+        val fields = fields.filterIsInstance<Field>()
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
         val nonStructElements = elements.filter { it !is Struct }
         val fieldsContent = if (fields.isEmpty()) {
@@ -212,6 +214,7 @@ object TypeScriptGenerator : Generator {
     }
 
     private fun Struct.emitInline(): String {
+        val fields = fields.filterIsInstance<Field>()
         if (fields.isEmpty()) return "{}"
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
         return "{${fields.joinToString(", ") { field ->
