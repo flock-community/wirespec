@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Constraint
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P32
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -146,7 +147,7 @@ private fun WsReference.consume(): Reference = when (this) {
     )
 
     is WsPrimitive -> Reference.Primitive(
-        type = type.consume(),
+        type = consumeType(),
         isNullable = isNullable,
     )
 
@@ -161,14 +162,18 @@ private fun WsReference.consume(): Reference = when (this) {
     )
 }
 
-private fun WsPrimitiveType.consume() = when (this) {
-    WsPrimitiveType.String -> Reference.Primitive.Type.String(constraint = null)
-    WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer(precision = P64, constraint = null)
-    WsPrimitiveType.Integer32 -> Reference.Primitive.Type.Integer(precision = P32, constraint = null)
-    WsPrimitiveType.Number -> Reference.Primitive.Type.Number(precision = P64, constraint = null)
-    WsPrimitiveType.Number32 -> Reference.Primitive.Type.Number(precision = P32, constraint = null)
-    WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
-    WsPrimitiveType.Bytes -> Reference.Primitive.Type.Bytes
+private fun WsPrimitive.consumeType(): Reference.Primitive.Type {
+    val regExp = (constraint as? WsRegExpConstraint)?.let { Constraint.RegExp(it.value) }
+    val bound = (constraint as? WsBoundConstraint)?.let { Constraint.Bound(it.min, it.max) }
+    return when (type) {
+        WsPrimitiveType.String -> Reference.Primitive.Type.String(constraint = regExp)
+        WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer(precision = P64, constraint = bound)
+        WsPrimitiveType.Integer32 -> Reference.Primitive.Type.Integer(precision = P32, constraint = bound)
+        WsPrimitiveType.Number -> Reference.Primitive.Type.Number(precision = P64, constraint = bound)
+        WsPrimitiveType.Number32 -> Reference.Primitive.Type.Number(precision = P32, constraint = bound)
+        WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
+        WsPrimitiveType.Bytes -> Reference.Primitive.Type.Bytes
+    }
 }
 
 fun AST.produce(): WsAST = WsAST(modules.map { it.produce() }.toTypedArray())
@@ -245,7 +250,7 @@ private fun Reference.produce(): WsReference = when (this) {
     is Reference.Any -> WsAny(isNullable)
     is Reference.Unit -> WsUnit(isNullable)
     is Reference.Custom -> WsCustom(value, isNullable)
-    is Reference.Primitive -> WsPrimitive(type.produce(), isNullable)
+    is Reference.Primitive -> WsPrimitive(type.produce(), isNullable, type.produceConstraint())
     is Reference.Dict -> WsDict(reference.produce(), isNullable)
     is Reference.Iterable -> WsIterable(reference.produce(), isNullable)
 }
@@ -262,6 +267,14 @@ private fun Reference.Primitive.Type.produce() = when (this) {
     }
     is Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
     is Reference.Primitive.Type.Bytes -> WsPrimitiveType.Bytes
+}
+
+private fun Reference.Primitive.Type.produceConstraint(): WsConstraint? = when (this) {
+    is Reference.Primitive.Type.String -> constraint?.let { WsRegExpConstraint(it.value) }
+    is Reference.Primitive.Type.Integer -> constraint?.let { WsBoundConstraint(it.min, it.max) }
+    is Reference.Primitive.Type.Number -> constraint?.let { WsBoundConstraint(it.min, it.max) }
+    is Reference.Primitive.Type.Boolean -> null
+    is Reference.Primitive.Type.Bytes -> null
 }
 
 private fun Endpoint.Method.produce() = when (this) {
@@ -415,10 +428,20 @@ data class WsCustom(
 data class WsPrimitive(
     val type: WsPrimitiveType,
     override val isNullable: Boolean,
+    val constraint: WsConstraint? = null,
 ) : WsReference
 
 @JsExport
 enum class WsPrimitiveType { String, Integer, Integer32, Number, Number32, Boolean, Bytes }
+
+@JsExport
+sealed interface WsConstraint
+
+@JsExport
+data class WsRegExpConstraint(val value: String) : WsConstraint
+
+@JsExport
+data class WsBoundConstraint(val min: String?, val max: String?) : WsConstraint
 
 @JsExport
 data class WsRequest(val content: WsContent?)

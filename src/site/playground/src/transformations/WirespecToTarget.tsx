@@ -50,6 +50,7 @@ export const wirespecToTarget: (
       parseResult.result,
       internalEmitter,
       "community.flock.wirespec.generated",
+      false,
     );
     if (
       internalEmitter === Emitters.OPENAPI_V3 ||
@@ -57,7 +58,7 @@ export const wirespecToTarget: (
       internalEmitter === Emitters.AVRO
     ) {
       result = result.map((it) => ({
-        typeName: it.typeName,
+        file: it.file,
         result: prettyJson(it.result),
       }));
     }

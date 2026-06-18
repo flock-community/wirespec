@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { WsError, WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Tab, Tabs } from "@mui/material";
 import { PlayGround } from "../components/PlayGround";
 import { OutputView } from "../components/OutputView";
 import { SpecificationSelector } from "../components/SpecificationSelector";
 import { EmitterSelector } from "../components/EmitterSelector";
+import { PackageSelector, packageOf } from "../components/PackageSelector";
 import { initializeMonaco } from "../utils/InitializeMonaco";
 import { MonacoError, setMonacoErrors } from "../utils/SetMonacoErrors";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
@@ -54,21 +55,6 @@ export type CompilationResult = {
   language: Language;
 };
 
-const createFileHeaderFor = (fileName: string, emitter: Emitter): string => {
-  switch (emitter) {
-    case "typescript":
-    case "kotlin":
-    case "open_api_v2":
-    case "open_api_v3":
-    case "avro":
-    case "wirespec":
-      return "";
-    case "java":
-    case "python":
-      return `\n/**\n/* ${fileName}\n**/\n`;
-  }
-};
-
 export const Route = createFileRoute("/")({
   component: RouteComponent,
   validateSearch: (search?: Record<string, unknown>): Search => {
@@ -85,10 +71,31 @@ function RouteComponent() {
   const { emitter, specification } = useSearch({ from: "/" });
   const [code, setCode] = useState("");
   const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
-  const [wirespecResult, setWirespecResult] = useState("");
   const [wirespecErrors, setWirespecErrors] = useState<MonacoError[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<string>();
   const [mobileDisplay, setMobileDisplay] = useState<"input" | "output">(
     "input",
+  );
+
+  const files = wirespecOutput?.result ?? [];
+
+  // Distinct packages (the directory containing each file) across the emitted
+  // files, in first-seen order, used to populate the package selector.
+  const packages = useMemo(() => {
+    const seen = new Set<string>();
+    files.forEach((file) => seen.add(packageOf(file.file)));
+    return [...seen];
+  }, [files]);
+
+  // Default to the first package, and fall back to it when the chosen package
+  // is absent from the current output (e.g. after switching emitter/spec).
+  const activePackage =
+    selectedPackage && packages.includes(selectedPackage)
+      ? selectedPackage
+      : packages[0];
+
+  const filteredFiles = files.filter(
+    (file) => packageOf(file.file) === activePackage,
   );
 
   useEffect(() => {
@@ -148,22 +155,10 @@ function RouteComponent() {
   }, [specification]);
 
   useEffect(() => {
-    if (wirespecOutput) {
-      if (wirespecOutput.result.length) {
-        setWirespecResult(
-          wirespecOutput.result
-            .map(
-              (file) =>
-                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`,
-            )
-            .join(""),
-        );
-      }
-      if (wirespecOutput.errors) {
-        setWirespecErrors(wirespecOutput.errors);
-      }
+    if (wirespecOutput?.errors) {
+      setWirespecErrors(wirespecOutput.errors);
     }
-  }, [wirespecOutput, emitter]);
+  }, [wirespecOutput]);
 
   return (
     <Box display="flex">
@@ -175,7 +170,7 @@ function RouteComponent() {
         }}
       >
         <Box
-          marginInline={{ xs: 1, sm: 8 }}
+          marginInline={{ xs: 1, sm: 2 }}
           display="flex"
           justifyContent="space-between"
         >
@@ -191,6 +186,25 @@ function RouteComponent() {
           </Box>
         </Box>
         <Box marginTop={1} borderTop="1px solid var(--border-primary)">
+          {/* Single file tab mirroring the output panel's file tabs, so both
+              editors stay vertically aligned. */}
+          <Tabs
+            value={0}
+            sx={{
+              minHeight: 36,
+              borderBottom: "1px solid var(--border-primary)",
+              "& .MuiTab-root": {
+                color: "var(--color-primary)",
+                minHeight: 36,
+                textTransform: "none",
+              },
+            }}
+          >
+            <Tab
+              value={0}
+              label={specification === "wirespec" ? "todo.ws" : "todo.json"}
+            />
+          </Tabs>
           <PlayGround
             code={code}
             setCode={setCode}
@@ -206,11 +220,20 @@ function RouteComponent() {
         }}
       >
         <Box
-          marginInline={{ xs: 1, sm: 8 }}
+          marginInline={{ xs: 1, sm: 2 }}
           display="flex"
           justifyContent="space-between"
         >
-          <EmitterSelector />
+          <Box display="flex" gap={1}>
+            <EmitterSelector />
+            {packages.length > 1 && (
+              <PackageSelector
+                packages={packages}
+                value={activePackage ?? ""}
+                onChange={setSelectedPackage}
+              />
+            )}
+          </Box>
           <Box display={{ sm: "none" }}>
             <Button
               sx={{ color: "var(--color-primary)" }}
@@ -227,8 +250,7 @@ function RouteComponent() {
           borderLeft={{ sm: "1px solid var(--border-primary)" }}
         >
           <OutputView
-            files={wirespecOutput?.result || []}
-            allCode={wirespecResult}
+            files={filteredFiles}
             language={wirespecOutput?.language || "wirespec"}
           />
         </Box>
