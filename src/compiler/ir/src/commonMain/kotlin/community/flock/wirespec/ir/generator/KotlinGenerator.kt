@@ -203,7 +203,8 @@ object KotlinGenerator : Generator {
 
         val paramsStr = fields.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") {
             val overridePrefix = "override ".takeIf { _ -> it.isOverride }.orEmpty()
-            "${overridePrefix}val ${it.name.value().sanitize()}: ${it.type.emitGenerics()}".indentCode(indent + 1)
+            val annotationsPrefix = it.annotations.joinToString("") { annotation -> "$annotation " }
+            "$annotationsPrefix${overridePrefix}val ${it.name.value().sanitize()}: ${it.type.emitGenerics()}".indentCode(indent + 1)
         }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {

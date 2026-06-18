@@ -138,6 +138,7 @@ data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
+    val annotations: List<String> = emptyList(),
 )
 
 data class Function(
