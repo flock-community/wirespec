@@ -79,7 +79,11 @@ internal object EndpointDslFile {
             if (needsArbConstant) {
                 import("io.kotest.property.arbitrary", "constant")
             }
-            shape.modelImports.forEach { import(modelPkg, it) }
+            // Model class names are pascalCased by the Kotlin IR emitter (see
+            // KotlinIrTransformer.buildModelImports). Apply the same normalisation so
+            // imports of underscore-bearing types (e.g. the HAL `Contact_embedded`)
+            // resolve to the emitted class (`ContactEmbedded`).
+            shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
             raw(renderScopeClass(shape, present, required))
             present.forEach { slot -> raw(renderSlotBuilder(shape, slot)) }
@@ -110,8 +114,7 @@ internal object EndpointDslFile {
     ).filter { it.fields.isNotEmpty() }
 
     /** Slots the caller must supply: those carrying at least one non-nullable field. */
-    private fun requiredSlots(shape: EndpointShape): List<Slot> =
-        presentSlots(shape).filter { slot -> slot.fields.any { !it.isNullable } }
+    private fun requiredSlots(shape: EndpointShape): List<Slot> = presentSlots(shape).filter { slot -> slot.fields.any { !it.isNullable } }
 
     private fun cap(name: String): String = name.replaceFirstChar(Char::uppercaseChar)
 
