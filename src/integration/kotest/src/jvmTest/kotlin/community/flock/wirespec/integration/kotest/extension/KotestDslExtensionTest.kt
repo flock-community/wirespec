@@ -22,15 +22,15 @@ class KotestDslExtensionTest {
     private fun emitter(): Emitter = KotlinIrEmitter(pkg, EmitShared(false)).applyExtensions(listOf(KotestDslExtension(pkg)))
 
     @Test
-    fun emitsPerEndpointDslAndCatalog() {
+    fun emitsPerEndpointDslWithCallExtension() {
         // `endpoint GetTodos GET /todos -> { 200 -> TodoDto[] }`
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
 
         output shouldContain "public class GetTodosScope internal constructor()"
         output shouldContain "endpointCall(GetTodos.Handler, GetTodos)"
         output shouldContain "inline fun <reified R : GetTodos.Response<*>> expecting(): R"
-        // One catalog object per source module exposes the endpoint as a block-style function.
-        output shouldContain "public suspend fun <R> getTodos(block: suspend GetTodosScope.() -> R): R"
+        // The entry point is a `call` extension on the generated endpoint object.
+        output shouldContain "public suspend fun <R> GetTodos.call(block: suspend GetTodosScope.() -> R): R"
     }
 
     @Test
@@ -60,9 +60,9 @@ class KotestDslExtensionTest {
         output shouldContain "inner.queryGen(\"name\", queryBuilder.name ?: Arb.constant(null))"
         output shouldContain "inner.headerGen(\"Refresh-Token\", headerBuilder.`Refresh-Token` ?: Arb.constant(null))"
 
-        // Terminals flush before executing; the catalog opens the scope as a block function.
+        // Terminals flush before executing; the `call` extension opens the scope as a block.
         output shouldContain "public suspend inline fun <reified R : PutTodo.Response<*>> expecting(): R {"
-        output shouldContain "public suspend fun <R> putTodo(block: suspend PutTodoScope.() -> R): R"
+        output shouldContain "public suspend fun <R> PutTodo.call(block: suspend PutTodoScope.() -> R): R"
     }
 
     @Test
@@ -72,5 +72,7 @@ class KotestDslExtensionTest {
 
         output shouldContain "public class QueueCall internal constructor()"
         output shouldContain "channelCall<String>(Queue::class)"
+        // The entry point is a `call` extension on the generated channel object.
+        output shouldContain "public suspend fun <R> Queue.call(block: suspend QueueCall.() -> R): R"
     }
 }
