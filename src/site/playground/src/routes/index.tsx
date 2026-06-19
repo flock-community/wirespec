@@ -17,11 +17,13 @@ import { swaggerExample } from "../examples/swagger";
 import {
   openApiV2ToWirespec,
   openApiV3ToWirespec,
+  avroToWirespec,
 } from "../transformations/OpenAPIToWirespec";
 import { openapiExample } from "../examples/openapi";
+import { avroExample } from "../examples/avro";
 
 type CompileSpecification = "wirespec";
-type ConvertSpecification = "open_api_v2" | "open_api_v3";
+type ConvertSpecification = "open_api_v2" | "open_api_v3" | "avro";
 
 export type Specification = CompileSpecification | ConvertSpecification;
 
@@ -108,7 +110,9 @@ function RouteComponent() {
     try {
       const json = JSON.parse(code);
 
-      if (json.swagger) {
+      if (specification === "avro") {
+        setWirespecOutput(avroToWirespec(code));
+      } else if (json.swagger) {
         setWirespecOutput(openApiV2ToWirespec(code));
       } else if (json.openapi) {
         setWirespecOutput(openApiV3ToWirespec(code));
@@ -151,6 +155,8 @@ function RouteComponent() {
         return setCode(swaggerExample);
       case "open_api_v3":
         return setCode(openapiExample);
+      case "avro":
+        return setCode(avroExample);
     }
   }, [specification]);
 
