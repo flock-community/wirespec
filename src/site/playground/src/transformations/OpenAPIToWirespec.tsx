@@ -6,7 +6,7 @@ export const openApiV2ToWirespec: (openapi: string) => CompilationResult = (
 ) => {
   const ast = convert(x, Converters.OPENAPI_V2);
   return {
-    result: emit(ast, Emitters.WIRESPEC, ""),
+    result: emit(ast, Emitters.WIRESPEC, "", false),
     errors: [],
     language: "wirespec",
   };
@@ -17,7 +17,7 @@ export const openApiV3ToWirespec: (openapi: string) => CompilationResult = (
 ) => {
   const ast = convert(x, Converters.OPENAPI_V3);
   return {
-    result: emit(ast, Emitters.WIRESPEC, ""),
+    result: emit(ast, Emitters.WIRESPEC, "", false),
     errors: [],
     language: "wirespec",
   };
@@ -28,7 +28,7 @@ export const avroToWirespec: (avro: string) => CompilationResult = (
 ) => {
   const ast = convert(x, Converters.AVRO);
   return {
-    result: emit(ast, Emitters.WIRESPEC, ""),
+    result: emit(ast, Emitters.WIRESPEC, "", false),
     errors: [],
     language: "wirespec",
   };
