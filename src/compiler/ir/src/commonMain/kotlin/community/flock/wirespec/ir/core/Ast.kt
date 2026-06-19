@@ -134,28 +134,29 @@ data class Struct(
  * contain other elements (such as [RawElement] annotations injected before a field by an IR
  * extension); this helper filters those out when only the declared fields are needed.
  */
-val Struct.fieldList: List<Field> get() = fields.filterIsInstance<Field>()
+fun Struct.fieldList(): List<Field> = fields.filterIsInstance<Field>()
 
 /**
- * Each declared [Field] paired with the raw annotation codes that immediately precede it.
- * An IR extension may inject annotations as [RawElement]s in front of a [Field] (see the
- * Jackson integration); the Java and Kotlin generators render those as the field's
- * annotations. Elements that are neither a [Field] nor a [RawElement] are ignored.
+ * Pairs each declared [Field] with the annotation codes that immediately precede it.
+ *
+ * An IR extension annotates a field by inserting [RawElement]s directly in front of it (see
+ * the Jackson integration). This walks [fields] in order, buffering each raw annotation code
+ * it encounters and attaching the buffer to the next [Field]. Elements that are neither a
+ * [Field] nor a [RawElement] are ignored.
  */
-val Struct.annotatedFields: List<Pair<Field, List<String>>>
-    get() = buildList {
-        val pending = mutableListOf<String>()
-        fields.forEach { element ->
-            when (element) {
-                is RawElement -> pending += element.code
-                is Field -> {
-                    add(element to pending.toList())
-                    pending.clear()
-                }
-                else -> Unit
+fun Struct.annotatedFields(): List<Pair<Field, List<String>>> = buildList {
+    val pendingAnnotations = mutableListOf<String>()
+    fields.forEach { element ->
+        when (element) {
+            is RawElement -> pendingAnnotations += element.code
+            is Field -> {
+                add(element to pendingAnnotations.toList())
+                pendingAnnotations.clear()
             }
+            else -> Unit
         }
     }
+}
 
 data class Constructor(
     val parameters: List<Parameter>,

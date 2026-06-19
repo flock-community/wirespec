@@ -213,7 +213,7 @@ class IrConverterTest {
         val inlineStruct = inline.convert().findElement<Struct>()!!
 
         val emittedStructName = inlineStruct.name.pascalCase()
-        val embeddedField = parentStruct.fieldList.single()
+        val embeddedField = parentStruct.fieldList().single()
         val customRef = ((embeddedField.type as Type.Nullable).type as Type.Custom).name.value()
 
         assertEquals(emittedStructName, customRef)

@@ -104,6 +104,7 @@ object TypeScriptGenerator : Generator {
             "$staticContent${";(async () => {\n$content${"})();".indentCode(indent)}\n".indentCode(indent)}"
         }
         is File -> elements.joinToString("") { it.emit(indent) }
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
         is Field -> ""
         is RawElement -> code.lines().joinToString("\n") { if (it.isEmpty()) it else it.indentCode(indent) } + "\n"
     }
@@ -162,7 +163,7 @@ object TypeScriptGenerator : Generator {
     private fun Enum.emit(indent: Int): String = "export type ${name.pascalCase()} = ${entries.joinToString(" | ") { "\"${it.name.value()}\"" }}\n".indentCode(indent)
 
     private fun Struct.emit(indent: Int): String {
-        val fields = fieldList
+        val fields = fieldList()
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
         val nonStructElements = elements.filter { it !is Struct }
         val fieldsContent = if (fields.isEmpty()) {
@@ -215,7 +216,7 @@ object TypeScriptGenerator : Generator {
     }
 
     private fun Struct.emitInline(): String {
-        val fields = fieldList
+        val fields = fieldList()
         if (fields.isEmpty()) return "{}"
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
         return "{${fields.joinToString(", ") { field ->

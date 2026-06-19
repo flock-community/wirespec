@@ -90,6 +90,7 @@ object RustGenerator : Generator {
             }
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope) }
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
         is Field -> ""
         is RawElement -> "$code\n".indentCode(indent)
     }
@@ -191,7 +192,7 @@ object RustGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList()): String {
-        val fields = fieldList
+        val fields = fieldList()
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emit() }}>"
         val functions = elements.filterIsInstance<AstFunction>()

@@ -48,8 +48,8 @@ class SanitizationTransformTest {
 
         val result = struct.sanitizeNames(javaLikeConfig)
 
-        assertEquals("firstName", result.fieldList[0].name.value())
-        assertEquals("lastName", result.fieldList[1].name.value())
+        assertEquals("firstName", result.fieldList()[0].name.value())
+        assertEquals("lastName", result.fieldList()[1].name.value())
     }
 
     @Test
@@ -63,7 +63,7 @@ class SanitizationTransformTest {
 
         val result = struct.sanitizeNames(javaLikeConfig)
 
-        assertEquals("_class", result.fieldList[0].name.value())
+        assertEquals("_class", result.fieldList()[0].name.value())
     }
 
     @Test

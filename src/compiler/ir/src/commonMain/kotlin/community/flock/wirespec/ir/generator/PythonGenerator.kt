@@ -109,6 +109,7 @@ object PythonGenerator : Generator {
             "$staticContent$defBlock$guard"
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope, qualifier) }
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
         is Field -> ""
         is RawElement -> "$code\n".indentCode(indent)
     }
@@ -185,7 +186,7 @@ object PythonGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), qualifier: ((String) -> String)? = null): String {
-        val fields = fieldList
+        val fields = fieldList()
         val p = mutableListOf<String>()
         interfaces.forEach { p.add(it.emit()) }
         if (typeParameters.isNotEmpty()) {

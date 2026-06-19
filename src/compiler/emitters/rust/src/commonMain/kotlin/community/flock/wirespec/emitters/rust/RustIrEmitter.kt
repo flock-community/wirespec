@@ -270,7 +270,7 @@ open class RustIrEmitter(
             .let { file ->
                 LanguageFile(file.name, file.elements.flatMap { element ->
                     if (element !is Struct) return@flatMap listOf(element)
-                    val structFields = element.fieldList
+                    val structFields = element.fieldList()
                     val derive = when {
                         structFields.any { containsUnderiveable(it.type) } -> ""
                         structFields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"

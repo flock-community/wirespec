@@ -125,7 +125,7 @@ internal fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = 
 
 internal fun <T : Element> T.addSelfReceiverToClientFields(): T {
     val struct = (this as? File)?.findElement<Struct>()
-    val fieldNames = struct?.fieldList?.map { it.name.value() }?.toSet() ?: emptySet()
+    val fieldNames = struct?.fieldList()?.map { it.name.value() }?.toSet() ?: emptySet()
     if (fieldNames.isEmpty()) return this
 
     return transform {

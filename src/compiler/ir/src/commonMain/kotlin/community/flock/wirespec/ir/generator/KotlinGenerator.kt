@@ -95,6 +95,7 @@ object KotlinGenerator : Generator {
             staticContent + "${modifier}fun main() {\n$content}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
         is Field -> ""
         is RawElement -> "$code\n".indentCode(indent)
     }
@@ -172,7 +173,7 @@ object KotlinGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val fields = fieldList
+        val fields = fieldList()
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
@@ -205,7 +206,7 @@ object KotlinGenerator : Generator {
             }
         }
 
-        val paramParts = annotatedFields.map { (field, annotations) ->
+        val paramParts = annotatedFields().map { (field, annotations) ->
             val annotationPrefix = annotations.joinToString("") { "$it " }
             val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
             "$annotationPrefix${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}".indentCode(indent + 1)

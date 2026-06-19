@@ -93,6 +93,7 @@ object JavaGenerator : Generator {
             "public class $fileName {\n$staticContent  public static void main(String[] args) {\n$content  }\n}\n"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
         is Field -> ""
         is RawElement -> code.indentCode(indent)
     }
@@ -191,7 +192,7 @@ object JavaGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val fields = fieldList
+        val fields = fieldList()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " implements ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emitGenerics() }
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
@@ -204,7 +205,7 @@ object JavaGenerator : Generator {
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
-        val paramParts = annotatedFields.map { (field, annotations) ->
+        val paramParts = annotatedFields().map { (field, annotations) ->
             val annotationPrefix = annotations.joinToString("") { "$it " }
             "$annotationPrefix${field.type.emitGenerics()} ${field.name.value().sanitize()}".indentCode(1)
         }
