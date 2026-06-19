@@ -18,7 +18,6 @@ import community.flock.wirespec.emitters.java.JavaIrEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.ir.extension.ExtendingIrEmitter
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class AvroExtensionTest {
@@ -70,17 +69,15 @@ class AvroExtensionTest {
             """
             |package packageName.avro;
             |import packageName.model.Identifier;
-            |public class IdentifierAvro {
+            |public interface IdentifierAvro {
             |  public static final org.apache.avro.Schema SCHEMA =
             |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
             |  public static Identifier from(org.apache.avro.generic.GenericData.Record record) {
-            |    return new Identifier(
-            |      (String) record.get(0).toString()
-            |    );
+            |    return new Identifier((String) record.get(0).toString());
             |  }
             |  public static org.apache.avro.generic.GenericData.Record to(Identifier data) {
-            |    var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
-            |      record.put(0, data.name());
+            |    final var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
+            |    record.put(0, data.name());
             |    return record;
             |  }
             |}
@@ -96,7 +93,7 @@ class AvroExtensionTest {
             """
             |package packageName.avro;
             |import packageName.model.Identifier;
-            |public class IdentifierAvro {
+            |public interface IdentifierAvro {
             |  public static final org.apache.avro.Schema SCHEMA =
             |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
             |  public static Identifier from(org.apache.avro.generic.GenericData.EnumSymbol record) {
@@ -120,16 +117,11 @@ class AvroExtensionTest {
             |import packageName.model.Identifier
             |object IdentifierAvro {
             |  val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}")
-            |  @JvmStatic
-            |  fun from(record: org.apache.avro.generic.GenericData.Record): Identifier {
-            |    return Identifier(
-            |      record.get(0).toString() as String
-            |    )
-            |  }
-            |  @JvmStatic
-            |  fun to(model: Identifier ): org.apache.avro.generic.GenericData.Record {
+            |  fun from(record: org.apache.avro.generic.GenericData.Record): Identifier =
+            |    Identifier(name = record.get(0).toString() as String)
+            |  fun to(data: Identifier): org.apache.avro.generic.GenericData.Record {
             |    val record = org.apache.avro.generic.GenericData.Record(SCHEMA)
-            |    record.put(0, model.name)
+            |    record.put(0, data.name)
             |    return record
             |  }
             |}
@@ -147,14 +139,10 @@ class AvroExtensionTest {
             |import packageName.model.Identifier
             |object IdentifierAvro {
             |  val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}")
-            |  @JvmStatic
-            |  fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): Identifier {
-            |    return Identifier.valueOf(record.toString())
-            |  }
-            |  @JvmStatic
-            |  fun to(model: Identifier): org.apache.avro.generic.GenericData.EnumSymbol {
-            |    return org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, model.name)
-            |  }
+            |  fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): Identifier =
+            |    Identifier.valueOf(record.toString())
+            |  fun to(data: Identifier): org.apache.avro.generic.GenericData.EnumSymbol =
+            |    org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, data.name)
             |}
             |
             """.trimMargin()
