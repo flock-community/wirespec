@@ -1,6 +1,11 @@
 package community.flock.wirespec.generated.channel
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
-interface Queue : Wirespec.Channel {
-  fun invoke(message: String)
+object Queue : Wirespec.Channel {
+  fun interface Sender {
+      fun queue(message: String)
+  }
+  fun interface Listener {
+      fun queue(handler: (String) -> Unit)
+  }
 }

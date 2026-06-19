@@ -147,7 +147,7 @@ object PutTodo : Wirespec.Endpoint {
         }
       }
   }
-  interface Call : Wirespec.Call {
+  fun interface Call : Wirespec.Call {
       suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): Response<*>
   }
   val api = Handler

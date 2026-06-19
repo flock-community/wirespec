@@ -72,7 +72,7 @@ object GetTodos : Wirespec.Endpoint {
         }
       }
   }
-  interface Call : Wirespec.Call {
+  fun interface Call : Wirespec.Call {
       suspend fun getTodos(): Response<*>
   }
   val api = Handler

@@ -1,6 +1,11 @@
 import {Wirespec} from '../Wirespec'
-export interface Queue extends Wirespec.Channel {
-  invoke(message: string): void;
+export namespace Queue {
+  export interface Sender {
+    queue(message: string): void;
+  }
+  export interface Listener {
+    queue(handler: (p0: string) => void): void;
+  }
 }
 
 export {Queue} from './Queue'
