@@ -121,13 +121,42 @@ data class Import(
 
 data class Struct(
     override val name: Name,
-    val fields: List<Field>,
+    val fields: List<Element>,
     val constructors: List<Constructor> = emptyList(),
     val interfaces: List<Type.Custom> = emptyList(),
     override val elements: List<Element> = emptyList(),
     val typeParameters: List<TypeParameter> = emptyList(),
 ) : HasName,
     HasElements
+
+/**
+ * The [Field] entries of this struct's parameter list. A struct's [Struct.fields] may also
+ * contain other elements (such as [RawElement] annotations injected before a field by an IR
+ * extension); this helper filters those out when only the declared fields are needed.
+ */
+fun Struct.fieldList(): List<Field> = fields.filterIsInstance<Field>()
+
+/**
+ * Pairs each declared [Field] with the annotation codes that immediately precede it.
+ *
+ * An IR extension annotates a field by inserting [RawElement]s directly in front of it (see
+ * the Jackson integration). This walks [fields] in order, buffering each raw annotation code
+ * it encounters and attaching the buffer to the next [Field]. Elements that are neither a
+ * [Field] nor a [RawElement] are ignored.
+ */
+fun Struct.annotatedFields(): List<Pair<Field, List<String>>> = buildList {
+    val pendingAnnotations = mutableListOf<String>()
+    fields.forEach { element ->
+        when (element) {
+            is RawElement -> pendingAnnotations += element.code
+            is Field -> {
+                add(element to pendingAnnotations.toList())
+                pendingAnnotations.clear()
+            }
+            else -> Unit
+        }
+    }
+}
 
 data class Constructor(
     val parameters: List<Parameter>,
@@ -138,7 +167,7 @@ data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
-)
+) : Element
 
 data class Function(
     override val name: Name,

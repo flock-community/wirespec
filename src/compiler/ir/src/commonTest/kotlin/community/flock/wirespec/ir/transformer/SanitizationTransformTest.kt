@@ -9,6 +9,7 @@ import community.flock.wirespec.ir.core.ReturnStatement
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.transformChildren
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -47,8 +48,8 @@ class SanitizationTransformTest {
 
         val result = struct.sanitizeNames(javaLikeConfig)
 
-        assertEquals("firstName", result.fields[0].name.value())
-        assertEquals("lastName", result.fields[1].name.value())
+        assertEquals("firstName", result.fieldList()[0].name.value())
+        assertEquals("lastName", result.fieldList()[1].name.value())
     }
 
     @Test
@@ -62,7 +63,7 @@ class SanitizationTransformTest {
 
         val result = struct.sanitizeNames(javaLikeConfig)
 
-        assertEquals("_class", result.fields[0].name.value())
+        assertEquals("_class", result.fieldList()[0].name.value())
     }
 
     @Test
