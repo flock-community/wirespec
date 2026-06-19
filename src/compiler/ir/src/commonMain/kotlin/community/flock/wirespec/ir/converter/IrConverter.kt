@@ -588,11 +588,18 @@ fun RefinedWirespec.convert() = file(identifier.toName()) {
 }
 
 fun ChannelWirespec.convert() = file(identifier.toName()) {
-    `interface`(identifier.toName()) {
-        extends(type("Wirespec.Channel"))
-        function("invoke") {
-            arg("message", reference.convert())
-            returnType(unit)
+    namespace(identifier.toName(), type("Wirespec.Channel")) {
+        `interface`("Sender") {
+            function(identifier.toName()) {
+                arg("message", reference.convert())
+                returnType(unit)
+            }
+        }
+        `interface`("Listener") {
+            function(identifier.toName()) {
+                arg("handler", Type.Function(listOf(reference.convert()), unit))
+                returnType(unit)
+            }
         }
     }
 }
