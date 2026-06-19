@@ -99,10 +99,6 @@ class Request(Wirespec.Request[PotentialTodoDto]):
         self.body = body
 class Response(Wirespec.Response[T], Generic[T]):
     pass
-class Response2XX(Response[T], Generic[T]):
-    pass
-class Response5XX(Response[T], Generic[T]):
-    pass
 class ResponseTodoDto(Response[TodoDto]):
     pass
 class ResponseError(Response[Error]):
@@ -111,7 +107,7 @@ class ResponseError(Response[Error]):
 class Response200Headers(Wirespec.Response.Headers):
     pass
 @dataclass
-class Response200(Response2XX[TodoDto], ResponseTodoDto):
+class Response200(Wirespec.Response2XX[TodoDto], ResponseTodoDto):
     status: int
     headers: Response200Headers
     body: TodoDto
@@ -127,7 +123,7 @@ class Response201Headers(Wirespec.Response.Headers):
     token: Token
     refreshToken: Optional[Token]
 @dataclass
-class Response201(Response2XX[TodoDto], ResponseTodoDto):
+class Response201(Wirespec.Response2XX[TodoDto], ResponseTodoDto):
     status: int
     headers: Response201Headers
     body: TodoDto
@@ -144,7 +140,7 @@ class Response201(Response2XX[TodoDto], ResponseTodoDto):
 class Response500Headers(Wirespec.Response.Headers):
     pass
 @dataclass
-class Response500(Response5XX[Error], ResponseError):
+class Response500(Wirespec.Response5XX[Error], ResponseError):
     status: int
     headers: Response500Headers
     body: Error

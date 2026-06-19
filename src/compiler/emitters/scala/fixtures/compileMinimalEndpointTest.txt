@@ -13,14 +13,13 @@ object GetTodos extends Wirespec.Endpoint {
       override val headers: RequestHeaders.type = RequestHeaders
       override val body: Unit = ()  }
   sealed trait Response[T] extends Wirespec.Response[T]
-  sealed trait Response2XX[T] extends Response[T]
   sealed trait ResponseListTodoDto extends Response[List[TodoDto]]
   object Response200Headers extends Wirespec.Response.Headers
   case class Response200(
       override val status: Int,
       override val headers: Response200Headers.type,
       override val body: List[TodoDto]
-    ) extends Response2XX[List[TodoDto]] with ResponseListTodoDto {
+    ) extends Wirespec.Response2XX[List[TodoDto]] with ResponseListTodoDto {
       def this(body: List[TodoDto]) = this(200, Response200Headers, body)
     }
   def toRawRequest(serialization: Wirespec.Serializer, request: Request.type): Wirespec.RawRequest =

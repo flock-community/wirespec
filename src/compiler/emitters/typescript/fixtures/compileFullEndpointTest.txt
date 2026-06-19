@@ -30,9 +30,7 @@ export namespace PutTodo {
     headers: {"token": params["token"], "refreshToken": params["refreshToken"]},
     body: params.body,
   })
-  export type Response<T = unknown> = Response2XX | Response5XX | ResponseTodoDto | ResponseError
-  export type Response2XX<T = unknown> = Response200 | Response201
-  export type Response5XX<T = unknown> = Response500
+  export type Response<T = unknown> = ResponseTodoDto | ResponseError
   export type ResponseTodoDto = Response200 | Response201
   export type ResponseError = Response500
   export type Response200Headers = {}

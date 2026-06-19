@@ -31,6 +31,11 @@ export namespace Wirespec {
     headers: {};
     body: T;
   }
+  export interface Response1XX<T> extends Response<T> {}
+  export interface Response2XX<T> extends Response<T> {}
+  export interface Response3XX<T> extends Response<T> {}
+  export interface Response4XX<T> extends Response<T> {}
+  export interface Response5XX<T> extends Response<T> {}
   export interface BodySerializer {
     serializeBody<T>(t: T, type: Type): Uint8Array;
   }

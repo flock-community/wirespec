@@ -99,15 +99,6 @@ impl From<Response200> for Response { fn from(value: Response200) -> Self { Resp
 impl From<Response201> for Response { fn from(value: Response201) -> Self { Response::Response201(value) } }
 impl From<Response500> for Response { fn from(value: Response500) -> Self { Response::Response500(value) } }
 #[derive(Debug, Clone, PartialEq)]
-pub enum Response2XX {
-    Response200(Response200),
-    Response201(Response201),
-}
-#[derive(Debug, Clone, PartialEq)]
-pub enum Response5XX {
-    Response500(Response500),
-}
-#[derive(Debug, Clone, PartialEq)]
 pub enum ResponseTodoDto {
     Response200(Response200),
     Response201(Response201),

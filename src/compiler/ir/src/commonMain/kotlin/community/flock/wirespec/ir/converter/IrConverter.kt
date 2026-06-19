@@ -114,6 +114,26 @@ fun PackageName.convert(): File = file("Wirespec") {
             field("body", type("T"))
             `interface`("Headers")
         }
+        `interface`("Response1XX") {
+            typeParam(type("T"))
+            extends(type("Response", type("T")))
+        }
+        `interface`("Response2XX") {
+            typeParam(type("T"))
+            extends(type("Response", type("T")))
+        }
+        `interface`("Response3XX") {
+            typeParam(type("T"))
+            extends(type("Response", type("T")))
+        }
+        `interface`("Response4XX") {
+            typeParam(type("T"))
+            extends(type("Response", type("T")))
+        }
+        `interface`("Response5XX") {
+            typeParam(type("T"))
+            extends(type("Response", type("T")))
+        }
         `interface`("BodySerializer") {
             function(Name("serialize", "Body")) {
                 returnType(bytes)
@@ -671,29 +691,21 @@ fun EndpointWirespec.convert(): File {
                 }
             }
 
-            // Pre-compute response names grouped by status prefix and content type
+            // Pre-compute response names grouped by content type
             val distinctResponses = endpoint.responses.distinctBy { it.status }
-            val statusPrefixGroups = distinctResponses.groupBy { it.status.first() }
             val contentTypeGroups = distinctResponses.groupBy { it.content?.reference }
 
-            val statusPrefixUnionNames = statusPrefixGroups.keys.map { "Response${it}XX" }
             val contentTypeUnionNames = contentTypeGroups.map { (ref, _) ->
                 val contentType = ref?.convert() ?: Type.Unit
                 "Response${contentType.toTypeName()}"
             }
 
-            // Response union — members are the intermediate unions
+            // Response union — members are the content-type unions. Status-prefix grouping
+            // is provided by the shared Wirespec.Response{1..5}XX marker interfaces, which the
+            // individual response records implement directly.
             union("Response", extends = type("Wirespec.Response", type("T"))) {
                 typeParam(type("T"))
-                (statusPrefixUnionNames + contentTypeUnionNames).distinct().forEach { member(it) }
-            }
-
-            // Status prefix unions (Response2XX, Response5XX, etc.)
-            statusPrefixGroups.forEach { (prefix, responses) ->
-                union("Response${prefix}XX", extends = type("Response", type("T"))) {
-                    typeParam(type("T"))
-                    responses.forEach { member("Response${it.status.replaceFirstChar { c -> c.uppercaseChar() }}") }
-                }
+                contentTypeUnionNames.distinct().forEach { member(it) }
             }
 
             // Content type unions (ResponseUnit, ResponseTodoDto, etc.)
@@ -718,7 +730,7 @@ fun EndpointWirespec.convert(): File {
                     response.headers.forEach { field(it.identifier.toName(), it.reference.convert()) }
                 }
                 struct("Response$statusClassName") {
-                    implements(type("Response${statusPrefix}XX", bodyType))
+                    implements(type("Wirespec.Response${statusPrefix}XX", bodyType))
                     implements(type("Response$contentTypeName"))
                     field("status", Type.IntegerLiteral(statusCode), isOverride = true)
                     field("headers", type(headersName), isOverride = true)
