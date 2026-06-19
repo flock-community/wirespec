@@ -28,8 +28,6 @@ internal data class EndpointShape(
     val bodyFieldShapes: List<BodyFieldShape>,
     val modelImports: List<String>,
 ) {
-    val dslName: String get() = name.replaceFirstChar(Char::lowercaseChar)
-
     /** Flat top-level view of [bodyFieldShapes], kept for backwards-compat with callers that expect a simple list. */
     val bodyFields: List<NamedTypedField> = bodyFieldShapes.map { f ->
         NamedTypedField(

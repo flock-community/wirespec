@@ -11,8 +11,6 @@ internal data class ChannelShape(
     val payloadFields: List<EndpointShape.NamedTypedField>,
     val modelImports: List<String>,
 ) {
-    val dslName: String get() = name.replaceFirstChar(Char::lowercaseChar)
-
     companion object {
         fun from(
             channel: Channel,

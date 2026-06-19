@@ -16,10 +16,10 @@ import community.flock.wirespec.ir.core.file
  *
  * ## Block style
  *
- * The catalog exposes each endpoint as a function taking a `<Endpoint>Scope` receiver:
+ * Each endpoint object carries a `call` extension taking a `<Endpoint>Scope` receiver:
  *
  * ```
- * runs.putTodo {
+ * PutTodo.call {
  *     path   = { id = Arb.constant("42") }
  *     query  = { done = Arb.constant(true) }   // `name` (nullable) may be omitted
  *     header = { token = Arb.constant(Token("iss")) }
@@ -85,6 +85,7 @@ internal object EndpointDslFile {
             // resolve to the emitted class (`ContactEmbedded`).
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
+            raw(renderCallExtension(shape))
             raw(renderScopeClass(shape, present, required))
             present.forEach { slot -> raw(renderSlotBuilder(shape, slot)) }
             if (shape.bodyType != null && shape.bodyFieldShapes.isNotEmpty()) {
@@ -119,6 +120,20 @@ internal object EndpointDslFile {
     private fun cap(name: String): String = name.replaceFirstChar(Char::uppercaseChar)
 
     private fun slotBuilderName(shape: EndpointShape, slot: Slot): String = "${shape.name}${cap(slot.name)}Builder"
+
+    // ------------------------------------------------------------------------------------
+    // Entry point
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * The DSL entry point: a `call` extension on the generated endpoint object (e.g.
+     * `PutTodo.call { … }`). It opens the `<Endpoint>Scope` receiver and runs the block,
+     * returning whatever the terminal (`expecting`/`collecting`) yields.
+     */
+    private fun renderCallExtension(shape: EndpointShape): String = buildString {
+        appendLine("public suspend fun <R> ${shape.name}.call(block: suspend ${shape.name}Scope.() -> R): R =")
+        append("    ${shape.name}Scope().block()")
+    }
 
     // ------------------------------------------------------------------------------------
     // Scope class
