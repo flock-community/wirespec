@@ -39,33 +39,32 @@ object PutTodo : Wirespec.Endpoint {
   sealed interface ResponseError : Response<Error>
   object Response200Headers : Wirespec.Response.Headers
   data class Response200(
-      override val status: Int,
-      override val headers: Response200Headers,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(body: TodoDto) : this(200, Response200Headers, body)
+      override val status: Int = 200
+      override val headers: Response200Headers = Response200Headers
     }
   data class Response201Headers(
       val token: Token,
       val refreshToken: Token?
     ) : Wirespec.Response.Headers
   data class Response201(
-      override val status: Int,
-      override val headers: Response201Headers,
+      val token: Token,
+      val refreshToken: Token?,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(token: Token, refreshToken: Token?, body: TodoDto) : this(201, Response201Headers(
+      override val status: Int = 201
+      override val headers: Response201Headers = Response201Headers(
         token = token,
         refreshToken = refreshToken
-      ), body)
+      )
     }
   object Response500Headers : Wirespec.Response.Headers
   data class Response500(
-      override val status: Int,
-      override val headers: Response500Headers,
       override val body: Error
     ) : Response5XX<Error>, ResponseError {
-      constructor(body: Error) : this(500, Response500Headers, body)
+      override val status: Int = 500
+      override val headers: Response500Headers = Response500Headers
     }
   fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(

@@ -17,11 +17,10 @@ object GetTodos extends Wirespec.Endpoint {
   sealed trait ResponseListTodoDto extends Response[List[TodoDto]]
   object Response200Headers extends Wirespec.Response.Headers
   case class Response200(
-      override val status: Int,
-      override val headers: Response200Headers.type,
       override val body: List[TodoDto]
     ) extends Response2XX[List[TodoDto]] with ResponseListTodoDto {
-      def this(body: List[TodoDto]) = this(200, Response200Headers, body)
+      override val status: Int = 200
+      override val headers: Response200Headers.type = Response200Headers
     }
   def toRawRequest(serialization: Wirespec.Serializer, request: Request.type): Wirespec.RawRequest =
     new Wirespec.RawRequest(

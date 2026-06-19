@@ -167,6 +167,12 @@ data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
+    /**
+     * When set, this field is a fixed/derived member rather than a constructor input: emitters
+     * render it with this initializer expression (e.g. `Response` status/headers) and exclude it
+     * from the constructable surface, so its value cannot be overridden by callers.
+     */
+    val initializer: Expression? = null,
 ) : Element
 
 data class Function(

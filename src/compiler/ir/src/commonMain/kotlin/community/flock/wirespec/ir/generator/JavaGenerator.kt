@@ -205,6 +205,29 @@ object JavaGenerator : Generator {
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
+        // Fields carrying an initializer are fixed/derived members rather than record components:
+        // they are rendered as accessor methods returning a constant value, so they cannot be set
+        // through the canonical constructor. The constructor parameters become the record's
+        // components (the only construction surface).
+        val memberFields = fields.filter { it.initializer != null }
+        if (memberFields.isNotEmpty()) {
+            val componentParts = (constructors.singleOrNull()?.parameters ?: emptyList()).map { param ->
+                "${param.type.emitGenerics()} ${param.name.camelCase().sanitize()}".indentCode(1)
+            }
+            val componentsStr = if (componentParts.isEmpty()) " ()" else componentParts.joinToString(",\n", " (\n", "\n)")
+            val memberMethods = memberFields.joinToString("") { field ->
+                val init = field.initializer!!
+                val valueStr = when {
+                    init is ConstructorStatement && init.type == Type.Unit -> "null"
+                    init is ConstructorStatement -> "new ${init.type.emitConstructorType()}${init.formatArgs()}"
+                    else -> init.emit()
+                }
+                val methodBody = "return $valueStr;\n".indentCode(1)
+                "public ${field.type.emitGenerics()} ${field.name.value().sanitize()}() {\n$methodBody}\n".indentCode(1)
+            }
+            return "$typeModifier ${name.pascalCase()}$typeParamsStr$componentsStr$implStr {\n$memberMethods$nestedContent};\n\n".indentCode(indent)
+        }
+
         val paramParts = annotatedFields().map { (field, annotations) ->
             val annotationPrefix = annotations.joinToString("") { "$it " }
             "$annotationPrefix${field.type.emitGenerics()} ${field.name.value().sanitize()}".indentCode(1)

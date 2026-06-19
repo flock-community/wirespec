@@ -290,6 +290,24 @@ object ScalaGenerator : Generator {
             }
         }
 
+        // Fields carrying an initializer are fixed/derived members rather than constructor inputs.
+        // The constructor parameters become the (only) public construction surface; matching
+        // declared fields contribute their `override` modifier.
+        val memberFields = fields.filter { it.initializer != null }
+        val ctorWithParams = constructors.singleOrNull()?.takeIf { it.parameters.isNotEmpty() }
+        if (memberFields.isNotEmpty() && ctorWithParams != null) {
+            val fieldsByName = fields.associateBy { it.name.value() }
+            val memberParamsStr = ctorWithParams.parameters.joinToString(",\n", "(\n", "\n${")".indentCode(indent)}") { param ->
+                val overridePrefix = "override ".takeIf { _ -> fieldsByName[param.name.value()]?.isOverride == true }.orEmpty()
+                "${overridePrefix}val ${param.name.camelCase().sanitize()}: ${param.type.emitTypeAnnotation()}".indentCode(indent + 1)
+            }
+            val memberLines = memberFields.joinToString("") { field ->
+                val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
+                "${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitTypeAnnotation()} = ${field.initializer!!.emit()}\n".indentCode(indent + 1)
+            }
+            return "case class $pascal$typeParamsStr$memberParamsStr$implStr {\n$memberLines$nestedContent$closingBrace\n\n".indentCode(indent)
+        }
+
         val paramsStr = if (fields.isEmpty()) {
             ""
         } else {

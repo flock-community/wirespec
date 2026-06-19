@@ -136,7 +136,10 @@ fun Element.transformChildren(transformer: Transformer): Element = when (this) {
     is RawElement -> this
 }
 
-fun Field.transformChildren(transformer: Transformer): Field = copy(type = transformer.transformType(type))
+fun Field.transformChildren(transformer: Transformer): Field = copy(
+    type = transformer.transformType(type),
+    initializer = initializer?.let { transformer.transformExpression(it) },
+)
 
 fun Parameter.transformChildren(transformer: Transformer): Parameter = copy(type = transformer.transformType(type))
 

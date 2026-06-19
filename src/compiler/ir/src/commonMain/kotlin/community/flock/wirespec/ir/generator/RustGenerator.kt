@@ -213,7 +213,12 @@ object RustGenerator : Generator {
 
         val fieldsStr = fields.joinToString("\n") {
             val fieldName = it.name.snakeCase().sanitize()
-            "pub $fieldName: ${it.type.emit()},".indentCode(1)
+            // Fields carrying an initializer (e.g. response status/headers) are fixed and must not
+            // be settable by consumers: keep them module-private so external struct-literal
+            // construction is rejected while the generated `new` and conversion helpers (defined in
+            // the same/descendant module) can still read and assign them.
+            val visibility = if (it.initializer != null) "" else "pub "
+            "$visibility$fieldName: ${it.type.emit()},".indentCode(1)
         }
         val structDef = "pub struct $rustName$typeParamsStr {\n$fieldsStr\n}\n\n".indentCode(indent)
 

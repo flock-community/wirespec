@@ -206,6 +206,25 @@ object KotlinGenerator : Generator {
             }
         }
 
+        // Fields carrying an initializer are fixed/derived members rather than constructor inputs.
+        // The constructor parameters become the (only) public construction surface; matching
+        // declared fields contribute their `override` modifier.
+        val memberFields = fields.filter { it.initializer != null }
+        val ctorWithParams = constructors.singleOrNull()?.takeIf { it.parameters.isNotEmpty() }
+        if (memberFields.isNotEmpty() && ctorWithParams != null) {
+            val fieldsByName = fields.associateBy { it.name.value() }
+            val memberParamParts = ctorWithParams.parameters.map { param ->
+                val overridePrefix = "override ".takeIf { _ -> fieldsByName[param.name.value()]?.isOverride == true }.orEmpty()
+                "${overridePrefix}val ${param.name.camelCase().sanitize()}: ${param.type.emitGenerics()}".indentCode(indent + 1)
+            }
+            val memberParamsStr = memberParamParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
+            val memberLines = memberFields.joinToString("") { field ->
+                val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
+                "${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()} = ${field.initializer!!.emit()}\n".indentCode(indent + 1)
+            }
+            return "data class $pascal$typeParamsStr$memberParamsStr$implStr {\n$memberLines$nestedContent$closingBrace\n\n".indentCode(indent)
+        }
+
         val paramParts = annotatedFields().map { (field, annotations) ->
             val annotationPrefix = annotations.joinToString("") { "$it " }
             val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()

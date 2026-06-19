@@ -25,12 +25,13 @@ public interface GetTodos extends Wirespec.Endpoint {
   public static record Response200Headers () implements Wirespec.Response.Headers {
   };
   public static record Response200 (
-    Integer status,
-    Response200Headers headers,
     java.util.List<TodoDto> body
   ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
-    public Response200(java.util.List<TodoDto> body) {
-      this(200, new Response200Headers(), body);
+    public Integer status() {
+      return 200;
+    }
+    public Response200Headers headers() {
+      return new Response200Headers();
     }
   };
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {

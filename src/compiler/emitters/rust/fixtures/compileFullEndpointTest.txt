@@ -120,8 +120,8 @@ pub enum ResponseError {
 pub struct Response200Headers;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response200 {
-    pub status: i32,
-    pub headers: Response200Headers,
+    status: i32,
+    headers: Response200Headers,
     pub body: TodoDto,
 }
 impl Response200 {
@@ -140,8 +140,8 @@ pub struct Response201Headers {
 }
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response201 {
-    pub status: i32,
-    pub headers: Response201Headers,
+    status: i32,
+    headers: Response201Headers,
     pub body: TodoDto,
 }
 impl Response201 {
@@ -157,8 +157,8 @@ impl Response201 {
 pub struct Response500Headers;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response500 {
-    pub status: i32,
-    pub headers: Response500Headers,
+    status: i32,
+    headers: Response500Headers,
     pub body: Error,
 }
 impl Response500 {

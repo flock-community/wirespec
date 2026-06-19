@@ -312,12 +312,12 @@ class StructBuilder(private val name: Name) : ContainerBuilder {
         typeParameters.add(TypeParameter(type, extends.toList()))
     }
 
-    fun field(name: String, type: Type, isOverride: Boolean = false) {
-        fields.add(Field(Name.of(name), type, isOverride))
+    fun field(name: String, type: Type, isOverride: Boolean = false, initializer: Expression? = null) {
+        fields.add(Field(Name.of(name), type, isOverride, initializer))
     }
 
-    fun field(name: Name, type: Type, isOverride: Boolean = false) {
-        fields.add(Field(name, type, isOverride))
+    fun field(name: Name, type: Type, isOverride: Boolean = false, initializer: Expression? = null) {
+        fields.add(Field(name, type, isOverride, initializer))
     }
 
     fun construct(type: Type, block: ConstructorBuilder.() -> Unit = {}): ConstructorStatement {

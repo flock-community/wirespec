@@ -720,9 +720,29 @@ fun EndpointWirespec.convert(): File {
                 struct("Response$statusClassName") {
                     implements(type("Response${statusPrefix}XX", bodyType))
                     implements(type("Response$contentTypeName"))
-                    field("status", Type.IntegerLiteral(statusCode), isOverride = true)
-                    field("headers", type(headersName), isOverride = true)
-                    field("body", bodyType, isOverride = true)
+                    // status and headers are fixed/derived members: they carry an initializer so
+                    // emitters render them as non-settable members instead of constructor inputs.
+                    field(
+                        "status",
+                        Type.IntegerLiteral(statusCode),
+                        isOverride = true,
+                        initializer = Literal(statusCode, Type.Integer(Precision.P32)),
+                    )
+                    field(
+                        "headers",
+                        type(headersName),
+                        isOverride = true,
+                        initializer = construct(type(headersName)) {
+                            response.headers.forEach {
+                                arg(it.identifier.toName(), VariableReference(it.identifier.toName()))
+                            }
+                        },
+                    )
+                    if (response.content != null) {
+                        field("body", bodyType, isOverride = true)
+                    } else {
+                        field("body", bodyType, isOverride = true, initializer = construct(Type.Unit))
+                    }
                     constructo {
                         response.responseParameters().forEach { (name, type) -> arg(name, type) }
                         assign("status", Literal(statusCode, Type.Integer(Precision.P32)))

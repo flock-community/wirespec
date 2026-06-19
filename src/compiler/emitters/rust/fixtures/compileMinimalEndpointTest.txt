@@ -55,8 +55,8 @@ pub enum ResponseListTodoDto {
 pub struct Response200Headers;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response200 {
-    pub status: i32,
-    pub headers: Response200Headers,
+    status: i32,
+    headers: Response200Headers,
     pub body: Vec<TodoDto>,
 }
 impl Response200 {

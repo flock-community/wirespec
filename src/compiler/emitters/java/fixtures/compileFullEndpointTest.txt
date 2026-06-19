@@ -45,12 +45,13 @@ public interface PutTodo extends Wirespec.Endpoint {
   public static record Response200Headers () implements Wirespec.Response.Headers {
   };
   public static record Response200 (
-    Integer status,
-    Response200Headers headers,
     TodoDto body
   ) implements Response2XX<TodoDto>, ResponseTodoDto {
-    public Response200(TodoDto body) {
-      this(200, new Response200Headers(), body);
+    public Integer status() {
+      return 200;
+    }
+    public Response200Headers headers() {
+      return new Response200Headers();
     }
   };
   public static record Response201Headers (
@@ -59,26 +60,30 @@ public interface PutTodo extends Wirespec.Endpoint {
   ) implements Wirespec.Response.Headers {
   };
   public static record Response201 (
-    Integer status,
-    Response201Headers headers,
+    Token token,
+    java.util.Optional<Token> refreshToken,
     TodoDto body
   ) implements Response2XX<TodoDto>, ResponseTodoDto {
-    public Response201(Token token, java.util.Optional<Token> refreshToken, TodoDto body) {
-      this(201, new Response201Headers(
+    public Integer status() {
+      return 201;
+    }
+    public Response201Headers headers() {
+      return new Response201Headers(
         token,
         refreshToken
-      ), body);
+      );
     }
   };
   public static record Response500Headers () implements Wirespec.Response.Headers {
   };
   public static record Response500 (
-    Integer status,
-    Response500Headers headers,
     Error body
   ) implements Response5XX<Error>, ResponseError {
-    public Response500(Error body) {
-      this(500, new Response500Headers(), body);
+    public Integer status() {
+      return 500;
+    }
+    public Response500Headers headers() {
+      return new Response500Headers();
     }
   };
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {

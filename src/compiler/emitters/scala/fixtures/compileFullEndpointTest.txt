@@ -39,33 +39,32 @@ object PutTodo extends Wirespec.Endpoint {
   sealed trait ResponseError extends Response[Error]
   object Response200Headers extends Wirespec.Response.Headers
   case class Response200(
-      override val status: Int,
-      override val headers: Response200Headers.type,
       override val body: TodoDto
     ) extends Response2XX[TodoDto] with ResponseTodoDto {
-      def this(body: TodoDto) = this(200, Response200Headers, body)
+      override val status: Int = 200
+      override val headers: Response200Headers.type = Response200Headers
     }
   case class Response201Headers(
       val token: Token,
       val refreshToken: Option[Token]
     ) extends Wirespec.Response.Headers
   case class Response201(
-      override val status: Int,
-      override val headers: Response201Headers,
+      val token: Token,
+      val refreshToken: Option[Token],
       override val body: TodoDto
     ) extends Response2XX[TodoDto] with ResponseTodoDto {
-      def this(token: Token, refreshToken: Option[Token], body: TodoDto) = this(201, Response201Headers(
+      override val status: Int = 201
+      override val headers: Response201Headers = Response201Headers(
         token = token,
         refreshToken = refreshToken
-      ), body)
+      )
     }
   object Response500Headers extends Wirespec.Response.Headers
   case class Response500(
-      override val status: Int,
-      override val headers: Response500Headers.type,
       override val body: Error
     ) extends Response5XX[Error] with ResponseError {
-      def this(body: Error) = this(500, Response500Headers, body)
+      override val status: Int = 500
+      override val headers: Response500Headers.type = Response500Headers
     }
   def toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     new Wirespec.RawRequest(
