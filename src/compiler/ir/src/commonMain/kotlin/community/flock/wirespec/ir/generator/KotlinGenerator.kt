@@ -112,6 +112,11 @@ object KotlinGenerator : Generator {
 
     private fun Interface.emit(indent: Int, parents: List<Element>): String {
         val sealedStr = "sealed ".takeIf { isSealed }.orEmpty()
+        // A functional (SAM) interface: not sealed, no abstract properties and exactly one abstract
+        // method. The abstract method may not be generic, since a lambda cannot satisfy a generic SAM.
+        val singleAbstractFun = (elements.singleOrNull() as? AstFunction)
+            ?.takeIf { it.body.isEmpty() && it.typeParameters.isEmpty() }
+        val funStr = "fun ".takeIf { !isSealed && fields.isEmpty() && singleAbstractFun != null }.orEmpty()
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val extStr = extends.joinNonEmpty(", ", " : ") { it.emitGenerics() }
         val fieldsContent = fields.joinToString("") { field ->
@@ -121,9 +126,9 @@ object KotlinGenerator : Generator {
         val elementsContent = elements.joinToString("") { it.emit(indent + 1, isStatic = false, parents = parents + this) }
         val content = fieldsContent + elementsContent
         return if (content.isEmpty()) {
-            "${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr\n\n".indentCode(indent)
+            "$funStr${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr\n\n".indentCode(indent)
         } else {
-            "${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+            "$funStr${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
         }
     }
 
