@@ -1,8 +1,8 @@
 package community.flock.wirespec.integration.avro.extension
 
 import arrow.core.toNonEmptyListOrNull
-import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -20,9 +20,7 @@ import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Import
 import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
@@ -40,19 +38,20 @@ import community.flock.wirespec.ir.extension.IrExtension
  * handling). Those are produced by a [JavaAvroSource] / [KotlinAvroSource] which reuse the
  * matching [JavaEmitter] / [KotlinEmitter] rendering helpers.
  *
- * Register it on a Java or Kotlin [community.flock.wirespec.ir.emit.IrEmitter] running in IR mode
- * (add the `avro-jvm` integration to the plugin classpath and list this class under
- * `extensionClasses`). The extension detects the target language from the IR (the shared
- * `Wirespec` package the model files import/emit is `$DEFAULT_SHARED_PACKAGE_STRING.java` for
- * Java and `$DEFAULT_SHARED_PACKAGE_STRING.kotlin` for Kotlin).
+ * The target [language] is supplied by the plugin (the emitter's [FileExtension]) and selects
+ * which source renders the language-specific leaves. Register it on a Java or Kotlin
+ * [community.flock.wirespec.ir.emit.IrEmitter] running in IR mode (add the `avro-jvm` integration
+ * to the plugin classpath and list this class under `extensionClasses`).
  */
-class AvroExtension(packageName: PackageName) : IrExtension {
+class AvroExtension(packageName: PackageName, language: FileExtension) : IrExtension {
 
-    private val java = JavaAvroSource(packageName)
-    private val kotlin = KotlinAvroSource(packageName)
+    private val source: AvroSource = when (language) {
+        FileExtension.Java -> JavaAvroSource(packageName)
+        FileExtension.Kotlin -> KotlinAvroSource(packageName)
+        else -> error("AvroExtension supports Java and Kotlin targets only, got $language")
+    }
 
     override fun extend(ir: IR, ast: AST): IR {
-        val source = ir.detectSource()
         val avroFiles = buildList {
             ast.modules.forEach { module ->
                 module.statements.forEach { definition ->
@@ -62,22 +61,6 @@ class AvroExtension(packageName: PackageName) : IrExtension {
         }
         val base: List<Element> = ir
         return (base + avroFiles).toNonEmptyListOrNull() ?: ir
-    }
-
-    private fun IR.detectSource(): AvroSource {
-        val paths = filterIsInstance<File>()
-            .flatMap { it.elements }
-            .mapNotNull {
-                when (it) {
-                    is Import -> it.path
-                    is Package -> it.path
-                    else -> null
-                }
-            }
-        return when {
-            paths.any { it == "$DEFAULT_SHARED_PACKAGE_STRING.kotlin" } -> kotlin
-            else -> java
-        }
     }
 }
 

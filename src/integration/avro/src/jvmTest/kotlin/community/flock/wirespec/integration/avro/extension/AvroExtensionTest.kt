@@ -4,6 +4,7 @@ import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -26,12 +27,12 @@ class AvroExtensionTest {
 
     private val javaEmitter = ExtendingIrEmitter(
         JavaIrEmitter(packageName, EmitShared(true)),
-        listOf(AvroExtension(packageName)),
+        listOf(AvroExtension(packageName, FileExtension.Java)),
     )
 
     private val kotlinEmitter = ExtendingIrEmitter(
         KotlinIrEmitter(packageName, EmitShared(true)),
-        listOf(AvroExtension(packageName)),
+        listOf(AvroExtension(packageName, FileExtension.Kotlin)),
     )
 
     private fun List<Emitted>.avro(file: String): String? = find { it.file == file }?.result

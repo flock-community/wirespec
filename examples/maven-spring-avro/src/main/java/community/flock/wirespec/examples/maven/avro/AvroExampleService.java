@@ -10,7 +10,7 @@ import org.springframework.kafka.listener.MessageListener;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AvroExampleService implements TestAvroRecord.Sender {
+public class AvroExampleService implements TestAvroRecord.Sender, TestAvroRecord.Listener {
 
     private static final String TOPIC = "test-avro-record";
 
@@ -30,6 +30,11 @@ public class AvroExampleService implements TestAvroRecord.Sender {
         var template = new KafkaTemplate<>(kafkaProducerFactory);
         var avro = com.eventloopsoftware.kafka.avro.TestAvroRecordAvro.to(message);
         template.send(TOPIC, avro);
+    }
+
+    @Override
+    public void testAvroRecord(java.util.function.Function<com.eventloopsoftware.kafka.model.TestAvroRecord, Void> handler) {
+        listen("group", handler::apply);
     }
 
     public void listen(String groupId, Consumer<com.eventloopsoftware.kafka.model.TestAvroRecord> listener) {
