@@ -136,6 +136,27 @@ data class Struct(
  */
 val Struct.fieldList: List<Field> get() = fields.filterIsInstance<Field>()
 
+/**
+ * Each declared [Field] paired with the raw annotation codes that immediately precede it.
+ * An IR extension may inject annotations as [RawElement]s in front of a [Field] (see the
+ * Jackson integration); the Java and Kotlin generators render those as the field's
+ * annotations. Elements that are neither a [Field] nor a [RawElement] are ignored.
+ */
+val Struct.annotatedFields: List<Pair<Field, List<String>>>
+    get() = buildList {
+        val pending = mutableListOf<String>()
+        fields.forEach { element ->
+            when (element) {
+                is RawElement -> pending += element.code
+                is Field -> {
+                    add(element to pending.toList())
+                    pending.clear()
+                }
+                else -> Unit
+            }
+        }
+    }
+
 data class Constructor(
     val parameters: List<Parameter>,
     val body: List<Statement>,

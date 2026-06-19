@@ -55,6 +55,7 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object ScalaGenerator : Generator {
@@ -122,7 +123,7 @@ object ScalaGenerator : Generator {
         for (element in elements) {
             when (element) {
                 is Struct -> {
-                    result[element.name.pascalCase()] = element.fields.filterIsInstance<Field>().map { it.name.value() }.toSet()
+                    result[element.name.pascalCase()] = element.fieldList.map { it.name.value() }.toSet()
                     result.putAll(collectPrimaryFieldNames(element.elements))
                 }
                 is Namespace -> result.putAll(collectPrimaryFieldNames(element.elements))
@@ -248,7 +249,7 @@ object ScalaGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val fields = fields.filterIsInstance<Field>()
+        val fields = fieldList
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitTypeAnnotation() }.distinct().joinNonEmpty(" with ", " extends ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "[", "]") { it.type.emitGenerics() }

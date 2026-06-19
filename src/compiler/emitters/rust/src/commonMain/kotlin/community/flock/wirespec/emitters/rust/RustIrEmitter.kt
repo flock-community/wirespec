@@ -34,7 +34,6 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
@@ -50,6 +49,7 @@ import community.flock.wirespec.ir.core.Switch
 import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.collectCustomTypeNames
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.`interface`
@@ -270,7 +270,7 @@ open class RustIrEmitter(
             .let { file ->
                 LanguageFile(file.name, file.elements.flatMap { element ->
                     if (element !is Struct) return@flatMap listOf(element)
-                    val structFields = element.fields.filterIsInstance<Field>()
+                    val structFields = element.fieldList
                     val derive = when {
                         structFields.any { containsUnderiveable(it.type) } -> ""
                         structFields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"

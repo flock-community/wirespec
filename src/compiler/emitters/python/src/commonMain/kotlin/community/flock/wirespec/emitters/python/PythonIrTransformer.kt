@@ -15,6 +15,7 @@ import community.flock.wirespec.ir.core.Parameter
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
@@ -124,7 +125,7 @@ internal fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = 
 
 internal fun <T : Element> T.addSelfReceiverToClientFields(): T {
     val struct = (this as? File)?.findElement<Struct>()
-    val fieldNames = struct?.fields?.filterIsInstance<Field>()?.map { it.name.value() }?.toSet() ?: emptySet()
+    val fieldNames = struct?.fieldList?.map { it.name.value() }?.toSet() ?: emptySet()
     if (fieldNames.isEmpty()) return this
 
     return transform {

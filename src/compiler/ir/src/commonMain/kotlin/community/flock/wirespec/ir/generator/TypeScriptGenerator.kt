@@ -53,6 +53,7 @@ import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.forEachElement
 import community.flock.wirespec.ir.core.Function as AstFunction
 
@@ -161,7 +162,7 @@ object TypeScriptGenerator : Generator {
     private fun Enum.emit(indent: Int): String = "export type ${name.pascalCase()} = ${entries.joinToString(" | ") { "\"${it.name.value()}\"" }}\n".indentCode(indent)
 
     private fun Struct.emit(indent: Int): String {
-        val fields = fields.filterIsInstance<Field>()
+        val fields = fieldList
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
         val nonStructElements = elements.filter { it !is Struct }
         val fieldsContent = if (fields.isEmpty()) {
@@ -214,7 +215,7 @@ object TypeScriptGenerator : Generator {
     }
 
     private fun Struct.emitInline(): String {
-        val fields = fields.filterIsInstance<Field>()
+        val fields = fieldList
         if (fields.isEmpty()) return "{}"
         val nestedStructs = elements.filterIsInstance<Struct>().associateBy { it.name.pascalCase() }
         return "{${fields.joinToString(", ") { field ->

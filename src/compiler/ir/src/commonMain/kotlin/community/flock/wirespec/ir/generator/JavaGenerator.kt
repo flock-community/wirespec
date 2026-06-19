@@ -55,6 +55,8 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.annotatedFields
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object JavaGenerator : Generator {
@@ -189,8 +191,7 @@ object JavaGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val fieldElements = fields
-        val fields = fields.filterIsInstance<Field>()
+        val fields = fieldList
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " implements ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emitGenerics() }
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
@@ -203,19 +204,9 @@ object JavaGenerator : Generator {
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
-        val paramParts = buildList {
-            val pendingAnnotations = mutableListOf<String>()
-            fieldElements.forEach { element ->
-                when (element) {
-                    is RawElement -> pendingAnnotations.add(element.code)
-                    is Field -> {
-                        val annotationPrefix = pendingAnnotations.joinToString("") { "$it " }
-                        pendingAnnotations.clear()
-                        add("$annotationPrefix${element.type.emitGenerics()} ${element.name.value().sanitize()}".indentCode(1))
-                    }
-                    else -> Unit
-                }
-            }
+        val paramParts = annotatedFields.map { (field, annotations) ->
+            val annotationPrefix = annotations.joinToString("") { "$it " }
+            "$annotationPrefix${field.type.emitGenerics()} ${field.name.value().sanitize()}".indentCode(1)
         }
         val paramsStr = if (paramParts.isEmpty()) " ()" else paramParts.joinToString(",\n", " (\n", "\n)")
 

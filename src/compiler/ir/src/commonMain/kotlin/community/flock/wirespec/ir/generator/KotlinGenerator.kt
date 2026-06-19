@@ -55,6 +55,8 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.annotatedFields
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object KotlinGenerator : Generator {
@@ -170,8 +172,7 @@ object KotlinGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
-        val fieldElements = fields
-        val fields = fields.filterIsInstance<Field>()
+        val fields = fieldList
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
@@ -204,20 +205,10 @@ object KotlinGenerator : Generator {
             }
         }
 
-        val paramParts = buildList {
-            val pendingAnnotations = mutableListOf<String>()
-            fieldElements.forEach { element ->
-                when (element) {
-                    is RawElement -> pendingAnnotations.add(element.code)
-                    is Field -> {
-                        val annotationPrefix = pendingAnnotations.joinToString("") { "$it " }
-                        pendingAnnotations.clear()
-                        val overridePrefix = "override ".takeIf { _ -> element.isOverride }.orEmpty()
-                        add("$annotationPrefix${overridePrefix}val ${element.name.value().sanitize()}: ${element.type.emitGenerics()}".indentCode(indent + 1))
-                    }
-                    else -> Unit
-                }
-            }
+        val paramParts = annotatedFields.map { (field, annotations) ->
+            val annotationPrefix = annotations.joinToString("") { "$it " }
+            val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
+            "$annotationPrefix${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}".indentCode(indent + 1)
         }
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()

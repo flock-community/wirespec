@@ -52,6 +52,7 @@ import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object PythonGenerator : Generator {
@@ -184,7 +185,7 @@ object PythonGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), qualifier: ((String) -> String)? = null): String {
-        val fields = fields.filterIsInstance<Field>()
+        val fields = fieldList
         val p = mutableListOf<String>()
         interfaces.forEach { p.add(it.emit()) }
         if (typeParameters.isNotEmpty()) {

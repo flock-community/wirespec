@@ -56,26 +56,24 @@ class JacksonExtension : IrExtension {
 
     private fun LanguageFile.annotate(recordNames: Set<String>, unionMemberNames: Set<String>): LanguageFile = copy(
         elements = elements.flatMap { element ->
-            when {
-                element is Union ->
-                    listOf(jsonTypeInfo, element)
-                element is Struct && element.name.pascalCase() in recordNames -> {
-                    val annotated = element.annotateFields()
-                    if (element.name.pascalCase() in unionMemberNames) {
-                        listOf(jsonTypeName(element.name.pascalCase()), annotated)
-                    } else {
-                        listOf(annotated)
+            when (element) {
+                is Union -> listOf(jsonTypeInfo, element)
+                is Struct -> {
+                    val pascal = element.name.pascalCase()
+                    when {
+                        pascal !in recordNames -> listOf(element)
+                        pascal in unionMemberNames -> listOf(jsonTypeName(pascal), element.annotateFields())
+                        else -> listOf(element.annotateFields())
                     }
                 }
-                else ->
-                    listOf(element)
+                else -> listOf(element)
             }
         },
     )
 
     private fun Struct.annotateFields(): Struct = copy(
-        fields = fields.flatMap { field ->
-            if (field is Field) listOf(jsonProperty(field.name.value()), field) else listOf(field)
+        fields = fields.flatMap { element ->
+            if (element is Field) listOf(jsonProperty(element.name.value()), element) else listOf(element)
         },
     )
 

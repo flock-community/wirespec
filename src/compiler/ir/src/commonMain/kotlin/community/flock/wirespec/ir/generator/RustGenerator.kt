@@ -54,6 +54,7 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object RustGenerator : Generator {
@@ -190,7 +191,7 @@ object RustGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList()): String {
-        val fields = fields.filterIsInstance<Field>()
+        val fields = fieldList
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emit() }}>"
         val functions = elements.filterIsInstance<AstFunction>()
