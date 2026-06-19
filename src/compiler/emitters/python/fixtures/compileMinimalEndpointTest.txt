@@ -43,13 +43,15 @@ class Request(Wirespec.Request[None]):
         self.body = None
 class Response(Wirespec.Response[T], Generic[T]):
     pass
+class Response2XX(Wirespec.Response2XX[T], Generic[T]):
+    pass
 class ResponseListTodoDto(Response[list[TodoDto]]):
     pass
 @dataclass
 class Response200Headers(Wirespec.Response.Headers):
     pass
 @dataclass
-class Response200(Wirespec.Response2XX[list[TodoDto]], ResponseListTodoDto):
+class Response200(Response2XX[list[TodoDto]], ResponseListTodoDto):
     status: int
     headers: Response200Headers
     body: list[TodoDto]

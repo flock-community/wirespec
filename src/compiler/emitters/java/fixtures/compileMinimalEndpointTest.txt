@@ -20,6 +20,7 @@ public interface GetTodos extends Wirespec.Endpoint {
     }
   };
   public sealed interface Response<T> extends Wirespec.Response<T> permits ResponseListTodoDto {}
+  public sealed interface Response2XX<T> extends Wirespec.Response2XX<T> permits Response200 {}
   public sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> permits Response200 {}
   public static record Response200Headers () implements Wirespec.Response.Headers {
   };
@@ -27,7 +28,7 @@ public interface GetTodos extends Wirespec.Endpoint {
     Integer status,
     Response200Headers headers,
     java.util.List<TodoDto> body
-  ) implements Wirespec.Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
+  ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
     public Response200(java.util.List<TodoDto> body) {
       this(200, new Response200Headers(), body);
     }

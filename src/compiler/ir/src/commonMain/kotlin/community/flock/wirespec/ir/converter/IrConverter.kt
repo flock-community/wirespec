@@ -691,8 +691,9 @@ fun EndpointWirespec.convert(): File {
                 }
             }
 
-            // Pre-compute response names grouped by content type
+            // Pre-compute response names grouped by status prefix and content type
             val distinctResponses = endpoint.responses.distinctBy { it.status }
+            val statusPrefixGroups = distinctResponses.groupBy { it.status.first() }
             val contentTypeGroups = distinctResponses.groupBy { it.content?.reference }
 
             val contentTypeUnionNames = contentTypeGroups.map { (ref, _) ->
@@ -700,12 +701,20 @@ fun EndpointWirespec.convert(): File {
                 "Response${contentType.toTypeName()}"
             }
 
-            // Response union — members are the content-type unions. Status-prefix grouping
-            // is provided by the shared Wirespec.Response{1..5}XX marker interfaces, which the
-            // individual response records implement directly.
+            // Response union — members are the content-type unions.
             union("Response", extends = type("Wirespec.Response", type("T"))) {
                 typeParam(type("T"))
                 contentTypeUnionNames.distinct().forEach { member(it) }
+            }
+
+            // Status prefix unions (Response2XX, Response5XX, etc.) — sealed within the
+            // endpoint object and tied to the shared Wirespec.Response{prefix}XX marker
+            // interface, so callers can exhaustively match on a response's status class.
+            statusPrefixGroups.forEach { (prefix, responses) ->
+                union("Response${prefix}XX", extends = type("Wirespec.Response${prefix}XX", type("T"))) {
+                    typeParam(type("T"))
+                    responses.forEach { member("Response${it.status.replaceFirstChar { c -> c.uppercaseChar() }}") }
+                }
             }
 
             // Content type unions (ResponseUnit, ResponseTodoDto, etc.)
@@ -730,7 +739,7 @@ fun EndpointWirespec.convert(): File {
                     response.headers.forEach { field(it.identifier.toName(), it.reference.convert()) }
                 }
                 struct("Response$statusClassName") {
-                    implements(type("Wirespec.Response${statusPrefix}XX", bodyType))
+                    implements(type("Response${statusPrefix}XX", bodyType))
                     implements(type("Response$contentTypeName"))
                     field("status", Type.IntegerLiteral(statusCode), isOverride = true)
                     field("headers", type(headersName), isOverride = true)

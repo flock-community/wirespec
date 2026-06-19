@@ -31,6 +31,8 @@ export namespace PutTodo {
     body: params.body,
   })
   export type Response<T = unknown> = ResponseTodoDto | ResponseError
+  export type Response2XX<T = unknown> = Response200 | Response201
+  export type Response5XX<T = unknown> = Response500
   export type ResponseTodoDto = Response200 | Response201
   export type ResponseError = Response500
   export type Response200Headers = {}

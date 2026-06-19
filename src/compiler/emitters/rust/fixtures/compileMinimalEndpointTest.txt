@@ -44,6 +44,10 @@ pub enum Response {
 }
 impl From<Response200> for Response { fn from(value: Response200) -> Self { Response::Response200(value) } }
 #[derive(Debug, Clone, PartialEq)]
+pub enum Response2XX {
+    Response200(Response200),
+}
+#[derive(Debug, Clone, PartialEq)]
 pub enum ResponseListTodoDto {
     Response200(Response200),
 }
