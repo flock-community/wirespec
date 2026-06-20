@@ -41,6 +41,8 @@ kotlin {
         commonMain {
             dependencies {
                 compileOnly(project(":src:integration:wirespec"))
+                compileOnly(project(":src:compiler:core"))
+                compileOnly(project(":src:compiler:ir"))
             }
         }
         commonTest {

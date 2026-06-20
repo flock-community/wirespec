@@ -47,6 +47,12 @@ kotlin {
         }
     }
     sourceSets {
+        commonMain {
+            dependencies {
+                compileOnly(project(":src:compiler:core"))
+                compileOnly(project(":src:compiler:ir"))
+            }
+        }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)

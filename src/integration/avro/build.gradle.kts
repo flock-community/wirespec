@@ -31,6 +31,15 @@ kotlin {
         }
     }
     sourceSets {
+        commonMain {
+            dependencies {
+                compileOnly(project(":src:compiler:core"))
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:compiler:emitters:java"))
+                implementation(project(":src:converter:avro"))
+                implementation(libs.kotlinx.serialization)
+            }
+        }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
@@ -41,17 +50,11 @@ kotlin {
         }
         jvmMain {
             dependencies {
-                compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:integration:wirespec"))
                 compileOnly(libs.kafka.avro)
-                implementation(project(":src:compiler:emitters:kotlin"))
-                implementation(project(":src:compiler:emitters:java"))
-                implementation(project(":src:converter:avro"))
-                implementation(libs.jackson2.kotlin)
                 implementation(libs.jackson2.kotlin)
                 implementation(libs.kotlin.reflect)
                 implementation(libs.kotlinx.coroutines.reactor)
-                implementation(libs.kotlinx.serialization)
                 implementation(libs.spring.boot.web)
                 runtimeOnly(libs.junit.launcher)
             }

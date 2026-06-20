@@ -28,6 +28,16 @@ kotlin {
         }
     }
     sourceSets {
+        commonMain {
+            dependencies {
+                // The Wirespec runtime and emitter come from the consumer's
+                // build; this module only reshapes the IR with raw, fully
+                // qualified kotlinx.serialization annotations, so no
+                // kotlinx-serialization dependency is needed here.
+                compileOnly(project(":src:compiler:core"))
+                compileOnly(project(":src:compiler:ir"))
+            }
+        }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
@@ -39,11 +49,6 @@ kotlin {
         }
         jvmMain {
             dependencies {
-                // The Wirespec runtime and emitter come from the consumer's
-                // build; this module only reshapes the IR with raw, fully
-                // qualified kotlinx.serialization annotations, so no
-                // kotlinx-serialization dependency is needed here.
-                compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:compiler:emitters:kotlin"))
                 api(project(":src:integration:wirespec"))
             }
