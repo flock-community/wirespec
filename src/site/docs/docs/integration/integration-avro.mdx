@@ -40,7 +40,13 @@ The integration works for both producers and consumers, and can be configured wi
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.build.directory}/generated-sources</output>
-                        <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter</emitterClass>
+                        <languages>
+                            <language>Java</language>
+                        </languages>
+                        <ir>true</ir>
+                        <extensionClasses>
+                            <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
+                        </extensionClasses>
                     </configuration>
                 </execution>
             </executions>
@@ -72,7 +78,13 @@ The integration works for both producers and consumers, and can be configured wi
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.build.directory}/generated-sources</output>
-                        <emitterClass>community.flock.wirespec.integration.avro.kotlin.emit.AvroKotlinEmitter</emitterClass>
+                        <languages>
+                            <language>Kotlin</language>
+                        </languages>
+                        <ir>true</ir>
+                        <extensionClasses>
+                            <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
+                        </extensionClasses>
                     </configuration>
                 </execution>
             </executions>
@@ -98,7 +110,9 @@ The integration works for both producers and consumers, and can be configured wi
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
-            emitterClass = community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter::class.java
+            languages = listOf(community.flock.wirespec.plugin.Language.Java)
+            ir = true
+            extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
         }
         ```
 
@@ -132,7 +146,9 @@ The integration works for both producers and consumers, and can be configured wi
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
-            emitterClass = community.flock.wirespec.integration.avro.kotlin.emit.AvroKotlinEmitter::class.java
+            languages = listOf(community.flock.wirespec.plugin.Language.Kotlin)
+            ir = true
+            extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
         }
         ```
 
@@ -193,105 +209,117 @@ Let's take a brief look at the code and schemas that get generated as a result:
 
 <Tabs groupId="language">
     <TabItem value="java" label="Java">
-        ```java title="generated-sources/community/flock/wirespec/generated/NotificationQueueChannel.java"
-        package community.flock.wirespec.generated;
+        ```java title="generated-sources/community/flock/wirespec/generated/channel/NotificationQueue.java"
+        package community.flock.wirespec.generated.channel;
 
-        public interface NotificationQueueChannel {
-            void invoke(Task message);
+        import community.flock.wirespec.java.Wirespec;
+
+        public interface NotificationQueue extends Wirespec.Channel {
+            public interface Sender {
+                public void notificationQueue(community.flock.wirespec.generated.model.Task message);
+            }
+            public interface Listener {
+                public void notificationQueue(java.util.function.Function<community.flock.wirespec.generated.model.Task, Void> handler);
+            }
         }
         ```
 
-        ```java title="generated-sources/community/flock/wirespec/generated/Task.java"
-        package community.flock.wirespec.generated;
+        The model is emitted by the Java IR emitter, and the Avro schema + converter live in a
+        separate `TaskAvro` class added by the `AvroExtension`:
+
+        ```java title="generated-sources/community/flock/wirespec/generated/model/Task.java"
+        package community.flock.wirespec.generated.model;
+
+        import community.flock.wirespec.java.Wirespec;
 
         public record Task (
             Long id,
             String content
-        ) {
-            public static class Avro {
-
-                public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(
-                    """
-                    {
-                        "type": "record",
-                        "name": "Task",
-                        "namespace": "community.flock.wirespec.generated",
-                        "fields": [{
-                            "name": "id",
-                            "type": "long"
-                        },
-                        {
-                            "name": "content",
-                            "type": "string"
-                        }]
-                    }
-                    """
-                );
-
-                public static Task from(org.apache.avro.generic.GenericData.Record record) {
-                    return new Task((Long) record.get(0),(String) record.get(1).toString());
-                }
-
-                public static org.apache.avro.generic.GenericData.Record to(Task data) {
-                    var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
-                    record.put(0, data.id());
-                    record.put(1, data.content());
-                    return record;
-                }
+        ) implements Wirespec.Shape {
+            @Override
+            public java.util.List<String> validate() {
+                return java.util.List.<String>of();
             }
         };
         ```
+
+        ```java title="generated-sources/community/flock/wirespec/generated/avro/TaskAvro.java"
+        package community.flock.wirespec.generated.avro;
+
+        import community.flock.wirespec.generated.model.Task;
+
+        public class TaskAvro {
+            public static final org.apache.avro.Schema SCHEMA =
+                new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Task\",\"namespace\":\"community.flock.wirespec.generated\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"content\",\"type\":\"string\"}]}");
+
+            public static Task from(org.apache.avro.generic.GenericData.Record record) {
+                return new Task(
+                    (Long) record.get(0),
+                    (String) record.get(1).toString()
+                );
+            }
+
+            public static org.apache.avro.generic.GenericData.Record to(Task data) {
+                var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
+                record.put(0, data.id());
+                record.put(1, data.content());
+                return record;
+            }
+        }
+        ```
     </TabItem>
     <TabItem value="kotlin" label="Kotlin">
-        ```kotlin title="generated-sources/community/flock/wirespec/generated/Notification.kt"
-        package community.flock.wirespec.generated
+        ```kotlin title="generated-sources/community/flock/wirespec/generated/channel/NotificationQueue.kt"
+        package community.flock.wirespec.generated.channel
 
-        interface NotificationQueueChannel {
-            operator fun invoke(message: Task)
+        import community.flock.wirespec.kotlin.Wirespec
+
+        interface NotificationQueue : Wirespec.Channel {
+            interface Sender {
+                fun notificationQueue(message: community.flock.wirespec.generated.model.Task)
+            }
+            interface Listener {
+                fun notificationQueue(handler: (community.flock.wirespec.generated.model.Task) -> Unit)
+            }
         }
+        ```
+
+        The model is emitted by the Kotlin IR emitter, and the Avro schema + converter live in a
+        separate `TaskAvro` object added by the `AvroExtension`:
+
+        ```kotlin title="generated-sources/community/flock/wirespec/generated/model/Task.kt"
+        package community.flock.wirespec.generated.model
+
+        import community.flock.wirespec.kotlin.Wirespec
 
         data class Task(
             val id: Long,
             val content: String
-        ) {
-            class Avro {
-                companion object {
-                    val SCHEMA = org.apache.avro.Schema.Parser().parse(
-                        """
-                        |{
-                        |  "type": "record",
-                        |  "name": "Task",
-                        |  "namespace": "community.flock.wirespec.generated",
-                        |  "fields": [
-                        |    {
-                        |      "name": "id",
-                        |      "type": "long"
-                        |    },
-                        |    {
-                        |      "name": "content",
-                        |      "type": "string"
-                        |    }
-                        |  ]
-                        |}
-                        """.trimMargin()
-                    )
+        )
+        ```
 
-                    @JvmStatic
-                    fun from(record: org.apache.avro.generic.GenericData.Record): Task {
-                        return Task(
-                            record.get(0) as Long,
-                            record.get(1).toString() as String
-                        )
-                    }
+        ```kotlin title="generated-sources/community/flock/wirespec/generated/avro/TaskAvro.kt"
+        package community.flock.wirespec.generated.avro
 
-                    @JvmStatic
-                    fun to(model: Task): org.apache.avro.generic.GenericData.Record {
-                        val record = org.apache.avro.generic.GenericData.Record(SCHEMA)
-                        record.put(0, model.id)
-                        record.put(1, model.content)
-                        return record
-                    }
-                }
+        import community.flock.wirespec.generated.model.Task
+
+        object TaskAvro {
+            val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Task\",\"namespace\":\"community.flock.wirespec.generated\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"content\",\"type\":\"string\"}]}")
+
+            @JvmStatic
+            fun from(record: org.apache.avro.generic.GenericData.Record): Task {
+                return Task(
+                    record.get(0) as Long,
+                    record.get(1).toString() as String
+                )
+            }
+
+            @JvmStatic
+            fun to(model: Task): org.apache.avro.generic.GenericData.Record {
+                val record = org.apache.avro.generic.GenericData.Record(SCHEMA)
+                record.put(0, model.id)
+                record.put(1, model.content)
+                return record
             }
         }
         ```
@@ -312,7 +340,7 @@ examples from both the producer and consumer side.
     <TabItem value="java" label="Java">
         ```java
         @Service
-        public class NotificationProducer implements NotificationQueueChannel {
+        public class NotificationProducer implements NotificationQueue.Sender {
 
             private static final String TOPIC = "my-topic";
 
@@ -323,9 +351,9 @@ examples from both the producer and consumer side.
             }
 
             @Override
-            public void invoke(Task message) {
+            public void notificationQueue(Task message) {
                 KafkaTemplate<Object, Object> template = new KafkaTemplate<>(kafkaProducerFactory);
-                GenericData.Record avro = Task.Avro.to(message);
+                GenericData.Record avro = TaskAvro.to(message);
                 template.send(TOPIC, avro);
             }
         }
@@ -336,15 +364,15 @@ examples from both the producer and consumer side.
         @Service
         class NotificationProducer(
             private val kafkaProducerFactory: ProducerFactory<Any, Any>
-        ) : NotificationQueueChannel {
+        ) : NotificationQueue.Sender {
 
             companion object {
                 const val TOPIC = "my-topic"
             }
 
-            override fun invoke(message: Task) {
+            override fun notificationQueue(message: Task) {
                 val template = KafkaTemplate(kafkaProducerFactory)
-                val avro = Task.Avro.to(message)
+                val avro = TaskAvro.to(message)
                 template.send(Companion.TOPIC, avro)
             }
         }
@@ -369,15 +397,15 @@ examples from both the producer and consumer side.
                 this.kafkaConsumerFactory = kafkaConsumerFactory;
             }
 
-            public void listen(String groupId, Task listener) {
+            public void listen(String groupId, java.util.function.Consumer<Task> listener) {
                 ContainerProperties containerProps = new ContainerProperties(TOPIC);
                 containerProps.setGroupId(groupId);
                 KafkaMessageListenerContainer<Object, Object> container =
                         new KafkaMessageListenerContainer<>(kafkaConsumerFactory, containerProps);
 
                 container.setupMessageListener((MessageListener<String, GenericData.Record>) data -> {
-                    Task task = Task.Avro.from(data.value());
-                    // Handle task
+                    Task task = TaskAvro.from(data.value());
+                    listener.accept(task);
                 });
                 container.start();
             }
@@ -393,15 +421,15 @@ examples from both the producer and consumer side.
                 private const val TOPIC = "my-topic"
             }
 
-            fun listen(groupId: String, listener: Task?) {
+            fun listen(groupId: String, listener: (Task) -> Unit) {
                 val containerProps = ContainerProperties(TOPIC)
                 containerProps.groupId = groupId
                 val container =
                     KafkaMessageListenerContainer(kafkaConsumerFactory, containerProps)
 
                 container.setupMessageListener(MessageListener { data: ConsumerRecord<String?, GenericData.Record?> ->
-                    val task = Task.Avro.from(data.value())
-                    // Handle task
+                    val task = TaskAvro.from(data.value())
+                    listener(task)
                 })
                 container.start()
             }

@@ -187,7 +187,13 @@
                             <input>${project.basedir}/src/main/avro/test_avro_001.avsc</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <format>Avro</format>
-                            <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroEmitter</emitterClass>
+                            <languages>
+                                <language>Java</language>
+                            </languages>
+                            <ir>true</ir>
+                            <extensionClasses>
+                                <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
+                            </extensionClasses>
                             <packageName>com.eventloopsoftware.kafka</packageName>
                         </configuration>
                     </execution>

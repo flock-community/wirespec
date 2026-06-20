@@ -161,7 +161,10 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
 
 internal fun Interface.withFullyQualifiedPrefix(prefix: String): Interface = if (prefix.isNotEmpty()) {
     transform {
-        matching { t: Type.Custom -> t.copy(name = Name.of(prefix + t.name.pascalCase())) }
+        // Keep the prefixed name as a single part: `Name.of` would split the fully qualified
+        // name on its dots and `pascalCase()` would then concatenate the segments
+        // (e.g. `com.example.model.Foo` -> `ComExampleModelFoo`).
+        matching { t: Type.Custom -> t.copy(name = Name(listOf(prefix + t.name.pascalCase()))) }
     }
 } else {
     this
