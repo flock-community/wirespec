@@ -209,7 +209,7 @@ open class JavaIrEmitter(
         }
         return channel.convert()
             .sanitizeNames(sanitizationConfig)
-            .applyFunctionalInterface(fullyQualifiedPrefix)
+            .qualifyChannelReferences(fullyQualifiedPrefix)
     }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {

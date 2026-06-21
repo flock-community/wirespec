@@ -1,7 +1,13 @@
 use super::super::wirespec::*;
 use regex;
-pub trait Queue: Wirespec.Channel {
-    fn invoke(message: &str);
+pub mod Queue {
+    use super::*;
+    pub trait Sender {
+        fn queue(message: &str);
+    }
+    pub trait Listener {
+        fn queue(handler: Box<dyn Fn(String) -> ()>);
+    }
 }
 
 #![allow(warnings)]
