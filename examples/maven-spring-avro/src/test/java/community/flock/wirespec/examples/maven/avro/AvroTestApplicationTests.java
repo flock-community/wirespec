@@ -92,7 +92,7 @@ class AvroTestApplicationTests {
             latch.countDown();
         });
 
-        service.invoke(avroRecord);
+        service.testAvroRecord(avroRecord);
 
         boolean messageConsumed = latch.await(10, TimeUnit.SECONDS);
         assertTrue(messageConsumed);

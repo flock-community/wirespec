@@ -105,6 +105,8 @@ The compile mojo supports the following parameters:
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
 - **emitterClass**: Specifies a custom emitter class to use for code generation.
+- **extensionClasses**: List of fully qualified `IrExtension` class names. The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`.
+- **ir**: Whether to emit through the intermediate representation. Required for `extensionClasses` to take effect on the built-in language targets. Default is 'false'.
 
 ### Running the Compile Goal
 
@@ -115,6 +117,47 @@ mvn wirespec:compile
 ```
 
 Or it will run automatically as part of the `generate-sources` phase during your normal build process.
+
+### Applying IR extensions
+
+[IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` parameter. Add the
+integration artifact that provides the extension as a plugin `<dependency>`, then list the fully qualified
+class name. Set `<ir>true</ir>` so the built-in language targets emit through the IR pipeline:
+
+```xml
+<plugin>
+    <groupId>community.flock.wirespec.plugin.maven</groupId>
+    <artifactId>wirespec-maven-plugin</artifactId>
+    <version>{{WIRESPEC_VERSION}}</version>
+    <dependencies>
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>kotlinx-serialization</artifactId>
+            <version>{{WIRESPEC_VERSION}}</version>
+        </dependency>
+    </dependencies>
+    <executions>
+        <execution>
+            <id>kotlin</id>
+            <goals>
+                <goal>compile</goal>
+            </goals>
+            <configuration>
+                <input>${project.basedir}/src/main/wirespec</input>
+                <output>${project.build.directory}/generated-sources</output>
+                <languages>
+                    <language>Kotlin</language>
+                </languages>
+                <ir>true</ir>
+                <shared>false</shared>
+                <extensionClasses>
+                    <extensionClass>community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension</extensionClass>
+                </extensionClasses>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
 
 ## Convert
 

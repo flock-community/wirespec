@@ -47,3 +47,33 @@ The `Custom` operation combines the functionality of both `Compile` and `Convert
 - **emitterClass:** The fully qualified name of the custom emitter class.
 - **extension:** The file extension for the output files.
 - **split:** A boolean flag indicating whether to split the output into separate files.
+
+## IR extensions
+
+Before generating code, Wirespec lowers your definitions into a language-neutral **intermediate
+representation** (IR). An `IrExtension` lets you reshape that IR — for example to inject framework-specific
+annotations — without forking an emitter. The transformed IR is then handed to the normal code generator,
+so the output stays idiomatic for the target language.
+
+You register extensions with the `extensionClasses` parameter of the compile/custom operations. The
+Maven and Gradle plugins accept a list of `IrExtension` classes and instantiate them for you, injecting the
+`packageName` and `shared` settings into the constructor when the extension needs them.
+
+:::note
+Extensions only run when the emitter is an `IrEmitter`. For the built-in language targets this means you
+must enable the IR pipeline by setting `ir = true` (Gradle) / `<ir>true</ir>` (Maven). A custom
+`emitterClass` that implements `IrEmitter` always honors the registered extensions.
+:::
+
+Wirespec ships several IR extensions in its integration modules:
+
+| Extension | Module | Effect |
+|---|---|---|
+| `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+
+Extensions whose constructor only needs `packageName`/`shared` (or nothing at all), such as
+`KotlinxSerializationExtension`, can be registered directly through `extensionClasses`. Extensions
+that need other arguments — for instance the target language — are typically wired into a custom
+`IrEmitter` instead.
+
+See [Gradle](./plugins-gradle.md) and [Maven](./plugins-maven.md) for the exact configuration syntax.

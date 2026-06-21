@@ -93,7 +93,7 @@ fun Element.transformChildren(transformer: Transformer): Element = when (this) {
     is Package -> this
     is Import -> copy(type = transformer.transformType(type) as Type.Custom)
     is Struct -> copy(
-        fields = fields.map { transformer.transformField(it) },
+        fields = fields.map { if (it is Field) transformer.transformField(it) else transformer.transformElement(it) },
         constructors = constructors.map { transformer.transformConstructor(it) },
         interfaces = interfaces.map { transformer.transformType(it) as Type.Custom },
         elements = elements.map { transformer.transformElement(it) },
@@ -132,6 +132,7 @@ fun Element.transformChildren(transformer: Transformer): Element = when (this) {
         statics = statics.map { transformer.transformElement(it) },
         body = body.map { transformer.transformStatement(it) },
     )
+    is Field -> transformChildren(transformer)
     is RawElement -> this
 }
 

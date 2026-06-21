@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.ir.core.Constructor
 import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.Function
 import community.flock.wirespec.ir.core.Name
@@ -22,7 +23,7 @@ import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.Type as LanguageType
 
 fun Struct.markMembersAsOverride(): Struct = copy(
-    fields = fields.map { f -> f.copy(isOverride = true) },
+    fields = fields.map { f -> if (f is Field) f.copy(isOverride = true) else f },
     elements = elements.map { element ->
         if (element is Function) element.copy(isOverride = true) else element
     },

@@ -19,8 +19,8 @@ class TransformTest {
         val result = struct.renameType("Address", "Location")
 
         assertEquals(Name.of("Person"), result.name)
-        assertEquals(Type.String, result.fields[0].type)
-        assertEquals(Type.Custom("Location"), result.fields[1].type)
+        assertEquals(Type.String, result.fieldList()[0].type)
+        assertEquals(Type.Custom("Location"), result.fieldList()[1].type)
     }
 
     @Test
@@ -34,7 +34,7 @@ class TransformTest {
 
         val result = struct.renameType("Address", "Location")
 
-        assertEquals(Type.Array(Type.Custom("Location")), result.fields[0].type)
+        assertEquals(Type.Array(Type.Custom("Location")), result.fieldList()[0].type)
     }
 
     @Test
@@ -48,7 +48,7 @@ class TransformTest {
 
         val result = struct.renameType("Address", "Location")
 
-        assertEquals(Type.Nullable(Type.Custom("Location")), result.fields[0].type)
+        assertEquals(Type.Nullable(Type.Custom("Location")), result.fieldList()[0].type)
     }
 
     @Test
@@ -62,7 +62,7 @@ class TransformTest {
 
         val result = struct.renameType("Item", "Product")
 
-        assertEquals(Type.Dict(Type.String, Type.Custom("Product")), result.fields[0].type)
+        assertEquals(Type.Dict(Type.String, Type.Custom("Product")), result.fieldList()[0].type)
     }
 
     @Test
@@ -77,8 +77,8 @@ class TransformTest {
 
         val result = struct.renameField("firstName", "givenName")
 
-        assertEquals(Name.of("givenName"), result.fields[0].name)
-        assertEquals(Name.of("lastName"), result.fields[1].name)
+        assertEquals(Name.of("givenName"), result.fieldList()[0].name)
+        assertEquals(Name.of("lastName"), result.fieldList()[1].name)
     }
 
     @Test
@@ -95,8 +95,8 @@ class TransformTest {
             Type.Custom("List", listOf(array.elementType))
         }
 
-        assertEquals(Type.Custom("List", listOf(Type.Custom("Item"))), result.fields[0].type)
-        assertEquals(Type.Integer(), result.fields[1].type)
+        assertEquals(Type.Custom("List", listOf(Type.Custom("Item"))), result.fieldList()[0].type)
+        assertEquals(Type.Integer(), result.fieldList()[1].type)
     }
 
     @Test
@@ -134,9 +134,9 @@ class TransformTest {
             transform = { it.copy(type = Type.Nullable(it.type)) },
         )
 
-        assertEquals(Type.Nullable(Type.String), result.fields[0].type)
-        assertEquals(Type.Integer(), result.fields[1].type)
-        assertEquals(Type.Nullable(Type.String), result.fields[2].type)
+        assertEquals(Type.Nullable(Type.String), result.fieldList()[0].type)
+        assertEquals(Type.Integer(), result.fieldList()[1].type)
+        assertEquals(Type.Nullable(Type.String), result.fieldList()[2].type)
     }
 
     @Test
@@ -287,7 +287,7 @@ class TransformTest {
         val outer = result.elements[0] as Struct
         val inner = outer.elements[0] as Struct
 
-        assertEquals(Type.Custom("Data"), inner.fields[0].type)
+        assertEquals(Type.Custom("Data"), inner.fieldList()[0].type)
     }
 
     @Test
@@ -321,7 +321,7 @@ class TransformTest {
 
         assertEquals(
             Type.Custom("List", listOf(Type.Custom("Product"))),
-            result.fields[0].type,
+            result.fieldList()[0].type,
         )
     }
 
@@ -347,8 +347,8 @@ class TransformTest {
 
         val result = struct.transform(transformer)
 
-        assertEquals(Type.Nullable(Type.String), result.fields[0].type)
-        assertEquals(Type.Integer(), result.fields[1].type)
+        assertEquals(Type.Nullable(Type.String), result.fieldList()[0].type)
+        assertEquals(Type.Integer(), result.fieldList()[1].type)
     }
 
     @Test
@@ -373,8 +373,8 @@ class TransformTest {
 
         val result = struct.transform(transformer)
 
-        assertEquals(Type.Integer(Precision.P64), result.fields[0].type)
-        assertEquals(Type.Number(Precision.P32), result.fields[1].type)
+        assertEquals(Type.Integer(Precision.P64), result.fieldList()[0].type)
+        assertEquals(Type.Number(Precision.P32), result.fieldList()[1].type)
     }
 
     @Test
@@ -452,7 +452,7 @@ class TransformTest {
             renameType("Address", "Location")
         }
 
-        assertEquals(Type.Custom("Location"), result.fields[0].type)
+        assertEquals(Type.Custom("Location"), result.fieldList()[0].type)
     }
 
     @Test
@@ -469,8 +469,8 @@ class TransformTest {
             renameField("firstName", "givenName")
         }
 
-        assertEquals(Type.Custom("Location"), result.fields[0].type)
-        assertEquals(Name.of("givenName"), result.fields[0].name)
+        assertEquals(Type.Custom("Location"), result.fieldList()[0].type)
+        assertEquals(Name.of("givenName"), result.fieldList()[0].name)
     }
 
     @Test
@@ -512,7 +512,7 @@ class TransformTest {
             }
         }
 
-        assertEquals(Type.Integer(Precision.P64), result.fields[0].type)
+        assertEquals(Type.Integer(Precision.P64), result.fieldList()[0].type)
     }
 
     @Test
@@ -543,7 +543,7 @@ class TransformTest {
         }
 
         val struct = result.elements[0] as Struct
-        assertEquals(Type.Nullable(Type.String), struct.fields[0].type)
+        assertEquals(Type.Nullable(Type.String), struct.fieldList()[0].type)
         val fn = result.elements[1] as Function
         assertEquals(Type.Nullable(Type.String), fn.parameters[0].type)
     }

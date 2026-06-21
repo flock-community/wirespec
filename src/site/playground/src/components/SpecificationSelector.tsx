@@ -9,6 +9,7 @@ export function SpecificationSelector() {
   const convertOptions: CompileOption[] = [
     { value: "open_api_v2", label: "Open API v2" },
     { value: "open_api_v3", label: "Open API v3" },
+    { value: "avro", label: "Avro" },
   ];
 
   const navigate = useNavigate({ from: "/" });

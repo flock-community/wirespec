@@ -52,6 +52,7 @@ import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object PythonGenerator : Generator {
@@ -108,6 +109,8 @@ object PythonGenerator : Generator {
             "$staticContent$defBlock$guard"
         }
         is File -> elements.joinToString("") { it.emit(indent, parents, isStaticScope, qualifier) }
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
+        is Field -> ""
         is RawElement -> "$code\n".indentCode(indent)
     }
 
@@ -183,6 +186,7 @@ object PythonGenerator : Generator {
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element> = emptyList(), qualifier: ((String) -> String)? = null): String {
+        val fields = fieldList()
         val p = mutableListOf<String>()
         interfaces.forEach { p.add(it.emit()) }
         if (typeParameters.isNotEmpty()) {

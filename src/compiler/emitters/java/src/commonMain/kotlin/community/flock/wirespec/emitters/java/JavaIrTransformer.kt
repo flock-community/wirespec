@@ -22,7 +22,6 @@ import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.plus
@@ -53,12 +52,8 @@ internal fun File.applyRefinedStructShape(refined: Refined): File = transform {
     }
 }
 
-internal fun File.applyFunctionalInterface(fullyQualifiedPrefix: String): File = transform {
+internal fun File.qualifyChannelReferences(fullyQualifiedPrefix: String): File = transform {
     matchingElements { it: Interface -> it.withFullyQualifiedPrefix(fullyQualifiedPrefix) }
-    matchingElements { file: File ->
-        val interfaceElement = file.findElement<Interface>()!!
-        file.copy(elements = listOf(RawElement("@FunctionalInterface\n"), interfaceElement))
-    }
 }
 
 internal fun <T : Element> T.injectHandleFunction(endpoint: Endpoint): T {
@@ -166,15 +161,10 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
 
 internal fun Interface.withFullyQualifiedPrefix(prefix: String): Interface = if (prefix.isNotEmpty()) {
     transform {
-        parametersWhere(
-            predicate = { it.name == Name.of("message") },
-            transform = { param ->
-                when (val t = param.type) {
-                    is Type.Custom -> param.copy(type = t.copy(name = Name.of(prefix + t.name.pascalCase())))
-                    else -> param
-                }
-            },
-        )
+        // Keep the prefixed name as a single part: `Name.of` would split the fully qualified
+        // name on its dots and `pascalCase()` would then concatenate the segments
+        // (e.g. `com.example.model.Foo` -> `ComExampleModelFoo`).
+        matching { t: Type.Custom -> t.copy(name = Name(listOf(prefix + t.name.pascalCase()))) }
     }
 } else {
     this

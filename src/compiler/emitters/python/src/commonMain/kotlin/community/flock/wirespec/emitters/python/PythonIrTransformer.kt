@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.Field
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
@@ -14,6 +15,7 @@ import community.flock.wirespec.ir.core.Parameter
 import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.transform
@@ -36,7 +38,7 @@ internal fun File.replaceReflectInNonGenericStructFields(): File = transform {
         if (struct.typeParameters.isNotEmpty()) return@matchingElements struct
         struct.copy(
             fields = struct.fields.map { field ->
-                field.copy(type = field.type.replaceReflectAsTypeAny())
+                if (field is Field) field.copy(type = field.type.replaceReflectAsTypeAny()) else field
             },
         )
     }
@@ -123,7 +125,7 @@ internal fun <T : Element> T.flattenEndpointTypeRefs(endpointName: String): T = 
 
 internal fun <T : Element> T.addSelfReceiverToClientFields(): T {
     val struct = (this as? File)?.findElement<Struct>()
-    val fieldNames = struct?.fields?.map { it.name.value() }?.toSet() ?: emptySet()
+    val fieldNames = struct?.fieldList()?.map { it.name.value() }?.toSet() ?: emptySet()
     if (fieldNames.isEmpty()) return this
 
     return transform {
