@@ -26,8 +26,8 @@ internal object ChannelDslFile {
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
 
-            import("io.kotest.extensions.wirespec.dsl", "channelCall")
-            import("io.kotest.extensions.wirespec.dsl", "WirespecScenarioDsl")
+            import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             import("io.kotest.property", "Gen")
             import("kotlin.time", "Duration")
             import(channelPkg, shape.name)
