@@ -56,8 +56,8 @@ internal object EndpointDslFile {
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
 
-            import("io.kotest.extensions.wirespec.dsl", "endpointCall")
-            import("io.kotest.extensions.wirespec.dsl", "WirespecScenarioDsl")
+            import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             import("kotlin.time", "Duration")
             import(endpointPkg, shape.name)
             val needsGen = shape.bodyFieldShapes.isNotEmpty() || present.isNotEmpty()
