@@ -31,29 +31,25 @@ kotlin {
         }
     }
     sourceSets {
+        commonMain {
+            dependencies {
+                // AvroExtension/Utils build the language-neutral IR and read the
+                // Avro schema model; the actual Avro runtime (kafka.avro) is only
+                // referenced by fully-qualified name in generated source, so it is
+                // not a compile dependency here.
+                compileOnly(project(":src:compiler:core"))
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:compiler:emitters:java"))
+                implementation(project(":src:converter:avro"))
+                implementation(libs.kotlinx.serialization)
+            }
+        }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
                 implementation(project(":src:integration:wirespec"))
                 implementation(project(":src:compiler:test"))
-            }
-        }
-        jvmMain {
-            dependencies {
-                compileOnly(project(":src:compiler:core"))
-                compileOnly(project(":src:integration:wirespec"))
-                compileOnly(libs.kafka.avro)
-                implementation(project(":src:compiler:emitters:kotlin"))
-                implementation(project(":src:compiler:emitters:java"))
-                implementation(project(":src:converter:avro"))
-                implementation(libs.jackson2.kotlin)
-                implementation(libs.jackson2.kotlin)
-                implementation(libs.kotlin.reflect)
-                implementation(libs.kotlinx.coroutines.reactor)
-                implementation(libs.kotlinx.serialization)
-                implementation(libs.spring.boot.web)
-                runtimeOnly(libs.junit.launcher)
             }
         }
         jvmTest {
