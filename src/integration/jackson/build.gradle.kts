@@ -40,6 +40,13 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                // The JacksonExtension only reshapes the language-neutral IR with
+                // fully-qualified raw annotations, so it needs the compiler/IR API
+                // at compile time but no Jackson runtime — that comes from the
+                // consumer's build.
+                compileOnly(project(":src:compiler:core"))
+                compileOnly(project(":src:compiler:emitters:kotlin"))
+                compileOnly(project(":src:compiler:emitters:java"))
                 compileOnly(project(":src:integration:wirespec"))
             }
         }

@@ -28,16 +28,7 @@ kotlin {
         }
     }
     sourceSets {
-        commonTest {
-            dependencies {
-                implementation(libs.kotlin.test)
-                implementation(libs.bundles.kotest)
-                implementation(project(":src:integration:wirespec"))
-                implementation(project(":src:compiler:test"))
-                implementation(project(":src:compiler:core"))
-            }
-        }
-        jvmMain {
+        commonMain {
             dependencies {
                 // The Wirespec runtime and emitter come from the consumer's
                 // build; this module only reshapes the IR with raw, fully
@@ -46,6 +37,15 @@ kotlin {
                 compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:compiler:emitters:kotlin"))
                 api(project(":src:integration:wirespec"))
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.bundles.kotest)
+                implementation(project(":src:integration:wirespec"))
+                implementation(project(":src:compiler:test"))
+                implementation(project(":src:compiler:core"))
             }
         }
         jvmTest {
