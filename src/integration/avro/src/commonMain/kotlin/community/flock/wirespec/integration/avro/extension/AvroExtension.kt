@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.avro.extension
 
+import arrow.core.escaped
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
@@ -11,10 +12,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.converter.avro.AvroJsonEmitter
+import community.flock.wirespec.converter.avro.AvroModel
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
-import community.flock.wirespec.integration.avro.Utils
-import community.flock.wirespec.integration.avro.Utils.isEnum
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.Expression
@@ -25,6 +26,8 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.extension.IrExtension
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * A single [IrExtension] that appends an Avro schema + converter declaration (`<Type>Avro`) for
@@ -267,7 +270,7 @@ private class KotlinAvroSource(packageName: PackageName) :
 }
 
 /** The escaped Avro schema JSON for [definition], with nested record references restored. */
-private fun schema(packageName: PackageName, definition: Definition, module: Module): String = Utils.emitAvroSchema(packageName, definition, module)
+private fun schema(packageName: PackageName, definition: Definition, module: Module): String = emitAvroSchema(packageName, definition, module)
     ?.replace("\\\"<<<<<", "\" + ")
     ?.replace(">>>>>\\\"", "Avro.SCHEMA + \"")
     ?: error("Cannot emit avro: ${definition.identifier.value}")
@@ -276,3 +279,55 @@ private fun JavaEmitter.schema(definition: Definition, module: Module): String =
 private fun KotlinEmitter.schema(definition: Definition, module: Module): String = schema(packageName, definition, module)
 
 private fun String.avroClass(): String = replace(".model.", ".avro.") + "Avro"
+
+private fun emitAvroSchema(packageName: PackageName, type: Definition, module: Module) = AvroJsonEmitter
+    .emit(module)
+    .map {
+        when (it) {
+            is AvroModel.RecordType -> it.copy(namespace = packageName.value)
+            else -> it
+        }
+    }
+    .find {
+        when (it) {
+            is AvroModel.RecordType -> it.name == type.identifier.value
+            is AvroModel.EnumType -> it.name == type.identifier.value
+            else -> false
+        }
+    }
+    ?.flatten()
+    ?.let { Json.encodeToString(it) }
+    ?.escaped()
+
+private fun Reference.isEnum(module: Module): Boolean = module.statements
+    .filterIsInstance<Enum>()
+    .any { it.identifier.value == this.value }
+
+private fun AvroModel.Type.flatten(): AvroModel.Type = when (this) {
+    is AvroModel.RecordType ->
+        this
+            .copy(
+                fields = fields
+                    .map { field ->
+                        field.copy(
+                            type = AvroModel.TypeList(
+                                field.type
+                                    .map { it.flatten() },
+                            ),
+                        )
+                    },
+            )
+
+    is AvroModel.ArrayType -> this.copy(items = items.flatten())
+    is AvroModel.EnumType -> this
+    is AvroModel.LogicalType -> this
+    is AvroModel.SimpleType -> this.copy(
+        value = when (value) {
+            "boolean", "int", "long", "float", "double", "bytes", "string", "null" -> value
+            else -> "<<<<<$value>>>>>"
+        },
+    )
+
+    is AvroModel.MapType -> TODO()
+    is AvroModel.UnionType -> TODO()
+}
