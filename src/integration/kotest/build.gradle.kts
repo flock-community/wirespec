@@ -53,6 +53,11 @@ kotlin {
                 // facade adapts the commonMain KotestGenerator into a
                 // Wirespec.Generator for IR-emitted callers.
                 implementation(project(":src:integration:wirespec"))
+                // The scenario-DSL runtime (WirespecExtension + the *.call { } entry
+                // points) is a kotest framework extension, so the published JVM
+                // artifact carries the framework engine and coroutines it builds on.
+                implementation(libs.kotest.engine)
+                implementation(libs.kotlinx.coroutines.core)
                 // KotestDslIrExtension builds IR File nodes (file{}/raw) over the
                 // parser AST and plugs into the IrEmitter pipeline as an IrExtension.
                 implementation(project(":src:compiler:core"))
