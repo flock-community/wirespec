@@ -55,6 +55,10 @@ internal object JvmRefinedWrapper : RefinedWrapper {
     @Suppress("UNCHECKED_CAST")
     private fun ctorFor(type: KType): KFunction<Any>? = cache.getOrPut(type) {
         val cls = (type.classifier as? KClass<*>) ?: return@getOrPut NotRefined
+        // Enums also have a single 1-arg constructor (the generated `label`), but it is
+        // private/inaccessible and an enum is never a Refined wrapper — pinning an enum
+        // field to a constant must pass the value through untouched, not try to re-wrap it.
+        if (cls.java.isEnum) return@getOrPut NotRefined
         cls.constructors.singleOrNull()
             ?.takeIf { it.parameters.size == 1 }
             ?.let { it as? KFunction<Any> }

@@ -80,6 +80,7 @@ kotlin_test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 kotlin_test_common = { module = "org.jetbrains.kotlin:kotlin-test-common", version.ref = "kotlin" }
 kotlin_test_annotations_common = { module = "org.jetbrains.kotlin:kotlin-test-annotations-common", version.ref = "kotlin" }
 kotlin_test_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotlinx_coroutines_core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx_coroutines" }
 kotlinx_coroutines_reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx_coroutines" }
 kotlinx_io_core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx_io" }
 kotlinx_openapi_bindings = { module = "community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings", version.ref = "kotlinx_openapi_bindings" }
