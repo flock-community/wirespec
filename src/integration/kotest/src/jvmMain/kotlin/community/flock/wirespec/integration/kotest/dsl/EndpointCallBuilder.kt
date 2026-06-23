@@ -1,0 +1,116 @@
+package community.flock.wirespec.integration.kotest.dsl
+
+import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
+import community.flock.wirespec.integration.kotest.runtime.CallExecutor
+import community.flock.wirespec.integration.kotest.validation.EndpointReflection
+import community.flock.wirespec.kotlin.Wirespec
+import io.kotest.property.Gen
+import kotlin.reflect.KClass
+import kotlin.time.Duration
+
+@DslMarker
+annotation class WirespecScenarioDsl
+
+/**
+ * Build an [EndpointCallBuilder] for an endpoint. Generated `*Dsl` wrappers call
+ * this from their `call { … }` entry point.
+ */
+fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> endpointCall(
+    client: Wirespec.Client<Req, Resp>,
+    endpointObject: Wirespec.Endpoint,
+): EndpointCallBuilder<BodyT, Req, Resp> = EndpointCallBuilder(client, endpointObject)
+
+@WirespecScenarioDsl
+class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> internal constructor(
+    @PublishedApi internal val client: Wirespec.Client<Req, Resp>,
+    endpointObject: Wirespec.Endpoint,
+) {
+
+    @PublishedApi
+    internal val reflection: EndpointReflection = EndpointReflection.of(endpointObject)
+
+    @PublishedApi internal var bodyFieldOverrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null
+
+    @PublishedApi internal var bodyListSizeGen: Gen<Int>? = null
+
+    @PublishedApi internal val pathGens: MutableMap<String, Gen<*>> = mutableMapOf()
+
+    @PublishedApi internal val queryGens: MutableMap<String, Gen<*>> = mutableMapOf()
+
+    @PublishedApi internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
+
+    internal var expectedStatuses: Set<Int>? = null
+    internal var customAssertion: ((Any) -> Unit)? = null
+
+    /**
+     * Per-field body override plumbing the generated typed body builder calls.
+     * Public (not internal) because generated `*Dsl` classes live in a downstream
+     * module and are not inline. Not intended for direct test use.
+     */
+    fun bodyFields(overrides: KotestWirespecGeneratorBuilder.() -> Unit): EndpointCallBuilder<BodyT, Req, Resp> = apply {
+        bodyFieldOverrides = overrides
+    }
+
+    /**
+     * Number of elements to generate when the request body is a list. Called by the
+     * generated list-body wrappers (`bodyCount`). Without it the runtime draws 1..3.
+     */
+    fun bodyListSize(gen: Gen<Int>): EndpointCallBuilder<BodyT, Req, Resp> = apply { bodyListSizeGen = gen }
+
+    /** Register a per-field path generator. Called by generated `path(...)`. */
+    fun pathGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { pathGens[name] = gen }
+
+    /** Register a per-field query generator. Called by generated `query(...)`. */
+    fun queryGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { queryGens[name] = gen }
+
+    /** Register a per-field header generator. Called by generated `header(...)`. */
+    fun headerGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { headerGens[name] = gen }
+
+    // ---- terminals (eager, suspend) ----
+
+    suspend inline fun <reified R : Resp> expecting(): R = expecting(R::class)
+
+    suspend fun <R : Resp> expecting(variantClass: KClass<R>): R {
+        expectedStatuses = setOf(statusOf(variantClass))
+        @Suppress("UNCHECKED_CAST")
+        return CallExecutor.executeEndpoint(this) as R
+    }
+
+    suspend inline fun <reified R : Resp> expecting(noinline block: (R) -> Unit): R = expecting(R::class, block)
+
+    suspend fun <R : Resp> expecting(variantClass: KClass<R>, block: (R) -> Unit): R {
+        expectedStatuses = setOf(statusOf(variantClass))
+        @Suppress("UNCHECKED_CAST")
+        customAssertion = { response -> block(response as R) }
+        @Suppress("UNCHECKED_CAST")
+        return CallExecutor.executeEndpoint(this) as R
+    }
+
+    // Endpoint streaming is not implemented: the single validated response is
+    // delivered as a one-element list. The count/duration arguments are accepted
+    // for DSL symmetry with the generated wrappers but not honored.
+    suspend inline fun <reified R : Resp> collecting(count: Int, noinline block: (List<R>) -> Unit) = collecting(R::class, block)
+
+    suspend inline fun <reified R : Resp> collecting(duration: Duration, noinline block: (List<R>) -> Unit) = collecting(R::class, block)
+
+    suspend fun <R : Resp> collecting(variantClass: KClass<R>, block: (List<R>) -> Unit) {
+        expectedStatuses = setOf(statusOf(variantClass))
+        val resp = CallExecutor.executeEndpoint(this)
+        @Suppress("UNCHECKED_CAST")
+        block(listOf(resp as R))
+    }
+
+    @PublishedApi
+    internal fun statusOf(variantClass: KClass<*>): Int {
+        val name = variantClass.simpleName
+            ?: error("Anonymous response variant class — pass a named ResponseNNN class.")
+        val match = STATUS_REGEX.matchEntire(name)
+            ?: error("Response variant class name '$name' doesn't match ResponseNNN. Use a Wirespec-generated response variant.")
+        return match.groupValues[1].toInt()
+    }
+
+    companion object {
+        @PublishedApi
+        internal val STATUS_REGEX = Regex("Response(\\d{3})")
+    }
+}
