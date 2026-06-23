@@ -47,19 +47,29 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
         HttpServletRequest servletRequest = (HttpServletRequest) webRequest.getNativeRequest();
 
         Class<?> declaringClass = parameter.getParameterType().getDeclaringClass();
-        Method fromRequest = fromRequestCache.computeIfAbsent(declaringClass, cls -> {
-            Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handler"))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
-            return Arrays.stream(handlerClass.getDeclaredMethods())
-                    .filter(m -> (m.getName().equals("fromRawRequest") || m.getName().equals("fromRequest")) && Modifier.isStatic(m.getModifiers()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("fromRawRequest method not found in " + handlerClass));
-        });
+        Method fromRequest = fromRequestCache.computeIfAbsent(
+                declaringClass,
+                cls -> findStaticFactory(cls, "fromRawRequest", "fromRequest"));
 
         Wirespec.RawRequest req = toRawRequest(servletRequest);
         return (Wirespec.Request<?>) fromRequest.invoke(null, wirespecSerialization, req);
+    }
+
+    /**
+     * Locates the static factory method on an endpoint class, tolerating both emitter shapes:
+     * the IR emitter declares it on the enclosing endpoint class, while the legacy emitter
+     * declares it on the nested {@code Handler} interface.
+     */
+    static Method findStaticFactory(Class<?> endpointClass, String rawName, String legacyName) {
+        List<Method> candidates = new ArrayList<>(Arrays.asList(endpointClass.getDeclaredMethods()));
+        Arrays.stream(endpointClass.getDeclaredClasses())
+                .filter(c -> c.getSimpleName().equals("Handler"))
+                .findFirst()
+                .ifPresent(handler -> candidates.addAll(Arrays.asList(handler.getDeclaredMethods())));
+        return candidates.stream()
+                .filter(m -> (m.getName().equals(rawName) || m.getName().equals(legacyName)) && Modifier.isStatic(m.getModifiers()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(rawName + " method not found in " + endpointClass + " or its Handler"));
     }
 
     private Wirespec.RawRequest toRawRequest(HttpServletRequest request) throws IOException {
