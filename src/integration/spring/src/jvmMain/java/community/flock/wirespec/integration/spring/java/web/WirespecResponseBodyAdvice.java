@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,16 +43,9 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     ) {
         try {
             Class<?> declaringClass = returnType.getParameterType().getDeclaringClass();
-            Method toResponse = toResponseCache.computeIfAbsent(declaringClass, cls -> {
-                Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
-                        .filter(c -> c.getSimpleName().equals("Handler"))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
-                return Arrays.stream(handlerClass.getDeclaredMethods())
-                        .filter(m -> (m.getName().equals("toRawResponse") || m.getName().equals("toResponse")) && Modifier.isStatic(m.getModifiers()))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("toRawResponse method not found in " + handlerClass));
-            });
+            Method toResponse = toResponseCache.computeIfAbsent(
+                    declaringClass,
+                    cls -> WirespecMethodArgumentResolver.findStaticFactory(cls, "toRawResponse", "toResponse"));
 
             if (body instanceof Wirespec.Response<?> wirespecResponse) {
                 Wirespec.RawResponse rawResponse = (Wirespec.RawResponse) toResponse.invoke(null, wirespecSerialization, wirespecResponse);
