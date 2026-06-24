@@ -43,12 +43,14 @@ CampaignEvents.call {
 }
 ```
 
-The DSL runtime lives in the published `community.flock.wirespec.integration:kotest` artifact. A
-test supplies the transport it runs against through a `ContextProvider`
-(see [`scenario/`](src/test/kotlin/community/flock/wirespec/examples/kotest/scenario)):
+The DSL runtime lives in the published `community.flock.wirespec.integration:kotest` artifact.
+Specs are plain `FunSpec`s that mount the ambient with `@ApplyExtension(WirespecExtension::class)`;
+the transport they run against is supplied through a `ContextProvider`
+(see [`support/`](src/test/kotlin/community/flock/wirespec/examples/kotest/support)):
 a JDK-`HttpClient` `Wirespec.Transportation` for endpoints and a Kafka producer/consumer
-`ChannelTransport` for the channel. [`CampaignScenarioSpec`](src/test/kotlin/community/flock/wirespec/examples/kotest/scenario/CampaignScenarioSpec.kt)
-boots an in-JVM Kafka broker (`spring-kafka-test`) and the real app per spec — no Docker required.
+`ChannelTransport` for the channel. [`CampaignTestEnvironment`](src/test/kotlin/community/flock/wirespec/examples/kotest/support/CampaignTestEnvironment.kt)
+boots an in-JVM Kafka broker (`spring-kafka-test`) and the real app once for the whole run — no
+Docker required.
 
 > Because the generated `*Dsl.kt` files import the kotest runtime and `io.kotest.property`, the
 > kotest dependencies are on the main classpath here (not just test). The DSL is generated test
