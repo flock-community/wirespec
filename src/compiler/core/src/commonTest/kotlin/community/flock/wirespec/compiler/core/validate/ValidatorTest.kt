@@ -9,6 +9,8 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
+import community.flock.wirespec.compiler.core.exceptions.SpreadCycleError
+import community.flock.wirespec.compiler.core.exceptions.SpreadTypeError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -218,6 +220,52 @@ class ValidatorTest {
                     DuplicateChannelError::class,
                 ),
             )
+    }
+
+    @Test
+    fun spreadNonRecordType() {
+        val source =
+            // language=ws
+            """
+            |type Bar = String
+            |type Foo { ...Bar, x: String }
+            """.trimMargin()
+
+        validate(source)
+            .shouldBeLeft()
+            .head.shouldBeInstanceOf<SpreadTypeError>()
+    }
+
+    @Test
+    fun spreadCycle() {
+        val source =
+            // language=ws
+            """
+            |type A { ...B }
+            |type B { ...A }
+            """.trimMargin()
+
+        validate(source)
+            .shouldBeLeft()
+            .head.shouldBeInstanceOf<SpreadCycleError>()
+    }
+
+    @Test
+    fun spreadAcrossFiles() {
+        val source1 =
+            // language=ws
+            """
+            |type Pagination { page: Integer?, size: Integer? }
+            """.trimMargin()
+
+        val source2 =
+            // language=ws
+            """
+            |type SomeQuery { ...Pagination, query: String? }
+            """.trimMargin()
+
+        validate(source1, source2)
+            .shouldBeRight()
     }
 
     @Test

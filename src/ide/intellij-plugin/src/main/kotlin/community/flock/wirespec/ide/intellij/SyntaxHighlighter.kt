@@ -3,6 +3,7 @@ package community.flock.wirespec.ide.intellij
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.BRACKETS
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.COMMA
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.DOT
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.IDENTIFIER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.LINE_COMMENT
@@ -27,6 +28,7 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.RIGHT_BRACKET -> arrayOf(BRACKETS)
         Types.COLON -> arrayOf(SEMICOLON)
         Types.COMMA -> arrayOf(COMMA)
+        Types.SPREAD -> arrayOf(DOT)
         Types.WIRESPEC_IDENTIFIER -> arrayOf(PARAMETER)
         Types.TYPE_IDENTIFIER -> arrayOf(IDENTIFIER)
         Types.WS_BOOLEAN -> arrayOf(KEYWORD)
