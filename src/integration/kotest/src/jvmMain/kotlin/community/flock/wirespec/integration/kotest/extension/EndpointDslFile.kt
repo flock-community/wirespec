@@ -317,7 +317,8 @@ internal object EndpointDslFile {
                 val subs = field.fields.joinToString(", ") {
                     "${KotlinIdentifier.escape(it.name)} = ${copyValueExpr(it, elemVar, nestedVar, builderPrefix)}"
                 }
-                "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
+                "$receiver.$fieldRef?.let { gen -> gen.draw(rs) } ?: " +
+                    "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
                     "$baseField?.let { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
             }
             is EndpointShape.BodyFieldShape.NestedList -> {
@@ -327,7 +328,8 @@ internal object EndpointDslFile {
                 val subs = field.fields.joinToString(", ") {
                     "${KotlinIdentifier.escape(it.name)} = ${copyValueExpr(it, elemVar, nestedVar, builderPrefix)}"
                 }
-                "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
+                "$receiver.$fieldRef?.let { gen -> gen.draw(rs) } ?: " +
+                    "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
                     "$baseField?.map { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
             }
         }
@@ -365,12 +367,18 @@ internal object EndpointDslFile {
                     appendLine("    public var $fieldRef: Gen<${f.kotlinType}>? = null")
                 }
                 is EndpointShape.BodyFieldShape.NestedObject -> {
+                    // Whole-value setter (`config = Arb.constant(...)`) pins the entire object; the
+                    // `${field}Block` sub-block keeps per-field overrides. The setter wins (copyValueExpr).
+                    appendLine("    public var $fieldRef: Gen<${f.typeName}>? = null")
                     appendLine("    @PublishedApi internal var $blockRef: ($builderPrefix${f.typeName}BodyBuilder.() -> Unit)? = null")
-                    appendLine("    public fun $fieldRef(block: $builderPrefix${f.typeName}BodyBuilder.() -> Unit) { $blockRef = block }")
+                    appendLine("    public fun ${KotlinIdentifier.escape("${f.name}Block")}(block: $builderPrefix${f.typeName}BodyBuilder.() -> Unit) { $blockRef = block }")
                 }
                 is EndpointShape.BodyFieldShape.NestedList -> {
+                    // Whole-list setter (`tools = Arb.constant(listOf(...))`) fixes the exact list; the
+                    // `${field}Block` sub-block keeps per-element overrides. The setter wins (copyValueExpr).
+                    appendLine("    public var $fieldRef: Gen<List<${f.elementTypeName}>>? = null")
                     appendLine("    @PublishedApi internal var $blockRef: ($builderPrefix${f.elementTypeName}BodyBuilder.() -> Unit)? = null")
-                    appendLine("    public fun $fieldRef(block: $builderPrefix${f.elementTypeName}BodyBuilder.() -> Unit) { $blockRef = block }")
+                    appendLine("    public fun ${KotlinIdentifier.escape("${f.name}Block")}(block: $builderPrefix${f.elementTypeName}BodyBuilder.() -> Unit) { $blockRef = block }")
                 }
             }
         }
