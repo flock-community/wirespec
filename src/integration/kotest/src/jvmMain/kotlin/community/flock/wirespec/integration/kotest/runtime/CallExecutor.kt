@@ -44,7 +44,7 @@ internal object CallExecutor {
         }
         call.customAssertion?.let { assertion ->
             try {
-                assertion.invoke(typedResponse)
+                assertion.invoke(request, typedResponse)
             } catch (t: Throwable) {
                 throw AssertionError(
                     "${reflection.endpointName} assertion failed (wirespec seed=${ambient.seed}): ${t.message}",
