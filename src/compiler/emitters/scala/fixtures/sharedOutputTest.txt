@@ -46,6 +46,11 @@ object Wirespec {
       def headers: Response.Headers
       def body: T
   }
+  trait Response1XX[T] extends Response[T]
+  trait Response2XX[T] extends Response[T]
+  trait Response3XX[T] extends Response[T]
+  trait Response4XX[T] extends Response[T]
+  trait Response5XX[T] extends Response[T]
   trait BodySerializer {
       def serializeBody[T](t: T, `type`: scala.reflect.ClassTag[?]): Array[Byte]
   }

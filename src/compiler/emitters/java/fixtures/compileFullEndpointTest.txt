@@ -37,9 +37,9 @@ public interface PutTodo extends Wirespec.Endpoint {
       ), body);
     }
   };
-  public sealed interface Response<T> extends Wirespec.Response<T> permits Response2XX, Response5XX, ResponseTodoDto, ResponseError {}
-  public sealed interface Response2XX<T> extends Response<T> permits Response200, Response201 {}
-  public sealed interface Response5XX<T> extends Response<T> permits Response500 {}
+  public sealed interface Response<T> extends Wirespec.Response<T> permits ResponseTodoDto, ResponseError {}
+  public sealed interface Response2XX<T> extends Wirespec.Response2XX<T> permits Response200, Response201 {}
+  public sealed interface Response5XX<T> extends Wirespec.Response5XX<T> permits Response500 {}
   public sealed interface ResponseTodoDto extends Response<TodoDto> permits Response200, Response201 {}
   public sealed interface ResponseError extends Response<Error> permits Response500 {}
   public static record Response200Headers () implements Wirespec.Response.Headers {

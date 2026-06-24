@@ -99,9 +99,9 @@ class Request(Wirespec.Request[PotentialTodoDto]):
         self.body = body
 class Response(Wirespec.Response[T], Generic[T]):
     pass
-class Response2XX(Response[T], Generic[T]):
+class Response2XX(Wirespec.Response2XX[T], Generic[T]):
     pass
-class Response5XX(Response[T], Generic[T]):
+class Response5XX(Wirespec.Response5XX[T], Generic[T]):
     pass
 class ResponseTodoDto(Response[TodoDto]):
     pass

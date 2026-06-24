@@ -55,6 +55,16 @@ public interface Wirespec {
     public interface Headers {
     }
   }
+  public interface Response1XX<T> extends Response<T> {
+  }
+  public interface Response2XX<T> extends Response<T> {
+  }
+  public interface Response3XX<T> extends Response<T> {
+  }
+  public interface Response4XX<T> extends Response<T> {
+  }
+  public interface Response5XX<T> extends Response<T> {
+  }
   public interface BodySerializer {
     public <T> byte[] serializeBody(T t, Type type);
   }
