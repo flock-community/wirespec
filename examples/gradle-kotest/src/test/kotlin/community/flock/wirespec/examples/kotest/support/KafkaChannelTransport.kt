@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.kotest.scenario
+package community.flock.wirespec.examples.kotest.support
 
 import community.flock.wirespec.integration.kotest.ChannelTransport
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +50,17 @@ class KafkaChannelTransport(
         // Force the lazy seek to resolve now (at the current log end) so events
         // published after construction — but before the first receive — are seen.
         partitions.forEach { position(it) }
+    }
+
+    /**
+     * Move the consumer to the current log end and resolve the position eagerly. Lets a
+     * spec start each scenario "watching from now", so `receive` only returns events
+     * published afterwards (not leftovers from earlier tests on the shared broker).
+     */
+    fun seekToEnd() {
+        val partitions = consumer.assignment()
+        consumer.seekToEnd(partitions)
+        partitions.forEach { consumer.position(it) }
     }
 
     override suspend fun publish(topic: String, key: String?, body: ByteArray): Unit =
