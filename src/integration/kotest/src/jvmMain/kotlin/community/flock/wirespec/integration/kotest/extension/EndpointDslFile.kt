@@ -246,12 +246,17 @@ internal object EndpointDslFile {
         appendLine("        flush()")
         appendLine("        return inner.expecting(variantClass, block)")
         appendLine("    }")
+        appendLine("    @PublishedApi internal suspend fun <R : $resp> expectingClass(variantClass: KClass<R>, block: (${shape.name}.Request, R) -> Unit): R {")
+        appendLine("        flush()")
+        appendLine("        return inner.expecting(variantClass, block)")
+        appendLine("    }")
         appendLine("    @PublishedApi internal suspend fun <R : $resp> collectingClass(variantClass: KClass<R>, block: (List<R>) -> Unit) {")
         appendLine("        flush()")
         appendLine("        inner.collecting(variantClass, block)")
         appendLine("    }")
         appendLine("    public suspend inline fun <reified R : $resp> expecting(): R = expectingClass(R::class)")
         appendLine("    public suspend inline fun <reified R : $resp> expecting(noinline block: (R) -> Unit): R = expectingClass(R::class, block)")
+        appendLine("    public suspend inline fun <reified R : $resp> expecting(noinline block: (${shape.name}.Request, R) -> Unit): R = expectingClass(R::class, block)")
         // No `returning<R, T>`: `R` is only in the projection's input position so it can never
         // be inferred, and Kotlin's all-or-nothing type args would then force `T` to be spelled
         // out too — naming the response type twice. `expecting<R>()` already returns `R`, so

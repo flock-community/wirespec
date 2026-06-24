@@ -40,7 +40,11 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     @PublishedApi internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
 
     internal var expectedStatuses: Set<Int>? = null
-    internal var customAssertion: ((Any) -> Unit)? = null
+
+    // Invoked with the generated request and the validated response, so assertion blocks can read
+    // both (e.g. assert the response echoes a generated request field). The response-only
+    // `expecting { … }` form ignores the request argument.
+    internal var customAssertion: ((request: Any, response: Any) -> Unit)? = null
 
     /**
      * Reconstruct the request body from per-field override `Gen`s. The generated typed
@@ -84,7 +88,17 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     suspend fun <R : Resp> expecting(variantClass: KClass<R>, block: (R) -> Unit): R {
         expectedStatuses = setOf(statusOf(variantClass))
         @Suppress("UNCHECKED_CAST")
-        customAssertion = { response -> block(response as R) }
+        customAssertion = { _, response -> block(response as R) }
+        @Suppress("UNCHECKED_CAST")
+        return CallExecutor.executeEndpoint(this) as R
+    }
+
+    suspend inline fun <reified R : Resp> expecting(noinline block: (Req, R) -> Unit): R = expecting(R::class, block)
+
+    suspend fun <R : Resp> expecting(variantClass: KClass<R>, block: (Req, R) -> Unit): R {
+        expectedStatuses = setOf(statusOf(variantClass))
+        @Suppress("UNCHECKED_CAST")
+        customAssertion = { request, response -> block(request as Req, response as R) }
         @Suppress("UNCHECKED_CAST")
         return CallExecutor.executeEndpoint(this) as R
     }
