@@ -59,8 +59,14 @@ internal object EndpointDslFile {
             import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             import("kotlin.time", "Duration")
+            import("kotlin.reflect", "KClass")
+            // The generated body transform reconstructs the contract default body with the
+            // typed builder's per-field override `Gen`s, drawing each value via `Gen.draw(rs)`.
+            if (shape.bodyFieldShapes.isNotEmpty()) {
+                import("community.flock.wirespec.integration.kotest.dsl", "draw")
+            }
             import(endpointPkg, shape.name)
-            val needsGen = shape.bodyFieldShapes.isNotEmpty() || present.isNotEmpty()
+            val needsGen = shape.bodyType != null || shape.bodyFieldShapes.isNotEmpty() || present.isNotEmpty()
             if (needsGen) {
                 import("io.kotest.property", "Gen")
             }
@@ -142,17 +148,15 @@ internal object EndpointDslFile {
     private fun renderScopeClass(shape: EndpointShape, present: List<Slot>, required: List<Slot>): String = buildString {
         appendLine("@WirespecScenarioDsl")
         appendLine("public class ${shape.name}Scope internal constructor() {")
-        appendLine("    @PublishedApi internal val inner = endpointCall(${shape.name}.Handler, ${shape.name})")
+        appendLine("    private val inner = endpointCall(${shape.name}.Handler, ${shape.name})")
         present.forEach { slot ->
             appendLine("    public var ${slot.name}: (${slotBuilderName(shape, slot)}.() -> Unit)? = null")
         }
-        if (shape.bodyType != null) {
-            if (shape.bodyFieldShapes.isNotEmpty()) {
-                val builderName = "${shape.name}${shape.bodyElementType}BodyBuilder"
-                appendLine("    public var body: ($builderName.() -> Unit)? = null")
-                if (shape.bodyKind == EndpointShape.BodyKind.List) {
-                    appendLine("    public var bodyCount: IntRange = 1..3")
-                }
+        if (shape.bodyFieldShapes.isNotEmpty()) {
+            val builderName = "${shape.name}${shape.bodyElementType}BodyBuilder"
+            appendLine("    public var body: ($builderName.() -> Unit)? = null")
+            if (shape.bodyKind == EndpointShape.BodyKind.List) {
+                appendLine("    public var bodyCount: IntRange = 1..3")
             }
         }
         appendLine(renderFlush(shape, present, required))
@@ -166,8 +170,8 @@ internal object EndpointDslFile {
      */
     private fun renderFlush(shape: EndpointShape, present: List<Slot>, required: List<Slot>): String = buildString {
         val requiredNames = required.map { it.name }.toSet()
-        appendLine("    @PublishedApi internal var flushed: Boolean = false")
-        appendLine("    @PublishedApi internal fun flush() {")
+        appendLine("    private var flushed: Boolean = false")
+        appendLine("    private fun flush() {")
         appendLine("        if (flushed) return")
         appendLine("        flushed = true")
         present.forEach { slot ->
@@ -183,21 +187,30 @@ internal object EndpointDslFile {
                 appendLine("        }")
             }
         }
-        if (shape.bodyType != null) {
-            if (shape.bodyFieldShapes.isNotEmpty()) {
-                val builderName = "${shape.name}${shape.bodyElementType}BodyBuilder"
-                val isList = shape.bodyKind == EndpointShape.BodyKind.List
-                val rootPrefix = if (isList) listOf("\"*\"") else emptyList()
-                appendLine("        body?.let { block ->")
-                appendLine("            val builder = $builderName().apply(block)")
-                if (isList) {
-                    appendLine("            inner.bodyListSize(Arb.int(bodyCount))")
-                }
-                appendLine("            inner.bodyFields {")
-                renderFieldRegistrations(this, "builder", shape.bodyFieldShapes, rootPrefix, indent = "                ", builderPrefix = shape.name)
-                appendLine("            }")
-                appendLine("        }")
+        if (shape.bodyFieldShapes.isNotEmpty()) {
+            val builderName = "${shape.name}${shape.bodyElementType}BodyBuilder"
+            val isList = shape.bodyKind == EndpointShape.BodyKind.List
+            val elementType = shape.bodyElementType
+            appendLine("        body?.let { block ->")
+            appendLine("            val builder = $builderName().apply(block)")
+            if (isList) {
+                appendLine("            inner.bodyListSize(Arb.int(bodyCount))")
             }
+            // Reconstruct the contract default body (`rawBase`) by copying it with each
+            // overridden field replaced; un-set fields keep their generated default. A list
+            // body applies the same per-element overrides to every generated element.
+            appendLine("            inner.bodyTransform { rawBase, rs ->")
+            if (isList) {
+                appendLine("                @Suppress(\"UNCHECKED_CAST\")")
+                appendLine("                (rawBase as List<$elementType>).map { base ->")
+                appendBodyCopy(this, "base", "builder", shape, indent = "                    ")
+                appendLine("                }")
+            } else {
+                appendLine("                val base = rawBase as $elementType")
+                appendBodyCopy(this, "base", "builder", shape, indent = "                ")
+            }
+            appendLine("            }")
+            appendLine("        }")
         }
         append("    }")
     }
@@ -221,25 +234,30 @@ internal object EndpointDslFile {
 
     private fun renderTerminalMembers(shape: EndpointShape): String = buildString {
         val resp = "${shape.name}.Response<*>"
-        appendLine("    public suspend inline fun <reified R : $resp> expecting(): R {")
+        // The public terminals stay `inline`/`reified` so call sites read `expecting<R>()`, but
+        // they only capture `R::class` and delegate to the non-inline `@PublishedApi` bridges
+        // below. That keeps `inner`/`flush()`/`flushed` private — the inline bodies never touch
+        // them, so only the small bridge surface is exposed for inlining.
+        appendLine("    @PublishedApi internal suspend fun <R : $resp> expectingClass(variantClass: KClass<R>): R {")
         appendLine("        flush()")
-        appendLine("        return inner.expecting<R>()")
+        appendLine("        return inner.expecting(variantClass)")
         appendLine("    }")
-        appendLine("    public suspend inline fun <reified R : $resp> expecting(noinline block: (R) -> Unit): R {")
+        appendLine("    @PublishedApi internal suspend fun <R : $resp> expectingClass(variantClass: KClass<R>, block: (R) -> Unit): R {")
         appendLine("        flush()")
-        appendLine("        return inner.expecting<R>(block)")
+        appendLine("        return inner.expecting(variantClass, block)")
         appendLine("    }")
+        appendLine("    @PublishedApi internal suspend fun <R : $resp> collectingClass(variantClass: KClass<R>, block: (List<R>) -> Unit) {")
+        appendLine("        flush()")
+        appendLine("        inner.collecting(variantClass, block)")
+        appendLine("    }")
+        appendLine("    public suspend inline fun <reified R : $resp> expecting(): R = expectingClass(R::class)")
+        appendLine("    public suspend inline fun <reified R : $resp> expecting(noinline block: (R) -> Unit): R = expectingClass(R::class, block)")
         // No `returning<R, T>`: `R` is only in the projection's input position so it can never
         // be inferred, and Kotlin's all-or-nothing type args would then force `T` to be spelled
         // out too — naming the response type twice. `expecting<R>()` already returns `R`, so
         // `expecting<R>().body` / `expecting<R>().let { … }` projects while naming `R` once.
-        appendLine("    public suspend inline fun <reified R : $resp> collecting(count: Int, noinline block: (List<R>) -> Unit) {")
-        appendLine("        flush()")
-        appendLine("        inner.collecting<R>(count, block)")
-        appendLine("    }")
-        appendLine("    public suspend inline fun <reified R : $resp> collecting(duration: Duration, noinline block: (List<R>) -> Unit) {")
-        appendLine("        flush()")
-        append("        inner.collecting<R>(duration, block)\n    }")
+        appendLine("    public suspend inline fun <reified R : $resp> collecting(count: Int, noinline block: (List<R>) -> Unit) = collectingClass(R::class, block)")
+        append("    public suspend inline fun <reified R : $resp> collecting(duration: Duration, noinline block: (List<R>) -> Unit) = collectingClass(R::class, block)")
     }
 
     // ------------------------------------------------------------------------------------
@@ -255,40 +273,80 @@ internal object EndpointDslFile {
         append("}")
     }
 
-    private fun renderFieldRegistrations(
+    /**
+     * Emit `$baseExpr.copy(field = <value>, …)` for a body shape, one field per line.
+     * Each value is produced by [copyValueExpr] — an override drawn from the builder's
+     * `Gen`, falling back to the generated default carried on [baseExpr].
+     */
+    private fun appendBodyCopy(
         out: StringBuilder,
+        baseExpr: String,
         receiver: String,
-        fields: List<EndpointShape.BodyFieldShape>,
-        pathPrefix: List<String>,
+        shape: EndpointShape,
         indent: String,
-        builderPrefix: String,
     ) {
-        fields.forEach { f ->
-            val nameSegment = "\"${f.name}\""
-            val pathArgs = (pathPrefix + nameSegment).joinToString(", ")
-            val fieldRef = KotlinIdentifier.escape(f.name)
-            val blockRef = KotlinIdentifier.escape("_${f.name}Block")
-            when (f) {
-                is EndpointShape.BodyFieldShape.Primitive -> {
-                    out.appendLine("$indent$receiver.$fieldRef?.let { registerPath($pathArgs) { it } }")
+        out.appendLine("$indent$baseExpr.copy(")
+        shape.bodyFieldShapes.forEach { f ->
+            out.appendLine("$indent    ${KotlinIdentifier.escape(f.name)} = ${copyValueExpr(f, baseExpr, receiver, shape.name)},")
+        }
+        out.appendLine("$indent)")
+    }
+
+    /**
+     * A single field's reconstructed value. A primitive override draws from its `Gen` and
+     * re-wraps refined values; an unset override falls back to `$baseExpr.<field>`. Nested
+     * object/list fields recurse, copying the generated default in place (and mapping over
+     * every element for a nested list, matching the previous `"*"` wildcard semantics).
+     */
+    private fun copyValueExpr(
+        field: EndpointShape.BodyFieldShape,
+        baseExpr: String,
+        receiver: String,
+        builderPrefix: String,
+    ): String {
+        val fieldRef = KotlinIdentifier.escape(field.name)
+        val blockRef = KotlinIdentifier.escape("_${field.name}Block")
+        val baseField = "$baseExpr.$fieldRef"
+        return when (field) {
+            is EndpointShape.BodyFieldShape.Primitive ->
+                "$receiver.$fieldRef?.let { gen -> ${wrapDrawn("gen.draw(rs)", field)} } ?: $baseField"
+            is EndpointShape.BodyFieldShape.NestedObject -> {
+                val nestedBuilder = "$builderPrefix${field.typeName}BodyBuilder"
+                val nestedVar = KotlinIdentifier.escape("nested_${field.name}")
+                val elemVar = KotlinIdentifier.escape("base_${field.name}")
+                val subs = field.fields.joinToString(", ") {
+                    "${KotlinIdentifier.escape(it.name)} = ${copyValueExpr(it, elemVar, nestedVar, builderPrefix)}"
                 }
-                is EndpointShape.BodyFieldShape.NestedObject -> {
-                    val nestedBuilder = "$builderPrefix${f.typeName}BodyBuilder"
-                    val nestedVar = KotlinIdentifier.escape("nested_${f.name}")
-                    out.appendLine("$indent$receiver.$blockRef?.let { block ->")
-                    out.appendLine("$indent    val $nestedVar = $nestedBuilder().apply(block)")
-                    renderFieldRegistrations(out, nestedVar, f.fields, pathPrefix + nameSegment, "$indent    ", builderPrefix)
-                    out.appendLine("$indent}")
-                }
-                is EndpointShape.BodyFieldShape.NestedList -> {
-                    val nestedBuilder = "$builderPrefix${f.elementTypeName}BodyBuilder"
-                    val nestedVar = KotlinIdentifier.escape("nested_${f.name}")
-                    out.appendLine("$indent$receiver.$blockRef?.let { block ->")
-                    out.appendLine("$indent    val $nestedVar = $nestedBuilder().apply(block)")
-                    renderFieldRegistrations(out, nestedVar, f.fields, pathPrefix + nameSegment + "\"*\"", "$indent    ", builderPrefix)
-                    out.appendLine("$indent}")
-                }
+                "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
+                    "$baseField?.let { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
             }
+            is EndpointShape.BodyFieldShape.NestedList -> {
+                val nestedBuilder = "$builderPrefix${field.elementTypeName}BodyBuilder"
+                val nestedVar = KotlinIdentifier.escape("nested_${field.name}")
+                val elemVar = KotlinIdentifier.escape("elem_${field.name}")
+                val subs = field.fields.joinToString(", ") {
+                    "${KotlinIdentifier.escape(it.name)} = ${copyValueExpr(it, elemVar, nestedVar, builderPrefix)}"
+                }
+                "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
+                    "$baseField?.map { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
+            }
+        }
+    }
+
+    /**
+     * Wrap a drawn body value to match the model field's declared type. The builder exposes
+     * refined fields as their unwrapped base primitive (`Gen<String>`), so a drawn value must
+     * be re-wrapped into the `Refined` class before it can go into `copy(...)`: `Refined(v)`
+     * for a scalar, `v.map { Refined(it) }` for a list, with null-safe variants. Non-refined
+     * values pass through unchanged.
+     */
+    private fun wrapDrawn(drawn: String, field: EndpointShape.BodyFieldShape.Primitive): String {
+        val refined = field.refinedTypeName ?: return drawn
+        return when {
+            field.isList && field.isNullable -> "$drawn?.map { $refined(it) }"
+            field.isList -> "$drawn.map { $refined(it) }"
+            field.isNullable -> "$drawn?.let { $refined(it) }"
+            else -> "$refined($drawn)"
         }
     }
 

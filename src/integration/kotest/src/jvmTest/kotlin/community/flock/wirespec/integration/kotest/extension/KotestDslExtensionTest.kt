@@ -61,7 +61,7 @@ class KotestDslExtensionTest {
         output shouldContain "inner.headerGen(\"Refresh-Token\", headerBuilder.`Refresh-Token` ?: Arb.constant(null))"
 
         // Terminals flush before executing; the `call` extension opens the scope as a block.
-        output shouldContain "public suspend inline fun <reified R : PutTodo.Response<*>> expecting(): R {"
+        output shouldContain "public suspend inline fun <reified R : PutTodo.Response<*>> expecting(): R = expectingClass(R::class)"
         output shouldContain "public suspend fun <R> PutTodo.call(block: suspend PutTodoScope.() -> R): R"
     }
 

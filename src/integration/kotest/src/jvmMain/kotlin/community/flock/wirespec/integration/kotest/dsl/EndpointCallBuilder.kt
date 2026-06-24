@@ -1,10 +1,10 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.runtime.CallExecutor
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
+import io.kotest.property.RandomSource
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
@@ -29,7 +29,7 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     @PublishedApi
     internal val reflection: EndpointReflection = EndpointReflection.of(endpointObject)
 
-    @PublishedApi internal var bodyFieldOverrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null
+    @PublishedApi internal var bodyTransform: ((Any, RandomSource) -> Any)? = null
 
     @PublishedApi internal var bodyListSizeGen: Gen<Int>? = null
 
@@ -43,12 +43,15 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     internal var customAssertion: ((Any) -> Unit)? = null
 
     /**
-     * Per-field body override plumbing the generated typed body builder calls.
-     * Public (not internal) because generated `*Dsl` classes live in a downstream
-     * module and are not inline. Not intended for direct test use.
+     * Reconstruct the request body from per-field override `Gen`s. The generated typed
+     * body builder passes a transform that takes the contract-derived default body (drawn
+     * by the kotest generator) plus the call's [RandomSource] and returns a copy with the
+     * overridden fields replaced — `base.copy(field = gen.draw(rs))`. Each un-overridden
+     * field keeps its generated default. Public (not internal) because generated `*Dsl`
+     * classes live in a downstream module and are not inline. Not intended for direct test use.
      */
-    fun bodyFields(overrides: KotestWirespecGeneratorBuilder.() -> Unit): EndpointCallBuilder<BodyT, Req, Resp> = apply {
-        bodyFieldOverrides = overrides
+    fun bodyTransform(transform: (Any, RandomSource) -> Any): EndpointCallBuilder<BodyT, Req, Resp> = apply {
+        bodyTransform = transform
     }
 
     /**
