@@ -47,7 +47,20 @@ internal data class EndpointShape(
     sealed interface BodyFieldShape {
         val name: String
 
-        data class Primitive(override val name: String, val kotlinType: String) : BodyFieldShape
+        /**
+         * Leaf body field declared as `Gen<[kotlinType]>?` in the typed builder (where
+         * [kotlinType] is the refined-unwrapped base primitive). When the field wraps a
+         * [Refined] type, [refinedTypeName] names the wrapper class so the generated body
+         * transform can re-wrap the drawn primitive — `Refined(v)` for a scalar,
+         * `v.map { Refined(it) }` for a list. [isList]/[isNullable] pick the wrap shape.
+         */
+        data class Primitive(
+            override val name: String,
+            val kotlinType: String,
+            val refinedTypeName: String? = null,
+            val isList: Boolean = false,
+            val isNullable: Boolean = false,
+        ) : BodyFieldShape
         data class NestedObject(
             override val name: String,
             val typeName: String,
@@ -187,7 +200,7 @@ internal data class EndpointShape(
                             fields = extractBodyFields(ref.value, types, refined, nextVisited),
                         )
                     } else {
-                        BodyFieldShape.Primitive(name, mapWithRefinedUnwrap(ref, refined))
+                        primitiveOf(name, ref, refined)
                     }
                     is Reference.Iterable -> {
                         val inner = ref.reference
@@ -198,12 +211,40 @@ internal data class EndpointShape(
                                 fields = extractBodyFields(inner.value, types, refined, nextVisited),
                             )
                         } else {
-                            BodyFieldShape.Primitive(name, mapWithRefinedUnwrap(ref, refined))
+                            primitiveOf(name, ref, refined)
                         }
                     }
-                    else -> BodyFieldShape.Primitive(name, mapWithRefinedUnwrap(ref, refined))
+                    else -> primitiveOf(name, ref, refined)
                 }
             }
+        }
+
+        /**
+         * Build a [BodyFieldShape.Primitive], recording the [Refined] wrapper class (if any)
+         * so the generated body transform can re-wrap the drawn base primitive. A scalar
+         * `Refined` field carries `isList = false`; an `Iterable<Refined>` carries
+         * `isList = true`. Non-refined fields get `refinedTypeName = null`.
+         */
+        private fun primitiveOf(
+            name: String,
+            ref: Reference,
+            refined: Map<String, Refined>,
+        ): BodyFieldShape.Primitive {
+            val (refinedTypeName, isList) = when {
+                ref is Reference.Custom && ref.value in refined -> ref.value to false
+                ref is Reference.Iterable -> {
+                    val inner = ref.reference
+                    if (inner is Reference.Custom && inner.value in refined) inner.value to true else null to false
+                }
+                else -> null to false
+            }
+            return BodyFieldShape.Primitive(
+                name = name,
+                kotlinType = mapWithRefinedUnwrap(ref, refined),
+                refinedTypeName = refinedTypeName,
+                isList = isList,
+                isNullable = ref.isNullable,
+            )
         }
 
         /** Like [KotlinTypeMapper.map], but replaces a `Reference.Custom` to a [Refined] with the
