@@ -79,11 +79,32 @@ internal class KotestWirespecGenerator(
     private val refinedWrapper: RefinedWrapper,
 ) : KotestGenerator {
 
+    private companion object {
+        // Nesting depth past which generated lists are emptied to terminate self-recursive types.
+        // Generous enough for realistic contract nesting; only deep runaway recursion is bounded.
+        const val MAX_GEN_DEPTH = 12
+    }
+
     private val pendingSeeds = ArrayDeque<PendingSeed>()
 
     private val captures = ArrayDeque<Capture>()
 
     private var shapeDepth = 0
+
+    // Actual nesting depth during value generation (incremented per shape/array descent), used to
+    // bound self-recursive types (e.g. a parameter that contains a list of parameters): beyond
+    // [MAX_GEN_DEPTH] generated lists are emptied so generation always terminates instead of
+    // overflowing the stack. Distinct from [shapeDepth], which only gates @Seed handling.
+    private var genDepth = 0
+
+    private inline fun <R> withGenDepth(block: () -> R): R {
+        genDepth++
+        return try {
+            block()
+        } finally {
+            genDepth--
+        }
+    }
 
     private val parentStack = ArrayDeque<ParentFrame>()
 
@@ -297,14 +318,16 @@ internal class KotestWirespecGenerator(
             is KotestFieldEnum -> Arb.element(field.values).next(rs) as T
             is KotestFieldUnion -> Arb.element(field.variants).next(rs) as T
             is KotestFieldArray<*> -> {
-                val size = Arb.int(1..10).next(rs)
-                (0 until size).map { i -> field.generate(path + "$i") } as T
+                // Empty deep lists so self-recursive element types (a parameter holding a list of
+                // parameters) terminate instead of overflowing the stack.
+                val size = if (genDepth >= MAX_GEN_DEPTH) 0 else Arb.int(1..10).next(rs)
+                (0 until size).map { i -> withGenDepth { field.generate(path + "$i") } } as T
             }
             // Deterministic ~20% null chance so consumers' null branches are
             // exercised; same seed + path always reproduces the same choice.
             is KotestFieldNullable<*> -> if (Arb.int(0..4).next(rs) == 0) null as T else field.generate(path) as T
             is KotestFieldShape<*> -> withParentFrame(ParentFrame(field.type.toString())) {
-                field.generate(path)
+                withGenDepth { field.generate(path) }
             } as T
             is KotestFieldDict<*> -> mapOf("a" to field.generate(path + "a")) as T
         }
