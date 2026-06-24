@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.kotest.runtime
 
 import community.flock.wirespec.integration.kotest.dsl.ArbReceiver
 import community.flock.wirespec.integration.kotest.dsl.EndpointCallBuilder
-import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 import community.flock.wirespec.integration.kotest.validation.ContractValidator
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec
@@ -64,23 +63,24 @@ internal object CallExecutor {
     ): Map<String, Any?> {
         val args = mutableMapOf<String, Any?>()
 
-        // A per-call generator honoring any `bodyFields { }` overrides, else the
-        // receiver's default. Built lazily so non-body endpoints pay nothing.
-        fun bodyGenerator(): Wirespec.Generator = call.bodyFieldOverrides
-            ?.let { overrides -> kotestWirespecKotlinGenerator(seed = rs.random.nextLong()) { overrides() } }
-            ?: arb.generator
+        // The body is always drawn from the contract default first; the generated DSL's
+        // `bodyTransform` (if any) then reconstructs it with the per-field overrides
+        // applied (`base.copy(field = gen.draw(rs))`). Un-overridden fields keep the
+        // generator's default value.
+        fun withBodyTransform(default: Any): Any = call.bodyTransform?.invoke(default, rs) ?: default
 
         when {
             reflection.hasBody && reflection.bodyElementClass != null -> {
                 val size = (call.bodyListSizeGen ?: Arb.int(1..3)).firstValue(rs)
                 val elementGen = arb.generatorFor(reflection.bodyElementClass)
-                args["body"] = (0 until size).map { i -> elementGen.generate(bodyGenerator(), listOf("$i")) }
+                val default = (0 until size).map { i -> elementGen.generate(arb.generator, listOf("$i")) }
+                args["body"] = withBodyTransform(default)
             }
             reflection.hasBody -> {
                 val bodyType = reflection.requestConstructor.parameters
                     .firstOrNull { it.name == "body" }?.type
                     ?: error("${reflection.endpointName}: hasBody=true but no `body` constructor param.")
-                args["body"] = arb.generatorFor(bodyType).generate(bodyGenerator(), emptyList())
+                args["body"] = withBodyTransform(arb.generatorFor(bodyType).generate(arb.generator, emptyList()))
             }
         }
 
