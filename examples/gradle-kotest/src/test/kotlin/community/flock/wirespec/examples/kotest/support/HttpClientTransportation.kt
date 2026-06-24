@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.kotest.scenario
+package community.flock.wirespec.examples.kotest.support
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlinx.coroutines.Dispatchers
