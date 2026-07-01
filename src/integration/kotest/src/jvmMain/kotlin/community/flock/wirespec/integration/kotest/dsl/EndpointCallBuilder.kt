@@ -73,6 +73,16 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     /** Register a per-field header generator. Called by generated `header(...)`. */
     fun headerGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { headerGens[name] = gen }
 
+    /**
+     * Build the typed request object from the registered slot/body gens against the ambient
+     * `RandomSource`, without sending it. Backs the generated `<Endpoint>.request { … }` DSL;
+     * `call { … }` sends exactly this request.
+     */
+    suspend fun buildRequest(): Req {
+        @Suppress("UNCHECKED_CAST")
+        return CallExecutor.buildRequest(this) as Req
+    }
+
     // ---- terminals (eager, suspend) ----
 
     suspend inline fun <reified R : Resp> expecting(): R = expecting(R::class)
