@@ -5,6 +5,9 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.CreateProduct
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetCampaign
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetProduct
 import community.flock.wirespec.examples.kotest.generated.kotest.call
+import community.flock.wirespec.examples.kotest.generated.kotest.request
+import community.flock.wirespec.examples.kotest.generated.kotest.response201
+import community.flock.wirespec.examples.kotest.generated.model.Product
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
 import community.flock.wirespec.integration.kotest.WirespecExtension
 import io.kotest.core.extensions.ApplyExtension
@@ -32,6 +35,29 @@ class CampaignEndpointScenarioTest : FunSpec({
                 response.body.id.value.shouldBeUuid()
             }
         }
+    }
+
+    test("request builds a random CreateProduct.Request, pinning only what you set") {
+        // Same scope block as `call { … }`, but it materialises the request instead of sending it.
+        // Unset fields (sku, price) are generated; `name` is pinned.
+        val req = CreateProduct.request {
+            body = { name = Arb.constant("Wireless Mouse") }
+        }
+        req.body.name shouldBe "Wireless Mouse"
+        req.body.sku.isNotEmpty() shouldBe true
+    }
+
+    test("response201 builds a random CreateProduct.Response201, pinning only what you set") {
+        // Per-variant response builder: whole-value `body` setter, everything else generated.
+        val pinned = Product(
+            id = ProductId("00000000-0000-0000-0000-000000000000"),
+            sku = "SKU-1",
+            name = "Wireless Mouse",
+            price = 9.99,
+        )
+        val response = CreateProduct.response201 { body = Arb.constant(pinned) }
+        response.status shouldBe 201
+        response.body shouldBe pinned
     }
 
     test("GetProduct on an unknown id returns a 404 with a contract Error") {

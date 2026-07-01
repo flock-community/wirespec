@@ -19,7 +19,24 @@ internal class EndpointReflection private constructor(
     val bodyElementClass: Class<*>?,
 ) {
 
+    private val variantCache = ConcurrentHashMap<Class<*>, ResponseVariantReflection>()
+
     fun responseClassForStatus(status: Int): Class<*>? = responseVariantsByStatus[status]
+
+    /** Reflect (and cache) a response variant's flattened constructor so a random instance can be built. */
+    fun responseVariant(variantClass: Class<*>): ResponseVariantReflection = variantCache.getOrPut(variantClass) { introspectVariant(variantClass) }
+
+    /**
+     * How to build one `Response<status>` variant: its user-facing constructor (the emitter's
+     * secondary, flattening header fields + `body`, with no `status` param) plus the body's
+     * shape — [bodyClass] for an object body, [bodyElementClass] for a `List<…>` body.
+     */
+    class ResponseVariantReflection(
+        val constructor: Constructor<*>,
+        val hasBody: Boolean,
+        val bodyElementClass: Class<*>?,
+        val bodyClass: Class<*>?,
+    )
 
     fun fromRawResponse(serialization: Wirespec.Serialization, response: Wirespec.RawResponse): Any = fromResponseMethod.invoke(instance, serialization, response)
 
@@ -43,6 +60,34 @@ internal class EndpointReflection private constructor(
     companion object {
         private val cache = ConcurrentHashMap<KClass<out Wirespec.Endpoint>, EndpointReflection>()
         private val variantRegex = Regex("Response(\\d{3})")
+        private val syntheticParamRegex = Regex("arg\\d+")
+
+        // Pick the emitter's flattened response-variant constructor: the secondary that omits the
+        // primary's `status` param and flattens response header fields + `body`. Fewest params as a
+        // tiebreak; fall back to any constructor for hand-rolled variants.
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        private fun introspectVariant(variantClass: Class<*>): ResponseVariantReflection {
+            val ctor = variantClass.declaredConstructors
+                .filter { c -> c.parameters.none { it.name == "status" } }
+                .minByOrNull { it.parameterCount }
+                ?: variantClass.declaredConstructors.minByOrNull { it.parameterCount }
+                ?: error("${variantClass.simpleName}: no constructors found.")
+            require(ctor.parameters.all { it.name != null && !it.name.matches(syntheticParamRegex) }) {
+                "${variantClass.simpleName} constructor parameter names not retained. " +
+                    "Ensure the generated module is compiled with `-java-parameters`."
+            }
+            val bodyParam = ctor.parameters.firstOrNull { it.name == "body" }
+            val isListBody = bodyParam != null && java.util.List::class.java.isAssignableFrom(bodyParam.type)
+            val bodyElementClass: Class<*>? = bodyParam
+                ?.takeIf { isListBody }
+                ?.let { (it.parameterizedType as? ParameterizedType)?.actualTypeArguments?.firstOrNull() as? Class<*> }
+            return ResponseVariantReflection(
+                constructor = ctor,
+                hasBody = bodyParam != null,
+                bodyElementClass = bodyElementClass,
+                bodyClass = bodyParam?.takeIf { !isListBody }?.type,
+            )
+        }
 
         fun of(endpoint: Wirespec.Endpoint): EndpointReflection = cache.getOrPut(endpoint::class) { introspect(endpoint, endpoint::class) }
 
