@@ -44,6 +44,7 @@ include(
     "src:integration:jackson",
     "src:integration:kotlinx-serialization",
     "src:integration:kotest",
+    "src:integration:ktor",
     "src:integration:wirespec",
     "src:integration:wiremock",
     "src:integration:spring",

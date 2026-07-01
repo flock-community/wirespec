@@ -119,12 +119,11 @@ internal object CallExecutor {
     }
 
     /** Default value for a non-body response constructor param: primitive Arb or a generated model. */
-    private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? =
-        if (PrimitiveArbs.supports(type)) {
-            PrimitiveArbs.forType(type).firstValue(rs)
-        } else {
-            arb.generatorFor(type).generate(arb.generator, emptyList())
-        }
+    private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? = if (PrimitiveArbs.supports(type)) {
+        PrimitiveArbs.forType(type).firstValue(rs)
+    } else {
+        arb.generatorFor(type).generate(arb.generator, emptyList())
+    }
 
     private fun resolveSlots(
         call: EndpointCallBuilder<*, *, *>,
