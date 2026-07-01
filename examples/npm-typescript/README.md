@@ -16,7 +16,7 @@ import { GetTodoById } from "./gen/endpoint";
 
 const server = setupServer(
   wirespec(GetTodoById.api, async (req) =>
-    GetTodoById.response200({ body: { id: req.path.id, /* ... */ } }),
+    GetTodoById.response200({ body: { id: req.path.id /* ... */ } }),
   ),
 );
 ```
@@ -29,3 +29,23 @@ error. Pass `{ baseUrl }` to pin a host or path prefix. See
 
 > `msw` is an optional peer dependency of `@flock/wirespec`; install it in your
 > project to use this integration.
+
+## Generating test data
+
+`@flock/wirespec/generator` provides a seeded random data generator (backed by
+the Kotest integration) that drives the generated `*Generator` namespaces to
+produce values conforming to your Wirespec definitions, including refined-type
+constraints such as regexes and number bounds:
+
+```ts
+import { kotestWirespecGenerator } from "@flock/wirespec/generator";
+import { TodoDtoGenerator } from "./gen/generator/TodoDtoGenerator";
+
+const generator = kotestWirespecGenerator(42);
+const todo = TodoDtoGenerator.generate(generator, []);
+// todo.id matches the TodoId UUID regex, todo.testInt2 is within its bounds, ...
+```
+
+The same seed always produces the same data, making generated values safe to
+use in deterministic tests. See [`src/generator.test.ts`](src/generator.test.ts)
+for a runnable example.

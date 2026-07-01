@@ -12,6 +12,7 @@ java = "17"
 junit_launcher = "1.11.3"
 kafka_avro = "7.7.1"
 kotest = "6.1.4"
+kotest_property_arbs = "3.0.0"
 ksp = "2.3.6"
 kotlin = "2.3.10"
 kotlin_api = "1.9"
@@ -37,7 +38,9 @@ kotlinx_io = "0.6.0"
 kotlinx_openapi_bindings = "0.3.1"
 kotlinx_rgxgen = "0.0.1"
 kotlinx_serialization = "1.7.0"
+ktor = "3.5.0"
 maven_plugin = "1.0.3"
+scala3 = "3.3.4"
 maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
@@ -64,6 +67,8 @@ kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref =
 kotest_assertions_arrow = { module = "io.kotest:kotest-assertions-arrow", version.ref = "kotest" }
 kotest_assertions_json = { module = "io.kotest:kotest-assertions-json", version.ref = "kotest" }
 kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest_property_arbs = { module = "io.kotest:kotest-property-arbs", version.ref = "kotest_property_arbs" }
 kotlin_compiler_embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin_embedded"}
 kotlin_gradle_plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
@@ -76,14 +81,20 @@ kotlin_test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 kotlin_test_common = { module = "org.jetbrains.kotlin:kotlin-test-common", version.ref = "kotlin" }
 kotlin_test_annotations_common = { module = "org.jetbrains.kotlin:kotlin-test-annotations-common", version.ref = "kotlin" }
 kotlin_test_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotlinx_coroutines_core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx_coroutines" }
 kotlinx_coroutines_reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx_coroutines" }
 kotlinx_io_core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx_io" }
 kotlinx_openapi_bindings = { module = "community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings", version.ref = "kotlinx_openapi_bindings" }
 kotlinx_rgxgen = { module = "community.flock.kotlinx.rgxgen:kotlin-rgxgen", version.ref = "kotlinx_rgxgen" }
 kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx_serialization" }
+ktor_client_core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor_client_mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
+scala3_library = { module = "org.scala-lang:scala3-library_3", version.ref = "scala3" }
+scala3_compiler = { module = "org.scala-lang:scala3-compiler_3", version.ref = "scala3" }
+scala3_sbt_bridge = { module = "org.scala-lang:scala3-sbt-bridge", version.ref = "scala3" }
 vanniktech_maven_publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktech-maven-publish" }
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
 spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }
@@ -97,6 +108,7 @@ jackson2 = ["jackson2_databind", "jackson2_jdk8", "jackson2_kotlin"]
 jackson3 = ["jackson3_databind", "jackson3_kotlin"]
 kotlin_test = ["kotlin_test_common", "kotlin_test_annotations_common", "kotlin_test_junit"]
 kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_json", "kotest_assertions_arrow"]
+kotest_property = ["kotest_property", "kotest_property_arbs"]
 maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
 [plugins]
