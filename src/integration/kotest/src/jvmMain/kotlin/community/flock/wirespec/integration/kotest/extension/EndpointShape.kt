@@ -26,6 +26,8 @@ internal data class EndpointShape(
      *  - [BodyFieldShape.NestedList] — `Iterable<Custom>` of a known [Type], registers paths with `"*"` segment
      */
     val bodyFieldShapes: List<BodyFieldShape>,
+    /** One entry per declared response variant (`200`, `201`, …), used to build random responses. */
+    val responseVariants: List<ResponseVariantShape>,
     val modelImports: List<String>,
 ) {
     /** Flat top-level view of [bodyFieldShapes], kept for backwards-compat with callers that expect a simple list. */
@@ -41,6 +43,25 @@ internal data class EndpointShape(
     }
 
     data class NamedTypedField(val name: String, val kotlinType: String, val isNullable: Boolean = false)
+
+    /**
+     * A single response variant (`Response<status>`), carrying enough to build a random
+     * instance: the variant class name, its body kind/type, and its flattened header fields.
+     * The body is set as a whole-value `Gen<BodyType>` (defaulting to a generated value); each
+     * header field is a whole-value `Gen<HeaderType>` (defaulting to a generated value).
+     */
+    data class ResponseVariantShape(
+        /** Numeric status, e.g. `"201"`. */
+        val status: String,
+        /** Generated variant class simple name, e.g. `"Response201"`. */
+        val className: String,
+        val bodyKind: BodyKind,
+        /** Full Kotlin type of the body, e.g. `"TodoDto"` or `"List<TodoDto>"`. `null` when there is no body. */
+        val bodyType: String?,
+        /** Name of the body's element Type — `"TodoDto"` for both object and list bodies. `null` for no body. */
+        val bodyElementType: String?,
+        val headerFields: List<NamedTypedField>,
+    )
 
     enum class BodyKind { None, Object, List }
 
@@ -109,11 +130,43 @@ internal data class EndpointShape(
                 ?.let { extractBodyFields(it, types, refined, visited = emptySet()) }
                 ?: emptyList()
 
+            val responseVariants = endpoint.responses
+                .mapNotNull { response ->
+                    val status = response.status.takeIf { it.all(Char::isDigit) } ?: return@mapNotNull null
+                    val respBodyRef = response.content?.reference
+                    val respBodyType = respBodyRef?.let { if (it is Reference.Unit) null else KotlinTypeMapper.map(it) }
+                    val (respBodyKind, respElementName) = when (respBodyRef) {
+                        null, is Reference.Unit -> BodyKind.None to null
+                        is Reference.Custom -> BodyKind.Object to respBodyRef.value
+                        is Reference.Iterable -> {
+                            val inner = respBodyRef.reference
+                            if (inner is Reference.Custom) BodyKind.List to inner.value else BodyKind.None to null
+                        }
+                        else -> BodyKind.None to null
+                    }
+                    ResponseVariantShape(
+                        status = status,
+                        className = "Response$status",
+                        bodyKind = respBodyKind,
+                        bodyType = respBodyType,
+                        bodyElementType = respElementName,
+                        headerFields = response.headers.map {
+                            NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable)
+                        },
+                    )
+                }
+                // Collapse duplicate statuses (a status can be declared once) keeping the first.
+                .distinctBy { it.status }
+
             val refs = buildList {
                 endpoint.path.filterIsInstance<Endpoint.Segment.Param>().forEach { add(it.reference) }
                 endpoint.queries.forEach { add(it.reference) }
                 endpoint.headers.forEach { add(it.reference) }
                 if (bodyRef != null) add(bodyRef)
+                endpoint.responses.forEach { response ->
+                    response.content?.reference?.let { add(it) }
+                    response.headers.forEach { add(it.reference) }
+                }
             }
             val bodyFieldRefs = elementCustomName
                 ?.let { types[it] }
@@ -135,6 +188,7 @@ internal data class EndpointShape(
                 bodyKind = bodyKind,
                 bodyElementType = bodyElementType,
                 bodyFieldShapes = bodyFieldShapes,
+                responseVariants = responseVariants,
                 modelImports = modelImports,
             )
         }

@@ -31,6 +31,18 @@ class KotestDslExtensionTest {
         output shouldContain "inline fun <reified R : GetTodos.Response<*>> expecting(): R"
         // The entry point is a `call` extension on the generated endpoint object.
         output shouldContain "public suspend fun <R> GetTodos.call(block: suspend GetTodosScope.() -> R): R"
+
+        // `request` mirrors `call`'s scope block but materialises the typed request instead of sending.
+        output shouldContain "public suspend fun GetTodos.request(block: suspend GetTodosScope.() -> Unit): GetTodos.Request"
+        output shouldContain "public suspend fun buildRequest(): GetTodos.Request"
+        output shouldContain "return inner.buildRequest()"
+
+        // A per-variant `responseNNN { … }` builds a random response variant; the list body is a
+        // whole-value `Gen<List<TodoDto>>` setter.
+        output shouldContain "public class GetTodosResponse200Scope internal constructor()"
+        output shouldContain "responseCall(GetTodos, GetTodos.Response200::class)"
+        output shouldContain "public var body: Gen<List<TodoDto>>? = null"
+        output shouldContain "public suspend fun GetTodos.response200(block: GetTodosResponse200Scope.() -> Unit = {}): GetTodos.Response200"
     }
 
     @Test
@@ -63,6 +75,24 @@ class KotestDslExtensionTest {
         // Terminals flush before executing; the `call` extension opens the scope as a block.
         output shouldContain "public suspend inline fun <reified R : PutTodo.Response<*>> expecting(): R = expectingClass(R::class)"
         output shouldContain "public suspend fun <R> PutTodo.call(block: suspend PutTodoScope.() -> R): R"
+
+        // `request` reuses the same scope (so path/query/header/body pin identically) and returns
+        // the built request.
+        output shouldContain "public suspend fun PutTodo.request(block: suspend PutTodoScope.() -> Unit): PutTodo.Request"
+        output shouldContain "public suspend fun buildRequest(): PutTodo.Request"
+
+        // The 201 variant carries a `TodoDto` body plus `token`/`refreshToken` response headers, so
+        // its scope exposes a whole-value body setter and one setter per header field.
+        output shouldContain "public class PutTodoResponse201Scope internal constructor()"
+        output shouldContain "responseCall(PutTodo, PutTodo.Response201::class)"
+        output shouldContain "public var body: Gen<TodoDto>? = null"
+        output shouldContain "public var token: Gen<Token>? = null"
+        output shouldContain "public var refreshToken: Gen<Token?>? = null"
+        output shouldContain "token?.let { inner.headerGen(\"token\", it) }"
+        output shouldContain "return inner.build() as PutTodo.Response201"
+        output shouldContain "public suspend fun PutTodo.response201(block: PutTodoResponse201Scope.() -> Unit = {}): PutTodo.Response201"
+        // A header-less variant (500 → Error) still gets its body setter and builder.
+        output shouldContain "public suspend fun PutTodo.response500(block: PutTodoResponse500Scope.() -> Unit = {}): PutTodo.Response500"
     }
 
     @Test

@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.kotest.runtime
 
 import community.flock.wirespec.integration.kotest.dsl.ArbReceiver
 import community.flock.wirespec.integration.kotest.dsl.EndpointCallBuilder
+import community.flock.wirespec.integration.kotest.dsl.ResponseBuilder
 import community.flock.wirespec.integration.kotest.validation.ContractValidator
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec
@@ -19,14 +20,26 @@ import io.kotest.property.arbitrary.int
  */
 internal object CallExecutor {
 
+    /**
+     * Build the typed request object from the call's slot/body gens against the ambient
+     * [RandomSource], without sending it. Backs both the `<Endpoint>.request { … }` DSL and
+     * [executeEndpoint], so a `call` sends exactly the request `request { … }` would produce.
+     */
+    suspend fun buildRequest(call: EndpointCallBuilder<*, *, *>): Any = buildRequestFrom(call, currentAmbient())
+
+    private fun buildRequestFrom(call: EndpointCallBuilder<*, *, *>, ambient: WirespecAmbient): Any {
+        val rs = ambient.randomSource
+        val arb = ArbReceiver(rs)
+        val reflection = call.reflection
+        return reflection.buildRequest(resolveSlots(call, reflection, rs, arb))
+    }
+
     /** Run the endpoint call; returns the validated typed response. */
     suspend fun executeEndpoint(call: EndpointCallBuilder<*, *, *>): Any {
         val ambient = currentAmbient()
         val ctx = ambient.endpointContext()
-        val rs = ambient.randomSource
-        val arb = ArbReceiver(rs)
         val reflection = call.reflection
-        val request = reflection.buildRequest(resolveSlots(call, reflection, rs, arb))
+        val request = buildRequestFrom(call, ambient)
 
         @Suppress("UNCHECKED_CAST")
         val starClient = call.client as Wirespec.Client<Wirespec.Request<Any>, Wirespec.Response<*>>
@@ -54,6 +67,64 @@ internal object CallExecutor {
         }
         return typedResponse
     }
+
+    /**
+     * Build a single random `Response<status>` variant from a [ResponseBuilder]: pinned gens win,
+     * every other constructor param (body + header fields) is generated against the ambient
+     * [RandomSource]. Backs the generated `<Endpoint>.responseNNN { … }` DSL.
+     */
+    suspend fun buildResponse(builder: ResponseBuilder): Any {
+        val ambient = currentAmbient()
+        val rs = ambient.randomSource
+        val arb = ArbReceiver(rs)
+        val reflection = EndpointReflection.of(builder.endpointObject)
+        val variant = reflection.responseVariant(builder.variantClass.java)
+
+        // Header gens registered under wire names; match to (camelCase) constructor params by the
+        // same normalization used for request slots. Exact-name matches take priority.
+        val headerGensByNormalizedName: Map<String, Gen<*>> =
+            builder.headerGens.entries.associate { (key, gen) -> normalizeSlotName(key) to gen }
+
+        val args = variant.constructor.parameters.map { param ->
+            val name = param.name ?: error("${builder.variantClass.simpleName}: unnamed constructor parameter.")
+            if (name == "body") {
+                resolveResponseBody(builder, variant, arb, rs)
+            } else {
+                val gen = builder.headerGens[name] ?: headerGensByNormalizedName[normalizeSlotName(name)]
+                gen?.firstValue(rs) ?: defaultValueFor(param.type, arb, rs)
+            }
+        }
+        return try {
+            variant.constructor.newInstance(*args.toTypedArray())
+        } catch (t: Throwable) {
+            error("Failed to build ${builder.variantClass.simpleName} with args=$args: ${t.cause?.message ?: t.message}")
+        }
+    }
+
+    /** Resolve the response body: a whole-value override wins, else a generated object/list. */
+    private fun resolveResponseBody(
+        builder: ResponseBuilder,
+        variant: EndpointReflection.ResponseVariantReflection,
+        arb: ArbReceiver,
+        rs: RandomSource,
+    ): Any? = when {
+        builder.bodyGen != null -> builder.bodyGen!!.firstValue(rs)
+        variant.bodyElementClass != null -> {
+            val size = Arb.int(1..3).firstValue(rs)
+            val elementGen = arb.generatorFor(variant.bodyElementClass)
+            (0 until size).map { i -> elementGen.generate(arb.generator, listOf("$i")) }
+        }
+        variant.bodyClass != null -> arb.generatorFor(variant.bodyClass).generate(arb.generator, emptyList())
+        else -> error("${variant.constructor.declaringClass.simpleName}: `body` param has no resolvable type.")
+    }
+
+    /** Default value for a non-body response constructor param: primitive Arb or a generated model. */
+    private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? =
+        if (PrimitiveArbs.supports(type)) {
+            PrimitiveArbs.forType(type).firstValue(rs)
+        } else {
+            arb.generatorFor(type).generate(arb.generator, emptyList())
+        }
 
     private fun resolveSlots(
         call: EndpointCallBuilder<*, *, *>,

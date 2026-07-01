@@ -58,6 +58,10 @@ internal object EndpointDslFile {
 
             import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
+            // Per-variant `responseNNN { … }` builders delegate to the runtime `responseCall`.
+            if (shape.responseVariants.isNotEmpty()) {
+                import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
+            }
             import("kotlin.time", "Duration")
             import("kotlin.reflect", "KClass")
             // The generated body transform reconstructs the contract default body with the
@@ -66,7 +70,10 @@ internal object EndpointDslFile {
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
             }
             import(endpointPkg, shape.name)
-            val needsGen = shape.bodyType != null || shape.bodyFieldShapes.isNotEmpty() || present.isNotEmpty()
+            // Response scopes expose `Gen`-typed body/header setters, so any variant with a body
+            // or header fields pulls in `Gen` too.
+            val responseNeedsGen = shape.responseVariants.any { it.bodyKind != EndpointShape.BodyKind.None || it.headerFields.isNotEmpty() }
+            val needsGen = shape.bodyType != null || shape.bodyFieldShapes.isNotEmpty() || present.isNotEmpty() || responseNeedsGen
             if (needsGen) {
                 import("io.kotest.property", "Gen")
             }
@@ -92,7 +99,9 @@ internal object EndpointDslFile {
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
             raw(renderCallExtension(shape))
+            raw(renderRequestExtension(shape))
             raw(renderScopeClass(shape, present, required))
+            shape.responseVariants.forEach { variant -> raw(renderResponseScope(shape, variant)) }
             present.forEach { slot -> raw(renderSlotBuilder(shape, slot)) }
             if (shape.bodyType != null && shape.bodyFieldShapes.isNotEmpty()) {
                 val element = shape.bodyElementType
@@ -141,6 +150,58 @@ internal object EndpointDslFile {
         append("    ${shape.name}Scope().block()")
     }
 
+    /**
+     * A `request` extension mirroring `call`'s signature: it opens the same `<Endpoint>Scope`
+     * (so path/query/header/body are pinned identically), but instead of sending it materialises
+     * and returns a random `<Endpoint>.Request` — the very object `call { … }` would have sent.
+     */
+    private fun renderRequestExtension(shape: EndpointShape): String = buildString {
+        appendLine("public suspend fun ${shape.name}.request(block: suspend ${shape.name}Scope.() -> Unit): ${shape.name}.Request {")
+        appendLine("    val scope = ${shape.name}Scope()")
+        appendLine("    scope.block()")
+        appendLine("    return scope.buildRequest()")
+        append("}")
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Response scopes
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * Per-variant response builder: a `responseNNN { … }` extension opening a
+     * `<Endpoint>Response<NNN>Scope`. The scope exposes a whole-value `body` setter (when the
+     * variant has a body) and one setter per response header field, each a `Gen<…>?` defaulting
+     * to a generated value. The terminal builds a random `<Endpoint>.Response<NNN>`.
+     */
+    private fun renderResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape): String = buildString {
+        val scopeName = "${shape.name}${variant.className}Scope"
+        val variantType = "${shape.name}.${variant.className}"
+        val hasBody = variant.bodyKind != EndpointShape.BodyKind.None && variant.bodyType != null
+
+        appendLine("@WirespecScenarioDsl")
+        appendLine("public class $scopeName internal constructor() {")
+        appendLine("    private val inner = responseCall(${shape.name}, $variantType::class)")
+        if (hasBody) {
+            appendLine("    public var body: Gen<${variant.bodyType}>? = null")
+        }
+        variant.headerFields.forEach { f ->
+            appendLine("    public var ${KotlinIdentifier.escape(f.name)}: Gen<${f.kotlinType}>? = null")
+        }
+        appendLine("    public suspend fun build(): $variantType {")
+        if (hasBody) {
+            appendLine("        body?.let { inner.body(it) }")
+        }
+        variant.headerFields.forEach { f ->
+            appendLine("        ${KotlinIdentifier.escape(f.name)}?.let { inner.headerGen(\"${f.name}\", it) }")
+        }
+        appendLine("        @Suppress(\"UNCHECKED_CAST\")")
+        appendLine("        return inner.build() as $variantType")
+        appendLine("    }")
+        appendLine("}")
+        appendLine("public suspend fun ${shape.name}.response${variant.status}(block: $scopeName.() -> Unit = {}): $variantType =")
+        append("    $scopeName().apply(block).build()")
+    }
+
     // ------------------------------------------------------------------------------------
     // Scope class
     // ------------------------------------------------------------------------------------
@@ -160,7 +221,14 @@ internal object EndpointDslFile {
             }
         }
         appendLine(renderFlush(shape, present, required))
-        append(renderTerminalMembers(shape))
+        appendLine(renderTerminalMembers(shape))
+        // `buildRequest()` flushes then materialises the typed request without sending it; it is
+        // the terminal behind the `<Endpoint>.request { … }` extension. Not inline, so it can touch
+        // the private `inner`/`flush()` directly.
+        appendLine("    public suspend fun buildRequest(): ${shape.name}.Request {")
+        appendLine("        flush()")
+        appendLine("        return inner.buildRequest()")
+        append("    }")
         append("\n}")
     }
 
