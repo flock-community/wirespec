@@ -47,6 +47,17 @@ kotlin {
         }
     }
     sourceSets {
+        commonMain {
+            dependencies {
+                // The Spring extensions only reshape the language-neutral IR with
+                // fully-qualified raw annotations/source, so they need the
+                // compiler/IR API at compile time but no Spring runtime — that
+                // comes from the consumer's build.
+                compileOnly(project(":src:compiler:core"))
+                compileOnly(project(":src:compiler:emitters:kotlin"))
+                compileOnly(project(":src:compiler:emitters:java"))
+            }
+        }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
