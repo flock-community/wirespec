@@ -35,7 +35,7 @@ kotlin {
                 "exports",
                 mapOf(
                     "." to mapOf(
-                        "types" to "./wirespec-src-plugin-npm.d.ts",
+                        "types" to "./wirespec-src-plugin-npm.d.mts",
                         "default" to "./wirespec-src-plugin-npm.mjs",
                     ),
                     "./fetch" to mapOf(
