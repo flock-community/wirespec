@@ -52,6 +52,8 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property.arbs)
     testImplementation(libs.kotlinx.coroutines.test)
+    // JDK-HttpClient `Wirespec.Transportation` the scenario tests drive the app over.
+    testImplementation(libs.wirespec.integration.jvm)
 }
 
 buildscript {

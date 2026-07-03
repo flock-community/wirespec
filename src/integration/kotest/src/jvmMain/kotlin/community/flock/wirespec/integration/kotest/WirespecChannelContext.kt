@@ -21,8 +21,9 @@ class WirespecChannelContext(
 /**
  * The minimal publish/receive surface a message broker must expose to back the
  * channel scenario DSL. Implementations (e.g. a Kafka producer/consumer pair) are
- * supplied per-spec through a
- * [ContextProvider][community.flock.wirespec.integration.kotest.context.ContextProvider].
+ * supplied per-spec to
+ * [WirespecExtension][community.flock.wirespec.integration.kotest.WirespecExtension]
+ * as part of a [WirespecChannelContext].
  */
 interface ChannelTransport {
     /** Publish a single serialized message [body] to [topic] under an optional [key]. */
