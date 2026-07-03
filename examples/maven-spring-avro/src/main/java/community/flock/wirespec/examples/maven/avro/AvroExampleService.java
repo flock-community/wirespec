@@ -33,7 +33,8 @@ public class AvroExampleService implements TestAvroRecord.Sender, TestAvroRecord
     }
 
     @Override
-    public void testAvroRecord(java.util.function.Function<com.eventloopsoftware.kafka.model.TestAvroRecord, Void> handler) {
+    public void testAvroRecord(
+            java.util.function.Function<com.eventloopsoftware.kafka.model.TestAvroRecord, Void> handler) {
         listen("group", handler::apply);
     }
 

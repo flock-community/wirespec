@@ -261,6 +261,10 @@ jobs:
             type: maven
           - name: maven-spring-boot-4-integration
             type: maven
+          - name: maven-spring-kotlin
+            type: maven
+          - name: maven-wiremock
+            type: maven
           - name: maven-spring-native
             type: native
           - name: gradle-ktor

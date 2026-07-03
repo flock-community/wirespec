@@ -16,7 +16,7 @@ import { GetTodoById } from "./gen/endpoint";
 
 const server = setupServer(
   wirespec(GetTodoById.api, async (req) =>
-    GetTodoById.response200({ body: { id: req.path.id, /* ... */ } }),
+    GetTodoById.response200({ body: { id: req.path.id /* ... */ } }),
   ),
 );
 ```
