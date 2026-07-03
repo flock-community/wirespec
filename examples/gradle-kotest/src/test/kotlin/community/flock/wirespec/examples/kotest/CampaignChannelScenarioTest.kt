@@ -9,7 +9,6 @@ import community.flock.wirespec.examples.kotest.kafka.CampaignEventConsumer
 import community.flock.wirespec.examples.kotest.support.CampaignTestEnvironment
 import community.flock.wirespec.integration.kotest.WirespecExtension
 import io.kotest.assertions.nondeterministic.eventually
-import io.kotest.core.extensions.ApplyExtension
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
@@ -26,8 +25,14 @@ import kotlin.time.Duration.Companion.seconds
  * `beforeEach` repositions the shared channel consumer at the log end so each scenario
  * only observes the events it produces.
  */
-@ApplyExtension(WirespecExtension::class)
 class CampaignChannelScenarioTest : FunSpec({
+
+    extension(
+        WirespecExtension(
+            endpoint = CampaignTestEnvironment.endpointContext,
+            channel = CampaignTestEnvironment.channelContext,
+        ),
+    )
 
     beforeEach { CampaignTestEnvironment.watchChannelFromNow() }
 

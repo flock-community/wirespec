@@ -11,17 +11,31 @@ import kotlinx.coroutines.withContext
 
 /**
  * Installs an ambient wirespec context around every test so wrapper-free endpoint
- * and channel calls resolve their transport (via the
- * [ContextProvider][community.flock.wirespec.integration.kotest.context.ContextProvider] SPI)
- * and a per-test [RandomSource]. Mount with `@ApplyExtension(WirespecExtension::class)`.
+ * and channel `*.call { … }` calls resolve their transport and a per-test
+ * [RandomSource].
+ *
+ * Register it from the spec body, passing the transport context(s) the spec drives:
+ *
+ * ```
+ * class MySpec : FunSpec({
+ *     extension(WirespecExtension(endpoint = myEndpointContext))
+ *     // …
+ * })
+ * ```
+ *
+ * Supply [endpoint] for endpoint calls, [channel] for channel calls, or both.
  */
-class WirespecExtension : TestCaseExtension {
+class WirespecExtension(
+    private val endpoint: WirespecTestContext? = null,
+    private val channel: WirespecChannelContext? = null,
+) : TestCaseExtension {
     override suspend fun intercept(
         testCase: TestCase,
         execute: suspend (TestCase) -> TestResult,
     ): TestResult {
         val ambient = WirespecAmbient(
-            spec = testCase.spec,
+            endpoint = endpoint,
+            channel = channel,
             randomSource = RandomSource.seeded(System.nanoTime()),
         )
         return withContext(ambient) { execute(testCase) }

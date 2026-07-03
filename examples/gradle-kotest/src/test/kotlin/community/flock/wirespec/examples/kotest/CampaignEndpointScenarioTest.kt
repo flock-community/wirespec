@@ -9,8 +9,8 @@ import community.flock.wirespec.examples.kotest.generated.kotest.request
 import community.flock.wirespec.examples.kotest.generated.kotest.response201
 import community.flock.wirespec.examples.kotest.generated.model.Product
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
+import community.flock.wirespec.examples.kotest.support.CampaignTestEnvironment
 import community.flock.wirespec.integration.kotest.WirespecExtension
-import io.kotest.core.extensions.ApplyExtension
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
@@ -22,11 +22,12 @@ import io.kotest.property.arbitrary.constant
  * the contract), sends it over real HTTP to the running app, and validates the typed
  * response variant against the Wirespec contract.
  *
- * The transport is supplied by the shared `CampaignTestEnvironment` via
- * `ScenarioContextProvider`; this spec only mounts the ambient with `@ApplyExtension`.
+ * The endpoint transport comes from the shared `CampaignTestEnvironment`, handed to
+ * the ambient via the `WirespecExtension` this spec registers.
  */
-@ApplyExtension(WirespecExtension::class)
 class CampaignEndpointScenarioTest : FunSpec({
+    extension(WirespecExtension(endpoint = CampaignTestEnvironment.endpointContext))
+
     test("CreateProduct returns a 201 echoing the generated body") {
         CreateProduct.call {
             body = { name = Arb.constant("Wireless Mouse") }

@@ -22,6 +22,7 @@ wirespec_emitters_kotlin = { module = "community.flock.wirespec.compiler.emitter
 wirespec_integration_jackson = { module = "community.flock.wirespec.integration:jackson-jvm", version.ref = "wirespec" }
 wirespec_integration_spring = { module = "community.flock.wirespec.integration:spring-jvm", version.ref = "wirespec" }
 wirespec_integration_kotest = { module = "community.flock.wirespec.integration:kotest-jvm", version.ref = "wirespec" }
+wirespec_integration_jvm = { module = "community.flock.wirespec.integration:jvm-jvm", version.ref = "wirespec" }
 kotest_runner_junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest_assertions_core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest" }

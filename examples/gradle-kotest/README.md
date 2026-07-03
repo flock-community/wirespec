@@ -44,9 +44,9 @@ CampaignEvents.call {
 ```
 
 The DSL runtime lives in the published `community.flock.wirespec.integration:kotest` artifact.
-Specs are plain `FunSpec`s that mount the ambient with `@ApplyExtension(WirespecExtension::class)`;
-the transport they run against is supplied through a `ContextProvider`
-(see [`support/`](src/test/kotlin/community/flock/wirespec/examples/kotest/support)):
+Specs are plain `FunSpec`s that register the ambient with
+`extension(WirespecExtension(endpoint = …, channel = …))`, passing the transport contexts the
+spec drives (see [`support/`](src/test/kotlin/community/flock/wirespec/examples/kotest/support)):
 a JDK-`HttpClient` `Wirespec.Transportation` for endpoints and a Kafka producer/consumer
 `ChannelTransport` for the channel. [`CampaignTestEnvironment`](src/test/kotlin/community/flock/wirespec/examples/kotest/support/CampaignTestEnvironment.kt)
 boots an in-JVM Kafka broker (`spring-kafka-test`) and the real app once for the whole run — no
