@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
-data class Emitted @JvmOverloads constructor(
+data class Emitted(
     val file: String,
     val result: String,
     val test: Boolean = false,

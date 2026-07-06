@@ -40,7 +40,7 @@ public class SpringJavaEmitter extends SpringJavaEmitterHelper {
         }
 
         var file = getPackageName().toDir() + "WirespecNativeHints." + getExtension().getValue();
-        return List.of(new Emitted(file, emitNativeHints(modelNames, endpointNames)));
+        return List.of(new Emitted(file, emitNativeHints(modelNames, endpointNames), false));
     }
 
     @Override
