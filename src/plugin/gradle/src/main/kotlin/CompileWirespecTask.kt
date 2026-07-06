@@ -29,6 +29,7 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
     fun action() {
         val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
         val outputPath = output.get().asFile.absolutePath
+        val testOutputPath = testOutput.orNull?.asFile?.absolutePath
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
             is ClassPath -> nonEmptySetOf(inputPath.readFromClasspath({ it }))
@@ -41,10 +42,11 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
         }
 
         val outputDir = Directory(getOutPutPath(inputPath, outputPath).or(::handleError))
+        val testOutputDir = testOutputPath?.let { Directory(getOutPutPath(inputPath, it).or(::handleError)) }
         CompilerArguments(
             input = sources,
             emitters = emitters(),
-            writer = writer(outputDir),
+            writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = packageNameValue(),
             logger = wirespecLogger,

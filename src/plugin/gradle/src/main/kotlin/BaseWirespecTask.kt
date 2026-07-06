@@ -37,6 +37,11 @@ abstract class BaseWirespecTask : DefaultTask() {
     @get:Option(option = "output", description = "output directory")
     abstract val output: DirectoryProperty
 
+    @get:OutputDirectory
+    @get:Optional
+    @get:Option(option = "testOutput", description = "test output directory")
+    abstract val testOutput: DirectoryProperty
+
     @get:Input
     @get:Optional
     @get:Option(option = "languages", description = "languages list")
@@ -127,9 +132,10 @@ abstract class BaseWirespecTask : DefaultTask() {
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguageOrEmitter()
 
-    protected fun writer(directory: Directory): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
+    protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
         emittedList.forEach { emitted ->
-            FilePath(directory.path.value + "/" + emitted.file).write(emitted.result)
+            val target = if (emitted.test && testDirectory != null) testDirectory else directory
+            FilePath(target.path.value + "/" + emitted.file).write(emitted.result)
         }
     }
 

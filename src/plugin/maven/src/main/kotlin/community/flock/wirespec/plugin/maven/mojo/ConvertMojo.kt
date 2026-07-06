@@ -81,6 +81,7 @@ class ConvertMojo : BaseMojo() {
 
     override fun execute() {
         project.addCompileSourceRoot(output)
+        testOutput?.let { project.addTestCompileSourceRoot(it) }
         compileSourceDirectory()
         val inputPath = getFullPath(input).or(::handleError)
 
@@ -97,11 +98,12 @@ class ConvertMojo : BaseMojo() {
         }.map(::preProcess)
 
         val outputDir = Directory(getOutPutPath(inputPath, output).or(::handleError))
+        val testOutputDir = testOutput?.let { Directory(getOutPutPath(inputPath, it).or(::handleError)) }
         ConverterArguments(
             format = format,
             input = nonEmptySetOf(sources),
             emitters = emitters,
-            writer = writer(outputDir),
+            writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = PackageName(packageName),
             logger = logger,
