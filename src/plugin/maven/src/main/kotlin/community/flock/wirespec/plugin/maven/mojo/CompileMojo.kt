@@ -31,6 +31,7 @@ class CompileMojo : BaseMojo() {
 
     override fun execute() {
         project.addCompileSourceRoot(output)
+        testOutput?.let { project.addTestCompileSourceRoot(it) }
         val inputPath = getFullPath(input).or(::handleError)
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
@@ -44,10 +45,11 @@ class CompileMojo : BaseMojo() {
         }
 
         val outputDir = Directory(getOutPutPath(inputPath, output).or(::handleError))
+        val testOutputDir = testOutput?.let { Directory(getOutPutPath(inputPath, it).or(::handleError)) }
         CompilerArguments(
             input = sources,
             emitters = emitters,
-            writer = writer(outputDir),
+            writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = PackageName(packageName),
             logger = logger,

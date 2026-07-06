@@ -41,6 +41,7 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
         val preProcessorFunction = preProcessor.getOrElse({ it })
         val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
         val outputPath = output.get().asFile.absolutePath
+        val testOutputPath = testOutput.orNull?.asFile?.absolutePath
         val sources: Source<JSON> = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
             is ClassPath -> inputPath.readFromClasspath(preProcessorFunction)
@@ -54,11 +55,12 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
         }
 
         val outputDir = Directory(getOutPutPath(inputPath, outputPath).or(::handleError))
+        val testOutputDir = testOutputPath?.let { Directory(getOutPutPath(inputPath, it).or(::handleError)) }
         ConverterArguments(
             format = format.get(),
             input = nonEmptySetOf(sources),
             emitters = emitters(),
-            writer = writer(outputDir),
+            writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = packageNameValue(),
             logger = wirespecLogger,

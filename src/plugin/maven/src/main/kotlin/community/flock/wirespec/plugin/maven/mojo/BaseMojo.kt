@@ -47,6 +47,13 @@ abstract class BaseMojo : AbstractMojo() {
     protected lateinit var output: String
 
     /**
+     * Specifies the test output directory. When set, [Emitted] entries flagged as test
+     * output are written here (and registered as a test compile source root) instead of [output].
+     */
+    @Parameter
+    protected var testOutput: String? = null
+
+    /**
      * Specifies the languages to compile to: [Language].
      */
     @Parameter
@@ -163,9 +170,10 @@ abstract class BaseMojo : AbstractMojo() {
         javaClass.getClassLoader()
     }
 
-    protected fun writer(directory: Directory): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
+    protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
         emittedList.forEach { emitted ->
-            FilePath(directory.path.value + "/" + emitted.file).write(emitted.result)
+            val target = if (emitted.test && testDirectory != null) testDirectory else directory
+            FilePath(target.path.value + "/" + emitted.file).write(emitted.result)
         }
     }
 
