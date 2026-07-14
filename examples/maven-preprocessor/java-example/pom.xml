@@ -43,6 +43,7 @@
                             <languages>
                                 <language>Java</language>
                             </languages>
+                            <ir>true</ir>
                         </configuration>
                     </execution>
                 </executions>

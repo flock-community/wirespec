@@ -189,6 +189,7 @@
                                 <language>Kotlin</language>
                             </languages>
                             <shared>true</shared>
+                            <ir>true</ir>
                         </configuration>
                     </execution>
                     <execution>
@@ -205,6 +206,7 @@
                                 <language>Kotlin</language>
                             </languages>
                             <shared>false</shared>
+                            <ir>true</ir>
                         </configuration>
                     </execution>
                 </executions>

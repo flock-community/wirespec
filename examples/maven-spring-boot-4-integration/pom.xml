@@ -169,7 +169,14 @@
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
-                            <emitterClass>community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter</emitterClass>
+                            <languages>
+                                <language>Java</language>
+                            </languages>
+                            <ir>true</ir>
+                            <extensionClasses>
+                                <extensionClass>community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension</extensionClass>
+                                <extensionClass>community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension</extensionClass>
+                            </extensionClasses>
                             <packageName>community.flock.wirespec.generated.examples.spring</packageName>
                         </configuration>
                     </execution>
