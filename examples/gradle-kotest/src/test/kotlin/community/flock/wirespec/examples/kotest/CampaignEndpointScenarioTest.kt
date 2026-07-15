@@ -4,6 +4,7 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.CreateCampaig
 import community.flock.wirespec.examples.kotest.generated.endpoint.CreateProduct
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetCampaign
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetProduct
+import community.flock.wirespec.examples.kotest.generated.kotest.call
 import community.flock.wirespec.examples.kotest.generated.kotest.generate
 import community.flock.wirespec.examples.kotest.generated.model.Product
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
@@ -44,6 +45,15 @@ class CampaignEndpointScenarioTest : FunSpec({
         }
         req.body.name shouldBe "Wireless Mouse"
         req.body.sku.isNotEmpty() shouldBe true
+    }
+
+    test("a built request chains into a send with .call()") {
+        // `generate.request { … }` materialises the typed request; `.call()` sends that exact
+        // request and returns the contract-validated response variant.
+        val response = CreateProduct.generate.request {
+            body { name = Arb.constant("Wireless Mouse") }
+        }.call()
+        response.status shouldBe 201
     }
 
     test("response201 builds a random CreateProduct.Response201, pinning only what you set") {

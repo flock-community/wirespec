@@ -37,24 +37,9 @@ internal object CallExecutor {
     /** Run the endpoint call; returns the validated typed response. */
     suspend fun executeEndpoint(call: EndpointCallBuilder<*, *, *>): Any {
         val ambient = currentAmbient()
-        val ctx = ambient.endpointContext()
         val reflection = call.reflection
         val request = buildRequestFrom(call, ambient)
-
-        @Suppress("UNCHECKED_CAST")
-        val starClient = call.client as Wirespec.Client<Wirespec.Request<Any>, Wirespec.Response<*>>
-        val clientEdge = starClient.client(ctx.serialization)
-
-        @Suppress("UNCHECKED_CAST")
-        val rawRequest = clientEdge.to(request as Wirespec.Request<Any>)
-        val rawResponse = ctx.transportation.transport(rawRequest)
-
-        val validator = ContractValidator(reflection, ctx.serialization)
-        val typedResponse = try {
-            validator.validate(rawResponse, expectedStatuses = call.expectedStatuses)
-        } catch (t: Throwable) {
-            throw AssertionError("${reflection.endpointName} failed (wirespec seed=${ambient.seed}): ${t.message}", t)
-        }
+        val typedResponse = transportAndValidate(call.client, reflection, request, call.expectedStatuses, ambient)
         call.customAssertion?.let { assertion ->
             try {
                 assertion.invoke(request, typedResponse)
@@ -66,6 +51,43 @@ internal object CallExecutor {
             }
         }
         return typedResponse
+    }
+
+    /**
+     * Send a pre-built typed request as-is; returns the response validated against the
+     * contract (any declared status). Backs the generated `<Endpoint>.Request.call()`
+     * extension, so a `generate.request { … }` chain can be sent without re-drawing.
+     */
+    suspend fun executeRequest(
+        client: Wirespec.Client<*, *>,
+        endpointObject: Wirespec.Endpoint,
+        request: Any,
+    ): Any = transportAndValidate(client, EndpointReflection.of(endpointObject), request, expectedStatuses = null, ambient = currentAmbient())
+
+    /** Typed transport of one request through the ambient context, then contract validation. */
+    private suspend fun transportAndValidate(
+        client: Wirespec.Client<*, *>,
+        reflection: EndpointReflection,
+        request: Any,
+        expectedStatuses: Set<Int>?,
+        ambient: WirespecAmbient,
+    ): Any {
+        val ctx = ambient.endpointContext()
+
+        @Suppress("UNCHECKED_CAST")
+        val starClient = client as Wirespec.Client<Wirespec.Request<Any>, Wirespec.Response<*>>
+        val clientEdge = starClient.client(ctx.serialization)
+
+        @Suppress("UNCHECKED_CAST")
+        val rawRequest = clientEdge.to(request as Wirespec.Request<Any>)
+        val rawResponse = ctx.transportation.transport(rawRequest)
+
+        val validator = ContractValidator(reflection, ctx.serialization)
+        return try {
+            validator.validate(rawResponse, expectedStatuses = expectedStatuses)
+        } catch (t: Throwable) {
+            throw AssertionError("${reflection.endpointName} failed (wirespec seed=${ambient.seed}): ${t.message}", t)
+        }
     }
 
     /**

@@ -39,6 +39,9 @@ CreateProduct.generate.call {
 val request = CreateProduct.generate.request { body { name = Arb.constant("Wireless Mouse") } }
 val response = CreateProduct.generate.response201()
 
+// …or chain the built request straight into a send with the `call()` request extension
+val sent = CreateProduct.generate.request { body { name = Arb.constant("Wireless Mouse") } }.call()
+
 // channel: publish / consume typed payloads over Kafka
 CampaignEvents.generate.call {
     expecting { event -> event.eventType shouldBe CampaignEventType.CREATED }

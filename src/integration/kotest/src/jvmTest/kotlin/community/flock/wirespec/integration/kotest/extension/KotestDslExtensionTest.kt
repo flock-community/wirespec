@@ -39,6 +39,10 @@ class KotestDslExtensionTest {
         output shouldContain "public suspend fun buildRequest(): GetTodos.Request"
         output shouldContain "return inner.buildRequest()"
 
+        // A materialised request chains into a send: `GetTodos.generate.request { … }.call()`.
+        output shouldContain "public suspend fun GetTodos.Request.call(): GetTodos.Response<*> ="
+        output shouldContain "requestCall(GetTodos.Handler, GetTodos, this)"
+
         // A per-variant `generate.responseNNN { … }` builds a random response variant; the list
         // body is a whole-value `Gen<List<TodoDto>>` setter.
         output shouldContain "public class GetTodosResponse200Scope internal constructor()"
@@ -87,6 +91,7 @@ class KotestDslExtensionTest {
         // the built request.
         output shouldContain "public suspend fun request(block: suspend PutTodoScope.() -> Unit): PutTodo.Request"
         output shouldContain "public suspend fun buildRequest(): PutTodo.Request"
+        output shouldContain "public suspend fun PutTodo.Request.call(): PutTodo.Response<*> ="
 
         // The 201 variant carries a `TodoDto` body plus `token`/`refreshToken` response headers, so
         // its scope exposes a whole-value body setter and one setter per header field.

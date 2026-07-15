@@ -20,6 +20,21 @@ fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> en
     endpointObject: Wirespec.Endpoint,
 ): EndpointCallBuilder<BodyT, Req, Resp> = EndpointCallBuilder(client, endpointObject)
 
+/**
+ * Send a pre-built typed request through the ambient transport and validate the response
+ * against the contract (any declared status). Backs the generated `<Endpoint>.Request.call()`
+ * extension, so a request materialised with `generate.request { … }` can be sent as-is:
+ * `PutTodo.generate.request { … }.call()`.
+ */
+suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> requestCall(
+    client: Wirespec.Client<Req, Resp>,
+    endpointObject: Wirespec.Endpoint,
+    request: Req,
+): Resp {
+    @Suppress("UNCHECKED_CAST")
+    return CallExecutor.executeRequest(client, endpointObject, request) as Resp
+}
+
 @WirespecScenarioDsl
 class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> internal constructor(
     @PublishedApi internal val client: Wirespec.Client<Req, Resp>,

@@ -29,6 +29,9 @@ import community.flock.wirespec.ir.core.file
  * }
  * ```
  *
+ * A materialised request chains straight into a send via the `call()` extension on the
+ * typed request: `PutTodo.generate.request { … }.call()`.
+ *
  * Each slot is an assignable `var` holding a builder lambda (`path = { … }`), with a
  * same-named function form (`path { … }`) assigning the same slot. The terminal
  * `expecting`/`returning`/`collecting` functions first call `flush()`, which applies the
@@ -59,6 +62,8 @@ internal object EndpointDslFile {
             `package`(kotestPkg)
 
             import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
+            // `<Endpoint>.Request.call()` sends a request built by `generate.request { … }` as-is.
+            import("community.flock.wirespec.integration.kotest.dsl", "requestCall")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             // Per-variant `responseNNN { … }` builders delegate to the runtime `responseCall`.
             if (shape.responseVariants.isNotEmpty()) {
@@ -101,6 +106,7 @@ internal object EndpointDslFile {
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
             raw(renderGenerateExtension(shape))
+            raw(renderRequestCallExtension(shape))
             raw(renderScopeClass(shape, present, required))
             shape.responseVariants.forEach { variant -> raw(renderResponseScope(shape, variant)) }
             present.forEach { slot -> raw(renderSlotBuilder(shape, slot)) }
@@ -170,6 +176,16 @@ internal object EndpointDslFile {
         appendLine("}")
         appendLine("public val ${shape.name}.generate: ${shape.name}Generate")
         append("    get() = ${shape.name}Generate()")
+    }
+
+    /**
+     * A `call()` extension on the typed request, so a materialised request chains straight
+     * into a send: `PutTodo.generate.request { … }.call()`. It transports the exact request
+     * through the ambient context and returns the contract-validated response variant.
+     */
+    private fun renderRequestCallExtension(shape: EndpointShape): String = buildString {
+        appendLine("public suspend fun ${shape.name}.Request.call(): ${shape.name}.Response<*> =")
+        append("    requestCall(${shape.name}.Handler, ${shape.name}, this)")
     }
 
     // ------------------------------------------------------------------------------------
