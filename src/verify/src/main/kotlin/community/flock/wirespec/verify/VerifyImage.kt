@@ -86,7 +86,10 @@ enum class VerifyImage {
                 .withDockerfileFromBuilder { builder ->
                     builder
                         .from("node:20-slim")
-                        .run("npm install -g typescript tsx")
+                        // Pinned: typescript@7 (published 2026-07-08) breaks the verify harness;
+                        // 6.0.3 is the last version that accepts this harness's tsconfig
+                        // (ignoreDeprecations "6.0" is rejected by 5.x)
+                        .run("npm install -g typescript@6.0.3 tsx@4.23.0")
                         .build()
                 }
                 .get()

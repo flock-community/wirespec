@@ -151,6 +151,7 @@
                             <languages>
                                 <language>TypeScript</language>
                             </languages>
+                            <ir>true</ir>
                         </configuration>
                     </execution>
                     <execution>
@@ -165,6 +166,7 @@
                             <languages>
                                 <language>Java</language>
                             </languages>
+                            <ir>true</ir>
                         </configuration>
                     </execution>
                     <execution>

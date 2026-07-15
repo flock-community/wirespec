@@ -12,8 +12,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>community.flock.wirespec.compiler</groupId>
-            <artifactId>core-jvm</artifactId>
+            <groupId>community.flock.wirespec.compiler.emitters</groupId>
+            <artifactId>java-jvm</artifactId>
+            <version>${wirespec.version}</version>
         </dependency>
     </dependencies>
 </project>

@@ -1,9 +1,5 @@
 import com.diffplug.gradle.spotless.SpotlessTask
-import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
@@ -90,6 +86,7 @@ buildscript {
     dependencies {
         classpath(libs.wirespec.compiler)
         classpath(libs.wirespec.emitters.kotlin)
+        classpath(libs.wirespec.kotlinx.serialization)
     }
 }
 
@@ -99,7 +96,9 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
-    emitterClass = KotlinSerializableEmitter::class.java
+    languages = listOf(Language.Kotlin)
+    ir = true
+    extensionClasses = listOf(KotlinxSerializationExtension::class.java)
 }
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
@@ -109,6 +108,7 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.typescript"
     languages = listOf(Language.TypeScript)
+    ir = true
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
@@ -120,17 +120,4 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     languages = listOf(Language.Wirespec)
     format = Format.OpenAPIV3
     preProcessor = { it.replaceFirst("http://www.apache.org/licenses/LICENSE-2.0.html", "https://flock.community") }
-}
-
-class KotlinSerializableEmitter : KotlinEmitter(PackageName("community.flock.wirespec.generated.kotlin")) {
-
-    override fun emit(type: Type, module: Module): String = """
-        |@kotlinx.serialization.Serializable
-        |${super.emit(type, module)}
-    """.trimMargin()
-
-    override fun emit(refined: Refined): String = """
-        |@kotlinx.serialization.Serializable
-        |${super.emit(refined)}
-    """.trimMargin()
 }

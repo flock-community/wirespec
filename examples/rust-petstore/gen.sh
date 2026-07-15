@@ -26,4 +26,5 @@ fi
   -o "$SCRIPT_DIR/src/gen" \
   -l Rust \
   -p '' \
-  --shared
+  --shared \
+  --ir

@@ -28,4 +28,5 @@ echo "Generating Scala code from wirespec defs..."
   -o "$OUT_DIR" \
   -l Scala \
   -p community.flock.wirespec.generated \
-  --shared
+  --shared \
+  --ir

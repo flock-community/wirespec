@@ -21,6 +21,7 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 wirespec_compiler = { module = "community.flock.wirespec.compiler:core-jvm", version.ref = "wirespec" }
 wirespec_emitters_kotlin = { module = "community.flock.wirespec.compiler.emitters:kotlin-jvm", version.ref = "wirespec" }
 wirespec_integration = { module = "community.flock.wirespec.integration:wirespec-jvm", version.ref = "wirespec" }
+wirespec_kotlinx_serialization = { module = "community.flock.wirespec.integration:kotlinx-serialization-jvm", version.ref = "wirespec" }
 
 [bundles]
 ktor = ["ktor_server_core", "ktor_server_netty", "ktor_server_content_negotiation", "ktor_client", "ktor_serialization_kotlinx_json"]
