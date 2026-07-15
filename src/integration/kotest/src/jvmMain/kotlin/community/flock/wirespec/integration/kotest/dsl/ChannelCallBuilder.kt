@@ -41,10 +41,28 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     fun topic(value: String): ChannelCallBuilder<P> = apply { topic = value }
     fun key(value: String): ChannelCallBuilder<P> = apply { key = value }
 
+    // ---- build (no publish) ----
+
+    /**
+     * Generate a random payload without publishing it. Backs the generated
+     * `<Channel>.generate.message { … }` entry point; sending happens by chaining
+     * the returned message's `send()`.
+     */
+    suspend fun buildMessage(): P = generatePayload(overrides = null)
+
+    /** Generate a payload with per-field [overrides] without publishing it. */
+    suspend fun buildMessageFields(overrides: KotestWirespecGeneratorBuilder.() -> Unit): P = generatePayload(overrides)
+
     // ---- send terminals ----
 
     /** Generate a random payload, publish it, and return it. */
     suspend fun send(): P = generatePayload(overrides = null).also { publish(it) }
+
+    /** Publish a concrete [payload] as-is and return it. Backs the generated `<Channel>Message.send()`. */
+    suspend fun send(payload: P): P {
+        publish(payload)
+        return payload
+    }
 
     /** Draw a payload from [gen], publish it, and return it. */
     suspend fun send(gen: Gen<P>): P {

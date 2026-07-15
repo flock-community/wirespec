@@ -43,11 +43,9 @@ val request = CreateProduct.generate.request { body { name = Arb.constant("Wirel
 val canned = CreateProduct.generate.response201()
 
 // channel: publish / consume typed payloads over Kafka
+CampaignEvents.generate.message { eventType = Arb.constant(CampaignEventType.ENDED) }.send()
 CampaignEvents.generate.call {
     expecting { event -> event.eventType shouldBe CampaignEventType.CREATED }
-}
-CampaignEvents.generate.call {
-    send { eventType = Arb.constant(CampaignEventType.ENDED) }
 }
 ```
 

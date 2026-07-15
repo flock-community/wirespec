@@ -28,12 +28,17 @@ internal object ChannelDslFile {
 
             import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
-            import("io.kotest.property", "Gen")
+            // The payload builder pins fields as `Gen<…>`s; a field-less (primitive) payload
+            // has no builder and no other `Gen` reference.
+            if (shape.payloadFields.isNotEmpty()) {
+                import("io.kotest.property", "Gen")
+            }
             import("kotlin.time", "Duration")
             import(channelPkg, shape.name)
             shape.modelImports.forEach { import(modelPkg, it) }
 
             raw(renderGenerateExtension(shape))
+            raw(renderMessageClass(shape))
             raw(renderCallClass(shape))
             if (shape.payloadFields.isNotEmpty()) {
                 raw(renderPayloadBuilder(shape.payloadType, shape.payloadFields))
@@ -42,13 +47,32 @@ internal object ChannelDslFile {
     }
 
     /**
-     * The DSL entry point: a `generate` extension property on the generated channel object
-     * (e.g. `Queue.generate.call { … }`), mirroring the endpoint DSL. Its `call` member opens
-     * the `<Channel>Call` receiver and runs the block, returning whatever the terminal
-     * (`send`/`expecting`/`collecting`/`returning`) yields.
+     * The DSL entry point: a `generate` extension property on the generated channel object,
+     * mirroring the endpoint DSL. The `<Channel>Generate` wrapper carries:
+     * - `message` — materialises a random typed payload (per-field `Gen` overrides pin
+     *   values, unset fields are generated) wrapped in a `<Channel>Message`; publishing
+     *   happens exclusively by chaining the message's `send()`:
+     *   `Queue.generate.message { … }.send()`;
+     * - `call` — opens the `<Channel>Call` receiver for the receive direction, returning
+     *   whatever the terminal (`expecting`/`collecting`/`returning`) yields.
      */
     private fun renderGenerateExtension(shape: ChannelShape): String = buildString {
+        val payload = shape.payloadType
         appendLine("public class ${shape.name}Generate internal constructor() {")
+        if (shape.payloadFields.isNotEmpty()) {
+            appendLine("    public suspend fun message(block: ${payload}PayloadBuilder.() -> Unit = {}): ${shape.name}Message {")
+            appendLine("        val builder = ${payload}PayloadBuilder().apply(block)")
+            appendLine("        val payload = channelCall<$payload>(${shape.name}::class).buildMessageFields {")
+            shape.payloadFields.forEach { f ->
+                appendLine("            builder.${KotlinIdentifier.escape(f.name)}?.let { registerPath(\"${f.name}\") { it } }")
+            }
+            appendLine("        }")
+            appendLine("        return ${shape.name}Message(payload)")
+            appendLine("    }")
+        } else {
+            appendLine("    public suspend fun message(): ${shape.name}Message =")
+            appendLine("        ${shape.name}Message(channelCall<$payload>(${shape.name}::class).buildMessage())")
+        }
         appendLine("    public suspend fun <R> call(block: suspend ${shape.name}Call.() -> R): R =")
         appendLine("        ${shape.name}Call().block()")
         appendLine("}")
@@ -56,6 +80,29 @@ internal object ChannelDslFile {
         append("    get() = ${shape.name}Generate()")
     }
 
+    /**
+     * The materialised typed message returned by `generate.message { … }`. It carries the
+     * built [payload]; `send()` publishes exactly that payload through the ambient channel
+     * transport and returns it. `topic`/`key` pin the destination before sending.
+     */
+    private fun renderMessageClass(shape: ChannelShape): String = buildString {
+        val payload = shape.payloadType
+        val cls = "${shape.name}Message"
+        appendLine("public class $cls internal constructor(public val payload: $payload) {")
+        appendLine("    private val inner = channelCall<$payload>(${shape.name}::class)")
+        appendLine("    public fun topic(value: String): $cls =")
+        appendLine("        apply { inner.topic(value) }")
+        appendLine("    public fun key(value: String): $cls =")
+        appendLine("        apply { inner.key(value) }")
+        appendLine("    public suspend fun send(): $payload =")
+        appendLine("        inner.send(payload)")
+        append("}")
+    }
+
+    /**
+     * The receive-direction scope opened by `generate.call { … }`. Sending is not part of
+     * this scope — it happens exclusively through `generate.message { … }.send()`.
+     */
     private fun renderCallClass(shape: ChannelShape): String = buildString {
         val call = "${shape.name}Call"
         val payload = shape.payloadType
@@ -66,20 +113,6 @@ internal object ChannelDslFile {
         appendLine("        apply { inner.topic(value) }")
         appendLine("    public fun key(value: String): $call =")
         appendLine("        apply { inner.key(value) }")
-        appendLine("    public suspend fun send(): $payload =")
-        appendLine("        inner.send()")
-        appendLine("    public suspend fun send(gen: Gen<$payload>): $payload =")
-        appendLine("        inner.send(gen)")
-        if (shape.payloadFields.isNotEmpty()) {
-            appendLine("    public suspend fun send(block: ${payload}PayloadBuilder.() -> Unit): $payload {")
-            appendLine("        val builder = ${payload}PayloadBuilder().apply(block)")
-            appendLine("        return inner.sendFields {")
-            shape.payloadFields.forEach { f ->
-                appendLine("            builder.${KotlinIdentifier.escape(f.name)}?.let { registerPath(\"${f.name}\") { it } }")
-            }
-            appendLine("        }")
-            appendLine("    }")
-        }
         appendLine("    public suspend fun expecting(): $payload =")
         appendLine("        inner.expecting()")
         appendLine("    public suspend fun expecting(block: ($payload) -> Unit): $payload =")

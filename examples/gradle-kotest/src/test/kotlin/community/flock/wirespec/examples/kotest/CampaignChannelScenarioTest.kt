@@ -18,11 +18,13 @@ import io.kotest.property.arbitrary.constant
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Kafka channel scenarios driven by the generated `CampaignEvents.generate.call { … }` DSL.
+ * Kafka channel scenarios driven by the generated channel DSL:
+ * `CampaignEvents.generate.message { … }.send()` to publish, and
+ * `CampaignEvents.generate.call { expecting { … } }` to consume.
  *
  * The DSL publishes/consumes through the embedded broker, demonstrating both
  * directions: the app reacting to an endpoint call by emitting an event the DSL then
- * `expecting()`s, and the DSL `send`ing an event the app's `@KafkaListener` consumes.
+ * `expecting()`s, and the DSL sending an event the app's `@KafkaListener` consumes.
  *
  * `beforeEach` repositions the shared channel consumer at the log end so each scenario
  * only observes the events it produces.
@@ -70,12 +72,10 @@ class CampaignChannelScenarioTest : FunSpec({
     }
 
     test("an event sent through the DSL is consumed by the application listener") {
-        val sent = CampaignEvents.generate.call {
-            send {
-                eventType = Arb.constant(CampaignEventType.ENDED)
-                discountPercentage = Arb.constant(0L)
-            }
-        }
+        val sent = CampaignEvents.generate.message {
+            eventType = Arb.constant(CampaignEventType.ENDED)
+            discountPercentage = Arb.constant(0L)
+        }.send()
 
         val listener = CampaignTestEnvironment.application.getBean(CampaignEventConsumer::class.java)
         eventually(10.seconds) {

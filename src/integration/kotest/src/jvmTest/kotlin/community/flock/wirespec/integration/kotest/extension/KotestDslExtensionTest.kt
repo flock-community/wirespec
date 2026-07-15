@@ -116,5 +116,15 @@ class KotestDslExtensionTest {
         output shouldContain "public class QueueGenerate internal constructor()"
         output shouldContain "public val Queue.generate: QueueGenerate"
         output shouldContain "public suspend fun <R> call(block: suspend QueueCall.() -> R): R"
+
+        // Publishing chains off the materialised message: `Queue.generate.message().send()`.
+        // The receive-direction call scope carries no send members.
+        output shouldContain "public class QueueMessage internal constructor(public val payload: String)"
+        output shouldContain "public suspend fun message(): QueueMessage ="
+        output shouldContain "QueueMessage(channelCall<String>(Queue::class).buildMessage())"
+        output shouldContain "public suspend fun send(): String ="
+        output shouldContain "inner.send(payload)"
+        output shouldNotContain "inner.send()"
+        output shouldNotContain "inner.sendFields"
     }
 }
