@@ -13,11 +13,12 @@ a Kafka channel.
   describing both the HTTP API and an async `channel CampaignEvents -> CampaignEvent`.
 - The Wirespec Gradle plugin running the **`KotlinIrEmitter`** with two IR extensions:
   - `SpringMappingAnnotationsExtension` — annotates the generated endpoint handlers for Spring MVC.
-  - `KotestDslExtension` — emits a typesafe Kotest scenario DSL (`<Op>.generate.call { … }`) next to the models.
+  - `KotestDslExtension` — emits a typesafe Kotest scenario DSL (`<Op>.generate.request { … }.call()`) next to the models.
 - The generated `CampaignEvents.Sender` / `Listener` interfaces wired to Kafka with `spring-kafka`.
 - Kotest specs that drive the real app through the generated DSL:
-  - `CampaignEndpointScenarioTest` — `CreateProduct.generate.call { … }`, `GetCampaign.generate.call { … }`,
-    etc. over real HTTP, validating the typed response variants against the contract.
+  - `CampaignEndpointScenarioTest` — `CreateProduct.generate.request { … }.call()`,
+    `GetCampaign.generate.request { … }.call()`, etc. over real HTTP, validating the typed
+    response variants against the contract.
   - `CampaignChannelScenarioTest` — `CampaignEvents.generate.call { … }` over an **embedded Kafka broker**,
     in both directions: the app emitting an event the DSL `expecting()`s, and the DSL `send`ing an
     event the app's `@KafkaListener` consumes.
@@ -25,22 +26,21 @@ a Kafka channel.
 ## The scenario DSL
 
 The `KotestDslExtension` generates one `<Operation>Dsl.kt` per endpoint and channel. Each operation
-object gets a `generate` extension property grouping the scenario builders — `call { … }` to drive
-the operation, `request { … }` / `response<NNN> { … }` to materialise typed values without sending:
+object gets a `generate` extension property grouping the scenario builders — `request { … }` /
+`response<NNN> { … }` materialise typed values, and the `call()` extension on the built request is
+the one way to send it:
 
 ```kotlin
-// endpoint: build the request with kotest Arbs, validate the response variant
-CreateProduct.generate.call {
+// endpoint: build the request with kotest Arbs, send it by chaining call(), narrow the variant
+val response = CreateProduct.generate.request {
     body { name = Arb.constant("Wireless Mouse") }      // unset fields are generated from the contract
-    expecting<CreateProduct.Response201> { it.body.name shouldBe "Wireless Mouse" }
-}
+}.call()
+response.shouldBeInstanceOf<CreateProduct.Response201>()
+response.body.name shouldBe "Wireless Mouse"
 
-// materialise a random typed request/response instead of sending one
+// …or materialise a random typed request/response without sending anything
 val request = CreateProduct.generate.request { body { name = Arb.constant("Wireless Mouse") } }
-val response = CreateProduct.generate.response201()
-
-// …or chain the built request straight into a send with the `call()` request extension
-val sent = CreateProduct.generate.request { body { name = Arb.constant("Wireless Mouse") } }.call()
+val canned = CreateProduct.generate.response201()
 
 // channel: publish / consume typed payloads over Kafka
 CampaignEvents.generate.call {

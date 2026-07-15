@@ -14,8 +14,10 @@ import community.flock.wirespec.ir.extension.IrExtension
  * Adds a typesafe Kotest scenario DSL to the generated output: one `<Endpoint>Dsl.kt`
  * / `<Channel>Dsl.kt` per operation. Each file carries a `generate` extension property
  * on the generated endpoint/channel object grouping the DSL entry points
- * (`PutTodo.generate.call { … }`, `PutTodo.generate.request { … }`,
- * `PutTodo.generate.response200 { … }`).
+ * (`PutTodo.generate.request { … }`, `PutTodo.generate.response200 { … }`); an endpoint
+ * request is sent by chaining its `call()` extension
+ * (`PutTodo.generate.request { … }.call()`), while a channel keeps its
+ * `generate.call { … }` scope (there is no request object to chain from).
  * Register on a Kotlin
  * [community.flock.wirespec.ir.emit.IrEmitter] (e.g. `KotlinIrEmitter`); the DSL
  * files live in `<packageName>.kotest` and reference the models/endpoints the base

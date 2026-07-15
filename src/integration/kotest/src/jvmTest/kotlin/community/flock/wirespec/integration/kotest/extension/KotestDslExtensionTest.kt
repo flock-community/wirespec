@@ -10,6 +10,7 @@ import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.ir.extension.applyExtensions
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
 
 class KotestDslExtensionTest {
@@ -28,20 +29,21 @@ class KotestDslExtensionTest {
 
         output shouldContain "public class GetTodosScope internal constructor()"
         output shouldContain "endpointCall(GetTodos.Handler, GetTodos)"
-        output shouldContain "inline fun <reified R : GetTodos.Response<*>> expecting(): R"
         // The entry points are grouped in a `generate` extension property on the endpoint object.
         output shouldContain "public class GetTodosGenerate internal constructor()"
         output shouldContain "public val GetTodos.generate: GetTodosGenerate"
-        output shouldContain "public suspend fun <R> call(block: suspend GetTodosScope.() -> R): R"
 
-        // `request` mirrors `call`'s scope block but materialises the typed request instead of sending.
+        // `request` opens the scope and materialises the typed request without sending.
         output shouldContain "public suspend fun request(block: suspend GetTodosScope.() -> Unit): GetTodos.Request"
         output shouldContain "public suspend fun buildRequest(): GetTodos.Request"
         output shouldContain "return inner.buildRequest()"
 
-        // A materialised request chains into a send: `GetTodos.generate.request { … }.call()`.
+        // Sending happens exclusively by chaining: `GetTodos.generate.request { … }.call()`.
+        // There is no scope-block `call` entry point and no in-scope terminals.
         output shouldContain "public suspend fun GetTodos.Request.call(): GetTodos.Response<*> ="
         output shouldContain "requestCall(GetTodos.Handler, GetTodos, this)"
+        output shouldNotContain "call(block: suspend GetTodosScope"
+        output shouldNotContain "expectingClass"
 
         // A per-variant `generate.responseNNN { … }` builds a random response variant; the list
         // body is a whole-value `Gen<List<TodoDto>>` setter.
@@ -81,17 +83,13 @@ class KotestDslExtensionTest {
         output shouldContain "inner.queryGen(\"name\", queryBuilder.name ?: Arb.constant(null))"
         output shouldContain "inner.headerGen(\"Refresh-Token\", headerBuilder.`Refresh-Token` ?: Arb.constant(null))"
 
-        // Terminals flush before executing; `generate.call` opens the scope as a block.
-        output shouldContain "public suspend inline fun <reified R : PutTodo.Response<*>> expecting(): R = expectingClass(R::class)"
+        // The scope's only terminal is `buildRequest()`; sending chains through `Request.call()`.
         output shouldContain "public class PutTodoGenerate internal constructor()"
         output shouldContain "public val PutTodo.generate: PutTodoGenerate"
-        output shouldContain "public suspend fun <R> call(block: suspend PutTodoScope.() -> R): R"
-
-        // `request` reuses the same scope (so path/query/header/body pin identically) and returns
-        // the built request.
         output shouldContain "public suspend fun request(block: suspend PutTodoScope.() -> Unit): PutTodo.Request"
         output shouldContain "public suspend fun buildRequest(): PutTodo.Request"
         output shouldContain "public suspend fun PutTodo.Request.call(): PutTodo.Response<*> ="
+        output shouldNotContain "call(block: suspend PutTodoScope"
 
         // The 201 variant carries a `TodoDto` body plus `token`/`refreshToken` response headers, so
         // its scope exposes a whole-value body setter and one setter per header field.

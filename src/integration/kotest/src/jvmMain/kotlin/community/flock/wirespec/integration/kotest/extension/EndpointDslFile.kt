@@ -17,30 +17,31 @@ import community.flock.wirespec.ir.core.file
  * ## Block style
  *
  * Each endpoint object carries a `generate` extension property exposing the DSL entry
- * points (`call`, `request`, `response<NNN>`), each taking a scope receiver:
+ * points (`request`, `response<NNN>`), each taking a scope receiver. `request { … }`
+ * materialises the typed request; the `call()` extension on the typed request is the one
+ * way to send it:
  *
  * ```
- * PutTodo.generate.call {
+ * PutTodo.generate.request {
  *     path   { id = Arb.constant("42") }
  *     query  { done = Arb.constant(true) }   // `name` (nullable) may be omitted
  *     header { token = Arb.constant(Token("iss")) }
  *     body   { name = Arb.constant("milk"); done = Arb.constant(false) }
- *     expecting<PutTodo.Response200>()
- * }
+ * }.call()
  * ```
  *
- * A materialised request chains straight into a send via the `call()` extension on the
- * typed request: `PutTodo.generate.request { … }.call()`.
+ * `call()` returns the contract-validated `PutTodo.Response<*>`; narrow it with e.g.
+ * kotest's `shouldBeInstanceOf<PutTodo.Response200>()`.
  *
  * Each slot is an assignable `var` holding a builder lambda (`path = { … }`), with a
- * same-named function form (`path { … }`) assigning the same slot. The terminal
- * `expecting`/`returning`/`collecting` functions first call `flush()`, which applies the
- * assigned slot lambdas to the runtime call and **validates required values** — a path/
- * query/header slot with a non-nullable field is required, as is each non-nullable field
- * within it. A missing required slot or field throws a clear error at scenario start.
- * (Kotlin cannot require that a `var` be assigned inside a lambda, so this enforcement is
- * runtime, not compile-time.) Nullable fields default to `Arb.constant(null)`; the request
- * body stays optional (the runtime generates unset fields).
+ * same-named function form (`path { … }`) assigning the same slot. `buildRequest()` first
+ * calls `flush()`, which applies the assigned slot lambdas to the runtime call and
+ * **validates required values** — a path/query/header slot with a non-nullable field is
+ * required, as is each non-nullable field within it. A missing required slot or field
+ * throws a clear error at scenario start. (Kotlin cannot require that a `var` be assigned
+ * inside a lambda, so this enforcement is runtime, not compile-time.) Nullable fields
+ * default to `Arb.constant(null)`; the request body stays optional (the runtime generates
+ * unset fields).
  */
 internal object EndpointDslFile {
 
@@ -69,8 +70,6 @@ internal object EndpointDslFile {
             if (shape.responseVariants.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
             }
-            import("kotlin.time", "Duration")
-            import("kotlin.reflect", "KClass")
             // The generated body transform reconstructs the contract default body with the
             // typed builder's per-field override `Gen`s, drawing each value via `Gen.draw(rs)`.
             if (shape.bodyFieldShapes.isNotEmpty()) {
@@ -149,20 +148,16 @@ internal object EndpointDslFile {
 
     /**
      * The DSL entry point: a `generate` extension property on the generated endpoint object
-     * grouping the scenario builders (e.g. `PutTodo.generate.call { … }`). The
+     * grouping the scenario builders (e.g. `PutTodo.generate.request { … }`). The
      * `<Endpoint>Generate` wrapper carries:
-     * - `call` — opens the `<Endpoint>Scope` receiver and runs the block, returning whatever
-     *   the terminal (`expecting`/`collecting`) yields;
-     * - `request` — the same scope block (so path/query/header/body pin identically), but
-     *   instead of sending it materialises and returns a random `<Endpoint>.Request` — the
-     *   very object `call { … }` would have sent;
+     * - `request` — opens the `<Endpoint>Scope` receiver and materialises a random
+     *   `<Endpoint>.Request`; sending happens exclusively by chaining the request's
+     *   `call()` extension;
      * - `response<NNN>` — one per response variant, building a random
      *   `<Endpoint>.Response<NNN>` via its `<Endpoint>Response<NNN>Scope`.
      */
     private fun renderGenerateExtension(shape: EndpointShape): String = buildString {
         appendLine("public class ${shape.name}Generate internal constructor() {")
-        appendLine("    public suspend fun <R> call(block: suspend ${shape.name}Scope.() -> R): R =")
-        appendLine("        ${shape.name}Scope().block()")
         appendLine("    public suspend fun request(block: suspend ${shape.name}Scope.() -> Unit): ${shape.name}.Request {")
         appendLine("        val scope = ${shape.name}Scope()")
         appendLine("        scope.block()")
@@ -249,10 +244,9 @@ internal object EndpointDslFile {
             }
         }
         appendLine(renderFlush(shape, present, required))
-        appendLine(renderTerminalMembers(shape))
         // `buildRequest()` flushes then materialises the typed request without sending it; it is
-        // the terminal behind the `<Endpoint>.request { … }` extension. Not inline, so it can touch
-        // the private `inner`/`flush()` directly.
+        // the terminal behind the `generate.request { … }` entry point. Sending happens through
+        // the `<Endpoint>.Request.call()` extension on the returned request.
         appendLine("    public suspend fun buildRequest(): ${shape.name}.Request {")
         appendLine("        flush()")
         appendLine("        return inner.buildRequest()")
@@ -326,39 +320,6 @@ internal object EndpointDslFile {
             "error(\"${shape.name}.${slot.name}: required `${field.name}` is missing\")"
         }
         return "${indent}inner.${slot.genFn}(\"${field.name}\", $ref ?: $fallback)"
-    }
-
-    private fun renderTerminalMembers(shape: EndpointShape): String = buildString {
-        val resp = "${shape.name}.Response<*>"
-        // The public terminals stay `inline`/`reified` so call sites read `expecting<R>()`, but
-        // they only capture `R::class` and delegate to the non-inline `@PublishedApi` bridges
-        // below. That keeps `inner`/`flush()`/`flushed` private — the inline bodies never touch
-        // them, so only the small bridge surface is exposed for inlining.
-        appendLine("    @PublishedApi internal suspend fun <R : $resp> expectingClass(variantClass: KClass<R>): R {")
-        appendLine("        flush()")
-        appendLine("        return inner.expecting(variantClass)")
-        appendLine("    }")
-        appendLine("    @PublishedApi internal suspend fun <R : $resp> expectingClass(variantClass: KClass<R>, block: (R) -> Unit): R {")
-        appendLine("        flush()")
-        appendLine("        return inner.expecting(variantClass, block)")
-        appendLine("    }")
-        appendLine("    @PublishedApi internal suspend fun <R : $resp> expectingClass(variantClass: KClass<R>, block: (${shape.name}.Request, R) -> Unit): R {")
-        appendLine("        flush()")
-        appendLine("        return inner.expecting(variantClass, block)")
-        appendLine("    }")
-        appendLine("    @PublishedApi internal suspend fun <R : $resp> collectingClass(variantClass: KClass<R>, block: (List<R>) -> Unit) {")
-        appendLine("        flush()")
-        appendLine("        inner.collecting(variantClass, block)")
-        appendLine("    }")
-        appendLine("    public suspend inline fun <reified R : $resp> expecting(): R = expectingClass(R::class)")
-        appendLine("    public suspend inline fun <reified R : $resp> expecting(noinline block: (R) -> Unit): R = expectingClass(R::class, block)")
-        appendLine("    public suspend inline fun <reified R : $resp> expecting(noinline block: (${shape.name}.Request, R) -> Unit): R = expectingClass(R::class, block)")
-        // No `returning<R, T>`: `R` is only in the projection's input position so it can never
-        // be inferred, and Kotlin's all-or-nothing type args would then force `T` to be spelled
-        // out too — naming the response type twice. `expecting<R>()` already returns `R`, so
-        // `expecting<R>().body` / `expecting<R>().let { … }` projects while naming `R` once.
-        appendLine("    public suspend inline fun <reified R : $resp> collecting(count: Int, noinline block: (List<R>) -> Unit) = collectingClass(R::class, block)")
-        append("    public suspend inline fun <reified R : $resp> collecting(duration: Duration, noinline block: (List<R>) -> Unit) = collectingClass(R::class, block)")
     }
 
     // ------------------------------------------------------------------------------------

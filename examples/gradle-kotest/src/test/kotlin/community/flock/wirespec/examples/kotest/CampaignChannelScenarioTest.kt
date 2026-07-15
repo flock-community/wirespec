@@ -3,6 +3,7 @@ package community.flock.wirespec.examples.kotest
 import community.flock.wirespec.examples.kotest.generated.channel.CampaignEvents
 import community.flock.wirespec.examples.kotest.generated.endpoint.ActivateCampaign
 import community.flock.wirespec.examples.kotest.generated.endpoint.CreateCampaign
+import community.flock.wirespec.examples.kotest.generated.kotest.call
 import community.flock.wirespec.examples.kotest.generated.kotest.generate
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEventType
 import community.flock.wirespec.examples.kotest.kafka.CampaignEventConsumer
@@ -11,6 +12,7 @@ import community.flock.wirespec.integration.kotest.WirespecExtension
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant
 import kotlin.time.Duration.Companion.seconds
@@ -37,14 +39,15 @@ class CampaignChannelScenarioTest : FunSpec({
     beforeEach { CampaignTestEnvironment.watchChannelFromNow() }
 
     test("creating then activating a campaign emits the matching CampaignEvents") {
-        val campaign = CreateCampaign.generate.call {
+        val createResponse = CreateCampaign.generate.request {
             body {
                 name = Arb.constant("Black Friday")
                 discountPercentage = Arb.constant(40L)
                 productIds = Arb.constant(emptyList<String>())
             }
-            expecting<CreateCampaign.Response201>()
-        }.body
+        }.call()
+        createResponse.shouldBeInstanceOf<CreateCampaign.Response201>()
+        val campaign = createResponse.body
 
         CampaignEvents.generate.call {
             expecting { event ->
@@ -54,10 +57,9 @@ class CampaignChannelScenarioTest : FunSpec({
             }
         }
 
-        ActivateCampaign.generate.call {
+        ActivateCampaign.generate.request {
             path { id = Arb.constant(campaign.id) }
-            expecting<ActivateCampaign.Response200>()
-        }
+        }.call().shouldBeInstanceOf<ActivateCampaign.Response200>()
 
         CampaignEvents.generate.call {
             expecting { event ->

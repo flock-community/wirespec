@@ -12,14 +12,16 @@ import community.flock.wirespec.examples.kotest.support.CampaignTestEnvironment
 import community.flock.wirespec.integration.kotest.WirespecExtension
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant
 
 /**
- * Endpoint scenarios driven by the generated `<Endpoint>.generate.call { … }` DSL. Each call
- * builds its request body/path with kotest `Arb`s (unset fields are generated from
- * the contract), sends it over real HTTP to the running app, and validates the typed
- * response variant against the Wirespec contract.
+ * Endpoint scenarios driven by the generated `<Endpoint>.generate.request { … }.call()`
+ * DSL. Each scenario builds its request body/path with kotest `Arb`s (unset fields are
+ * generated from the contract), sends the materialised request over real HTTP to the
+ * running app with the chained `call()`, and validates the typed response variant against
+ * the Wirespec contract.
  *
  * The endpoint transport comes from the shared `CampaignTestEnvironment`, handed to
  * the ambient via the `WirespecExtension` this spec registers.
@@ -28,17 +30,16 @@ class CampaignEndpointScenarioTest : FunSpec({
     extension(WirespecExtension(endpoint = CampaignTestEnvironment.endpointContext))
 
     test("CreateProduct returns a 201 echoing the generated body") {
-        CreateProduct.generate.call {
+        val response = CreateProduct.generate.request {
             body { name = Arb.constant("Wireless Mouse") }
-            expecting<CreateProduct.Response201> { response ->
-                response.body.name shouldBe "Wireless Mouse"
-                response.body.id.value.shouldBeUuid()
-            }
-        }
+        }.call()
+        response.shouldBeInstanceOf<CreateProduct.Response201>()
+        response.body.name shouldBe "Wireless Mouse"
+        response.body.id.value.shouldBeUuid()
     }
 
     test("request builds a random CreateProduct.Request, pinning only what you set") {
-        // Same scope block as `call { … }`, but it materialises the request instead of sending it.
+        // `request { … }` materialises the typed request without sending it.
         // Unset fields (sku, price) are generated; `name` is pinned.
         val req = CreateProduct.generate.request {
             body { name = Arb.constant("Wireless Mouse") }
@@ -70,32 +71,31 @@ class CampaignEndpointScenarioTest : FunSpec({
     }
 
     test("GetProduct on an unknown id returns a 404 with a contract Error") {
-        GetProduct.generate.call {
+        val response = GetProduct.generate.request {
             path { id = Arb.constant(ProductId("00000000-0000-0000-0000-000000000000")) }
-            expecting<GetProduct.Response404> { response ->
-                response.body.code shouldBe 404L
-            }
-        }
+        }.call()
+        response.shouldBeInstanceOf<GetProduct.Response404>()
+        response.body.code shouldBe 404L
     }
 
     test("a created campaign can be fetched back by its id") {
-        val created = CreateCampaign.generate.call {
+        val createResponse = CreateCampaign.generate.request {
             body {
                 name = Arb.constant("Spring Launch")
                 discountPercentage = Arb.constant(15L)
                 productIds = Arb.constant(emptyList<String>())
             }
-            expecting<CreateCampaign.Response201>()
-        }.body
+        }.call()
+        createResponse.shouldBeInstanceOf<CreateCampaign.Response201>()
+        val created = createResponse.body
 
-        GetCampaign.generate.call {
+        val fetched = GetCampaign.generate.request {
             path { id = Arb.constant(created.id) }
-            expecting<GetCampaign.Response200> { response ->
-                response.body.id shouldBe created.id
-                response.body.name shouldBe "Spring Launch"
-                response.body.discountPercentage shouldBe 15L
-            }
-        }
+        }.call()
+        fetched.shouldBeInstanceOf<GetCampaign.Response200>()
+        fetched.body.id shouldBe created.id
+        fetched.body.name shouldBe "Spring Launch"
+        fetched.body.discountPercentage shouldBe 15L
     }
 })
 

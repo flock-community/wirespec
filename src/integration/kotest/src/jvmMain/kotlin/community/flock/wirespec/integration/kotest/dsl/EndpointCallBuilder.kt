@@ -13,7 +13,7 @@ annotation class WirespecScenarioDsl
 
 /**
  * Build an [EndpointCallBuilder] for an endpoint. Generated `*Dsl` wrappers call
- * this from their `call { … }` entry point.
+ * this from their `generate.request { … }` entry point.
  */
 fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> endpointCall(
     client: Wirespec.Client<Req, Resp>,
