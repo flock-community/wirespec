@@ -110,15 +110,18 @@ class KotestDslExtensionTest {
         // `channel Queue -> String`
         val output = CompileChannelTest.compiler(::emitter).shouldBeRight()
 
-        output shouldContain "public class QueueCall internal constructor()"
+        output shouldContain "public class QueueListen internal constructor()"
         output shouldContain "channelCall<String>(Queue::class)"
         // The entry point is a `generate` extension property on the generated channel object.
         output shouldContain "public class QueueGenerate internal constructor()"
         output shouldContain "public val Queue.generate: QueueGenerate"
-        output shouldContain "public suspend fun <R> call(block: suspend QueueCall.() -> R): R"
+        // The receive direction is opened by `listen { … }`, not `call { … }`.
+        output shouldContain "public suspend fun <R> listen(block: suspend QueueListen.() -> R): R"
+        output shouldNotContain "public suspend fun <R> call(block: suspend QueueListen"
+        output shouldNotContain "QueueCall"
 
         // Publishing chains off the materialised message: `Queue.generate.message().send()`.
-        // The receive-direction call scope carries no send members.
+        // The receive-direction listen scope carries no send members.
         output shouldContain "public class QueueMessage internal constructor(public val payload: String)"
         output shouldContain "public suspend fun message(): QueueMessage ="
         output shouldContain "QueueMessage(channelCall<String>(Queue::class).buildMessage())"

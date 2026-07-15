@@ -19,7 +19,7 @@ a Kafka channel.
   - `CampaignEndpointScenarioTest` — `CreateProduct.generate.request { … }.call()`,
     `GetCampaign.generate.request { … }.call()`, etc. over real HTTP, validating the typed
     response variants against the contract.
-  - `CampaignChannelScenarioTest` — `CampaignEvents.generate.call { … }` over an **embedded Kafka broker**,
+  - `CampaignChannelScenarioTest` — `CampaignEvents.generate.listen { … }` over an **embedded Kafka broker**,
     in both directions: the app emitting an event the DSL `expecting()`s, and the DSL `send`ing an
     event the app's `@KafkaListener` consumes.
 
@@ -44,7 +44,7 @@ val canned = CreateProduct.generate.response201()
 
 // channel: publish / consume typed payloads over Kafka
 CampaignEvents.generate.message { eventType = Arb.constant(CampaignEventType.ENDED) }.send()
-CampaignEvents.generate.call {
+CampaignEvents.generate.listen {
     expecting { event -> event.eventType shouldBe CampaignEventType.CREATED }
 }
 ```

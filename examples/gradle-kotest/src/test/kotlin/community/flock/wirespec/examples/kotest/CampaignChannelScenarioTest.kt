@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Kafka channel scenarios driven by the generated channel DSL:
  * `CampaignEvents.generate.message { … }.send()` to publish, and
- * `CampaignEvents.generate.call { expecting { … } }` to consume.
+ * `CampaignEvents.generate.listen { expecting { … } }` to consume.
  *
  * The DSL publishes/consumes through the embedded broker, demonstrating both
  * directions: the app reacting to an endpoint call by emitting an event the DSL then
@@ -51,7 +51,7 @@ class CampaignChannelScenarioTest : FunSpec({
         createResponse.shouldBeInstanceOf<CreateCampaign.Response201>()
         val campaign = createResponse.body
 
-        CampaignEvents.generate.call {
+        CampaignEvents.generate.listen {
             expecting { event ->
                 event.campaignId shouldBe campaign.id
                 event.eventType shouldBe CampaignEventType.CREATED
@@ -63,7 +63,7 @@ class CampaignChannelScenarioTest : FunSpec({
             path { id = Arb.constant(campaign.id) }
         }.call().shouldBeInstanceOf<ActivateCampaign.Response200>()
 
-        CampaignEvents.generate.call {
+        CampaignEvents.generate.listen {
             expecting { event ->
                 event.campaignId shouldBe campaign.id
                 event.eventType shouldBe CampaignEventType.ACTIVATED

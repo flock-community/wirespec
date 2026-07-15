@@ -33,7 +33,7 @@ import kotlin.time.TimeSource
  * on first use and torn down by a JVM shutdown hook.
  *
  * The endpoint and channel transport contexts it exposes are what each spec hands to
- * `WirespecExtension` for the generated `*.generate.call { … }` DSL, so specs only need a single
+ * `WirespecExtension` for the generated `*.generate` DSL, so specs only need a single
  * `extension(WirespecExtension(…))` line — no base class.
  */
 object CampaignTestEnvironment {

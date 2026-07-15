@@ -18,7 +18,7 @@ import community.flock.wirespec.ir.extension.IrExtension
  * - endpoint: `PutTodo.generate.request { … }.call()` (plus
  *   `PutTodo.generate.response200 { … }` for canned responses);
  * - channel: `Queue.generate.message { … }.send()` to publish, and
- *   `Queue.generate.call { expecting { … } }` for the receive direction.
+ *   `Queue.generate.listen { expecting { … } }` for the receive direction.
  * Register on a Kotlin
  * [community.flock.wirespec.ir.emit.IrEmitter] (e.g. `KotlinIrEmitter`); the DSL
  * files live in `<packageName>.kotest` and reference the models/endpoints the base

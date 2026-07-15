@@ -53,7 +53,7 @@ internal object ChannelDslFile {
      *   values, unset fields are generated) wrapped in a `<Channel>Message`; publishing
      *   happens exclusively by chaining the message's `send()`:
      *   `Queue.generate.message { … }.send()`;
-     * - `call` — opens the `<Channel>Call` receiver for the receive direction, returning
+     * - `listen` — opens the `<Channel>Listen` receiver for the receive direction, returning
      *   whatever the terminal (`expecting`/`collecting`/`returning`) yields.
      */
     private fun renderGenerateExtension(shape: ChannelShape): String = buildString {
@@ -73,8 +73,8 @@ internal object ChannelDslFile {
             appendLine("    public suspend fun message(): ${shape.name}Message =")
             appendLine("        ${shape.name}Message(channelCall<$payload>(${shape.name}::class).buildMessage())")
         }
-        appendLine("    public suspend fun <R> call(block: suspend ${shape.name}Call.() -> R): R =")
-        appendLine("        ${shape.name}Call().block()")
+        appendLine("    public suspend fun <R> listen(block: suspend ${shape.name}Listen.() -> R): R =")
+        appendLine("        ${shape.name}Listen().block()")
         appendLine("}")
         appendLine("public val ${shape.name}.generate: ${shape.name}Generate")
         append("    get() = ${shape.name}Generate()")
@@ -100,18 +100,18 @@ internal object ChannelDslFile {
     }
 
     /**
-     * The receive-direction scope opened by `generate.call { … }`. Sending is not part of
+     * The receive-direction scope opened by `generate.listen { … }`. Sending is not part of
      * this scope — it happens exclusively through `generate.message { … }.send()`.
      */
     private fun renderCallClass(shape: ChannelShape): String = buildString {
-        val call = "${shape.name}Call"
+        val listen = "${shape.name}Listen"
         val payload = shape.payloadType
         appendLine("@WirespecScenarioDsl")
-        appendLine("public class $call internal constructor() {")
+        appendLine("public class $listen internal constructor() {")
         appendLine("    @PublishedApi internal val inner = channelCall<$payload>(${shape.name}::class)")
-        appendLine("    public fun topic(value: String): $call =")
+        appendLine("    public fun topic(value: String): $listen =")
         appendLine("        apply { inner.topic(value) }")
-        appendLine("    public fun key(value: String): $call =")
+        appendLine("    public fun key(value: String): $listen =")
         appendLine("        apply { inner.key(value) }")
         appendLine("    public suspend fun expecting(): $payload =")
         appendLine("        inner.expecting()")
