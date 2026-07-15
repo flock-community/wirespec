@@ -4,9 +4,7 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.CreateCampaig
 import community.flock.wirespec.examples.kotest.generated.endpoint.CreateProduct
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetCampaign
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetProduct
-import community.flock.wirespec.examples.kotest.generated.kotest.call
-import community.flock.wirespec.examples.kotest.generated.kotest.request
-import community.flock.wirespec.examples.kotest.generated.kotest.response201
+import community.flock.wirespec.examples.kotest.generated.kotest.generate
 import community.flock.wirespec.examples.kotest.generated.model.Product
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
 import community.flock.wirespec.examples.kotest.support.CampaignTestEnvironment
@@ -17,7 +15,7 @@ import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant
 
 /**
- * Endpoint scenarios driven by the generated `<Endpoint>.call { … }` DSL. Each call
+ * Endpoint scenarios driven by the generated `<Endpoint>.generate.call { … }` DSL. Each call
  * builds its request body/path with kotest `Arb`s (unset fields are generated from
  * the contract), sends it over real HTTP to the running app, and validates the typed
  * response variant against the Wirespec contract.
@@ -29,8 +27,8 @@ class CampaignEndpointScenarioTest : FunSpec({
     extension(WirespecExtension(endpoint = CampaignTestEnvironment.endpointContext))
 
     test("CreateProduct returns a 201 echoing the generated body") {
-        CreateProduct.call {
-            body = { name = Arb.constant("Wireless Mouse") }
+        CreateProduct.generate.call {
+            body { name = Arb.constant("Wireless Mouse") }
             expecting<CreateProduct.Response201> { response ->
                 response.body.name shouldBe "Wireless Mouse"
                 response.body.id.value.shouldBeUuid()
@@ -41,8 +39,8 @@ class CampaignEndpointScenarioTest : FunSpec({
     test("request builds a random CreateProduct.Request, pinning only what you set") {
         // Same scope block as `call { … }`, but it materialises the request instead of sending it.
         // Unset fields (sku, price) are generated; `name` is pinned.
-        val req = CreateProduct.request {
-            body = { name = Arb.constant("Wireless Mouse") }
+        val req = CreateProduct.generate.request {
+            body { name = Arb.constant("Wireless Mouse") }
         }
         req.body.name shouldBe "Wireless Mouse"
         req.body.sku.isNotEmpty() shouldBe true
@@ -56,14 +54,14 @@ class CampaignEndpointScenarioTest : FunSpec({
             name = "Wireless Mouse",
             price = 9.99,
         )
-        val response = CreateProduct.response201 { body = Arb.constant(pinned) }
+        val response = CreateProduct.generate.response201 { body = Arb.constant(pinned) }
         response.status shouldBe 201
         response.body shouldBe pinned
     }
 
     test("GetProduct on an unknown id returns a 404 with a contract Error") {
-        GetProduct.call {
-            path = { id = Arb.constant(ProductId("00000000-0000-0000-0000-000000000000")) }
+        GetProduct.generate.call {
+            path { id = Arb.constant(ProductId("00000000-0000-0000-0000-000000000000")) }
             expecting<GetProduct.Response404> { response ->
                 response.body.code shouldBe 404L
             }
@@ -71,8 +69,8 @@ class CampaignEndpointScenarioTest : FunSpec({
     }
 
     test("a created campaign can be fetched back by its id") {
-        val created = CreateCampaign.call {
-            body = {
+        val created = CreateCampaign.generate.call {
+            body {
                 name = Arb.constant("Spring Launch")
                 discountPercentage = Arb.constant(15L)
                 productIds = Arb.constant(emptyList<String>())
@@ -80,8 +78,8 @@ class CampaignEndpointScenarioTest : FunSpec({
             expecting<CreateCampaign.Response201>()
         }.body
 
-        GetCampaign.call {
-            path = { id = Arb.constant(created.id) }
+        GetCampaign.generate.call {
+            path { id = Arb.constant(created.id) }
             expecting<GetCampaign.Response200> { response ->
                 response.body.id shouldBe created.id
                 response.body.name shouldBe "Spring Launch"

@@ -13,32 +13,37 @@ a Kafka channel.
   describing both the HTTP API and an async `channel CampaignEvents -> CampaignEvent`.
 - The Wirespec Gradle plugin running the **`KotlinIrEmitter`** with two IR extensions:
   - `SpringMappingAnnotationsExtension` — annotates the generated endpoint handlers for Spring MVC.
-  - `KotestDslExtension` — emits a typesafe Kotest scenario DSL (`<Op>.call { … }`) next to the models.
+  - `KotestDslExtension` — emits a typesafe Kotest scenario DSL (`<Op>.generate.call { … }`) next to the models.
 - The generated `CampaignEvents.Sender` / `Listener` interfaces wired to Kafka with `spring-kafka`.
 - Kotest specs that drive the real app through the generated DSL:
-  - `CampaignEndpointScenarioTest` — `CreateProduct.call { … }`, `GetCampaign.call { … }`, etc.
-    over real HTTP, validating the typed response variants against the contract.
-  - `CampaignChannelScenarioTest` — `CampaignEvents.call { … }` over an **embedded Kafka broker**,
+  - `CampaignEndpointScenarioTest` — `CreateProduct.generate.call { … }`, `GetCampaign.generate.call { … }`,
+    etc. over real HTTP, validating the typed response variants against the contract.
+  - `CampaignChannelScenarioTest` — `CampaignEvents.generate.call { … }` over an **embedded Kafka broker**,
     in both directions: the app emitting an event the DSL `expecting()`s, and the DSL `send`ing an
     event the app's `@KafkaListener` consumes.
 
 ## The scenario DSL
 
-The `KotestDslExtension` generates one `<Operation>Dsl.kt` per endpoint and channel. Each opens a
-typed builder via a `call { … }` extension on the generated operation object:
+The `KotestDslExtension` generates one `<Operation>Dsl.kt` per endpoint and channel. Each operation
+object gets a `generate` extension property grouping the scenario builders — `call { … }` to drive
+the operation, `request { … }` / `response<NNN> { … }` to materialise typed values without sending:
 
 ```kotlin
 // endpoint: build the request with kotest Arbs, validate the response variant
-CreateProduct.call {
-    body = { name = Arb.constant("Wireless Mouse") }      // unset fields are generated from the contract
+CreateProduct.generate.call {
+    body { name = Arb.constant("Wireless Mouse") }      // unset fields are generated from the contract
     expecting<CreateProduct.Response201> { it.body.name shouldBe "Wireless Mouse" }
 }
 
+// materialise a random typed request/response instead of sending one
+val request = CreateProduct.generate.request { body { name = Arb.constant("Wireless Mouse") } }
+val response = CreateProduct.generate.response201()
+
 // channel: publish / consume typed payloads over Kafka
-CampaignEvents.call {
+CampaignEvents.generate.call {
     expecting { event -> event.eventType shouldBe CampaignEventType.CREATED }
 }
-CampaignEvents.call {
+CampaignEvents.generate.call {
     send { eventType = Arb.constant(CampaignEventType.ENDED) }
 }
 ```

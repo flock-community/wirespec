@@ -16,19 +16,21 @@ import community.flock.wirespec.ir.core.file
  *
  * ## Block style
  *
- * Each endpoint object carries a `call` extension taking a `<Endpoint>Scope` receiver:
+ * Each endpoint object carries a `generate` extension property exposing the DSL entry
+ * points (`call`, `request`, `response<NNN>`), each taking a scope receiver:
  *
  * ```
- * PutTodo.call {
- *     path   = { id = Arb.constant("42") }
- *     query  = { done = Arb.constant(true) }   // `name` (nullable) may be omitted
- *     header = { token = Arb.constant(Token("iss")) }
- *     body   = { name = Arb.constant("milk"); done = Arb.constant(false) }
+ * PutTodo.generate.call {
+ *     path   { id = Arb.constant("42") }
+ *     query  { done = Arb.constant(true) }   // `name` (nullable) may be omitted
+ *     header { token = Arb.constant(Token("iss")) }
+ *     body   { name = Arb.constant("milk"); done = Arb.constant(false) }
  *     expecting<PutTodo.Response200>()
  * }
  * ```
  *
- * Each slot is an assignable `var` holding a builder lambda. The terminal
+ * Each slot is an assignable `var` holding a builder lambda (`path = { … }`), with a
+ * same-named function form (`path { … }`) assigning the same slot. The terminal
  * `expecting`/`returning`/`collecting` functions first call `flush()`, which applies the
  * assigned slot lambdas to the runtime call and **validates required values** — a path/
  * query/header slot with a non-nullable field is required, as is each non-nullable field
@@ -98,8 +100,7 @@ internal object EndpointDslFile {
             // resolve to the emitted class (`ContactEmbedded`).
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
-            raw(renderCallExtension(shape))
-            raw(renderRequestExtension(shape))
+            raw(renderGenerateExtension(shape))
             raw(renderScopeClass(shape, present, required))
             shape.responseVariants.forEach { variant -> raw(renderResponseScope(shape, variant)) }
             present.forEach { slot -> raw(renderSlotBuilder(shape, slot)) }
@@ -141,26 +142,34 @@ internal object EndpointDslFile {
     // ------------------------------------------------------------------------------------
 
     /**
-     * The DSL entry point: a `call` extension on the generated endpoint object (e.g.
-     * `PutTodo.call { … }`). It opens the `<Endpoint>Scope` receiver and runs the block,
-     * returning whatever the terminal (`expecting`/`collecting`) yields.
+     * The DSL entry point: a `generate` extension property on the generated endpoint object
+     * grouping the scenario builders (e.g. `PutTodo.generate.call { … }`). The
+     * `<Endpoint>Generate` wrapper carries:
+     * - `call` — opens the `<Endpoint>Scope` receiver and runs the block, returning whatever
+     *   the terminal (`expecting`/`collecting`) yields;
+     * - `request` — the same scope block (so path/query/header/body pin identically), but
+     *   instead of sending it materialises and returns a random `<Endpoint>.Request` — the
+     *   very object `call { … }` would have sent;
+     * - `response<NNN>` — one per response variant, building a random
+     *   `<Endpoint>.Response<NNN>` via its `<Endpoint>Response<NNN>Scope`.
      */
-    private fun renderCallExtension(shape: EndpointShape): String = buildString {
-        appendLine("public suspend fun <R> ${shape.name}.call(block: suspend ${shape.name}Scope.() -> R): R =")
-        append("    ${shape.name}Scope().block()")
-    }
-
-    /**
-     * A `request` extension mirroring `call`'s signature: it opens the same `<Endpoint>Scope`
-     * (so path/query/header/body are pinned identically), but instead of sending it materialises
-     * and returns a random `<Endpoint>.Request` — the very object `call { … }` would have sent.
-     */
-    private fun renderRequestExtension(shape: EndpointShape): String = buildString {
-        appendLine("public suspend fun ${shape.name}.request(block: suspend ${shape.name}Scope.() -> Unit): ${shape.name}.Request {")
-        appendLine("    val scope = ${shape.name}Scope()")
-        appendLine("    scope.block()")
-        appendLine("    return scope.buildRequest()")
-        append("}")
+    private fun renderGenerateExtension(shape: EndpointShape): String = buildString {
+        appendLine("public class ${shape.name}Generate internal constructor() {")
+        appendLine("    public suspend fun <R> call(block: suspend ${shape.name}Scope.() -> R): R =")
+        appendLine("        ${shape.name}Scope().block()")
+        appendLine("    public suspend fun request(block: suspend ${shape.name}Scope.() -> Unit): ${shape.name}.Request {")
+        appendLine("        val scope = ${shape.name}Scope()")
+        appendLine("        scope.block()")
+        appendLine("        return scope.buildRequest()")
+        appendLine("    }")
+        shape.responseVariants.forEach { variant ->
+            val scopeName = "${shape.name}${variant.className}Scope"
+            appendLine("    public suspend fun response${variant.status}(block: $scopeName.() -> Unit = {}): ${shape.name}.${variant.className} =")
+            appendLine("        $scopeName().apply(block).build()")
+        }
+        appendLine("}")
+        appendLine("public val ${shape.name}.generate: ${shape.name}Generate")
+        append("    get() = ${shape.name}Generate()")
     }
 
     // ------------------------------------------------------------------------------------
@@ -168,10 +177,10 @@ internal object EndpointDslFile {
     // ------------------------------------------------------------------------------------
 
     /**
-     * Per-variant response builder: a `responseNNN { … }` extension opening a
-     * `<Endpoint>Response<NNN>Scope`. The scope exposes a whole-value `body` setter (when the
-     * variant has a body) and one setter per response header field, each a `Gen<…>?` defaulting
-     * to a generated value. The terminal builds a random `<Endpoint>.Response<NNN>`.
+     * Per-variant response scope, opened by `generate.responseNNN { … }`. The scope exposes a
+     * whole-value `body` setter (when the variant has a body) and one setter per response
+     * header field, each a `Gen<…>?` defaulting to a generated value. The terminal builds a
+     * random `<Endpoint>.Response<NNN>`.
      */
     private fun renderResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape): String = buildString {
         val scopeName = "${shape.name}${variant.className}Scope"
@@ -197,9 +206,7 @@ internal object EndpointDslFile {
         appendLine("        @Suppress(\"UNCHECKED_CAST\")")
         appendLine("        return inner.build() as $variantType")
         appendLine("    }")
-        appendLine("}")
-        appendLine("public suspend fun ${shape.name}.response${variant.status}(block: $scopeName.() -> Unit = {}): $variantType =")
-        append("    $scopeName().apply(block).build()")
+        append("}")
     }
 
     // ------------------------------------------------------------------------------------
@@ -210,12 +217,17 @@ internal object EndpointDslFile {
         appendLine("@WirespecScenarioDsl")
         appendLine("public class ${shape.name}Scope internal constructor() {")
         appendLine("    private val inner = endpointCall(${shape.name}.Handler, ${shape.name})")
+        // Each slot is both an assignable `var` (`path = { … }`) and a same-named function
+        // (`path { … }`) assigning it — the function form reads better inside the DSL block.
         present.forEach { slot ->
-            appendLine("    public var ${slot.name}: (${slotBuilderName(shape, slot)}.() -> Unit)? = null")
+            val builderClass = slotBuilderName(shape, slot)
+            appendLine("    public var ${slot.name}: ($builderClass.() -> Unit)? = null")
+            appendLine("    public fun ${slot.name}(block: $builderClass.() -> Unit) { this.${slot.name} = block }")
         }
         if (shape.bodyFieldShapes.isNotEmpty()) {
             val builderName = "${shape.name}${shape.bodyElementType}BodyBuilder"
             appendLine("    public var body: ($builderName.() -> Unit)? = null")
+            appendLine("    public fun body(block: $builderName.() -> Unit) { this.body = block }")
             if (shape.bodyKind == EndpointShape.BodyKind.List) {
                 appendLine("    public var bodyCount: IntRange = 1..3")
             }

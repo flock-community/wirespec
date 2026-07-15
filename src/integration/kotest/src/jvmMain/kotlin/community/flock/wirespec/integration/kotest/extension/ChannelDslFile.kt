@@ -33,7 +33,7 @@ internal object ChannelDslFile {
             import(channelPkg, shape.name)
             shape.modelImports.forEach { import(modelPkg, it) }
 
-            raw(renderCallExtension(shape))
+            raw(renderGenerateExtension(shape))
             raw(renderCallClass(shape))
             if (shape.payloadFields.isNotEmpty()) {
                 raw(renderPayloadBuilder(shape.payloadType, shape.payloadFields))
@@ -42,13 +42,18 @@ internal object ChannelDslFile {
     }
 
     /**
-     * The DSL entry point: a `call` extension on the generated channel object (e.g.
-     * `Queue.call { … }`). It opens the `<Channel>Call` receiver and runs the block,
-     * returning whatever the terminal (`send`/`expecting`/`collecting`/`returning`) yields.
+     * The DSL entry point: a `generate` extension property on the generated channel object
+     * (e.g. `Queue.generate.call { … }`), mirroring the endpoint DSL. Its `call` member opens
+     * the `<Channel>Call` receiver and runs the block, returning whatever the terminal
+     * (`send`/`expecting`/`collecting`/`returning`) yields.
      */
-    private fun renderCallExtension(shape: ChannelShape): String = buildString {
-        appendLine("public suspend fun <R> ${shape.name}.call(block: suspend ${shape.name}Call.() -> R): R =")
-        append("    ${shape.name}Call().block()")
+    private fun renderGenerateExtension(shape: ChannelShape): String = buildString {
+        appendLine("public class ${shape.name}Generate internal constructor() {")
+        appendLine("    public suspend fun <R> call(block: suspend ${shape.name}Call.() -> R): R =")
+        appendLine("        ${shape.name}Call().block()")
+        appendLine("}")
+        appendLine("public val ${shape.name}.generate: ${shape.name}Generate")
+        append("    get() = ${shape.name}Generate()")
     }
 
     private fun renderCallClass(shape: ChannelShape): String = buildString {

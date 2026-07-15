@@ -3,7 +3,7 @@ package community.flock.wirespec.examples.kotest
 import community.flock.wirespec.examples.kotest.generated.channel.CampaignEvents
 import community.flock.wirespec.examples.kotest.generated.endpoint.ActivateCampaign
 import community.flock.wirespec.examples.kotest.generated.endpoint.CreateCampaign
-import community.flock.wirespec.examples.kotest.generated.kotest.call
+import community.flock.wirespec.examples.kotest.generated.kotest.generate
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEventType
 import community.flock.wirespec.examples.kotest.kafka.CampaignEventConsumer
 import community.flock.wirespec.examples.kotest.support.CampaignTestEnvironment
@@ -16,7 +16,7 @@ import io.kotest.property.arbitrary.constant
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Kafka channel scenarios driven by the generated `CampaignEvents.call { … }` DSL.
+ * Kafka channel scenarios driven by the generated `CampaignEvents.generate.call { … }` DSL.
  *
  * The DSL publishes/consumes through the embedded broker, demonstrating both
  * directions: the app reacting to an endpoint call by emitting an event the DSL then
@@ -37,8 +37,8 @@ class CampaignChannelScenarioTest : FunSpec({
     beforeEach { CampaignTestEnvironment.watchChannelFromNow() }
 
     test("creating then activating a campaign emits the matching CampaignEvents") {
-        val campaign = CreateCampaign.call {
-            body = {
+        val campaign = CreateCampaign.generate.call {
+            body {
                 name = Arb.constant("Black Friday")
                 discountPercentage = Arb.constant(40L)
                 productIds = Arb.constant(emptyList<String>())
@@ -46,7 +46,7 @@ class CampaignChannelScenarioTest : FunSpec({
             expecting<CreateCampaign.Response201>()
         }.body
 
-        CampaignEvents.call {
+        CampaignEvents.generate.call {
             expecting { event ->
                 event.campaignId shouldBe campaign.id
                 event.eventType shouldBe CampaignEventType.CREATED
@@ -54,12 +54,12 @@ class CampaignChannelScenarioTest : FunSpec({
             }
         }
 
-        ActivateCampaign.call {
-            path = { id = Arb.constant(campaign.id) }
+        ActivateCampaign.generate.call {
+            path { id = Arb.constant(campaign.id) }
             expecting<ActivateCampaign.Response200>()
         }
 
-        CampaignEvents.call {
+        CampaignEvents.generate.call {
             expecting { event ->
                 event.campaignId shouldBe campaign.id
                 event.eventType shouldBe CampaignEventType.ACTIVATED
@@ -68,7 +68,7 @@ class CampaignChannelScenarioTest : FunSpec({
     }
 
     test("an event sent through the DSL is consumed by the application listener") {
-        val sent = CampaignEvents.call {
+        val sent = CampaignEvents.generate.call {
             send {
                 eventType = Arb.constant(CampaignEventType.ENDED)
                 discountPercentage = Arb.constant(0L)
