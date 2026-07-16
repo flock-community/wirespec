@@ -67,9 +67,11 @@ internal object EndpointDslFile {
             // `<Endpoint>.Request.call()` sends a request built by `generate.request { … }` as-is.
             import("community.flock.wirespec.integration.kotest.dsl", "requestCall")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
-            // Per-variant `responseNNN { … }` builders delegate to the runtime `responseCall`.
+            // Per-variant `responseNNN { … }` builders delegate to the runtime `responseCall`;
+            // `Gen<Response<*>>.mock { … }` stubs a drawn response on the ambient mock server.
             if (shape.responseVariants.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
+                import("community.flock.wirespec.integration.kotest.dsl", "responseMock")
             }
             // The generated body transform reconstructs the contract default body with the
             // typed builder's per-field override `Gen`s, drawing each value via `Gen.draw(rs)`.
@@ -102,6 +104,9 @@ internal object EndpointDslFile {
 
             raw(renderGenerateExtension(shape))
             raw(renderRequestCallExtension(shape))
+            if (shape.responseVariants.isNotEmpty()) {
+                raw(renderResponseMockExtension(shape))
+            }
             raw(renderScopeClass(shape, present, required))
             shape.responseVariants.forEach { variant -> raw(renderResponseScope(shape, variant)) }
             present.forEach { slot -> raw(renderSlotBuilder(shape, slot)) }
@@ -168,6 +173,18 @@ internal object EndpointDslFile {
     private fun renderRequestCallExtension(shape: EndpointShape): String = buildString {
         appendLine("public suspend fun Gen<${shape.name}.Request>.call(): ${shape.name}.Response<*> =")
         append("    requestCall(${shape.name}.Handler, ${shape.name}, this)")
+    }
+
+    /**
+     * A `mock()` extension on `Gen<Response<*>>`, the response-side twin of `Gen<Request>.call()`:
+     * `PutTodo.generate.response200 { … }.mock { req -> req.path.id == "1" }`. It draws one
+     * response (seeded by the ambient `RandomSource`) and registers it on the ambient mock server
+     * for every incoming request the typed [predicate] accepts. The receiver is the endpoint's
+     * `Response<*>` supertype, so any `responseNNN { … }` variant `Gen` chains straight into it.
+     */
+    private fun renderResponseMockExtension(shape: EndpointShape): String = buildString {
+        appendLine("public suspend fun Gen<${shape.name}.Response<*>>.mock(predicate: (${shape.name}.Request) -> Boolean): Unit =")
+        append("    responseMock(${shape.name}.Handler, this, predicate)")
     }
 
     // ------------------------------------------------------------------------------------

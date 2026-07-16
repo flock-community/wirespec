@@ -18,9 +18,9 @@ import kotlin.coroutines.coroutineContext
 
 /**
  * Installs the channel half of the ambient wirespec context around every test, so
- * wrapper-free `SomeChannel.generate.message { … }.send()` and
- * `SomeChannel.generate.listen { expecting { … } }` calls resolve their transport and a
- * per-test [RandomSource].
+ * wrapper-free `SomeChannel.generate.message { … }.send()` calls resolve their transport and a
+ * per-test [RandomSource]. Asserting on what the app published is left to the test's own broker
+ * consumer.
  *
  * Supply the transport eagerly, or let this extension build and own it:
  *
@@ -80,7 +80,7 @@ class WirespecChannelExtension internal constructor(
             WirespecChannelContext(transport, serializationFactory!!(), defaultTopic)
         }
         val ambient = coroutineContext[WirespecAmbient]?.withChannel(channel)
-            ?: WirespecAmbient(endpoint = null, channel = channel, randomSource = RandomSource.seeded(System.nanoTime()))
+            ?: WirespecAmbient(endpoint = null, channel = channel, mock = null, randomSource = RandomSource.seeded(System.nanoTime()))
         return withContext(ambient) { execute(testCase) }
     }
 

@@ -33,29 +33,34 @@ build/generated/.../generated/
   }.call()
   response.shouldBeInstanceOf<CreateProduct.Response201>()
 
-  // channel: assert on what the app published to Kafka
-  CampaignEvents.generate.listen {
-      expecting { event -> event.eventType shouldBe CampaignEventType.CREATED }
-  }
+  // channel: publish a generated message; assert on it with a plain Kafka consumer
+  CampaignEvents.generate.message { eventType = Arb.constant(CampaignEventType.ENDED) }.send(CAMPAIGN_EVENTS_TOPIC)
   ```
+
+  The DSL drives the **send** direction only; asserting on what the app published to Kafka is done
+  with a standard Kotest consumer (see `awaitCampaignEvent` in `CampaignChannelScenarioTest`).
 
 ## Layout
 
 | Path | Role |
 |---|---|
-| `src/main/wirespec/campaign.ws` | The contract |
-| `controller/` | Implement the generated `*.Handler` interfaces |
+| `src/main/wirespec/campaign.ws` | The app's own contract (its REST surface + channel) |
+| `src/main/wirespec/inventory.ws` | A downstream service the app *calls* (client only) |
+| `controller/` | Implement the generated `*.Handler` interfaces (incl. `AvailabilityController`) |
+| `downstream/` | `InventoryClient` + HTTP transportation driving the generated `GetStock` client |
 | `service/`, `repository/` | In-memory domain logic |
 | `kafka/` | Publisher/consumer implementing the generated channel `Sender`/`Listener` |
 | `CampaignEndpointScenarioTest` | HTTP scenarios |
 | `CampaignChannelScenarioTest` | Kafka messaging scenarios (`@EmbeddedKafka`) |
-| `ProjectConfig` | Registers every extension once for the whole suite, plus the `KafkaChannelTransport` (a `ChannelTransport` backing `send()` / `expecting()` over Kafka) |
+| `ProductAvailabilityMockTest` | Mocks the downstream inventory service with `.mock { req -> … }` |
+| `mock/WireMockMockServer` | WireMock-backed `MockServer` the `.mock` DSL drives |
+| `ProjectConfig` | Registers every extension once for the whole suite, plus the `KafkaChannelTransport` (a producer-only `ChannelTransport` backing `send()` over Kafka) |
 
 ## How the tests wire the transport
 
 The scenario DSL resolves its transport from an ambient context installed by two framework-agnostic
 Wirespec extensions — `WirespecEndpointExtension` (backs `call()`) and `WirespecChannelExtension`
-(backs `send()` / `expecting()`). Neither depends on Spring: each takes `suspend` factories for the
+(backs `send()`). Neither depends on Spring: each takes `suspend` factories for the
 transport(ation) and `Wirespec.Serialization`. Both are registered once — alongside Kotest's
 `SpringExtension` — in a single `ProjectConfig` (pointed at with the `kotest.framework.config.fqn`
 system property in `build.gradle.kts`, so it can live in this package rather than the default
@@ -86,6 +91,63 @@ class ProjectConfig : AbstractProjectConfig() {
 extension builds one transport **per spec**, so the same registered instance serves both the endpoint
 spec and the `@EmbeddedKafka` channel spec correctly, and closes each after its spec. The endpoint and
 channel ambients compose, so a scenario can drive REST and then assert on the emitted event.
+
+## Mocking a downstream service
+
+The app doesn't only *serve* its contract — it also *calls out*. A second contract,
+[`inventory.ws`](src/main/wirespec/inventory.ws), describes a downstream inventory service; the app's
+`GET /products/{id}/availability` (`AvailabilityController`) looks up a product and then calls that
+service through the Wirespec-generated `GetStock` **client** (`InventoryClient`, pointed at
+`inventory.base-url`). `CampaignEndpointScenarioTest`'s sibling `ProductAvailabilityMockTest` stubs
+the downstream so the whole path runs without a real inventory service.
+
+The response side of the DSL is the mirror image of `call()`. Where `Gen<Request>.call()` draws a
+request and **sends** it, `Gen<Response<*>>.mock { req -> … }` draws a response and **stubs** it on a
+mock server for every incoming request the typed predicate accepts:
+
+```kotlin
+// stub GET /stock/{sku}: only requests for SKU-001 get this canned 200
+GetStock.generate.response200 {
+    body = StockLevel.generate { sku = Arb.constant("SKU-001"); available = Arb.constant(7L); warehouse = Arb.constant("EU-WEST") }
+}.mock { req -> req.path.sku == "SKU-001" }
+
+// drive the app; its outbound GetStock call is answered by the stub above
+val availability = GetProductAvailability.generate.request { path { id = Arb.constant(productId) } }.call()
+availability.shouldBeInstanceOf<GetProductAvailability.Response200>()
+availability.body.available shouldBe 7L
+```
+
+`req` is the fully typed `GetStock.Request`, so `req.path.sku` / `req.queries` / `req.body` read
+through the generated names. The stub matches on the endpoint's method and path template first, then
+on the predicate — so two stubs with different predicates route each SKU to its own response.
+
+The mock server is resolved from an ambient context installed by `WirespecMockExtension` — the
+response-side counterpart to `WirespecEndpointExtension`. The extension consumes a framework-neutral
+[`MockServer`](../../src/integration/kotest/src/commonMain/kotlin/community/flock/wirespec/integration/kotest/WirespecMockContext.kt);
+[`WireMockMockServer`](src/test/kotlin/community/flock/wirespec/examples/kotest/mock/WireMockMockServer.kt)
+is the WireMock-backed implementation (the mock analogue of `KafkaChannelTransport`). It is started in
+the spec's companion so its `baseUrl` can feed the app's `inventory.base-url` via
+`@DynamicPropertySource` before the Spring context boots, then registered spec-locally so it composes
+with the global endpoint extension:
+
+```kotlin
+class ProductAvailabilityMockTest : FunSpec() {
+    init {
+        // managed form: resets stubs between tests, stops the server after the spec
+        extension(WirespecMockExtension(serialization = { mockSerialization() }, server = { mockServer }))
+        test("…") { /* .mock { } stubs, .call() drives the app */ }
+    }
+    companion object {
+        private val mockServer = WireMockMockServer.start()   // dynamic port
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun inventoryProperties(registry: DynamicPropertyRegistry) {
+            registry.add("inventory.base-url") { mockServer.baseUrl }
+        }
+    }
+}
+```
 
 ## Running
 
