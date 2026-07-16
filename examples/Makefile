@@ -1,6 +1,7 @@
 .PHONY: *
 
 build:
+	(cd gradle-kotest && ./gradlew check) && \
 	(cd gradle-ktor && ./gradlew check) && \
 	(cd maven-preprocessor && ./mvnw verify) && \
 	(cd maven-spring-avro && ./mvnw verify) && \
@@ -17,6 +18,7 @@ build:
 	(cd scala-zio && sbt compile)
 
 clean:
+	(cd gradle-kotest && ./gradlew clean) && \
 	(cd gradle-ktor && ./gradlew clean) && \
 	(cd maven-preprocessor && ./mvnw clean) && \
 	(cd maven-spring-avro && ./mvnw clean) && \
@@ -32,6 +34,7 @@ clean:
 	(cd scala-zio && sbt clean)
 
 format:
+	(cd gradle-kotest && ./gradlew spotlessApply) && \
 	(cd gradle-ktor && ./gradlew spotlessApply) && \
     (cd maven-preprocessor && ./mvnw test-compile -Pformat) && \
 	(cd maven-spring-avro && ./mvnw test-compile -Pformat) && \
@@ -45,6 +48,7 @@ format:
 	(cd npm-typescript && npm run format)
 
 yolo:
+	(cd gradle-kotest && ./gradlew check -x test) && \
 	(cd gradle-ktor && ./gradlew check -x test) && \
 	(cd maven-preprocessor && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-avro && ./mvnw verify -DskipTests) && \
