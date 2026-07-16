@@ -51,6 +51,11 @@ class KotestDslExtensionTest {
         output shouldContain "responseCall(GetTodos, GetTodos.Response200::class)"
         output shouldContain "public var body: Gen<List<TodoDto>>? = null"
         output shouldContain "public fun response200(block: GetTodosResponse200Scope.() -> Unit = {}): Gen<GetTodos.Response200>"
+
+        // Mocking chains off the response `Gen`, the response-side twin of `Gen<Request>.call()`:
+        // `GetTodos.generate.response200 { … }.mock { req -> … }` stubs the drawn response.
+        output shouldContain "public suspend fun Gen<GetTodos.Response<*>>.mock(predicate: (GetTodos.Request) -> Boolean): Unit ="
+        output shouldContain "responseMock(GetTodos.Handler, this, predicate)"
     }
 
     @Test
@@ -114,14 +119,18 @@ class KotestDslExtensionTest {
         // `channel Queue -> String`
         val output = CompileChannelTest.compiler(::emitter).shouldBeRight()
 
-        output shouldContain "public class QueueListen internal constructor()"
         output shouldContain "channelCall<String>(Queue::class)"
         // The entry point is a `generate` extension property on the generated channel object.
         output shouldContain "public class QueueGenerate internal constructor()"
         output shouldContain "public val Queue.generate: QueueGenerate"
-        // The receive direction is opened by `listen { … }`, not `call { … }`.
-        output shouldContain "public suspend fun <R> listen(block: suspend QueueListen.() -> R): R"
-        output shouldNotContain "public suspend fun <R> call(block: suspend QueueListen"
+
+        // Only the send direction is generated; asserting on published messages is left to the
+        // test's own broker consumer, so there is no `listen`/receive scope.
+        output shouldNotContain "listen"
+        output shouldNotContain "QueueListen"
+        output shouldNotContain "expecting"
+        output shouldNotContain "collecting"
+        output shouldNotContain "returning"
         output shouldNotContain "QueueCall"
 
         // `message` returns a `Gen<Payload>`; publishing chains off its `send()` extension:
