@@ -8,6 +8,7 @@ kotlinx_coroutines = "1.9.0"
 spring_boot = "3.3.4"
 spring_dependency_management = "1.1.6"
 spring_kafka = "3.2.4"
+wiremock = "3.3.1"
 wirespec = "0.0.0-SNAPSHOT"
 
 [libraries]
@@ -34,6 +35,9 @@ kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest"
 kotest_runner_junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest_extensions_spring = { module = "io.kotest:kotest-extensions-spring", version.ref = "kotest" }
+
+# WireMock backs the mock server the response-side scenario DSL (`.mock { req -> … }`) drives.
+wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
 
 [plugins]
 kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

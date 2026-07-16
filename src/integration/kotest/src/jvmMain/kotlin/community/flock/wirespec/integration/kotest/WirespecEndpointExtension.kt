@@ -58,7 +58,7 @@ class WirespecEndpointExtension internal constructor(
     ): TestResult {
         val endpoint = eager ?: WirespecEndpointContext(transportationFactory!!(), serializationFactory!!())
         val ambient = coroutineContext[WirespecAmbient]?.withEndpoint(endpoint)
-            ?: WirespecAmbient(endpoint = endpoint, channel = null, randomSource = RandomSource.seeded(System.nanoTime()))
+            ?: WirespecAmbient(endpoint = endpoint, channel = null, mock = null, randomSource = RandomSource.seeded(System.nanoTime()))
         return withContext(ambient) { execute(testCase) }
     }
 }
