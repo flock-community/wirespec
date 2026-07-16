@@ -24,8 +24,8 @@ import community.flock.wirespec.ir.extension.IrExtension
  * always chained off the materialised value:
  * - endpoint: `PutTodo.generate.request { … }.call()` (plus
  *   `PutTodo.generate.response200 { … }` for canned responses);
- * - channel: `Queue.generate.message { … }.send()` to publish, and
- *   `Queue.generate.listen { expecting { … } }` for the receive direction;
+ * - channel: `Queue.generate.message { … }.send()` to publish (asserting on what the app
+ *   published is left to the test's own broker consumer);
  * - type: `TodoDto.generate { … }` returns a `Gen<TodoDto>` for a standalone record.
  * Register on a Kotlin
  * [community.flock.wirespec.ir.emit.IrEmitter] (e.g. `KotlinIrEmitter`); the DSL

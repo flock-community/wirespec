@@ -42,6 +42,12 @@ type CampaignEvent {
     discountPercentage: Integer
 }
 
+type Availability {
+    productId: ProductId,
+    inStock: Boolean,
+    available: Integer
+}
+
 type Error {
     code: Integer,
     message: String
@@ -60,6 +66,11 @@ endpoint GetProduct GET /products/{id: ProductId} -> {
 
 endpoint CreateProduct POST ProductInput /products -> {
     201 -> Product
+}
+
+endpoint GetProductAvailability GET /products/{id: ProductId}/availability -> {
+    200 -> Availability
+    404 -> Error
 }
 
 endpoint GetCampaigns GET /campaigns ? {status: CampaignStatus?} -> {

@@ -11,12 +11,10 @@ import io.kotest.property.arbitrary.arbitrary
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Build a [ChannelCallBuilder] for a channel. Generated `*Dsl` wrappers call this
- * from their `call { … }` entry point, passing the channel object's [KClass] and —
+ * from their `message { … }` entry point, passing the channel object's [KClass] and —
  * via the reified [P] — the payload type used for (de)serialization and generation.
  */
 inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
@@ -24,8 +22,8 @@ inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBu
 /**
  * Eager channel scenario runner. `send*` generates (or accepts) a typed payload,
  * serializes it via the ambient [WirespecChannelContext] and publishes it through
- * the broker [transport][community.flock.wirespec.integration.kotest.ChannelTransport];
- * `expecting`/`collecting` receive raw bodies and deserialize them back into [P].
+ * the broker [transport][community.flock.wirespec.integration.kotest.ChannelTransport].
+ * Asserting on what the app published is left to the test's own broker consumer.
  *
  * The destination topic is `topic(...)` if pinned, else the context's
  * `defaultTopic`, else the channel object's simple name.
@@ -97,23 +95,6 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     /** Generate a payload with per-field [overrides], publish it, and return it. */
     suspend fun sendFields(overrides: KotestWirespecGeneratorBuilder.() -> Unit): P = generatePayload(overrides).also { publish(it) }
 
-    // ---- receive terminals ----
-
-    /** Receive a single payload from the topic. */
-    suspend fun expecting(): P = receive(count = 1, timeout = DEFAULT_TIMEOUT).single()
-
-    /** Receive a single payload and run [block] against it. */
-    suspend fun expecting(block: (P) -> Unit): P = expecting().also(block)
-
-    /** Receive [count] payloads (within [DEFAULT_TIMEOUT]) and run [block] against them. */
-    suspend fun collecting(count: Int, block: (List<P>) -> Unit): List<P> = receive(count = count, timeout = DEFAULT_TIMEOUT).also(block)
-
-    /** Receive every payload arriving within [duration] and run [block] against them. */
-    suspend fun collecting(duration: Duration, block: (List<P>) -> Unit): List<P> = receive(count = Int.MAX_VALUE, timeout = duration).also(block)
-
-    /** Receive a single payload and project it. */
-    suspend fun <T> returning(projection: (P) -> T): T = projection(expecting())
-
     // ---- internals ----
 
     private suspend fun generatePayload(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P {
@@ -140,16 +121,6 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
         ctx.transport.publish(resolveTopic(ctx), key, body)
     }
 
-    private suspend fun receive(count: Int, timeout: Duration): List<P> {
-        val ctx = currentAmbient().channelContext()
-        return ctx.transport.receive(resolveTopic(ctx), count, timeout)
-            .map { ctx.serialization.deserializeBody<P>(it, payloadType) }
-    }
-
     private fun resolveTopic(ctx: WirespecChannelContext): String = topic ?: ctx.defaultTopic ?: channelClass.simpleName
         ?: error("$channelClass: cannot resolve a topic — pin one with topic(...) or set a defaultTopic.")
-
-    private companion object {
-        val DEFAULT_TIMEOUT: Duration = 5.seconds
-    }
 }

@@ -1,3 +1,7 @@
+inventory:
+  # Base URL of the downstream inventory service (inventory.ws). Tests point this at a mock server.
+  base-url: ${INVENTORY_BASE_URL:http://localhost:9999}
+
 spring:
   application:
     name: campaign-service
