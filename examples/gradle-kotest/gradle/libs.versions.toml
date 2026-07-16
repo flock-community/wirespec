@@ -1,0 +1,43 @@
+[versions]
+java = "17"
+kotlin = "2.3.10"
+# The Wirespec kotest integration is built against kotest 6.1.4; 6.1.5 is the first
+# patch with a matching Spring extension published, and is binary-compatible with it.
+kotest = "6.1.5"
+kotlinx_coroutines = "1.9.0"
+spring_boot = "3.3.4"
+spring_dependency_management = "1.1.6"
+spring_kafka = "3.2.4"
+wirespec = "0.0.0-SNAPSHOT"
+
+[libraries]
+# Wirespec runtime + integrations (published to mavenLocal as 0.0.0-SNAPSHOT)
+wirespec_integration_spring = { module = "community.flock.wirespec.integration:spring-jvm", version.ref = "wirespec" }
+wirespec_integration_kotest = { module = "community.flock.wirespec.integration:kotest-jvm", version.ref = "wirespec" }
+wirespec_integration_jackson = { module = "community.flock.wirespec.integration:jackson-jvm", version.ref = "wirespec" }
+
+# Wirespec compiler + emitters, used on the buildscript classpath to run the generator
+wirespec_compiler = { module = "community.flock.wirespec.compiler:core-jvm", version.ref = "wirespec" }
+wirespec_emitters_kotlin = { module = "community.flock.wirespec.compiler.emitters:kotlin-jvm", version.ref = "wirespec" }
+
+# Spring
+spring_boot_starter_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
+spring_boot_starter_webflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "spring_boot" }
+spring_boot_starter_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }
+spring_kafka = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring_kafka" }
+spring_kafka_test = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "spring_kafka" }
+kotlinx_coroutines_reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx_coroutines" }
+
+# Kotest — property drives the generator, engine/assertions run the specs,
+# the spring extension autowires the Spring context into a spec.
+kotest_property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest_runner_junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest_extensions_spring = { module = "io.kotest:kotest-extensions-spring", version.ref = "kotest" }
+
+[plugins]
+kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin_spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
+spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }
+wirespec = { id = "community.flock.wirespec.plugin.gradle", version.ref = "wirespec" }

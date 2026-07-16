@@ -122,7 +122,12 @@ val generateWirespecRuntime = tasks.register<JavaExec>("generateWirespecRuntime"
     )
 }
 
-kotlin.sourceSets.named("jvmMain") {
+// The generated Kotlin runtime (Wirespec.kt) uses only kotlin.reflect.KType, which
+// is multiplatform stdlib, so it compiles as commonMain — letting downstream KMP
+// modules (e.g. the kotest integration) reference the Wirespec.* interfaces from
+// their own commonMain. The hand-written serde defaults stay in jvmMain because
+// they need full reflection (kotlin.reflect.full, KClass.java, constructor.call).
+kotlin.sourceSets.named("commonMain") {
     kotlin.srcDir(files(generatedKotlinDir).builtBy(generateWirespecRuntime))
 }
 
