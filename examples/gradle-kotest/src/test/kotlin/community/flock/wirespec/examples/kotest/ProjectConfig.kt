@@ -15,6 +15,7 @@ import community.flock.wirespec.integration.kotest.extension.WirespecMockExtensi
 import community.flock.wirespec.integration.kotest.transport.HttpTransportation
 import community.flock.wirespec.integration.wiremock.kotlin.requestBuilder
 import community.flock.wirespec.integration.wiremock.kotlin.responseBuilder
+import community.flock.wirespec.integration.wiremock.kotlin.toRawRequest
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.config.AbstractProjectConfig
 import io.kotest.core.extensions.Extension
@@ -27,8 +28,6 @@ import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.apache.kafka.common.serialization.StringSerializer
-import java.net.URI
-import java.net.URLDecoder
 
 /**
  * The single Kotest project config, registering every extension once for the whole suite — so specs
@@ -109,10 +108,11 @@ val inventoryMockServer: WireMockMockServer = WireMockMockServer.start().also { 
  * counterpart to [KafkaChannelTransport]: it implements the framework-neutral [MockServer] the DSL
  * consumes and carries no wirespec types of its own, translating each [MockStub] into a WireMock stub.
  *
- * The method/path match and the response body come from the wirespec WireMock integration's
- * [requestBuilder]/[responseBuilder]; on top of that method/path match it defers to [MockStub.matches]
- * — the lowered `.mock { req -> … }` predicate — via a WireMock [ValueMatcher], replying with the
- * drawn, already serialized [Wirespec.RawResponse]. [reset] drops all stubs; [close] stops the server.
+ * The method/path match, the request mapping and the response body all come from the wirespec WireMock
+ * integration ([requestBuilder]/[toRawRequest]/[responseBuilder]); on top of the method/path match it
+ * defers to [MockStub.matches] — the lowered `.mock { req -> … }` predicate — via a WireMock
+ * [ValueMatcher], replying with the drawn, already serialized [Wirespec.RawResponse]. [reset] drops all
+ * stubs; [close] stops the server.
  */
 class WireMockMockServer private constructor(
     private val server: WireMockServer,
@@ -156,21 +156,3 @@ class WireMockMockServer private constructor(
     }
 }
 
-/** Map a WireMock [Request] onto the neutral [Wirespec.RawRequest] the typed predicate reads. */
-private fun Request.toRawRequest(): Wirespec.RawRequest {
-    val uri = URI.create(absoluteUrl)
-    val segments = uri.rawPath.split("/").filter(String::isNotEmpty).map(::decode)
-    val queries = (uri.rawQuery ?: "").split("&").filter(String::isNotEmpty)
-        .map { it.split("=", limit = 2) }
-        .groupBy({ decode(it[0]) }, { decode(it.getOrElse(1) { "" }) })
-    val headerMap = headers.all().associate { it.key() to it.values().toList() }
-    return Wirespec.RawRequest(
-        method = method.value(),
-        path = segments,
-        queries = queries,
-        headers = headerMap,
-        body = body?.takeIf(ByteArray::isNotEmpty),
-    )
-}
-
-private fun decode(value: String): String = URLDecoder.decode(value, Charsets.UTF_8)
