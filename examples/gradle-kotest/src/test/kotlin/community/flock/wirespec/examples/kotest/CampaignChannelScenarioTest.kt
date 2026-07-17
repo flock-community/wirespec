@@ -13,6 +13,7 @@ import community.flock.wirespec.examples.kotest.kafka.CAMPAIGN_EVENTS_TOPIC
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.testContextManager
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.property.Arb
@@ -52,17 +53,21 @@ import kotlin.time.Duration.Companion.seconds
 class CampaignChannelScenarioTest : FunSpec({
 
     test("creating a campaign publishes a CREATED event") {
-        val created = CreateCampaign.generate.request {
-            body {
-                name = Arb.constant("Autumn promo")
-                discountPercentage = Arb.constant(20L)
-                productIds = Arb.constant(emptyList())
+        val created = CreateCampaign.generate
+            .request {
+                body {
+                    name = Arb.constant("Autumn promo")
+                    discountPercentage = Arb.constant(20L)
+                }
+            }.call()
+            .shouldBeInstanceOf<CreateCampaign.Response201>()
+            .also {
+                it.body.status shouldBe CampaignStatus.DRAFT
             }
-        }.call()
-        created.shouldBeInstanceOf<CreateCampaign.Response201>()
 
-        val event = awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == created.body.id && it.eventType == CampaignEventType.CREATED }
-        event.discountPercentage shouldBe 20L
+        awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == created.body.id && it.eventType == CampaignEventType.CREATED }
+            .should { it.discountPercentage shouldBe 20L }
+
     }
 
     test("activating a campaign publishes an ACTIVATED event") {
@@ -83,18 +88,22 @@ class CampaignChannelScenarioTest : FunSpec({
 
         // Filtering by campaignId + eventType isolates this campaign's ACTIVATED event from the
         // CREATED one (and from other tests sharing the broker), so no draining is needed.
-        val event = awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == created.body.id && it.eventType == CampaignEventType.ACTIVATED }
+        val event =
+            awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == created.body.id && it.eventType == CampaignEventType.ACTIVATED }
         event.campaignId shouldBe created.body.id
     }
 
     test("a CampaignEvent sent through the channel round-trips over the topic") {
         // send() takes the destination topic (and an optional key); omit it to fall back to the
         // channel context's defaultTopic.
-        val sent = CampaignEvents.generate.message {
-            eventType = Arb.constant(CampaignEventType.ENDED)
-        }.send(CAMPAIGN_EVENTS_TOPIC)
+        val sent = CampaignEvents.generate
+            .message {
+                eventType = Arb.constant(CampaignEventType.ENDED)
+            }
+            .send(CAMPAIGN_EVENTS_TOPIC)
 
-        val received = awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == sent.campaignId && it.eventType == CampaignEventType.ENDED }
+        val received =
+            awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == sent.campaignId && it.eventType == CampaignEventType.ENDED }
         received shouldBe sent
     }
 })

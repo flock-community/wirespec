@@ -53,7 +53,7 @@ type Error {
     message: String
 }
 
-channel CampaignEvents -> CampaignEvent
+channel CampaignEvents -> CampaignEvent # {token:String}
 
 endpoint GetProducts GET /products -> {
     200 -> Product[]
