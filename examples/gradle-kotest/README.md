@@ -78,7 +78,7 @@ class ProjectConfig : AbstractProjectConfig() {
         ),
         WirespecChannelExtension(
             serialization = { serialization() },
-            transport = { KafkaChannelTransport(property("spring.kafka.bootstrap-servers")) },
+            transportation = { KafkaChannelTransport(property("spring.kafka.bootstrap-servers")) },
             defaultTopic = CAMPAIGN_EVENTS_TOPIC,
         ),
         WirespecMockExtension(
