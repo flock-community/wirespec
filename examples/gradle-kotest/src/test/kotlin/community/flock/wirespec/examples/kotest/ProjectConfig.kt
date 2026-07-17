@@ -38,7 +38,7 @@ import org.apache.kafka.common.serialization.StringSerializer
  * `SpringExtension` is listed first so it wraps the others: it loads each spec's `@SpringBootTest`
  * context, which the framework-agnostic wirespec extensions then read from — via their `suspend`
  * factories calling `testContextManager()` — for the server port, the `Wirespec.Serialization` bean,
- * and the Kafka bootstrap servers. The channel extension builds one transport per spec; the mock
+ * and the Kafka bootstrap servers. The channel extension builds one transportation per spec; the mock
  * extension resets [inventoryMockServer] before each test but leaves it open (it is owned here, its
  * base URL fed to the app via `@DynamicPropertySource` in `ProductAvailabilityMockTest`).
  */
@@ -51,7 +51,7 @@ class ProjectConfig : AbstractProjectConfig() {
         ),
         WirespecChannelExtension(
             serialization = { serialization() },
-            transport = { KafkaChannelTransport(property("spring.kafka.bootstrap-servers")) },
+            transportation = { KafkaChannelTransport(property("spring.kafka.bootstrap-servers")) },
             defaultTopic = CAMPAIGN_EVENTS_TOPIC,
         ),
         WirespecMockExtension(

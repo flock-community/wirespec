@@ -20,16 +20,16 @@ import kotlin.coroutines.coroutineContext
 
 /**
  * Installs the channel half of the ambient wirespec context around every test, so
- * wrapper-free `SomeChannel.generate.message { … }.send()` calls resolve their transport and a
+ * wrapper-free `SomeChannel.generate.message { … }.send()` calls resolve their transportation and a
  * per-test [RandomSource]. Asserting on what the app published is left to the test's own broker
  * consumer.
  *
- * Supply the transport eagerly, or let this extension build and own it:
+ * Supply the transportation eagerly, or let this extension build and own it:
  *
  * ```
- * // eager — you own the transport's lifecycle
+ * // eager — you own the transportation's lifecycle
  * extension(WirespecChannelExtension(myChannelContext))
- * extension(WirespecChannelExtension(myTransport, mySerialization))
+ * extension(WirespecChannelExtension(myTransportation, mySerialization))
  *
  * // managed — built once per spec (lazily) from `suspend` factories, reset per test, closed after
  * // the spec. The factories carry any framework wiring (e.g. Spring via `testContextManager()`), so
@@ -38,7 +38,7 @@ import kotlin.coroutines.coroutineContext
  * extension(
  *     WirespecChannelExtension(
  *         serialization = { myWirespecSerialization() },
- *         transport = { KafkaChannelTransport(bootstrapServers()) },
+ *         transportation = { KafkaChannelTransport(bootstrapServers()) },
  *         reset = { it.clear() },
  *     ),
  * )
@@ -51,7 +51,7 @@ import kotlin.coroutines.coroutineContext
 class WirespecChannelExtension internal constructor(
     private val eager: WirespecChannelContext?,
     private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
-    private val transportFactory: (suspend () -> ChannelTransport)?,
+    private val transportationFactory: (suspend () -> ChannelTransport)?,
     private val defaultTopic: String?,
     private val reset: (ChannelTransport) -> Unit,
 ) : TestCaseExtension,
@@ -59,17 +59,17 @@ class WirespecChannelExtension internal constructor(
 
     constructor(channel: WirespecChannelContext) : this(channel, null, null, null, {})
 
-    /** Convenience: build the [WirespecChannelContext] from a [transport] + [serialization] directly. */
+    /** Convenience: build the [WirespecChannelContext] from a [transportation] + [serialization] directly. */
     constructor(
-        transport: ChannelTransport,
+        transportation: ChannelTransport,
         serialization: Wirespec.Serialization,
         defaultTopic: String? = null,
-    ) : this(WirespecChannelContext(transport, serialization, defaultTopic))
+    ) : this(WirespecChannelContext(transportation, serialization, defaultTopic))
 
-    // Managed mode builds one transport per spec (not per instance), so a single instance registered
-    // in a ProjectConfig serves every spec correctly — each spec resolves its own transport (e.g. its
+    // Managed mode builds one transportation per spec (not per instance), so a single instance registered
+    // in a ProjectConfig serves every spec correctly — each spec resolves its own transportation (e.g. its
     // own broker) and closes it in afterSpec. Keyed by Spec; the mutex guards the suspend build.
-    private val transports = ConcurrentHashMap<Spec, ChannelTransport>()
+    private val transportations = ConcurrentHashMap<Spec, ChannelTransport>()
     private val buildLock = Mutex()
 
     override suspend fun intercept(
@@ -77,40 +77,40 @@ class WirespecChannelExtension internal constructor(
         execute: suspend (TestCase) -> TestResult,
     ): TestResult {
         val channel = eager ?: run {
-            val transport = managedTransport(testCase.spec)
-            reset(transport)
-            WirespecChannelContext(transport, serializationFactory!!(), defaultTopic)
+            val transportation = managedTransportation(testCase.spec)
+            reset(transportation)
+            WirespecChannelContext(transportation, serializationFactory!!(), defaultTopic)
         }
         val ambient = coroutineContext[WirespecAmbient]?.withChannel(channel)
             ?: WirespecAmbient(endpoint = null, channel = channel, mock = null, randomSource = RandomSource.seeded(System.nanoTime()))
         return withContext(ambient) { execute(testCase) }
     }
 
-    private suspend fun managedTransport(spec: Spec): ChannelTransport = transports[spec] ?: buildLock.withLock {
-        transports[spec] ?: transportFactory!!().also { transports[spec] = it }
+    private suspend fun managedTransportation(spec: Spec): ChannelTransport = transportations[spec] ?: buildLock.withLock {
+        transportations[spec] ?: transportationFactory!!().also { transportations[spec] = it }
     }
 
     override suspend fun afterSpec(spec: Spec) {
-        // Only a managed transport is owned here; an eager one belongs to the caller.
-        (transports.remove(spec) as? AutoCloseable)?.close()
+        // Only a managed transportation is owned here; an eager one belongs to the caller.
+        (transportations.remove(spec) as? AutoCloseable)?.close()
     }
 }
 
 /**
- * Managed [WirespecChannelExtension]: builds the transport once per spec (lazily) via a `suspend`
+ * Managed [WirespecChannelExtension]: builds the transportation once per spec (lazily) via a `suspend`
  * factory, resets it before each test, and closes it after the spec. The generic [T] lets [reset]
- * receive the concrete transport type (so `reset = { it.clear() }` needs no cast). Named arguments
- * (`serialization = …`, `transport = …`) select this factory over the eager constructors.
+ * receive the concrete transportation type (so `reset = { it.clear() }` needs no cast). Named arguments
+ * (`serialization = …`, `transportation = …`) select this factory over the eager constructors.
  */
 fun <T : ChannelTransport> WirespecChannelExtension(
     serialization: suspend () -> Wirespec.Serialization,
-    transport: suspend () -> T,
+    transportation: suspend () -> T,
     defaultTopic: String? = null,
     reset: (T) -> Unit = {},
 ): WirespecChannelExtension = WirespecChannelExtension(
     eager = null,
     serializationFactory = serialization,
-    transportFactory = transport,
+    transportationFactory = transportation,
     defaultTopic = defaultTopic,
     reset = {
         @Suppress("UNCHECKED_CAST")
