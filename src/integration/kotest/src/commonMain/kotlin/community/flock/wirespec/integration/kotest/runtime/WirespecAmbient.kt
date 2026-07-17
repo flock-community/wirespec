@@ -12,8 +12,8 @@ import kotlin.coroutines.coroutineContext
  * Coroutine-context element carrying everything an eager wirespec call needs: the
  * per-test [randomSource] (its [seed] is printed on failure for reproducibility)
  * and the endpoint / channel transport contexts installed by
- * [WirespecEndpointExtension][community.flock.wirespec.integration.kotest.WirespecEndpointExtension]
- * and [WirespecChannelExtension][community.flock.wirespec.integration.kotest.WirespecChannelExtension].
+ * [WirespecEndpointExtension][community.flock.wirespec.integration.kotest.extension.WirespecEndpointExtension]
+ * and [WirespecChannelExtension][community.flock.wirespec.integration.kotest.extension.WirespecChannelExtension].
  *
  * A context is optional: an endpoint-only spec registers just the endpoint extension
  * (and vice versa), and the corresponding accessor raises a clear error only if a call

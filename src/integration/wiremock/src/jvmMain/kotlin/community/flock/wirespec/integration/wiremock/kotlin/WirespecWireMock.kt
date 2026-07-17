@@ -24,7 +24,7 @@ import community.flock.wirespec.kotlin.Wirespec
  */
 fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> wirespec(
     endpoint: Wirespec.Server<Req, Res>,
-): WirespecMappingBuilder<Res> = WirespecMappingBuilder(endpoint, requestBuilder(endpoint))
+): WirespecMappingBuilder<Res> = WirespecMappingBuilder(endpoint, requestBuilder(endpoint.method, endpoint.pathTemplate))
 
 class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
     private val endpoint: Wirespec.Server<*, Res>,
@@ -45,9 +45,15 @@ class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
 
 private val defaultSerialization: Wirespec.Serialization by lazy { WirespecSerialization(ObjectMapper()) }
 
-private fun requestBuilder(endpoint: Wirespec.Server<*, *>): MappingBuilder {
-    val urlPattern = urlPatternFor(endpoint.pathTemplate)
-    return when (endpoint.method.uppercase()) {
+/**
+ * A WireMock [MappingBuilder] matching an endpoint's HTTP [method] and [pathTemplate] (path
+ * parameters match any non-slash segment). The building block behind [wirespec]; reusable directly
+ * when a stub needs extra matching (e.g. `.andMatching(...)` on the deserialized request) on top of
+ * the method/path match.
+ */
+fun requestBuilder(method: String, pathTemplate: String): MappingBuilder {
+    val urlPattern = urlPatternFor(pathTemplate)
+    return when (method.uppercase()) {
         "GET" -> WireMock.get(urlPattern)
         "PUT" -> WireMock.put(urlPattern)
         "POST" -> WireMock.post(urlPattern)
@@ -60,7 +66,8 @@ private fun requestBuilder(endpoint: Wirespec.Server<*, *>): MappingBuilder {
     }
 }
 
-private fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilder {
+/** A WireMock [ResponseDefinitionBuilder] mirroring an already-serialized Wirespec [rawResponse]. */
+fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilder {
     val builder = WireMock.aResponse().withStatus(rawResponse.statusCode)
     rawResponse.headers.forEach { (name, values) ->
         values.forEach { value -> builder.withHeader(name, value) }
