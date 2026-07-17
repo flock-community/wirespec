@@ -34,7 +34,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * End-to-end messaging scenarios over an in-JVM Kafka broker (`@EmbeddedKafka`, no Docker).
  * The Wirespec DSL drives the **send** direction only (`generate.message { … }.send()`); asserting
- * on what the app published is done with a plain Kafka consumer ([awaitCampaignEvent]), i.e. standard
+ * on what the app published is done with a plain Kafka consumer ([awaitEvent]), i.e. standard
  * Kotest, not a generated `listen` DSL. All extensions live in the project's [ProjectConfig], so this
  * spec carries no extension wiring; the endpoint and channel ambients compose, so a scenario can act
  * on the REST side that emits events and then assert on what landed on the topic.
@@ -61,7 +61,7 @@ class CampaignChannelScenarioTest : FunSpec({
         }.call()
         created.shouldBeInstanceOf<CreateCampaign.Response201>()
 
-        val event = awaitCampaignEvent { it.campaignId == created.body.id && it.eventType == CampaignEventType.CREATED }
+        val event = awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == created.body.id && it.eventType == CampaignEventType.CREATED }
         event.discountPercentage shouldBe 20L
     }
 
@@ -83,7 +83,7 @@ class CampaignChannelScenarioTest : FunSpec({
 
         // Filtering by campaignId + eventType isolates this campaign's ACTIVATED event from the
         // CREATED one (and from other tests sharing the broker), so no draining is needed.
-        val event = awaitCampaignEvent { it.campaignId == created.body.id && it.eventType == CampaignEventType.ACTIVATED }
+        val event = awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == created.body.id && it.eventType == CampaignEventType.ACTIVATED }
         event.campaignId shouldBe created.body.id
     }
 
@@ -94,42 +94,43 @@ class CampaignChannelScenarioTest : FunSpec({
             eventType = Arb.constant(CampaignEventType.ENDED)
         }.send(CAMPAIGN_EVENTS_TOPIC)
 
-        val received = awaitCampaignEvent { it.campaignId == sent.campaignId && it.eventType == CampaignEventType.ENDED }
+        val received = awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == sent.campaignId && it.eventType == CampaignEventType.ENDED }
         received shouldBe sent
     }
 })
 
 /**
- * Poll [CAMPAIGN_EVENTS_TOPIC] with a throwaway consumer group (reading from `earliest`) until an
- * event satisfying [predicate] arrives, or [timeout] elapses. Bodies are decoded with the app's own
+ * Poll [topic] with a throwaway consumer group (reading from `earliest`) until an event of type [T]
+ * satisfying [predicate] arrives, or [timeout] elapses. Bodies are decoded with the app's own
  * `Wirespec.Serialization` bean — the mirror of what the publisher wrote — so equality with a sent
  * payload holds. This is the standard-Kotest counterpart to the removed `listen { … }` DSL.
  */
-private suspend fun awaitCampaignEvent(
+private suspend inline fun <reified T : Any> awaitEvent(
+    topic: String,
     timeout: Duration = 10.seconds,
-    predicate: (CampaignEvent) -> Boolean,
-): CampaignEvent {
+    crossinline predicate: (T) -> Boolean,
+): T {
     val applicationContext = testContextManager().testContext.applicationContext
     val serialization = applicationContext.getBean(Wirespec.Serialization::class.java)
     val bootstrapServers = applicationContext.environment.getProperty("spring.kafka.bootstrap-servers")
         ?: error("spring.kafka.bootstrap-servers is not set in the test context")
 
     return withContext(Dispatchers.IO) {
-        campaignEventConsumer(bootstrapServers).use { consumer ->
-            consumer.subscribe(listOf(CAMPAIGN_EVENTS_TOPIC))
+        eventConsumer(bootstrapServers).use { consumer ->
+            consumer.subscribe(listOf(topic))
             val deadline = System.nanoTime() + timeout.inWholeNanoseconds
             while (System.nanoTime() < deadline) {
                 consumer.poll(ofMillis(500)).forEach { record ->
-                    val event = serialization.deserializeBody<CampaignEvent>(record.value(), typeOf<CampaignEvent>())
+                    val event = serialization.deserializeBody<T>(record.value(), typeOf<T>())
                     if (predicate(event)) return@use event
                 }
             }
-            error("No matching CampaignEvent arrived on $CAMPAIGN_EVENTS_TOPIC within $timeout")
+            error("No matching ${T::class.simpleName} arrived on $topic within $timeout")
         }
     }
 }
 
-private fun campaignEventConsumer(bootstrapServers: String): KafkaConsumer<String, ByteArray> = KafkaConsumer(
+private fun eventConsumer(bootstrapServers: String): KafkaConsumer<String, ByteArray> = KafkaConsumer(
     mapOf(
         ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
         ConsumerConfig.GROUP_ID_CONFIG to "kotest-assert-${UUID.randomUUID()}",
