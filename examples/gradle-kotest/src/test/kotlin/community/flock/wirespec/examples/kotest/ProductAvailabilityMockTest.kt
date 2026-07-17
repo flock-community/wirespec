@@ -38,17 +38,21 @@ class ProductAvailabilityMockTest : FunSpec({
         val productId = createProduct(sku)
 
         // Only requests for SKU-001 get this canned 200 — the predicate reads the typed request.
-        GetStock.generate.response200 {
-            body = StockLevel.generate {
-                this.sku = Arb.constant(sku)
-                available = Arb.constant(7L)
-                warehouse = Arb.constant("EU-WEST")
+        GetStock.generate
+            .response200 {
+                body = StockLevel.generate {
+                    this.sku = Arb.constant(sku)
+                    available = Arb.constant(7L)
+                    warehouse = Arb.constant("EU-WEST")
+                }
             }
-        }.mock { req -> req.path.sku == sku }
+            .mock { req -> req.path.sku == sku }
 
-        val availability = GetProductAvailability.generate.request {
-            path { id = Arb.constant(productId) }
-        }.call()
+        val availability = GetProductAvailability.generate
+            .request {
+                path { id = Arb.constant(productId) }
+            }
+            .call()
 
         availability.shouldBeInstanceOf<GetProductAvailability.Response200>()
         availability.body.inStock shouldBe true
@@ -61,12 +65,16 @@ class ProductAvailabilityMockTest : FunSpec({
 
         GetStock.generate
             .response200 {
-                body = StockLevel.generate { sku = Arb.constant("SKU-OOS"); available = Arb.constant(0L); warehouse = Arb.constant("EU-WEST") }
+                body = StockLevel.generate {
+                    sku = Arb.constant("SKU-OOS"); available = Arb.constant(0L); warehouse = Arb.constant("EU-WEST")
+                }
             }
             .mock { req -> req.path.sku == "SKU-OOS" }
         GetStock.generate
             .response200 {
-                body = StockLevel.generate { sku = Arb.constant("SKU-IN"); available = Arb.constant(42L); warehouse = Arb.constant("EU-WEST") }
+                body = StockLevel.generate {
+                    sku = Arb.constant("SKU-IN"); available = Arb.constant(42L); warehouse = Arb.constant("EU-WEST")
+                }
             }
             .mock { req -> req.path.sku == "SKU-IN" }
 
