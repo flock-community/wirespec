@@ -10,7 +10,7 @@ import community.flock.wirespec.kotlin.Wirespec
  * request the `.mock { req -> … }` predicate reads).
  *
  * Supplied per-spec to
- * [WirespecMockExtension][community.flock.wirespec.integration.kotest.WirespecMockExtension],
+ * [WirespecMockExtension][community.flock.wirespec.integration.kotest.extension.WirespecMockExtension],
  * mirroring how a [WirespecChannelContext] carries a [ChannelTransport].
  */
 class WirespecMockContext(
@@ -27,7 +27,7 @@ class WirespecMockContext(
  * [MockStub.response] before handing the stub over.
  *
  * Implementations (e.g. a WireMock-backed server) are supplied per-spec to
- * [WirespecMockExtension][community.flock.wirespec.integration.kotest.WirespecMockExtension]
+ * [WirespecMockExtension][community.flock.wirespec.integration.kotest.extension.WirespecMockExtension]
  * as part of a [WirespecMockContext].
  */
 interface MockServer {

@@ -41,7 +41,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * `@EmbeddedKafka` starts the broker before the context loads and points the app's
  * `spring.kafka.bootstrap-servers` at it; the project's channel extension resolves that per spec and
- * builds a `KafkaChannelTransport` for it (closed after the spec).
+ * builds a `KafkaChannelTransport` for it.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EmbeddedKafka(

@@ -53,21 +53,20 @@ build/generated/.../generated/
 | `CampaignEndpointScenarioTest` | HTTP scenarios |
 | `CampaignChannelScenarioTest` | Kafka messaging scenarios (`@EmbeddedKafka`) |
 | `ProductAvailabilityMockTest` | Mocks the downstream inventory service with `.mock { req -> … }` |
-| `mock/WireMockMockServer` | WireMock-backed `MockServer` the `.mock` DSL drives |
-| `ProjectConfig` | Registers every extension once for the whole suite, plus the `KafkaChannelTransport` (a producer-only `ChannelTransport` backing `send()` over Kafka) |
+| `ProjectConfig` | Registers every extension once for the whole suite, plus `KafkaChannelTransport` (producer-only `ChannelTransport` backing `send()`) and `WireMockMockServer` (the `MockServer` the `.mock` DSL drives) |
 
 ## How the tests wire the transport
 
-The scenario DSL resolves its transport from an ambient context installed by two framework-agnostic
-Wirespec extensions — `WirespecEndpointExtension` (backs `call()`) and `WirespecChannelExtension`
-(backs `send()`). Neither depends on Spring: each takes `suspend` factories for the
-transport(ation) and `Wirespec.Serialization`. Both are registered once — alongside Kotest's
-`SpringExtension` — in a single `ProjectConfig` (pointed at with the `kotest.framework.config.fqn`
-system property in `build.gradle.kts`, so it can live in this package rather than the default
-`io.kotest.provided.ProjectConfig`). Specs then carry no extension wiring at all (just
-`@SpringBootTest` / `@EmbeddedKafka` to declare their context). The factories supply the Spring
-wiring, reading the server port, the `Wirespec.Serialization` bean, and the Kafka bootstrap servers
-from the test context via `testContextManager()`:
+The scenario DSL resolves its transport from an ambient context installed by three framework-agnostic
+Wirespec extensions — `WirespecEndpointExtension` (backs `call()`), `WirespecChannelExtension` (backs
+`send()`), and `WirespecMockExtension` (backs `.mock { }`). None depends on Spring: each takes
+`suspend` factories for its transport/server and `Wirespec.Serialization`. All are registered once —
+alongside Kotest's `SpringExtension` — in a single `ProjectConfig` (pointed at with the
+`kotest.framework.config.fqn` system property in `build.gradle.kts`, so it can live in this package
+rather than the default `io.kotest.provided.ProjectConfig`). Specs then carry no extension wiring at
+all (just `@SpringBootTest` / `@EmbeddedKafka` to declare their context). The factories supply the
+Spring wiring, reading the server port, the `Wirespec.Serialization` bean, and the Kafka bootstrap
+servers from the test context via `testContextManager()`:
 
 ```kotlin
 class ProjectConfig : AbstractProjectConfig() {
@@ -81,16 +80,20 @@ class ProjectConfig : AbstractProjectConfig() {
             serialization = { serialization() },
             transport = { KafkaChannelTransport(property("spring.kafka.bootstrap-servers")) },
             defaultTopic = CAMPAIGN_EVENTS_TOPIC,
-            reset = { it.clear() },
+        ),
+        WirespecMockExtension(
+            server = inventoryMockServer,        // suite-wide, started eagerly (see the mocking section)
+            serialization = { serialization() },
         ),
     )
 }
 ```
 
 `SpringExtension` is listed first so it wraps the others and loads the context they read. The channel
-extension builds one transport **per spec**, so the same registered instance serves both the endpoint
-spec and the `@EmbeddedKafka` channel spec correctly, and closes each after its spec. The endpoint and
-channel ambients compose, so a scenario can drive REST and then assert on the emitted event.
+extension builds one transport **per spec** (so the same registered instance serves the endpoint and
+`@EmbeddedKafka` channel specs correctly); the mock extension shares one suite-wide server and only
+resets its stubs between tests. The endpoint, channel and mock ambients compose, so a scenario can
+drive REST, assert on an emitted event, and get a mocked downstream reply all at once.
 
 ## Mocking a downstream service
 
@@ -124,26 +127,41 @@ on the predicate — so two stubs with different predicates route each SKU to it
 The mock server is resolved from an ambient context installed by `WirespecMockExtension` — the
 response-side counterpart to `WirespecEndpointExtension`. The extension consumes a framework-neutral
 [`MockServer`](../../src/integration/kotest/src/commonMain/kotlin/community/flock/wirespec/integration/kotest/WirespecMockContext.kt);
-[`WireMockMockServer`](src/test/kotlin/community/flock/wirespec/examples/kotest/mock/WireMockMockServer.kt)
-is the WireMock-backed implementation (the mock analogue of `KafkaChannelTransport`). It is started in
-the spec's companion so its `baseUrl` can feed the app's `inventory.base-url` via
-`@DynamicPropertySource` before the Spring context boots, then registered spec-locally so it composes
-with the global endpoint extension:
+`WireMockMockServer` (in [`ProjectConfig.kt`](src/test/kotlin/community/flock/wirespec/examples/kotest/ProjectConfig.kt))
+is the WireMock-backed implementation, the mock analogue of `KafkaChannelTransport` — it reuses the
+wirespec WireMock integration (`community.flock.wirespec.integration:wiremock`) `requestBuilder` /
+`responseBuilder` to turn each stub's method/path and serialized response into a WireMock mapping,
+adding only the typed-predicate matcher on top. Like the endpoint
+and channel extensions it is registered once for the whole suite in `ProjectConfig`, against a
+suite-wide `inventoryMockServer` started eagerly so its `baseUrl` is known before any context boots
+(the caller-owned form: stubs are reset between tests, the server is left open):
 
 ```kotlin
-class ProductAvailabilityMockTest : FunSpec() {
-    init {
-        // managed form: resets stubs between tests, stops the server after the spec
-        extension(WirespecMockExtension(serialization = { mockSerialization() }, server = { mockServer }))
-        test("…") { /* .mock { } stubs, .call() drives the app */ }
-    }
-    companion object {
-        private val mockServer = WireMockMockServer.start()   // dynamic port
+// ProjectConfig.kt — one registration for the whole suite
+val inventoryMockServer: WireMockMockServer = WireMockMockServer.start()   // dynamic port
 
+class ProjectConfig : AbstractProjectConfig() {
+    override val extensions = listOf(
+        SpringExtension(),
+        // …endpoint + channel extensions…
+        WirespecMockExtension(server = inventoryMockServer, serialization = { serialization() }),
+    )
+}
+```
+
+Only the spec that actually mocks the downstream then wires the app's `inventory.base-url` at that
+server, via a `@DynamicPropertySource` that runs before its Spring context boots:
+
+```kotlin
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+class ProductAvailabilityMockTest : FunSpec({
+    test("…") { /* .mock { } stubs, .call() drives the app */ }
+}) {
+    companion object {
         @JvmStatic
         @DynamicPropertySource
         fun inventoryProperties(registry: DynamicPropertyRegistry) {
-            registry.add("inventory.base-url") { mockServer.baseUrl }
+            registry.add("inventory.base-url") { inventoryMockServer.baseUrl }
         }
     }
 }

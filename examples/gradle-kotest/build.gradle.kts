@@ -47,8 +47,10 @@ dependencies {
     testImplementation(libs.kotest.extensions.spring)
     // In-JVM Kafka broker for the channel scenarios (`@EmbeddedKafka`), no Docker needed.
     testImplementation(libs.spring.kafka.test)
-    // WireMock backs the mock server the response-side scenario DSL (`.mock { req -> … }`) drives.
+    // WireMock backs the mock server the response-side scenario DSL (`.mock { req -> … }`) drives;
+    // the wirespec WireMock integration supplies the request/response stub builders it reuses.
     testImplementation(libs.wiremock)
+    testImplementation(libs.wirespec.integration.wiremock)
 }
 
 // The generator itself runs on the buildscript classpath. Besides the compiler and the

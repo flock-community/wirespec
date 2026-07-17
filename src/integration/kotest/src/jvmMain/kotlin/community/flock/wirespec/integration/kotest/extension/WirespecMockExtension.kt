@@ -1,5 +1,7 @@
-package community.flock.wirespec.integration.kotest
+package community.flock.wirespec.integration.kotest.extension
 
+import community.flock.wirespec.integration.kotest.MockServer
+import community.flock.wirespec.integration.kotest.WirespecMockContext
 import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension
@@ -25,22 +27,20 @@ import kotlin.coroutines.coroutineContext
  * sends it, `.mock` draws a response and stubs it for every incoming request its predicate
  * accepts.
  *
- * Supply the [MockServer] eagerly, or let this extension build and own it:
+ * Three registration forms, differing only in who owns the server's lifecycle:
  *
  * ```
- * // eager — you own the server's lifecycle (and its base URL, so the app client can be
- * // pointed at it before the suite starts). Stubs are NOT reset for you.
+ * // eager context/value — you own the server (start + close) and its base URL. Stubs are NOT reset.
  * extension(WirespecMockExtension(myMockServer, mySerialization))
  *
- * // managed — built once per spec (lazily) from `suspend` factories, reset before each test,
- * // closed after the spec. The factories carry any framework wiring (e.g. Spring via
- * // `testContextManager()`), so this extension itself stays framework-agnostic.
- * extension(
- *     WirespecMockExtension(
- *         serialization = { myWirespecSerialization() },
- *         server = { WireMockMockServer.start() },
- *     ),
- * )
+ * // shared server, lazy serialization — you own the server (e.g. one started in a ProjectConfig,
+ * // whose base URL feeds the app before the suite starts), the extension resolves serialization per
+ * // test (e.g. Spring via `testContextManager()`) and resets stubs before each test but never closes it.
+ * extension(WirespecMockExtension(server = myMockServer, serialization = { myWirespecSerialization() }))
+ *
+ * // managed — built once per spec (lazily) from `suspend` factories, reset before each test, and
+ * // closed after the spec.
+ * extension(WirespecMockExtension(serialization = { myWirespecSerialization() }, server = { WireMockMockServer.start() }))
  * ```
  *
  * Composes with [WirespecEndpointExtension] and [WirespecChannelExtension]: when several are
@@ -48,13 +48,19 @@ import kotlin.coroutines.coroutineContext
  * can drive live endpoints, channels and mocked dependencies together.
  */
 class WirespecMockExtension internal constructor(
-    private val eager: WirespecMockContext?,
-    private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
-    private val serverFactory: (suspend () -> MockServer)?,
+    private val serverFactory: suspend (Spec) -> MockServer,
+    private val serializationFactory: suspend () -> Wirespec.Serialization,
+    private val resetBeforeTest: Boolean,
+    private val closeAfterSpec: Boolean,
 ) : TestCaseExtension,
     AfterSpecListener {
 
-    constructor(mock: WirespecMockContext) : this(mock, null, null)
+    constructor(mock: WirespecMockContext) : this(
+        serverFactory = { mock.server },
+        serializationFactory = { mock.serialization },
+        resetBeforeTest = false,
+        closeAfterSpec = false,
+    )
 
     /** Convenience: build the [WirespecMockContext] from a [server] + [serialization] directly. */
     constructor(
@@ -62,8 +68,8 @@ class WirespecMockExtension internal constructor(
         serialization: Wirespec.Serialization,
     ) : this(WirespecMockContext(server, serialization))
 
-    // Managed mode builds one server per spec (not per instance), so a single instance registered
-    // in a ProjectConfig serves every spec correctly. Keyed by Spec; the mutex guards the suspend build.
+    // Server resolved once per spec (not per instance), so a single instance registered in a
+    // ProjectConfig serves every spec correctly. Keyed by Spec; the mutex guards the suspend build.
     private val servers = ConcurrentHashMap<Spec, MockServer>()
     private val buildLock = Mutex()
 
@@ -71,23 +77,22 @@ class WirespecMockExtension internal constructor(
         testCase: TestCase,
         execute: suspend (TestCase) -> TestResult,
     ): TestResult {
-        val mock = eager ?: run {
-            val server = managedServer(testCase.spec)
-            server.reset()
-            WirespecMockContext(server, serializationFactory!!())
-        }
+        val server = server(testCase.spec)
+        if (resetBeforeTest) server.reset()
+        val mock = WirespecMockContext(server, serializationFactory())
         val ambient = coroutineContext[WirespecAmbient]?.withMock(mock)
             ?: WirespecAmbient(endpoint = null, channel = null, mock = mock, randomSource = RandomSource.seeded(System.nanoTime()))
         return withContext(ambient) { execute(testCase) }
     }
 
-    private suspend fun managedServer(spec: Spec): MockServer = servers[spec] ?: buildLock.withLock {
-        servers[spec] ?: serverFactory!!().also { servers[spec] = it }
+    private suspend fun server(spec: Spec): MockServer = servers[spec] ?: buildLock.withLock {
+        servers[spec] ?: serverFactory(spec).also { servers[spec] = it }
     }
 
     override suspend fun afterSpec(spec: Spec) {
-        // Only a managed server is owned here; an eager one belongs to the caller.
-        (servers.remove(spec) as? AutoCloseable)?.close()
+        val removed = servers.remove(spec)
+        // Only a managed server is owned here; an eager/shared one belongs to the caller.
+        if (closeAfterSpec) (removed as? AutoCloseable)?.close()
     }
 }
 
@@ -101,7 +106,24 @@ fun <T : MockServer> WirespecMockExtension(
     serialization: suspend () -> Wirespec.Serialization,
     server: suspend () -> T,
 ): WirespecMockExtension = WirespecMockExtension(
-    eager = null,
+    serverFactory = { server() },
     serializationFactory = serialization,
-    serverFactory = server,
+    resetBeforeTest = true,
+    closeAfterSpec = true,
+)
+
+/**
+ * Caller-owned [WirespecMockExtension]: uses a long-lived [server] the caller starts and closes (e.g.
+ * one shared across the suite from a ProjectConfig, whose base URL is wired into the app before it
+ * boots), resolving [serialization] per test from a `suspend` factory. Stubs are reset before each
+ * test; the server is left open (the caller owns its lifecycle). Named arguments select this factory.
+ */
+fun WirespecMockExtension(
+    server: MockServer,
+    serialization: suspend () -> Wirespec.Serialization,
+): WirespecMockExtension = WirespecMockExtension(
+    serverFactory = { server },
+    serializationFactory = serialization,
+    resetBeforeTest = true,
+    closeAfterSpec = false,
 )
