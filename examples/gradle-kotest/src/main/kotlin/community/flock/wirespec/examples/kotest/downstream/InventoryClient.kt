@@ -1,6 +1,7 @@
 package community.flock.wirespec.examples.kotest.downstream
 
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetStock
+import community.flock.wirespec.integration.kotest.transport.HttpTransportation
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
