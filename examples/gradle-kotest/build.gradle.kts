@@ -36,8 +36,8 @@ dependencies {
 
     // `KotestDslExtension` emits the scenario DSL into the *main* source set next to the
     // models, so the main compilation needs the DSL runtime and kotest-property to compile.
-    implementation(libs.wirespec.integration.kotest)
-    implementation(libs.kotest.property)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.wirespec.integration.kotest)
 
     // Tests build a `Wirespec.Serialization` from Jackson to drive the generated client.
     testImplementation(libs.wirespec.integration.jackson)
