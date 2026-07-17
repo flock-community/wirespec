@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.http.Request
 import com.github.tomakehurst.wiremock.matching.UrlPattern
 import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.kotlin.Wirespec
+import java.net.URI
+import java.net.URLDecoder
 
 /**
  * Start building a WireMock stub for a Wirespec endpoint. Mirrors WireMock's own
@@ -75,6 +78,32 @@ fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilde
     rawResponse.body?.let(builder::withBody)
     return builder
 }
+
+/**
+ * Map an incoming WireMock [Request] onto the neutral [Wirespec.RawRequest]. The mirror image of
+ * [responseBuilder]; use it when a stub matches on the request itself — `.andMatching { request ->
+ * … request.toRawRequest() … }` — so the matcher can deserialize the request through a generated
+ * endpoint rather than reading WireMock's own types.
+ *
+ * Path segments and query values are percent-decoded; a query key without `=` yields an empty value,
+ * and a repeated key yields all its values in order. An empty body maps to `null`.
+ */
+fun Request.toRawRequest(): Wirespec.RawRequest {
+    val uri = URI.create(absoluteUrl)
+    val segments = uri.rawPath.split("/").filter(String::isNotEmpty).map(::decode)
+    val queries = (uri.rawQuery ?: "").split("&").filter(String::isNotEmpty)
+        .map { it.split("=", limit = 2) }
+        .groupBy({ decode(it[0]) }, { decode(it.getOrElse(1) { "" }) })
+    return Wirespec.RawRequest(
+        method = method.value(),
+        path = segments,
+        queries = queries,
+        headers = headers.all().associate { it.key() to it.values().toList() },
+        body = body?.takeIf(ByteArray::isNotEmpty),
+    )
+}
+
+private fun decode(value: String): String = URLDecoder.decode(value, Charsets.UTF_8)
 
 private val PATH_PARAM_REGEX = Regex("""\{[^/}]+\}""")
 
