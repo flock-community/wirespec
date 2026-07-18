@@ -23,6 +23,21 @@ interface BaseBuilder {
 
     fun Type.nullable() = Type.Nullable(this)
 
+    /**
+     * A function type, optionally a receiver function type ([receiver] != null → `R.() -> T`)
+     * and/or `suspend`. Used for lambda-typed parameters and properties
+     * (e.g. `block: Builder.() -> Unit`).
+     */
+    fun functionType(
+        returnType: Type,
+        receiver: Type? = null,
+        parameterTypes: List<Type> = emptyList(),
+        isSuspend: Boolean = false,
+    ): Type.Function = Type.Function(parameterTypes, returnType, receiver, isSuspend)
+
+    /** A raw code fragment usable where an [Expression] is expected (e.g. `returns(rawExpr(...))`). */
+    fun rawExpr(code: String): RawExpression = RawExpression(code)
+
     fun literal(value: String) = Literal(value, Type.String)
     fun literal(value: Int) = Literal(value, Type.Integer())
     fun literal(value: Long) = Literal(value, Type.Integer(Precision.P64))
@@ -51,6 +66,37 @@ interface ContainerBuilder : BaseBuilder {
 
     fun raw(code: String) {
         elements.add(RawElement(code))
+    }
+
+    /**
+     * Adds a property declaration — a class member, a top-level property, or (when [receiver]
+     * is non-null) an extension property. [name] is kept verbatim (single-part [Name]) so wire
+     * names such as `Refresh-Token` are backtick-escaped rather than normalised.
+     */
+    fun property(
+        name: String,
+        type: Type,
+        isMutable: Boolean = false,
+        visibility: Visibility? = null,
+        receiver: Type? = null,
+        annotations: List<String> = emptyList(),
+        initializer: Expression? = null,
+        getter: Expression? = null,
+        isOverride: Boolean = false,
+    ) {
+        elements.add(
+            Field(
+                name = Name(name),
+                type = type,
+                isOverride = isOverride,
+                isMutable = isMutable,
+                visibility = visibility,
+                annotations = annotations,
+                receiver = receiver,
+                initializer = initializer,
+                getter = getter,
+            ),
+        )
     }
 
     fun struct(name: String, block: (StructBuilder.() -> Unit)? = null) {
@@ -303,6 +349,27 @@ class StructBuilder(private val name: Name) : ContainerBuilder {
     private val interfaces = mutableListOf<Type.Custom>()
     override val elements = mutableListOf<Element>()
     private val typeParameters = mutableListOf<TypeParameter>()
+    private var visibility: Visibility? = null
+    private val annotations = mutableListOf<String>()
+    private var kind: Struct.Kind? = null
+    private var constructorVisibility: Visibility? = null
+
+    fun visibility(visibility: Visibility) {
+        this.visibility = visibility
+    }
+
+    fun annotation(annotation: String) {
+        annotations.add(annotation)
+    }
+
+    /** Renders as a stateful `class` (members from [elements]) rather than an inferred object/data class. */
+    fun plainClass() {
+        kind = Struct.Kind.PLAIN_CLASS
+    }
+
+    fun constructorVisibility(visibility: Visibility) {
+        constructorVisibility = visibility
+    }
 
     fun implements(type: Type.Custom) {
         interfaces.add(type)
@@ -332,7 +399,18 @@ class StructBuilder(private val name: Name) : ContainerBuilder {
         constructors.add(builder.build())
     }
 
-    fun build(): Struct = Struct(name, fields, constructors, interfaces, elements, typeParameters)
+    fun build(): Struct = Struct(
+        name = name,
+        fields = fields,
+        constructors = constructors,
+        interfaces = interfaces,
+        elements = elements,
+        typeParameters = typeParameters,
+        visibility = visibility,
+        annotations = annotations,
+        kind = kind,
+        constructorVisibility = constructorVisibility,
+    )
 }
 
 @Dsl
@@ -399,6 +477,9 @@ class FunctionBuilder(
     private val parameters = mutableListOf<Parameter>()
     private val body = mutableListOf<Statement>()
     private var returnType: Type? = null
+    private var receiver: Type? = null
+    private var visibility: Visibility? = null
+    private val annotations = mutableListOf<String>()
 
     fun typeParam(type: Type, vararg extends: Type) {
         typeParameters.add(TypeParameter(type, extends.toList()))
@@ -408,12 +489,30 @@ class FunctionBuilder(
         returnType = type
     }
 
+    /** Makes this an extension function on [type] (e.g. `fun Gen<Request>.call()`). */
+    fun receiver(type: Type) {
+        receiver = type
+    }
+
+    fun visibility(visibility: Visibility) {
+        this.visibility = visibility
+    }
+
+    fun annotation(annotation: String) {
+        annotations.add(annotation)
+    }
+
     fun arg(name: String, type: Type) {
         parameters.add(Parameter(Name.of(name), type))
     }
 
     fun arg(name: Name, type: Type) {
         parameters.add(Parameter(name, type))
+    }
+
+    /** Parameter with a default value (`name: Type = <default>`). */
+    fun arg(name: String, type: Type, default: Expression) {
+        parameters.add(Parameter(Name.of(name), type, default))
     }
 
     fun print(expression: Expression) {
@@ -502,7 +601,19 @@ class FunctionBuilder(
         return node
     }
 
-    fun build(): Function = Function(name, typeParameters, parameters, returnType, body, isAsync, isStatic, isOverride)
+    fun build(): Function = Function(
+        name = name,
+        typeParameters = typeParameters,
+        parameters = parameters,
+        returnType = returnType,
+        body = body,
+        isAsync = isAsync,
+        isStatic = isStatic,
+        isOverride = isOverride,
+        receiver = receiver,
+        visibility = visibility,
+        annotations = annotations,
+    )
 }
 
 @Dsl

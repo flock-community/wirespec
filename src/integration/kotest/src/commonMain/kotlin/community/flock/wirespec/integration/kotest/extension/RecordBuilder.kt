@@ -1,42 +1,76 @@
 package community.flock.wirespec.integration.kotest.extension
 
 import community.flock.wirespec.integration.kotest.extension.EndpointShape.BodyFieldShape
+import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.Visibility
+import community.flock.wirespec.ir.core.struct
+import community.flock.wirespec.ir.core.Type as IrType
 
 /**
- * Renders the single reusable per-record builder class `<Type>Builder` (emitted once in the
- * type's own `<Type>Dsl.kt`) and the `registerPath` lines that apply it. The type,
- * endpoint-body and channel-payload DSLs reference it by name instead of emitting their own.
+ * Builds the single reusable per-record builder class `<Type>Builder` (emitted once in the
+ * type's own `<Type>Dsl.kt`) as an IR [Struct], and renders the `registerPath` lines that
+ * apply it. The type, endpoint-body and channel-payload DSLs reference it by name instead of
+ * emitting their own.
  */
 internal object RecordBuilder {
 
     fun builderName(typeName: String): String = "${typeName}Builder"
 
-    /** Nested fields reference the nested type's own `<Nested>Builder`; this renderer never emits it. */
-    fun renderBuilderClass(typeName: String, fields: List<BodyFieldShape>): String = buildString {
-        appendLine("@WirespecScenarioDsl")
-        appendLine("public class ${builderName(typeName)} {")
+    /** Nested fields reference the nested type's own `<Nested>Builder`; this builder never emits it. */
+    fun buildBuilderClass(typeName: String, fields: List<BodyFieldShape>): Struct = struct(builderName(typeName)) {
+        plainClass()
+        annotation("@WirespecScenarioDsl")
+        visibility(Visibility.PUBLIC)
         fields.forEach { f ->
-            val fieldRef = KotlinIdentifier.escape(f.name)
-            val blockRef = KotlinIdentifier.escape("_${f.name}Block")
-            val blockFn = KotlinIdentifier.escape("${f.name}Block")
             when (f) {
                 is BodyFieldShape.Primitive ->
-                    appendLine("    public var $fieldRef: Gen<${f.kotlinType}>? = null")
-                is BodyFieldShape.NestedObject -> {
-                    val nested = builderName(f.typeName)
-                    appendLine("    public var $fieldRef: Gen<${f.typeName}>? = null")
-                    appendLine("    @PublishedApi internal var $blockRef: ($nested.() -> Unit)? = null")
-                    appendLine("    public fun $blockFn(block: $nested.() -> Unit) { $blockRef = block }")
-                }
-                is BodyFieldShape.NestedList -> {
-                    val nested = builderName(f.elementTypeName)
-                    appendLine("    public var $fieldRef: Gen<List<${f.elementTypeName}>>? = null")
-                    appendLine("    @PublishedApi internal var $blockRef: ($nested.() -> Unit)? = null")
-                    appendLine("    public fun $blockFn(block: $nested.() -> Unit) { $blockRef = block }")
-                }
+                    property(
+                        name = f.name,
+                        type = genNullable(IrType.Custom(f.kotlinType)),
+                        isMutable = true,
+                        visibility = Visibility.PUBLIC,
+                        initializer = rawExpr("null"),
+                    )
+                is BodyFieldShape.NestedObject -> nestedBlock(f.name, f.typeName, genNullable(IrType.Custom(f.typeName)))
+                is BodyFieldShape.NestedList ->
+                    nestedBlock(f.name, f.elementTypeName, genNullable(IrType.Array(IrType.Custom(f.elementTypeName))))
             }
         }
-        append("}")
+    }
+
+    /** `Gen<[element]>?`, the type of a builder override slot. */
+    private fun genNullable(element: IrType): IrType = IrType.Nullable(IrType.Custom("Gen", listOf(element)))
+
+    /** `<nested>.() -> Unit`, the sub-builder block type. */
+    private fun blockType(nested: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(nested))
+
+    /**
+     * Emits the three members for a nested object/list field: the whole-value `Gen<…>?` override,
+     * the `@PublishedApi internal var _<field>Block` sub-builder slot, and the `<field>Block { … }`
+     * function that assigns it.
+     */
+    private fun community.flock.wirespec.ir.core.StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType) {
+        val nested = builderName(nestedTypeName)
+        property(
+            name = fieldName,
+            type = genType,
+            isMutable = true,
+            visibility = Visibility.PUBLIC,
+            initializer = rawExpr("null"),
+        )
+        property(
+            name = "_${fieldName}Block",
+            type = IrType.Nullable(blockType(nested)),
+            isMutable = true,
+            visibility = Visibility.INTERNAL,
+            annotations = listOf("@PublishedApi"),
+            initializer = rawExpr("null"),
+        )
+        function("${fieldName}Block") {
+            visibility(Visibility.PUBLIC)
+            arg("block", blockType(nested))
+            raw("${KotlinIdentifier.escape("_${fieldName}Block")} = block")
+        }
     }
 
     /**
