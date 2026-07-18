@@ -5,7 +5,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.ir.core.Type as IrType
 
 /**
  * Builds the per-type Kotest DSL file (`<Type>Dsl.kt`): the reusable `<Type>Builder` (see
@@ -27,6 +29,11 @@ internal object TypeDslFile {
         val modelPkg = "${packageName.value}.model"
         val fileName = PackageName(kotestPkg).toDir() + "${shape.name}Dsl"
 
+        val model = Name.of(shape.name).pascalCase()
+        val builder = RecordBuilder.builderName(shape.name)
+        // Field-less records emit as `object`s with no companion, so `generate` extends the object itself.
+        val receiver = if (shape.fields.isEmpty()) model else "$model.Companion"
+
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
 
@@ -36,21 +43,21 @@ internal object TypeDslFile {
             // pascalCase so underscore-bearing type names resolve to the emitted class.
             (listOf(shape.name) + shape.modelImports).distinct().forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
-            raw(renderEntryPoint(shape))
-            raw(RecordBuilder.renderBuilderClass(shape.name, shape.fields))
-        }
-    }
+            // `<Model>.generate { … }: Gen<Model>` — an extension on the type's companion (or the
+            // object itself for a field-less record) that pins per-field overrides on the shared builder.
+            function("generate") {
+                visibility(Visibility.PUBLIC)
+                receiver(IrType.Custom(receiver))
+                arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
+                returnType(IrType.Custom("Gen", listOf(IrType.Custom(model))))
+                raw("val builder = $builder().apply(block)")
+                raw("return recordGen<$model> {")
+                raw(RecordBuilder.renderRegistration(shape.fields, "builder", emptyList(), "    ").trimEnd())
+                raw("}")
+            }
 
-    private fun renderEntryPoint(shape: TypeShape): String = buildString {
-        val model = Name.of(shape.name).pascalCase()
-        val builder = RecordBuilder.builderName(shape.name)
-        // Field-less records emit as `object`s with no companion, so `generate` extends the object itself.
-        val receiver = if (shape.fields.isEmpty()) model else "$model.Companion"
-        appendLine("public fun $receiver.generate(block: $builder.() -> Unit = {}): Gen<$model> {")
-        appendLine("    val builder = $builder().apply(block)")
-        appendLine("    return recordGen<$model> {")
-        append(RecordBuilder.renderRegistration(shape.fields, "builder", emptyList(), "        "))
-        appendLine("    }")
-        append("}")
+            // The single reusable `<Type>Builder` carrying one override slot per field.
+            elements.add(RecordBuilder.buildBuilderClass(shape.name, shape.fields))
+        }
     }
 }

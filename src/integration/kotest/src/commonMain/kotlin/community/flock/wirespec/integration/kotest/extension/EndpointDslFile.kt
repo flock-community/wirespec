@@ -6,13 +6,17 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.ir.core.Type as IrType
 
 /**
- * Builds the per-endpoint block-style Kotest DSL file (`<Endpoint>Dsl.kt`) as an IR
- * [File], so the wrapping `KotlinIrEmitter` renders it alongside the generated models
- * and endpoints. The DSL body is rendered as raw Kotlin via [raw] — the shapes are
- * specific enough that hand-rolled templates are clearer than IR nodes.
+ * Builds the per-endpoint block-style Kotest DSL file (`<Endpoint>Dsl.kt`) as an IR [File]
+ * using the IR DSL builders: the `<Endpoint>Generate` class and its `generate` extension
+ * property, the `Gen<Request>.call()` / `Gen<Response<*>>.mock()` extensions, the request
+ * `<Endpoint>Scope`, the per-variant response scopes, and the slot builders. Declarations are
+ * modelled as DSL nodes; only the genuinely-imperative method bodies (`flush`, the body
+ * transform) remain raw code.
  *
  * ## Block style
  *
@@ -34,8 +38,8 @@ import community.flock.wirespec.ir.core.file
  * kotest's `shouldBeInstanceOf<PutTodo.Response200>()`. `response<NNN> { … }` likewise returns a
  * `Gen<Response<NNN>>`.
  *
- * Each slot is an assignable `var` holding a builder lambda (`path = { … }`), with a
- * same-named function form (`path { … }`) assigning the same slot. `buildRequest()` first
+ * Each slot is set through its function form (`path { … }`); the underlying `var` holding
+ * the builder lambda is private, so that function is the only way in. `buildRequest()` first
  * calls `flush()`, which applies the assigned slot lambdas to the runtime call and
  * **validates required values** — a path/query/header slot with a non-nullable field is
  * required, as is each non-nullable field within it. A missing required slot or field
@@ -102,14 +106,21 @@ internal object EndpointDslFile {
             // resolve to the emitted class (`ContactEmbedded`).
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
-            raw(renderGenerateExtension(shape))
-            raw(renderRequestCallExtension(shape))
+            buildGenerateWrapper(shape)
+            property(
+                name = "generate",
+                type = IrType.Custom("${shape.name}Generate"),
+                visibility = Visibility.PUBLIC,
+                receiver = IrType.Custom(shape.name),
+                getter = rawExpr("${shape.name}Generate()"),
+            )
+            buildRequestCall(shape)
             if (shape.responseVariants.isNotEmpty()) {
-                raw(renderResponseMockExtension(shape))
+                buildResponseMock(shape)
             }
-            raw(renderScopeClass(shape, present, required))
-            shape.responseVariants.forEach { variant -> raw(renderResponseScope(shape, variant)) }
-            present.forEach { slot -> raw(renderSlotBuilder(shape, slot)) }
+            buildScopeClass(shape, present, required)
+            shape.responseVariants.forEach { variant -> buildResponseScope(shape, variant) }
+            present.forEach { slot -> buildSlotBuilder(shape, slot) }
             // Request body field builders are the shared `<Type>Builder`s (emitted by each record's
             // own `<Type>Dsl.kt`); the scope and body transform reference them by name.
         }
@@ -136,55 +147,73 @@ internal object EndpointDslFile {
     private fun slotBuilderName(shape: EndpointShape, slot: Slot): String = "${shape.name}${cap(slot.name)}Builder"
 
     // ------------------------------------------------------------------------------------
+    // IR type helpers
+    // ------------------------------------------------------------------------------------
+
+    private fun genOf(inner: String): IrType = IrType.Custom("Gen", listOf(IrType.Custom(inner)))
+    private fun genNullableOf(inner: String): IrType = IrType.Nullable(genOf(inner))
+    private fun blockType(builder: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(builder))
+    private fun suspendScopeType(scope: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(scope), isSuspend = true)
+
+    // ------------------------------------------------------------------------------------
     // Entry point
     // ------------------------------------------------------------------------------------
 
     /**
-     * The DSL entry point: a `generate` extension property on the generated endpoint object
-     * grouping the scenario builders (e.g. `PutTodo.generate.request { … }`). The
-     * `<Endpoint>Generate` wrapper carries:
-     * - `request` — opens the `<Endpoint>Scope` receiver and returns a `Gen<Request>`; sending
-     *   chains off it via the `Gen<Request>.call()` extension;
-     * - `response<NNN>` — one per response variant, returning a `Gen<Response<NNN>>` via its
-     *   `<Endpoint>Response<NNN>Scope`.
+     * The `<Endpoint>Generate` wrapper grouping the scenario builders (reached via the
+     * `generate` extension property): `request` opens the `<Endpoint>Scope` and returns a
+     * `Gen<Request>`; each `response<NNN>` returns a `Gen<Response<NNN>>` via its response scope.
      */
-    private fun renderGenerateExtension(shape: EndpointShape): String = buildString {
-        appendLine("public class ${shape.name}Generate internal constructor() {")
-        appendLine("    public suspend fun request(block: suspend ${shape.name}Scope.() -> Unit): Gen<${shape.name}.Request> {")
-        appendLine("        val scope = ${shape.name}Scope()")
-        appendLine("        scope.block()")
-        appendLine("        return scope.buildRequest()")
-        appendLine("    }")
-        shape.responseVariants.forEach { variant ->
-            val scopeName = "${shape.name}${variant.className}Scope"
-            appendLine("    public fun response${variant.status}(block: $scopeName.() -> Unit = {}): Gen<${shape.name}.${variant.className}> =")
-            appendLine("        $scopeName().apply(block).build()")
+    private fun community.flock.wirespec.ir.core.FileBuilder.buildGenerateWrapper(shape: EndpointShape) {
+        struct("${shape.name}Generate") {
+            plainClass()
+            visibility(Visibility.PUBLIC)
+            constructorVisibility(Visibility.INTERNAL)
+            asyncFunction("request") {
+                visibility(Visibility.PUBLIC)
+                arg("block", suspendScopeType("${shape.name}Scope"))
+                returnType(genOf("${shape.name}.Request"))
+                raw("val scope = ${shape.name}Scope()")
+                raw("scope.block()")
+                returns(rawExpr("scope.buildRequest()"))
+            }
+            shape.responseVariants.forEach { variant ->
+                val scopeName = "${shape.name}${variant.className}Scope"
+                function("response${variant.status}") {
+                    visibility(Visibility.PUBLIC)
+                    arg("block", blockType(scopeName), rawExpr("{}"))
+                    returnType(genOf("${shape.name}.${variant.className}"))
+                    returns(rawExpr("$scopeName().apply(block).build()"))
+                }
+            }
         }
-        appendLine("}")
-        appendLine("public val ${shape.name}.generate: ${shape.name}Generate")
-        append("    get() = ${shape.name}Generate()")
     }
 
     /**
      * A `call()` extension on `Gen<Request>`, so the request `Gen` chains straight into a send:
-     * `PutTodo.generate.request { … }.call()`. It draws one request (seeded by the ambient
-     * `RandomSource`), transports it, and returns the contract-validated response variant.
+     * `PutTodo.generate.request { … }.call()`.
      */
-    private fun renderRequestCallExtension(shape: EndpointShape): String = buildString {
-        appendLine("public suspend fun Gen<${shape.name}.Request>.call(): ${shape.name}.Response<*> =")
-        append("    requestCall(${shape.name}.Handler, ${shape.name}, this)")
+    private fun community.flock.wirespec.ir.core.FileBuilder.buildRequestCall(shape: EndpointShape) {
+        asyncFunction("call") {
+            visibility(Visibility.PUBLIC)
+            receiver(genOf("${shape.name}.Request"))
+            returnType(IrType.Custom("${shape.name}.Response<*>"))
+            returns(rawExpr("requestCall(${shape.name}.Handler, ${shape.name}, this)"))
+        }
     }
 
     /**
      * A `mock()` extension on `Gen<Response<*>>`, the response-side twin of `Gen<Request>.call()`:
-     * `PutTodo.generate.response200 { … }.mock { req -> req.path.id == "1" }`. It draws one
-     * response (seeded by the ambient `RandomSource`) and registers it on the ambient mock server
-     * for every incoming request the typed [predicate] accepts. The receiver is the endpoint's
-     * `Response<*>` supertype, so any `responseNNN { … }` variant `Gen` chains straight into it.
+     * `PutTodo.generate.response200 { … }.mock { req -> req.path.id == "1" }`.
      */
-    private fun renderResponseMockExtension(shape: EndpointShape): String = buildString {
-        appendLine("public suspend fun Gen<${shape.name}.Response<*>>.mock(predicate: (${shape.name}.Request) -> Boolean): Unit =")
-        append("    responseMock(${shape.name}.Handler, this, predicate)")
+    private fun community.flock.wirespec.ir.core.FileBuilder.buildResponseMock(shape: EndpointShape) {
+        asyncFunction("mock") {
+            visibility(Visibility.PUBLIC)
+            receiver(genOf("${shape.name}.Response<*>"))
+            arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
+            returnType(IrType.Unit)
+            returns(rawExpr("responseMock(${shape.name}.Handler, this, predicate)"))
+        }
     }
 
     // ------------------------------------------------------------------------------------
@@ -192,121 +221,139 @@ internal object EndpointDslFile {
     // ------------------------------------------------------------------------------------
 
     /**
-     * Per-variant response scope, opened by `generate.responseNNN { … }`. The scope exposes a
-     * whole-value `body` setter (when the variant has a body) and one setter per response
-     * header field, each a `Gen<…>?` defaulting to a generated value. The terminal returns a
-     * `Gen<Response<NNN>>`.
+     * Per-variant response scope, opened by `generate.responseNNN { … }`. Exposes a whole-value
+     * `body` setter (when the variant has a body) and one setter per response header field, each
+     * a `Gen<…>?` defaulting to a generated value; `build()` returns a `Gen<Response<NNN>>`.
      */
-    private fun renderResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape): String = buildString {
+    private fun community.flock.wirespec.ir.core.FileBuilder.buildResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape) {
         val scopeName = "${shape.name}${variant.className}Scope"
         val variantType = "${shape.name}.${variant.className}"
         val hasBody = variant.bodyKind != EndpointShape.BodyKind.None && variant.bodyType != null
 
-        appendLine("@WirespecScenarioDsl")
-        appendLine("public class $scopeName internal constructor() {")
-        appendLine("    private val inner = responseCall(${shape.name}, $variantType::class)")
-        if (hasBody) {
-            appendLine("    public var body: Gen<${variant.bodyType}>? = null")
+        struct(scopeName) {
+            plainClass()
+            annotation("@WirespecScenarioDsl")
+            visibility(Visibility.PUBLIC)
+            constructorVisibility(Visibility.INTERNAL)
+            raw("private val inner = responseCall(${shape.name}, $variantType::class)")
+            if (hasBody) {
+                property("body", genNullableOf(variant.bodyType!!), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+            }
+            variant.headerFields.forEach { f ->
+                property(f.name, genNullableOf(f.kotlinType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+            }
+            function("build") {
+                visibility(Visibility.PUBLIC)
+                returnType(genOf(variantType))
+                if (hasBody) {
+                    raw("body?.let { inner.body(it) }")
+                }
+                variant.headerFields.forEach { f ->
+                    raw("${KotlinIdentifier.escape(f.name)}?.let { inner.headerGen(\"${f.name}\", it) }")
+                }
+                raw("@Suppress(\"UNCHECKED_CAST\")")
+                returns(rawExpr("inner.buildGen() as Gen<$variantType>"))
+            }
         }
-        variant.headerFields.forEach { f ->
-            appendLine("    public var ${KotlinIdentifier.escape(f.name)}: Gen<${f.kotlinType}>? = null")
-        }
-        appendLine("    public fun build(): Gen<$variantType> {")
-        if (hasBody) {
-            appendLine("        body?.let { inner.body(it) }")
-        }
-        variant.headerFields.forEach { f ->
-            appendLine("        ${KotlinIdentifier.escape(f.name)}?.let { inner.headerGen(\"${f.name}\", it) }")
-        }
-        appendLine("        @Suppress(\"UNCHECKED_CAST\")")
-        appendLine("        return inner.buildGen() as Gen<$variantType>")
-        appendLine("    }")
-        append("}")
     }
 
     // ------------------------------------------------------------------------------------
     // Scope class
     // ------------------------------------------------------------------------------------
 
-    private fun renderScopeClass(shape: EndpointShape, present: List<Slot>, required: List<Slot>): String = buildString {
-        appendLine("@WirespecScenarioDsl")
-        appendLine("public class ${shape.name}Scope internal constructor() {")
-        appendLine("    private val inner = endpointCall(${shape.name}.Handler, ${shape.name})")
-        // Each slot is both an assignable `var` (`path = { … }`) and a same-named function
-        // (`path { … }`) assigning it — the function form reads better inside the DSL block.
-        present.forEach { slot ->
-            val builderClass = slotBuilderName(shape, slot)
-            appendLine("    public var ${slot.name}: ($builderClass.() -> Unit)? = null")
-            appendLine("    public fun ${slot.name}(block: $builderClass.() -> Unit) { this.${slot.name} = block }")
-        }
-        if (shape.bodyFieldShapes.isNotEmpty()) {
-            val builderName = RecordBuilder.builderName(shape.bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for ${shape.name}"))
-            appendLine("    public var body: ($builderName.() -> Unit)? = null")
-            appendLine("    public fun body(block: $builderName.() -> Unit) { this.body = block }")
-            if (shape.bodyKind == EndpointShape.BodyKind.List) {
-                appendLine("    public var bodyCount: IntRange = 1..3")
+    private fun community.flock.wirespec.ir.core.FileBuilder.buildScopeClass(shape: EndpointShape, present: List<Slot>, required: List<Slot>) {
+        struct("${shape.name}Scope") {
+            plainClass()
+            annotation("@WirespecScenarioDsl")
+            visibility(Visibility.PUBLIC)
+            constructorVisibility(Visibility.INTERNAL)
+            raw("private val inner = endpointCall(${shape.name}.Handler, ${shape.name})")
+            // Each slot is a private `var` holding a builder lambda, set only via its same-named
+            // function form (`path { … }`); the `var` is hidden so the DSL admits just that form.
+            present.forEach { slot ->
+                val builderClass = slotBuilderName(shape, slot)
+                property(slot.name, IrType.Nullable(blockType(builderClass)), isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("null"))
+                function(slot.name) {
+                    visibility(Visibility.PUBLIC)
+                    arg("block", blockType(builderClass))
+                    raw("this.${slot.name} = block")
+                }
+            }
+            if (shape.bodyFieldShapes.isNotEmpty()) {
+                val builderName = RecordBuilder.builderName(shape.bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for ${shape.name}"))
+                property("body", IrType.Nullable(blockType(builderName)), isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("null"))
+                function("body") {
+                    visibility(Visibility.PUBLIC)
+                    arg("block", blockType(builderName))
+                    raw("this.body = block")
+                }
+                if (shape.bodyKind == EndpointShape.BodyKind.List) {
+                    property("bodyCount", IrType.Custom("IntRange"), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("1..3"))
+                }
+            }
+            property("flushed", IrType.Boolean, isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("false"))
+            function("flush") {
+                visibility(Visibility.PRIVATE)
+                raw(renderFlushBody(shape, present, required).trimEnd())
+            }
+            // `buildRequest()` flushes (validating required slots eagerly) then returns a `Gen` that
+            // materialises the typed request on each draw; it is the terminal behind the
+            // `generate.request { … }` entry point. Sending happens through `Gen<Request>.call()`.
+            function("buildRequest") {
+                visibility(Visibility.PUBLIC)
+                returnType(genOf("${shape.name}.Request"))
+                raw("flush()")
+                returns(rawExpr("inner.buildRequestGen()"))
             }
         }
-        appendLine(renderFlush(shape, present, required))
-        // `buildRequest()` flushes (validating required slots eagerly) then returns a `Gen` that
-        // materialises the typed request on each draw; it is the terminal behind the
-        // `generate.request { … }` entry point. Sending happens through `Gen<Request>.call()`.
-        appendLine("    public fun buildRequest(): Gen<${shape.name}.Request> {")
-        appendLine("        flush()")
-        appendLine("        return inner.buildRequestGen()")
-        append("    }")
-        append("\n}")
     }
 
     /**
-     * Applies the assigned slot/body lambdas to the runtime call and validates required
-     * values. Idempotent (guarded by `flushed`) so repeated terminal calls are safe.
+     * Body of `flush()`: applies the assigned slot/body lambdas to the runtime call and validates
+     * required values. Idempotent (guarded by `flushed`) so repeated terminal calls are safe.
      */
-    private fun renderFlush(shape: EndpointShape, present: List<Slot>, required: List<Slot>): String = buildString {
+    private fun renderFlushBody(shape: EndpointShape, present: List<Slot>, required: List<Slot>): String = buildString {
         val requiredNames = required.map { it.name }.toSet()
-        appendLine("    private var flushed: Boolean = false")
-        appendLine("    private fun flush() {")
-        appendLine("        if (flushed) return")
-        appendLine("        flushed = true")
+        appendLine("if (flushed) return")
+        appendLine("flushed = true")
         present.forEach { slot ->
             val builderClass = slotBuilderName(shape, slot)
             val builderVar = "${slot.name}Builder"
             if (slot.name in requiredNames) {
-                appendLine("        val $builderVar = $builderClass().apply(${slot.name} ?: error(\"${shape.name}: required `${slot.name}` block is missing\"))")
-                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "        ")) }
+                appendLine("val $builderVar = $builderClass().apply(${slot.name} ?: error(\"${shape.name}: required `${slot.name}` block is missing\"))")
+                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "")) }
             } else {
-                appendLine("        ${slot.name}?.let { block ->")
-                appendLine("            val $builderVar = $builderClass().apply(block)")
-                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "            ")) }
-                appendLine("        }")
+                appendLine("${slot.name}?.let { block ->")
+                appendLine("    val $builderVar = $builderClass().apply(block)")
+                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "    ")) }
+                appendLine("}")
             }
         }
         if (shape.bodyFieldShapes.isNotEmpty()) {
             val builderName = RecordBuilder.builderName(shape.bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for ${shape.name}"))
             val isList = shape.bodyKind == EndpointShape.BodyKind.List
             val elementType = shape.bodyElementType
-            appendLine("        body?.let { block ->")
-            appendLine("            val builder = $builderName().apply(block)")
+            appendLine("body?.let { block ->")
+            appendLine("    val builder = $builderName().apply(block)")
             if (isList) {
-                appendLine("            inner.bodyListSize(Arb.int(bodyCount))")
+                appendLine("    inner.bodyListSize(Arb.int(bodyCount))")
             }
             // Reconstruct the contract default body (`rawBase`) by copying it with each
             // overridden field replaced; un-set fields keep their generated default. A list
             // body applies the same per-element overrides to every generated element.
-            appendLine("            inner.bodyTransform { rawBase, rs ->")
+            appendLine("    inner.bodyTransform { rawBase, rs ->")
             if (isList) {
-                appendLine("                @Suppress(\"UNCHECKED_CAST\")")
-                appendLine("                (rawBase as List<$elementType>).map { base ->")
-                appendBodyCopy(this, "base", "builder", shape, indent = "                    ")
-                appendLine("                }")
+                appendLine("        @Suppress(\"UNCHECKED_CAST\")")
+                appendLine("        (rawBase as List<$elementType>).map { base ->")
+                appendBodyCopy(this, "base", "builder", shape, indent = "            ")
+                appendLine("        }")
             } else {
-                appendLine("                val base = rawBase as $elementType")
-                appendBodyCopy(this, "base", "builder", shape, indent = "                ")
+                appendLine("        val base = rawBase as $elementType")
+                appendBodyCopy(this, "base", "builder", shape, indent = "        ")
             }
-            appendLine("            }")
-            appendLine("        }")
+            appendLine("    }")
+            appendLine("}")
         }
-        append("    }")
     }
 
     /** A single `inner.<gen>("wire", builder.field ?: …)` registration line for a slot field. */
@@ -330,13 +377,15 @@ internal object EndpointDslFile {
     // Builders
     // ------------------------------------------------------------------------------------
 
-    private fun renderSlotBuilder(shape: EndpointShape, slot: Slot): String = buildString {
-        appendLine("@WirespecScenarioDsl")
-        appendLine("public class ${slotBuilderName(shape, slot)} {")
-        slot.fields.forEach { f ->
-            appendLine("    public var ${KotlinIdentifier.escape(f.name)}: Gen<${f.kotlinType}>? = null")
+    private fun community.flock.wirespec.ir.core.FileBuilder.buildSlotBuilder(shape: EndpointShape, slot: Slot) {
+        struct(slotBuilderName(shape, slot)) {
+            plainClass()
+            annotation("@WirespecScenarioDsl")
+            visibility(Visibility.PUBLIC)
+            slot.fields.forEach { f ->
+                property(f.name, genNullableOf(f.kotlinType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+            }
         }
-        append("}")
     }
 
     /**
