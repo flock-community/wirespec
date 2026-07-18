@@ -64,17 +64,21 @@ class KotestDslExtensionTest {
         // has a required path (id), query (done) and header (token) slot — each non-nullable.
         val output = CompileFullEndpointTest.compiler(::emitter).shouldBeRight()
 
-        // The scope exposes each slot as an assignable builder-lambda `var`, plus a same-named
-        // function form (`path { … }`) assigning it.
+        // The scope exposes each slot only through its function form (`path { … }`); the
+        // underlying builder-lambda `var` is private, so it is the sole way to set the slot.
         output shouldContain "public class PutTodoScope internal constructor()"
-        output shouldContain "public var path: (PutTodoPathBuilder.() -> Unit)? = null"
-        output shouldContain "public fun path(block: PutTodoPathBuilder.() -> Unit) { this.path = block }"
-        output shouldContain "public var query: (PutTodoQueryBuilder.() -> Unit)? = null"
-        output shouldContain "public var header: (PutTodoHeaderBuilder.() -> Unit)? = null"
+        output shouldContain "private var path: (PutTodoPathBuilder.() -> Unit)? = null"
+        // Setter body is rendered by the IR generator, which normalises single-statement blocks
+        // onto their own line rather than the inline `{ … }` form.
+        output shouldContain "public fun path(block: PutTodoPathBuilder.() -> Unit) {"
+        output shouldContain "this.path = block"
+        output shouldContain "private var query: (PutTodoQueryBuilder.() -> Unit)? = null"
+        output shouldContain "private var header: (PutTodoHeaderBuilder.() -> Unit)? = null"
         // The request body references the shared, un-prefixed `<Type>Builder` (emitted once by the
         // type DSL), not a per-endpoint `PutTodoPotentialTodoDtoBodyBuilder`.
-        output shouldContain "public var body: (PotentialTodoDtoBuilder.() -> Unit)? = null"
-        output shouldContain "public fun body(block: PotentialTodoDtoBuilder.() -> Unit) { this.body = block }"
+        output shouldContain "private var body: (PotentialTodoDtoBuilder.() -> Unit)? = null"
+        output shouldContain "public fun body(block: PotentialTodoDtoBuilder.() -> Unit) {"
+        output shouldContain "this.body = block"
         output shouldNotContain "PutTodoPotentialTodoDtoBodyBuilder"
 
         // Slot builders carry one `var` per field; nullable/invalid names are backtick-escaped.
