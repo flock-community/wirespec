@@ -12,7 +12,7 @@ import community.flock.wirespec.integration.kotest.MockStub
 import community.flock.wirespec.integration.kotest.extension.WirespecChannelExtension
 import community.flock.wirespec.integration.kotest.extension.WirespecEndpointExtension
 import community.flock.wirespec.integration.kotest.extension.WirespecMockExtension
-import community.flock.wirespec.integration.kotest.transport.HttpTransportation
+import community.flock.wirespec.integration.java.transport.HttpTransportation
 import community.flock.wirespec.integration.wiremock.kotlin.requestBuilder
 import community.flock.wirespec.integration.wiremock.kotlin.responseBuilder
 import community.flock.wirespec.integration.wiremock.kotlin.toRawRequest

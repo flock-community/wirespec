@@ -38,6 +38,9 @@ dependencies {
     // models, so the main compilation needs the DSL runtime and kotest-property to compile.
     implementation(libs.kotest.property)
     implementation(libs.wirespec.integration.kotest)
+    // `HttpTransportation` (InventoryClient / ProjectConfig) drives the generated client
+    // over java.net.http against the running server.
+    implementation(libs.wirespec.integration.java)
 
     // Tests build a `Wirespec.Serialization` from Jackson to drive the generated client.
     testImplementation(libs.wirespec.integration.jackson)
