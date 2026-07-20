@@ -16,6 +16,7 @@ wirespec = "0.0.0-SNAPSHOT"
 wirespec_integration_spring = { module = "community.flock.wirespec.integration:spring-jvm", version.ref = "wirespec" }
 wirespec_integration_kotest = { module = "community.flock.wirespec.integration:kotest-jvm", version.ref = "wirespec" }
 wirespec_integration_jackson = { module = "community.flock.wirespec.integration:jackson-jvm", version.ref = "wirespec" }
+wirespec_integration_java = { module = "community.flock.wirespec.integration:java-jvm", version.ref = "wirespec" }
 wirespec_integration_wiremock = { module = "community.flock.wirespec.integration:wiremock-jvm", version.ref = "wirespec" }
 
 # Wirespec compiler + emitters, used on the buildscript classpath to run the generator
