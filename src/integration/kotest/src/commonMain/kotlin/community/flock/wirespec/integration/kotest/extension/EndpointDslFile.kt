@@ -5,7 +5,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.Type as IrType
@@ -112,7 +114,7 @@ internal object EndpointDslFile {
                 type = IrType.Custom("${shape.name}Generate"),
                 visibility = Visibility.PUBLIC,
                 receiver = IrType.Custom(shape.name),
-                getter = rawExpr("${shape.name}Generate()"),
+                getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
             buildRequestCall(shape)
             if (shape.responseVariants.isNotEmpty()) {
@@ -173,9 +175,9 @@ internal object EndpointDslFile {
                 visibility(Visibility.PUBLIC)
                 arg("block", suspendScopeType("${shape.name}Scope"))
                 returnType(genOf("${shape.name}.Request"))
-                raw("val scope = ${shape.name}Scope()")
-                raw("scope.block()")
-                returns(rawExpr("scope.buildRequest()"))
+                assign("scope", FunctionCall(name = Name.of("${shape.name}Scope")))
+                functionCall("block", receiver = VariableReference("scope"))
+                returns(FunctionCall(receiver = VariableReference("scope"), name = Name.of("buildRequest")))
             }
             shape.responseVariants.forEach { variant ->
                 val scopeName = "${shape.name}${variant.className}Scope"
@@ -252,7 +254,7 @@ internal object EndpointDslFile {
                     raw("${KotlinIdentifier.escape(f.name)}?.let { inner.headerGen(\"${f.name}\", it) }")
                 }
                 raw("@Suppress(\"UNCHECKED_CAST\")")
-                returns(rawExpr("inner.buildGen() as Gen<$variantType>"))
+                returns(cast(FunctionCall(receiver = VariableReference("inner"), name = Name.of("buildGen")), genOf(variantType)))
             }
         }
     }

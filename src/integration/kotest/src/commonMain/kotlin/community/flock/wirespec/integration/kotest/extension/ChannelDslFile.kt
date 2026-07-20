@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.file
@@ -76,7 +77,7 @@ internal object ChannelDslFile {
                 type = IrType.Custom("${shape.name}Generate"),
                 visibility = Visibility.PUBLIC,
                 receiver = IrType.Custom(shape.name),
-                getter = rawExpr("${shape.name}Generate()"),
+                getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
 
             // `send()` extension on the payload `Gen`, so `generate.message { … }.send()` draws one
