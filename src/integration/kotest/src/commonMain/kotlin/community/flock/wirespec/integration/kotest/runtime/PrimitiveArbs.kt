@@ -24,10 +24,12 @@ import io.kotest.property.arbitrary.string
  * both are mapped.
  */
 internal object PrimitiveArbs {
-    /** Whether [forType] can supply a default generator for [type] (i.e. it is a known primitive/String). */
-    fun supports(type: Class<*>): Boolean = runCatching { forType(type) }.isSuccess
+    fun forType(type: Class<*>): Arb<*> = forTypeOrNull(type) ?: error(
+        "No default generator for path/query/header field type ${type.name}. Pass this field explicitly as a Gen.",
+    )
 
-    fun forType(type: Class<*>): Arb<*> = when (type) {
+    /** The default [Arb] for [type], or `null` when [type] is not a known primitive/String. */
+    fun forTypeOrNull(type: Class<*>): Arb<*>? = when (type) {
         // Alphanumeric + non-empty so an auto-generated value is safe to drop into a
         // URL path segment (no `/`, no reserved characters) and never blank.
         String::class.java -> Arb.string(minSize = 1, maxSize = 20, codepoints = Codepoint.alphanumeric())
@@ -39,8 +41,6 @@ internal object PrimitiveArbs {
         Double::class.javaPrimitiveType, java.lang.Double::class.java -> Arb.double()
         Float::class.javaPrimitiveType, java.lang.Float::class.java -> Arb.float()
         Char::class.javaPrimitiveType, Character::class.java -> Arb.char()
-        else -> error(
-            "No default generator for path/query/header field type ${type.name}. Pass this field explicitly as a Gen.",
-        )
+        else -> null
     }
 }

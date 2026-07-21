@@ -2,11 +2,11 @@ package community.flock.wirespec.integration.kotest.extension
 
 import community.flock.wirespec.integration.kotest.context.WirespecEndpointContext
 import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
+import community.flock.wirespec.integration.kotest.runtime.mergeEndpoint
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
-import io.kotest.property.RandomSource
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 
@@ -58,8 +58,7 @@ class WirespecEndpointExtension internal constructor(
         execute: suspend (TestCase) -> TestResult,
     ): TestResult {
         val endpoint = eager ?: WirespecEndpointContext(transportationFactory!!(), serializationFactory!!())
-        val ambient = coroutineContext[WirespecAmbient]?.withEndpoint(endpoint)
-            ?: WirespecAmbient(endpoint = endpoint, channel = null, mock = null, randomSource = RandomSource.seeded(System.nanoTime()))
+        val ambient = coroutineContext[WirespecAmbient].mergeEndpoint(endpoint)
         return withContext(ambient) { execute(testCase) }
     }
 }

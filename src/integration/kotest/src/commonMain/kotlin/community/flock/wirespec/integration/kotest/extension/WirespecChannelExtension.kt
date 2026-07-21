@@ -3,17 +3,14 @@ package community.flock.wirespec.integration.kotest.extension
 import community.flock.wirespec.integration.kotest.context.ChannelTransport
 import community.flock.wirespec.integration.kotest.context.WirespecChannelContext
 import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
+import community.flock.wirespec.integration.kotest.runtime.mergeChannel
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension
 import io.kotest.core.listeners.AfterSpecListener
 import io.kotest.core.spec.Spec
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
-import io.kotest.property.RandomSource
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
 // NB: kotest 6.x relocated TestResult to io.kotest.engine.test; io.kotest.core.test.TestResult no longer exists.
@@ -64,34 +61,25 @@ class WirespecChannelExtension internal constructor(
         serialization: Wirespec.Serialization,
     ) : this(WirespecChannelContext(transportation, serialization))
 
-    // Managed mode builds one transportation per spec (not per instance), so a single instance registered
-    // in a ProjectConfig serves every spec correctly — each spec resolves its own transportation (e.g. its
-    // own broker) and closes it in afterSpec. Keyed by Spec; the mutex guards the suspend build.
-    private val transportations = ConcurrentHashMap<Spec, ChannelTransport>()
-    private val buildLock = Mutex()
+    // Managed mode builds one transportation per spec, resolved (and closed) via SpecScopedResource, so a
+    // single instance registered in a ProjectConfig serves every spec correctly — each spec gets its own
+    // transportation (e.g. its own broker). An eager transportation bypasses this and belongs to the caller.
+    private val transportations = SpecScopedResource<ChannelTransport>(closeOnRemove = true) { transportationFactory!!() }
 
     override suspend fun intercept(
         testCase: TestCase,
         execute: suspend (TestCase) -> TestResult,
     ): TestResult {
         val channel = eager ?: run {
-            val transportation = managedTransportation(testCase.spec)
+            val transportation = transportations.get(testCase.spec)
             reset(transportation)
             WirespecChannelContext(transportation, serializationFactory!!())
         }
-        val ambient = coroutineContext[WirespecAmbient]?.withChannel(channel)
-            ?: WirespecAmbient(endpoint = null, channel = channel, mock = null, randomSource = RandomSource.seeded(System.nanoTime()))
+        val ambient = coroutineContext[WirespecAmbient].mergeChannel(channel)
         return withContext(ambient) { execute(testCase) }
     }
 
-    private suspend fun managedTransportation(spec: Spec): ChannelTransport = transportations[spec] ?: buildLock.withLock {
-        transportations[spec] ?: transportationFactory!!().also { transportations[spec] = it }
-    }
-
-    override suspend fun afterSpec(spec: Spec) {
-        // Only a managed transportation is owned here; an eager one belongs to the caller.
-        (transportations.remove(spec) as? AutoCloseable)?.close()
-    }
+    override suspend fun afterSpec(spec: Spec) = transportations.remove(spec)
 }
 
 /**

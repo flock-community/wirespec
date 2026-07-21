@@ -62,20 +62,31 @@ internal class EndpointReflection private constructor(
         private val variantRegex = Regex("Response(\\d{3})")
         private val syntheticParamRegex = Regex("arg\\d+")
 
-        // Pick the emitter's flattened response-variant constructor: the secondary that omits the
-        // primary's `status` param and flattens response header fields + `body`. Fewest params as a
-        // tiebreak; fall back to any constructor for hand-rolled variants.
-        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-        private fun introspectVariant(variantClass: Class<*>): ResponseVariantReflection {
-            val ctor = variantClass.declaredConstructors
-                .filter { c -> c.parameters.none { it.name == "status" } }
+        /**
+         * Pick the emitter's flattened secondary constructor of [cls]: the one that omits the
+         * primary's [excludeParam] param and flattens the user-facing fields (`body` + path/query/
+         * header). Fewest params as a tiebreak; falls back to any constructor for hand-rolled
+         * classes. Requires retained (non-synthetic) parameter names — the runtime matches slots by
+         * name — and uses [label] in the diagnostics.
+         */
+        private fun pickEmitterConstructor(cls: Class<*>, excludeParam: String, label: String): Constructor<*> {
+            val ctor = cls.declaredConstructors
+                .filter { c -> c.parameters.none { it.name == excludeParam } }
                 .minByOrNull { it.parameterCount }
-                ?: variantClass.declaredConstructors.minByOrNull { it.parameterCount }
-                ?: error("${variantClass.simpleName}: no constructors found.")
+                ?: cls.declaredConstructors.minByOrNull { it.parameterCount }
+                ?: error("$label: no constructors found.")
             require(ctor.parameters.all { it.name != null && !it.name.matches(syntheticParamRegex) }) {
-                "${variantClass.simpleName} constructor parameter names not retained. " +
+                "$label constructor parameter names not retained. " +
                     "Ensure the generated module is compiled with `-java-parameters`."
             }
+            return ctor
+        }
+
+        // Pick the emitter's flattened response-variant constructor: the secondary that omits the
+        // primary's `status` param and flattens response header fields + `body`.
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        private fun introspectVariant(variantClass: Class<*>): ResponseVariantReflection {
+            val ctor = pickEmitterConstructor(variantClass, excludeParam = "status", label = variantClass.simpleName ?: variantClass.name)
             val bodyParam = ctor.parameters.firstOrNull { it.name == "body" }
             val isListBody = bodyParam != null && java.util.List::class.java.isAssignableFrom(bodyParam.type)
             val bodyElementClass: Class<*>? = bodyParam
@@ -106,22 +117,13 @@ internal class EndpointReflection private constructor(
                 .firstOrNull { it.name == "fromResponse" || it.name == "fromRawResponse" }
                 ?: error("${cls.simpleName}: no fromResponse/fromRawResponse method found.")
 
-            // Pick the user-facing secondary Request constructor: the emitter's
-            // secondary flattens path/query/header fields and never declares the
-            // primary's `method` parameter. Fewest-params alone is not enough — an
-            // endpoint with many flattened params (e.g. 1 path + 6 queries) has a
-            // secondary LARGER than the 5-arg primary. Fall back to fewest-params for
-            // hand-rolled Request classes without retained parameter names.
-            val requestConstructor = requestClass.declaredConstructors
-                .filter { ctor -> ctor.parameters.none { it.name == "method" } }
-                .minByOrNull { it.parameterCount }
-                ?: requestClass.declaredConstructors.minByOrNull { it.parameterCount }
-                ?: error("${cls.simpleName}.Request: no constructors found.")
+            // Pick the user-facing secondary Request constructor: the emitter's secondary flattens
+            // path/query/header fields and never declares the primary's `method` parameter. Fewest-
+            // params alone is not enough — an endpoint with many flattened params (e.g. 1 path + 6
+            // queries) has a secondary LARGER than the 5-arg primary — so exclusion by `method` runs
+            // first, inside pickEmitterConstructor.
+            val requestConstructor = pickEmitterConstructor(requestClass, excludeParam = "method", label = "${cls.simpleName}.Request")
             val paramNames = requestConstructor.parameters.map { it.name }
-            require(paramNames.all { it != null && !it.matches(Regex("arg\\d+")) }) {
-                "${cls.simpleName}.Request constructor parameter names not retained. " +
-                    "Ensure the generated module is compiled with `-java-parameters`."
-            }
 
             val hasBody = "body" in paramNames
 
