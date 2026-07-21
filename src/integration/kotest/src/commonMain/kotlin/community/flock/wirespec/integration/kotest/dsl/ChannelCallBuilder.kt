@@ -57,18 +57,21 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
      */
     fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Gen<P> = arbitrary { rs ->
         @Suppress("UNCHECKED_CAST")
-        if (PrimitiveArbs.supports(payloadClass)) {
-            require(overrides == null) {
-                "${channelClass.simpleName}: per-field message { } overrides are only supported for record " +
-                    "payloads, not the primitive payload ${payloadClass.simpleName}."
+        when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
+            null -> {
+                val receiver = ArbReceiver(rs)
+                val generator = overrides
+                    ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong()) { it() } }
+                    ?: receiver.generator
+                receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
             }
-            PrimitiveArbs.forType(payloadClass).draw(rs) as P
-        } else {
-            val receiver = ArbReceiver(rs)
-            val generator = overrides
-                ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong()) { it() } }
-                ?: receiver.generator
-            receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
+            else -> {
+                require(overrides == null) {
+                    "${channelClass.simpleName}: per-field message { } overrides are only supported for record " +
+                        "payloads, not the primitive payload ${payloadClass.simpleName}."
+                }
+                primitive.draw(rs) as P
+            }
         }
     }
 
@@ -98,18 +101,21 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     private suspend fun generatePayload(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P {
         val rs = currentAmbient().randomSource
         @Suppress("UNCHECKED_CAST")
-        return if (PrimitiveArbs.supports(payloadClass)) {
-            require(overrides == null) {
-                "${channelClass.simpleName}: per-field send { } overrides are only supported for record payloads, " +
-                    "not the primitive payload ${payloadClass.simpleName}."
+        return when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
+            null -> {
+                val receiver = ArbReceiver(rs)
+                val generator = overrides
+                    ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong()) { it() } }
+                    ?: receiver.generator
+                receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
             }
-            PrimitiveArbs.forType(payloadClass).draw(rs) as P
-        } else {
-            val receiver = ArbReceiver(rs)
-            val generator = overrides
-                ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong()) { it() } }
-                ?: receiver.generator
-            receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
+            else -> {
+                require(overrides == null) {
+                    "${channelClass.simpleName}: per-field send { } overrides are only supported for record payloads, " +
+                        "not the primitive payload ${payloadClass.simpleName}."
+                }
+                primitive.draw(rs) as P
+            }
         }
     }
 
