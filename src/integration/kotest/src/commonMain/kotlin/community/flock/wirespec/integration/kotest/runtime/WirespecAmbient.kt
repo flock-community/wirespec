@@ -1,8 +1,8 @@
 package community.flock.wirespec.integration.kotest.runtime
 
-import community.flock.wirespec.integration.kotest.WirespecChannelContext
-import community.flock.wirespec.integration.kotest.WirespecEndpointContext
-import community.flock.wirespec.integration.kotest.WirespecMockContext
+import community.flock.wirespec.integration.kotest.context.WirespecChannelContext
+import community.flock.wirespec.integration.kotest.context.WirespecEndpointContext
+import community.flock.wirespec.integration.kotest.context.WirespecMockContext
 import io.kotest.property.RandomSource
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext

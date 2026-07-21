@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
+import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.ir.extension.applyExtensions
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -116,6 +117,42 @@ class KotestDslExtensionTest {
         output shouldContain "public fun response201(block: PutTodoResponse201Scope.() -> Unit = {}): Gen<PutTodo.Response201>"
         // A header-less variant (500 → Error) still gets its body setter and builder.
         output shouldContain "public fun response500(block: PutTodoResponse500Scope.() -> Unit = {}): Gen<PutTodo.Response500>"
+    }
+
+    @Test
+    fun allNullableSlotsAreOptionalNotRequired() {
+        // An endpoint whose query (`q`, `limit`) and header (`trace`) fields are *all* nullable, but
+        // whose path (`listId`) is required. A slot is required only when it carries at least one
+        // non-nullable field, so query/header must be emitted as optional `?.let` blocks while path
+        // stays an eager `error(...)`.
+        // language=ws
+        val source =
+            """
+            |endpoint SearchTodos GET /todos/{listId: String}
+            |    ?{q: String?, limit: Integer?}
+            |    #{trace: String?} -> {
+            |    200 -> TodoDto
+            |}
+            |type TodoDto {
+            |    id: String
+            |}
+            """.trimMargin()
+        val output = compile(source)(::emitter).shouldBeRight()
+
+        // Path carries a non-nullable field, so it remains required.
+        output shouldContain "SearchTodosPathBuilder().apply(path ?: error(\"SearchTodos: required `path` block is missing\"))"
+
+        // Query and header are all-nullable, so they are optional: guarded by `?.let`, never an
+        // eager required-block error.
+        output shouldContain "query?.let { block ->"
+        output shouldContain "header?.let { block ->"
+        output shouldNotContain "required `query` block is missing"
+        output shouldNotContain "required `header` block is missing"
+
+        // Each nullable field defaults to `Arb.constant(null)` rather than throwing when unset.
+        output shouldContain "inner.queryGen(\"q\", queryBuilder.q ?: Arb.constant(null))"
+        output shouldContain "inner.queryGen(\"limit\", queryBuilder.limit ?: Arb.constant(null))"
+        output shouldContain "inner.headerGen(\"trace\", headerBuilder.trace ?: Arb.constant(null))"
     }
 
     @Test

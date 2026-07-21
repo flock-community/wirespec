@@ -10,13 +10,11 @@ internal data class EndpointShape(
     val pathFields: List<NamedTypedField>,
     val queryFields: List<NamedTypedField>,
     val headerFields: List<NamedTypedField>,
-    /** Full Kotlin type of the body, e.g. `"Pet"` (Object) or `"List<Pet>"` (List). `null` when there is no body. */
-    val bodyType: String?,
     val bodyKind: BodyKind,
     /**
      * Name of the body's element Type — `"Pet"` for both `Object` (body is `Pet`) and `List` (body is `List<Pet>`).
-     * `null` for `BodyKind.None`. **Prefer this over `bodyType` when constructing builder class names**, because
-     * `bodyType` is `"List<T>"` for list bodies and not a valid Kotlin identifier segment.
+     * `null` for `BodyKind.None`. This is the name to use when constructing builder class names, since it is always
+     * a valid Kotlin identifier segment (unlike a `"List<T>"` rendering of a list body).
      */
     val bodyElementType: String?,
     /**
@@ -30,18 +28,6 @@ internal data class EndpointShape(
     val responseVariants: List<ResponseVariantShape>,
     val modelImports: List<String>,
 ) {
-    /** Flat top-level view of [bodyFieldShapes], kept for backwards-compat with callers that expect a simple list. */
-    val bodyFields: List<NamedTypedField> = bodyFieldShapes.map { f ->
-        NamedTypedField(
-            f.name,
-            when (f) {
-                is BodyFieldShape.Primitive -> f.kotlinType
-                is BodyFieldShape.NestedObject -> f.typeName
-                is BodyFieldShape.NestedList -> "List<${f.elementTypeName}>"
-            },
-        )
-    }
-
     data class NamedTypedField(val name: String, val kotlinType: String, val isNullable: Boolean = false)
 
     /**
@@ -108,25 +94,14 @@ internal data class EndpointShape(
             val headerFields = endpoint.headers
                 .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable) }
             val bodyRef = endpoint.requests.firstOrNull()?.content?.reference
-            val bodyType = bodyRef?.let { if (it is Reference.Unit) null else KotlinTypeMapper.map(it) }
-
-            val (bodyKind, elementCustomName) = when (bodyRef) {
-                null, is Reference.Unit -> BodyKind.None to null
-                is Reference.Custom -> BodyKind.Object to bodyRef.value
-                is Reference.Iterable -> {
-                    val inner = bodyRef.reference
-                    if (inner is Reference.Custom) BodyKind.List to inner.value else BodyKind.None to null
-                }
-                else -> BodyKind.None to null
-            }
-            val bodyElementType = elementCustomName
+            val (bodyKind, bodyElementType) = classifyBody(bodyRef)
 
             // Body-field kotlinType unwraps refined wrappers to their base primitive: the typed
             // body{} builder declares the field as Arb<BaseType>, and the runtime's RefinedWrapper
             // wraps each drawn primitive into the refined class via its single-arg ctor. Without
             // this unwrap, overriding a refined field at runtime throws "expected Arb<BaseType>
             // for refined …, got value of type …".
-            val bodyFieldShapes: List<BodyFieldShape> = elementCustomName
+            val bodyFieldShapes: List<BodyFieldShape> = bodyElementType
                 ?.let { extractBodyFields(it, types, refined, visited = emptySet()) }
                 ?: emptyList()
 
@@ -135,15 +110,7 @@ internal data class EndpointShape(
                     val status = response.status.takeIf { it.all(Char::isDigit) } ?: return@mapNotNull null
                     val respBodyRef = response.content?.reference
                     val respBodyType = respBodyRef?.let { if (it is Reference.Unit) null else KotlinTypeMapper.map(it) }
-                    val (respBodyKind, respElementName) = when (respBodyRef) {
-                        null, is Reference.Unit -> BodyKind.None to null
-                        is Reference.Custom -> BodyKind.Object to respBodyRef.value
-                        is Reference.Iterable -> {
-                            val inner = respBodyRef.reference
-                            if (inner is Reference.Custom) BodyKind.List to inner.value else BodyKind.None to null
-                        }
-                        else -> BodyKind.None to null
-                    }
+                    val (respBodyKind, respElementName) = classifyBody(respBodyRef)
                     ResponseVariantShape(
                         status = status,
                         className = "Response$status",
@@ -168,23 +135,18 @@ internal data class EndpointShape(
                     response.headers.forEach { add(it.reference) }
                 }
             }
-            val bodyFieldRefs = elementCustomName
+            val bodyFieldRefs = bodyElementType
                 ?.let { types[it] }
                 ?.shape?.value
                 ?.map { it.reference }
                 ?: emptyList()
-            val modelImports = (
-                (refs + bodyFieldRefs).flatMap(::collectCustomNames) +
-                    collectNestedTypeNames(bodyFieldShapes) +
-                    collectFieldTypeNames(bodyFieldShapes, types)
-                ).distinct()
+            val modelImports = modelImportsFor(refs + bodyFieldRefs, bodyFieldShapes, types)
 
             return EndpointShape(
                 name = endpoint.identifier.value,
                 pathFields = pathFields,
                 queryFields = queryFields,
                 headerFields = headerFields,
-                bodyType = bodyType,
                 bodyKind = bodyKind,
                 bodyElementType = bodyElementType,
                 bodyFieldShapes = bodyFieldShapes,
@@ -193,14 +155,39 @@ internal data class EndpointShape(
             )
         }
 
-        internal fun collectCustomNames(reference: Reference): List<String> = when (reference) {
+        /** Classifies a request/response body reference into its [BodyKind] and element type name. */
+        private fun classifyBody(reference: Reference?): Pair<BodyKind, String?> = when (reference) {
+            null, is Reference.Unit -> BodyKind.None to null
+            is Reference.Custom -> BodyKind.Object to reference.value
+            is Reference.Iterable -> (reference.reference as? Reference.Custom)
+                ?.let { BodyKind.List to it.value }
+                ?: (BodyKind.None to null)
+            else -> BodyKind.None to null
+        }
+
+        /**
+         * The distinct model type names an operation's DSL file must import: the [Reference.Custom]
+         * names reachable from its top-level [refs], plus the nested-type and field-type names
+         * discovered while walking its body/payload [fieldShapes].
+         */
+        internal fun modelImportsFor(
+            refs: List<Reference>,
+            fieldShapes: List<BodyFieldShape>,
+            types: Map<String, Type>,
+        ): List<String> = (
+            refs.flatMap(::collectCustomNames) +
+                collectNestedTypeNames(fieldShapes) +
+                collectFieldTypeNames(fieldShapes, types)
+            ).distinct()
+
+        private fun collectCustomNames(reference: Reference): List<String> = when (reference) {
             is Reference.Custom -> listOf(reference.value)
             is Reference.Iterable -> collectCustomNames(reference.reference)
             is Reference.Dict -> collectCustomNames(reference.reference)
             else -> emptyList()
         }
 
-        internal fun collectNestedTypeNames(fields: List<BodyFieldShape>): List<String> = fields.flatMap { f ->
+        private fun collectNestedTypeNames(fields: List<BodyFieldShape>): List<String> = fields.flatMap { f ->
             when (f) {
                 is BodyFieldShape.Primitive -> emptyList()
                 is BodyFieldShape.NestedObject -> listOf(f.typeName) + collectNestedTypeNames(f.fields)
@@ -214,7 +201,7 @@ internal data class EndpointShape(
          * types referenced only by inlined nested builders (e.g. an enum field on a nested
          * object that doesn't show up in the root body's direct fields).
          */
-        internal fun collectFieldTypeNames(
+        private fun collectFieldTypeNames(
             fields: List<BodyFieldShape>,
             types: Map<String, Type>,
         ): List<String> = fields.flatMap { f ->
@@ -303,7 +290,7 @@ internal data class EndpointShape(
 
         /** Like [KotlinTypeMapper.map], but replaces a `Reference.Custom` to a [Refined] with the
          *  refined's underlying primitive type (preserving nullability/iterables/dicts wrapping). */
-        internal fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): String = when (reference) {
+        private fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): String = when (reference) {
             is Reference.Custom -> refined[reference.value]?.let { r ->
                 KotlinTypeMapper.map(r.reference.copy(isNullable = reference.isNullable))
             } ?: KotlinTypeMapper.map(reference)

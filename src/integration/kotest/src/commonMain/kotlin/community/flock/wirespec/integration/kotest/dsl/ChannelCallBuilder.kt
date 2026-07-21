@@ -1,11 +1,10 @@
 package community.flock.wirespec.integration.kotest.dsl
 
 import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
-import community.flock.wirespec.integration.kotest.WirespecChannelContext
+import community.flock.wirespec.integration.kotest.context.WirespecChannelContext
 import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
 import community.flock.wirespec.integration.kotest.runtime.currentAmbient
-import community.flock.wirespec.integration.kotest.runtime.firstValue
 import io.kotest.property.Gen
 import io.kotest.property.arbitrary.arbitrary
 import kotlin.reflect.KClass
@@ -22,11 +21,10 @@ inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBu
 /**
  * Eager channel scenario runner. `send*` generates (or accepts) a typed payload,
  * serializes it via the ambient [WirespecChannelContext] and publishes it through
- * the broker [transport][community.flock.wirespec.integration.kotest.ChannelTransport].
+ * the broker [transport][community.flock.wirespec.integration.kotest.context.ChannelTransport].
  * Asserting on what the app published is left to the test's own broker consumer.
  *
- * The destination topic is `topic(...)` if pinned, else the context's
- * `defaultTopic`, else the channel object's simple name.
+ * The destination topic is `topic(...)` if pinned, else the channel object's simple name.
  */
 @WirespecScenarioDsl
 class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
@@ -64,7 +62,7 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
                 "${channelClass.simpleName}: per-field message { } overrides are only supported for record " +
                     "payloads, not the primitive payload ${payloadClass.simpleName}."
             }
-            PrimitiveArbs.forType(payloadClass).firstValue(rs) as P
+            PrimitiveArbs.forType(payloadClass).draw(rs) as P
         } else {
             val receiver = ArbReceiver(rs)
             val generator = overrides
@@ -87,7 +85,7 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
 
     /** Draw a payload from [gen], publish it, and return it. */
     suspend fun send(gen: Gen<P>): P {
-        val payload = gen.firstValue(currentAmbient().randomSource)
+        val payload = gen.draw(currentAmbient().randomSource)
         publish(payload)
         return payload
     }
@@ -105,7 +103,7 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
                 "${channelClass.simpleName}: per-field send { } overrides are only supported for record payloads, " +
                     "not the primitive payload ${payloadClass.simpleName}."
             }
-            PrimitiveArbs.forType(payloadClass).firstValue(rs) as P
+            PrimitiveArbs.forType(payloadClass).draw(rs) as P
         } else {
             val receiver = ArbReceiver(rs)
             val generator = overrides
@@ -118,9 +116,9 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     private suspend fun publish(payload: P) {
         val ctx = currentAmbient().channelContext()
         val body = ctx.serialization.serializeBody(payload, payloadType)
-        ctx.transport.publish(resolveTopic(ctx), key, body)
+        ctx.transport.publish(resolveTopic(), key, body)
     }
 
-    private fun resolveTopic(ctx: WirespecChannelContext): String = topic ?: ctx.defaultTopic ?: channelClass.simpleName
-        ?: error("$channelClass: cannot resolve a topic — pin one with topic(...) or set a defaultTopic.")
+    private fun resolveTopic(): String = topic ?: channelClass.simpleName
+        ?: error("$channelClass: cannot resolve a topic — pin one with topic(...).")
 }
