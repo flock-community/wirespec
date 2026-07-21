@@ -26,7 +26,7 @@ class HttpTransportation(
     private val client: HttpClient = HttpClient.newHttpClient()
 
     override suspend fun transport(request: Wirespec.RawRequest): Wirespec.RawResponse = withContext(Dispatchers.IO) {
-        val path = request.path.joinToString("/", prefix = "/")
+        val path = request.path.joinToString("/", prefix = "/") { encodePathSegment(it) }
         val query = request.queries.entries
             .flatMap { (key, values) -> values.map { key to it } }
             .joinToString("&") { (key, value) -> "${encode(key)}=${encode(value)}" }
@@ -38,7 +38,8 @@ class HttpTransportation(
 
         val builder = HttpRequest.newBuilder(uri).method(request.method, bodyPublisher)
         request.headers.forEach { (key, values) -> values.forEach { builder.header(key, it) } }
-        if (request.body != null) builder.header("Content-Type", "application/json")
+        val hasContentType = request.headers.keys.any { it.equals("Content-Type", ignoreCase = true) }
+        if (request.body != null && !hasContentType) builder.header("Content-Type", "application/json")
 
         val response = client.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray())
         Wirespec.RawResponse(
@@ -49,4 +50,8 @@ class HttpTransportation(
     }
 
     private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
+
+    // Path segments use percent-encoding, so translate the `+` that URLEncoder emits for a space
+    // (an `application/x-www-form-urlencoded` convention valid only in the query) back to `%20`.
+    private fun encodePathSegment(segment: String): String = encode(segment).replace("+", "%20")
 }
