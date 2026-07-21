@@ -3,17 +3,14 @@ package community.flock.wirespec.integration.kotest.extension
 import community.flock.wirespec.integration.kotest.context.MockServer
 import community.flock.wirespec.integration.kotest.context.WirespecMockContext
 import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
+import community.flock.wirespec.integration.kotest.runtime.mergeMock
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension
 import io.kotest.core.listeners.AfterSpecListener
 import io.kotest.core.spec.Spec
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
-import io.kotest.property.RandomSource
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
 // NB: kotest 6.x relocated TestResult to io.kotest.engine.test; io.kotest.core.test.TestResult no longer exists.
@@ -69,31 +66,22 @@ class WirespecMockExtension internal constructor(
     ) : this(WirespecMockContext(server, serialization))
 
     // Server resolved once per spec (not per instance), so a single instance registered in a
-    // ProjectConfig serves every spec correctly. Keyed by Spec; the mutex guards the suspend build.
-    private val servers = ConcurrentHashMap<Spec, MockServer>()
-    private val buildLock = Mutex()
+    // ProjectConfig serves every spec correctly. Only a managed server is closed on spec end; an
+    // eager/shared one belongs to the caller, hence closeOnRemove tracks closeAfterSpec.
+    private val servers = SpecScopedResource(closeOnRemove = closeAfterSpec) { spec -> serverFactory(spec) }
 
     override suspend fun intercept(
         testCase: TestCase,
         execute: suspend (TestCase) -> TestResult,
     ): TestResult {
-        val server = server(testCase.spec)
+        val server = servers.get(testCase.spec)
         if (resetBeforeTest) server.reset()
         val mock = WirespecMockContext(server, serializationFactory())
-        val ambient = coroutineContext[WirespecAmbient]?.withMock(mock)
-            ?: WirespecAmbient(endpoint = null, channel = null, mock = mock, randomSource = RandomSource.seeded(System.nanoTime()))
+        val ambient = coroutineContext[WirespecAmbient].mergeMock(mock)
         return withContext(ambient) { execute(testCase) }
     }
 
-    private suspend fun server(spec: Spec): MockServer = servers[spec] ?: buildLock.withLock {
-        servers[spec] ?: serverFactory(spec).also { servers[spec] = it }
-    }
-
-    override suspend fun afterSpec(spec: Spec) {
-        val removed = servers.remove(spec)
-        // Only a managed server is owned here; an eager/shared one belongs to the caller.
-        if (closeAfterSpec) (removed as? AutoCloseable)?.close()
-    }
+    override suspend fun afterSpec(spec: Spec) = servers.remove(spec)
 }
 
 /**

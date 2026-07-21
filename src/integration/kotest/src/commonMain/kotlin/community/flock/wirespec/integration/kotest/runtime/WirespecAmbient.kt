@@ -63,3 +63,16 @@ internal suspend fun currentAmbient(): WirespecAmbient = coroutineContext[Wiresp
     "No wirespec ambient context in scope. Register the extension with " +
         "`extension(WirespecEndpointExtension(…))` or `extension(WirespecChannelExtension(…))` on the spec.",
 )
+
+// A fresh per-test [RandomSource]; its seed is printed on failure so a run can be reproduced. The
+// three extensions share this one source of seeding, rather than each calling RandomSource.seeded.
+private fun newAmbientRandomSource(): RandomSource = RandomSource.seeded(System.nanoTime())
+
+/** Merge [endpoint] into the ambient already in scope for this test, or start a fresh seeded one. */
+internal fun WirespecAmbient?.mergeEndpoint(endpoint: WirespecEndpointContext): WirespecAmbient = this?.withEndpoint(endpoint) ?: WirespecAmbient(endpoint = endpoint, channel = null, mock = null, randomSource = newAmbientRandomSource())
+
+/** Merge [channel] into the ambient already in scope for this test, or start a fresh seeded one. */
+internal fun WirespecAmbient?.mergeChannel(channel: WirespecChannelContext): WirespecAmbient = this?.withChannel(channel) ?: WirespecAmbient(endpoint = null, channel = channel, mock = null, randomSource = newAmbientRandomSource())
+
+/** Merge [mock] into the ambient already in scope for this test, or start a fresh seeded one. */
+internal fun WirespecAmbient?.mergeMock(mock: WirespecMockContext): WirespecAmbient = this?.withMock(mock) ?: WirespecAmbient(endpoint = null, channel = null, mock = mock, randomSource = newAmbientRandomSource())
