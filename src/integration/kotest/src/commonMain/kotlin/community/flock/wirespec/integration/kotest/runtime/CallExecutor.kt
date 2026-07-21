@@ -94,14 +94,14 @@ internal object CallExecutor {
         }
     }
 
+    /** A [Gen] that materialises the response variant on each draw; backs `<Endpoint>.responseNNN { … }`. */
+    fun buildResponseGen(builder: ResponseBuilder): Arb<Any> = arbitrary { rs -> buildResponseWith(builder, rs) }
+
     /**
      * Build a single random `Response<status>` variant from a [ResponseBuilder]: pinned gens win,
      * every other constructor param (body + header fields) is generated against the ambient
      * [RandomSource]. Backs the generated `<Endpoint>.responseNNN { … }` DSL.
      */
-    /** A [Gen] that materialises the response variant on each draw; backs `<Endpoint>.responseNNN { … }`. */
-    fun buildResponseGen(builder: ResponseBuilder): Arb<Any> = arbitrary { rs -> buildResponseWith(builder, rs) }
-
     private fun buildResponseWith(builder: ResponseBuilder, rs: RandomSource): Any {
         val arb = ArbReceiver(rs)
         val reflection = EndpointReflection.of(builder.endpointObject)
@@ -146,11 +146,8 @@ internal object CallExecutor {
     }
 
     /** Default value for a non-body response constructor param: primitive Arb or a generated model. */
-    private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? = if (PrimitiveArbs.supports(type)) {
-        PrimitiveArbs.forType(type).draw(rs)
-    } else {
-        arb.generatorFor(type).generate(arb.generator, emptyList())
-    }
+    private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? = PrimitiveArbs.forTypeOrNull(type)?.draw(rs)
+        ?: arb.generatorFor(type).generate(arb.generator, emptyList())
 
     private fun resolveSlots(
         call: EndpointCallBuilder<*, *, *>,
