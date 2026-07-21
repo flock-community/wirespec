@@ -21,11 +21,7 @@ internal data class TypeShape(
             val name = type.identifier.value
             val fields = EndpointShape.extractBodyFields(name, types, refined, visited = emptySet())
             val directRefs = type.shape.value.map { it.reference }
-            val modelImports = (
-                directRefs.flatMap(EndpointShape::collectCustomNames) +
-                    EndpointShape.collectNestedTypeNames(fields) +
-                    EndpointShape.collectFieldTypeNames(fields, types)
-                ).distinct()
+            val modelImports = EndpointShape.modelImportsFor(directRefs, fields, types)
             return TypeShape(name = name, fields = fields, modelImports = modelImports)
         }
     }

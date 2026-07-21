@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FileBuilder
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.VariableReference
@@ -166,7 +167,7 @@ internal object EndpointDslFile {
      * `generate` extension property): `request` opens the `<Endpoint>Scope` and returns a
      * `Gen<Request>`; each `response<NNN>` returns a `Gen<Response<NNN>>` via its response scope.
      */
-    private fun community.flock.wirespec.ir.core.FileBuilder.buildGenerateWrapper(shape: EndpointShape) {
+    private fun FileBuilder.buildGenerateWrapper(shape: EndpointShape) {
         struct("${shape.name}Generate") {
             plainClass()
             visibility(Visibility.PUBLIC)
@@ -195,7 +196,7 @@ internal object EndpointDslFile {
      * A `call()` extension on `Gen<Request>`, so the request `Gen` chains straight into a send:
      * `PutTodo.generate.request { … }.call()`.
      */
-    private fun community.flock.wirespec.ir.core.FileBuilder.buildRequestCall(shape: EndpointShape) {
+    private fun FileBuilder.buildRequestCall(shape: EndpointShape) {
         asyncFunction("call") {
             visibility(Visibility.PUBLIC)
             receiver(genOf("${shape.name}.Request"))
@@ -208,7 +209,7 @@ internal object EndpointDslFile {
      * A `mock()` extension on `Gen<Response<*>>`, the response-side twin of `Gen<Request>.call()`:
      * `PutTodo.generate.response200 { … }.mock { req -> req.path.id == "1" }`.
      */
-    private fun community.flock.wirespec.ir.core.FileBuilder.buildResponseMock(shape: EndpointShape) {
+    private fun FileBuilder.buildResponseMock(shape: EndpointShape) {
         asyncFunction("mock") {
             visibility(Visibility.PUBLIC)
             receiver(genOf("${shape.name}.Response<*>"))
@@ -227,7 +228,7 @@ internal object EndpointDslFile {
      * `body` setter (when the variant has a body) and one setter per response header field, each
      * a `Gen<…>?` defaulting to a generated value; `build()` returns a `Gen<Response<NNN>>`.
      */
-    private fun community.flock.wirespec.ir.core.FileBuilder.buildResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape) {
+    private fun FileBuilder.buildResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape) {
         val scopeName = "${shape.name}${variant.className}Scope"
         val variantType = "${shape.name}.${variant.className}"
         val hasBody = variant.bodyKind != EndpointShape.BodyKind.None && variant.bodyType != null
@@ -263,7 +264,7 @@ internal object EndpointDslFile {
     // Scope class
     // ------------------------------------------------------------------------------------
 
-    private fun community.flock.wirespec.ir.core.FileBuilder.buildScopeClass(shape: EndpointShape, present: List<Slot>, required: List<Slot>) {
+    private fun FileBuilder.buildScopeClass(shape: EndpointShape, present: List<Slot>, required: List<Slot>) {
         struct("${shape.name}Scope") {
             plainClass()
             annotation("@WirespecScenarioDsl")
@@ -347,11 +348,11 @@ internal object EndpointDslFile {
             if (isList) {
                 appendLine("        @Suppress(\"UNCHECKED_CAST\")")
                 appendLine("        (rawBase as List<$elementType>).map { base ->")
-                appendBodyCopy(this, "base", "builder", shape, indent = "            ")
+                appendBodyCopy("base", "builder", shape, indent = "            ")
                 appendLine("        }")
             } else {
                 appendLine("        val base = rawBase as $elementType")
-                appendBodyCopy(this, "base", "builder", shape, indent = "        ")
+                appendBodyCopy("base", "builder", shape, indent = "        ")
             }
             appendLine("    }")
             appendLine("}")
@@ -379,7 +380,7 @@ internal object EndpointDslFile {
     // Builders
     // ------------------------------------------------------------------------------------
 
-    private fun community.flock.wirespec.ir.core.FileBuilder.buildSlotBuilder(shape: EndpointShape, slot: Slot) {
+    private fun FileBuilder.buildSlotBuilder(shape: EndpointShape, slot: Slot) {
         struct(slotBuilderName(shape, slot)) {
             plainClass()
             annotation("@WirespecScenarioDsl")
@@ -395,18 +396,17 @@ internal object EndpointDslFile {
      * Each value is produced by [copyValueExpr] — an override drawn from the builder's
      * `Gen`, falling back to the generated default carried on [baseExpr].
      */
-    private fun appendBodyCopy(
-        out: StringBuilder,
+    private fun StringBuilder.appendBodyCopy(
         baseExpr: String,
         receiver: String,
         shape: EndpointShape,
         indent: String,
     ) {
-        out.appendLine("$indent$baseExpr.copy(")
+        appendLine("$indent$baseExpr.copy(")
         shape.bodyFieldShapes.forEach { f ->
-            out.appendLine("$indent    ${KotlinIdentifier.escape(f.name)} = ${copyValueExpr(f, baseExpr, receiver)},")
+            appendLine("$indent    ${KotlinIdentifier.escape(f.name)} = ${copyValueExpr(f, baseExpr, receiver)},")
         }
-        out.appendLine("$indent)")
+        appendLine("$indent)")
     }
 
     /**
@@ -421,34 +421,43 @@ internal object EndpointDslFile {
         receiver: String,
     ): String {
         val fieldRef = KotlinIdentifier.escape(field.name)
-        val blockRef = KotlinIdentifier.escape("_${field.name}Block")
         val baseField = "$baseExpr.$fieldRef"
         return when (field) {
             is EndpointShape.BodyFieldShape.Primitive ->
                 "$receiver.$fieldRef?.let { gen -> ${wrapDrawn("gen.draw(rs)", field)} } ?: $baseField"
-            is EndpointShape.BodyFieldShape.NestedObject -> {
-                val nestedBuilder = RecordBuilder.builderName(field.typeName)
-                val nestedVar = KotlinIdentifier.escape("nested_${field.name}")
-                val elemVar = KotlinIdentifier.escape("base_${field.name}")
-                val subs = field.fields.joinToString(", ") {
-                    "${KotlinIdentifier.escape(it.name)} = ${copyValueExpr(it, elemVar, nestedVar)}"
-                }
-                "$receiver.$fieldRef?.let { gen -> gen.draw(rs) } ?: " +
-                    "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
-                    "$baseField?.let { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
-            }
-            is EndpointShape.BodyFieldShape.NestedList -> {
-                val nestedBuilder = RecordBuilder.builderName(field.elementTypeName)
-                val nestedVar = KotlinIdentifier.escape("nested_${field.name}")
-                val elemVar = KotlinIdentifier.escape("elem_${field.name}")
-                val subs = field.fields.joinToString(", ") {
-                    "${KotlinIdentifier.escape(it.name)} = ${copyValueExpr(it, elemVar, nestedVar)}"
-                }
-                "$receiver.$fieldRef?.let { gen -> gen.draw(rs) } ?: " +
-                    "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
-                    "$baseField?.map { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
-            }
+            is EndpointShape.BodyFieldShape.NestedObject ->
+                nestedCopyExpr(field.name, field.typeName, field.fields, baseExpr, receiver, isList = false)
+            is EndpointShape.BodyFieldShape.NestedList ->
+                nestedCopyExpr(field.name, field.elementTypeName, field.fields, baseExpr, receiver, isList = true)
         }
+    }
+
+    /**
+     * The reconstructed value for a nested object/list field: draw the whole-value override `Gen`
+     * if set, else apply the sub-builder block over the generated default (via `?.let` for an
+     * object, `?.map` for a list), else fall back to the default unchanged.
+     */
+    private fun nestedCopyExpr(
+        fieldName: String,
+        nestedTypeName: String,
+        fields: List<EndpointShape.BodyFieldShape>,
+        baseExpr: String,
+        receiver: String,
+        isList: Boolean,
+    ): String {
+        val fieldRef = KotlinIdentifier.escape(fieldName)
+        val blockRef = KotlinIdentifier.escape("_${fieldName}Block")
+        val baseField = "$baseExpr.$fieldRef"
+        val nestedBuilder = RecordBuilder.builderName(nestedTypeName)
+        val nestedVar = KotlinIdentifier.escape("nested_$fieldName")
+        val elemVar = KotlinIdentifier.escape("${if (isList) "elem" else "base"}_$fieldName")
+        val overBase = if (isList) "?.map" else "?.let"
+        val subs = fields.joinToString(", ") {
+            "${KotlinIdentifier.escape(it.name)} = ${copyValueExpr(it, elemVar, nestedVar)}"
+        }
+        return "$receiver.$fieldRef?.let { gen -> gen.draw(rs) } ?: " +
+            "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
+            "$baseField$overBase { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
     }
 
     /**

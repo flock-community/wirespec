@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.kotest.extension
 
 import community.flock.wirespec.integration.kotest.extension.EndpointShape.BodyFieldShape
 import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.StructBuilder
 import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.Type as IrType
@@ -49,7 +50,7 @@ internal object RecordBuilder {
      * the `@PublishedApi internal var _<field>Block` sub-builder slot, and the `<field>Block { … }`
      * function that assigns it.
      */
-    private fun community.flock.wirespec.ir.core.StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType) {
+    private fun StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType) {
         val nested = builderName(nestedTypeName)
         property(
             name = fieldName,
@@ -86,28 +87,37 @@ internal object RecordBuilder {
     ): String = buildString {
         fields.forEach { f ->
             val fieldRef = "$receiver.${KotlinIdentifier.escape(f.name)}"
-            val blockRef = "$receiver.${KotlinIdentifier.escape("_${f.name}Block")}"
             val segs = (path + f.name).joinToString(", ") { "\"$it\"" }
+            appendLine("$indent$fieldRef?.let { registerPath($segs) { it } }")
             when (f) {
-                is BodyFieldShape.Primitive ->
-                    appendLine("$indent$fieldRef?.let { registerPath($segs) { it } }")
-                is BodyFieldShape.NestedObject -> {
-                    val nestedVar = KotlinIdentifier.escape("nested_${f.name}")
-                    appendLine("$indent$fieldRef?.let { registerPath($segs) { it } }")
-                    appendLine("$indent$blockRef?.let { block ->")
-                    appendLine("$indent    val $nestedVar = ${builderName(f.typeName)}().apply(block)")
-                    append(renderRegistration(f.fields, nestedVar, path + f.name, "$indent    "))
-                    appendLine("$indent}")
-                }
-                is BodyFieldShape.NestedList -> {
-                    val nestedVar = KotlinIdentifier.escape("nested_${f.name}")
-                    appendLine("$indent$fieldRef?.let { registerPath($segs) { it } }")
-                    appendLine("$indent$blockRef?.let { block ->")
-                    appendLine("$indent    val $nestedVar = ${builderName(f.elementTypeName)}().apply(block)")
-                    append(renderRegistration(f.fields, nestedVar, path + f.name + "*", "$indent    "))
-                    appendLine("$indent}")
-                }
+                is BodyFieldShape.Primitive -> Unit
+                is BodyFieldShape.NestedObject ->
+                    appendNestedBlock(f.name, f.typeName, f.fields, receiver, path, indent, listSegment = false)
+                is BodyFieldShape.NestedList ->
+                    appendNestedBlock(f.name, f.elementTypeName, f.fields, receiver, path, indent, listSegment = true)
             }
         }
+    }
+
+    /**
+     * The `<field>Block?.let { … }` drill-down applying a nested sub-builder's registrations,
+     * recursing through [renderRegistration]. A nested list adds a `"*"` wildcard path segment.
+     */
+    private fun StringBuilder.appendNestedBlock(
+        fieldName: String,
+        nestedTypeName: String,
+        fields: List<BodyFieldShape>,
+        receiver: String,
+        path: List<String>,
+        indent: String,
+        listSegment: Boolean,
+    ) {
+        val blockRef = "$receiver.${KotlinIdentifier.escape("_${fieldName}Block")}"
+        val nestedVar = KotlinIdentifier.escape("nested_$fieldName")
+        val nextPath = if (listSegment) path + fieldName + "*" else path + fieldName
+        appendLine("$indent$blockRef?.let { block ->")
+        appendLine("$indent    val $nestedVar = ${builderName(nestedTypeName)}().apply(block)")
+        append(renderRegistration(fields, nestedVar, nextPath, "$indent    "))
+        appendLine("$indent}")
     }
 }

@@ -36,28 +36,15 @@ kotlin {
                 // lives in commonMain.
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:ir"))
-                // wirespec's Kotlin runtime (the Wirespec.* interfaces) is now
-                // commonMain, so the framework-neutral context/ambient types that
-                // only reference those interfaces live in commonMain too. The serde
-                // defaults it also ships stay JVM-only but aren't used here.
+                // wirespec's Kotlin runtime (the Wirespec.* interfaces), the
+                // framework-neutral context/ambient types, and the whole scenario-DSL
+                // runtime all live in commonMain. The module has a single jvm() target,
+                // so commonMain compiles against the JVM and freely uses reflection
+                // (ArbReceiver, EndpointReflection, CallExecutor, the *CallBuilder
+                // terminals) alongside the kotest framework extensions.
                 implementation(project(":src:integration:wirespec"))
-            }
-        }
-        commonTest {
-            dependencies {
-                implementation(libs.kotest.property)
-                implementation(kotlin("test"))
-            }
-        }
-        jvmMain {
-            dependencies {
-                // The reflection-driven runtime (ArbReceiver, EndpointReflection,
-                // CallExecutor, the *CallBuilder terminals) that adapts the commonMain
-                // KotestGenerator into a Wirespec.Generator for IR-emitted callers.
-                // wirespec itself is inherited transitively from commonMain.
-                // The scenario-DSL runtime (WirespecExtension + the generate.request { }
-                // entry points) is a kotest framework extension, so the published JVM
-                // artifact carries the framework engine and coroutines it builds on.
+                // The kotest framework extensions (WirespecEndpoint/Channel/MockExtension)
+                // build on the engine's TestCaseExtension/AfterSpecListener and coroutines.
                 implementation(libs.kotest.engine)
                 implementation(libs.kotlinx.coroutines.core)
                 // Full reflection: KClass.constructors / KFunction.call in
@@ -67,9 +54,11 @@ kotlin {
                 implementation(libs.kotlin.reflect.compat)
             }
         }
-        jvmTest {
+        commonTest {
             dependencies {
-                implementation(project(":src:integration:wirespec"))
+                implementation(kotlin("test"))
+                // kotest.property and :src:integration:wirespec come transitively from
+                // commonMain (commonTest dependsOn commonMain), so they aren't re-declared here.
                 // KotestDslExtension smoke test: compile a .ws fixture through
                 // KotlinIrEmitter + the extension and assert the emitted DSL files.
                 implementation(project(":src:compiler:emitters:kotlin"))
