@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotest
+package community.flock.wirespec.integration.kotest.context
 
 import community.flock.wirespec.kotlin.Wirespec
 
@@ -7,14 +7,13 @@ import community.flock.wirespec.kotlin.Wirespec
  * [ChannelTransport] publishes raw message bodies; a [Wirespec.Serialization] turns
  * the channel's typed payload into those bytes.
  *
- * [defaultTopic] is used when a `generate.message { … }.send()` scenario does not pin
- * one with `topic(...)`; when it too is `null` the runtime falls back to the channel
- * object's simple name.
+ * A `generate.message { … }.send()` scenario publishes to the topic pinned with
+ * `topic(...)`; when none is pinned the runtime falls back to the channel object's
+ * simple name.
  */
 class WirespecChannelContext(
     val transport: ChannelTransport,
     val serialization: Wirespec.Serialization,
-    val defaultTopic: String? = null,
 )
 
 /**

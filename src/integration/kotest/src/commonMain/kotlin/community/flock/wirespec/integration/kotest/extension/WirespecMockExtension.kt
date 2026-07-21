@@ -1,7 +1,7 @@
 package community.flock.wirespec.integration.kotest.extension
 
-import community.flock.wirespec.integration.kotest.MockServer
-import community.flock.wirespec.integration.kotest.WirespecMockContext
+import community.flock.wirespec.integration.kotest.context.MockServer
+import community.flock.wirespec.integration.kotest.context.WirespecMockContext
 import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension

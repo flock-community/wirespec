@@ -31,11 +31,7 @@ internal data class ChannelShape(
                 ?.shape?.value
                 ?.map { it.reference }
                 ?: emptyList()
-            val modelImports = (
-                (listOf(payloadRef) + directRefs).flatMap(EndpointShape::collectCustomNames) +
-                    EndpointShape.collectNestedTypeNames(payloadFieldShapes) +
-                    EndpointShape.collectFieldTypeNames(payloadFieldShapes, types)
-                ).distinct()
+            val modelImports = EndpointShape.modelImportsFor(listOf(payloadRef) + directRefs, payloadFieldShapes, types)
 
             return ChannelShape(
                 name = channel.identifier.value,
