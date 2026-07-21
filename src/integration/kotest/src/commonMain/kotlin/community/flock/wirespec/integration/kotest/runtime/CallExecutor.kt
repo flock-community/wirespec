@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.kotest.runtime
 import community.flock.wirespec.integration.kotest.dsl.ArbReceiver
 import community.flock.wirespec.integration.kotest.dsl.EndpointCallBuilder
 import community.flock.wirespec.integration.kotest.dsl.ResponseBuilder
+import community.flock.wirespec.integration.kotest.dsl.draw
 import community.flock.wirespec.integration.kotest.validation.ContractValidator
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec
@@ -117,7 +118,7 @@ internal object CallExecutor {
                 resolveResponseBody(builder, variant, arb, rs)
             } else {
                 val gen = builder.headerGens[name] ?: headerGensByNormalizedName[normalizeSlotName(name)]
-                gen?.firstValue(rs) ?: defaultValueFor(param.type, arb, rs)
+                gen?.draw(rs) ?: defaultValueFor(param.type, arb, rs)
             }
         }
         return try {
@@ -134,9 +135,9 @@ internal object CallExecutor {
         arb: ArbReceiver,
         rs: RandomSource,
     ): Any? = when {
-        builder.bodyGen != null -> builder.bodyGen!!.firstValue(rs)
+        builder.bodyGen != null -> builder.bodyGen!!.draw(rs)
         variant.bodyElementClass != null -> {
-            val size = Arb.int(1..3).firstValue(rs)
+            val size = Arb.int(1..3).draw(rs)
             val elementGen = arb.generatorFor(variant.bodyElementClass)
             (0 until size).map { i -> elementGen.generate(arb.generator, listOf("$i")) }
         }
@@ -146,7 +147,7 @@ internal object CallExecutor {
 
     /** Default value for a non-body response constructor param: primitive Arb or a generated model. */
     private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? = if (PrimitiveArbs.supports(type)) {
-        PrimitiveArbs.forType(type).firstValue(rs)
+        PrimitiveArbs.forType(type).draw(rs)
     } else {
         arb.generatorFor(type).generate(arb.generator, emptyList())
     }
@@ -167,7 +168,7 @@ internal object CallExecutor {
 
         when {
             reflection.hasBody && reflection.bodyElementClass != null -> {
-                val size = (call.bodyListSizeGen ?: Arb.int(1..3)).firstValue(rs)
+                val size = (call.bodyListSizeGen ?: Arb.int(1..3)).draw(rs)
                 val elementGen = arb.generatorFor(reflection.bodyElementClass)
                 val default = (0 until size).map { i -> elementGen.generate(arb.generator, listOf("$i")) }
                 args["body"] = withBodyTransform(default)
@@ -197,7 +198,7 @@ internal object CallExecutor {
             val name = param.name ?: return@forEach
             if (name == "body" || args.containsKey(name)) return@forEach
             val gen = slotGens[name] ?: slotGensByNormalizedName[normalizeSlotName(name)]
-            args[name] = (gen ?: PrimitiveArbs.forType(param.type)).firstValue(rs)
+            args[name] = (gen ?: PrimitiveArbs.forType(param.type)).draw(rs)
         }
         return args
     }

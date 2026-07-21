@@ -1,15 +1,14 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.MockStub
+import community.flock.wirespec.integration.kotest.context.MockStub
 import community.flock.wirespec.integration.kotest.runtime.currentAmbient
-import community.flock.wirespec.integration.kotest.runtime.firstValue
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
 
 /**
  * Draw one response from [responseGen] (seeded by the ambient `RandomSource`), serialize it
  * through the mock context's [Wirespec.Serialization], and register it with the ambient
- * [MockServer][community.flock.wirespec.integration.kotest.MockServer]: every incoming request
+ * [MockServer][community.flock.wirespec.integration.kotest.context.MockServer]: every incoming request
  * to this endpoint that satisfies [predicate] gets that response. Backs the generated
  * `Gen<Endpoint.Response<*>>.mock { req -> … }` extension — the response-side twin of
  * `Gen<Request>.call()`, so `PutTodo.generate.response200 { … }.mock { it.path.id == "1" }`
@@ -28,7 +27,7 @@ suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> responseMock
     val ambient = currentAmbient()
     val ctx = ambient.mockContext()
     val edge = server.server(ctx.serialization)
-    val response = responseGen.firstValue(ambient.randomSource)
+    val response = responseGen.draw(ambient.randomSource)
     ctx.server.stub(
         MockStub(
             method = server.method,

@@ -7,10 +7,9 @@ import io.kotest.property.RandomSource
 
 /**
  * Draw a single value from any [Gen] (an [Arb] sample or an [Exhaustive] pick),
- * seeded by [rs]. Public counterpart of the runtime-internal `firstValue`, used
- * by the generated `*Dsl` body transforms (which live in a downstream module and
- * therefore cannot see the `internal` runtime helper) to reconstruct the request
- * body from per-field override `Gen`s.
+ * seeded by [rs]. Used both internally and by the generated `*Dsl` body transforms
+ * (which live in a downstream module) to reconstruct the request body from per-field
+ * override `Gen`s.
  */
 fun <T> Gen<T>.draw(rs: RandomSource): T = when (this) {
     is Arb -> sample(rs).value

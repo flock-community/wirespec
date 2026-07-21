@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.kotest.extension
 
-import community.flock.wirespec.integration.kotest.WirespecEndpointContext
+import community.flock.wirespec.integration.kotest.context.WirespecEndpointContext
 import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension
