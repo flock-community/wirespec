@@ -1,7 +1,7 @@
 package community.flock.wirespec.integration.kotest.extension
 
-import community.flock.wirespec.integration.kotest.ChannelTransport
-import community.flock.wirespec.integration.kotest.WirespecChannelContext
+import community.flock.wirespec.integration.kotest.context.ChannelTransport
+import community.flock.wirespec.integration.kotest.context.WirespecChannelContext
 import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension
@@ -52,19 +52,17 @@ class WirespecChannelExtension internal constructor(
     private val eager: WirespecChannelContext?,
     private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
     private val transportationFactory: (suspend () -> ChannelTransport)?,
-    private val defaultTopic: String?,
     private val reset: (ChannelTransport) -> Unit,
 ) : TestCaseExtension,
     AfterSpecListener {
 
-    constructor(channel: WirespecChannelContext) : this(channel, null, null, null, {})
+    constructor(channel: WirespecChannelContext) : this(channel, null, null, {})
 
     /** Convenience: build the [WirespecChannelContext] from a [transportation] + [serialization] directly. */
     constructor(
         transportation: ChannelTransport,
         serialization: Wirespec.Serialization,
-        defaultTopic: String? = null,
-    ) : this(WirespecChannelContext(transportation, serialization, defaultTopic))
+    ) : this(WirespecChannelContext(transportation, serialization))
 
     // Managed mode builds one transportation per spec (not per instance), so a single instance registered
     // in a ProjectConfig serves every spec correctly — each spec resolves its own transportation (e.g. its
@@ -79,7 +77,7 @@ class WirespecChannelExtension internal constructor(
         val channel = eager ?: run {
             val transportation = managedTransportation(testCase.spec)
             reset(transportation)
-            WirespecChannelContext(transportation, serializationFactory!!(), defaultTopic)
+            WirespecChannelContext(transportation, serializationFactory!!())
         }
         val ambient = coroutineContext[WirespecAmbient]?.withChannel(channel)
             ?: WirespecAmbient(endpoint = null, channel = channel, mock = null, randomSource = RandomSource.seeded(System.nanoTime()))
@@ -105,13 +103,11 @@ class WirespecChannelExtension internal constructor(
 fun <T : ChannelTransport> WirespecChannelExtension(
     serialization: suspend () -> Wirespec.Serialization,
     transportation: suspend () -> T,
-    defaultTopic: String? = null,
     reset: (T) -> Unit = {},
 ): WirespecChannelExtension = WirespecChannelExtension(
     eager = null,
     serializationFactory = serialization,
     transportationFactory = transportation,
-    defaultTopic = defaultTopic,
     reset = {
         @Suppress("UNCHECKED_CAST")
         reset(it as T)

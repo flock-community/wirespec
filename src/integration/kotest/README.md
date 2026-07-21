@@ -146,7 +146,7 @@ val request: Gen<PutTodo.Request> = PutTodo.generate.request { path { id = Arb.c
 val canned: PutTodo.Response200 = PutTodo.generate.response200().draw()
 
 // Channels: publish by chaining send() on the message Gen. send() takes an optional
-// destination topic (and key); omit them to use the channel context's defaultTopic.
+// destination topic (and key); omit them to fall back to the channel object's simple name.
 CampaignEvents.generate.message { eventType = Arb.constant(CampaignEventType.ENDED) }.send("campaign-events")
 
 // Channels: consume via the listen scope.
@@ -180,7 +180,7 @@ spec drives (or both, they compose into one ambient sharing a `RandomSource`):
 ```kotlin
 class MySpec : FunSpec({
     extension(WirespecEndpointExtension(WirespecEndpointContext(transportation, serialization)))
-    extension(WirespecChannelExtension(WirespecChannelContext(transport, serialization, defaultTopic = "campaigns")))
+    extension(WirespecChannelExtension(WirespecChannelContext(transport, serialization)))
 })
 ```
 

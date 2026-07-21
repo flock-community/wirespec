@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
+import community.flock.wirespec.integration.kotest.context.WirespecEndpointContext
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
 
