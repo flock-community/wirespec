@@ -18,6 +18,9 @@ kotlin {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
     }
     jvm {
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
@@ -33,6 +36,12 @@ kotlin {
                 // transport() runs the java.net.http call off the calling coroutine
                 // via withContext(Dispatchers.IO).
                 implementation(libs.kotlinx.coroutines.core)
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation(libs.kotlin.junit)
+                runtimeOnly(libs.junit.launcher)
             }
         }
     }
