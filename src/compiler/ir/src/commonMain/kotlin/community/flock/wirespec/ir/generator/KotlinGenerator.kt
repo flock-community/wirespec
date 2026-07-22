@@ -198,7 +198,7 @@ object KotlinGenerator : Generator {
         val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
         val keyword = if (isMutable) "var" else "val"
         val receiverStr = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
-        val signature = "$annotationPrefix$visibilityPrefix$overridePrefix$keyword $receiverStr${name.value().escapeIdentifier()}: ${type.emitGenerics()}"
+        val signature = "$annotationPrefix$visibilityPrefix$overridePrefix$keyword $receiverStr${name.value().escapeKotlinIdentifier()}: ${type.emitGenerics()}"
         return when {
             getter != null -> "$signature\n${"get() = ${getter.emit()}".indentCode(1)}\n\n".indentCode(indent)
             initializer != null -> "$signature = ${initializer.emit()}\n\n".indentCode(indent)
@@ -310,7 +310,7 @@ object KotlinGenerator : Generator {
         // DSL-authored functions (opting into an explicit visibility) keep their name verbatim so
         // wire-derived names such as `Refresh-TokenBlock` are backtick-escaped, not camel-cased;
         // model functions (visibility == null) keep the camelCase normalisation.
-        val nameStr = if (visibility != null) name.value().escapeIdentifier() else name.camelCase()
+        val nameStr = if (visibility != null) name.value().escapeKotlinIdentifier() else name.camelCase()
         val signature = "$annotationPrefix$visibilityPrefix$overridePrefix${suspendPrefix}fun $typeParamsStr$receiverStr$nameStr($params)$returnTypeStr"
 
         return when {
@@ -620,9 +620,10 @@ private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
  * Escapes an arbitrary declaration name for use as a Kotlin identifier: backticks it when it
  * is not already a valid identifier (e.g. the wire header name `Refresh-Token`) or collides
  * with a reserved keyword. Unlike [sanitize], this also handles names with non-identifier
- * characters, not just keywords.
+ * characters, not just keywords. Public so raw-code emitters (e.g. the Kotest DSL extension)
+ * escape names identically to this generator.
  */
-private fun String.escapeIdentifier(): String = if (validIdentifier.matches(this) && this !in reservedKeywords) this else "`$this`"
+fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in reservedKeywords) this else "`$this`"
 
 private val reservedKeywords = setOf(
     "as", "break", "class", "continue", "do",
