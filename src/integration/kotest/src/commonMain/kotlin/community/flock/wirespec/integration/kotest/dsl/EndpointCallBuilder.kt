@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest.dsl
 
+import community.flock.wirespec.integration.kotest.ResponseVariantNaming
 import community.flock.wirespec.integration.kotest.runtime.CallExecutor
 import community.flock.wirespec.integration.kotest.runtime.currentAmbient
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
@@ -157,13 +158,7 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     internal fun statusOf(variantClass: KClass<*>): Int {
         val name = variantClass.simpleName
             ?: error("Anonymous response variant class — pass a named ResponseNNN class.")
-        val match = STATUS_REGEX.matchEntire(name)
+        return ResponseVariantNaming.statusOf(name)
             ?: error("Response variant class name '$name' doesn't match ResponseNNN. Use a Wirespec-generated response variant.")
-        return match.groupValues[1].toInt()
-    }
-
-    companion object {
-        @PublishedApi
-        internal val STATUS_REGEX = Regex("Response(\\d{3})")
     }
 }

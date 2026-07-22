@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotest.extension
+package community.flock.wirespec.integration.kotest.emit
 
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -446,6 +446,5 @@ internal object EndpointDslFile {
     }
 
     /** The element type backing this endpoint's body-field shapes; present whenever `bodyFieldShapes` is. */
-    private fun EndpointShape.requireBodyElementType(): String =
-        bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for $name")
+    private fun EndpointShape.requireBodyElementType(): String = bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for $name")
 }
