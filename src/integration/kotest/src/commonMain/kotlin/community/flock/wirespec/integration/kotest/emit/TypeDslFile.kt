@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotest.extension
+package community.flock.wirespec.integration.kotest.emit
 
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -13,7 +13,8 @@ import community.flock.wirespec.ir.core.Type as IrType
  * Builds the per-type Kotest DSL file (`<Type>Dsl.kt`): the reusable `<Type>Builder` (see
  * [RecordBuilder]) plus a `TodoDto.generate { … }: Gen<TodoDto>` entry point mirroring the
  * endpoint/channel `<X>.generate`. `generate` is an extension on the type's companion object
- * ([KotestDslExtension] injects one into each record); a field-less record has no companion,
+ * ([KotestDslExtension][community.flock.wirespec.integration.kotest.extension.KotestDslExtension]
+ * injects one into each record); a field-less record has no companion,
  * so its `generate` extends the emitted `object` itself instead.
  */
 internal object TypeDslFile {
