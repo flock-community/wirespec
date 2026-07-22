@@ -52,17 +52,12 @@ open class KotestDslExtension(
         val endpoints = allStatements.filterIsInstance<Endpoint>()
         val channels = allStatements.filterIsInstance<Channel>()
 
-        // One `<Type>Dsl.kt` per record carries the single reusable `<Type>Builder`, referenced by
-        // endpoint bodies and channel payloads rather than replicated per operation.
         val typeDsl = types.values.map { TypeDslFile.build(it, packageName, types, refined) }
         val endpointDsl = endpoints.map { EndpointDslFile.build(it, packageName, types, refined) }
         val channelDsl = channels.map { ChannelDslFile.build(it, packageName, types, refined) }
 
         val extra: List<Element> = typeDsl + endpointDsl + channelDsl
 
-        // `<Type>.generate` is a companion extension, but records carry no companion — inject an empty
-        // one into each model record (keeping the model dependency-free). Field-less records emit as
-        // `object`s with no companion and take an object-level `generate`, so they need no injection.
         val recordNames = types.values.map { Name.of(it.identifier.value).pascalCase() }.toSet()
         val modelPkg = "${packageName.value}.model"
         val withCompanions = ir.map { it.injectRecordCompanion(recordNames, modelPkg) }

@@ -5,6 +5,7 @@ import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.StructBuilder
 import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.struct
+import community.flock.wirespec.ir.generator.escapeKotlinIdentifier
 import community.flock.wirespec.ir.core.Type as IrType
 
 /**
@@ -79,7 +80,7 @@ internal object RecordBuilder {
         function("${fieldName}Block") {
             visibility(Visibility.PUBLIC)
             arg("block", blockType(nested))
-            raw("${KotlinIdentifier.escape("_${fieldName}Block")} = block")
+            raw("${"_${fieldName}Block".escapeKotlinIdentifier()} = block")
         }
     }
 
@@ -95,7 +96,7 @@ internal object RecordBuilder {
         indent: String,
     ): String = buildString {
         fields.forEach { f ->
-            val fieldRef = "$receiver.${KotlinIdentifier.escape(f.name)}"
+            val fieldRef = "$receiver.${f.name.escapeKotlinIdentifier()}"
             val segs = (path + f.name).joinToString(", ") { "\"$it\"" }
             appendLine("$indent$fieldRef?.let { registerPath($segs) { it } }")
             when (f) {
@@ -121,8 +122,8 @@ internal object RecordBuilder {
         indent: String,
         listSegment: Boolean,
     ) {
-        val blockRef = "$receiver.${KotlinIdentifier.escape("_${fieldName}Block")}"
-        val nestedVar = KotlinIdentifier.escape("nested_$fieldName")
+        val blockRef = "$receiver.${"_${fieldName}Block".escapeKotlinIdentifier()}"
+        val nestedVar = "nested_$fieldName".escapeKotlinIdentifier()
         val nextPath = if (listSegment) path + fieldName + "*" else path + fieldName
         appendLine("$indent$blockRef?.let { block ->")
         appendLine("$indent    val $nestedVar = ${builderName(nestedTypeName)}().apply(block)")

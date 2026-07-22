@@ -1,14 +1,11 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.ResponseVariantNaming
 import community.flock.wirespec.integration.kotest.runtime.CallExecutor
 import community.flock.wirespec.integration.kotest.runtime.currentAmbient
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
 import io.kotest.property.RandomSource
-import kotlin.reflect.KClass
-import kotlin.time.Duration
 
 @DslMarker
 annotation class WirespecScenarioDsl
@@ -57,13 +54,6 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
 
     @PublishedApi internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
 
-    internal var expectedStatuses: Set<Int>? = null
-
-    // Invoked with the generated request and the validated response, so assertion blocks can read
-    // both (e.g. assert the response echoes a generated request field). The response-only
-    // `expecting { … }` form ignores the request argument.
-    internal var customAssertion: ((request: Any, response: Any) -> Unit)? = null
-
     /**
      * Reconstruct the request body from per-field override `Gen`s. The generated typed
      * body builder passes a transform that takes the contract-derived default body (drawn
@@ -92,73 +82,11 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     fun headerGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { headerGens[name] = gen }
 
     /**
-     * Build the typed request object from the registered slot/body gens against the ambient
-     * `RandomSource`, without sending it. Backs the generated `<Endpoint>.request { … }` DSL;
-     * `call { … }` sends exactly this request.
-     */
-    suspend fun buildRequest(): Req {
-        @Suppress("UNCHECKED_CAST")
-        return CallExecutor.buildRequest(this) as Req
-    }
-
-    /**
      * A [Gen] materialising the typed request on each draw (from the slot/body gens registered so
      * far). Backs the generated `<Endpoint>.request { … }` DSL; `Gen<Req>.call()` draws and sends it.
      */
     fun buildRequestGen(): Gen<Req> {
         @Suppress("UNCHECKED_CAST")
         return CallExecutor.buildRequestGen(this) as Gen<Req>
-    }
-
-    // ---- terminals (eager, suspend) ----
-
-    suspend inline fun <reified R : Resp> expecting(): R = expecting(R::class)
-
-    suspend fun <R : Resp> expecting(variantClass: KClass<R>): R {
-        expectedStatuses = setOf(statusOf(variantClass))
-        @Suppress("UNCHECKED_CAST")
-        return CallExecutor.executeEndpoint(this) as R
-    }
-
-    suspend inline fun <reified R : Resp> expecting(noinline block: (R) -> Unit): R = expecting(R::class, block)
-
-    suspend fun <R : Resp> expecting(variantClass: KClass<R>, block: (R) -> Unit): R {
-        expectedStatuses = setOf(statusOf(variantClass))
-        @Suppress("UNCHECKED_CAST")
-        customAssertion = { _, response -> block(response as R) }
-        @Suppress("UNCHECKED_CAST")
-        return CallExecutor.executeEndpoint(this) as R
-    }
-
-    suspend inline fun <reified R : Resp> expecting(noinline block: (Req, R) -> Unit): R = expecting(R::class, block)
-
-    suspend fun <R : Resp> expecting(variantClass: KClass<R>, block: (Req, R) -> Unit): R {
-        expectedStatuses = setOf(statusOf(variantClass))
-        @Suppress("UNCHECKED_CAST")
-        customAssertion = { request, response -> block(request as Req, response as R) }
-        @Suppress("UNCHECKED_CAST")
-        return CallExecutor.executeEndpoint(this) as R
-    }
-
-    // Endpoint streaming is not implemented: the single validated response is
-    // delivered as a one-element list. The count/duration arguments are accepted
-    // for DSL symmetry with the generated wrappers but not honored.
-    suspend inline fun <reified R : Resp> collecting(count: Int, noinline block: (List<R>) -> Unit) = collecting(R::class, block)
-
-    suspend inline fun <reified R : Resp> collecting(duration: Duration, noinline block: (List<R>) -> Unit) = collecting(R::class, block)
-
-    suspend fun <R : Resp> collecting(variantClass: KClass<R>, block: (List<R>) -> Unit) {
-        expectedStatuses = setOf(statusOf(variantClass))
-        val resp = CallExecutor.executeEndpoint(this)
-        @Suppress("UNCHECKED_CAST")
-        block(listOf(resp as R))
-    }
-
-    @PublishedApi
-    internal fun statusOf(variantClass: KClass<*>): Int {
-        val name = variantClass.simpleName
-            ?: error("Anonymous response variant class — pass a named ResponseNNN class.")
-        return ResponseVariantNaming.statusOf(name)
-            ?: error("Response variant class name '$name' doesn't match ResponseNNN. Use a Wirespec-generated response variant.")
     }
 }
