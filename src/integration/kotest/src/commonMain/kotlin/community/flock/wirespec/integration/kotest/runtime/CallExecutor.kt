@@ -15,13 +15,10 @@ import io.kotest.property.arbitrary.int
 
 /**
  * Executes a single endpoint call eagerly against the ambient context: slot resolution → typed
- * transport → contract validation → user assertion. The ambient [RandomSource] advances on every
- * call, so repeated same-endpoint calls draw distinct bodies.
+ * transport → contract validation. The ambient [RandomSource] advances on every call, so repeated
+ * same-endpoint calls draw distinct bodies.
  */
 internal object CallExecutor {
-
-    /** Build the typed request from the call's slot/body gens without sending it. */
-    suspend fun buildRequest(call: EndpointCallBuilder<*, *, *>): Any = buildRequestWith(call, currentAmbient().randomSource)
 
     fun buildRequestGen(call: EndpointCallBuilder<*, *, *>): Arb<Any> = arbitrary { rs -> buildRequestWith(call, rs) }
 
@@ -31,38 +28,18 @@ internal object CallExecutor {
         return reflection.buildRequest(resolveSlots(call, reflection, rs, arb))
     }
 
-    /** Run the endpoint call and return the validated typed response. */
-    suspend fun executeEndpoint(call: EndpointCallBuilder<*, *, *>): Any {
-        val ambient = currentAmbient()
-        val reflection = call.reflection
-        val request = buildRequestWith(call, ambient.randomSource)
-        val typedResponse = transportAndValidate(call.client, reflection, request, call.expectedStatuses, ambient)
-        call.customAssertion?.let { assertion ->
-            try {
-                assertion.invoke(request, typedResponse)
-            } catch (t: Throwable) {
-                throw AssertionError(
-                    "${reflection.endpointName} assertion failed (wirespec seed=${ambient.seed}): ${t.message}",
-                    t,
-                )
-            }
-        }
-        return typedResponse
-    }
-
-    /** Send a pre-built typed request as-is; returns the response validated against any declared status. */
+    /** Send a pre-built typed request as-is; returns the response validated against the contract. */
     suspend fun executeRequest(
         client: Wirespec.Client<*, *>,
         endpointObject: Wirespec.Endpoint,
         request: Any,
-    ): Any = transportAndValidate(client, EndpointReflection.of(endpointObject), request, expectedStatuses = null, ambient = currentAmbient())
+    ): Any = transportAndValidate(client, EndpointReflection.of(endpointObject), request, ambient = currentAmbient())
 
     /** Typed transport of one request through the ambient context, then contract validation. */
     private suspend fun transportAndValidate(
         client: Wirespec.Client<*, *>,
         reflection: EndpointReflection,
         request: Any,
-        expectedStatuses: Set<Int>?,
         ambient: WirespecAmbient,
     ): Any {
         val ctx = ambient.endpointContext()
@@ -77,7 +54,7 @@ internal object CallExecutor {
 
         val validator = ContractValidator(reflection, ctx.serialization)
         return try {
-            validator.validate(rawResponse, expectedStatuses = expectedStatuses)
+            validator.validate(rawResponse)
         } catch (t: Throwable) {
             throw AssertionError("${reflection.endpointName} failed (wirespec seed=${ambient.seed}): ${t.message}", t)
         }

@@ -3,14 +3,13 @@ package community.flock.wirespec.integration.kotest.validation
 import community.flock.wirespec.kotlin.Wirespec
 
 /** Kind of contract violation surfaced to test failure messages. */
-enum class ContractViolationKind { UnexpectedStatus, UndeclaredStatus, BodyMismatch }
+enum class ContractViolationKind { UndeclaredStatus, BodyMismatch }
 
 /**
  * Validates a [Wirespec.RawResponse] against an endpoint's contract, in order:
  *
  *   1. **Status code** — must match one of the `ResponseNNN` variants Wirespec
- *      emitted for the endpoint (or, if [validate]'s `expectedStatuses` is set,
- *      one of those).
+ *      emitted for the endpoint.
  *   2. **Body schema** — must deserialize into the matched variant's body type via
  *      [Wirespec.Serialization]; anything that fails `fromRawResponse` becomes a
  *      [ContractViolation] with the underlying cause attached.
@@ -22,16 +21,7 @@ internal class ContractValidator(
     private val serialization: Wirespec.Serialization,
 ) {
 
-    fun validate(raw: Wirespec.RawResponse, expectedStatuses: Set<Int>? = null): Any {
-        if (expectedStatuses != null && raw.statusCode !in expectedStatuses) {
-            throw ContractViolation(
-                endpoint = endpoint.endpointName,
-                kind = ContractViolationKind.UnexpectedStatus,
-                message = "expected status in $expectedStatuses but got ${raw.statusCode}",
-                rawResponse = raw,
-            )
-        }
-
+    fun validate(raw: Wirespec.RawResponse): Any {
         val variant = endpoint.responseClassForStatus(raw.statusCode)
             ?: throw ContractViolation(
                 endpoint = endpoint.endpointName,

@@ -35,54 +35,29 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     // ---- build (no publish) ----
 
     /**
-     * Generate a random payload without publishing it. Backs the generated
-     * `<Channel>.generate.message { … }` entry point; sending happens by chaining
-     * the returned message's `send()`.
-     */
-    suspend fun buildMessage(): P = generatePayload(overrides = null)
-
-    /** Generate a payload with per-field [overrides] without publishing it. */
-    suspend fun buildMessageFields(overrides: KotestWirespecGeneratorBuilder.() -> Unit): P = generatePayload(overrides)
-
-    /**
      * A [Gen] materialising a random payload on each draw, optionally applying per-field
      * [overrides]. Backs the generated `<Channel>.generate.message { … }`; `Gen<P>.send()`
      * draws one and publishes it. A primitive payload accepts no overrides.
      */
-    fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Gen<P> = arbitrary { rs -> buildPayload(rs, overrides, form = "message") }
+    fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Gen<P> = arbitrary { rs -> buildPayload(rs, overrides) }
 
-    // ---- send terminals ----
+    // ---- send terminal ----
 
-    /** Generate a random payload, publish it, and return it. */
-    suspend fun send(): P = generatePayload(overrides = null).also { publish(it) }
-
-    /** Publish a concrete [payload] as-is and return it. Backs the generated `<Channel>Message.send()`. */
-    suspend fun send(payload: P): P {
-        publish(payload)
-        return payload
-    }
-
-    /** Draw a payload from [gen], publish it, and return it. */
+    /** Draw a payload from [gen], publish it, and return it. Backs the generated `Gen<Payload>.send()`. */
     suspend fun send(gen: Gen<P>): P {
         val payload = gen.draw(currentAmbient().randomSource)
         publish(payload)
         return payload
     }
 
-    /** Generate a payload with per-field [overrides], publish it, and return it. */
-    suspend fun sendFields(overrides: KotestWirespecGeneratorBuilder.() -> Unit): P = generatePayload(overrides).also { publish(it) }
-
     // ---- internals ----
-
-    private suspend fun generatePayload(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P = buildPayload(currentAmbient().randomSource, overrides, form = "send")
 
     /**
      * Materialise a payload from [rs]: a record payload is drawn through the wirespec generator
-     * (honouring per-field [overrides]); a primitive payload is drawn directly and rejects
-     * [overrides]. [form] names the DSL entry point (`message`/`send`) in the rejection message.
+     * (honouring per-field [overrides]); a primitive payload is drawn directly and rejects [overrides].
      */
     @Suppress("UNCHECKED_CAST")
-    private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?, form: String): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
+    private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
         null -> {
             val receiver = ArbReceiver(rs)
             val generator = overrides
@@ -92,7 +67,7 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
         }
         else -> {
             require(overrides == null) {
-                "${channelClass.simpleName}: per-field $form { } overrides are only supported for record " +
+                "${channelClass.simpleName}: per-field message { } overrides are only supported for record " +
                     "payloads, not the primitive payload ${payloadClass.simpleName}."
             }
             primitive.draw(rs) as P
