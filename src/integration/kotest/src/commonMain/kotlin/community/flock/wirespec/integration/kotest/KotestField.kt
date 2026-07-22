@@ -3,28 +3,20 @@ package community.flock.wirespec.integration.kotest
 import kotlin.reflect.KType
 
 /**
- * Generation contract owned by the kotest integration. Mirrors the
- * `Wirespec.Generator` shape but lives in commonMain so the JS facade can
- * implement it without depending on the JVM-only `:src:integration:wirespec`
- * module. The JVM bridge in [kotestWirespecKotlinGenerator] adapts a
- * `KotestGenerator` into a `Wirespec.Generator` for IR-emitted callers.
+ * Generation contract owned by the kotest integration, mirroring `Wirespec.Generator` but in
+ * commonMain so the JS facade can implement it without the JVM-only `:src:integration:wirespec`
+ * module. [kotestWirespecKotlinGenerator] adapts it to a `Wirespec.Generator` for IR-emitted callers.
  */
 interface KotestGenerator {
     fun <T> generate(path: List<String>, field: KotestField<T>): T
 }
 
-/**
- * Multiplatform mirror of `Wirespec.GeneratorField<T>`. Each variant carries
- * the same fields as its Wirespec counterpart, so the JVM adapter can
- * translate the two sides 1:1 and the JS facade can construct them straight
- * from plain JS objects.
- */
+/** Multiplatform 1:1 mirror of `Wirespec.GeneratorField<T>`. */
 sealed interface KotestField<T : Any?>
 
 /**
- * Leaf variants that carry Wirespec field annotations (e.g. `@Seed`).
- * Container variants (Array/Nullable/Dict) don't; Shape carries them per
- * child field instead.
+ * Leaf variants that carry Wirespec field annotations (e.g. `@Seed`). Container variants
+ * (Array/Nullable/Dict) don't; Shape carries them per child field instead.
  */
 sealed interface KotestLeafField<T : Any?> : KotestField<T> {
     val annotations: List<Map<String, Any>>

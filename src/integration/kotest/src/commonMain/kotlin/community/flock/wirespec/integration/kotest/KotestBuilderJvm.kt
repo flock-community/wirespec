@@ -9,16 +9,10 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /**
- * `(parent type, field name)` override registration using a property
- * reference. `KProperty1<Parent, V>` supplies the parent type (via
- * `typeOf<Parent>().toString()`) and the field name (via `property.name`)
- * in one compile-checked expression — a typo or rename becomes a compile
- * error. `V` (the property's declared type) is reflected in the call site
- * but the [factory] still returns `Gen<*>`: when the field is a Refined
- * wrapper, [JvmRefinedWrapper] auto-wraps the drawn inner primitive into
- * the wrapper class.
+ * Compile-checked `(parent type, field name)` override via a property reference — a typo or
+ * rename becomes a compile error. When the field is a Refined wrapper, [JvmRefinedWrapper]
+ * auto-wraps the drawn inner primitive into the wrapper class.
  *
- * Example:
  * ```
  * registerField(User::email) { Arb.email() }
  * registerField(User::age, value = 42L)
@@ -39,10 +33,8 @@ inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerFiel
 }
 
 /**
- * JVM-side `RefinedWrapper` that wraps a drawn primitive into the matching
- * single-arg Refined wrapper class. If the underlying [field] is not a
- * `KotestFieldShape<*>` with a single-ctor classifier, the drawn value is
- * passed through unchanged.
+ * JVM-side `RefinedWrapper` that wraps a drawn primitive into the matching single-arg Refined
+ * wrapper class. A field that is not a single-ctor `KotestFieldShape<*>` passes through unchanged.
  */
 internal object JvmRefinedWrapper : RefinedWrapper {
 

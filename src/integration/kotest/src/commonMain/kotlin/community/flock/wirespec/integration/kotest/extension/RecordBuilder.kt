@@ -24,7 +24,7 @@ internal object RecordBuilder {
         visibility(Visibility.PUBLIC)
         fields.forEach { f ->
             when (f) {
-                is BodyFieldShape.Primitive ->
+                is BodyFieldShape.Primitive -> {
                     property(
                         name = f.name,
                         type = genNullable(IrType.Custom(f.kotlinType)),
@@ -32,9 +32,17 @@ internal object RecordBuilder {
                         visibility = Visibility.PUBLIC,
                         initializer = rawExpr("null"),
                     )
-                is BodyFieldShape.NestedObject -> nestedBlock(f.name, f.typeName, genNullable(IrType.Custom(f.typeName)))
+                    valueSetter(f.name, f.kotlinType)
+                }
+                is BodyFieldShape.NestedObject ->
+                    nestedBlock(f.name, f.typeName, genNullable(IrType.Custom(f.typeName)), f.typeName)
                 is BodyFieldShape.NestedList ->
-                    nestedBlock(f.name, f.elementTypeName, genNullable(IrType.Array(IrType.Custom(f.elementTypeName))))
+                    nestedBlock(
+                        f.name,
+                        f.elementTypeName,
+                        genNullable(IrType.Array(IrType.Custom(f.elementTypeName))),
+                        "List<${f.elementTypeName}>",
+                    )
             }
         }
     }
@@ -46,11 +54,11 @@ internal object RecordBuilder {
     private fun blockType(nested: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(nested))
 
     /**
-     * Emits the three members for a nested object/list field: the whole-value `Gen<…>?` override,
-     * the `@PublishedApi internal var _<field>Block` sub-builder slot, and the `<field>Block { … }`
-     * function that assigns it.
+     * Emits the members for a nested object/list field: the whole-value `Gen<…>?` override and its
+     * constant-value `<field>(value)` overload, the `@PublishedApi internal var _<field>Block`
+     * sub-builder slot, and the `<field>Block { … }` function that assigns it.
      */
-    private fun StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType) {
+    private fun StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType, valueType: String) {
         val nested = builderName(nestedTypeName)
         property(
             name = fieldName,
@@ -59,6 +67,7 @@ internal object RecordBuilder {
             visibility = Visibility.PUBLIC,
             initializer = rawExpr("null"),
         )
+        valueSetter(fieldName, valueType)
         property(
             name = "_${fieldName}Block",
             type = IrType.Nullable(blockType(nested)),

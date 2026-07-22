@@ -105,14 +105,14 @@ sealed interface Type {
 
     /**
      * A function type. [receiver] (when non-null) makes it a receiver function type
-     * (Kotlin `Receiver.() -> R`); [isSuspend] marks it `suspend`. Both default so plain
+     * (Kotlin `Receiver.() -> R`); [isAsync] marks it `suspend` in Kotlin. Both default so plain
      * `(A, B) -> R` function types are unchanged.
      */
     data class Function(
         val parameterTypes: List<Type>,
         val returnType: Type,
         val receiver: Type? = null,
-        val isSuspend: kotlin.Boolean = false,
+        val isAsync: kotlin.Boolean = false,
     ) : Type
 }
 

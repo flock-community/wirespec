@@ -6,25 +6,19 @@ import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
 import community.flock.wirespec.integration.kotest.runtime.currentAmbient
 import io.kotest.property.Gen
+import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.arbitrary
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-/**
- * Build a [ChannelCallBuilder] for a channel. Generated `*Dsl` wrappers call this
- * from their `message { … }` entry point, passing the channel object's [KClass] and —
- * via the reified [P] — the payload type used for (de)serialization and generation.
- */
+/** Build a [ChannelCallBuilder] for a channel. Called by generated `*Dsl` wrappers. */
 inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
 
 /**
- * Eager channel scenario runner. `send*` generates (or accepts) a typed payload,
- * serializes it via the ambient [WirespecChannelContext] and publishes it through
- * the broker [transport][community.flock.wirespec.integration.kotest.context.ChannelTransport].
- * Asserting on what the app published is left to the test's own broker consumer.
- *
- * The destination topic is `topic(...)` if pinned, else the channel object's simple name.
+ * Eager channel scenario runner. `send*` generates (or accepts) a typed payload, serializes it via
+ * the ambient [WirespecChannelContext] and publishes it through the broker transport. The
+ * destination topic is `topic(...)` if pinned, else the channel object's simple name.
  */
 @WirespecScenarioDsl
 class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
@@ -55,25 +49,7 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
      * [overrides]. Backs the generated `<Channel>.generate.message { … }`; `Gen<P>.send()`
      * draws one and publishes it. A primitive payload accepts no overrides.
      */
-    fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Gen<P> = arbitrary { rs ->
-        @Suppress("UNCHECKED_CAST")
-        when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
-            null -> {
-                val receiver = ArbReceiver(rs)
-                val generator = overrides
-                    ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong()) { it() } }
-                    ?: receiver.generator
-                receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
-            }
-            else -> {
-                require(overrides == null) {
-                    "${channelClass.simpleName}: per-field message { } overrides are only supported for record " +
-                        "payloads, not the primitive payload ${payloadClass.simpleName}."
-                }
-                primitive.draw(rs) as P
-            }
-        }
-    }
+    fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Gen<P> = arbitrary { rs -> buildPayload(rs, overrides, form = "message") }
 
     // ---- send terminals ----
 
@@ -98,26 +74,31 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
 
     // ---- internals ----
 
-    private suspend fun generatePayload(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P {
-        val rs = currentAmbient().randomSource
-        @Suppress("UNCHECKED_CAST")
-        return when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
+    private suspend fun generatePayload(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P = buildPayload(currentAmbient().randomSource, overrides, form = "send")
+
+    /**
+     * Materialise a payload from [rs]: a record payload is drawn through the wirespec generator
+     * (honouring per-field [overrides]); a primitive payload is drawn directly and rejects
+     * [overrides]. [form] names the DSL entry point (`message`/`send`) in the rejection message.
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?, form: String): P =
+        when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
             null -> {
                 val receiver = ArbReceiver(rs)
                 val generator = overrides
-                    ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong()) { it() } }
+                    ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong(), block = it) }
                     ?: receiver.generator
                 receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
             }
             else -> {
                 require(overrides == null) {
-                    "${channelClass.simpleName}: per-field send { } overrides are only supported for record payloads, " +
-                        "not the primitive payload ${payloadClass.simpleName}."
+                    "${channelClass.simpleName}: per-field $form { } overrides are only supported for record " +
+                        "payloads, not the primitive payload ${payloadClass.simpleName}."
                 }
                 primitive.draw(rs) as P
             }
         }
-    }
 
     private suspend fun publish(payload: P) {
         val ctx = currentAmbient().channelContext()

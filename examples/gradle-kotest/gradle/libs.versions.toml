@@ -8,6 +8,7 @@ kotlinx_coroutines = "1.9.0"
 spring_boot = "3.3.4"
 spring_dependency_management = "1.1.6"
 spring_kafka = "3.2.4"
+spotless = "7.0.2"
 wiremock = "3.3.1"
 wirespec = "0.0.0-SNAPSHOT"
 
@@ -46,4 +47,5 @@ kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
 spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 wirespec = { id = "community.flock.wirespec.plugin.gradle", version.ref = "wirespec" }

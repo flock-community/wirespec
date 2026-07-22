@@ -11,11 +11,7 @@ import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.Type as IrType
 
-/**
- * Builds the per-channel Kotest DSL file (`<Channel>Dsl.kt`) as an IR [File] using the IR
- * DSL builders: the `<Channel>Generate` class, its `generate` extension property, and the
- * `Gen<Payload>.send()` extension. Only the imperative method/getter bodies are raw code.
- */
+/** Builds the per-channel Kotest DSL file (`<Channel>Dsl.kt`): the `<Channel>Generate` class, its `generate` extension property, and the `Gen<Payload>.send()` extension. */
 internal object ChannelDslFile {
 
     fun build(
@@ -37,17 +33,11 @@ internal object ChannelDslFile {
             `package`(kotestPkg)
 
             import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
-            // `message` returns `Gen<Payload>` and `send()` extends it.
             import("io.kotest.property", "Gen")
             import(channelPkg, shape.name)
             // pascalCase so underscore-bearing type names resolve to the emitted class.
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
-            // The DSL entry point: a `generate` extension property on the generated channel object,
-            // mirroring the endpoint DSL. The `<Channel>Generate` wrapper carries `message` — it
-            // returns a `Gen<Payload>` (per-field `Gen` overrides pin values, unset fields are
-            // generated). The payload field builder is the shared `<Type>Builder` (emitted by the
-            // payload's own `<Type>Dsl.kt`); the message entry point references it by name.
             struct("${shape.name}Generate") {
                 plainClass()
                 visibility(Visibility.PUBLIC)
@@ -80,9 +70,8 @@ internal object ChannelDslFile {
                 getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
 
-            // `send()` extension on the payload `Gen`, so `generate.message { … }.send()` draws one
-            // payload (seeded by the ambient `RandomSource`), publishes it through the ambient channel
-            // transport, and returns it. `topic`/`key` optionally pin the destination.
+            // `generate.message { … }.send()` draws one payload, publishes it through the ambient
+            // channel transport, and returns it; `topic`/`key` optionally pin the destination.
             asyncFunction("send") {
                 visibility(Visibility.PUBLIC)
                 receiver(genPayload)
