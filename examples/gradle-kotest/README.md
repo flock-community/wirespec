@@ -29,12 +29,12 @@ build/generated/.../generated/
   ```kotlin
   // endpoint: build a request, send it over real HTTP, narrow the validated response
   val response = CreateProduct.generate.request {
-      body { sku = Arb.constant("SKU-001"); name = Arb.constant("Wireless mouse"); price = Arb.constant(29.95) }
+      body { sku("SKU-001"); name("Wireless mouse"); price(29.95) }
   }.call()
   response.shouldBeInstanceOf<CreateProduct.Response201>()
 
   // channel: publish a generated message; assert on it with a plain Kafka consumer
-  CampaignEvents.generate.message { eventType = Arb.constant(CampaignEventType.ENDED) }.send(CAMPAIGN_EVENTS_TOPIC)
+  CampaignEvents.generate.message { eventType(CampaignEventType.ENDED) }.send(CAMPAIGN_EVENTS_TOPIC)
   ```
 
   The DSL drives the **send** direction only; asserting on what the app published to Kafka is done
@@ -111,11 +111,11 @@ mock server for every incoming request the typed predicate accepts:
 ```kotlin
 // stub GET /stock/{sku}: only requests for SKU-001 get this canned 200
 GetStock.generate.response200 {
-    body = StockLevel.generate { sku = Arb.constant("SKU-001"); available = Arb.constant(7L); warehouse = Arb.constant("EU-WEST") }
+    body = StockLevel.generate { sku("SKU-001"); available(7L); warehouse("EU-WEST") }
 }.mock { req -> req.path.sku == "SKU-001" }
 
 // drive the app; its outbound GetStock call is answered by the stub above
-val availability = GetProductAvailability.generate.request { path { id = Arb.constant(productId) } }.call()
+val availability = GetProductAvailability.generate.request { path { id(productId) } }.call()
 availability.shouldBeInstanceOf<GetProductAvailability.Response200>()
 availability.body.available shouldBe 7L
 ```

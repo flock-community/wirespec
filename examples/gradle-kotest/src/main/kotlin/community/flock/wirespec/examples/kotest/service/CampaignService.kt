@@ -53,12 +53,11 @@ class CampaignService(
 
     suspend fun delete(id: CampaignId): Boolean = repository.delete(id)
 
-    private fun CampaignEventPublisher.publish(campaign: Campaign, type: CampaignEventType) =
-        campaignEvents(
-            CampaignEvent(
-                campaignId = campaign.id,
-                eventType = type,
-                discountPercentage = campaign.discountPercentage,
-            ),
-        )
+    private fun CampaignEventPublisher.publish(campaign: Campaign, type: CampaignEventType) = campaignEvents(
+        CampaignEvent(
+            campaignId = campaign.id,
+            eventType = type,
+            discountPercentage = campaign.discountPercentage,
+        ),
+    )
 }

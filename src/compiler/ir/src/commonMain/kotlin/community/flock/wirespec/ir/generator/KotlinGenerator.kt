@@ -376,7 +376,7 @@ object KotlinGenerator : Generator {
     }
 
     private fun Type.Function.emitFunctionType(): String {
-        val suspendPrefix = "suspend ".takeIf { isSuspend }.orEmpty()
+        val suspendPrefix = "suspend ".takeIf { isAsync }.orEmpty()
         val receiverPrefix = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
         val params = parameterTypes.joinToString(", ") { it.emitGenerics() }
         return "$suspendPrefix$receiverPrefix($params) -> ${returnType.emitGenerics()}"

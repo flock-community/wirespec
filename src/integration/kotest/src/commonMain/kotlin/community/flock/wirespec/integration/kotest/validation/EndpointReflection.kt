@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.kotest.validation
 import community.flock.wirespec.kotlin.Wirespec
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
+import java.lang.reflect.Parameter
 import java.lang.reflect.ParameterizedType
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -82,21 +83,23 @@ internal class EndpointReflection private constructor(
             return ctor
         }
 
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        private fun Parameter.isListType(): Boolean = java.util.List::class.java.isAssignableFrom(type)
+
+        /** The element `Class<*>` of a `List<…>` body/param, or `null` when it isn't a list. */
+        private fun Parameter.listElementClassOrNull(): Class<*>? = takeIf { it.isListType() }
+            ?.let { (parameterizedType as? ParameterizedType)?.actualTypeArguments?.firstOrNull() as? Class<*> }
+
         // Pick the emitter's flattened response-variant constructor: the secondary that omits the
         // primary's `status` param and flattens response header fields + `body`.
-        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
         private fun introspectVariant(variantClass: Class<*>): ResponseVariantReflection {
             val ctor = pickEmitterConstructor(variantClass, excludeParam = "status", label = variantClass.simpleName ?: variantClass.name)
             val bodyParam = ctor.parameters.firstOrNull { it.name == "body" }
-            val isListBody = bodyParam != null && java.util.List::class.java.isAssignableFrom(bodyParam.type)
-            val bodyElementClass: Class<*>? = bodyParam
-                ?.takeIf { isListBody }
-                ?.let { (it.parameterizedType as? ParameterizedType)?.actualTypeArguments?.firstOrNull() as? Class<*> }
             return ResponseVariantReflection(
                 constructor = ctor,
                 hasBody = bodyParam != null,
-                bodyElementClass = bodyElementClass,
-                bodyClass = bodyParam?.takeIf { !isListBody }?.type,
+                bodyElementClass = bodyParam?.listElementClassOrNull(),
+                bodyClass = bodyParam?.takeIf { !it.isListType() }?.type,
             )
         }
 
@@ -123,21 +126,9 @@ internal class EndpointReflection private constructor(
             // queries) has a secondary LARGER than the 5-arg primary — so exclusion by `method` runs
             // first, inside pickEmitterConstructor.
             val requestConstructor = pickEmitterConstructor(requestClass, excludeParam = "method", label = "${cls.simpleName}.Request")
-            val paramNames = requestConstructor.parameters.map { it.name }
-
-            val hasBody = "body" in paramNames
-
-            @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-            val bodyElementClass: Class<*>? = if (hasBody) {
-                val bodyParam = requestConstructor.parameters.first { it.name == "body" }
-                if (java.util.List::class.java.isAssignableFrom(bodyParam.type)) {
-                    (bodyParam.parameterizedType as? ParameterizedType)?.actualTypeArguments?.firstOrNull() as? Class<*>
-                } else {
-                    null
-                }
-            } else {
-                null
-            }
+            // pickEmitterConstructor guarantees every parameter name is retained (non-null).
+            val paramNames = requestConstructor.parameters.map { it.name!! }
+            val bodyParam = requestConstructor.parameters.firstOrNull { it.name == "body" }
 
             return EndpointReflection(
                 endpointName = cls.simpleName ?: jcls.name,
@@ -145,9 +136,9 @@ internal class EndpointReflection private constructor(
                 fromResponseMethod = fromResponseMethod,
                 instance = instance,
                 requestConstructor = requestConstructor,
-                requestConstructorParamNames = paramNames.filterNotNull(),
-                hasBody = hasBody,
-                bodyElementClass = bodyElementClass,
+                requestConstructorParamNames = paramNames,
+                hasBody = bodyParam != null,
+                bodyElementClass = bodyParam?.listElementClassOrNull(),
             )
         }
     }

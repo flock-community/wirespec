@@ -136,31 +136,42 @@ with `call()` / `send()`, which draw one value and return what went over the wir
 ```kotlin
 // Build a request Gen, send one with call(), narrow the returned variant.
 val response = PutTodo.generate.request {
-    path { id = Arb.constant("42") }
-    body { name = Arb.constant("milk") }
+    path { id("42") }
+    body { name("milk") }
 }.call()
 response.shouldBeInstanceOf<PutTodo.Response200>()
 
 // Every builder entry point returns a Gen<…>; draw() one to inspect it (or feed it to checkAll).
-val request: Gen<PutTodo.Request> = PutTodo.generate.request { path { id = Arb.constant("42") } }
+val request: Gen<PutTodo.Request> = PutTodo.generate.request { path { id("42") } }
 val canned: PutTodo.Response200 = PutTodo.generate.response200().draw()
 
 // Channels: publish by chaining send() on the message Gen. send() takes an optional
 // destination topic (and key); omit them to fall back to the channel object's simple name.
-CampaignEvents.generate.message { eventType = Arb.constant(CampaignEventType.ENDED) }.send("campaign-events")
+CampaignEvents.generate.message { eventType(CampaignEventType.ENDED) }.send("campaign-events")
 
 // Channels: consume via the listen scope.
 CampaignEvents.generate.listen { expecting { event -> event.eventType shouldBe CampaignEventType.CREATED } }
 
 // Standalone types: `<Type>.generate { … }` reads through the type name like the
 // endpoint/channel entry points and returns a `Gen<…>`, pinning only the fields you set.
-val gen: Gen<Campaign> = Campaign.generate { name = Arb.constant("Summer sale") }
+val gen: Gen<Campaign> = Campaign.generate { name("Summer sale") }
 val one: Campaign = gen.draw()
 ```
 
 Every scope slot has both an assignable `var` form (`path = { … }`) and a
 same-named function form (`path { … }`). Un-overridden fields keep the value the
 generator drew, so a scenario only spells out the fields it actually cares about.
+
+Field slots follow the same pair. Each is a `Gen<…>?` property plus a same-named
+single-arg function that pins a constant, so a fixed value needs no `Arb` wrapper:
+
+```kotlin
+body {
+    name("Autumn promo")               // == name = Arb.constant("Autumn promo")
+    discountPercentage(20L)
+    productIds = Arb.list(productIdArb) // the property form still takes any Gen/Arb
+}
+```
 
 `<Type>.generate` is an extension on the type's companion object; the extension injects an
 empty `companion object` into each generated record so there is a receiver to hang it

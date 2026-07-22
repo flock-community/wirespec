@@ -14,18 +14,10 @@ import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.Type as IrType
 
 /**
- * Builds the per-endpoint block-style Kotest DSL file (`<Endpoint>Dsl.kt`) as an IR [File]
- * using the IR DSL builders: the `<Endpoint>Generate` class and its `generate` extension
- * property, the `Gen<Request>.call()` / `Gen<Response<*>>.mock()` extensions, the request
- * `<Endpoint>Scope`, the per-variant response scopes, and the slot builders. Declarations are
- * modelled as DSL nodes; only the genuinely-imperative method bodies (`flush`, the body
- * transform) remain raw code.
- *
- * ## Block style
- *
- * Each endpoint object carries a `generate` extension property exposing the DSL entry
- * points (`request`, `response<NNN>`), each taking a scope receiver. `request { … }`
- * returns a `Gen<Request>`; the `call()` extension on that `Gen` is the one way to send it:
+ * Builds the per-endpoint block-style Kotest DSL file (`<Endpoint>Dsl.kt`): the
+ * `<Endpoint>Generate` class and its `generate` extension property, the `Gen<Request>.call()` /
+ * `Gen<Response<*>>.mock()` extensions, the request `<Endpoint>Scope`, per-variant response
+ * scopes, and slot builders.
  *
  * ```
  * PutTodo.generate.request {
@@ -36,20 +28,9 @@ import community.flock.wirespec.ir.core.Type as IrType
  * }.call()
  * ```
  *
- * `call()` draws one request from the `Gen` (seeded by the ambient `RandomSource`) and returns
- * the contract-validated `PutTodo.Response<*>`; narrow it with e.g.
- * kotest's `shouldBeInstanceOf<PutTodo.Response200>()`. `response<NNN> { … }` likewise returns a
- * `Gen<Response<NNN>>`.
- *
- * Each slot is set through its function form (`path { … }`); the underlying `var` holding
- * the builder lambda is private, so that function is the only way in. `buildRequest()` first
- * calls `flush()`, which applies the assigned slot lambdas to the runtime call and
- * **validates required values** — a path/query/header slot with a non-nullable field is
- * required, as is each non-nullable field within it. A missing required slot or field
- * throws a clear error at scenario start. (Kotlin cannot require that a `var` be assigned
- * inside a lambda, so this enforcement is runtime, not compile-time.) Nullable fields
- * default to `Arb.constant(null)`; the request body stays optional (the runtime generates
- * unset fields).
+ * `flush()` (run by `buildRequest()`) validates required slots/fields and throws a clear error
+ * at scenario start. Kotlin cannot require a `var` be assigned inside a lambda, so this
+ * enforcement is runtime, not compile-time; nullable fields default to `Arb.constant(null)`.
  */
 internal object EndpointDslFile {
 
@@ -71,42 +52,35 @@ internal object EndpointDslFile {
             `package`(kotestPkg)
 
             import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
-            // `<Endpoint>.Request.call()` sends a request built by `generate.request { … }` as-is.
             import("community.flock.wirespec.integration.kotest.dsl", "requestCall")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
-            // Per-variant `responseNNN { … }` builders delegate to the runtime `responseCall`;
-            // `Gen<Response<*>>.mock { … }` stubs a drawn response on the ambient mock server.
             if (shape.responseVariants.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
                 import("community.flock.wirespec.integration.kotest.dsl", "responseMock")
             }
-            // The generated body transform reconstructs the contract default body with the
-            // typed builder's per-field override `Gen`s, drawing each value via `Gen.draw(rs)`.
             if (shape.bodyFieldShapes.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
             }
             import(endpointPkg, shape.name)
-            // `request`/`response`/`buildRequest` return `Gen<…>` and `call()` extends `Gen<Request>`.
             import("io.kotest.property", "Gen")
             val isListBody = shape.bodyKind == EndpointShape.BodyKind.List
-            // Nullable path/query/header fields default to `Arb.constant(null)` when the
-            // caller leaves them unset; that default is applied in `flush()`.
-            val needsArbConstant = (shape.pathFields + shape.queryFields + shape.headerFields).any { it.isNullable }
+            // `Arb.constant` backs both the nullable-slot fallback and every `<field>(value)` setter
+            // emitted next to a `Gen<…>?` slot (see [valueSetter]).
+            val needsArbConstant = (shape.pathFields + shape.queryFields + shape.headerFields).any { it.isNullable } ||
+                present.isNotEmpty() ||
+                shape.responseVariants.any { it.bodyType != null || it.headerFields.isNotEmpty() }
             if (isListBody || needsArbConstant) {
                 import("io.kotest.property", "Arb")
             }
             if (isListBody) {
-                // List body builder samples its element count with `Arb.int(count)`.
                 // Arb.int is an extension on Arb.Companion in io.kotest.property.arbitrary.
                 import("io.kotest.property.arbitrary", "int")
             }
             if (needsArbConstant) {
                 import("io.kotest.property.arbitrary", "constant")
             }
-            // Model class names are pascalCased by the Kotlin IR emitter (see
-            // KotlinIrTransformer.buildModelImports). Apply the same normalisation so
-            // imports of underscore-bearing types (e.g. the HAL `Contact_embedded`)
-            // resolve to the emitted class (`ContactEmbedded`).
+            // Model class names are pascalCased by the Kotlin IR emitter (KotlinIrTransformer.buildModelImports);
+            // apply the same normalisation so underscore-bearing types (e.g. HAL `Contact_embedded`) resolve.
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
             buildGenerateWrapper(shape)
@@ -124,8 +98,6 @@ internal object EndpointDslFile {
             buildScopeClass(shape, present, required)
             shape.responseVariants.forEach { variant -> buildResponseScope(shape, variant) }
             present.forEach { slot -> buildSlotBuilder(shape, slot) }
-            // Request body field builders are the shared `<Type>Builder`s (emitted by each record's
-            // own `<Type>Dsl.kt`); the scope and body transform reference them by name.
         }
     }
 
@@ -156,16 +128,15 @@ internal object EndpointDslFile {
     private fun genOf(inner: String): IrType = IrType.Custom("Gen", listOf(IrType.Custom(inner)))
     private fun genNullableOf(inner: String): IrType = IrType.Nullable(genOf(inner))
     private fun blockType(builder: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(builder))
-    private fun suspendScopeType(scope: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(scope), isSuspend = true)
+    private fun suspendScopeType(scope: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(scope), isAsync = true)
 
     // ------------------------------------------------------------------------------------
     // Entry point
     // ------------------------------------------------------------------------------------
 
     /**
-     * The `<Endpoint>Generate` wrapper grouping the scenario builders (reached via the
-     * `generate` extension property): `request` opens the `<Endpoint>Scope` and returns a
-     * `Gen<Request>`; each `response<NNN>` returns a `Gen<Response<NNN>>` via its response scope.
+     * The `<Endpoint>Generate` wrapper grouping the scenario builders: `request` opens the
+     * `<Endpoint>Scope` returning a `Gen<Request>`; each `response<NNN>` returns a `Gen<Response<NNN>>`.
      */
     private fun FileBuilder.buildGenerateWrapper(shape: EndpointShape) {
         struct("${shape.name}Generate") {
@@ -192,10 +163,7 @@ internal object EndpointDslFile {
         }
     }
 
-    /**
-     * A `call()` extension on `Gen<Request>`, so the request `Gen` chains straight into a send:
-     * `PutTodo.generate.request { … }.call()`.
-     */
+    /** A `call()` extension on `Gen<Request>`: `PutTodo.generate.request { … }.call()`. */
     private fun FileBuilder.buildRequestCall(shape: EndpointShape) {
         asyncFunction("call") {
             visibility(Visibility.PUBLIC)
@@ -205,10 +173,7 @@ internal object EndpointDslFile {
         }
     }
 
-    /**
-     * A `mock()` extension on `Gen<Response<*>>`, the response-side twin of `Gen<Request>.call()`:
-     * `PutTodo.generate.response200 { … }.mock { req -> req.path.id == "1" }`.
-     */
+    /** A `mock()` extension on `Gen<Response<*>>`: `PutTodo.generate.response200 { … }.mock { req -> req.path.id == "1" }`. */
     private fun FileBuilder.buildResponseMock(shape: EndpointShape) {
         asyncFunction("mock") {
             visibility(Visibility.PUBLIC)
@@ -224,14 +189,14 @@ internal object EndpointDslFile {
     // ------------------------------------------------------------------------------------
 
     /**
-     * Per-variant response scope, opened by `generate.responseNNN { … }`. Exposes a whole-value
-     * `body` setter (when the variant has a body) and one setter per response header field, each
-     * a `Gen<…>?` defaulting to a generated value; `build()` returns a `Gen<Response<NNN>>`.
+     * Per-variant response scope, opened by `generate.responseNNN { … }`: a whole-value `body`
+     * setter (when the variant has a body) and one `Gen<…>?` setter per response header field;
+     * `build()` returns a `Gen<Response<NNN>>`.
      */
     private fun FileBuilder.buildResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape) {
         val scopeName = "${shape.name}${variant.className}Scope"
         val variantType = "${shape.name}.${variant.className}"
-        val hasBody = variant.bodyKind != EndpointShape.BodyKind.None && variant.bodyType != null
+        val bodyType = variant.bodyType?.takeIf { variant.bodyKind != EndpointShape.BodyKind.None }
 
         struct(scopeName) {
             plainClass()
@@ -239,16 +204,18 @@ internal object EndpointDslFile {
             visibility(Visibility.PUBLIC)
             constructorVisibility(Visibility.INTERNAL)
             raw("private val inner = responseCall(${shape.name}, $variantType::class)")
-            if (hasBody) {
-                property("body", genNullableOf(variant.bodyType!!), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+            if (bodyType != null) {
+                property("body", genNullableOf(bodyType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter("body", bodyType)
             }
             variant.headerFields.forEach { f ->
                 property(f.name, genNullableOf(f.kotlinType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter(f.name, f.kotlinType)
             }
             function("build") {
                 visibility(Visibility.PUBLIC)
                 returnType(genOf(variantType))
-                if (hasBody) {
+                if (bodyType != null) {
                     raw("body?.let { inner.body(it) }")
                 }
                 variant.headerFields.forEach { f ->
@@ -283,7 +250,7 @@ internal object EndpointDslFile {
                 }
             }
             if (shape.bodyFieldShapes.isNotEmpty()) {
-                val builderName = RecordBuilder.builderName(shape.bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for ${shape.name}"))
+                val builderName = RecordBuilder.builderName(shape.requireBodyElementType())
                 property("body", IrType.Nullable(blockType(builderName)), isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("null"))
                 function("body") {
                     visibility(Visibility.PUBLIC)
@@ -333,7 +300,7 @@ internal object EndpointDslFile {
             }
         }
         if (shape.bodyFieldShapes.isNotEmpty()) {
-            val builderName = RecordBuilder.builderName(shape.bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for ${shape.name}"))
+            val builderName = RecordBuilder.builderName(shape.requireBodyElementType())
             val isList = shape.bodyKind == EndpointShape.BodyKind.List
             val elementType = shape.bodyElementType
             appendLine("body?.let { block ->")
@@ -387,6 +354,7 @@ internal object EndpointDslFile {
             visibility(Visibility.PUBLIC)
             slot.fields.forEach { f ->
                 property(f.name, genNullableOf(f.kotlinType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter(f.name, f.kotlinType)
             }
         }
     }
@@ -476,4 +444,8 @@ internal object EndpointDslFile {
             else -> "$refined($drawn)"
         }
     }
+
+    /** The element type backing this endpoint's body-field shapes; present whenever `bodyFieldShapes` is. */
+    private fun EndpointShape.requireBodyElementType(): String =
+        bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for $name")
 }

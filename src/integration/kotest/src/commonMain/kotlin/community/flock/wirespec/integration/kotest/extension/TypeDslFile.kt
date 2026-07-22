@@ -40,6 +40,11 @@ internal object TypeDslFile {
             import("community.flock.wirespec.integration.kotest.dsl", "recordGen")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             import("io.kotest.property", "Gen")
+            if (shape.fields.isNotEmpty()) {
+                // Backs the `<field>(value)` constant setters emitted next to each slot (see [valueSetter]).
+                import("io.kotest.property", "Arb")
+                import("io.kotest.property.arbitrary", "constant")
+            }
             // pascalCase so underscore-bearing type names resolve to the emitted class.
             (listOf(shape.name) + shape.modelImports).distinct().forEach { import(modelPkg, Name.of(it).pascalCase()) }
 

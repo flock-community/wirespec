@@ -1,3 +1,4 @@
+import com.diffplug.gradle.spotless.SpotlessTask
 import community.flock.wirespec.integration.kotest.extension.KotestDslExtension
 import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
 import community.flock.wirespec.plugin.Language
@@ -9,6 +10,7 @@ plugins {
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.spotless)
     alias(libs.plugins.wirespec)
 }
 
@@ -102,4 +104,29 @@ tasks.withType<Test> {
     // Point Kotest at the project config in this package instead of the default
     // `io.kotest.provided.ProjectConfig`.
     systemProperty("kotest.framework.config.fqn", "community.flock.wirespec.examples.kotest.ProjectConfig")
+}
+
+// The generated sources land in the main source set, so formatting must wait for the generator.
+tasks.withType<SpotlessTask> {
+    dependsOn("wirespec-kotlin")
+}
+
+spotless {
+    format("misc") {
+        target("**/.gitignore", "**/*.properties", "**/*.md")
+        endWithNewline()
+    }
+
+    format("wirespec") {
+        target("**/*.ws")
+        endWithNewline()
+    }
+
+    kotlin {
+        target("**/*.kt", "**/*.kts")
+        targetExclude("**/build/**", "**/resources/**")
+        ktlint().editorConfigOverride(
+            mapOf("ktlint_code_style" to "intellij_idea"),
+        )
+    }
 }
