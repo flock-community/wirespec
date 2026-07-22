@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.kotest.emit
 
 import community.flock.wirespec.ir.core.StructBuilder
 import community.flock.wirespec.ir.core.Visibility
+import community.flock.wirespec.ir.generator.escapeKotlinIdentifier
 import community.flock.wirespec.ir.core.Type as IrType
 
 /**
@@ -23,7 +24,7 @@ import community.flock.wirespec.ir.core.Type as IrType
  * to be imported by the surrounding file.
  */
 internal fun StructBuilder.valueSetter(fieldName: String, kotlinType: String) {
-    val escaped = KotlinIdentifier.escape(fieldName)
+    val escaped = fieldName.escapeKotlinIdentifier()
     function(fieldName) {
         visibility(Visibility.PUBLIC)
         arg("value", IrType.Custom(kotlinType))
