@@ -176,8 +176,7 @@ internal class KotestWirespecGenerator(
 
     /** Draw the override [factory]'s value for [path], re-wrapping it for a refined [field]. */
     @Suppress("UNCHECKED_CAST")
-    private fun <T> applyOverride(factory: () -> Gen<*>, field: KotestField<T>, path: List<String>): T =
-        refinedWrapper.wrap(factory().drawOne(rsFor(path)), field, path) as T
+    private fun <T> applyOverride(factory: () -> Gen<*>, field: KotestField<T>, path: List<String>): T = refinedWrapper.wrap(factory().drawOne(rsFor(path)), field, path) as T
 
     private fun captureSeedIfMatches(path: List<String>, field: KotestField<*>): Any? {
         val capture = captures.lastOrNull() ?: return null

@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest.validation
 
+import community.flock.wirespec.integration.kotest.ResponseVariantNaming
 import community.flock.wirespec.kotlin.Wirespec
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
@@ -60,7 +61,6 @@ internal class EndpointReflection private constructor(
 
     companion object {
         private val cache = ConcurrentHashMap<KClass<out Wirespec.Endpoint>, EndpointReflection>()
-        private val variantRegex = Regex("Response(\\d{3})")
         private val syntheticParamRegex = Regex("arg\\d+")
 
         /**
@@ -111,8 +111,8 @@ internal class EndpointReflection private constructor(
                 ?: error("${cls.simpleName}: no nested Request type found.")
 
             val variants: Map<Int, Class<*>> = jcls.declaredClasses.mapNotNull { c ->
-                val match = c.simpleName?.let(variantRegex::matchEntire) ?: return@mapNotNull null
-                match.groupValues[1].toInt() to c
+                val status = c.simpleName?.let(ResponseVariantNaming::statusOf) ?: return@mapNotNull null
+                status to c
             }.toMap()
             require(variants.isNotEmpty()) { "${cls.simpleName}: no concrete ResponseNNN variants found." }
 

@@ -1,9 +1,10 @@
-package community.flock.wirespec.integration.kotest.extension
+package community.flock.wirespec.integration.kotest.emit
 
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.integration.kotest.ResponseVariantNaming
 
 internal data class EndpointShape(
     val name: String,
@@ -113,7 +114,7 @@ internal data class EndpointShape(
                     val (respBodyKind, respElementName) = classifyBody(respBodyRef)
                     ResponseVariantShape(
                         status = status,
-                        className = "Response$status",
+                        className = ResponseVariantNaming.className(status),
                         bodyKind = respBodyKind,
                         bodyType = respBodyType,
                         bodyElementType = respElementName,
