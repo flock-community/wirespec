@@ -16,22 +16,13 @@ import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
 
 /**
- * `KotestGenerator` backed by Kotest [Arb]s. The IR-emitted
- * `*Generator.generate(...)` factories accept anything compatible with
- * `KotestGenerator`; use [kotestGenerator] (commonMain) or the JVM factory
- * `kotestWirespecKotlinGenerator` to obtain one.
+ * `KotestGenerator` backed by Kotest [Arb]s. `@Seed` annotations are honored for
+ * deterministic array-element regeneration; `@Generator(...)` annotations are ignored —
+ * use a scoped override ([KotestWirespecGeneratorBuilder.registerPath] /
+ * [KotestWirespecGeneratorBuilder.registerFieldByTypeName]) instead.
  *
- * `@Seed` annotations are honored for deterministic regeneration of array
- * elements from their seed value. Any `@Generator(...)` annotation that the
- * IR still emits is ignored — replace it with a scoped override
- * ([KotestWirespecGeneratorBuilder.registerPath] /
- * [KotestWirespecGeneratorBuilder.registerFieldByTypeName], or the JVM
- * `registerField(Parent::field)` extension).
- *
- * The returned generator keeps per-call traversal state (`@Seed`
- * capture/replay, parent-type tracking) and is therefore **not thread-safe**:
- * don't share one instance across concurrently running tests — instances are
- * cheap, create one per test.
+ * Not thread-safe: it keeps per-call traversal state, so create one per test rather than
+ * sharing across concurrent tests (instances are cheap).
  */
 fun kotestGenerator(
     seed: Long = 0L,
@@ -90,10 +81,8 @@ internal class KotestWirespecGenerator(
 
     private var shapeDepth = 0
 
-    // Actual nesting depth during value generation (incremented per shape/array descent), used to
-    // bound self-recursive types (e.g. a parameter that contains a list of parameters): beyond
-    // [MAX_GEN_DEPTH] generated lists are emptied so generation always terminates instead of
-    // overflowing the stack. Distinct from [shapeDepth], which only gates @Seed handling.
+    // Actual value-generation nesting depth (per shape/array descent), used to bound self-recursive
+    // types beyond [MAX_GEN_DEPTH]. Distinct from [shapeDepth], which only gates @Seed handling.
     private var genDepth = 0
 
     private inline fun <R> withGenDepth(block: () -> R): R {
@@ -174,22 +163,21 @@ internal class KotestWirespecGenerator(
             }
         }
 
-        overrides.findPath(path)?.let { factory ->
-            val drawn = factory().drawOne(rsFor(path))
-            return refinedWrapper.wrap(drawn, field, path) as T
-        }
+        overrides.findPath(path)?.let { factory -> return applyOverride(factory, field, path) }
 
         val parent = parentStack.lastOrNull()
         val leafName = path.lastOrNull()
         if (parent != null && leafName != null) {
-            overrides.findField(FieldKey(parent.typeName, leafName))?.let { factory ->
-                val drawn = factory().drawOne(rsFor(path))
-                return refinedWrapper.wrap(drawn, field, path) as T
-            }
+            overrides.findField(FieldKey(parent.typeName, leafName))?.let { factory -> return applyOverride(factory, field, path) }
         }
 
         return generateLeaf(field, path)
     }
+
+    /** Draw the override [factory]'s value for [path], re-wrapping it for a refined [field]. */
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> applyOverride(factory: () -> Gen<*>, field: KotestField<T>, path: List<String>): T =
+        refinedWrapper.wrap(factory().drawOne(rsFor(path)), field, path) as T
 
     private fun captureSeedIfMatches(path: List<String>, field: KotestField<*>): Any? {
         val capture = captures.lastOrNull() ?: return null
@@ -199,20 +187,8 @@ internal class KotestWirespecGenerator(
         val rs = rsFor(path)
         return when (field) {
             is KotestFieldString -> generateString(field, path, rs).also { capture.seed = it }
-            is KotestFieldInteger64 -> {
-                val lo = field.min ?: 0
-                val hi = field.max ?: Long.MAX_VALUE
-                val value = Arb.long(lo..hi).next(rs)
-                capture.seed = value.toString()
-                value
-            }
-            is KotestFieldInteger32 -> {
-                val lo = field.min ?: 0
-                val hi = field.max ?: Int.MAX_VALUE
-                val value = Arb.int(lo..hi).next(rs)
-                capture.seed = value.toString()
-                value
-            }
+            is KotestFieldInteger64 -> Arb.long((field.min ?: 0)..(field.max ?: Long.MAX_VALUE)).next(rs).also { capture.seed = it.toString() }
+            is KotestFieldInteger32 -> Arb.int((field.min ?: 0)..(field.max ?: Int.MAX_VALUE)).next(rs).also { capture.seed = it.toString() }
             else -> null
         }
     }
@@ -277,12 +253,9 @@ internal class KotestWirespecGenerator(
         .firstOrNull { (_, anns) -> anns.any { it["name"] == "Seed" } }
         ?.key
 
-    /**
-     * Default string generation: with a regex constraint the value matches it
-     * verbatim; without one, a readable `<fieldName>-XXXXXXXX` token.
-     */
+    /** With a regex constraint, matches it verbatim; otherwise a readable `<fieldName>-XXXXXXXX` token. */
     private fun generateString(field: KotestFieldString, path: List<String>, rs: RandomSource): String {
-        val prefix = field.regex?.let { "" } ?: (path.lastOrNull().orEmpty() + "-")
+        val prefix = if (field.regex != null) "" else path.lastOrNull().orEmpty() + "-"
         val regex = field.regex ?: "\\w{8}"
         return prefix + RgxGen.parse(regex).generate(rs.random)
     }
@@ -292,26 +265,10 @@ internal class KotestWirespecGenerator(
         val rs = rsFor(path)
         return when (field) {
             is KotestFieldString -> generateString(field, path, rs) as T
-            is KotestFieldInteger64 -> {
-                val lo = field.min ?: Long.MIN_VALUE
-                val hi = field.max ?: Long.MAX_VALUE
-                Arb.long(lo..hi).next(rs) as T
-            }
-            is KotestFieldInteger32 -> {
-                val lo = field.min ?: Int.MIN_VALUE
-                val hi = field.max ?: Int.MAX_VALUE
-                Arb.int(lo..hi).next(rs) as T
-            }
-            is KotestFieldNumber64 -> {
-                val lo = field.min ?: -1e6
-                val hi = field.max ?: 1e6
-                Arb.double(lo, hi).next(rs) as T
-            }
-            is KotestFieldNumber32 -> {
-                val lo = field.min ?: -1e6f
-                val hi = field.max ?: 1e6f
-                Arb.float(lo, hi).next(rs) as T
-            }
+            is KotestFieldInteger64 -> Arb.long((field.min ?: Long.MIN_VALUE)..(field.max ?: Long.MAX_VALUE)).next(rs) as T
+            is KotestFieldInteger32 -> Arb.int((field.min ?: Int.MIN_VALUE)..(field.max ?: Int.MAX_VALUE)).next(rs) as T
+            is KotestFieldNumber64 -> Arb.double(field.min ?: -1e6, field.max ?: 1e6).next(rs) as T
+            is KotestFieldNumber32 -> Arb.float(field.min ?: -1e6f, field.max ?: 1e6f).next(rs) as T
             is KotestFieldBoolean -> Arb.boolean().next(rs) as T
             is KotestFieldBytes -> Arb.byteArray(Arb.int(0..16), Arb.byte()).next(rs) as T
             is KotestFieldEnum -> Arb.element(field.values).next(rs) as T

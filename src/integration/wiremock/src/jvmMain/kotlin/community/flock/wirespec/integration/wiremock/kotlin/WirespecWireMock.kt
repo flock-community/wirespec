@@ -12,18 +12,13 @@ import java.net.URI
 import java.net.URLDecoder
 
 /**
- * Start building a WireMock stub for a Wirespec endpoint. Mirrors WireMock's own
- * `get(urlEqualTo(...))` / `post(urlEqualTo(...))` factories — the returned builder
- * accepts only [Wirespec.Response] values that belong to the same endpoint:
+ * Start building a WireMock stub for a Wirespec endpoint; the endpoint's method and path template
+ * drive the request matcher (path parameters match any non-slash segment). The returned builder
+ * accepts only [Wirespec.Response] values of the same endpoint — a different one is a compile error.
  *
  * ```
  * server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
  * ```
- *
- * Passing a response from a different endpoint is a compile error.
- *
- * The endpoint's HTTP method and path template drive the WireMock request matcher
- * (path parameters match any non-slash segment).
  */
 fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> wirespec(
     endpoint: Wirespec.Server<Req, Res>,
@@ -34,11 +29,9 @@ class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
     private val mapping: MappingBuilder,
 ) {
     /**
-     * Serialize [response] through [serialization] and attach it as this stub's response.
-     * Defaults to a Jackson-backed [Wirespec.Serialization]; pass your own to customize
-     * the ObjectMapper or swap in a different serializer. Returns the underlying
-     * [MappingBuilder] so callers can keep chaining WireMock methods (e.g. `.atPriority(...)`,
-     * `.inScenario(...)`).
+     * Serialize [response] through [serialization] (Jackson-backed by default) and attach it as this
+     * stub's response. Returns the underlying [MappingBuilder] so callers can keep chaining WireMock
+     * methods (e.g. `.atPriority(...)`, `.inScenario(...)`).
      */
     fun willReturn(
         response: Res,
@@ -49,10 +42,9 @@ class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
 private val defaultSerialization: Wirespec.Serialization by lazy { WirespecSerialization(ObjectMapper()) }
 
 /**
- * A WireMock [MappingBuilder] matching an endpoint's HTTP [method] and [pathTemplate] (path
- * parameters match any non-slash segment). The building block behind [wirespec]; reusable directly
- * when a stub needs extra matching (e.g. `.andMatching(...)` on the deserialized request) on top of
- * the method/path match.
+ * A WireMock [MappingBuilder] matching an endpoint's HTTP [method] and [pathTemplate] (path parameters
+ * match any non-slash segment). The building block behind [wirespec], reusable directly when a stub
+ * needs extra matching (e.g. `.andMatching(...)`) on top of the method/path match.
  */
 fun requestBuilder(method: String, pathTemplate: String): MappingBuilder {
     val urlPattern = urlPatternFor(pathTemplate)
@@ -80,13 +72,12 @@ fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilde
 }
 
 /**
- * Map an incoming WireMock [Request] onto the neutral [Wirespec.RawRequest]. The mirror image of
- * [responseBuilder]; use it when a stub matches on the request itself — `.andMatching { request ->
- * … request.toRawRequest() … }` — so the matcher can deserialize the request through a generated
- * endpoint rather than reading WireMock's own types.
+ * Map an incoming WireMock [Request] onto the neutral [Wirespec.RawRequest]. Use it when a stub
+ * matches on the request itself (`.andMatching { request -> … request.toRawRequest() … }`) so the
+ * matcher can deserialize through a generated endpoint rather than WireMock's own types.
  *
  * Path segments and query values are percent-decoded; a query key without `=` yields an empty value,
- * and a repeated key yields all its values in order. An empty body maps to `null`.
+ * a repeated key yields all its values in order, and an empty body maps to `null`.
  */
 fun Request.toRawRequest(): Wirespec.RawRequest {
     val uri = URI.create(absoluteUrl)
