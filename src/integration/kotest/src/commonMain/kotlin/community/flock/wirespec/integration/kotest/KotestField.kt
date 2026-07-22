@@ -12,13 +12,13 @@ interface KotestGenerator {
 }
 
 /** Multiplatform 1:1 mirror of `Wirespec.GeneratorField<T>`. */
-sealed interface KotestField<T : Any?>
+sealed interface KotestField<T>
 
 /**
  * Leaf variants that carry Wirespec field annotations (e.g. `@Seed`). Container variants
  * (Array/Nullable/Dict) don't; Shape carries them per child field instead.
  */
-sealed interface KotestLeafField<T : Any?> : KotestField<T> {
+sealed interface KotestLeafField<T> : KotestField<T> {
     val annotations: List<Map<String, Any>>
 }
 
