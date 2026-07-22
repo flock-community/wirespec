@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotest.extension
+package community.flock.wirespec.integration.kotest.emit
 
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 
