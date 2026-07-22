@@ -7,12 +7,9 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 /**
- * Calls the downstream inventory service over HTTP, driving the Wirespec-generated [GetStock]
- * *client* (`GetStock.Handler` is both a server and a client edge; this uses the client side). The
- * base URL comes from the `inventory.base-url` property, so tests can point it at a mock server.
- *
- * Requests/responses are (de)serialized with the shared [Wirespec.Serialization] bean, so the bytes
- * match what the mock's `GetStock.generate.response200 { … }.mock { … }` stub produces.
+ * Calls the downstream inventory service over HTTP via the Wirespec-generated [GetStock] client edge.
+ * The base URL comes from `inventory.base-url`, so tests can point it at a mock server. Uses the
+ * shared [Wirespec.Serialization] bean so the bytes match what the mock stub produces.
  */
 @Component
 class InventoryClient(
@@ -22,6 +19,5 @@ class InventoryClient(
     private val edge = GetStock.Handler.client(serialization)
     private val transportation = HttpTransportation(baseUrl)
 
-    suspend fun getStock(sku: String): GetStock.Response<*> =
-        edge.from(transportation.transport(edge.to(GetStock.Request(sku))))
+    suspend fun getStock(sku: String): GetStock.Response<*> = edge.from(transportation.transport(edge.to(GetStock.Request(sku))))
 }

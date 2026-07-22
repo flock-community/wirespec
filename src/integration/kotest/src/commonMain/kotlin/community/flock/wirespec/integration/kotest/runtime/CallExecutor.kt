@@ -14,22 +14,15 @@ import io.kotest.property.arbitrary.arbitrary
 import io.kotest.property.arbitrary.int
 
 /**
- * Executes a single endpoint call eagerly against the ambient context: slot
- * resolution → typed transport → contract validation → user assertion. Reads the
- * context from [currentAmbient]. Each call constructs a fresh [ArbReceiver] from the
- * ambient [RandomSource]; because the source advances on every call, repeated
- * same-endpoint calls draw distinct bodies.
+ * Executes a single endpoint call eagerly against the ambient context: slot resolution → typed
+ * transport → contract validation → user assertion. The ambient [RandomSource] advances on every
+ * call, so repeated same-endpoint calls draw distinct bodies.
  */
 internal object CallExecutor {
 
-    /**
-     * Build the typed request object from the call's slot/body gens against the ambient
-     * [RandomSource], without sending it. Backs both the `<Endpoint>.request { … }` DSL and
-     * [executeEndpoint], so a `call` sends exactly the request `request { … }` would produce.
-     */
+    /** Build the typed request from the call's slot/body gens without sending it. */
     suspend fun buildRequest(call: EndpointCallBuilder<*, *, *>): Any = buildRequestWith(call, currentAmbient().randomSource)
 
-    /** A [Gen] that materialises the typed request on each draw; backs `<Endpoint>.request { … }`. */
     fun buildRequestGen(call: EndpointCallBuilder<*, *, *>): Arb<Any> = arbitrary { rs -> buildRequestWith(call, rs) }
 
     private fun buildRequestWith(call: EndpointCallBuilder<*, *, *>, rs: RandomSource): Any {
@@ -38,7 +31,7 @@ internal object CallExecutor {
         return reflection.buildRequest(resolveSlots(call, reflection, rs, arb))
     }
 
-    /** Run the endpoint call; returns the validated typed response. */
+    /** Run the endpoint call and return the validated typed response. */
     suspend fun executeEndpoint(call: EndpointCallBuilder<*, *, *>): Any {
         val ambient = currentAmbient()
         val reflection = call.reflection
@@ -57,11 +50,7 @@ internal object CallExecutor {
         return typedResponse
     }
 
-    /**
-     * Send a pre-built typed request as-is; returns the response validated against the
-     * contract (any declared status). Backs the generated `<Endpoint>.Request.call()`
-     * extension, so a `generate.request { … }` chain can be sent without re-drawing.
-     */
+    /** Send a pre-built typed request as-is; returns the response validated against any declared status. */
     suspend fun executeRequest(
         client: Wirespec.Client<*, *>,
         endpointObject: Wirespec.Endpoint,
@@ -94,13 +83,11 @@ internal object CallExecutor {
         }
     }
 
-    /** A [Gen] that materialises the response variant on each draw; backs `<Endpoint>.responseNNN { … }`. */
     fun buildResponseGen(builder: ResponseBuilder): Arb<Any> = arbitrary { rs -> buildResponseWith(builder, rs) }
 
     /**
-     * Build a single random `Response<status>` variant from a [ResponseBuilder]: pinned gens win,
-     * every other constructor param (body + header fields) is generated against the ambient
-     * [RandomSource]. Backs the generated `<Endpoint>.responseNNN { … }` DSL.
+     * Build a single random `Response<status>` variant: pinned gens win, every other constructor
+     * param (body + header fields) is generated against the ambient [RandomSource].
      */
     private fun buildResponseWith(builder: ResponseBuilder, rs: RandomSource): Any {
         val arb = ArbReceiver(rs)
@@ -110,7 +97,7 @@ internal object CallExecutor {
         // Header gens registered under wire names; match to (camelCase) constructor params by the
         // same normalization used for request slots. Exact-name matches take priority.
         val headerGensByNormalizedName: Map<String, Gen<*>> =
-            builder.headerGens.entries.associate { (key, gen) -> normalizeSlotName(key) to gen }
+            builder.headerGens.mapKeys { (key, _) -> normalizeSlotName(key) }
 
         val args = variant.constructor.parameters.map { param ->
             val name = param.name ?: error("${builder.variantClass.simpleName}: unnamed constructor parameter.")
@@ -134,8 +121,19 @@ internal object CallExecutor {
         variant: EndpointReflection.ResponseVariantReflection,
         arb: ArbReceiver,
         rs: RandomSource,
+    ): Any? = when (val bodyGen = builder.bodyGen) {
+        // whole-value override wins; a nullable body may legitimately draw `null`, so branch on the
+        // gen itself rather than `?:`-falling-through on a null draw.
+        null -> resolveGeneratedBody(variant, arb, rs)
+        else -> bodyGen.draw(rs)
+    }
+
+    /** Generate the response body from reflection when no whole-value override is pinned. */
+    private fun resolveGeneratedBody(
+        variant: EndpointReflection.ResponseVariantReflection,
+        arb: ArbReceiver,
+        rs: RandomSource,
     ): Any? = when {
-        builder.bodyGen != null -> builder.bodyGen!!.draw(rs)
         variant.bodyElementClass != null -> {
             val size = Arb.int(1..3).draw(rs)
             val elementGen = arb.generatorFor(variant.bodyElementClass)
@@ -190,7 +188,7 @@ internal object CallExecutor {
         // request instead of being overwritten by a random PrimitiveArbs draw.
         // Exact-name matches still take priority.
         val slotGensByNormalizedName: Map<String, Gen<*>> =
-            slotGens.entries.associate { (key, gen) -> normalizeSlotName(key) to gen }
+            slotGens.mapKeys { (key, _) -> normalizeSlotName(key) }
         reflection.requestConstructor.parameters.forEach { param ->
             val name = param.name ?: return@forEach
             if (name == "body" || args.containsKey(name)) return@forEach
