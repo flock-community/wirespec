@@ -82,23 +82,22 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
      * [overrides]. [form] names the DSL entry point (`message`/`send`) in the rejection message.
      */
     @Suppress("UNCHECKED_CAST")
-    private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?, form: String): P =
-        when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
-            null -> {
-                val receiver = ArbReceiver(rs)
-                val generator = overrides
-                    ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong(), block = it) }
-                    ?: receiver.generator
-                receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
-            }
-            else -> {
-                require(overrides == null) {
-                    "${channelClass.simpleName}: per-field $form { } overrides are only supported for record " +
-                        "payloads, not the primitive payload ${payloadClass.simpleName}."
-                }
-                primitive.draw(rs) as P
-            }
+    private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?, form: String): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
+        null -> {
+            val receiver = ArbReceiver(rs)
+            val generator = overrides
+                ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong(), block = it) }
+                ?: receiver.generator
+            receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
         }
+        else -> {
+            require(overrides == null) {
+                "${channelClass.simpleName}: per-field $form { } overrides are only supported for record " +
+                    "payloads, not the primitive payload ${payloadClass.simpleName}."
+            }
+            primitive.draw(rs) as P
+        }
+    }
 
     private suspend fun publish(payload: P) {
         val ctx = currentAmbient().channelContext()

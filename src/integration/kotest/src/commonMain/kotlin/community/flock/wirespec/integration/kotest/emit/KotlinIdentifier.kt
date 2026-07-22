@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotest.extension
+package community.flock.wirespec.integration.kotest.emit
 
 /**
  * Renders Wirespec field/parameter names as Kotlin identifiers. Wirespec allows names that
