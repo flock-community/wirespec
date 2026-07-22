@@ -187,12 +187,24 @@ internal data class EndpointShape(
             else -> emptyList()
         }
 
-        private fun collectNestedTypeNames(fields: List<BodyFieldShape>): List<String> = fields.flatMap { f ->
-            when (f) {
-                is BodyFieldShape.Primitive -> emptyList()
-                is BodyFieldShape.NestedObject -> listOf(f.typeName) + collectNestedTypeNames(f.fields)
-                is BodyFieldShape.NestedList -> listOf(f.elementTypeName) + collectNestedTypeNames(f.fields)
+        /** The custom type a nested body field drills into (`null` for a leaf primitive). */
+        private val BodyFieldShape.nestedTypeName: String?
+            get() = when (this) {
+                is BodyFieldShape.NestedObject -> typeName
+                is BodyFieldShape.NestedList -> elementTypeName
+                is BodyFieldShape.Primitive -> null
             }
+
+        /** The child field shapes of a nested body field (empty for a leaf primitive). */
+        private val BodyFieldShape.childFields: List<BodyFieldShape>
+            get() = when (this) {
+                is BodyFieldShape.NestedObject -> fields
+                is BodyFieldShape.NestedList -> fields
+                is BodyFieldShape.Primitive -> emptyList()
+            }
+
+        private fun collectNestedTypeNames(fields: List<BodyFieldShape>): List<String> = fields.flatMap { f ->
+            listOfNotNull(f.nestedTypeName) + collectNestedTypeNames(f.childFields)
         }
 
         /**
@@ -205,21 +217,10 @@ internal data class EndpointShape(
             fields: List<BodyFieldShape>,
             types: Map<String, Type>,
         ): List<String> = fields.flatMap { f ->
-            when (f) {
-                is BodyFieldShape.Primitive -> emptyList()
-                is BodyFieldShape.NestedObject -> {
-                    val nestedFieldRefs = types[f.typeName]?.shape?.value
-                        ?.flatMap { collectCustomNames(it.reference) }
-                        ?: emptyList()
-                    nestedFieldRefs + collectFieldTypeNames(f.fields, types)
-                }
-                is BodyFieldShape.NestedList -> {
-                    val nestedFieldRefs = types[f.elementTypeName]?.shape?.value
-                        ?.flatMap { collectCustomNames(it.reference) }
-                        ?: emptyList()
-                    nestedFieldRefs + collectFieldTypeNames(f.fields, types)
-                }
-            }
+            val nestedFieldRefs = f.nestedTypeName
+                ?.let { types[it]?.shape?.value?.flatMap { field -> collectCustomNames(field.reference) } }
+                ?: emptyList()
+            nestedFieldRefs + collectFieldTypeNames(f.childFields, types)
         }
 
         internal fun extractBodyFields(

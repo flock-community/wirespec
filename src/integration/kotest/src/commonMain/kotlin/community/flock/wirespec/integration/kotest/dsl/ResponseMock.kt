@@ -6,18 +6,13 @@ import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
 
 /**
- * Draw one response from [responseGen] (seeded by the ambient `RandomSource`), serialize it
- * through the mock context's [Wirespec.Serialization], and register it with the ambient
- * [MockServer][community.flock.wirespec.integration.kotest.context.MockServer]: every incoming request
- * to this endpoint that satisfies [predicate] gets that response. Backs the generated
- * `Gen<Endpoint.Response<*>>.mock { req -> … }` extension — the response-side twin of
- * `Gen<Request>.call()`, so `PutTodo.generate.response200 { … }.mock { it.path.id == "1" }`
- * stubs exactly the response the `Gen` produces.
+ * Draw one response from [responseGen], serialize it, and stub it on the ambient mock server:
+ * every incoming request to this endpoint satisfying [predicate] gets that response. Backs the
+ * generated `Gen<Endpoint.Response<*>>.mock { req -> … }`.
  *
- * The typed [predicate] is lowered onto the raw request the server receives: each candidate is
- * deserialized back into the endpoint's `Req` via the server edge before the predicate runs, so
- * a predicate that throws (e.g. a request that does not belong to this endpoint slipping through
- * the method/path matcher) simply fails to match rather than propagating.
+ * The typed [predicate] runs against the raw request deserialized back into `Req` via the server
+ * edge; a predicate that throws (e.g. a foreign request slipping through the method/path matcher)
+ * fails to match rather than propagating.
  */
 suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> responseMock(
     server: Wirespec.Server<Req, Res>,
@@ -32,13 +27,7 @@ suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> responseMock
         MockStub(
             method = server.method,
             pathTemplate = server.pathTemplate,
-            matches = { raw ->
-                try {
-                    predicate(edge.from(raw))
-                } catch (_: Throwable) {
-                    false
-                }
-            },
+            matches = { raw -> runCatching { predicate(edge.from(raw)) }.getOrDefault(false) },
             response = edge.to(response),
         ),
     )

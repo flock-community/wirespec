@@ -89,6 +89,12 @@ class KotestDslExtensionTest {
         output shouldContain "public var name: Gen<String?>? = null"
         output shouldContain "public var `Refresh-Token`: Gen<Token?>? = null"
 
+        // Every `Gen<…>?` slot is paired with a constant setter so a fixed value needs no `Arb`.
+        output shouldContain "public fun id(value: String) {"
+        output shouldContain "this.id = Arb.constant(value)"
+        output shouldContain "public fun `Refresh-Token`(value: Token?) {"
+        output shouldContain "this.`Refresh-Token` = Arb.constant(value)"
+
         // flush() validates required slots/fields and defaults nullable ones; the wire name
         // stays raw while the Kotlin reference is escaped.
         output shouldContain "PutTodoPathBuilder().apply(path ?: error(\"PutTodo: required `path` block is missing\"))"
@@ -198,6 +204,7 @@ class KotestDslExtensionTest {
         // The single reusable `<Type>Builder` carries one `Gen<…>?` var per field.
         output shouldContain "public class TodoDtoBuilder {"
         output shouldContain "public var description: Gen<String>? = null"
+        output shouldContain "public fun description(value: String) {"
 
         // The companion is injected into the model record so the extension has a receiver.
         output shouldContain "companion object"

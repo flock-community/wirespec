@@ -3,12 +3,8 @@ package community.flock.wirespec.integration.kotest
 import community.flock.wirespec.kotlin.Wirespec
 
 /**
- * JVM-facing factory for Kotlin-emitted code: returns a `community.flock.wirespec
- * .kotlin.Wirespec.Generator`, which is the contract IR-emitted
- * `*Generator.generate(gen: Wirespec.Generator, …)` factories expect. Internally
- * builds a multiplatform [KotestGenerator] and wraps it in
- * [WirespecKotlinGeneratorAdapter], which translates `Wirespec.GeneratorField*`
- * inputs into the kotest-owned [KotestField] mirror types on each call.
+ * JVM-facing factory for Kotlin-emitted code: returns the `Wirespec.Generator` that IR-emitted
+ * `*Generator.generate(...)` factories expect, wrapping a multiplatform [KotestGenerator].
  *
  * ```
  * val gen = kotestWirespecKotlinGenerator(seed = 1L) {
@@ -26,11 +22,8 @@ fun kotestWirespecKotlinGenerator(
 )
 
 /**
- * Bridge between Wirespec's Kotlin `Generator` / `GeneratorField*` (which live
- * in `:src:integration:wirespec`, JVM-only, Kotlin 1.9-pinned for downstream
- * binary compat) and kotest's commonMain `KotestGenerator` / `KotestField*`
- * mirror types. The two hierarchies are 1:1, so translation is a flat `when`
- * with no semantic logic.
+ * Bridges Wirespec's JVM-only Kotlin `Generator` / `GeneratorField*` and kotest's commonMain
+ * `KotestGenerator` / `KotestField*` mirror types. The hierarchies are 1:1, so this is a flat `when`.
  */
 internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator) : Wirespec.Generator {
 
@@ -51,21 +44,9 @@ internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator
         is Wirespec.GeneratorFieldBytes -> KotestFieldBytes(annotations)
         is Wirespec.GeneratorFieldEnum -> KotestFieldEnum(values, annotations, type)
         is Wirespec.GeneratorFieldUnion -> KotestFieldUnion(variants, annotations, type)
-        is Wirespec.GeneratorFieldArray<*> -> {
-            val gen = (this as Wirespec.GeneratorFieldArray<Any>).generate
-            KotestFieldArray(gen)
-        }
-        is Wirespec.GeneratorFieldNullable<*> -> {
-            val gen = (this as Wirespec.GeneratorFieldNullable<Any>).generate
-            KotestFieldNullable(gen)
-        }
-        is Wirespec.GeneratorFieldShape<*> -> {
-            val shape = this as Wirespec.GeneratorFieldShape<Any>
-            KotestFieldShape(shape.annotations, shape.generate, shape.type)
-        }
-        is Wirespec.GeneratorFieldDict<*> -> {
-            val gen = (this as Wirespec.GeneratorFieldDict<Any>).generate
-            KotestFieldDict(gen)
-        }
+        is Wirespec.GeneratorFieldArray<*> -> KotestFieldArray((this as Wirespec.GeneratorFieldArray<Any>).generate)
+        is Wirespec.GeneratorFieldNullable<*> -> KotestFieldNullable((this as Wirespec.GeneratorFieldNullable<Any>).generate)
+        is Wirespec.GeneratorFieldShape<*> -> (this as Wirespec.GeneratorFieldShape<Any>).let { KotestFieldShape(it.annotations, it.generate, it.type) }
+        is Wirespec.GeneratorFieldDict<*> -> KotestFieldDict((this as Wirespec.GeneratorFieldDict<Any>).generate)
     }
 }

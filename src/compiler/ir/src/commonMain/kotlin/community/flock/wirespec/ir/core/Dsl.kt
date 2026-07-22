@@ -32,8 +32,8 @@ interface BaseBuilder {
         returnType: Type,
         receiver: Type? = null,
         parameterTypes: List<Type> = emptyList(),
-        isSuspend: Boolean = false,
-    ): Type.Function = Type.Function(parameterTypes, returnType, receiver, isSuspend)
+        isAsync: Boolean = false,
+    ): Type.Function = Type.Function(parameterTypes, returnType, receiver, isAsync)
 
     /** A raw code fragment usable where an [Expression] is expected (e.g. `returns(rawExpr(...))`). */
     fun rawExpr(code: String): RawExpression = RawExpression(code)

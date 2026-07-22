@@ -7,9 +7,8 @@ import io.kotest.property.Gen
 import io.kotest.property.arbitrary.arbitrary
 
 /**
- * A [Gen] that materialises a random record instance of [T] via the IR-emitted `<T>Generator`,
- * optionally applying per-field [overrides]. Backs the generated `<Type>.generate { … }` entry point.
- * Each draw builds a fresh instance seeded by the sample's [io.kotest.property.RandomSource].
+ * A [Gen] materialising a random record instance of [T] via the IR-emitted `<T>Generator`,
+ * optionally applying per-field [overrides]. Backs the generated `<Type>.generate { … }`.
  */
 inline fun <reified T : Any> recordGen(
     noinline overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null,
