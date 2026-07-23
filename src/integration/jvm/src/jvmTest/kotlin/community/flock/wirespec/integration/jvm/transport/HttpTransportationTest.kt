@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.java.transport
+package community.flock.wirespec.integration.jvm.transport
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer

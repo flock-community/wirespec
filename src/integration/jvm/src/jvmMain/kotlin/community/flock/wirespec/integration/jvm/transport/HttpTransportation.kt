@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.java.transport
+package community.flock.wirespec.integration.jvm.transport
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlinx.coroutines.Dispatchers
