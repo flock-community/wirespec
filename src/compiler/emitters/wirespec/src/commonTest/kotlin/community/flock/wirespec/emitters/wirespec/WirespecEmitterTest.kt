@@ -1,5 +1,8 @@
 package community.flock.wirespec.emitters.wirespec
 
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
@@ -10,9 +13,6 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.compile
-import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.ast.Reference
-import community.flock.wirespec.compiler.core.parse.ast.Refined
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
