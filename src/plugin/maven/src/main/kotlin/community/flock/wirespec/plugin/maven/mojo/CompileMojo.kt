@@ -35,7 +35,7 @@ class CompileMojo : BaseMojo() {
         val inputPath = getFullPath(input).or(::handleError)
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
-            is ClassPath -> nonEmptySetOf(inputPath.readFromClasspath())
+            is ClassPath -> inputPath.readWirespecSourcesFromClasspath()
             is DirectoryPath -> Directory(inputPath).wirespecSources(logger).or(::handleError)
             is FilePath -> when (inputPath.extension) {
                 FileExtension.Wirespec -> nonEmptySetOf<Source<Wirespec>>(Source(inputPath.name, inputPath.read()))

@@ -1,6 +1,8 @@
 package community.flock.wirespec.plugin.maven.mojo
 
 import arrow.core.NonEmptyList
+import arrow.core.NonEmptySet
+import arrow.core.nonEmptySetOf
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -19,6 +21,7 @@ import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
+import community.flock.wirespec.plugin.io.Source.Type.Wirespec
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
@@ -28,6 +31,7 @@ import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import java.io.File
+import java.net.JarURLConnection
 import java.net.URLClassLoader
 
 abstract class BaseMojo : AbstractMojo() {
@@ -35,7 +39,9 @@ abstract class BaseMojo : AbstractMojo() {
     /**
      * Specifies the input files or directories.
      * Multiple paths can be provided, separated by commas.
-     * Files can also be loaded from the classpath using the 'classpath:' prefix (e.g., 'classpath:wirespec/petstore.ws').
+     * Files can also be loaded from the classpath using the 'classpath:' prefix. This accepts either a
+     * single file (e.g., 'classpath:wirespec/petstore.ws') or a folder (e.g., 'classpath:wirespec'), in
+     * which case every '.ws' file found beneath that folder on the classpath (including inside jars) is compiled.
      */
     @Parameter(required = true)
     protected lateinit var input: String
@@ -198,6 +204,50 @@ abstract class BaseMojo : AbstractMojo() {
         val name = file.name.split(".").first()
         logger.info("Found 1 file from classpath: $file")
         return Source<E>(name = Name(name), content = content)
+    }
+
+    /**
+     * Reads Wirespec sources from the classpath. When [value] points at a single `.ws` file the one
+     * file is returned; otherwise [value] is treated as a folder and every `.ws` file found beneath it
+     * (across the classpath, including inside jars) is returned.
+     */
+    protected fun ClassPath.readWirespecSourcesFromClasspath(): NonEmptySet<Source<Wirespec>> {
+        val extension = ".${FileExtension.Wirespec.value}"
+        if (value.endsWith(extension)) {
+            return nonEmptySetOf(readFromClasspath<Wirespec>())
+        }
+
+        val classLoader = javaClass.classLoader
+        val folder = value.trimEnd('/')
+        val resources = classLoader.getResources(folder).toList()
+        if (resources.isEmpty()) error("Could not find folder: $value on the classpath.")
+
+        val sources = resources.flatMap { url ->
+            when (url.protocol) {
+                "file" -> File(url.toURI()).walkTopDown()
+                    .filter { it.isFile && it.name.endsWith(extension) }
+                    .map { Source<Wirespec>(Name(it.name.removeSuffix(extension)), it.readText(Charsets.UTF_8)) }
+                    .toList()
+
+                "jar" -> {
+                    val jarFile = (url.openConnection() as JarURLConnection).jarFile
+                    val prefix = "$folder/"
+                    jarFile.entries().asSequence()
+                        .filter { !it.isDirectory && it.name.startsWith(prefix) && it.name.endsWith(extension) }
+                        .map { entry ->
+                            val name = entry.name.substringAfterLast('/').removeSuffix(extension)
+                            val content = jarFile.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            Source<Wirespec>(Name(name), content)
+                        }
+                        .toList()
+                }
+
+                else -> emptyList()
+            }
+        }
+
+        logger.info("Found ${sources.size} wirespec file(s) from classpath folder: $value")
+        return sources.toNonEmptySetOrNull() ?: error("No wirespec files found in classpath folder: $value")
     }
 
     protected fun handleError(string: String): Nothing = throw RuntimeException(string)
