@@ -9,6 +9,7 @@ lazy val root = project
     name := "scala-zio",
     version := "0.1.0",
     scalaVersion := scala3Version,
+    resolvers += Resolver.mavenLocal,
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-http" % zioHttpVersion,
@@ -16,6 +17,9 @@ lazy val root = project
       "dev.zio" %% "zio-test" % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test,
       "dev.zio" %% "zio-http-testkit" % zioHttpVersion % Test,
+      // Kotlin bridge providing kotestWirespecScalaGenerator(...). Pure JVM
+      // artifact (no Scala suffix); transitives are declared in its POM.
+      "community.flock.wirespec.integration" % "kotest-jvm" % "0.0.0-SNAPSHOT" % Test,
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     // Wirespec code generation
