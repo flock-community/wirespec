@@ -42,7 +42,7 @@ dependencies {
     implementation(libs.wirespec.integration.kotest)
     // `HttpTransportation` (InventoryClient / ProjectConfig) drives the generated client
     // over java.net.http against the running server.
-    implementation(libs.wirespec.integration.java)
+    implementation(libs.wirespec.integration.jvm)
 
     // Tests build a `Wirespec.Serialization` from Jackson to drive the generated client.
     testImplementation(libs.wirespec.integration.jackson)
