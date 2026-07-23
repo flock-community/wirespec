@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest.dsl
 
+import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.RandomSource
@@ -18,12 +19,27 @@ import java.util.concurrent.ConcurrentHashMap
  * The per-iteration [RandomSource] threads into the generator's seed so failures are
  * reproducible (kotest-property prints the seed on failure).
  */
-class ArbReceiver internal constructor(randomSource: RandomSource) {
+class ArbReceiver internal constructor(private val randomSource: RandomSource) {
 
     /** The kotest-backed [Wirespec.Generator] used by every `*Generator.generate(...)`. */
     @PublishedApi
     internal val generator: Wirespec.Generator =
         kotestWirespecKotlinGenerator(seed = randomSource.random.nextLong())
+
+    /**
+     * Generate a random instance of [modelClass] via its IR-emitted `<Model>Generator`, drawing
+     * through [generator], or through a fresh generator carrying per-field [overrides] when given.
+     */
+    @Suppress("UNCHECKED_CAST")
+    internal fun <T> generateModel(
+        modelClass: Class<*>,
+        overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null,
+    ): T {
+        val generator = overrides
+            ?.let { kotestWirespecKotlinGenerator(seed = randomSource.random.nextLong(), block = it) }
+            ?: this.generator
+        return generatorFor(modelClass).generate(generator, emptyList()) as T
+    }
 
     /** Locate (and cache) the IR-emitted `<Model>Generator` for [modelClass]. */
     @PublishedApi
