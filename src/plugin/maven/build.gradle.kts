@@ -25,6 +25,13 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.bundles.maven.plugin)
     implementation(libs.kotlin.compiler.embeddable)
+
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 java {
