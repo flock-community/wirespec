@@ -34,6 +34,6 @@ open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
     override fun Reference.Primitive.Type.Constraint.emit() = when(this){
         is Reference.Primitive.Type.Constraint.RegExp -> "(${value})"
-        is Reference.Primitive.Type.Constraint.Bound -> "(${min}, ${max})"
+        is Reference.Primitive.Type.Constraint.Bound -> "(${min ?: "_"}, ${max ?: "_"})"
     }
 }
