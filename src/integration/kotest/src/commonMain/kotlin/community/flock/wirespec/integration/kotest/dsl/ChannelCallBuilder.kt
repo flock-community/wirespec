@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.kotest.dsl
 
 import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.context.WirespecChannelContext
-import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
 import community.flock.wirespec.integration.kotest.runtime.currentAmbient
 import io.kotest.property.Gen
@@ -58,13 +57,7 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
      */
     @Suppress("UNCHECKED_CAST")
     private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
-        null -> {
-            val receiver = ArbReceiver(rs)
-            val generator = overrides
-                ?.let { kotestWirespecKotlinGenerator(seed = rs.random.nextLong(), block = it) }
-                ?: receiver.generator
-            receiver.generatorFor(payloadClass).generate(generator, emptyList()) as P
-        }
+        null -> ArbReceiver(rs).generateModel(payloadClass, overrides)
         else -> {
             require(overrides == null) {
                 "${channelClass.simpleName}: per-field message { } overrides are only supported for record " +

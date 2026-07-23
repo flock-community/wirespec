@@ -42,8 +42,8 @@ internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator
         is Wirespec.GeneratorFieldNumber32 -> KotestFieldNumber32(min, max, annotations)
         is Wirespec.GeneratorFieldBoolean -> KotestFieldBoolean(annotations)
         is Wirespec.GeneratorFieldBytes -> KotestFieldBytes(annotations)
-        is Wirespec.GeneratorFieldEnum -> KotestFieldEnum(values, annotations, type)
-        is Wirespec.GeneratorFieldUnion -> KotestFieldUnion(variants, annotations, type)
+        is Wirespec.GeneratorFieldEnum -> KotestFieldEnum(values, annotations)
+        is Wirespec.GeneratorFieldUnion -> KotestFieldUnion(variants, annotations)
         is Wirespec.GeneratorFieldArray<*> -> KotestFieldArray((this as Wirespec.GeneratorFieldArray<Any>).generate)
         is Wirespec.GeneratorFieldNullable<*> -> KotestFieldNullable((this as Wirespec.GeneratorFieldNullable<Any>).generate)
         is Wirespec.GeneratorFieldShape<*> -> (this as Wirespec.GeneratorFieldShape<Any>).let { KotestFieldShape(it.annotations, it.generate, it.type) }

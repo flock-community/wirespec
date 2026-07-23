@@ -62,13 +62,11 @@ data class KotestFieldBytes(
 data class KotestFieldEnum(
     val values: List<String>,
     override val annotations: List<Map<String, Any>>,
-    val type: KType,
 ) : KotestLeafField<String>
 
 data class KotestFieldUnion(
     val variants: List<String>,
     override val annotations: List<Map<String, Any>>,
-    val type: KType,
 ) : KotestLeafField<String>
 
 data class KotestFieldArray<T : Any>(
