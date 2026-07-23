@@ -203,7 +203,7 @@ undeclared status or a body that won't deserialize into the matched variant
 fails the test with the seed printed for reproduction.
 
 For endpoint specs against a running server, the module ships a ready
-`Wirespec.Transportation` — `community.flock.wirespec.integration.java.transport.HttpTransportation`
+`Wirespec.Transportation` — `community.flock.wirespec.integration.jvm.transport.HttpTransportation`
 (JDK `HttpClient`) — so you can wire `WirespecEndpointContext(HttpTransportation("http://localhost:$port"), serialization)`
 without hand-rolling one.
 
