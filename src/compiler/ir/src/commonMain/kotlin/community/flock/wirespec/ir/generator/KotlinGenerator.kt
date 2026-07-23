@@ -66,6 +66,9 @@ object KotlinGenerator : Generator {
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
 
+    /** Render a single [Type] as Kotlin source (e.g. `List<Pet>`, `Map<String, Int>`, `Foo?`). */
+    fun generateType(type: Type): String = type.emitGenerics()
+
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
         val (imports, others) = rest.partition { it is Import }

@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.integration.kotest.ResponseVariantNaming
+import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FileBuilder
 import community.flock.wirespec.ir.core.FunctionCall
@@ -128,8 +129,10 @@ internal object EndpointDslFile {
     // IR type helpers
     // ------------------------------------------------------------------------------------
 
-    private fun genOf(inner: String): IrType = IrType.Custom("Gen", listOf(IrType.Custom(inner)))
-    private fun genNullableOf(inner: String): IrType = IrType.Nullable(genOf(inner))
+    private fun genOf(inner: IrType): IrType = IrType.Custom("Gen", listOf(inner))
+    private fun genOf(inner: String): IrType = genOf(IrType.Custom(inner))
+    private fun genNullableOf(inner: IrType): IrType = IrType.Nullable(genOf(inner))
+    private fun genNullableOf(inner: String): IrType = genNullableOf(IrType.Custom(inner))
     private fun blockType(builder: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(builder))
     private fun suspendScopeType(scope: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(scope), isAsync = true)
 
@@ -212,8 +215,8 @@ internal object EndpointDslFile {
                 valueSetter("body", bodyType)
             }
             variant.headerFields.forEach { f ->
-                property(f.name, genNullableOf(f.kotlinType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
-                valueSetter(f.name, f.kotlinType)
+                property(f.name, genNullableOf(f.type), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter(f.name, f.type)
             }
             function("build") {
                 visibility(Visibility.PUBLIC)
@@ -356,8 +359,8 @@ internal object EndpointDslFile {
             annotation("@WirespecScenarioDsl")
             visibility(Visibility.PUBLIC)
             slot.fields.forEach { f ->
-                property(f.name, genNullableOf(f.kotlinType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
-                valueSetter(f.name, f.kotlinType)
+                property(f.name, genNullableOf(f.type), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter(f.name, f.type)
             }
         }
     }
@@ -475,7 +478,7 @@ internal data class EndpointShape(
     val responseVariants: List<ResponseVariantShape>,
     val modelImports: List<String>,
 ) {
-    data class NamedTypedField(val name: String, val kotlinType: String, val isNullable: Boolean = false)
+    data class NamedTypedField(val name: String, val type: IrType, val isNullable: Boolean = false)
 
     /**
      * A single response variant (`Response<status>`), carrying enough to build a random
@@ -489,8 +492,8 @@ internal data class EndpointShape(
         /** Generated variant class simple name, e.g. `"Response201"`. */
         val className: String,
         val bodyKind: BodyKind,
-        /** Full Kotlin type of the body, e.g. `"TodoDto"` or `"List<TodoDto>"`. `null` when there is no body. */
-        val bodyType: String?,
+        /** IR type of the body, e.g. `TodoDto` or `List<TodoDto>` once rendered. `null` when there is no body. */
+        val bodyType: IrType?,
         /** Name of the body's element Type — `"TodoDto"` for both object and list bodies. `null` for no body. */
         val bodyElementType: String?,
         val headerFields: List<NamedTypedField>,
@@ -502,15 +505,15 @@ internal data class EndpointShape(
         val name: String
 
         /**
-         * Leaf body field declared as `Gen<[kotlinType]>?` in the typed builder (where
-         * [kotlinType] is the refined-unwrapped base primitive). When the field wraps a
-         * [Refined] type, [refinedTypeName] names the wrapper class so the generated body
-         * transform can re-wrap the drawn primitive — `Refined(v)` for a scalar,
-         * `v.map { Refined(it) }` for a list. [isList]/[isNullable] pick the wrap shape.
+         * Leaf body field declared as `Gen<[type]>?` in the typed builder (where [type] is the
+         * refined-unwrapped base primitive). When the field wraps a [Refined] type,
+         * [refinedTypeName] names the wrapper class so the generated body transform can re-wrap
+         * the drawn primitive — `Refined(v)` for a scalar, `v.map { Refined(it) }` for a list.
+         * [isList]/[isNullable] pick the wrap shape.
          */
         data class Primitive(
             override val name: String,
-            val kotlinType: String,
+            val type: IrType,
             val refinedTypeName: String? = null,
             val isList: Boolean = false,
             val isNullable: Boolean = false,
@@ -535,15 +538,15 @@ internal data class EndpointShape(
         ): EndpointShape {
             val pathFields = endpoint.path
                 .filterIsInstance<Endpoint.Segment.Param>()
-                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable) }
+                .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
             val queryFields = endpoint.queries
-                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable) }
+                .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
             val headerFields = endpoint.headers
-                .map { NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable) }
+                .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
             val bodyRef = endpoint.requests.firstOrNull()?.content?.reference
             val (bodyKind, bodyElementType) = classifyBody(bodyRef)
 
-            // Body-field kotlinType unwraps refined wrappers to their base primitive: the typed
+            // Body-field types unwrap refined wrappers to their base primitive: the typed
             // body{} builder declares the field as Arb<BaseType>, and the runtime's RefinedWrapper
             // wraps each drawn primitive into the refined class via its single-arg ctor. Without
             // this unwrap, overriding a refined field at runtime throws "expected Arb<BaseType>
@@ -556,7 +559,7 @@ internal data class EndpointShape(
                 .mapNotNull { response ->
                     val status = response.status.takeIf { it.all(Char::isDigit) } ?: return@mapNotNull null
                     val respBodyRef = response.content?.reference
-                    val respBodyType = respBodyRef?.let { if (it is Reference.Unit) null else KotlinTypeMapper.map(it) }
+                    val respBodyType = respBodyRef?.let { if (it is Reference.Unit) null else it.convert() }
                     val (respBodyKind, respElementName) = classifyBody(respBodyRef)
                     ResponseVariantShape(
                         status = status,
@@ -565,7 +568,7 @@ internal data class EndpointShape(
                         bodyType = respBodyType,
                         bodyElementType = respElementName,
                         headerFields = response.headers.map {
-                            NamedTypedField(it.identifier.value, KotlinTypeMapper.map(it.reference), it.reference.isNullable)
+                            NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable)
                         },
                     )
                 }
@@ -729,28 +732,24 @@ internal data class EndpointShape(
             }
             return BodyFieldShape.Primitive(
                 name = name,
-                kotlinType = mapWithRefinedUnwrap(ref, refined),
+                type = mapWithRefinedUnwrap(ref, refined),
                 refinedTypeName = refinedTypeName,
                 isList = isList,
                 isNullable = ref.isNullable,
             )
         }
 
-        /** Like [KotlinTypeMapper.map], but replaces a `Reference.Custom` to a [Refined] with the
+        /** Like [Reference.convert], but replaces a `Reference.Custom` to a [Refined] with the
          *  refined's underlying primitive type (preserving nullability/iterables/dicts wrapping). */
-        private fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): String = when (reference) {
-            is Reference.Custom -> refined[reference.value]?.let { r ->
-                KotlinTypeMapper.map(r.reference.copy(isNullable = reference.isNullable))
-            } ?: KotlinTypeMapper.map(reference)
-            is Reference.Iterable -> {
-                val inner = mapWithRefinedUnwrap(reference.reference, refined)
-                if (reference.isNullable) "List<$inner>?" else "List<$inner>"
-            }
-            is Reference.Dict -> {
-                val inner = mapWithRefinedUnwrap(reference.reference, refined)
-                if (reference.isNullable) "Map<String, $inner>?" else "Map<String, $inner>"
-            }
-            else -> KotlinTypeMapper.map(reference)
+        private fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): IrType = when (reference) {
+            is Reference.Custom -> refined[reference.value]
+                ?.let { r -> r.reference.copy(isNullable = reference.isNullable).convert() }
+                ?: reference.convert()
+            is Reference.Iterable -> IrType.Array(mapWithRefinedUnwrap(reference.reference, refined))
+                .let { if (reference.isNullable) IrType.Nullable(it) else it }
+            is Reference.Dict -> IrType.Dict(IrType.String, mapWithRefinedUnwrap(reference.reference, refined))
+                .let { if (reference.isNullable) IrType.Nullable(it) else it }
+            else -> reference.convert()
         }
     }
 }

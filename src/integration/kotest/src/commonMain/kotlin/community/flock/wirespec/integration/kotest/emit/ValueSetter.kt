@@ -23,11 +23,11 @@ import community.flock.wirespec.ir.core.Type as IrType
  * Emitting these requires `io.kotest.property.Arb` and `io.kotest.property.arbitrary.constant`
  * to be imported by the surrounding file.
  */
-internal fun StructBuilder.valueSetter(fieldName: String, kotlinType: String) {
+internal fun StructBuilder.valueSetter(fieldName: String, type: IrType) {
     val escaped = fieldName.escapeKotlinIdentifier()
     function(fieldName) {
         visibility(Visibility.PUBLIC)
-        arg("value", IrType.Custom(kotlinType))
+        arg("value", type)
         raw("this.$escaped = Arb.constant(value)")
     }
 }
