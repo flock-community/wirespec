@@ -9,7 +9,12 @@ import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.compile
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class WirespecEmitterTest {
@@ -94,23 +99,63 @@ class WirespecEmitterTest {
             |
             |type TestInt = Integer
             |
-            |type TestInt0 = Integer(null, null)
+            |type TestInt0 = Integer(_, _)
             |
-            |type TestInt1 = Integer(0, null)
+            |type TestInt1 = Integer(0, _)
             |
             |type TestInt2 = Integer(1, 3)
             |
             |type TestNum = Number
             |
-            |type TestNum0 = Number(null, null)
+            |type TestNum0 = Number(_, _)
             |
-            |type TestNum1 = Number(null, 0.5)
+            |type TestNum1 = Number(_, 0.5)
             |
             |type TestNum2 = Number(-0.2, 0.5)
             |
         """.trimMargin()
 
         CompileRefinedTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileNullableRefinedTest() {
+        // A nullable refined type must round-trip: the `?` goes after the bound, so it stays parseable.
+        val source = """
+            |type TestIntNullable = Integer(0, _)?
+            |type TestNumNullable = Number(-0.2, 0.5)?
+            |
+        """.trimMargin()
+
+        val wirespec = """
+            |type TestIntNullable = Integer(0, _)?
+            |
+            |type TestNumNullable = Number(-0.2, 0.5)?
+            |
+        """.trimMargin()
+
+        val compiler = compile(source)
+        compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileNumberIntegerBoundsTest() {
+        // Integer-valued Number bounds cannot be parsed from Wirespec source (Number bounds must be
+        // decimals), but they can arrive via conversion (e.g. OpenAPI). The emitter must render them
+        // as decimals so the output stays parseable.
+        val refined = Refined(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("TestNumIntBounds"),
+            reference = Reference.Primitive(
+                type = Reference.Primitive.Type.Number(
+                    constraint = Reference.Primitive.Type.Constraint.Bound("0", "1"),
+                ),
+                isNullable = false,
+            ),
+        )
+
+        WirespecEmitter().emit(refined) shouldBe "type TestNumIntBounds = Number(0.0, 1.0)\n"
     }
 
     @Test

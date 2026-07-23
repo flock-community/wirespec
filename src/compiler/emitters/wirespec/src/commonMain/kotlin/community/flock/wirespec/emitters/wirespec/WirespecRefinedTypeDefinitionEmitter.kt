@@ -7,15 +7,24 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 interface WirespecRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(refined: Refined) =
-        "type ${emit(refined.identifier)} = ${refined.reference.emit()}${refined.emitValidator()}\n"
+        "type ${emit(refined.identifier)} = ${refined.reference.copy(isNullable = false).emit()}${refined.emitValidator()}${if (refined.reference.isNullable) "?" else ""}\n"
 
     override fun Refined.emitValidator():String {
         return when (val type = reference.type) {
             is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: ""
-            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: ""
+            is Reference.Primitive.Type.Number -> type.constraint?.emitDecimal() ?: ""
             is Reference.Primitive.Type.String -> type.constraint?.emit() ?: ""
             Reference.Primitive.Type.Boolean -> ""
             Reference.Primitive.Type.Bytes -> ""
         }
+    }
+
+    private fun Reference.Primitive.Type.Constraint.Bound.emitDecimal(): String =
+        "(${min.toBoundDecimal()}, ${max.toBoundDecimal()})"
+
+    private fun String?.toBoundDecimal(): String = when {
+        this == null -> "_"
+        contains(".") -> this
+        else -> "$this.0"
     }
 }
