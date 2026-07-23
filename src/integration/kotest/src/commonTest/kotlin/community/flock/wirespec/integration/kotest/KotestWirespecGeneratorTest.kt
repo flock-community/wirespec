@@ -93,7 +93,7 @@ class KotestWirespecGeneratorTest {
     fun `KotestFieldEnum picks a value from the values list`() {
         val values = listOf("A", "B", "C")
         repeat(20) { i ->
-            val field = KotestFieldEnum(values = values, annotations = emptyList(), type = typeOf<String>())
+            val field = KotestFieldEnum(values = values, annotations = emptyList())
             val v = generate(seed = i.toLong(), field) as String
             assertTrue(v in values, "expected one of $values, got '$v'")
         }
@@ -103,7 +103,7 @@ class KotestWirespecGeneratorTest {
     fun `KotestFieldUnion picks a variant from the variants list`() {
         val variants = listOf("V1", "V2")
         repeat(20) { i ->
-            val field = KotestFieldUnion(variants = variants, annotations = emptyList(), type = typeOf<String>())
+            val field = KotestFieldUnion(variants = variants, annotations = emptyList())
             val v = generate(seed = i.toLong(), field) as String
             assertTrue(v in variants, "expected one of $variants, got '$v'")
         }
