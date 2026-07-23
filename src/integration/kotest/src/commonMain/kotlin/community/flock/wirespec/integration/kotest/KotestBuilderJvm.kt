@@ -53,7 +53,6 @@ internal object JvmRefinedWrapper : RefinedWrapper {
         if (cls.java.isEnum) return@getOrPut NotRefined
         cls.constructors.singleOrNull()
             ?.takeIf { it.parameters.size == 1 }
-            ?.let { it as? KFunction<Any> }
             ?: NotRefined
     } as? KFunction<Any>
 
