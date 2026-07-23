@@ -34,7 +34,7 @@ internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator
     ): T = inner.generate(path, field.toKotestField() as KotestField<T>) as T
 
     @Suppress("UNCHECKED_CAST")
-    private fun Wirespec.GeneratorField<*>.toKotestField(): KotestField<*> = when (this) {
+    private fun Wirespec.GeneratorField<*>.toKotestField(): KotestField<*> = when (val field = this) {
         is Wirespec.GeneratorFieldString -> KotestFieldString(regex, annotations)
         is Wirespec.GeneratorFieldInteger64 -> KotestFieldInteger64(min, max, annotations)
         is Wirespec.GeneratorFieldInteger32 -> KotestFieldInteger32(min, max, annotations)
@@ -44,9 +44,9 @@ internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator
         is Wirespec.GeneratorFieldBytes -> KotestFieldBytes(annotations)
         is Wirespec.GeneratorFieldEnum -> KotestFieldEnum(values, annotations)
         is Wirespec.GeneratorFieldUnion -> KotestFieldUnion(variants, annotations)
-        is Wirespec.GeneratorFieldArray<*> -> KotestFieldArray((this as Wirespec.GeneratorFieldArray<Any>).generate)
-        is Wirespec.GeneratorFieldNullable<*> -> KotestFieldNullable((this as Wirespec.GeneratorFieldNullable<Any>).generate)
-        is Wirespec.GeneratorFieldShape<*> -> (this as Wirespec.GeneratorFieldShape<Any>).let { KotestFieldShape(it.annotations, it.generate, it.type) }
-        is Wirespec.GeneratorFieldDict<*> -> KotestFieldDict((this as Wirespec.GeneratorFieldDict<Any>).generate)
+        is Wirespec.GeneratorFieldArray<*> -> KotestFieldArray(field.generate)
+        is Wirespec.GeneratorFieldNullable<*> -> KotestFieldNullable(field.generate)
+        is Wirespec.GeneratorFieldShape<*> -> KotestFieldShape(annotations, generate, type)
+        is Wirespec.GeneratorFieldDict<*> -> KotestFieldDict(field.generate)
     }
 }
