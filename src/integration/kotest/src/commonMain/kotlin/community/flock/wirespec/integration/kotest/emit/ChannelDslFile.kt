@@ -5,11 +5,13 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.ir.generator.KotlinGenerator
 import community.flock.wirespec.ir.core.Type as IrType
 
 /** Builds the per-channel Kotest DSL file (`<Channel>Dsl.kt`): the `<Channel>Generate` class, its `generate` extension property, and the `Gen<Payload>.send()` extension. */
@@ -100,7 +102,7 @@ internal data class ChannelShape(
             refined: Map<String, Refined> = emptyMap(),
         ): ChannelShape {
             val payloadRef = channel.reference
-            val payloadType = KotlinTypeMapper.map(payloadRef)
+            val payloadType = KotlinGenerator.generateType(payloadRef.convert())
             val payloadCustom = payloadRef as? Reference.Custom
 
             val payloadFieldShapes = payloadCustom
