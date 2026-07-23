@@ -28,21 +28,21 @@ internal object RecordBuilder {
                 is BodyFieldShape.Primitive -> {
                     property(
                         name = f.name,
-                        type = genNullable(IrType.Custom(f.kotlinType)),
+                        type = genNullable(f.type),
                         isMutable = true,
                         visibility = Visibility.PUBLIC,
                         initializer = rawExpr("null"),
                     )
-                    valueSetter(f.name, f.kotlinType)
+                    valueSetter(f.name, f.type)
                 }
                 is BodyFieldShape.NestedObject ->
-                    nestedBlock(f.name, f.typeName, genNullable(IrType.Custom(f.typeName)), f.typeName)
+                    nestedBlock(f.name, f.typeName, genNullable(IrType.Custom(f.typeName)), IrType.Custom(f.typeName))
                 is BodyFieldShape.NestedList ->
                     nestedBlock(
                         f.name,
                         f.elementTypeName,
                         genNullable(IrType.Array(IrType.Custom(f.elementTypeName))),
-                        "List<${f.elementTypeName}>",
+                        IrType.Array(IrType.Custom(f.elementTypeName)),
                     )
             }
         }
@@ -59,7 +59,7 @@ internal object RecordBuilder {
      * constant-value `<field>(value)` overload, the `@PublishedApi internal var _<field>Block`
      * sub-builder slot, and the `<field>Block { … }` function that assigns it.
      */
-    private fun StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType, valueType: String) {
+    private fun StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType, valueType: IrType) {
         val nested = builderName(nestedTypeName)
         property(
             name = fieldName,
