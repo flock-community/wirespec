@@ -28,6 +28,13 @@ class DefinitionNotExistsException(fileUri: FileUri, referenceName: String, coor
         message = "Cannot find reference: $referenceName",
     )
 
+class NullableRefinedReferenceException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A refined type cannot be nullable: $referenceName",
+    )
+
 sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :
     EatTokenException(
         fileUri,

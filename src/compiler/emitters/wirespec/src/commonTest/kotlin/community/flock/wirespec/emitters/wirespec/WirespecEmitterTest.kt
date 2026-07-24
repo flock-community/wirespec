@@ -1,5 +1,6 @@
 package community.flock.wirespec.emitters.wirespec
 
+import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -13,8 +14,11 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.compile
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
 class WirespecEmitterTest {
@@ -120,22 +124,18 @@ class WirespecEmitterTest {
 
     @Test
     fun compileNullableRefinedTest() {
-        // A nullable refined type must round-trip: the `?` goes after the bound, so it stays parseable.
+        // A refined type can never be nullable: a trailing `?` on a refined declaration is a parse error.
         val source = """
             |type TestIntNullable = Integer(0, _)?
-            |type TestNumNullable = Number(-0.2, 0.5)?
-            |
-        """.trimMargin()
-
-        val wirespec = """
-            |type TestIntNullable = Integer(0, _)?
-            |
-            |type TestNumNullable = Number(-0.2, 0.5)?
             |
         """.trimMargin()
 
         val compiler = compile(source)
-        compiler { WirespecEmitter() } shouldBeRight wirespec
+        compiler { WirespecEmitter() }
+            .shouldBeLeft()
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<NullableRefinedReferenceException>()
     }
 
     @Test
