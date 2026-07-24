@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.kotest.validation
 
-import community.flock.wirespec.integration.kotest.ResponseVariantNaming
 import community.flock.wirespec.kotlin.Wirespec
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
@@ -59,6 +58,9 @@ internal class EndpointReflection private constructor(
         private val cache = ConcurrentHashMap<KClass<out Wirespec.Endpoint>, EndpointReflection>()
         private val syntheticParamRegex = Regex("arg\\d+")
 
+        /** Matches a Wirespec response-variant simple name (`Response<NNN>`, e.g. `Response200`). */
+        private val responseVariantRegex = Regex("Response(\\d{3})")
+
         /** Pick the emitter's flattened secondary constructor of [cls], omitting the [excludeParam] param. */
         private fun pickEmitterConstructor(cls: Class<*>, excludeParam: String, label: String): Constructor<*> {
             val ctor = cls.declaredConstructors
@@ -99,7 +101,7 @@ internal class EndpointReflection private constructor(
                 ?: error("${cls.simpleName}: no nested Request type found.")
 
             val variants: Map<Int, Class<*>> = jcls.declaredClasses.mapNotNull { c ->
-                val status = c.simpleName?.let(ResponseVariantNaming::statusOf) ?: return@mapNotNull null
+                val status = responseVariantRegex.matchEntire(c.simpleName)?.groupValues?.get(1)?.toInt() ?: return@mapNotNull null
                 status to c
             }.toMap()
             require(variants.isNotEmpty()) { "${cls.simpleName}: no concrete ResponseNNN variants found." }

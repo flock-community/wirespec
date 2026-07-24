@@ -25,9 +25,8 @@ the module lives in `commonMain` and uses no JVM APIs:
   and `kotlin.coroutines`.
 - **`jvmMain`** — everything that reflects over generated classes at runtime
   (`ArbReceiver`, `EndpointReflection`, `CallExecutor`, the `*CallBuilder`
-  terminals, `JvmRefinedWrapper`) or needs a JVM primitive (`WirespecRequestScope`
-  uses `ThreadLocal`). These are anchored to the JVM by `kotlin-reflect` and
-  `java.*`, not by choice of target.
+  terminals, `JvmRefinedWrapper`). These are anchored to the JVM by
+  `kotlin-reflect` and `java.*`, not by choice of target.
 
 Regex generation uses [`community.flock.kotlinx.rgxgen`][rgxgen] (multiplatform),
 not `Arb.stringPattern` (which is JVM-only in kotest 6.x).
@@ -206,7 +205,3 @@ For endpoint specs against a running server, the module ships a ready
 `Wirespec.Transportation` — `community.flock.wirespec.integration.jvm.transport.HttpTransportation`
 (JDK `HttpClient`) — so you can wire `WirespecEndpointContext(HttpTransportation("http://localhost:$port"), serialization)`
 without hand-rolling one.
-
-For a spec whose single transport applies per-block identity (auth, headers),
-hold the active config in a `WirespecRequestScope<C>` and have the transport read
-`scope.current()` on each request.
