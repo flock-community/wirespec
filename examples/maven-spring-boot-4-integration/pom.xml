@@ -48,6 +48,10 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+        </dependency>
+        <dependency>
             <groupId>community.flock.wirespec.integration</groupId>
             <artifactId>spring-jvm</artifactId>
             <version>${wirespec.version}</version>
