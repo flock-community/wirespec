@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotest
+package community.flock.wirespec.integration.kotest.generator
 
 import community.flock.kotlinx.rgxgen.RgxGen
 import io.kotest.property.Arb

@@ -1,5 +1,8 @@
 package community.flock.wirespec.integration.kotest
 
+import community.flock.wirespec.integration.kotest.generator.KotestField
+import community.flock.wirespec.integration.kotest.generator.WirespecKotlinGeneratorAdapter
+import community.flock.wirespec.integration.kotest.generator.kotestWirespecKotlinGenerator
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import kotlin.test.Test

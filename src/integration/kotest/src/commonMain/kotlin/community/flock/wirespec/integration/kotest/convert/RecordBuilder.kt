@@ -1,6 +1,6 @@
-package community.flock.wirespec.integration.kotest.emit
+package community.flock.wirespec.integration.kotest.convert
 
-import community.flock.wirespec.integration.kotest.emit.EndpointShape.BodyFieldShape
+import community.flock.wirespec.integration.kotest.convert.EndpointShape.BodyFieldShape
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.StructBuilder
 import community.flock.wirespec.ir.core.Visibility

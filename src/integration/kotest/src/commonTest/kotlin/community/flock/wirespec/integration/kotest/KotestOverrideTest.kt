@@ -1,5 +1,8 @@
 package community.flock.wirespec.integration.kotest
 
+import community.flock.wirespec.integration.kotest.generator.KotestFieldShape
+import community.flock.wirespec.integration.kotest.generator.KotestFieldString
+import community.flock.wirespec.integration.kotest.generator.kotestGenerator
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant
 import kotlin.reflect.typeOf

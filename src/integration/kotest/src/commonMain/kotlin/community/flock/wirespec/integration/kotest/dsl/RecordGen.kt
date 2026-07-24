@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
+import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
 import io.kotest.property.Arb
 import io.kotest.property.Gen
 import io.kotest.property.arbitrary.arbitrary
