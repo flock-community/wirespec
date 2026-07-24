@@ -1,5 +1,9 @@
 package community.flock.wirespec.integration.kotest
 
+import community.flock.wirespec.integration.kotest.generator.KotestFieldShape
+import community.flock.wirespec.integration.kotest.generator.RefinedWrapper
+import community.flock.wirespec.integration.kotest.generator.kotestWirespecKotlinGenerator
+import community.flock.wirespec.integration.kotest.generator.registerField
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.constant

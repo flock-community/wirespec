@@ -1,5 +1,19 @@
 package community.flock.wirespec.integration.kotest
 
+import community.flock.wirespec.integration.kotest.generator.KotestField
+import community.flock.wirespec.integration.kotest.generator.KotestFieldArray
+import community.flock.wirespec.integration.kotest.generator.KotestFieldBoolean
+import community.flock.wirespec.integration.kotest.generator.KotestFieldBytes
+import community.flock.wirespec.integration.kotest.generator.KotestFieldDict
+import community.flock.wirespec.integration.kotest.generator.KotestFieldEnum
+import community.flock.wirespec.integration.kotest.generator.KotestFieldInteger64
+import community.flock.wirespec.integration.kotest.generator.KotestFieldNullable
+import community.flock.wirespec.integration.kotest.generator.KotestFieldNumber64
+import community.flock.wirespec.integration.kotest.generator.KotestFieldShape
+import community.flock.wirespec.integration.kotest.generator.KotestFieldString
+import community.flock.wirespec.integration.kotest.generator.KotestFieldUnion
+import community.flock.wirespec.integration.kotest.generator.KotestGenerator
+import community.flock.wirespec.integration.kotest.generator.kotestGenerator
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals

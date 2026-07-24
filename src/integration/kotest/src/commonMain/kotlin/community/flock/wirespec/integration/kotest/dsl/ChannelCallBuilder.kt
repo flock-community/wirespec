@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
+import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.context.WirespecChannelContext
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
 import community.flock.wirespec.integration.kotest.runtime.currentAmbient

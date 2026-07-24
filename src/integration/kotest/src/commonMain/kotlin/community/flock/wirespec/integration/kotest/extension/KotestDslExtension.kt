@@ -6,9 +6,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.integration.kotest.emit.ChannelDslFile
-import community.flock.wirespec.integration.kotest.emit.EndpointDslFile
-import community.flock.wirespec.integration.kotest.emit.TypeDslFile
+import community.flock.wirespec.integration.kotest.convert.ChannelDslFile
+import community.flock.wirespec.integration.kotest.convert.EndpointDslFile
+import community.flock.wirespec.integration.kotest.convert.TypeDslFile
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.IR

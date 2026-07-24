@@ -1,7 +1,7 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.KotestWirespecGeneratorBuilder
-import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
+import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
+import community.flock.wirespec.integration.kotest.generator.kotestWirespecKotlinGenerator
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.RandomSource
 import java.lang.reflect.Method
