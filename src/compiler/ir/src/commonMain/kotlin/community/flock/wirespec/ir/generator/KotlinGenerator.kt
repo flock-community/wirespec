@@ -55,6 +55,7 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.annotatedFields
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
@@ -64,6 +65,9 @@ object KotlinGenerator : Generator {
         is File -> emitFile(element)
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
+
+    /** Render a single [Type] as Kotlin source (e.g. `List<Pet>`, `Map<String, Int>`, `Foo?`). */
+    fun generateType(type: Type): String = type.emitGenerics()
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -95,8 +99,10 @@ object KotlinGenerator : Generator {
             staticContent + "${modifier}fun main() {\n$content}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
-        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
-        is Field -> ""
+        // A plain constructor-param field has no standalone rendering (emitted inline within its
+        // enclosing Struct parameter list). A field opting into property markers (mutability,
+        // visibility, an initializer, a getter, an extension receiver) renders as a property.
+        is Field -> emitProperty(indent)
         is RawElement -> "$code\n".indentCode(indent)
     }
 
@@ -177,7 +183,50 @@ object KotlinGenerator : Generator {
         }
     }
 
+    /**
+     * Renders a [Field] that opts into property markers as a standalone property — a class
+     * member, a top-level property, or (when [Field.receiver] is set) an extension property.
+     * A field with none of the markers keeps its empty standalone rendering.
+     */
+    private fun Field.emitProperty(indent: Int): String {
+        val isProperty = isMutable ||
+            visibility != null ||
+            annotations.isNotEmpty() ||
+            receiver != null ||
+            initializer != null ||
+            getter != null
+        if (!isProperty) return ""
+        val annotationPrefix = annotations.annotationPrefix()
+        val visibilityPrefix = visibility.prefix()
+        val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
+        val keyword = if (isMutable) "var" else "val"
+        val receiverStr = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
+        val signature = "$annotationPrefix$visibilityPrefix$overridePrefix$keyword $receiverStr${name.value().escapeKotlinIdentifier()}: ${type.emitGenerics()}"
+        return when {
+            getter != null -> "$signature\n${"get() = ${getter.emit()}".indentCode(1)}\n\n".indentCode(indent)
+            initializer != null -> "$signature = ${initializer.emit()}\n\n".indentCode(indent)
+            else -> "$signature\n\n".indentCode(indent)
+        }
+    }
+
+    private fun Struct.emitPlainClass(indent: Int, parents: List<Element>): String {
+        val pascal = name.pascalCase()
+        val annotationPrefix = annotations.annotationPrefix()
+        val visibilityPrefix = visibility.prefix()
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
+        val ctorStr = constructorVisibility?.let { " ${it.prefix().trim()} constructor()" }.orEmpty()
+        val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
+        val content = elements.joinToString("") { it.emit(indent + 1, isStatic = false, parents = parents + this) }
+        val header = "$annotationPrefix$visibilityPrefix" + "class $pascal$typeParamsStr$ctorStr$implStr"
+        return if (content.isEmpty()) {
+            "$header\n\n".indentCode(indent)
+        } else {
+            "$header {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+        }
+    }
+
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
+        if (kind == Struct.Kind.PLAIN_CLASS) return emitPlainClass(indent, parents)
         val fields = fieldList()
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
@@ -249,16 +298,23 @@ object KotlinGenerator : Generator {
     }
 
     private fun AstFunction.emit(indent: Int, @Suppress("UNUSED_PARAMETER") parents: List<Element>): String {
+        val annotationPrefix = annotations.annotationPrefix()
+        val visibilityPrefix = visibility.prefix()
         val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
         val suspendPrefix = "suspend ".takeIf { isAsync }.orEmpty()
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", "> ") { it.emit() }
+        val receiverStr = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
         val rType = when {
             isAsync -> returnType?.emitGenerics() ?: "Unit"
             else -> returnType?.takeIf { it != Type.Unit }?.emitGenerics()
         }
         val returnTypeStr = rType?.let { ": $it" }.orEmpty()
         val params = parameters.joinToString(", ") { it.emit(0) }
-        val signature = "$overridePrefix${suspendPrefix}fun $typeParamsStr${name.camelCase()}($params)$returnTypeStr"
+        // DSL-authored functions (opting into an explicit visibility) keep their name verbatim so
+        // wire-derived names such as `Refresh-TokenBlock` are backtick-escaped, not camel-cased;
+        // model functions (visibility == null) keep the camelCase normalisation.
+        val nameStr = if (visibility != null) name.value().escapeKotlinIdentifier() else name.camelCase()
+        val signature = "$annotationPrefix$visibilityPrefix$overridePrefix${suspendPrefix}fun $typeParamsStr$receiverStr$nameStr($params)$returnTypeStr"
 
         return when {
             body.isEmpty() -> "$signature\n".indentCode(indent)
@@ -273,7 +329,22 @@ object KotlinGenerator : Generator {
         }
     }
 
-    private fun Parameter.emit(indent: Int): String = "${name.camelCase().sanitize()}: ${type.emitGenerics()}".indentCode(indent)
+    private fun Parameter.emit(indent: Int): String {
+        val defaultStr = default?.let { " = ${it.emit()}" }.orEmpty()
+        return "${name.camelCase().sanitize()}: ${type.emitGenerics()}$defaultStr".indentCode(indent)
+    }
+
+    /** Kotlin visibility keyword with a trailing space, or empty when unset. */
+    private fun Visibility?.prefix(): String = when (this) {
+        Visibility.PUBLIC -> "public "
+        Visibility.INTERNAL -> "internal "
+        Visibility.PRIVATE -> "private "
+        Visibility.PROTECTED -> "protected "
+        null -> ""
+    }
+
+    /** Renders class/function/property annotations, each on its own line, as a prefix. */
+    private fun List<String>.annotationPrefix(): String = joinToString("") { "$it\n" }
 
     private fun TypeParameter.emit(): String {
         val bounds = extends.takeUnless { it.isEmpty() }?.joinToString(" & ") { it.emitGenerics() } ?: "Any"
@@ -301,10 +372,17 @@ object KotlinGenerator : Generator {
         is Type.Array -> "List"
         is Type.Dict -> "Map"
         is Type.Custom -> name.referenceName()
-        is Type.Nullable -> "${type.emitGenerics()}?"
+        is Type.Nullable -> type.emitNullableInner()
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
-        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
+        is Type.Function -> emitFunctionType()
+    }
+
+    private fun Type.Function.emitFunctionType(): String {
+        val suspendPrefix = "suspend ".takeIf { isAsync }.orEmpty()
+        val receiverPrefix = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
+        val params = parameterTypes.joinToString(", ") { it.emitGenerics() }
+        return "$suspendPrefix$receiverPrefix($params) -> ${returnType.emitGenerics()}"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -318,9 +396,15 @@ object KotlinGenerator : Generator {
             }
         }
 
-        is Type.Nullable -> "${type.emitGenerics()}?"
-        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
+        is Type.Nullable -> type.emitNullableInner()
+        is Type.Function -> emitFunctionType()
         else -> emit()
+    }
+
+    /** Renders the inner type of a `Nullable`, wrapping function types in parens (`(A) -> B)?`). */
+    private fun Type.emitNullableInner(): String = when (this) {
+        is Type.Function -> "(${emitFunctionType()})?"
+        else -> "${emitGenerics()}?"
     }
 
     private fun ConstructorStatement.formatArgs(): String {
@@ -532,6 +616,17 @@ object KotlinGenerator : Generator {
 }
 
 private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "`$this`" else this
+
+private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
+
+/**
+ * Escapes an arbitrary declaration name for use as a Kotlin identifier: backticks it when it
+ * is not already a valid identifier (e.g. the wire header name `Refresh-Token`) or collides
+ * with a reserved keyword. Unlike [sanitize], this also handles names with non-identifier
+ * characters, not just keywords. Public so raw-code emitters (e.g. the Kotest DSL extension)
+ * escape names identically to this generator.
+ */
+fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in reservedKeywords) this else "`$this`"
 
 private val reservedKeywords = setOf(
     "as", "break", "class", "continue", "do",

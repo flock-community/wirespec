@@ -1,0 +1,20 @@
+inventory:
+  # Base URL of the downstream inventory service (inventory.ws). Tests point this at a mock server.
+  base-url: ${INVENTORY_BASE_URL:http://localhost:9999}
+
+spring:
+  application:
+    name: campaign-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+      # Fail fast when no broker is reachable so REST-only runs never hang on metadata.
+      properties:
+        max.block.ms: 5000
+    consumer:
+      group-id: campaign-app
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer

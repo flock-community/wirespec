@@ -42,6 +42,8 @@ include(
     "src:converter:openapi",
     "src:integration:avro",
     "src:integration:jackson",
+    "src:integration:jvm",
+    "src:integration:kotest",
     "src:integration:kotlinx-serialization",
     "src:integration:wirespec",
     "src:integration:wiremock",
