@@ -1,44 +1,17 @@
 package community.flock.wirespec.integration.kotest.extension
 
-import community.flock.wirespec.integration.kotest.context.WirespecEndpointContext
-import community.flock.wirespec.integration.kotest.runtime.WirespecAmbient
-import community.flock.wirespec.integration.kotest.runtime.mergeEndpoint
+import community.flock.wirespec.integration.kotest.runtime.WirespecSeed
+import community.flock.wirespec.integration.kotest.runtime.orNew
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.extensions.TestCaseExtension
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-// NB: kotest 6.x relocated TestResult to io.kotest.engine.test; io.kotest.core.test.TestResult no longer exists.
-
-/**
- * Installs the endpoint half of the ambient wirespec context around every test, so
- * wrapper-free `SomeEndpoint.generate.request { … }.call()` calls resolve their
- * transportation and a per-test [RandomSource].
- *
- * Supply the endpoint context eagerly, or from `suspend` factories resolved per test:
- *
- * ```
- * // eager
- * extension(WirespecEndpointExtension(myEndpointContext))
- * extension(WirespecEndpointExtension(myTransportation, mySerialization))
- *
- * // factory form — the factories carry any framework wiring (e.g. the running server's port and a
- * // serialization bean via Spring's `testContextManager()`), so this extension stays
- * // framework-agnostic.
- * extension(
- *     WirespecEndpointExtension(
- *         serialization = { myWirespecSerialization() },
- *         transportation = { HttpTransportation("http://localhost:${'$'}{serverPort()}") },
- *     ),
- * )
- * ```
- *
- * Composes with [WirespecChannelExtension]: when both are registered they merge into a
- * single ambient (sharing one per-test [RandomSource]), so a spec can drive endpoints and
- * channels together.
- */
+/** Installs the endpoint half of the ambient wirespec context around every test. */
 class WirespecEndpointExtension internal constructor(
     private val eager: WirespecEndpointContext?,
     private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
@@ -58,17 +31,12 @@ class WirespecEndpointExtension internal constructor(
         execute: suspend (TestCase) -> TestResult,
     ): TestResult {
         val endpoint = eager ?: WirespecEndpointContext(transportationFactory!!(), serializationFactory!!())
-        val ambient = coroutineContext[WirespecAmbient].mergeEndpoint(endpoint)
-        return withContext(ambient) { execute(testCase) }
+        val seed = coroutineContext[WirespecSeed].orNew()
+        return withContext(endpoint + seed) { execute(testCase) }
     }
 }
 
-/**
- * Factory-form [WirespecEndpointExtension]: resolves the [transportation] + [serialization] from
- * `suspend` factories per test (an `HttpTransportation` is stateless, so nothing is cached or
- * closed). Named arguments (`serialization = …`, `transportation = …`) select this over the eager
- * constructors.
- */
+/** Factory-form [WirespecEndpointExtension] that resolves the transportation and serialization per test. */
 fun WirespecEndpointExtension(
     serialization: suspend () -> Wirespec.Serialization,
     transportation: suspend () -> Wirespec.Transportation,
@@ -76,4 +44,18 @@ fun WirespecEndpointExtension(
     eager = null,
     serializationFactory = serialization,
     transportationFactory = transportation,
+)
+
+/** Framework-neutral handle [WirespecEndpointExtension] installs and the scenario DSL consumes. */
+class WirespecEndpointContext(
+    val transportation: Wirespec.Transportation,
+    val serialization: Wirespec.Serialization,
+) : AbstractCoroutineContextElement(Key) {
+
+    companion object Key : CoroutineContext.Key<WirespecEndpointContext>
+}
+
+internal suspend fun currentEndpointContext(): WirespecEndpointContext = coroutineContext[WirespecEndpointContext] ?: error(
+    "No WirespecEndpointContext configured. Register " +
+        "`WirespecEndpointExtension(endpoint)` on the spec.",
 )

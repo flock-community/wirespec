@@ -13,11 +13,7 @@ import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.short
 import io.kotest.property.arbitrary.string
 
-/**
- * Default kotest [Arb]s for primitive path/query/header field types, used to auto-generate a slot
- * the caller did not override. Keyed by the reflected Java [Class]; both the JVM primitive (`int`,
- * non-null field) and its boxed form (`Integer`, nullable field) are mapped.
- */
+/** Default kotest [Arb]s for primitive path/query/header field types, keyed by reflected Java [Class]. */
 internal object PrimitiveArbs {
     fun forType(type: Class<*>): Arb<*> = forTypeOrNull(type) ?: error(
         "No default generator for path/query/header field type ${type.name}. Pass this field explicitly as a Gen.",
@@ -25,8 +21,6 @@ internal object PrimitiveArbs {
 
     /** The default [Arb] for [type], or `null` when [type] is not a known primitive/String. */
     fun forTypeOrNull(type: Class<*>): Arb<*>? = when (type) {
-        // Alphanumeric + non-empty so an auto-generated value is safe to drop into a
-        // URL path segment (no `/`, no reserved characters) and never blank.
         String::class.java -> Arb.string(minSize = 1, maxSize = 20, codepoints = Codepoint.alphanumeric())
         Int::class.javaPrimitiveType, Integer::class.java -> Arb.int()
         Long::class.javaPrimitiveType, java.lang.Long::class.java -> Arb.long()

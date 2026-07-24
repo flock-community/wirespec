@@ -8,12 +8,7 @@ import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.generator.escapeKotlinIdentifier
 import community.flock.wirespec.ir.core.Type as IrType
 
-/**
- * Builds the single reusable per-record builder class `<Type>Builder` (emitted once in the
- * type's own `<Type>Dsl.kt`) as an IR [Struct], and renders the `registerPath` lines that
- * apply it. The type, endpoint-body and channel-payload DSLs reference it by name instead of
- * emitting their own.
- */
+/** Builds the reusable per-record builder class `<Type>Builder` as an IR [Struct] and renders its `registerPath` lines. */
 internal object RecordBuilder {
 
     fun builderName(typeName: String): String = "${typeName}Builder"
@@ -54,11 +49,7 @@ internal object RecordBuilder {
     /** `<nested>.() -> Unit`, the sub-builder block type. */
     private fun blockType(nested: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(nested))
 
-    /**
-     * Emits the members for a nested object/list field: the whole-value `Gen<…>?` override and its
-     * constant-value `<field>(value)` overload, the `@PublishedApi internal var _<field>Block`
-     * sub-builder slot, and the `<field>Block { … }` function that assigns it.
-     */
+    /** Emits the members for a nested object/list field: the override slot, its setter overloads, and the sub-builder block. */
     private fun StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType, valueType: IrType) {
         val nested = builderName(nestedTypeName)
         property(
@@ -84,11 +75,7 @@ internal object RecordBuilder {
         }
     }
 
-    /**
-     * `registerPath(...)` lines applying a builder's override `Gen`s onto a
-     * `KotestWirespecGeneratorBuilder` receiver, drilling into nested `<field>Block` sub-builders.
-     * [path] is the wire-name segments so far (a nested list adds a `"*"` wildcard segment).
-     */
+    /** `registerPath(...)` lines applying a builder's override `Gen`s, drilling into nested `<field>Block` sub-builders. */
     fun renderRegistration(
         fields: List<BodyFieldShape>,
         receiver: String,
@@ -109,10 +96,7 @@ internal object RecordBuilder {
         }
     }
 
-    /**
-     * The `<field>Block?.let { … }` drill-down applying a nested sub-builder's registrations,
-     * recursing through [renderRegistration]. A nested list adds a `"*"` wildcard path segment.
-     */
+    /** The `<field>Block?.let { … }` drill-down applying a nested sub-builder's registrations. */
     private fun StringBuilder.appendNestedBlock(
         fieldName: String,
         nestedTypeName: String,

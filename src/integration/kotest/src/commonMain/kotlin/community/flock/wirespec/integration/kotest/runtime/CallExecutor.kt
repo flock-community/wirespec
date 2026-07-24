@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest.runtime
 
+import community.flock.wirespec.integration.kotest.extension.currentEndpointContext
 import community.flock.wirespec.integration.kotest.dsl.ArbReceiver
 import community.flock.wirespec.integration.kotest.dsl.EndpointCallBuilder
 import community.flock.wirespec.integration.kotest.dsl.ResponseBuilder
@@ -13,11 +14,7 @@ import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.arbitrary
 import io.kotest.property.arbitrary.int
 
-/**
- * Executes a single endpoint call eagerly against the ambient context: slot resolution → typed
- * transport → contract validation. The ambient [RandomSource] advances on every call, so repeated
- * same-endpoint calls draw distinct bodies.
- */
+/** Executes a single endpoint call eagerly: slot resolution, typed transport, contract validation. */
 internal object CallExecutor {
 
     fun buildRequestGen(call: EndpointCallBuilder<*, *, *>): Arb<Any> = arbitrary { rs -> buildRequestWith(call, rs) }
@@ -33,16 +30,15 @@ internal object CallExecutor {
         client: Wirespec.Client<*, *>,
         endpointObject: Wirespec.Endpoint,
         request: Any,
-    ): Any = transportAndValidate(client, EndpointReflection.of(endpointObject), request, ambient = currentAmbient())
+    ): Any = transportAndValidate(client, EndpointReflection.of(endpointObject), request)
 
-    /** Typed transport of one request through the ambient context, then contract validation. */
+    /** Typed transport of one request through the installed endpoint context, then contract validation. */
     private suspend fun transportAndValidate(
         client: Wirespec.Client<*, *>,
         reflection: EndpointReflection,
         request: Any,
-        ambient: WirespecAmbient,
     ): Any {
-        val ctx = ambient.endpointContext()
+        val ctx = currentEndpointContext()
 
         @Suppress("UNCHECKED_CAST")
         val starClient = client as Wirespec.Client<Wirespec.Request<Any>, Wirespec.Response<*>>
@@ -56,23 +52,17 @@ internal object CallExecutor {
         return try {
             validator.validate(rawResponse)
         } catch (t: Throwable) {
-            throw AssertionError("${reflection.endpointName} failed (wirespec seed=${ambient.seed}): ${t.message}", t)
+            throw AssertionError("${reflection.endpointName} failed (wirespec seed=${currentSeed()}): ${t.message}", t)
         }
     }
 
     fun buildResponseGen(builder: ResponseBuilder): Arb<Any> = arbitrary { rs -> buildResponseWith(builder, rs) }
 
-    /**
-     * Build a single random `Response<status>` variant: pinned gens win, every other constructor
-     * param (body + header fields) is generated against the ambient [RandomSource].
-     */
     private fun buildResponseWith(builder: ResponseBuilder, rs: RandomSource): Any {
         val arb = ArbReceiver(rs)
         val reflection = EndpointReflection.of(builder.endpointObject)
         val variant = reflection.responseVariant(builder.variantClass.java)
 
-        // Header gens registered under wire names; match to (camelCase) constructor params by the
-        // same normalization used for request slots. Exact-name matches take priority.
         val headerGensByNormalizedName: Map<String, Gen<*>> =
             builder.headerGens.mapKeys { (key, _) -> normalizeSlotName(key) }
 
@@ -92,20 +82,16 @@ internal object CallExecutor {
         }
     }
 
-    /** Resolve the response body: a whole-value override wins, else a generated object/list. */
     private fun resolveResponseBody(
         builder: ResponseBuilder,
         variant: EndpointReflection.ResponseVariantReflection,
         arb: ArbReceiver,
         rs: RandomSource,
     ): Any? = when (val bodyGen = builder.bodyGen) {
-        // whole-value override wins; a nullable body may legitimately draw `null`, so branch on the
-        // gen itself rather than `?:`-falling-through on a null draw.
         null -> resolveGeneratedBody(variant, arb, rs)
         else -> bodyGen.draw(rs)
     }
 
-    /** Generate the response body from reflection when no whole-value override is pinned. */
     private fun resolveGeneratedBody(
         variant: EndpointReflection.ResponseVariantReflection,
         arb: ArbReceiver,
@@ -120,7 +106,6 @@ internal object CallExecutor {
         else -> error("${variant.constructor.declaringClass.simpleName}: `body` param has no resolvable type.")
     }
 
-    /** Default value for a non-body response constructor param: primitive Arb or a generated model. */
     private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? = PrimitiveArbs.forTypeOrNull(type)?.draw(rs)
         ?: arb.generatorFor(type).generate(arb.generator, emptyList())
 
@@ -132,10 +117,6 @@ internal object CallExecutor {
     ): Map<String, Any?> {
         val args = mutableMapOf<String, Any?>()
 
-        // The body is always drawn from the contract default first; the generated DSL's
-        // `bodyTransform` (if any) then reconstructs it with the per-field overrides
-        // applied (`base.copy(field = gen.draw(rs))`). Un-overridden fields keep the
-        // generator's default value.
         fun withBodyTransform(default: Any): Any = call.bodyTransform?.invoke(default, rs) ?: default
 
         when {
@@ -153,17 +134,7 @@ internal object CallExecutor {
             }
         }
 
-        // Fill every flattened path/query/header field. The request constructor's
-        // params are the source of truth (real names + primitive types). Field names
-        // are unique across path/query/header (all flattened into one constructor),
-        // so the three gen maps merge without collision.
         val slotGens: Map<String, Gen<*>> = call.pathGens + call.queryGens + call.headerGens
-        // The generated DSL registers gens under their *wire* names (`supplier-id`,
-        // `X-Namespace`), but the Request constructor params are the identifier-safe
-        // camelCase forms (`supplierId`, `xNamespace`). Match them by a normalization
-        // that strips separators and case, so a pinned multi-word slot reaches the
-        // request instead of being overwritten by a random PrimitiveArbs draw.
-        // Exact-name matches still take priority.
         val slotGensByNormalizedName: Map<String, Gen<*>> =
             slotGens.mapKeys { (key, _) -> normalizeSlotName(key) }
         reflection.requestConstructor.parameters.forEach { param ->
@@ -175,10 +146,5 @@ internal object CallExecutor {
         return args
     }
 
-    /**
-     * Normalize a path/query/header slot name for matching: strip the `-`/`_`
-     * separators used in wire names and lowercase, so `supplier-id`, `supplier_id`
-     * and the constructor's `supplierId` all collapse to the same key.
-     */
     private fun normalizeSlotName(name: String): String = name.replace("-", "").replace("_", "").lowercase()
 }

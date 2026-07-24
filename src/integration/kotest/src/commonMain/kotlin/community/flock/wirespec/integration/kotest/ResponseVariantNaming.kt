@@ -1,11 +1,6 @@
 package community.flock.wirespec.integration.kotest
 
-/**
- * Single source of the Wirespec response-variant naming convention: a generated variant class is
- * named `Response<NNN>` for a three-digit status (e.g. `Response200`). Both the DSL emitter (which
- * builds those names) and the runtime (which reflects the status back out of them, and off a
- * user-supplied `ResponseNNN::class`) go through here, so the convention lives in exactly one place.
- */
+/** Single source of the Wirespec response-variant naming convention (`Response<NNN>`, e.g. `Response200`). */
 internal object ResponseVariantNaming {
     private val regex = Regex("Response(\\d{3})")
 

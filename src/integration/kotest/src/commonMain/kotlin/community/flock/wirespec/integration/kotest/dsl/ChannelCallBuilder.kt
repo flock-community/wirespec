@@ -1,9 +1,10 @@
 package community.flock.wirespec.integration.kotest.dsl
 
 import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
-import community.flock.wirespec.integration.kotest.context.WirespecChannelContext
+import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
+import community.flock.wirespec.integration.kotest.extension.WirespecChannelContext
+import community.flock.wirespec.integration.kotest.extension.currentChannelContext
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
-import community.flock.wirespec.integration.kotest.runtime.currentAmbient
 import io.kotest.property.Gen
 import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.arbitrary
@@ -14,11 +15,7 @@ import kotlin.reflect.typeOf
 /** Build a [ChannelCallBuilder] for a channel. Called by generated `*Dsl` wrappers. */
 inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
 
-/**
- * Eager channel scenario runner. `send*` generates (or accepts) a typed payload, serializes it via
- * the ambient [WirespecChannelContext] and publishes it through the broker transport. The
- * destination topic is `topic(...)` if pinned, else the channel object's simple name.
- */
+/** Eager channel scenario runner that generates a typed payload and publishes it through the broker transport. */
 @WirespecScenarioDsl
 class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     @PublishedApi internal val channelClass: KClass<*>,
@@ -31,30 +28,16 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     fun topic(value: String): ChannelCallBuilder<P> = apply { topic = value }
     fun key(value: String): ChannelCallBuilder<P> = apply { key = value }
 
-    // ---- build (no publish) ----
-
-    /**
-     * A [Gen] materialising a random payload on each draw, optionally applying per-field
-     * [overrides]. Backs the generated `<Channel>.generate.message { … }`; `Gen<P>.send()`
-     * draws one and publishes it. A primitive payload accepts no overrides.
-     */
+    /** A [Gen] materialising a random payload on each draw, optionally applying per-field [overrides]. */
     fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Gen<P> = arbitrary { rs -> buildPayload(rs, overrides) }
 
-    // ---- send terminal ----
-
-    /** Draw a payload from [gen], publish it, and return it. Backs the generated `Gen<Payload>.send()`. */
+    /** Draw a payload from [gen], publish it, and return it. */
     suspend fun send(gen: Gen<P>): P {
-        val payload = gen.draw(currentAmbient().randomSource)
+        val payload = gen.draw(currentRandomSource())
         publish(payload)
         return payload
     }
 
-    // ---- internals ----
-
-    /**
-     * Materialise a payload from [rs]: a record payload is drawn through the wirespec generator
-     * (honouring per-field [overrides]); a primitive payload is drawn directly and rejects [overrides].
-     */
     @Suppress("UNCHECKED_CAST")
     private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
         null -> ArbReceiver(rs).generateModel(payloadClass, overrides)
@@ -68,7 +51,7 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     }
 
     private suspend fun publish(payload: P) {
-        val ctx = currentAmbient().channelContext()
+        val ctx = currentChannelContext()
         val body = ctx.serialization.serializeBody(payload, payloadType)
         ctx.transport.publish(resolveTopic(), key, body)
     }

@@ -5,22 +5,13 @@ import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
 import kotlin.reflect.KClass
 
-/**
- * Build a [ResponseBuilder] for one response variant of an endpoint. Generated `*Dsl`
- * wrappers call this from their `responseNNN { … }` entry point.
- */
+/** Build a [ResponseBuilder] for one response variant of an endpoint. */
 fun responseCall(
     endpointObject: Wirespec.Endpoint,
     variantClass: KClass<*>,
 ): ResponseBuilder = ResponseBuilder(endpointObject, variantClass)
 
-/**
- * Builds a single random `Response<status>` instance for an endpoint. The body defaults to a
- * generated value (via the endpoint's model generators); each header field defaults to a
- * generated value too. Callers pin any field by registering a [Gen] — `body(...)` for the
- * whole response body, `headerGen(name, ...)` per header field. [buildGen] resolves the rest
- * randomly on each draw and constructs the variant.
- */
+/** Builds a single random `Response<status>` instance for an endpoint. */
 @WirespecScenarioDsl
 class ResponseBuilder internal constructor(
     internal val endpointObject: Wirespec.Endpoint,

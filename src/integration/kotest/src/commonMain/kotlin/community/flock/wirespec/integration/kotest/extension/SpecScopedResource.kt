@@ -5,16 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * A resource built at most once per [Spec] (lazily, under a mutex so a `suspend` factory runs a
- * single time even under concurrent access), cached for reuse across that spec's tests, and dropped
- * — optionally [close]d if [AutoCloseable] — when the spec ends. Keyed per spec (not per extension
- * instance) so a single extension registered in a Kotest `ProjectConfig` still gives each spec its
- * own resource.
- *
- * Shared by [WirespecChannelExtension] and [WirespecMockExtension], whose managed transportation /
- * server lifecycles are otherwise identical.
- */
+/** A resource built at most once per [Spec] (lazily), cached across its tests, and dropped when the spec ends. */
 internal class SpecScopedResource<T : Any>(
     private val closeOnRemove: Boolean,
     private val factory: suspend (Spec) -> T,
@@ -22,7 +13,6 @@ internal class SpecScopedResource<T : Any>(
     private val bySpec = ConcurrentHashMap<Spec, T>()
     private val buildLock = Mutex()
 
-    /** The resource for [spec], building (and caching) it on first access. */
     suspend fun get(spec: Spec): T = bySpec[spec] ?: buildLock.withLock {
         bySpec[spec] ?: factory(spec).also { bySpec[spec] = it }
     }

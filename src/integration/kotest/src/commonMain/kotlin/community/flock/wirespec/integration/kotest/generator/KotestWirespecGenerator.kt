@@ -15,15 +15,7 @@ import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
 
-/**
- * `KotestGenerator` backed by Kotest [Arb]s. `@Seed` annotations are honored for
- * deterministic array-element regeneration; `@Generator(...)` annotations are ignored —
- * use a scoped override ([KotestWirespecGeneratorBuilder.registerPath] /
- * [KotestWirespecGeneratorBuilder.registerFieldByTypeName]) instead.
- *
- * Not thread-safe: it keeps per-call traversal state, so create one per test rather than
- * sharing across concurrent tests (instances are cheap).
- */
+/** `KotestGenerator` backed by Kotest [Arb]s; not thread-safe, so create one per test. */
 fun kotestGenerator(
     seed: Long = 0L,
     refinedWrapper: RefinedWrapper = IdentityRefinedWrapper,
@@ -36,20 +28,12 @@ fun kotestGenerator(
 class KotestWirespecGeneratorBuilder internal constructor() {
     internal val overrides: OverrideRegistry = OverrideRegistry()
 
-    /**
-     * Override the value generated at an exact path. `*` matches any single
-     * segment (e.g. an array index): `registerPath("users", "*", "id") { ... }`.
-     */
+    /** Override the value generated at an exact path; `*` matches any single segment. */
     fun registerPath(vararg segments: String, factory: () -> Gen<*>) {
         overrides.addPath(segments, factory)
     }
 
-    /**
-     * Constant-value form of [registerPath]. The `value` argument **must be
-     * named** — `registerPath("users", "id", "FIXED")` would register the
-     * three-segment path `users/id/FIXED` instead, because the vararg
-     * swallows positional strings.
-     */
+    /** Constant-value form of [registerPath]; the `value` argument must be named. */
     fun registerPath(vararg segments: String, value: Any?) {
         overrides.addPath(segments) { Arb.constant(value) }
     }
@@ -109,15 +93,12 @@ internal class KotestWirespecGenerator(
         var seed: String? = null
     }
 
-    // FNV-1a (64-bit) over the joined path: String.hashCode is only 32 bits
-    // and collides easily ("Aa"/"BB"), which would give unrelated fields
-    // identical values.
     private fun pathHash(path: List<String>): Long {
-        var hash = -3750763034362895579L // FNV-1a 64-bit offset basis
+        var hash = -3750763034362895579L
         for (segment in path) {
             for (ch in segment) {
                 hash = hash xor ch.code.toLong()
-                hash *= 1099511628211L // FNV-1a 64-bit prime
+                hash *= 1099511628211L
             }
             hash = hash xor '/'.code.toLong()
             hash *= 1099511628211L
@@ -171,7 +152,6 @@ internal class KotestWirespecGenerator(
         return generateLeaf(field, path)
     }
 
-    /** Draw the override [factory]'s value for [path], re-wrapping it for a refined [field]. */
     @Suppress("UNCHECKED_CAST")
     private fun <T> applyOverride(factory: () -> Gen<*>, field: KotestField<T>, path: List<String>): T = refinedWrapper.wrap(factory().drawOne(rsFor(path)), field, path) as T
 
@@ -279,13 +259,9 @@ internal class KotestWirespecGenerator(
             is KotestFieldEnum -> Arb.element(field.values).next(rs) as T
             is KotestFieldUnion -> Arb.element(field.variants).next(rs) as T
             is KotestFieldArray<*> -> {
-                // Empty deep lists so self-recursive element types (a parameter holding a list of
-                // parameters) terminate instead of overflowing the stack.
                 val size = if (genDepth >= MAX_GEN_DEPTH) 0 else Arb.int(1..10).next(rs)
                 (0 until size).map { i -> withGenDepth { field.generate(path + "$i") } } as T
             }
-            // Deterministic ~20% null chance so consumers' null branches are
-            // exercised; same seed + path always reproduces the same choice.
             is KotestFieldNullable<*> -> if (Arb.int(0..4).next(rs) == 0) null as T else field.generate(path) as T
             is KotestFieldShape<*> -> withParentFrame(ParentFrame(field.type.toString())) {
                 withGenDepth { field.generate(path) }
