@@ -5,10 +5,7 @@ import io.kotest.property.Arb
 import io.kotest.property.Gen
 import io.kotest.property.arbitrary.arbitrary
 
-/**
- * A [Gen] materialising a random record instance of [T] via the IR-emitted `<T>Generator`,
- * optionally applying per-field [overrides]. Backs the generated `<Type>.generate { … }`.
- */
+/** A [Gen] materialising a random record instance of [T], optionally applying per-field [overrides]. */
 inline fun <reified T : Any> recordGen(
     noinline overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null,
 ): Gen<T> = recordGen(T::class.java, overrides)

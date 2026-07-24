@@ -28,11 +28,7 @@ internal class EndpointReflection private constructor(
     /** Reflect (and cache) a response variant's flattened constructor so a random instance can be built. */
     fun responseVariant(variantClass: Class<*>): ResponseVariantReflection = variantCache.getOrPut(variantClass) { introspectVariant(variantClass) }
 
-    /**
-     * How to build one `Response<status>` variant: its user-facing constructor (the emitter's
-     * secondary, flattening header fields + `body`, with no `status` param) plus the body's
-     * shape — [bodyClass] for an object body, [bodyElementClass] for a `List<…>` body.
-     */
+    /** How to build one `Response<status>` variant: its flattened constructor plus the body's shape. */
     class ResponseVariantReflection(
         val constructor: Constructor<*>,
         val hasBody: Boolean,
@@ -63,13 +59,7 @@ internal class EndpointReflection private constructor(
         private val cache = ConcurrentHashMap<KClass<out Wirespec.Endpoint>, EndpointReflection>()
         private val syntheticParamRegex = Regex("arg\\d+")
 
-        /**
-         * Pick the emitter's flattened secondary constructor of [cls]: the one that omits the
-         * primary's [excludeParam] param and flattens the user-facing fields (`body` + path/query/
-         * header). Fewest params as a tiebreak; falls back to any constructor for hand-rolled
-         * classes. Requires retained (non-synthetic) parameter names — the runtime matches slots by
-         * name — and uses [label] in the diagnostics.
-         */
+        /** Pick the emitter's flattened secondary constructor of [cls], omitting the [excludeParam] param. */
         private fun pickEmitterConstructor(cls: Class<*>, excludeParam: String, label: String): Constructor<*> {
             val ctor = cls.declaredConstructors
                 .filter { c -> c.parameters.none { it.name == excludeParam } }
@@ -90,8 +80,6 @@ internal class EndpointReflection private constructor(
         private fun Parameter.listElementClassOrNull(): Class<*>? = takeIf { it.isListType() }
             ?.let { (parameterizedType as? ParameterizedType)?.actualTypeArguments?.firstOrNull() as? Class<*> }
 
-        // Pick the emitter's flattened response-variant constructor: the secondary that omits the
-        // primary's `status` param and flattens response header fields + `body`.
         private fun introspectVariant(variantClass: Class<*>): ResponseVariantReflection {
             val ctor = pickEmitterConstructor(variantClass, excludeParam = "status", label = variantClass.simpleName ?: variantClass.name)
             val bodyParam = ctor.parameters.firstOrNull { it.name == "body" }
@@ -120,13 +108,7 @@ internal class EndpointReflection private constructor(
                 .firstOrNull { it.name == "fromResponse" || it.name == "fromRawResponse" }
                 ?: error("${cls.simpleName}: no fromResponse/fromRawResponse method found.")
 
-            // Pick the user-facing secondary Request constructor: the emitter's secondary flattens
-            // path/query/header fields and never declares the primary's `method` parameter. Fewest-
-            // params alone is not enough — an endpoint with many flattened params (e.g. 1 path + 6
-            // queries) has a secondary LARGER than the 5-arg primary — so exclusion by `method` runs
-            // first, inside pickEmitterConstructor.
             val requestConstructor = pickEmitterConstructor(requestClass, excludeParam = "method", label = "${cls.simpleName}.Request")
-            // pickEmitterConstructor guarantees every parameter name is retained (non-null).
             val paramNames = requestConstructor.parameters.map { it.name!! }
             val bodyParam = requestConstructor.parameters.firstOrNull { it.name == "body" }
 
