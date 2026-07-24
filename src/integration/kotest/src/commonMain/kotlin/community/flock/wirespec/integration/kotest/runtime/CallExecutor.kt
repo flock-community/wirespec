@@ -1,10 +1,10 @@
 package community.flock.wirespec.integration.kotest.runtime
 
-import community.flock.wirespec.integration.kotest.extension.currentEndpointContext
 import community.flock.wirespec.integration.kotest.dsl.ArbReceiver
 import community.flock.wirespec.integration.kotest.dsl.EndpointCallBuilder
 import community.flock.wirespec.integration.kotest.dsl.ResponseBuilder
 import community.flock.wirespec.integration.kotest.dsl.draw
+import community.flock.wirespec.integration.kotest.extension.currentEndpointContext
 import community.flock.wirespec.integration.kotest.validation.ContractValidator
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec

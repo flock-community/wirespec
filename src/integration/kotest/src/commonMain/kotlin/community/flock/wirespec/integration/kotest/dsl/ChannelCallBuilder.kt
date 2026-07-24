@@ -1,10 +1,9 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
-import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
-import community.flock.wirespec.integration.kotest.extension.WirespecChannelContext
 import community.flock.wirespec.integration.kotest.extension.currentChannelContext
+import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
+import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import io.kotest.property.Gen
 import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.arbitrary
