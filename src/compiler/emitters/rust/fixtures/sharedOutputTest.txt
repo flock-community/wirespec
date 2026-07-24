@@ -45,6 +45,11 @@ pub trait Response<T> {
     fn body(&self) -> &T;
 }
 pub trait ResponseHeaders: Headers {}
+pub trait Response1XX<T>: Response<T> {}
+pub trait Response2XX<T>: Response<T> {}
+pub trait Response3XX<T>: Response<T> {}
+pub trait Response4XX<T>: Response<T> {}
+pub trait Response5XX<T>: Response<T> {}
 pub trait BodySerializer {
     fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
 }

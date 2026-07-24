@@ -33,8 +33,8 @@ object PutTodo : Wirespec.Endpoint {
       ), body)
     }
   sealed interface Response<T: Any> : Wirespec.Response<T>
-  sealed interface Response2XX<T: Any> : Response<T>
-  sealed interface Response5XX<T: Any> : Response<T>
+  sealed interface Response2XX<T: Any> : Wirespec.Response2XX<T>
+  sealed interface Response5XX<T: Any> : Wirespec.Response5XX<T>
   sealed interface ResponseTodoDto : Response<TodoDto>
   sealed interface ResponseError : Response<Error>
   object Response200Headers : Wirespec.Response.Headers

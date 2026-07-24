@@ -33,8 +33,8 @@ object PutTodo extends Wirespec.Endpoint {
       ), body)
     }
   sealed trait Response[T] extends Wirespec.Response[T]
-  sealed trait Response2XX[T] extends Response[T]
-  sealed trait Response5XX[T] extends Response[T]
+  sealed trait Response2XX[T] extends Wirespec.Response2XX[T]
+  sealed trait Response5XX[T] extends Wirespec.Response5XX[T]
   sealed trait ResponseTodoDto extends Response[TodoDto]
   sealed trait ResponseError extends Response[Error]
   object Response200Headers extends Wirespec.Response.Headers

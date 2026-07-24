@@ -42,6 +42,11 @@ object Wirespec {
       val body: T
       interface Headers
   }
+  interface Response1XX<T: Any> : Response<T>
+  interface Response2XX<T: Any> : Response<T>
+  interface Response3XX<T: Any> : Response<T>
+  interface Response4XX<T: Any> : Response<T>
+  interface Response5XX<T: Any> : Response<T>
   interface BodySerializer {
       fun <T: Any> serializeBody(t: T, type: KType): ByteArray
   }

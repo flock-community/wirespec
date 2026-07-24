@@ -43,7 +43,7 @@ class Request(Wirespec.Request[None]):
         self.body = None
 class Response(Wirespec.Response[T], Generic[T]):
     pass
-class Response2XX(Response[T], Generic[T]):
+class Response2XX(Wirespec.Response2XX[T], Generic[T]):
     pass
 class ResponseListTodoDto(Response[list[TodoDto]]):
     pass
