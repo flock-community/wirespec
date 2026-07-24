@@ -12,7 +12,11 @@ interface WirespecIdentifierEmitter: IdentifierEmitter {
     override fun emit(identifier: Identifier) = when (identifier) {
         is DefinitionIdentifier -> identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
         is FieldIdentifier -> identifier.run {
-            if (value in reservedKeywords || value.first().isUpperCase()) value.addBackticks() else value
+            // Bare field identifiers must start with a lowercase letter (LanguageSpec
+            // tokenizes a leading `_`, digit or uppercase letter differently), so any
+            // other start — `_embedded`, reserved keywords — is backtick-quoted to keep
+            // its wire name intact rather than renamed.
+            if (value in reservedKeywords || !value.first().isLowerCase()) value.addBackticks() else value
         }
     }
 
