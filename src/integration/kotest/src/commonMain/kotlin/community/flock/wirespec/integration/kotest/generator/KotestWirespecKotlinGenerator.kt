@@ -2,18 +2,7 @@ package community.flock.wirespec.integration.kotest.generator
 
 import community.flock.wirespec.kotlin.Wirespec
 
-/**
- * JVM-facing factory for Kotlin-emitted code: returns the `Wirespec.Generator` that IR-emitted
- * `*Generator.generate(...)` factories expect, wrapping a multiplatform [KotestGenerator].
- *
- * ```
- * val gen = kotestWirespecKotlinGenerator(seed = 1L) {
- *     registerField(Member::id) { Arb.uuid().map(java.util.UUID::toString) }
- *     registerPath("users", "*", "email") { Arb.email() }
- * }
- * val member = MemberGenerator.generate(gen, emptyList())
- * ```
- */
+/** JVM-facing factory returning the `Wirespec.Generator` that IR-emitted code expects, wrapping a [KotestGenerator]. */
 fun kotestWirespecKotlinGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
@@ -21,10 +10,7 @@ fun kotestWirespecKotlinGenerator(
     kotestGenerator(seed, refinedWrapper = JvmRefinedWrapper, block = block),
 )
 
-/**
- * Bridges Wirespec's JVM-only Kotlin `Generator` / `GeneratorField*` and kotest's commonMain
- * `KotestGenerator` / `KotestField*` mirror types. The hierarchies are 1:1, so this is a flat `when`.
- */
+/** Bridges Wirespec's JVM-only Kotlin `Generator`/`GeneratorField*` to kotest's commonMain mirror types. */
 internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator) : Wirespec.Generator {
 
     @Suppress("UNCHECKED_CAST")

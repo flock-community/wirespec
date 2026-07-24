@@ -20,25 +20,7 @@ import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.extension.IrExtension
 
-/**
- * Adds a typesafe Kotest scenario DSL to the generated output: one `<Endpoint>Dsl.kt`
- * / `<Channel>Dsl.kt` per operation. Each file carries a `generate` extension property
- * on the generated endpoint/channel object grouping the DSL entry points, with sending
- * always chained off the materialised value:
- * - endpoint: `PutTodo.generate.request { … }.call()` (plus
- *   `PutTodo.generate.response200 { … }` for canned responses);
- * - channel: `Queue.generate.message { … }.send()` to publish (asserting on what the app
- *   published is left to the test's own broker consumer);
- * - type: `TodoDto.generate { … }` returns a `Gen<TodoDto>` for a standalone record.
- * Register on a Kotlin
- * [community.flock.wirespec.ir.emit.IrEmitter] (e.g. `KotlinIrEmitter`); the DSL
- * files live in `<packageName>.kotest` and reference the models/endpoints the base
- * emitter produces in `<packageName>.model` / `.endpoint` / `.channel`.
- *
- * Ported from the standalone `TypesafeDslEmitter` (which subclassed `KotlinIrEmitter`)
- * into the IR extension model so it composes with any Kotlin IR emitter and is
- * registerable through the Wirespec Gradle/Maven plugins via `extensionClasses`.
- */
+/** Adds a typesafe Kotest scenario DSL to the generated output, one DSL file per endpoint/channel/type. */
 open class KotestDslExtension(
     private val packageName: PackageName,
 ) : IrExtension {

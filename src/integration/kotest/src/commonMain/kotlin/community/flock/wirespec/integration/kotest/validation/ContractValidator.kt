@@ -5,17 +5,7 @@ import community.flock.wirespec.kotlin.Wirespec
 /** Kind of contract violation surfaced to test failure messages. */
 enum class ContractViolationKind { UndeclaredStatus, BodyMismatch }
 
-/**
- * Validates a [Wirespec.RawResponse] against an endpoint's contract, in order:
- *
- *   1. **Status code** — must match one of the `ResponseNNN` variants Wirespec
- *      emitted for the endpoint.
- *   2. **Body schema** — must deserialize into the matched variant's body type via
- *      [Wirespec.Serialization]; anything that fails `fromRawResponse` becomes a
- *      [ContractViolation] with the underlying cause attached.
- *
- * On success the typed `ResponseNNN` instance is returned.
- */
+/** Validates a [Wirespec.RawResponse] against an endpoint's contract (status code, then body schema). */
 internal class ContractValidator(
     private val endpoint: EndpointReflection,
     private val serialization: Wirespec.Serialization,

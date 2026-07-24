@@ -14,7 +14,7 @@ import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.generator.KotlinGenerator
 import community.flock.wirespec.ir.core.Type as IrType
 
-/** Builds the per-channel Kotest DSL file (`<Channel>Dsl.kt`): the `<Channel>Generate` class, its `generate` extension property, and the `Gen<Payload>.send()` extension. */
+/** Builds the per-channel Kotest DSL file (`<Channel>Dsl.kt`). */
 internal object ChannelDslFile {
 
     fun build(
@@ -38,7 +38,6 @@ internal object ChannelDslFile {
             import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
             import("io.kotest.property", "Gen")
             import(channelPkg, shape.name)
-            // pascalCase so underscore-bearing type names resolve to the emitted class.
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
 
             struct("${shape.name}Generate") {
@@ -91,7 +90,7 @@ internal object ChannelDslFile {
 internal data class ChannelShape(
     val name: String,
     val payloadType: String,
-    /** Payload record fields (reused from the endpoint body machinery); empty for a primitive payload. */
+    /** Payload record fields; empty for a primitive payload. */
     val payloadFieldShapes: List<EndpointShape.BodyFieldShape>,
     val modelImports: List<String>,
 ) {
