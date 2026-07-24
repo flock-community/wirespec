@@ -7,7 +7,6 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseDict
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseType
-import community.flock.wirespec.compiler.core.parse.TypeParser.parseTypeShape
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Comment
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -34,6 +33,7 @@ import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.SpecificType
+import community.flock.wirespec.compiler.core.tokenize.Spread
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinitionStart
@@ -58,26 +58,7 @@ object TypeParser {
     }
 
     fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
-        mutableListOf<Field>().apply {
-            val firstFieldAnnotations = parseAnnotations().bind()
-            when (token.type) {
-                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations).bind())
-                else -> raiseWrongToken<WirespecIdentifier>().bind()
-            }
-            while (token.type is Comma) {
-                eatToken().bind()
-                val fieldAnnotations = parseAnnotations().bind()
-                when (token.type) {
-                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations).bind())
-                    else -> raiseWrongToken<WirespecIdentifier>().bind()
-                }
-            }
-        }.also {
-            when (token.type) {
-                is RightCurly -> eatToken().bind()
-                else -> raiseWrongToken<RightCurly>().bind()
-            }
-        }.let(Type::Shape)
+        parseShapeEntries(allowSpread = false).bind().let { Type.Shape(it.fields) }
     }
 
     fun TokenProvider.parseDict(): Either<WirespecException, Reference.Dict> = parseToken {
@@ -134,15 +115,71 @@ object TypeParser {
 private fun TokenProvider.parseTypeDefinition(comment: Comment?, annotations: List<Annotation>, typeName: DefinitionIdentifier) = parseToken {
     when (token.type) {
         is Equals -> parseRefinedOrUnion(comment, annotations, typeName).bind()
-        is LeftCurly -> Type(
-            comment = comment,
-            annotations = annotations,
-            identifier = typeName,
-            shape = parseTypeShape().bind(),
-            extends = emptyList(),
-        )
+        is LeftCurly -> parseSpreadableTypeShape().bind().let { parsed ->
+            Type(
+                comment = comment,
+                annotations = annotations,
+                identifier = typeName,
+                shape = Type.Shape(parsed.fields),
+                extends = emptyList(),
+                spread = parsed.spreads,
+            )
+        }
 
         else -> raiseWrongToken<TypeDefinitionStart>().bind()
+    }
+}
+
+private class ParsedShape(val fields: List<Field>, val spreads: List<Type.Spread>)
+
+private sealed interface ShapeEntry {
+    data class FieldEntry(val field: Field) : ShapeEntry
+    data class SpreadEntry(val reference: Reference) : ShapeEntry
+}
+
+private fun TokenProvider.parseSpreadableTypeShape(): Either<WirespecException, ParsedShape> = parseToken {
+    parseShapeEntries(allowSpread = true).bind()
+}
+
+private fun TokenProvider.parseShapeEntries(allowSpread: Boolean): Either<WirespecException, ParsedShape> = either {
+    val entries = mutableListOf<ShapeEntry>()
+    entries.add(parseShapeEntry(allowSpread).bind())
+    while (token.type is Comma) {
+        eatToken().bind()
+        entries.add(parseShapeEntry(allowSpread).bind())
+    }
+    when (token.type) {
+        is RightCurly -> eatToken().bind()
+        else -> raiseWrongToken<RightCurly>().bind()
+    }
+    val fields = mutableListOf<Field>()
+    val spreads = mutableListOf<Type.Spread>()
+    entries.forEach { entry ->
+        when (entry) {
+            is ShapeEntry.FieldEntry -> fields.add(entry.field)
+            is ShapeEntry.SpreadEntry -> spreads.add(Type.Spread(entry.reference, fields.size))
+        }
+    }
+    ParsedShape(fields, spreads)
+}
+
+private fun TokenProvider.parseShapeEntry(allowSpread: Boolean): Either<WirespecException, ShapeEntry> = either {
+    val annotations = parseAnnotations().bind()
+    when (token.type) {
+        is Spread -> {
+            if (!allowSpread) raiseWrongToken<WirespecIdentifier>().bind()
+            eatToken().bind()
+            when (token.type) {
+                is TypeIdentifier -> ShapeEntry.SpreadEntry(
+                    Reference.Custom(token.shouldBeDefined().bind().value, false),
+                ).also { eatToken().bind() }
+
+                else -> raiseWrongToken<TypeIdentifier>().bind()
+            }
+        }
+
+        is WirespecIdentifier -> ShapeEntry.FieldEntry(parseField(FieldIdentifier(token.value), annotations).bind())
+        else -> raiseWrongToken<WirespecIdentifier>().bind()
     }
 }
 

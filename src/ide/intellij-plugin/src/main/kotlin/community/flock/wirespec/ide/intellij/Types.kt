@@ -12,6 +12,7 @@ interface Types {
         val RIGHT_PARENTHESES = ElementType("RIGHT_PARENTHESES")
         val COLON = ElementType("COLON")
         val COMMA = ElementType("COMMA")
+        val SPREAD = ElementType("SPREAD")
         val QUESTION_MARK = ElementType("QUESTION_MARK")
         val HASH = ElementType("HASH")
         val FORWARD_SLASH = ElementType("FORWARD_SLASH")

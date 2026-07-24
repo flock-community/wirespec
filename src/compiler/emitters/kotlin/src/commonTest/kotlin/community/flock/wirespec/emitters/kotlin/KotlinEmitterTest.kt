@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
+import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
@@ -576,6 +577,41 @@ class KotlinEmitterTest {
         """.trimMargin()
 
         CompileRefinedTest.compiler { KotlinEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun compileTypeSpreadTest() {
+        val source = """
+            |type Pagination {
+            |  page: Integer?,
+            |  size: Integer?
+            |}
+            |type SomeQuery {
+            |  ...Pagination,
+            |  query: String?
+            |}
+        """.trimMargin()
+
+        val kotlin = """
+            |package community.flock.wirespec.generated.model
+            |
+            |data class Pagination(
+            |  val page: Long?,
+            |  val size: Long?
+            |)
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |data class SomeQuery(
+            |  val page: Long?,
+            |  val size: Long?,
+            |  val query: String?
+            |)
+            |
+        """.trimMargin()
+
+        val compiler = compile(source)
+        compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
