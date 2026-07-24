@@ -1,6 +1,6 @@
 package community.flock.wirespec.emitters.wirespec
 
-import community.flock.wirespec.compiler.core.exceptions.NullableRefinedException
+import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -135,7 +135,7 @@ class WirespecEmitterTest {
             .shouldBeLeft()
             .shouldHaveSize(1)
             .first()
-            .shouldBeInstanceOf<NullableRefinedException>()
+            .shouldBeInstanceOf<NullableRefinedReferenceException>()
     }
 
     @Test

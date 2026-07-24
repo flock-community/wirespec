@@ -2,7 +2,7 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import arrow.core.raise.either
-import community.flock.wirespec.compiler.core.exceptions.NullableRefinedException
+import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseDict
@@ -160,7 +160,7 @@ private fun TokenProvider.parseRefined(comment: Comment?, annotations: List<Anno
             val coordinates = token.coordinates
             val reference = parsePrimitiveType(eatToken().bind()).bind()
             if (reference.isNullable) {
-                raise(NullableRefinedException(fileUri, identifier.value, coordinates))
+                raise(NullableRefinedReferenceException(fileUri, identifier.value, coordinates))
             }
             Refined(
                 comment = comment,

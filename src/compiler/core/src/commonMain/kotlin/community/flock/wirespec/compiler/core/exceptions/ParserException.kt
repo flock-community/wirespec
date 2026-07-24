@@ -28,7 +28,7 @@ class DefinitionNotExistsException(fileUri: FileUri, referenceName: String, coor
         message = "Cannot find reference: $referenceName",
     )
 
-class NullableRefinedException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
+class NullableRefinedReferenceException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,
         coordinates = coordinates,
