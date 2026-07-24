@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.kotest.emit
+package community.flock.wirespec.integration.kotest.convert
 
 import community.flock.wirespec.ir.core.StructBuilder
 import community.flock.wirespec.ir.core.Visibility
