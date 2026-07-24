@@ -1,7 +1,7 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import community.flock.wirespec.integration.kotest.runtime.CallExecutor
+import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
