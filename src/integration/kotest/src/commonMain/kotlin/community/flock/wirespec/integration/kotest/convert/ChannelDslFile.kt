@@ -31,11 +31,13 @@ internal object ChannelDslFile {
 
         val payload = shape.payloadType
         val genPayload = IrType.Custom("Gen", listOf(IrType.Custom(payload)))
+        val arbPayload = IrType.Custom("Arb", listOf(IrType.Custom(payload)))
 
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
 
             import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
+            import("io.kotest.property", "Arb")
             import("io.kotest.property", "Gen")
             import(channelPkg, shape.name)
             shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
@@ -49,7 +51,7 @@ internal object ChannelDslFile {
                     function("message") {
                         visibility(Visibility.PUBLIC)
                         arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
-                        returnType(genPayload)
+                        returnType(arbPayload)
                         raw("val builder = $builder().apply(block)")
                         raw("return channelCall<$payload>(${shape.name}::class).messageGen {")
                         raw(RecordBuilder.renderRegistration(shape.payloadFieldShapes, "builder", emptyList(), "    ").trimEnd())
@@ -58,7 +60,7 @@ internal object ChannelDslFile {
                 } else {
                     function("message") {
                         visibility(Visibility.PUBLIC)
-                        returnType(genPayload)
+                        returnType(arbPayload)
                         returns(rawExpr("channelCall<$payload>(${shape.name}::class).messageGen()"))
                     }
                 }

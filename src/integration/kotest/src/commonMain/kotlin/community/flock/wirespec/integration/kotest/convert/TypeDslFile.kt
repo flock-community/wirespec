@@ -32,9 +32,9 @@ internal object TypeDslFile {
 
             import("community.flock.wirespec.integration.kotest.dsl", "recordGen")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
-            import("io.kotest.property", "Gen")
+            import("io.kotest.property", "Arb")
             if (shape.fields.isNotEmpty()) {
-                import("io.kotest.property", "Arb")
+                import("io.kotest.property", "Gen")
                 import("io.kotest.property.arbitrary", "constant")
             }
             (listOf(shape.name) + shape.modelImports).distinct().forEach { import(modelPkg, Name.of(it).pascalCase()) }
@@ -43,7 +43,7 @@ internal object TypeDslFile {
                 visibility(Visibility.PUBLIC)
                 receiver(IrType.Custom(receiver))
                 arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
-                returnType(IrType.Custom("Gen", listOf(IrType.Custom(model))))
+                returnType(IrType.Custom("Arb", listOf(IrType.Custom(model))))
                 raw("val builder = $builder().apply(block)")
                 raw("return recordGen<$model> {")
                 raw(RecordBuilder.renderRegistration(shape.fields, "builder", emptyList(), "    ").trimEnd())
