@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.kotest.dsl
 
 import community.flock.wirespec.integration.kotest.runtime.CallExecutor
 import community.flock.wirespec.kotlin.Wirespec
+import io.kotest.property.Arb
 import io.kotest.property.Gen
 import kotlin.reflect.KClass
 
@@ -28,6 +29,6 @@ class ResponseBuilder internal constructor(
     /** Pin a single response header field. Called by the generated header setters. */
     fun headerGen(name: String, gen: Gen<*>): ResponseBuilder = apply { headerGens[name] = gen }
 
-    /** A [Gen] materialising the random response variant on each draw. */
-    fun buildGen(): Gen<Any> = CallExecutor.buildResponseGen(this)
+    /** An [Arb] materialising the random response variant on each draw. */
+    fun buildGen(): Arb<Any> = CallExecutor.buildResponseGen(this)
 }

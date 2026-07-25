@@ -4,6 +4,7 @@ import community.flock.wirespec.integration.kotest.extension.currentChannelConte
 import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
 import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
+import io.kotest.property.Arb
 import io.kotest.property.Gen
 import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.arbitrary
@@ -27,8 +28,8 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     fun topic(value: String): ChannelCallBuilder<P> = apply { topic = value }
     fun key(value: String): ChannelCallBuilder<P> = apply { key = value }
 
-    /** A [Gen] materialising a random payload on each draw, optionally applying per-field [overrides]. */
-    fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Gen<P> = arbitrary { rs -> buildPayload(rs, overrides) }
+    /** An [Arb] materialising a random payload on each draw, optionally applying per-field [overrides]. */
+    fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Arb<P> = arbitrary { rs -> buildPayload(rs, overrides) }
 
     /** Draw a payload from [gen], publish it, and return it. */
     suspend fun send(gen: Gen<P>): P {

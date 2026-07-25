@@ -4,6 +4,7 @@ import community.flock.wirespec.integration.kotest.runtime.CallExecutor
 import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
 import community.flock.wirespec.kotlin.Wirespec
+import io.kotest.property.Arb
 import io.kotest.property.Gen
 import io.kotest.property.RandomSource
 
@@ -63,9 +64,9 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
     /** Register a per-field header generator. Called by generated `header(...)`. */
     fun headerGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { headerGens[name] = gen }
 
-    /** A [Gen] materialising the typed request on each draw. */
-    fun buildRequestGen(): Gen<Req> {
+    /** An [Arb] materialising the typed request on each draw. */
+    fun buildRequestGen(): Arb<Req> {
         @Suppress("UNCHECKED_CAST")
-        return CallExecutor.buildRequestGen(this) as Gen<Req>
+        return CallExecutor.buildRequestGen(this) as Arb<Req>
     }
 }

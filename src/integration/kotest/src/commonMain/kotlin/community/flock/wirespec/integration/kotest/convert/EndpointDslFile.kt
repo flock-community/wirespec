@@ -48,13 +48,11 @@ internal object EndpointDslFile {
             }
             import(endpointPkg, shape.name)
             import("io.kotest.property", "Gen")
+            import("io.kotest.property", "Arb")
             val isListBody = shape.bodyKind == EndpointShape.BodyKind.List
             val needsArbConstant = (shape.pathFields + shape.queryFields + shape.headerFields).any { it.isNullable } ||
                 present.isNotEmpty() ||
                 shape.responseVariants.any { it.bodyType != null || it.headerFields.isNotEmpty() }
-            if (isListBody || needsArbConstant) {
-                import("io.kotest.property", "Arb")
-            }
             if (isListBody) {
                 import("io.kotest.property.arbitrary", "int")
             }
@@ -98,6 +96,8 @@ internal object EndpointDslFile {
 
     private fun genOf(inner: IrType): IrType = IrType.Custom("Gen", listOf(inner))
     private fun genOf(inner: String): IrType = genOf(IrType.Custom(inner))
+    private fun arbOf(inner: IrType): IrType = IrType.Custom("Arb", listOf(inner))
+    private fun arbOf(inner: String): IrType = arbOf(IrType.Custom(inner))
     private fun genNullableOf(inner: IrType): IrType = IrType.Nullable(genOf(inner))
     private fun genNullableOf(inner: String): IrType = genNullableOf(IrType.Custom(inner))
     private fun blockType(builder: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(builder))
@@ -112,7 +112,7 @@ internal object EndpointDslFile {
             asyncFunction("request") {
                 visibility(Visibility.PUBLIC)
                 arg("block", suspendScopeType("${shape.name}Scope"))
-                returnType(genOf("${shape.name}.Request"))
+                returnType(arbOf("${shape.name}.Request"))
                 assign("scope", FunctionCall(name = Name.of("${shape.name}Scope")))
                 functionCall("block", receiver = VariableReference("scope"))
                 returns(FunctionCall(receiver = VariableReference("scope"), name = Name.of("buildRequest")))
@@ -122,7 +122,7 @@ internal object EndpointDslFile {
                 function("response${variant.status}") {
                     visibility(Visibility.PUBLIC)
                     arg("block", blockType(scopeName), rawExpr("{}"))
-                    returnType(genOf("${shape.name}.${variant.className}"))
+                    returnType(arbOf("${shape.name}.${variant.className}"))
                     returns(rawExpr("$scopeName().apply(block).build()"))
                 }
             }
@@ -172,7 +172,7 @@ internal object EndpointDslFile {
             }
             function("build") {
                 visibility(Visibility.PUBLIC)
-                returnType(genOf(variantType))
+                returnType(arbOf(variantType))
                 if (bodyType != null) {
                     raw("body?.let { inner.body(it) }")
                 }
@@ -180,7 +180,7 @@ internal object EndpointDslFile {
                     raw("${f.name.escapeKotlinIdentifier()}?.let { inner.headerGen(\"${f.name}\", it) }")
                 }
                 raw("@Suppress(\"UNCHECKED_CAST\")")
-                returns(cast(FunctionCall(receiver = VariableReference("inner"), name = Name.of("buildGen")), genOf(variantType)))
+                returns(cast(FunctionCall(receiver = VariableReference("inner"), name = Name.of("buildGen")), arbOf(variantType)))
             }
         }
     }
@@ -220,7 +220,7 @@ internal object EndpointDslFile {
             }
             function("buildRequest") {
                 visibility(Visibility.PUBLIC)
-                returnType(genOf("${shape.name}.Request"))
+                returnType(arbOf("${shape.name}.Request"))
                 raw("flush()")
                 returns(rawExpr("inner.buildRequestGen()"))
             }
