@@ -35,9 +35,9 @@ class KotestDslExtensionTest {
         output shouldContain "public class GetTodosGenerate internal constructor()"
         output shouldContain "public val GetTodos.generate: GetTodosGenerate"
 
-        // `request` opens the scope and returns a `Gen<Request>` (drawn/sent later).
-        output shouldContain "public suspend fun request(block: suspend GetTodosScope.() -> Unit): Gen<GetTodos.Request>"
-        output shouldContain "public fun buildRequest(): Gen<GetTodos.Request>"
+        // `request` opens the scope and returns an `Arb<Request>` (drawn/sent later).
+        output shouldContain "public suspend fun request(block: suspend GetTodosScope.() -> Unit): Arb<GetTodos.Request>"
+        output shouldContain "public fun buildRequest(): Arb<GetTodos.Request>"
         output shouldContain "return inner.buildRequestGen()"
 
         // Sending chains off the request `Gen`: `GetTodos.generate.request { … }.call()`.
@@ -46,12 +46,12 @@ class KotestDslExtensionTest {
         output shouldNotContain "call(block: suspend GetTodosScope"
         output shouldNotContain "expectingClass"
 
-        // A per-variant `generate.responseNNN { … }` returns a `Gen<Response<NNN>>`; the list
+        // A per-variant `generate.responseNNN { … }` returns an `Arb<Response<NNN>>`; the list
         // body is a whole-value `Gen<List<TodoDto>>` setter.
         output shouldContain "public class GetTodosResponse200Scope internal constructor()"
         output shouldContain "responseCall(GetTodos, GetTodos.Response200::class)"
         output shouldContain "public var body: Gen<List<TodoDto>>? = null"
-        output shouldContain "public fun response200(block: GetTodosResponse200Scope.() -> Unit = {}): Gen<GetTodos.Response200>"
+        output shouldContain "public fun response200(block: GetTodosResponse200Scope.() -> Unit = {}): Arb<GetTodos.Response200>"
 
         // Mocking chains off the response `Gen`, the response-side twin of `Gen<Request>.call()`:
         // `GetTodos.generate.response200 { … }.mock { req -> … }` stubs the drawn response.
@@ -102,27 +102,27 @@ class KotestDslExtensionTest {
         output shouldContain "inner.queryGen(\"name\", queryBuilder.name ?: Arb.constant(null))"
         output shouldContain "inner.headerGen(\"Refresh-Token\", headerBuilder.`Refresh-Token` ?: Arb.constant(null))"
 
-        // The scope's only terminal is `buildRequest()` (returns a `Gen<Request>`); sending chains
+        // The scope's only terminal is `buildRequest()` (returns an `Arb<Request>`); sending chains
         // through `Gen<Request>.call()`.
         output shouldContain "public class PutTodoGenerate internal constructor()"
         output shouldContain "public val PutTodo.generate: PutTodoGenerate"
-        output shouldContain "public suspend fun request(block: suspend PutTodoScope.() -> Unit): Gen<PutTodo.Request>"
-        output shouldContain "public fun buildRequest(): Gen<PutTodo.Request>"
+        output shouldContain "public suspend fun request(block: suspend PutTodoScope.() -> Unit): Arb<PutTodo.Request>"
+        output shouldContain "public fun buildRequest(): Arb<PutTodo.Request>"
         output shouldContain "public suspend fun Gen<PutTodo.Request>.call(): PutTodo.Response<*> ="
         output shouldNotContain "call(block: suspend PutTodoScope"
 
         // The 201 variant carries a `TodoDto` body plus `token`/`refreshToken` response headers, so
-        // its scope exposes a whole-value body setter and one setter per header field, and builds a Gen.
+        // its scope exposes a whole-value body setter and one setter per header field, and builds an Arb.
         output shouldContain "public class PutTodoResponse201Scope internal constructor()"
         output shouldContain "responseCall(PutTodo, PutTodo.Response201::class)"
         output shouldContain "public var body: Gen<TodoDto>? = null"
         output shouldContain "public var token: Gen<Token>? = null"
         output shouldContain "public var refreshToken: Gen<Token?>? = null"
         output shouldContain "token?.let { inner.headerGen(\"token\", it) }"
-        output shouldContain "return inner.buildGen() as Gen<PutTodo.Response201>"
-        output shouldContain "public fun response201(block: PutTodoResponse201Scope.() -> Unit = {}): Gen<PutTodo.Response201>"
+        output shouldContain "return inner.buildGen() as Arb<PutTodo.Response201>"
+        output shouldContain "public fun response201(block: PutTodoResponse201Scope.() -> Unit = {}): Arb<PutTodo.Response201>"
         // A header-less variant (500 → Error) still gets its body setter and builder.
-        output shouldContain "public fun response500(block: PutTodoResponse500Scope.() -> Unit = {}): Gen<PutTodo.Response500>"
+        output shouldContain "public fun response500(block: PutTodoResponse500Scope.() -> Unit = {}): Arb<PutTodo.Response500>"
     }
 
     @Test
@@ -182,9 +182,9 @@ class KotestDslExtensionTest {
         output shouldNotContain "returning"
         output shouldNotContain "QueueCall"
 
-        // `message` returns a `Gen<Payload>`; publishing chains off its `send()` extension:
+        // `message` returns an `Arb<Payload>`; publishing chains off its `send()` extension:
         // `Queue.generate.message().send()`. There is no message wrapper class.
-        output shouldContain "public fun message(): Gen<String> ="
+        output shouldContain "public fun message(): Arb<String> ="
         output shouldContain "channelCall<String>(Queue::class).messageGen()"
         output shouldContain "public suspend fun Gen<String>.send(topic: String? = null, key: String? = null): String {"
         output shouldContain "return call.send(this)"
@@ -197,9 +197,9 @@ class KotestDslExtensionTest {
         // `type TodoDto { description: String }`
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
 
-        // Each record type gets a `<Type>.generate { … }: Gen<…>` entry point — an extension on the
+        // Each record type gets a `<Type>.generate { … }: Arb<…>` entry point — an extension on the
         // type's companion — that pins per-field overrides on the shared builder.
-        output shouldContain "public fun TodoDto.Companion.generate(block: TodoDtoBuilder.() -> Unit = {}): Gen<TodoDto> {"
+        output shouldContain "public fun TodoDto.Companion.generate(block: TodoDtoBuilder.() -> Unit = {}): Arb<TodoDto> {"
         output shouldContain "return recordGen<TodoDto> {"
         output shouldContain "builder.description?.let { registerPath(\"description\") { it } }"
 
@@ -221,8 +221,8 @@ class KotestDslExtensionTest {
         // Exactly one declaration of the shared builder (split on the class header → 2 parts).
         output.split("public class PotentialTodoDtoBuilder {").size shouldBe 2
         // Every referenced record type has its own companion `generate`, including the `Error` type.
-        output shouldContain "public fun PotentialTodoDto.Companion.generate(block: PotentialTodoDtoBuilder.() -> Unit = {}): Gen<PotentialTodoDto> {"
-        output shouldContain "public fun Error.Companion.generate(block: ErrorBuilder.() -> Unit = {}): Gen<Error> {"
+        output shouldContain "public fun PotentialTodoDto.Companion.generate(block: PotentialTodoDtoBuilder.() -> Unit = {}): Arb<PotentialTodoDto> {"
+        output shouldContain "public fun Error.Companion.generate(block: ErrorBuilder.() -> Unit = {}): Arb<Error> {"
         // No per-endpoint body-builder class survives anywhere in the output.
         output shouldNotContain "BodyBuilder"
     }

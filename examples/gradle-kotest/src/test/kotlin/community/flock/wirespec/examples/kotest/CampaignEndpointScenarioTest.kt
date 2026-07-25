@@ -45,7 +45,7 @@ class CampaignEndpointScenarioTest :
         }
 
         test("request builds a random CreateProduct.Request, pinning only what you set") {
-            // `request { }` returns a `Gen<Request>`; draw one to inspect it.
+            // `request { }` returns an `Arb<Request>`; draw one to inspect it.
             val request = CreateProduct.generate.request {
                 body { sku("PINNED-SKU") }
             }.draw()
