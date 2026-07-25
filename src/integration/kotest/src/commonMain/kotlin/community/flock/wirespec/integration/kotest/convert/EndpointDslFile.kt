@@ -239,10 +239,10 @@ internal object EndpointDslFile {
                 appendLine("val $builderVar = $builderClass().apply(${slot.name} ?: error(\"${shape.name}: required `${slot.name}` block is missing\"))")
                 slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "")) }
             } else {
-                appendLine("${slot.name}?.let { block ->")
-                appendLine("    val $builderVar = $builderClass().apply(block)")
-                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "    ")) }
-                appendLine("}")
+                // Optional slot (all fields nullable): register defaults whether or not the block is
+                // supplied, so an omitted block yields null rather than a random value.
+                appendLine("val $builderVar = ${slot.name}?.let { block -> $builderClass().apply(block) }")
+                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "", nullableBuilder = true)) }
             }
         }
         if (shape.bodyFieldShapes.isNotEmpty()) {
@@ -276,8 +276,10 @@ internal object EndpointDslFile {
         builderVar: String,
         field: EndpointShape.NamedTypedField,
         indent: String,
+        nullableBuilder: Boolean = false,
     ): String {
-        val ref = "$builderVar.${field.name.escapeKotlinIdentifier()}"
+        val access = if (nullableBuilder) "?." else "."
+        val ref = "$builderVar$access${field.name.escapeKotlinIdentifier()}"
         val fallback = if (field.isNullable) {
             "Arb.constant(null)"
         } else {

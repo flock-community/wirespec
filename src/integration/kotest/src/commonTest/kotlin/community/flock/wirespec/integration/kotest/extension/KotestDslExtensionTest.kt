@@ -148,17 +148,19 @@ class KotestDslExtensionTest {
         // Path carries a non-nullable field, so it remains required.
         output shouldContain "SearchTodosPathBuilder().apply(path ?: error(\"SearchTodos: required `path` block is missing\"))"
 
-        // Query and header are all-nullable, so they are optional: guarded by `?.let`, never an
-        // eager required-block error.
+        // Query and header are all-nullable, so they are optional: the builder is built only when
+        // its block is present (`?.let`), never via an eager required-block error.
         output shouldContain "query?.let { block ->"
         output shouldContain "header?.let { block ->"
         output shouldNotContain "required `query` block is missing"
         output shouldNotContain "required `header` block is missing"
 
-        // Each nullable field defaults to `Arb.constant(null)` rather than throwing when unset.
-        output shouldContain "inner.queryGen(\"q\", queryBuilder.q ?: Arb.constant(null))"
-        output shouldContain "inner.queryGen(\"limit\", queryBuilder.limit ?: Arb.constant(null))"
-        output shouldContain "inner.headerGen(\"trace\", headerBuilder.trace ?: Arb.constant(null))"
+        // Each nullable field defaults to `Arb.constant(null)` even when its block is omitted: the
+        // builder is nullable (`?.`), so an absent `query`/`header` block still registers null rather
+        // than leaving the param to draw a random value.
+        output shouldContain "inner.queryGen(\"q\", queryBuilder?.q ?: Arb.constant(null))"
+        output shouldContain "inner.queryGen(\"limit\", queryBuilder?.limit ?: Arb.constant(null))"
+        output shouldContain "inner.headerGen(\"trace\", headerBuilder?.trace ?: Arb.constant(null))"
     }
 
     @Test
