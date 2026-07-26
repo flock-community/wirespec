@@ -354,9 +354,13 @@ internal object EndpointDslFile {
         val subs = fields.joinToString(", ") {
             "${it.name.escapeKotlinIdentifier()} = ${copyValueExpr(it, elemVar, nestedVar)}"
         }
-        return "$receiver.$fieldRef?.let { gen -> gen.draw(rs) } ?: " +
+        // As in the primitive case, branch the whole-collection override on builder-slot presence, not
+        // on the drawn value, so a configured slot that draws null (a nullable collection set to null)
+        // stays null instead of falling through to the block override or base. The block-override and
+        // base fallback stay chained with `?:` as the `else` branch.
+        return "$receiver.$fieldRef.let { gen -> if (gen != null) gen.draw(rs) else " +
             "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
-            "$baseField$overBase { $elemVar -> $elemVar.copy($subs) } } ?: $baseField"
+            "$baseField$overBase { $elemVar -> $elemVar.copy($subs) } } ?: $baseField }"
     }
 
     /** Wrap a drawn body value to match the model field's declared type, re-wrapping refined values. */
