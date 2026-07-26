@@ -324,7 +324,10 @@ internal object EndpointDslFile {
         val baseField = "$baseExpr.$fieldRef"
         return when (field) {
             is EndpointShape.BodyFieldShape.Primitive ->
-                "$receiver.$fieldRef?.let { gen -> ${wrapDrawn("gen.draw(rs)", field)} } ?: $baseField"
+                // Branch on builder-slot presence, not on the drawn value: a configured slot whose gen
+                // draws null (e.g. `endDate(null)` on a nullable field) must stay null, so `?: base`
+                // cannot be used here — it would conflate "slot unset" with "slot set to null".
+                "$receiver.$fieldRef.let { gen -> if (gen == null) $baseField else ${wrapDrawn("gen.draw(rs)", field)} }"
             is EndpointShape.BodyFieldShape.NestedObject ->
                 nestedCopyExpr(field.name, field.typeName, field.fields, baseExpr, receiver, isList = false)
             is EndpointShape.BodyFieldShape.NestedList ->
