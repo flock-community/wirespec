@@ -72,6 +72,9 @@ internal class EndpointReflection private constructor(
                 "$label constructor parameter names not retained. " +
                     "Ensure the generated module is compiled with `-java-parameters`."
             }
+            // A param-less request/response emitted as a Kotlin `data object` exposes only a private
+            // synthetic constructor; make it accessible so reflective instantiation doesn't fail.
+            ctor.isAccessible = true
             return ctor
         }
 
