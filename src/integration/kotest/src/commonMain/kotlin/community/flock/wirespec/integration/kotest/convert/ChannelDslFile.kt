@@ -118,7 +118,9 @@ internal data class ChannelShape(
             val modelImports = EndpointShape.modelImportsFor(listOf(payloadRef) + directRefs, payloadFieldShapes, types)
 
             return ChannelShape(
-                name = channel.identifier.value,
+                // The channel object is emitted under its pascal-cased name (`Publish_Event` ->
+                // `PublishEvent`), so the DSL must reference that name, not the raw identifier.
+                name = Name.of(channel.identifier.value).pascalCase(),
                 payloadType = payloadType,
                 payloadFieldShapes = payloadFieldShapes,
                 modelImports = modelImports,

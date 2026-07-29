@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.kotest.convert
 
 import community.flock.wirespec.integration.kotest.convert.EndpointShape.BodyFieldShape
+import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.StructBuilder
 import community.flock.wirespec.ir.core.Visibility
@@ -11,7 +12,11 @@ import community.flock.wirespec.ir.core.Type as IrType
 /** Builds the reusable per-record builder class `<Type>Builder` as an IR [Struct] and renders its `registerPath` lines. */
 internal object RecordBuilder {
 
-    fun builderName(typeName: String): String = "${typeName}Builder"
+    /**
+     * Records are emitted under their pascal-cased name (`Foo_Bar` -> `FooBar`), so the builder
+     * must be named after that; the raw identifier would not resolve.
+     */
+    fun builderName(typeName: String): String = "${Name.of(typeName).pascalCase()}Builder"
 
     /** Nested fields reference the nested type's own `<Nested>Builder`; this builder never emits it. */
     fun buildBuilderClass(typeName: String, fields: List<BodyFieldShape>): Struct = struct(builderName(typeName)) {

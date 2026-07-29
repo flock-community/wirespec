@@ -490,7 +490,9 @@ internal data class EndpointShape(
             val modelImports = modelImportsFor(refs + bodyFieldRefs, bodyFieldShapes, types)
 
             return EndpointShape(
-                name = endpoint.identifier.value,
+                // The endpoint object is emitted under its pascal-cased name (`Get_ById` ->
+                // `GetById`), so the DSL must reference that name, not the raw identifier.
+                name = Name.of(endpoint.identifier.value).pascalCase(),
                 pathFields = pathFields,
                 queryFields = queryFields,
                 headerFields = headerFields,

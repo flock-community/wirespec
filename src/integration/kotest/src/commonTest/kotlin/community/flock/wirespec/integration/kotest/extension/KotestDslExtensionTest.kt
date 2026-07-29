@@ -193,6 +193,33 @@ class KotestDslExtensionTest {
     }
 
     @Test
+    fun underscoredNamesReferenceThePascalCasedDeclarations() {
+        // Converted specs carry underscored definition names (`channel Publish_Event`). Those are
+        // emitted pascal-cased (`PublishEvent`), so every DSL reference — import, `::class`
+        // literal, builder, `generate` getter — must use that name, not the raw identifier.
+        val source =
+            // language=ws
+            """
+            |type Event_Payload {
+            |  id: String
+            |}
+            |channel Publish_Event -> Event_Payload
+            """.trimMargin()
+        val output = compile(source)(::emitter).shouldBeRight()
+
+        output shouldNotContain "Publish_Event"
+        output shouldNotContain "Event_Payload"
+
+        output shouldContain "import com.example.api.channel.PublishEvent"
+        output shouldContain "public class PublishEventGenerate internal constructor()"
+        output shouldContain "public val PublishEvent.generate: PublishEventGenerate"
+        output shouldContain "get() = PublishEventGenerate()"
+        output shouldContain "channelCall<EventPayload>(PublishEvent::class)"
+        output shouldContain "val builder = EventPayloadBuilder().apply(block)"
+        output shouldContain "public class EventPayloadBuilder {"
+    }
+
+    @Test
     fun emitsPerTypeDslWithSharedReusableBuilder() {
         // `type TodoDto { description: String }`
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
