@@ -234,38 +234,91 @@ private class KotlinAvroSource(packageName: PackageName) :
         else -> emptyList()
     }
 
+    /** The `<Type>Avro` object for [reference], named after the type itself, never its nullability. */
+    private fun avroObject(reference: Reference): String = reference.copy(isNullable = false).emit().avroClass()
+
     private fun schemaField(definition: Definition, module: Module, explicitType: Boolean): String {
         val declaration = if (explicitType) "val SCHEMA: org.apache.avro.Schema" else "val SCHEMA"
         return "$declaration = org.apache.avro.Schema.Parser().parse(\"${schema(definition, module)}\")"
     }
 
-    private fun toValue(field: Field): String = when (val reference = field.reference) {
-        is Reference.Iterable -> "data.${emit(field.identifier)}.map{${reference.reference.value.avroClass()}.to(it)}"
-        is Reference.Custom -> "${field.reference.emit().avroClass()}.to(data.${emit(field.identifier)})"
-        is Reference.Primitive -> when {
-            reference.type == Reference.Primitive.Type.Bytes -> "java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}.toByteArray())"
-            else -> "data.${emit(field.identifier)}"
-        }
+    private fun toValue(field: Field): String {
+        val value = "data.${emit(field.identifier)}"
+        // A nullable field carries the null straight through to the record; the element
+        // conversions below only ever run on a present value.
+        val access = if (field.reference.isNullable) "$value?" else value
+        return when (val reference = field.reference) {
+            // Avro arrays and maps of primitives need no per-element conversion: the model
+            // already holds the very types the writer expects.
+            is Reference.Iterable -> when (reference.reference) {
+                is Reference.Custom -> "$access.map{${avroObject(reference.reference)}.to(it)}"
+                else -> value
+            }
+            is Reference.Dict -> when (reference.reference) {
+                is Reference.Custom -> "$access.mapValues{${avroObject(reference.reference)}.to(it.value)}"
+                else -> value
+            }
+            is Reference.Custom -> when {
+                field.reference.isNullable -> "$access.let{${avroObject(reference)}.to(it)}"
+                else -> "${avroObject(reference)}.to($value)"
+            }
+            is Reference.Primitive -> when {
+                // `bytes` is a ByteArray in the model and a ByteBuffer on the wire.
+                reference.type == Reference.Primitive.Type.Bytes && reference.isNullable ->
+                    "$access.let{java.nio.ByteBuffer.wrap(it)}"
+                reference.type == Reference.Primitive.Type.Bytes -> "java.nio.ByteBuffer.wrap($value)"
+                else -> value
+            }
 
-        else -> error("Cannot emit Avro: $reference")
+            else -> error("Cannot emit Avro: $reference")
+        }
     }
 
     private fun fromValue(module: Module): (index: Int, field: Field) -> String = { index, field ->
-        when (val reference = field.reference) {
-            is Reference.Iterable -> "(record.get($index) as java.util.List<org.apache.avro.generic.GenericData.Record>).map{${reference.reference.emit().avroClass()}.from(it)}"
-            is Reference.Custom -> when {
-                reference.isEnum(module) -> "${field.reference.emit().avroClass()}.from(record.get($index) as org.apache.avro.generic.GenericData.EnumSymbol)"
-                else -> "${field.reference.emit().avroClass()}.from(record.get($index) as org.apache.avro.generic.GenericData.Record)"
+        val reference = field.reference
+        val get = "record.get($index)"
+        // `?` after the cast keeps a null field null; the conversions then run under `?.`.
+        val orNull = if (reference.isNullable) "?" else ""
+        when (reference) {
+            is Reference.Iterable ->
+                "($get as kotlin.collections.List<*>$orNull)$orNull.map{${element(module, reference.reference, "it")}}"
+            is Reference.Dict ->
+                "($get as kotlin.collections.Map<*, *>$orNull)$orNull.entries$orNull.associate{it.key.toString() to ${element(module, reference.reference, "it.value")}}"
+            is Reference.Custom -> {
+                // An enum arrives as an EnumSymbol rather than a Record, so the cast that guards
+                // the null has to name the carrier the value actually has.
+                val carrier = if (reference.isEnum(module)) ENUM_SYMBOL else RECORD
+                when {
+                    reference.isNullable -> "($get as $carrier?)?.let{${avroObject(reference)}.from(it)}"
+                    else -> element(module, reference, get)
+                }
             }
 
             is Reference.Primitive -> when (reference.type) {
-                is Reference.Primitive.Type.Bytes -> "String((record.get($index) as java.nio.ByteBuffer).array())"
-                is Reference.Primitive.Type.String -> "record.get($index)${if (reference.isNullable) "?" else ""}.toString() as ${reference.emit()}"
-                else -> "record.get($index) as ${reference.emit()}"
+                is Reference.Primitive.Type.Bytes -> "($get as java.nio.ByteBuffer$orNull)$orNull.array()"
+                is Reference.Primitive.Type.String -> "$get$orNull.toString() as ${reference.emit()}"
+                else -> "$get as ${reference.emit()}"
             }
 
-            else -> "record.get($index): ${reference.emit()}"
+            else -> error("Cannot emit Avro: $reference")
         }
+    }
+
+    /**
+     * Reads a single Avro value held in [value] back into the model type [reference] — the element
+     * of an array or map, or a field read straight off the record. Avro hands strings back as
+     * `Utf8`, so anything string-shaped goes through `toString()` rather than a cast.
+     */
+    private fun element(module: Module, reference: Reference, value: String): String = when (reference) {
+        is Reference.Custom -> when {
+            reference.isEnum(module) -> "${avroObject(reference)}.from($value as $ENUM_SYMBOL)"
+            else -> "${avroObject(reference)}.from($value as $RECORD)"
+        }
+        is Reference.Primitive -> when (reference.type) {
+            is Reference.Primitive.Type.String -> "$value.toString()"
+            else -> "$value as ${reference.emit()}"
+        }
+        else -> error("Cannot emit Avro element: $reference")
     }
 }
 
@@ -280,22 +333,22 @@ private fun KotlinEmitter.schema(definition: Definition, module: Module): String
 
 private fun String.avroClass(): String = replace(".model.", ".avro.") + "Avro"
 
-private fun emitAvroSchema(packageName: PackageName, type: Definition, module: Module) = AvroJsonEmitter
-    .emit(module)
-    .map {
-        when (it) {
-            is AvroModel.RecordType -> it.copy(namespace = packageName.value)
-            else -> it
-        }
+/**
+ * The Avro schema for [definition] alone. Emitting per definition rather than picking one out of
+ * the whole module keeps every schema self-contained: nested records are written out in full the
+ * first time they appear, and the seeded name makes a type that refers back to itself — directly
+ * or through a nested record — resolve by name instead of trying to inline itself forever.
+ */
+private fun emitAvroSchema(packageName: PackageName, definition: Definition, module: Module) = with(AvroJsonEmitter) {
+    when (definition) {
+        is Type -> definition
+            .emit(module, mutableListOf(definition.identifier.value))
+            .copy(namespace = packageName.value)
+        is Enum -> definition.emit()
+        else -> null
     }
-    .find {
-        when (it) {
-            is AvroModel.RecordType -> it.name == type.identifier.value
-            is AvroModel.EnumType -> it.name == type.identifier.value
-            else -> false
-        }
-    }
-    ?.flatten()
+}
+    ?.flatten(mutableSetOf())
     ?.let { Json.encodeToString(it) }
     ?.escaped()
 
@@ -303,8 +356,18 @@ private fun Reference.isEnum(module: Module): Boolean = module.statements
     .filterIsInstance<Enum>()
     .any { it.identifier.value == this.value }
 
-private fun AvroModel.Type.flatten(): AvroModel.Type = when (this) {
-    is AvroModel.RecordType ->
+private val AVRO_PRIMITIVES = setOf("boolean", "int", "long", "float", "double", "bytes", "string", "null")
+
+/**
+ * Marks every name this schema does not define itself, so [schema] can splice in the emitting
+ * object's `SCHEMA` for it. [defined] collects the names defined along the way — a record or enum
+ * written out in full here, or a name already spliced in — and a repeat of one of those stays a
+ * bare Avro name, which is both how Avro deduplicates and the only way to write a recursive type.
+ */
+private fun AvroModel.Type.flatten(defined: MutableSet<String>): AvroModel.Type = when (this) {
+    is AvroModel.RecordType -> {
+        // Registered before the fields are walked, so a field referring back to this record finds it.
+        defined.add(name)
         this
             .copy(
                 fields = fields
@@ -312,22 +375,24 @@ private fun AvroModel.Type.flatten(): AvroModel.Type = when (this) {
                         field.copy(
                             type = AvroModel.TypeList(
                                 field.type
-                                    .map { it.flatten() },
+                                    .map { it.flatten(defined) },
                             ),
                         )
                     },
             )
+    }
 
-    is AvroModel.ArrayType -> this.copy(items = items.flatten())
-    is AvroModel.EnumType -> this
+    is AvroModel.ArrayType -> this.copy(items = items.flatten(defined))
+    is AvroModel.EnumType -> this.also { defined.add(name) }
     is AvroModel.LogicalType -> this
-    is AvroModel.SimpleType -> this.copy(
-        value = when (value) {
-            "boolean", "int", "long", "float", "double", "bytes", "string", "null" -> value
-            else -> "<<<<<$value>>>>>"
-        },
-    )
+    is AvroModel.SimpleType -> when {
+        value in AVRO_PRIMITIVES || value in defined -> this
+        else -> {
+            defined.add(value)
+            this.copy(value = "<<<<<$value>>>>>")
+        }
+    }
 
-    is AvroModel.MapType -> TODO()
-    is AvroModel.UnionType -> TODO()
+    is AvroModel.MapType -> this.copy(values = values.flatten(defined))
+    is AvroModel.UnionType -> this.copy(type = AvroModel.TypeList(type.map { it.flatten(defined) }))
 }
