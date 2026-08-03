@@ -43,7 +43,7 @@ internal object EndpointDslFile {
                 import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
                 import("community.flock.wirespec.integration.kotest.dsl", "responseMock")
             }
-            if (shape.bodyFieldShapes.isNotEmpty()) {
+            if (shape.bodyFieldShapes.isNotEmpty() || shape.bodyKind == EndpointShape.BodyKind.Primitive) {
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
             }
             import(endpointPkg, shape.name)
@@ -52,6 +52,7 @@ internal object EndpointDslFile {
             val isListBody = shape.bodyKind == EndpointShape.BodyKind.List
             val needsArbConstant = (shape.pathFields + shape.queryFields + shape.headerFields).any { it.isNullable } ||
                 present.isNotEmpty() ||
+                shape.bodyKind == EndpointShape.BodyKind.Primitive ||
                 shape.responseVariants.any { it.bodyType != null || it.headerFields.isNotEmpty() }
             if (isListBody) {
                 import("io.kotest.property.arbitrary", "int")
@@ -213,6 +214,13 @@ internal object EndpointDslFile {
                     property("bodyCount", IrType.Custom("IntRange"), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("1..3"))
                 }
             }
+            if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
+                // A raw primitive body (e.g. ByteArray) has no per-field builder; expose a
+                // whole-value slot mirroring the response scopes' `body`.
+                val bodyType = shape.requireBodyPrimitiveType()
+                property("body", genNullableOf(bodyType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter("body", bodyType)
+            }
             property("flushed", IrType.Boolean, isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("false"))
             function("flush") {
                 visibility(Visibility.PRIVATE)
@@ -265,6 +273,11 @@ internal object EndpointDslFile {
                 appendBodyCopy("base", "builder", shape, indent = "        ")
             }
             appendLine("    }")
+            appendLine("}")
+        }
+        if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
+            appendLine("body?.let { gen ->")
+            appendLine("    inner.bodyTransform { _, rs -> gen.draw(rs) }")
             appendLine("}")
         }
     }
@@ -376,6 +389,9 @@ internal object EndpointDslFile {
 
     /** The element type backing this endpoint's body-field shapes; present whenever `bodyFieldShapes` is. */
     private fun EndpointShape.requireBodyElementType(): String = bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for $name")
+
+    /** The IR type of a primitive body; present whenever `bodyKind == Primitive`. */
+    private fun EndpointShape.requireBodyPrimitiveType(): IrType = bodyPrimitiveType ?: error("BodyKind.Primitive but no bodyPrimitiveType for $name")
 }
 
 internal data class EndpointShape(
@@ -386,6 +402,8 @@ internal data class EndpointShape(
     val bodyKind: BodyKind,
     /** Name of the body's element Type (`"Pet"` for both object and list bodies); `null` for `BodyKind.None`. */
     val bodyElementType: String?,
+    /** IR type of a [BodyKind.Primitive] body (nullability stripped, e.g. `ByteArray`); `null` otherwise. */
+    val bodyPrimitiveType: IrType?,
     /** Recursive classification of body fields. */
     val bodyFieldShapes: List<BodyFieldShape>,
     /** One entry per declared response variant (`200`, `201`, …), used to build random responses. */
@@ -408,7 +426,7 @@ internal data class EndpointShape(
         val headerFields: List<NamedTypedField>,
     )
 
-    enum class BodyKind { None, Object, List }
+    enum class BodyKind { None, Object, List, Primitive }
 
     sealed interface BodyFieldShape {
         val name: String
@@ -448,6 +466,12 @@ internal data class EndpointShape(
                 .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
             val bodyRef = endpoint.requests.firstOrNull()?.content?.reference
             val (bodyKind, bodyElementType) = classifyBody(bodyRef)
+            // Nullability is stripped: the flush-time `bodyTransform` must return a non-null body,
+            // so the whole-value slot is declared over the non-null type.
+            val bodyPrimitiveType = bodyRef
+                ?.takeIf { bodyKind == BodyKind.Primitive }
+                ?.convert()
+                ?.let { if (it is IrType.Nullable) it.type else it }
 
             val bodyFieldShapes: List<BodyFieldShape> = bodyElementType
                 ?.let { extractBodyFields(it, types, refined, visited = emptySet()) }
@@ -498,6 +522,7 @@ internal data class EndpointShape(
                 headerFields = headerFields,
                 bodyKind = bodyKind,
                 bodyElementType = bodyElementType,
+                bodyPrimitiveType = bodyPrimitiveType,
                 bodyFieldShapes = bodyFieldShapes,
                 responseVariants = responseVariants,
                 modelImports = modelImports,
@@ -511,6 +536,9 @@ internal data class EndpointShape(
             is Reference.Iterable -> (reference.reference as? Reference.Custom)
                 ?.let { BodyKind.List to it.value }
                 ?: (BodyKind.None to null)
+            // A raw primitive body (e.g. `Bytes` from OpenAPI `format: binary`) has no record to
+            // open a per-field builder on; the scope gets a whole-value slot instead.
+            is Reference.Primitive -> BodyKind.Primitive to null
             else -> BodyKind.None to null
         }
 

@@ -72,7 +72,7 @@ internal object CallExecutor {
                 resolveResponseBody(builder, variant, arb, rs)
             } else {
                 val gen = builder.headerGens[name] ?: headerGensByNormalizedName[normalizeSlotName(name)]
-                gen?.draw(rs) ?: defaultValueFor(param.type, arb, rs)
+                gen?.draw(rs) ?: generatedValueFor(param.type, arb, rs, emptyList())
             }
         }
         return try {
@@ -99,15 +99,19 @@ internal object CallExecutor {
     ): Any? = when {
         variant.bodyElementClass != null -> {
             val size = Arb.int(1..3).draw(rs)
-            val elementGen = arb.generatorFor(variant.bodyElementClass)
-            (0 until size).map { i -> elementGen.generate(arb.generator, listOf("$i")) }
+            (0 until size).map { i -> generatedValueFor(variant.bodyElementClass, arb, rs, listOf("$i")) }
         }
-        variant.bodyClass != null -> arb.generatorFor(variant.bodyClass).generate(arb.generator, emptyList())
+        variant.bodyClass != null -> generatedValueFor(variant.bodyClass, arb, rs, emptyList())
         else -> error("${variant.constructor.declaringClass.simpleName}: `body` param has no resolvable type.")
     }
 
-    private fun defaultValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource): Any? = PrimitiveArbs.forTypeOrNull(type)?.draw(rs)
-        ?: arb.generatorFor(type).generate(arb.generator, emptyList())
+    /**
+     * A generated default for [type]: a primitive [Arb] draw when [type] is primitive-shaped
+     * (String, numbers, ByteArray — which has no package and thus no reflectable `<Model>Generator`),
+     * else the IR-emitted `<Model>Generator` looked up via [arb].
+     */
+    private fun generatedValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource, path: List<String>): Any = PrimitiveArbs.forTypeOrNull(type)?.draw(rs)
+        ?: arb.generatorFor(type).generate(arb.generator, path)
 
     private fun resolveSlots(
         call: EndpointCallBuilder<*, *, *>,
@@ -122,15 +126,14 @@ internal object CallExecutor {
         when {
             reflection.hasBody && reflection.bodyElementClass != null -> {
                 val size = (call.bodyListSizeGen ?: Arb.int(1..3)).draw(rs)
-                val elementGen = arb.generatorFor(reflection.bodyElementClass)
-                val default = (0 until size).map { i -> elementGen.generate(arb.generator, listOf("$i")) }
+                val default = (0 until size).map { i -> generatedValueFor(reflection.bodyElementClass, arb, rs, listOf("$i")) }
                 args["body"] = withBodyTransform(default)
             }
             reflection.hasBody -> {
                 val bodyType = reflection.requestConstructor.parameters
                     .firstOrNull { it.name == "body" }?.type
                     ?: error("${reflection.endpointName}: hasBody=true but no `body` constructor param.")
-                args["body"] = withBodyTransform(arb.generatorFor(bodyType).generate(arb.generator, emptyList()))
+                args["body"] = withBodyTransform(generatedValueFor(bodyType, arb, rs, emptyList()))
             }
         }
 

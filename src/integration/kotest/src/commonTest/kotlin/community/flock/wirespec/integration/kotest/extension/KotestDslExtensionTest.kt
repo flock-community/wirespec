@@ -193,6 +193,54 @@ class KotestDslExtensionTest {
     }
 
     @Test
+    fun channelsSharingAPayloadEmitOneSendExtension() {
+        // Extracted specs can carry several channels for one event (e.g. the new- and
+        // legacy-cluster listeners); each still gets its own `generate`, but the identical
+        // `Gen<Payload>.send` extension must be emitted only once or the package fails to
+        // compile with conflicting overloads.
+        val source =
+            // language=ws
+            """
+            |type Event {
+            |  id: String
+            |}
+            |channel NewListener -> Event
+            |channel OldListener -> Event
+            """.trimMargin()
+        val output = compile(source)(::emitter).shouldBeRight()
+
+        output shouldContain "public val NewListener.generate: NewListenerGenerate"
+        output shouldContain "public val OldListener.generate: OldListenerGenerate"
+        val sendSignature = "public suspend fun Gen<Event>.send(topic: String? = null, key: String? = null): Event {"
+        output.windowed(sendSignature.length).count { it == sendSignature } shouldBe 1
+    }
+
+    @Test
+    fun primitiveBodyGetsWholeValueSlot() {
+        // A raw `Bytes` request body (OpenAPI `type: string, format: binary`) has no record type to
+        // open a per-field builder on. The scope must still expose a `body` slot — a whole-value
+        // `Gen<ByteArray>?` mirroring the response scopes — wired through `bodyTransform`, so the
+        // request can be built (with a random or pinned payload) instead of falling through to the
+        // package-based model-generator lookup, which dies on `byte[]`.
+        // language=ws
+        val source =
+            """
+            |endpoint ImportContacts POST Bytes /contacts -> {
+            |    200 -> String
+            |}
+            """.trimMargin()
+        val output = compile(source)(::emitter).shouldBeRight()
+
+        output shouldContain "public class ImportContactsScope internal constructor()"
+        output shouldContain "public var body: Gen<ByteArray>? = null"
+        output shouldContain "public fun body(value: ByteArray) {"
+        output shouldContain "this.body = Arb.constant(value)"
+        output shouldContain "inner.bodyTransform { _, rs -> gen.draw(rs) }"
+        // No per-field record builder is referenced for the primitive body.
+        output shouldNotContain "ByteArrayBuilder"
+    }
+
+    @Test
     fun underscoredNamesReferenceThePascalCasedDeclarations() {
         // Converted specs carry underscored definition names (`channel Publish_Event`). Those are
         // emitted pascal-cased (`PublishEvent`), so every DSL reference — import, `::class`

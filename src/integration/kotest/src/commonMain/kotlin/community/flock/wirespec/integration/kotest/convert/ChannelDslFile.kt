@@ -17,11 +17,18 @@ import community.flock.wirespec.ir.core.Type as IrType
 /** Builds the per-channel Kotest DSL file (`<Channel>Dsl.kt`). */
 internal object ChannelDslFile {
 
+    /**
+     * [emitSend] guards the `Gen<Payload>.send` extension: two channels carrying the same payload
+     * type would otherwise emit conflicting overloads into one package, so the caller emits it for
+     * the first such channel only. `send` itself is channel-agnostic apart from the default topic
+     * (the channel's simple name), which is never a real topic — production callers pass one.
+     */
     fun build(
         channel: Channel,
         packageName: PackageName,
         types: Map<String, Type> = emptyMap(),
         refined: Map<String, Refined> = emptyMap(),
+        emitSend: Boolean = true,
     ): File {
         val shape = ChannelShape.from(channel, types, refined)
         val kotestPkg = "${packageName.value}.kotest"
@@ -74,16 +81,18 @@ internal object ChannelDslFile {
                 getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
 
-            asyncFunction("send") {
-                visibility(Visibility.PUBLIC)
-                receiver(genPayload)
-                arg("topic", IrType.Nullable(IrType.String), rawExpr("null"))
-                arg("key", IrType.Nullable(IrType.String), rawExpr("null"))
-                returnType(IrType.Custom(payload))
-                raw("val call = channelCall<$payload>(${shape.name}::class)")
-                raw("topic?.let { call.topic(it) }")
-                raw("key?.let { call.key(it) }")
-                returns(rawExpr("call.send(this)"))
+            if (emitSend) {
+                asyncFunction("send") {
+                    visibility(Visibility.PUBLIC)
+                    receiver(genPayload)
+                    arg("topic", IrType.Nullable(IrType.String), rawExpr("null"))
+                    arg("key", IrType.Nullable(IrType.String), rawExpr("null"))
+                    returnType(IrType.Custom(payload))
+                    raw("val call = channelCall<$payload>(${shape.name}::class)")
+                    raw("topic?.let { call.topic(it) }")
+                    raw("key?.let { call.key(it) }")
+                    returns(rawExpr("call.send(this)"))
+                }
             }
         }
     }
