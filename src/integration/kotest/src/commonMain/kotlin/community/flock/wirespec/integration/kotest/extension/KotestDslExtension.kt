@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.integration.kotest.convert.ChannelDslFile
+import community.flock.wirespec.integration.kotest.convert.ChannelShape
 import community.flock.wirespec.integration.kotest.convert.EndpointDslFile
 import community.flock.wirespec.integration.kotest.convert.TypeDslFile
 import community.flock.wirespec.ir.core.Element
@@ -36,7 +37,13 @@ open class KotestDslExtension(
 
         val typeDsl = types.values.map { TypeDslFile.build(it, packageName, types, refined) }
         val endpointDsl = endpoints.map { EndpointDslFile.build(it, packageName, types, refined) }
-        val channelDsl = channels.map { ChannelDslFile.build(it, packageName, types, refined) }
+        // Channels sharing a payload type (e.g. new- and legacy-cluster listeners for one event)
+        // must not each emit the identical `Gen<Payload>.send` extension; the first one carries it.
+        val sendPayloads = mutableSetOf<String>()
+        val channelDsl = channels.map {
+            val payload = ChannelShape.from(it, types, refined).payloadType
+            ChannelDslFile.build(it, packageName, types, refined, emitSend = sendPayloads.add(payload))
+        }
 
         val extra: List<Element> = typeDsl + endpointDsl + channelDsl
 

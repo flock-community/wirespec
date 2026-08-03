@@ -5,6 +5,7 @@ import io.kotest.property.arbitrary.Codepoint
 import io.kotest.property.arbitrary.alphanumeric
 import io.kotest.property.arbitrary.boolean
 import io.kotest.property.arbitrary.byte
+import io.kotest.property.arbitrary.byteArray
 import io.kotest.property.arbitrary.char
 import io.kotest.property.arbitrary.double
 import io.kotest.property.arbitrary.float
@@ -30,6 +31,7 @@ internal object PrimitiveArbs {
         Double::class.javaPrimitiveType, java.lang.Double::class.java -> Arb.double()
         Float::class.javaPrimitiveType, java.lang.Float::class.java -> Arb.float()
         Char::class.javaPrimitiveType, Character::class.java -> Arb.char()
+        ByteArray::class.java -> Arb.byteArray(Arb.int(1..64), Arb.byte())
         else -> null
     }
 }
