@@ -341,9 +341,10 @@ private fun String.avroClass(): String = replace(".model.", ".avro.") + "Avro"
  */
 private fun emitAvroSchema(packageName: PackageName, definition: Definition, module: Module) = with(AvroJsonEmitter) {
     when (definition) {
-        is Type -> definition
-            .emit(module, mutableListOf(definition.identifier.value))
-            .copy(namespace = packageName.value)
+        is Type ->
+            definition
+                .emit(module, mutableListOf(definition.identifier.value))
+                .copy(namespace = packageName.value)
         is Enum -> definition.emit()
         else -> null
     }
