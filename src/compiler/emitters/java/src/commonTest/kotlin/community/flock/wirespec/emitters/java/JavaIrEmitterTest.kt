@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
@@ -84,6 +85,11 @@ class JavaIrEmitterTest {
     @Test
     fun compileTypeTest() {
         CompileTypeTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileTypeTest
+    }
+
+    @Test
+    fun compileAnyTest() {
+        CompileAnyTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileAnyTest
     }
 
     @Test

@@ -1,6 +1,7 @@
 package community.flock.wirespec.emitters.rust
 
 import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
@@ -30,6 +31,13 @@ class RustIrEmitterTest {
         val rust = EmitterFixtures.compileTypeTest
 
         CompileTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
+    }
+
+    @Test
+    fun compileAnyTest() {
+        val rust = EmitterFixtures.compileAnyTest
+
+        CompileAnyTest.compiler { RustIrEmitter() } shouldBeRight rust
     }
 
     @Test

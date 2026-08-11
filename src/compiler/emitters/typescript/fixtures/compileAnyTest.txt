@@ -1,0 +1,20 @@
+import {Wirespec} from '../Wirespec'
+export type Message = {
+  "payload": any,
+  "metadata": any | undefined,
+  "attachments": any[],
+  "extensions": Record<string, any>,
+}
+export function validateMessage(obj: Message): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+import {Message} from '../model/Message'
+export namespace MessageGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Message {
+    return { payload: undefined, metadata: generator.generate([...path, ...['metadata']], { kind: 'nullable', generate: (p0: string[]) => undefined }), attachments: generator.generate([...path, ...['attachments']], { kind: 'array', generate: (p0: string[]) => undefined }), extensions: generator.generate([...path, ...['extensions']], { kind: 'dict', generate: (p0: string[]) => undefined }) };
+  }
+}
+
+export {Message} from './Message'

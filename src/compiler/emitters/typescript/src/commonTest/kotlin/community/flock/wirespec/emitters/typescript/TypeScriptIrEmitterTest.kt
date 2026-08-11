@@ -1,5 +1,6 @@
 package community.flock.wirespec.emitters.typescript
 
+import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
@@ -64,6 +65,13 @@ class TypeScriptIrEmitterTest {
         val typescript = EmitterFixtures.compileTypeTest
 
         CompileTypeTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileAnyTest() {
+        val typescript = EmitterFixtures.compileAnyTest
+
+        CompileAnyTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
     }
 
     @Test

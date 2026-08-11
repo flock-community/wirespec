@@ -81,6 +81,7 @@ private fun compileFixtures(emitterFactory: () -> Emitter): Map<String, () -> St
     "compileFieldNameSanitizationTest" to { compile(CompileFieldNameSanitizationTest, emitterFactory) },
     "compileNestedTypeTest" to { compile(CompileNestedTypeTest, emitterFactory) },
     "compileComplexModelTest" to { compile(CompileComplexModelTest, emitterFactory) },
+    "compileAnyTest" to { compile(CompileAnyTest, emitterFactory) },
 )
 
 private fun nodeFixtures(emitterFactory: () -> Emitter): Map<String, () -> String> {

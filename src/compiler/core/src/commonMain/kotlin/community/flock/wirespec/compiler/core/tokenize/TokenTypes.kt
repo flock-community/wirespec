@@ -72,6 +72,7 @@ interface TypeIdentifier : WirespecType {
 }
 
 data object WsUnit : SpecificType
+data object WsAny : SpecificType
 data object WsString : PrimitiveType
 data object WsBoolean : PrimitiveType
 data object WsBytes : PrimitiveType

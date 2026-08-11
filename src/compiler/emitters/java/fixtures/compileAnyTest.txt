@@ -1,0 +1,27 @@
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Message (
+  Object payload,
+  java.util.Optional<Object> metadata,
+  java.util.List<Object> attachments,
+  java.util.Map<String, Object> extensions
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Message;
+public interface MessageGenerator {
+  public static Message generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Message(
+      null,
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("metadata")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> null)),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("attachments")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> null)),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("extensions")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict<>((p0) -> null))
+    );
+  }
+}

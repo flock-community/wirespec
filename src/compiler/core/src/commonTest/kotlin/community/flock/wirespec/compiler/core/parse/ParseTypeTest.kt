@@ -62,6 +62,34 @@ class ParseTypeTest {
     }
 
     @Test
+    fun testAnyTypeParser() {
+        val source =
+            // language=ws
+            """
+            |type Foo {
+            |    bar: Any,
+            |    baz: Any?,
+            |    qux: Any[]
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .also { it.identifier.value shouldBe "Foo" }
+            .shape.value
+            .shouldHaveSize(3)
+            .run {
+                get(0).reference.shouldBeInstanceOf<Reference.Any>().isNullable.shouldBeFalse()
+                get(1).reference.shouldBeInstanceOf<Reference.Any>().isNullable shouldBe true
+                get(2).reference.shouldBeInstanceOf<Reference.Iterable>()
+                    .reference.shouldBeInstanceOf<Reference.Any>().isNullable.shouldBeFalse()
+            }
+    }
+
+    @Test
     fun testRefinedParserString() {
         val source =
             // language=ws

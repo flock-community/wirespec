@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenc
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
@@ -197,6 +198,21 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileTypeTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileAnyTest() {
+        val wirespec = """
+            |type Message {
+            |  payload: Any,
+            |  metadata: Any?,
+            |  attachments: Any[],
+            |  extensions: { Any }
+            |}
+            |
+        """.trimMargin()
+
+        CompileAnyTest.compiler { WirespecEmitter() } shouldBeRight wirespec
     }
 
     @Test

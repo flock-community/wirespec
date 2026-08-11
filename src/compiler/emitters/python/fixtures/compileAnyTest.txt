@@ -1,0 +1,38 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class Message(Wirespec.Shape):
+    payload: Any
+    metadata: Optional[Any]
+    attachments: list[Any]
+    extensions: dict[str, Any]
+    def validate(self) -> list[str]:
+        return []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Message import Message
+class MessageGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Message:
+        return Message(payload=None, metadata=generator.generate(path + ['metadata'], Wirespec.GeneratorFieldNullable(generate=lambda p0: None)), attachments=generator.generate(path + ['attachments'], Wirespec.GeneratorFieldArray(generate=lambda p0: None)), extensions=generator.generate(path + ['extensions'], Wirespec.GeneratorFieldDict(generate=lambda p0: None)))
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+
