@@ -1,0 +1,29 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Message {
+    pub payload: Box<dyn std::any::Any>,
+    pub metadata: Option<Box<dyn std::any::Any>>,
+    pub attachments: Vec<Box<dyn std::any::Any>>,
+    pub extensions: std::collections::HashMap<String, Box<dyn std::any::Any>>,
+}
+impl Message {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::message::Message;
+pub struct MessageGenerator;
+impl MessageGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Message {
+        return Message { payload: None, metadata: generator.generate(vec![path.as_slice(), vec![String::from("metadata")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| None) }), attachments: generator.generate(vec![path.as_slice(), vec![String::from("attachments")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| None) }), extensions: generator.generate(vec![path.as_slice(), vec![String::from("extensions")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| None) }) };
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

@@ -34,6 +34,7 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.WS_NUMBER -> arrayOf(KEYWORD)
         Types.WS_STRING -> arrayOf(KEYWORD)
         Types.UNIT -> arrayOf(KEYWORD)
+        Types.ANY -> arrayOf(KEYWORD)
         Types.TYPE_DEF -> arrayOf(KEYWORD)
         Types.ENDPOINT_DEF -> arrayOf(KEYWORD)
         Types.CHANNEL_DEF -> arrayOf(KEYWORD)

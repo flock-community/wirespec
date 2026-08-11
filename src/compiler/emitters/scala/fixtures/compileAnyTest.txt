@@ -1,0 +1,26 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class Message(
+  val payload: Any,
+  val metadata: Option[Any],
+  val attachments: List[Any],
+  val extensions: Map[String, Any]
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    List.empty[String]
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Message
+object MessageGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Message =
+    new Message(
+      payload = null,
+      metadata = generator.generate(path ++ List("metadata"), new Wirespec.GeneratorFieldNullable(generate = (p0) => null)),
+      attachments = generator.generate(path ++ List("attachments"), new Wirespec.GeneratorFieldArray(generate = (p0) => null)),
+      extensions = generator.generate(path ++ List("extensions"), new Wirespec.GeneratorFieldDict(generate = (p0) => null))
+    )
+}

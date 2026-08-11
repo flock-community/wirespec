@@ -1055,7 +1055,7 @@ private fun Type.toTypeName(): String = when (this) {
 }
 
 fun ReferenceWirespec.convert(): Type = when (this) {
-    is ReferenceWirespec.Any -> Type.Custom("Any")
+    is ReferenceWirespec.Any -> Type.Any
     is ReferenceWirespec.Custom -> Type.Custom(Name.of(value).pascalCase())
     is ReferenceWirespec.Dict -> Type.Dict(Type.String, reference.convert())
     is ReferenceWirespec.Iterable -> Type.Array(reference.convert())

@@ -69,8 +69,7 @@ class AvroExtensionTest {
         reference = reference,
     )
 
-    private fun string(isNullable: Boolean = false) =
-        Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
+    private fun string(isNullable: Boolean = false) = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
 
     private val nested = Type(
         comment = null,

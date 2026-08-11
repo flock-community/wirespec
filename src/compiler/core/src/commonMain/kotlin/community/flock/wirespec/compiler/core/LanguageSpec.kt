@@ -42,6 +42,7 @@ import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Underscore
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpaceExceptNewLine
+import community.flock.wirespec.compiler.core.tokenize.WsAny
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
 import community.flock.wirespec.compiler.core.tokenize.WsInteger
@@ -103,6 +104,7 @@ object WirespecSpec : LanguageSpec {
 
 data object WirespecType : TypeIdentifier {
     override val specificTypes = mapOf(
+        "Any" to WsAny,
         "Boolean" to WsBoolean,
         "Bytes" to WsBytes,
         "Integer" to WsInteger(P64),

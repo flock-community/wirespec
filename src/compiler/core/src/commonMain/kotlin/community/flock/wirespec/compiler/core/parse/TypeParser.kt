@@ -41,6 +41,7 @@ import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Underscore
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
+import community.flock.wirespec.compiler.core.tokenize.WsAny
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
 import community.flock.wirespec.compiler.core.tokenize.WsInteger
@@ -104,6 +105,12 @@ object TypeParser {
 
             is WsUnit -> {
                 Reference.Unit(
+                    isNullable = isNullable().bind(),
+                )
+            }
+
+            is WsAny -> {
+                Reference.Any(
                     isNullable = isNullable().bind(),
                 )
             }

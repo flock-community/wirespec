@@ -38,6 +38,7 @@ import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Underscore
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
+import community.flock.wirespec.compiler.core.tokenize.WsAny
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
 import community.flock.wirespec.compiler.core.tokenize.WsInteger
@@ -118,6 +119,7 @@ class Lexer : IntellijLexer() {
             WsBoolean::class to Types.WS_BOOLEAN,
             WsBytes::class to Types.WS_BYTES,
             WsUnit::class to Types.UNIT,
+            WsAny::class to Types.ANY,
             Method::class to Types.METHOD,
             Path::class to Types.PATH,
             Arrow::class to Types.ARROW,

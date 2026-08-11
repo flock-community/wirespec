@@ -34,6 +34,7 @@ interface Types {
         val WS_BYTES = ElementType("BYTES")
         val TYPE_IDENTIFIER = ElementType("CUSTOM_TYPE")
         val UNIT = ElementType("UNIT")
+        val ANY = ElementType("ANY")
         val METHOD = ElementType("METHOD")
         val PATH = ElementType("PATH")
         val ARROW = ElementType("ARROW")
