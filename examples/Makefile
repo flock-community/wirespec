@@ -11,6 +11,8 @@ build:
 	(cd maven-spring-integration && ./mvnw verify) && \
 	(cd maven-spring-kotlin && ./mvnw verify) && \
 	(cd maven-spring-native && ./mvnw verify) && \
+	(cd gradle-spring-boot && ./gradlew check) && \
+	(cd gradle-kotest && ./gradlew check) && \
 	(cd maven-wiremock && ./mvnw verify) && \
 	(cd npm-typescript && npm ci && npm run build) && \
 	(cd rust-petstore && bash gen.sh && cargo build) && \
@@ -27,6 +29,8 @@ clean:
 	(cd maven-spring-integration && ./mvnw clean) && \
 	(cd maven-spring-kotlin && ./mvnw clean) && \
 	(cd maven-spring-native && ./mvnw clean) && \
+	(cd gradle-spring-boot && ./gradlew clean) && \
+	(cd gradle-kotest && ./gradlew clean) && \
 	(cd maven-wiremock && ./mvnw clean) && \
 	(cd npm-typescript && npm run clean) && \
 	(cd scala-zio && sbt clean)
@@ -55,4 +59,6 @@ yolo:
 	(cd maven-spring-integration && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-kotlin && ./mvnw verify -DskipTests) && \
 	(cd maven-spring-native && ./mvnw verify -DskipTests) && \
-	(cd maven-wiremock && ./mvnw verify -DskipTests)
+	(cd maven-wiremock && ./mvnw verify -DskipTests) && \
+	(cd gradle-spring-boot && ./gradlew check -x test) && \
+	(cd gradle-kotest && ./gradlew check -x test)

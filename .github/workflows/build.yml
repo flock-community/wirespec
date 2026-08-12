@@ -302,7 +302,7 @@ jobs:
         if: matrix.type == 'scala'
         uses: sbt/setup-sbt@v1
       - name: Download Maven Local artifacts
-        if: matrix.type != 'npm' && matrix.type != 'rust' && matrix.type != 'scala'
+        if: matrix.type != 'npm' && matrix.type != 'rust'
         uses: actions/download-artifact@v4
         with:
           name: wirespec-m2
