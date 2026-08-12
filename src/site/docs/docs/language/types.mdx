@@ -120,6 +120,37 @@ type Person {
 }
 ```
 
+### Spread
+
+When several types share the same fields you can avoid repeating them by spreading another type into a composite type
+using the `...` operator. The fields of the referenced type are spliced in at the position of the spread, keeping the
+order in which fields are declared:
+
+```wirespec
+type Pagination {
+    page: Integer?,
+    size: Integer?
+}
+
+type SomeQuery {
+    ...Pagination,
+    query: String?
+}
+```
+
+The example above is equivalent to writing all of the fields out by hand:
+
+```wirespec
+type SomeQuery {
+    page: Integer?,
+    size: Integer?,
+    query: String?
+}
+```
+
+A spread can only reference a composite type, and spreads are resolved recursively, so a type that is spread in may
+itself spread other types. Cyclic spreads (a type that spreads itself, directly or indirectly) are reported as an error.
+
 ## Enum
 
 Enums (enumerations) in Wirespec are used to define a type that can only take on one of a predefined set of named

@@ -39,3 +39,15 @@ class DuplicateChannelError(typeName: String) :
         coordinates = Token.Coordinates(),
         message = "Channel '$typeName' is already defined",
     )
+
+class SpreadTypeError(typeName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Cannot spread '$typeName' because it is not a record type",
+    )
+
+class SpreadCycleError(typeName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Spread cycle detected for type '$typeName'",
+    )

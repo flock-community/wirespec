@@ -10,6 +10,7 @@ data object RightBracket : TokenType
 
 data object Colon : TokenType
 data object Comma : TokenType
+data object Spread : TokenType
 data object QuestionMark : TokenType
 data object Hash : TokenType
 data object Brackets : TokenType
