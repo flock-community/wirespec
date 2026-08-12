@@ -188,6 +188,38 @@ class GeneratorConverterTest {
     }
 
     @Test
+    fun testAnyFieldsGenerateStringLeavesNotNull() {
+        // `any` fields must not emit bare `null` — that breaks compilation in
+        // Kotlin/Java/Rust (non-null `Any`, uninferred `T` on the
+        // GeneratorFieldNullable/Array/Dict lambdas). They fall back to a
+        // GeneratorFieldString leaf instead.
+        val message = TypeWirespec(
+            comment = null,
+            annotations = emptyList(),
+            identifier = definitionId("Message"),
+            shape = TypeWirespec.Shape(
+                listOf(
+                    Field(emptyList(), fieldId("payload"), Reference.Any(isNullable = false)),
+                    Field(emptyList(), fieldId("metadata"), Reference.Any(isNullable = true)),
+                    Field(emptyList(), fieldId("attachments"), Reference.Iterable(Reference.Any(isNullable = false), false)),
+                    Field(emptyList(), fieldId("extensions"), Reference.Dict(Reference.Any(isNullable = false), false)),
+                ),
+            ),
+            extends = emptyList(),
+        )
+
+        val file = message.convertToGenerator()
+
+        assertTrue(
+            file.collectExpressions<community.flock.wirespec.ir.core.NullLiteral>().isEmpty(),
+            "any-typed fields must not produce null literals",
+        )
+        val stringLeaves = file.collectStatements<community.flock.wirespec.ir.core.ConstructorStatement>()
+            .filter { it.type == Type.Custom("Wirespec.GeneratorFieldString") }
+        assertEquals(4, stringLeaves.size, "each any-typed slot should generate through a GeneratorFieldString leaf")
+    }
+
+    @Test
     fun testCoerceAnnotationValueLiteralBoolean() {
         assertEquals(Literal(true, Type.Boolean), coerceAnnotationValueLiteral("true"))
         assertEquals(Literal(false, Type.Boolean), coerceAnnotationValueLiteral("false"))

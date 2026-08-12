@@ -18,10 +18,22 @@ import community.flock.wirespec.generated.model.Message;
 public interface MessageGenerator {
   public static Message generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Message(
-      null,
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("metadata")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> null)),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("attachments")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> null)),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("extensions")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict<>((p0) -> null))
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("payload")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("metadata")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("attachments")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("extensions")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))))
     );
   }
 }

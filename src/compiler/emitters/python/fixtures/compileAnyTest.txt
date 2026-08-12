@@ -25,7 +25,7 @@ from ..model.Message import Message
 class MessageGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Message:
-        return Message(payload=None, metadata=generator.generate(path + ['metadata'], Wirespec.GeneratorFieldNullable(generate=lambda p0: None)), attachments=generator.generate(path + ['attachments'], Wirespec.GeneratorFieldArray(generate=lambda p0: None)), extensions=generator.generate(path + ['extensions'], Wirespec.GeneratorFieldDict(generate=lambda p0: None)))
+        return Message(payload=generator.generate(path + ['payload'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), metadata=generator.generate(path + ['metadata'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), attachments=generator.generate(path + ['attachments'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), extensions=generator.generate(path + ['extensions'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
 
 from . import model
 from . import endpoint
