@@ -19,18 +19,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 
 class UnderscoreTypeNameGeneratorTest {
 
-    // Wirespec's `typeIdentifier` token rule (`^\b[A-Z][a-zA-Z0-9_]*\b`) allows
-    // underscores, and OpenAPI HAL specs routinely produce them: a `_embedded`
-    // field on `ProposalNow` becomes a synthetic nested type named
-    // `ProposalNow_embedded`.
-    //
-    // Every emitter renders a type *definition* (struct/class) and its
-    // *Generator* object via `pascalCase()`, which drops the separator —
-    // yielding `ProposalNowEmbedded` / `ProposalNowEmbeddedGenerator`.
-    // So every *reference* must agree, or the generated code names something that
-    // was never declared. This regression guards that invariant across all
-    // language generators (each renders `Type.Custom` via `Name.referenceName()`,
-    // and the shared converter normalises the cross-`*Generator` receiver).
+    // Wirespec type identifiers may contain underscores (e.g. the synthetic
+    // `ProposalNow_embedded` from an OpenAPI HAL `_embedded` field). Emitters
+    // render definitions via `pascalCase()`, which drops the separator, so
+    // every reference must agree or the generated code names something that
+    // was never declared.
     private val generators: List<Pair<String, Generator>> = listOf(
         "Kotlin" to KotlinGenerator,
         "Java" to JavaGenerator,
@@ -75,13 +68,10 @@ class UnderscoreTypeNameGeneratorTest {
             val parentCode = generator.generate(parent.convertToGenerator() as Element)
             val nestedCode = generator.generate(nested.convertToGenerator() as Element)
 
-            // The pascal-cased name that matches the emitted definitions.
             assertTrue(
                 parentCode.contains("ProposalNowEmbedded"),
                 "$lang: expected pascal-cased reference, got:\n$parentCode",
             )
-            // The broken, underscore-preserving forms must never appear — neither
-            // the type reference nor the downstream `*Generator` receiver.
             assertFalse(
                 parentCode.contains("ProposalNow_embedded"),
                 "$lang: underscore leaked into a reference:\n$parentCode",
@@ -95,8 +85,8 @@ class UnderscoreTypeNameGeneratorTest {
 
     @Test
     fun underscoreFieldNameItselfIsPreserved() {
-        // The fix must NOT over-sanitise: the JSON field name `_embedded` keeps
-        // its leading underscore (only the *type* name is normalised).
+        // The JSON field name `_embedded` keeps its leading underscore —
+        // only the *type* name is normalised.
         val parent = typeDef(
             "ProposalNow",
             listOf(
