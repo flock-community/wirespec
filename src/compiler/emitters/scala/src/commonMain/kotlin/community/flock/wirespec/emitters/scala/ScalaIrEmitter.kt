@@ -52,6 +52,7 @@ import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.generator.ScalaKeywords
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
@@ -316,18 +317,6 @@ open class ScalaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords {
-        override val reservedKeywords = setOf(
-            "abstract", "case", "class", "def", "do",
-            "else", "extends", "false", "final", "for",
-            "forSome", "if", "implicit", "import", "lazy",
-            "match", "new", "null", "object", "override",
-            "package", "private", "protected", "return", "sealed",
-            "super", "this", "throw", "trait", "true",
-            "try", "type", "val", "var", "while",
-            "with", "yield", "given", "using", "enum",
-            "export", "then",
-        )
-    }
+    companion object : Keywords by ScalaKeywords
 
 }

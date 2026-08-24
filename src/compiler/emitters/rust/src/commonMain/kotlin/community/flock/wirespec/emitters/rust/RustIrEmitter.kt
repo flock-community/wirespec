@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.generator.RustKeywords
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -597,21 +598,8 @@ open class RustIrEmitter(
         return paramsStr to argsStr
     }
 
-    companion object : Keywords {
+    companion object : Keywords by RustKeywords {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
-        override val reservedKeywords = setOf(
-            "as", "break", "const", "continue", "crate",
-            "else", "enum", "extern", "false", "fn",
-            "for", "if", "impl", "in", "let",
-            "loop", "match", "mod", "move", "mut",
-            "pub", "ref", "return", "self", "Self",
-            "static", "struct", "super", "trait", "true",
-            "type", "unsafe", "use", "where", "while",
-            "async", "await", "dyn", "abstract", "become",
-            "box", "do", "final", "macro", "override",
-            "priv", "typeof", "unsized", "virtual", "yield",
-            "try",
-        )
     }
 
 }

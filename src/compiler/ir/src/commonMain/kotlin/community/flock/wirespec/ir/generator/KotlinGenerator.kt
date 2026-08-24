@@ -602,17 +602,8 @@ object KotlinGenerator : Generator {
     private fun TypeDescriptor.emitTypeDescriptor(): String = "typeOf<${type.emitGenerics()}>()"
 }
 
-private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "`$this`" else this
+private fun String.sanitize(): String = if (KotlinKeywords.reservedKeywords.contains(this)) "`$this`" else this
 
 private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
-fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in reservedKeywords) this else "`$this`"
-
-private val reservedKeywords = setOf(
-    "as", "break", "class", "continue", "do",
-    "else", "false", "for", "fun", "if",
-    "in", "interface", "internal", "is", "null",
-    "object", "open", "package", "return", "super",
-    "this", "throw", "true", "try", "typealias",
-    "typeof", "val", "var", "when", "while",
-)
+fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in KotlinKeywords.reservedKeywords) this else "`$this`"

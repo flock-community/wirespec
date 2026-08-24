@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.generator.TypeScriptKeywords
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.namespace
@@ -431,7 +432,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     private data class EndpointParam(val name: String, val type: String, val nullable: Boolean)
 
-    companion object : Keywords {
+    companion object : Keywords by TypeScriptKeywords {
         private val GENERATOR_FIELD_KINDS: Map<String, String> = listOf(
             "GeneratorFieldString",
             "GeneratorFieldInteger64", "GeneratorFieldInteger32",
@@ -440,19 +441,6 @@ open class TypeScriptIrEmitter : IrEmitter {
             "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
             "GeneratorFieldShape", "GeneratorFieldDict",
         ).associateWith { it.removePrefix("GeneratorField").lowercase() }
-
-        override val reservedKeywords = setOf(
-            "break", "case", "catch", "continue", "debugger",
-            "default", "delete", "do", "else", "finally",
-            "for", "function", "if", "in", "instanceof",
-            "new", "return", "switch", "this", "throw",
-            "try", "typeof", "var", "void", "while",
-            "with", "class", "const", "enum", "export",
-            "extends", "import", "super", "implements",
-            "interface", "let", "package", "private",
-            "protected", "public", "static", "yield",
-            "type", "async", "await",
-        )
     }
 
 }

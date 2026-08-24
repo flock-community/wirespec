@@ -28,6 +28,8 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.ir.generator.JavaKeywords
+import community.flock.wirespec.ir.generator.KotlinKeywords
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -170,7 +172,7 @@ private class JavaAvroSource(private val packageName: PackageName) : AvroSource 
 
     private fun emit(identifier: Identifier): String = when (identifier) {
         is DefinitionIdentifier -> identifier.value.sanitizeSymbol()
-        is FieldIdentifier -> identifier.value.sanitizeSymbol().let { if (it in reservedKeywords) "_$it" else it }
+        is FieldIdentifier -> identifier.value.sanitizeSymbol().let { if (it in JavaKeywords.reservedKeywords) "_$it" else it }
     }
 
     private fun String.sanitizeSymbol() = this
@@ -252,22 +254,6 @@ private class JavaAvroSource(private val packageName: PackageName) : AvroSource 
             else -> "(${reference.emit()}) record.get($index)"
         }
     }
-
-    companion object {
-        private val reservedKeywords = setOf(
-            "abstract", "continue", "for", "new", "switch",
-            "assert", "default", "goto", "package", "synchronized",
-            "boolean", "do", "if", "private", "this",
-            "break", "double", "implements", "protected", "throw",
-            "byte", "else", "import", "public", "throws",
-            "case", "enum", "instanceof", "return", "transient",
-            "catch", "extends", "int", "short", "try",
-            "char", "final", "interface", "static", "void",
-            "class", "finally", "long", "strictfp", "volatile",
-            "const", "float", "native", "super", "while",
-            "true", "false",
-        )
-    }
 }
 
 private class KotlinAvroSource(private val packageName: PackageName) : AvroSource {
@@ -297,7 +283,7 @@ private class KotlinAvroSource(private val packageName: PackageName) : AvroSourc
 
     private fun emit(identifier: Identifier): String = when (identifier) {
         is DefinitionIdentifier -> identifier.sanitize()
-        is FieldIdentifier -> identifier.sanitize().let { if (it in reservedKeywords) it.addBackticks() else it }
+        is FieldIdentifier -> identifier.sanitize().let { if (it in KotlinKeywords.reservedKeywords) it.addBackticks() else it }
     }
 
     private fun Identifier.sanitize() = value
@@ -417,17 +403,6 @@ private class KotlinAvroSource(private val packageName: PackageName) : AvroSourc
             else -> "$value as ${reference.emit()}"
         }
         else -> error("Cannot emit Avro element: $reference")
-    }
-
-    companion object {
-        private val reservedKeywords = setOf(
-            "as", "break", "class", "continue", "do",
-            "else", "false", "for", "fun", "if",
-            "in", "interface", "internal", "is", "null",
-            "object", "open", "package", "return", "super",
-            "this", "throw", "true", "try", "typealias",
-            "typeof", "val", "var", "when", "while", "private", "public",
-        )
     }
 }
 

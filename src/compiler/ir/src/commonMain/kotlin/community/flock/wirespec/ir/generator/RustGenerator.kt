@@ -617,18 +617,8 @@ object RustGenerator : Generator {
     }
 }
 
-private fun String.sanitize(): String = if (this in reservedKeywords) "r#$this" else this
+// `self` and `Self` cannot be escaped as raw identifiers (r#self is invalid Rust); the emitter's
+// sanitization renames such fields instead, so the generator leaves them untouched.
+private val escapableKeywords = RustKeywords.reservedKeywords - setOf("self", "Self")
 
-private val reservedKeywords = setOf(
-    "as", "break", "const", "continue", "crate",
-    "else", "enum", "extern", "false", "fn",
-    "for", "if", "impl", "in", "let",
-    "loop", "match", "mod", "move", "mut",
-    "pub", "ref", "return",
-    "static", "struct", "super", "trait", "true",
-    "type", "unsafe", "use", "where", "while",
-    "async", "await", "dyn", "abstract", "become",
-    "box", "do", "final", "macro", "override",
-    "priv", "typeof", "unsized", "virtual", "yield",
-    "try",
-)
+private fun String.sanitize(): String = if (this in escapableKeywords) "r#$this" else this
