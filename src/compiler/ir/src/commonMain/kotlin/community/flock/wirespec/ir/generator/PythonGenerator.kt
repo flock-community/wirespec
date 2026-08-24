@@ -56,6 +56,16 @@ import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object PythonGenerator : Generator {
+    override val reservedKeywords = setOf(
+        "False", "None", "True", "and", "as", "assert",
+        "break", "class", "continue", "def", "del",
+        "elif", "else", "except", "finally", "for",
+        "from", "global", "if", "import", "in",
+        "is", "lambda", "nonlocal", "not", "or",
+        "pass", "raise", "return", "try", "while",
+        "with", "yield",
+    )
+
     override fun generate(element: Element): String = when (element) {
         is File -> element.emit(0)
         else -> File(Name.of(""), listOf(element)).emit(0)

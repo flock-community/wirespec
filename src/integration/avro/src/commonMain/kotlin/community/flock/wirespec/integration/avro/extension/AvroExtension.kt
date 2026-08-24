@@ -28,8 +28,8 @@ import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.extension.IrExtension
-import community.flock.wirespec.ir.generator.JavaKeywords
-import community.flock.wirespec.ir.generator.KotlinKeywords
+import community.flock.wirespec.ir.generator.JavaGenerator
+import community.flock.wirespec.ir.generator.KotlinGenerator
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -172,7 +172,7 @@ private class JavaAvroSource(private val packageName: PackageName) : AvroSource 
 
     private fun emit(identifier: Identifier): String = when (identifier) {
         is DefinitionIdentifier -> identifier.value.sanitizeSymbol()
-        is FieldIdentifier -> identifier.value.sanitizeSymbol().let { if (it in JavaKeywords.reservedKeywords) "_$it" else it }
+        is FieldIdentifier -> identifier.value.sanitizeSymbol().let { if (it in JavaGenerator.reservedKeywords) "_$it" else it }
     }
 
     private fun String.sanitizeSymbol() = this
@@ -283,7 +283,7 @@ private class KotlinAvroSource(private val packageName: PackageName) : AvroSourc
 
     private fun emit(identifier: Identifier): String = when (identifier) {
         is DefinitionIdentifier -> identifier.sanitize()
-        is FieldIdentifier -> identifier.sanitize().let { if (it in KotlinKeywords.reservedKeywords) it.addBackticks() else it }
+        is FieldIdentifier -> identifier.sanitize().let { if (it in KotlinGenerator.reservedKeywords) it.addBackticks() else it }
     }
 
     private fun Identifier.sanitize() = value

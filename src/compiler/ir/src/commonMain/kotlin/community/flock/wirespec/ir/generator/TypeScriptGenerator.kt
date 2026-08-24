@@ -58,6 +58,19 @@ import community.flock.wirespec.ir.core.forEachElement
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object TypeScriptGenerator : Generator {
+    override val reservedKeywords = setOf(
+        "break", "case", "catch", "continue", "debugger",
+        "default", "delete", "do", "else", "finally",
+        "for", "function", "if", "in", "instanceof",
+        "new", "return", "switch", "this", "throw",
+        "try", "typeof", "var", "void", "while",
+        "with", "class", "const", "enum", "export",
+        "extends", "import", "super", "implements",
+        "interface", "let", "package", "private",
+        "protected", "public", "static", "yield",
+        "type", "async", "await",
+    )
+
     private var structsWithConstructors: Set<String> = emptySet()
     private var constructorFuncNames: Set<String> = emptySet()
 

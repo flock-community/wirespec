@@ -52,7 +52,6 @@ import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.generator.ScalaKeywords
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
@@ -317,6 +316,6 @@ open class ScalaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords by ScalaKeywords
+    companion object : Keywords by ScalaGenerator
 
 }

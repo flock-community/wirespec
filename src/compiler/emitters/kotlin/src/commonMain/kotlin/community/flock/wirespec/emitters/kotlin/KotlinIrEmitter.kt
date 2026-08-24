@@ -12,7 +12,6 @@ import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.generator.KotlinKeywords
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
@@ -278,6 +277,6 @@ open class KotlinIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords by KotlinKeywords
+    companion object : Keywords by KotlinGenerator
 
 }

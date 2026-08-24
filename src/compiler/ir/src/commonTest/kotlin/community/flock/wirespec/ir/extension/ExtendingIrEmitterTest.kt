@@ -40,6 +40,7 @@ class ExtendingIrEmitterTest {
     private object TestEmitter : IrEmitter {
         override val extension = FileExtension.Kotlin
         override val generator = object : Generator {
+            override val reservedKeywords = emptySet<String>()
             override fun generate(element: Element) = (element as File).name.value()
         }
 

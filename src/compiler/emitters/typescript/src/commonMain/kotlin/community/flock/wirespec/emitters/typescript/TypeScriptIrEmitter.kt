@@ -5,7 +5,6 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.generator.TypeScriptKeywords
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.namespace
@@ -432,7 +431,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     private data class EndpointParam(val name: String, val type: String, val nullable: Boolean)
 
-    companion object : Keywords by TypeScriptKeywords {
+    companion object : Keywords by TypeScriptGenerator {
         private val GENERATOR_FIELD_KINDS: Map<String, String> = listOf(
             "GeneratorFieldString",
             "GeneratorFieldInteger64", "GeneratorFieldInteger32",

@@ -38,7 +38,6 @@ import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.generator.JavaKeywords
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.ir.generator.JavaGenerator
@@ -267,6 +266,6 @@ open class JavaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords by JavaKeywords
+    companion object : Keywords by JavaGenerator
 
 }

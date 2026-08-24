@@ -61,6 +61,16 @@ import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
 object KotlinGenerator : Generator {
+    override val reservedKeywords = setOf(
+        "as", "break", "class", "continue", "do",
+        "else", "false", "for", "fun", "if",
+        "in", "interface", "internal", "is", "null",
+        "object", "open", "package", "return", "super",
+        "this", "throw", "true", "try", "typealias",
+        "typeof", "val", "var", "when", "while",
+        "private", "public",
+    )
+
     override fun generate(element: Element): String = when (element) {
         is File -> emitFile(element)
         else -> emitFile(File(Name.of(""), listOf(element)))
@@ -602,8 +612,8 @@ object KotlinGenerator : Generator {
     private fun TypeDescriptor.emitTypeDescriptor(): String = "typeOf<${type.emitGenerics()}>()"
 }
 
-private fun String.sanitize(): String = if (KotlinKeywords.reservedKeywords.contains(this)) "`$this`" else this
+private fun String.sanitize(): String = if (KotlinGenerator.reservedKeywords.contains(this)) "`$this`" else this
 
 private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
-fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in KotlinKeywords.reservedKeywords) this else "`$this`"
+fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in KotlinGenerator.reservedKeywords) this else "`$this`"

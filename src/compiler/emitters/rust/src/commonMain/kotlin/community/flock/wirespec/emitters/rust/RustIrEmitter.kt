@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.generator.RustKeywords
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -598,7 +597,7 @@ open class RustIrEmitter(
         return paramsStr to argsStr
     }
 
-    companion object : Keywords by RustKeywords {
+    companion object : Keywords by RustGenerator {
         fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
     }
 
