@@ -1,7 +1,5 @@
 package community.flock.wirespec.integration.spring.java.generated.model;
-
 import community.flock.wirespec.java.Wirespec;
-
 public record Order (
   java.util.Optional<Long> id,
   java.util.Optional<Long> petId,
@@ -9,5 +7,9 @@ public record Order (
   java.util.Optional<String> shipDate,
   java.util.Optional<OrderStatus> status,
   java.util.Optional<Boolean> complete
-) {
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
 };

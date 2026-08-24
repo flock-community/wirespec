@@ -63,7 +63,6 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.examples.kotest.generated"
     languages = listOf(Language.Kotlin)
-    ir = true
     extensionClasses = listOf(
         SpringMappingAnnotationsExtension::class.java,
         KotestDslExtension::class.java,

@@ -172,7 +172,6 @@
                             <languages>
                                 <language>Java</language>
                             </languages>
-                            <ir>true</ir>
                             <extensionClasses>
                                 <extensionClass>community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension</extensionClass>
                             </extensionClasses>

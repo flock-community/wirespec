@@ -1,7 +1,5 @@
 package community.flock.wirespec.integration.spring.java.generated.model;
-
 import community.flock.wirespec.java.Wirespec;
-
 public record User (
   java.util.Optional<Long> id,
   java.util.Optional<String> username,
@@ -11,5 +9,9 @@ public record User (
   java.util.Optional<String> password,
   java.util.Optional<String> phone,
   java.util.Optional<Integer> userStatus
-) {
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
 };

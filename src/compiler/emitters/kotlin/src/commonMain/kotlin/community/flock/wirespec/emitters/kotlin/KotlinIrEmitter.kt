@@ -10,6 +10,7 @@ import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
@@ -77,7 +78,12 @@ open class KotlinIrEmitter(
                 val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
                 Name(listOf(sanitized))
             },
-            parameterNameCase = { name -> Name(listOf(name.camelCase().sanitizeSymbol())) },
+            // Parameters must be cased exactly like fields: constructor named arguments are
+            // field-cased, so a diverging parameter name (ranDoMQueRY vs RanDoMQueRY) breaks the call.
+            parameterNameCase = { name ->
+                val sanitized = if (name.parts.size > 1) name.camelCase() else name.value().sanitizeSymbol()
+                Name(listOf(sanitized))
+            },
             sanitizeSymbol = { it.sanitizeSymbol() },
             extraStatementTransforms = { stmt, tr ->
                 when {
@@ -89,6 +95,14 @@ open class KotlinIrEmitter(
                             sanitizationConfig.sanitizeFieldName(name) to tr.transformExpression(expr)
                         }.toMap(),
                     )
+                    // References to parameters carry the raw wire name (Refresh-Token); case them
+                    // like the parameters they refer to, since the generator emits names verbatim.
+                    stmt is VariableReference -> {
+                        val cased = sanitizationConfig.parameterNameCase(stmt.name)
+                        val sanitized = sanitizationConfig.sanitizeSymbol(cased.value())
+                        val escaped = if (sanitized in reservedKeywords) sanitized.addBackticks() else sanitized
+                        VariableReference(Name(listOf(escaped)))
+                    }
                     else -> stmt.transformChildren(tr)
                 }
             },

@@ -9,8 +9,8 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.emitters.java.JavaEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.java.JavaIrEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import java.io.File
 
 /**
@@ -36,10 +36,10 @@ fun main(args: Array<String>) {
     val javaRoot = outputDir.resolve("java")
     val kotlinRoot = outputDir.resolve("kotlin")
 
-    JavaEmitter(PackageName("$basePackage.java.generated")).emit(ast, noLogger).forEach {
+    JavaIrEmitter(PackageName("$basePackage.java.generated")).emit(ast, noLogger).forEach {
         javaRoot.resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result)
     }
-    KotlinEmitter(PackageName("$basePackage.kotlin.generated")).emit(ast, noLogger).forEach {
+    KotlinIrEmitter(PackageName("$basePackage.kotlin.generated")).emit(ast, noLogger).forEach {
         kotlinRoot.resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result)
     }
 }

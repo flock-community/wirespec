@@ -97,7 +97,6 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
     languages = listOf(Language.Kotlin)
-    ir = true
     extensionClasses = listOf(KotlinxSerializationExtension::class.java)
 }
 
@@ -108,7 +107,6 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.typescript"
     languages = listOf(Language.TypeScript)
-    ir = true
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {

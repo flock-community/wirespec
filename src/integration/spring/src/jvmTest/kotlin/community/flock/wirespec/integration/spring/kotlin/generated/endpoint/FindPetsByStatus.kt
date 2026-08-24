@@ -1,110 +1,103 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
-
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
-
 import community.flock.wirespec.integration.spring.kotlin.generated.model.FindPetsByStatusParameterStatus
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
-
 object FindPetsByStatus : Wirespec.Endpoint {
-  data object Path : Wirespec.Path
-
+  object Path : Wirespec.Path
   data class Queries(
-    val status: FindPetsByStatusParameterStatus?,
-  ) : Wirespec.Queries
-
-  data object Headers : Wirespec.Request.Headers
-
-  class Request(
-    status: FindPetsByStatusParameterStatus?
-  ) : Wirespec.Request<Unit> {
-    override val path = Path
-    override val method = Wirespec.Method.GET
-    override val queries = Queries(status)
-    override val headers = Headers
-    override val body = Unit
-  }
-
-  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
-    Wirespec.RawRequest(
-      path = listOf("pet", "findByStatus"),
-      method = request.method.name,
-      queries = mapOf(
-          "status" to request.queries.status?.let{ serialization.serializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) }.orEmpty()
-        ),
-      headers = emptyMap(),
-      body = null,
-    )
-
-  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
-    Request(
-      status =
-        request.queries
-          .entries
-          .find { it.key.equals("status", ignoreCase = false) }
-          ?.let { serialization.deserializeParam(it.value, typeOf<FindPetsByStatusParameterStatus?>()) }
-    )
-
+      val status: FindPetsByStatusParameterStatus?
+    ) : Wirespec.Queries
+  object RequestHeaders : Wirespec.Request.Headers
+  data class Request(
+      override val path: Path,
+      override val method: Wirespec.Method,
+      override val queries: Queries,
+      override val headers: RequestHeaders,
+      override val body: Unit
+    ) : Wirespec.Request<Unit> {
+      constructor(status: FindPetsByStatusParameterStatus?) : this(Path, Wirespec.Method.GET, Queries(status = status), RequestHeaders, Unit)
+    }
   sealed interface Response<T: Any> : Wirespec.Response<T>
-
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
-
   sealed interface ResponseListPet : Response<List<Pet>>
   sealed interface ResponseUnit : Response<Unit>
-
-  data class Response200(override val body: List<Pet>) : Response2XX<List<Pet>>, ResponseListPet {
-    override val status = 200
-    override val headers = ResponseHeaders
-    data object ResponseHeaders : Wirespec.Response.Headers
-  }
-
-  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
-    override val status = 400
-    override val headers = ResponseHeaders
-    data object ResponseHeaders : Wirespec.Response.Headers
-  }
-
-  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-    when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = serialization.serializeBody(response.body, typeOf<List<Pet>>()),
-      )
-      is Response400 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = null,
-      )
+  object Response200Headers : Wirespec.Response.Headers
+  data class Response200(
+      override val status: Int,
+      override val headers: Response200Headers,
+      override val body: List<Pet>
+    ) : Response2XX<List<Pet>>, ResponseListPet {
+      constructor(body: List<Pet>) : this(200, Response200Headers, body)
     }
-
-  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+  object Response400Headers : Wirespec.Response.Headers
+  data object Response400 : Response4XX<Unit>, ResponseUnit {
+      override val status: Int = 400
+      override val headers: Response400Headers = Response400Headers
+      override val body: Unit = Unit  }
+  fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = request.method.name,
+      path = listOf("pet", "findByStatus"),
+      queries = mapOf("status" to (request.queries.status?.let { serialization.serializeParam<FindPetsByStatusParameterStatus>(it, typeOf<FindPetsByStatusParameterStatus>()) } ?: emptyList<String>())),
+      headers = emptyMap<String, List<String>>(),
+      body = null
+    )
+  fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    Request(status = (request.queries["status"]?.let { serialization.deserializeParam<FindPetsByStatusParameterStatus>(it, typeOf<FindPetsByStatusParameterStatus>()) }))
+  fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
+    when(val r = response) {
+        is Response200 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = emptyMap<String, List<String>>(),
+            body = serialization.serializeBody(r.body, typeOf<List<Pet>>())
+          )
+        }
+        is Response400 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = emptyMap<String, List<String>>(),
+            body = null
+          )
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.status))
+        }
+    }
+  }
+  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> {
     when (response.statusCode) {
-      200 -> Response200(
-        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<Pet>>()),
-      )
-      400 -> Response400(
-        body = Unit,
-      )
-      else -> error("Cannot match response with status: ${response.statusCode}")
-    }
-
-  interface Handler: Wirespec.Handler {
-    @org.springframework.web.bind.annotation.GetMapping("/pet/findByStatus")
-    suspend fun findPetsByStatus(request: Request): Response<*>
-
-    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-      override val pathTemplate = "/pet/findByStatus"
-      override val method = "GET"
-      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-        override fun to(response: Response<*>) = toResponse(serialization, response)
-      }
-      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        override fun to(request: Request) = toRequest(serialization, request)
-        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-      }
+        200 -> {
+          return Response200(body = (response.body?.let { serialization.deserializeBody<List<Pet>>(it, typeOf<List<Pet>>()) } ?: error("body is null")))
+        }
+        400 -> {
+          return Response400
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.statusCode))
+        }
     }
   }
+  interface Handler : Wirespec.Handler {
+      @org.springframework.web.bind.annotation.GetMapping("/pet/findByStatus")
+      suspend fun findPetsByStatus(request: Request): Response<*>
+      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        override val pathTemplate = "/pet/findByStatus"
+        override val method = "GET"
+        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+          override fun to(response: Response<*>) = toRawResponse(serialization, response)
+        }
+        override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+          override fun to(request: Request) = toRawRequest(serialization, request)
+          override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+        }
+      }
+  }
+  fun interface Call : Wirespec.Call {
+      suspend fun findPetsByStatus(status: FindPetsByStatusParameterStatus?): Response<*>
+  }
+  val api = Handler
 }

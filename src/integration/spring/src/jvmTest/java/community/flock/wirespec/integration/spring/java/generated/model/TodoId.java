@@ -1,13 +1,18 @@
 package community.flock.wirespec.integration.spring.java.generated.model;
-
 import community.flock.wirespec.java.Wirespec;
-
-public record TodoId (String value) implements Wirespec.Refined<String> {
+public record TodoId (
+  String value
+) implements Wirespec.Refined {
   @Override
-  public String toString() { return value.toString(); }
   public Boolean validate() {
     return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(value).find();
   }
   @Override
-  public String value() { return value; }
-}
+  public String toString() {
+    return value;
+  }
+  @Override
+  public String value() {
+    return value;
+  }
+};

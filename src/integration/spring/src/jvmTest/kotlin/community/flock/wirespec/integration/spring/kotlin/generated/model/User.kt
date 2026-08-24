@@ -1,8 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.model
-
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
-
 data class User(
   val id: Long?,
   val username: String?,
@@ -12,4 +10,7 @@ data class User(
   val password: String?,
   val phone: String?,
   val userStatus: Int?
-)
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}

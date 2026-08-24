@@ -63,7 +63,7 @@ need to:
 
 1. Add the integration artifact to the plugin's classpath.
 2. Register `KotlinxSerializationExtension` via `irExtensions`.
-3. Enable the IR pipeline (`ir = true`) and disable shared-code emission (`shared = false`) so the
+3. Disable shared-code emission (`shared = false`) so the
    Wirespec runtime classes come from the `wirespec-jvm` dependency rather than being re-emitted as
    source.
 4. Apply the kotlinx.serialization compiler plugin and add its runtime to your project, so the generated
@@ -94,7 +94,6 @@ need to:
         output = layout.buildDirectory.dir("generated")
         packageName = "community.flock.wirespec.generated.kotlin"
         languages = listOf(Language.Kotlin)
-        ir = true
         shared = false
         irExtensions = listOf(KotlinxSerializationExtension::class.java)
     }
@@ -125,7 +124,6 @@ need to:
                     <languages>
                         <language>Kotlin</language>
                     </languages>
-                    <ir>true</ir>
                     <shared>false</shared>
                     <irExtensions>
                         <irExtension>community.flock.wirespec.integration.kotlinx_serialization.extension.KotlinxSerializationExtension</irExtension>

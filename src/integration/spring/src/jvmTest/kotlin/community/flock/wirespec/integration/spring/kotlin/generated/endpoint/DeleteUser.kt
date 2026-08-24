@@ -1,101 +1,96 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
-
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
-
-
-
 object DeleteUser : Wirespec.Endpoint {
   data class Path(
-    val username: String,
-  ) : Wirespec.Path
-
-  data object Queries : Wirespec.Queries
-
-  data object Headers : Wirespec.Request.Headers
-
-  class Request(
-    username: String
-  ) : Wirespec.Request<Unit> {
-    override val path = Path(username)
-    override val method = Wirespec.Method.DELETE
-    override val queries = Queries
-    override val headers = Headers
-    override val body = Unit
-  }
-
-  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
-    Wirespec.RawRequest(
-      path = listOf("user", request.path.username.let{serialization.serializePath(it, typeOf<String>())}),
-      method = request.method.name,
-      queries = emptyMap(),
-      headers = emptyMap(),
-      body = null,
-    )
-
-  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
-    Request(
-      username = serialization.deserializePath(request.path[1], typeOf<String>())
-    )
-
+      val username: String
+    ) : Wirespec.Path
+  object Queries : Wirespec.Queries
+  object RequestHeaders : Wirespec.Request.Headers
+  data class Request(
+      override val path: Path,
+      override val method: Wirespec.Method,
+      override val queries: Queries,
+      override val headers: RequestHeaders,
+      override val body: Unit
+    ) : Wirespec.Request<Unit> {
+      constructor(username: String) : this(Path(username = username), Wirespec.Method.DELETE, Queries, RequestHeaders, Unit)
+    }
   sealed interface Response<T: Any> : Wirespec.Response<T>
-
   sealed interface Response4XX<T: Any> : Response<T>
-
   sealed interface ResponseUnit : Response<Unit>
-
-  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
-    override val status = 400
-    override val headers = ResponseHeaders
-    data object ResponseHeaders : Wirespec.Response.Headers
-  }
-
-  data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
-    override val status = 404
-    override val headers = ResponseHeaders
-    data object ResponseHeaders : Wirespec.Response.Headers
-  }
-
-  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-    when(response) {
-      is Response400 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = null,
-      )
-      is Response404 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = null,
-      )
+  object Response400Headers : Wirespec.Response.Headers
+  data object Response400 : Response4XX<Unit>, ResponseUnit {
+      override val status: Int = 400
+      override val headers: Response400Headers = Response400Headers
+      override val body: Unit = Unit  }
+  object Response404Headers : Wirespec.Response.Headers
+  data object Response404 : Response4XX<Unit>, ResponseUnit {
+      override val status: Int = 404
+      override val headers: Response404Headers = Response404Headers
+      override val body: Unit = Unit  }
+  fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = request.method.name,
+      path = listOf("user", serialization.serializePath<String>(request.path.username, typeOf<String>())),
+      queries = emptyMap<String, List<String>>(),
+      headers = emptyMap<String, List<String>>(),
+      body = null
+    )
+  fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    Request(username = serialization.deserializePath<String>(request.path[1], typeOf<String>()))
+  fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
+    when(val r = response) {
+        is Response400 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = emptyMap<String, List<String>>(),
+            body = null
+          )
+        }
+        is Response404 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = emptyMap<String, List<String>>(),
+            body = null
+          )
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.status))
+        }
     }
-
-  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+  }
+  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> {
     when (response.statusCode) {
-      400 -> Response400(
-        body = Unit,
-      )
-      404 -> Response404(
-        body = Unit,
-      )
-      else -> error("Cannot match response with status: ${response.statusCode}")
-    }
-
-  interface Handler: Wirespec.Handler {
-    @org.springframework.web.bind.annotation.DeleteMapping("/user/{username}")
-    suspend fun deleteUser(request: Request): Response<*>
-
-    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-      override val pathTemplate = "/user/{username}"
-      override val method = "DELETE"
-      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-        override fun to(response: Response<*>) = toResponse(serialization, response)
-      }
-      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        override fun to(request: Request) = toRequest(serialization, request)
-        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-      }
+        400 -> {
+          return Response400
+        }
+        404 -> {
+          return Response404
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.statusCode))
+        }
     }
   }
+  interface Handler : Wirespec.Handler {
+      @org.springframework.web.bind.annotation.DeleteMapping("/user/{username}")
+      suspend fun deleteUser(request: Request): Response<*>
+      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        override val pathTemplate = "/user/{username}"
+        override val method = "DELETE"
+        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+          override fun to(response: Response<*>) = toRawResponse(serialization, response)
+        }
+        override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+          override fun to(request: Request) = toRawRequest(serialization, request)
+          override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+        }
+      }
+  }
+  fun interface Call : Wirespec.Call {
+      suspend fun deleteUser(username: String): Response<*>
+  }
+  val api = Handler
 }

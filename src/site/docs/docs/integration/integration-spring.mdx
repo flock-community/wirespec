@@ -52,7 +52,12 @@ The integration works for both [producers](#restcontroller) (RestController) and
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.build.directory}/generated-sources</output>
-                        <emitterClass>community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter</emitterClass>
+                        <languages>
+                            <language>Java</language>
+                        </languages>
+                        <extensionClasses>
+                            <extensionClass>community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension</extensionClass>
+                        </extensionClasses>
                     </configuration>
                 </execution>
             </executions>
@@ -66,8 +71,6 @@ The integration works for both [producers](#restcontroller) (RestController) and
         For single module project this is in the `build.gradle.kts`
 
         ```gradle
-        import community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
-
         buildscript {
             dependencies {
                 classpath("community.flock.wirespec.integration:spring:{{WIRESPEC_VERSION}}")
@@ -84,8 +87,8 @@ The integration works for both [producers](#restcontroller) (RestController) and
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
-            emitterClass = community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter::class.java
             languages = listOf(Language.Java)
+            extensionClasses = listOf(community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension::class.java)
         }
         ```
 
@@ -388,7 +391,7 @@ class FileController implements UploadFile.Handler {
 ## Native Images (GraalVM)
 
 Wirespec's Spring integration includes built-in support for GraalVM native images. When you compile your Wirespec
-definitions using the `SpringJavaEmitter`, a `WirespecNativeHints` class is automatically generated alongside your
+definitions with the `SpringNativeHintsExtension` registered, a `WirespecNativeHints` class is automatically generated alongside your
 models and endpoints. This class registers all generated types for reflection, which is required for serialization
 and deserialization in a native image.
 

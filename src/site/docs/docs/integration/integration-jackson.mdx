@@ -142,8 +142,8 @@ Endpoint-internal structs (the `Path`, `Request`, `Response` types nested inside
 untouched; only the top-level models are annotated.
 :::
 
-The extension works for the **Java** and **Kotlin** targets and runs as part of the IR pipeline. Enable the
-IR pipeline (`ir = true`) and disable shared-code emission (`shared = false`) so the Wirespec runtime classes
+The extension works for the **Java** and **Kotlin** targets and runs as part of the IR pipeline. Disable
+shared-code emission (`shared = false`) so the Wirespec runtime classes
 come from the `wirespec-jvm` dependency, then register `JacksonExtension` via `irExtensions`.
 
 <Tabs>
@@ -164,7 +164,6 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` via `i
         packageName = "community.flock.wirespec.generated"
         // Works for both Java and Kotlin
         languages = listOf(Language.Kotlin)
-        ir = true
         shared = false
         irExtensions = listOf(JacksonExtension::class.java)
     }
@@ -196,7 +195,6 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` via `i
                         <!-- Works for both Java and Kotlin -->
                         <language>Kotlin</language>
                     </languages>
-                    <ir>true</ir>
                     <shared>false</shared>
                     <irExtensions>
                         <irExtension>community.flock.wirespec.integration.jackson.extension.JacksonExtension</irExtension>

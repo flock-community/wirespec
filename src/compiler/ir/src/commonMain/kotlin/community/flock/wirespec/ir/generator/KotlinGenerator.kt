@@ -229,7 +229,7 @@ object KotlinGenerator : Generator {
         // Empty-parameter primary constructor: emit as `data object`
         val primary = constructors.singleOrNull()?.takeIf { it.parameters.isEmpty() }
         if (primary != null) {
-            val assignments = primary.body.filterIsInstance<Assignment>().associateBy { it.name.camelCase() }
+            val assignments = primary.body.filterIsInstance<Assignment>().associateBy { it.name.value() }
             val fieldProperties = fields.joinToString("\n") { field ->
                 val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
                 val valueStr = assignments[field.name.value()]?.let { " = ${it.value.emit()}" }.orEmpty()
@@ -274,9 +274,9 @@ object KotlinGenerator : Generator {
             val args = delegation.namedArguments.entries.joinToString(", ") { (k, v) -> "${k.value()} = ${v.emit()}" }
             "this($args)" to body.filter { it !is ConstructorStatement }
         } else {
-            val assignments = body.filterIsInstance<Assignment>().associate { it.name.camelCase() to it.value.emit() }
+            val assignments = body.filterIsInstance<Assignment>().associate { it.name.value() to it.value.emit() }
             val args = structFields.joinToString(", ") { assignments[it.name.value()] ?: "null" }
-            "this($args)" to body.filter { it !is Assignment || it.name.camelCase() !in fieldNames }
+            "this($args)" to body.filter { it !is Assignment || it.name.value() !in fieldNames }
         }
 
         val signature = "constructor($params) : $delegationStr"
@@ -317,9 +317,11 @@ object KotlinGenerator : Generator {
         }
     }
 
+    // Identifiers are emitted verbatim (post-sanitization): parameters must match the
+    // field-cased names used in constructor named arguments (RanDoMQueRY, not ranDoMQueRY).
     private fun Parameter.emit(indent: Int): String {
         val defaultStr = default?.let { " = ${it.emit()}" }.orEmpty()
-        return "${name.camelCase().sanitize()}: ${type.emitGenerics()}$defaultStr".indentCode(indent)
+        return "${name.value().sanitize()}: ${type.emitGenerics()}$defaultStr".indentCode(indent)
     }
 
     private fun Visibility?.prefix(): String = when (this) {
@@ -411,7 +413,7 @@ object KotlinGenerator : Generator {
         is LiteralMap -> "${emit()}\n".indentCode(indent)
         is Assignment -> {
             val expr = (value as? ConstructorStatement)?.let { "${it.type.emitGenerics()}${it.formatArgs()}" } ?: value.emit()
-            val lhs = if (isProperty) name.value().sanitize() else "val ${name.camelCase().sanitize()}"
+            val lhs = if (isProperty) name.value().sanitize() else "val ${name.value().sanitize()}"
             "$lhs = $expr\n".indentCode(indent)
         }
 
@@ -422,7 +424,7 @@ object KotlinGenerator : Generator {
         is RawExpression -> "$code\n".indentCode(indent)
         is NullLiteral -> "null\n".indentCode(indent)
         is NullableEmpty -> "null\n".indentCode(indent)
-        is VariableReference -> "${name.camelCase().sanitize()}\n".indentCode(indent)
+        is VariableReference -> "${name.value().sanitize()}\n".indentCode(indent)
         is FieldCall -> "${emit()}\n".indentCode(indent)
 
         is FunctionCall -> "${emit()}\n".indentCode(indent)
@@ -472,7 +474,7 @@ object KotlinGenerator : Generator {
             "else -> {\n$bodyStr}\n".indentCode(caseIndent)
         }.orEmpty()
         val header = if (isPatternSwitch) {
-            val exprStr = variable?.let { "val ${it.camelCase()} = ${expression.emit()}" } ?: expression.emit()
+            val exprStr = variable?.let { "val ${it.value().sanitize()} = ${expression.emit()}" } ?: expression.emit()
             "when($exprStr)"
         } else {
             "when (${expression.emit()})"
@@ -496,7 +498,7 @@ object KotlinGenerator : Generator {
         is RawExpression -> code
         is NullLiteral -> "null"
         is NullableEmpty -> "null"
-        is VariableReference -> name.camelCase().sanitize()
+        is VariableReference -> name.value().sanitize()
         is FieldCall -> {
             val receiverStr = receiver?.emit()?.plus(".").orEmpty()
             "$receiverStr${field.value().sanitize()}"
@@ -541,8 +543,8 @@ object KotlinGenerator : Generator {
         is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Kotlin")
         is NotExpression -> "!${expression.emit()}"
         is IfExpression -> "if (${condition.emit()}) ${thenExpr.emit()} else ${elseExpr.emit()}"
-        is MapExpression -> "${receiver.emit()}.map { ${variable.camelCase()} -> ${body.emit()} }"
-        is FlatMapIndexed -> "${receiver.emit()}.flatMapIndexed { ${indexVar.camelCase()}, ${elementVar.camelCase()} -> ${body.emit()} }"
+        is MapExpression -> "${receiver.emit()}.map { ${variable.value().sanitize()} -> ${body.emit()} }"
+        is FlatMapIndexed -> "${receiver.emit()}.flatMapIndexed { ${indexVar.value().sanitize()}, ${elementVar.value().sanitize()} -> ${body.emit()} }"
         is ListConcat -> when {
             lists.isEmpty() -> "emptyList<String>()"
             lists.size == 1 -> lists.single().emit()
@@ -558,7 +560,7 @@ object KotlinGenerator : Generator {
             }
         }}\""
         is Lambda -> {
-            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            val params = parameters.joinToString(", ") { it.name.value().sanitize() }
             if (params.isEmpty()) "{ ${body.emit()} }" else "{ $params -> ${body.emit()} }"
         }
     }

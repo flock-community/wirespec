@@ -1,7 +1,5 @@
 package community.flock.wirespec.integration.spring.java.generated.model;
-
 import community.flock.wirespec.java.Wirespec;
-
 public enum OrderStatus implements Wirespec.Enum {
   placed("placed"),
   approved("approved"),
@@ -14,7 +12,6 @@ public enum OrderStatus implements Wirespec.Enum {
   public String toString() {
     return label;
   }
-  @Override
   public String label() {
     return label;
   }

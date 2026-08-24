@@ -55,18 +55,14 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     strict = false
 }
 
-// Example of a custom emitter class
-class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin", noLogger) {
+// Example of a custom emitter class built on the IR pipeline: it extends the standard
+// KotlinIrEmitter and reshapes the IR File produced for every definition before generation.
+class KotlinSerializableEmitter(packageName: PackageName) : KotlinIrEmitter(packageName, EmitShared(false)) {
 
-    override fun emit(type: Type, ast: AST): String = """
-        |@kotlinx.serialization.Serializable
-        |${super.emit(type, ast)}
-    """.trimMargin()
-
-    override fun emit(refined: Refined): String = """
-        |@kotlinx.serialization.Serializable
-        |${super.emit(refined)}
-    """.trimMargin()
+    override fun emit(definition: Definition, module: Module, logger: Logger): File =
+        super.emit(definition, module, logger).let { file ->
+            file.copy(elements = listOf(RawElement("@kotlinx.serialization.Serializable")) + file.elements)
+        }
 }
 ```
 
@@ -95,7 +91,6 @@ This task compiles Wirespec definitions to various target languages.
 - `packageName`: Property&lt;String&gt; - Package name for generated code
 - `emitterClass`: Property&lt;Class&lt;\*&gt;&gt; - Custom emitter class
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
-- `ir`: Property&lt;Boolean&gt; - Emit through the intermediate representation. Required for `extensionClasses` to take effect on the built-in language targets (default: false)
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 
@@ -119,7 +114,7 @@ This task converts from JSON or Avro to other formats.
 
 [IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` property. Put the
 integration artifact that provides the extension on the `buildscript` classpath, then reference the class
-directly. Remember to set `ir = true` so the built-in language targets emit through the IR pipeline:
+directly. The built-in language targets always emit through the IR pipeline:
 
 ```gradle title="build.gradle.kts"
 import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
@@ -137,7 +132,6 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
     languages = listOf(Language.Kotlin)
-    ir = true
     shared = false
     extensionClasses = listOf(KotlinxSerializationExtension::class.java)
 }

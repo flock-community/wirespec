@@ -60,9 +60,9 @@ Maven and Gradle plugins accept a list of `IrExtension` classes and instantiate 
 `packageName` and `shared` settings into the constructor when the extension needs them.
 
 :::note
-Extensions only run when the emitter is an `IrEmitter`. For the built-in language targets this means you
-must enable the IR pipeline by setting `ir = true` (Gradle) / `<ir>true</ir>` (Maven). A custom
-`emitterClass` that implements `IrEmitter` always honors the registered extensions.
+Extensions only run when the emitter is an `IrEmitter`. The built-in language targets always emit
+through the IR pipeline, so registered extensions take effect out of the box. A custom
+`emitterClass` that implements `IrEmitter` also honors the registered extensions.
 :::
 
 Wirespec ships several IR extensions in its integration modules:

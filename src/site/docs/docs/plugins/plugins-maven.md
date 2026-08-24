@@ -122,7 +122,7 @@ Or it will run automatically as part of the `generate-sources` phase during your
 
 [IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` parameter. Add the
 integration artifact that provides the extension as a plugin `<dependency>`, then list the fully qualified
-class name. Set `<ir>true</ir>` so the built-in language targets emit through the IR pipeline:
+class name. The built-in language targets always emit through the IR pipeline:
 
 ```xml
 <plugin>
@@ -148,7 +148,6 @@ class name. Set `<ir>true</ir>` so the built-in language targets emit through th
                 <languages>
                     <language>Kotlin</language>
                 </languages>
-                <ir>true</ir>
                 <shared>false</shared>
                 <extensionClasses>
                     <extensionClass>community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension</extensionClass>

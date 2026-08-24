@@ -6,13 +6,18 @@ import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.test.JavaInteropTestHelper
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
-import community.flock.wirespec.integration.spring.kotlin.emit.SpringKotlinEmitter
+import community.flock.wirespec.emitters.java.JavaIrEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
+import community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension
+import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import io.kotest.matchers.shouldBe
 import java.io.File
@@ -24,8 +29,18 @@ class GenerateTestClasses {
     private val kotlinPkg = basePkg + "kotlin.generated"
     private val javaPkg = basePkg + "java.generated"
 
-    private val kotlinEmitter = SpringKotlinEmitter(kotlinPkg)
-    private val javaEmitter = SpringJavaEmitter(javaPkg)
+    private val kotlinEmitter = KotlinIrEmitter(kotlinPkg, EmitShared(false)).applyExtensions(
+        listOf(
+            SpringMappingAnnotationsExtension(FileExtension.Kotlin),
+            SpringNativeHintsExtension(kotlinPkg, FileExtension.Kotlin),
+        ),
+    )
+    private val javaEmitter = JavaIrEmitter(javaPkg, EmitShared(false)).applyExtensions(
+        listOf(
+            SpringMappingAnnotationsExtension(FileExtension.Java),
+            SpringNativeHintsExtension(javaPkg, FileExtension.Java),
+        ),
+    )
 
     private fun pkgToPath(pkg: PackageName) = pkg.value.split(".").joinToString("/")
 
@@ -43,7 +58,7 @@ class GenerateTestClasses {
 
         modules.forEach { kotlinOutputDir.resolve(it).mkdirs() }
         emittedKotlin.forEach {
-            baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
+            baseDir.resolve("kotlin").resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result)
         }
 
         val ctx: CompilationContext = object : CompilationContext {
@@ -54,7 +69,7 @@ class GenerateTestClasses {
         val result = ctx.compile(nonEmptyListOf(ModuleContent(FileUri("N/A"), todoFile)))
         result.isRight() shouldBe true
         result.getOrNull()?.forEach {
-            baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
+            baseDir.resolve("kotlin").resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result)
         }
     }
 
@@ -68,7 +83,7 @@ class GenerateTestClasses {
         modules.forEach { javaOutputDir.resolve(it).mkdirs() }
         emittedJava
             .filter { "Wirespec" !in it.file }.forEach {
-                baseDir.resolve("java").resolve(it.file).writeText(it.result)
+                baseDir.resolve("java").resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result)
             }
 
         val ctx: CompilationContext = object : CompilationContext {
@@ -79,7 +94,7 @@ class GenerateTestClasses {
         val result = ctx.compile(nonEmptyListOf(ModuleContent(FileUri("N/A"), todoFile)))
         result.isRight() shouldBe true
         result.getOrNull()?.forEach {
-            baseDir.resolve("java").resolve(it.file).writeText(it.result)
+            baseDir.resolve("java").resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result)
         }
     }
 }

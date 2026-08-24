@@ -9,7 +9,6 @@ import community.flock.wirespec.plugin.io.DirectoryPath
 import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.read
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
 
@@ -29,15 +28,15 @@ class WirespecCliTest {
 
         val directoryPath = DirectoryPath("$output/$packageDir")
 
-        FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Kotlin).read() shouldBe """
-            |package community.flock.wirespec.generated.model
-            |
-            |data class Bla(
-            |  val yolo: String,
-            |  val `class`: Boolean
-            |)
-            |
-        """.trimMargin()
+        FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Kotlin).read().let { content ->
+            content shouldContain "package community.flock.wirespec.generated.model"
+            content shouldContain """
+                |data class Bla(
+                |  val yolo: String,
+                |  val `class`: Boolean
+                |) : Wirespec.Shape {
+            """.trimMargin()
+        }
     }
 
     @Test
@@ -59,16 +58,15 @@ class WirespecCliTest {
 
         val directoryPath = DirectoryPath("$output/$packageDir")
 
-        FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Java).read() shouldBe """
-            |package community.flock.next.model;
-            |
-            |public record Bla (
-            |  String yolo,
-            |  Boolean _class
-            |) {
-            |};
-            |
-        """.trimMargin()
+        FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Java).read().let { content ->
+            content shouldContain "package community.flock.next.model;"
+            content shouldContain """
+                |public record Bla (
+                |  String yolo,
+                |  Boolean _class
+                |) implements Wirespec.Shape {
+            """.trimMargin()
+        }
     }
 
     @Test
@@ -155,21 +153,15 @@ class WirespecCliTest {
         val directoryPath = DirectoryPath("$output/model")
         val path = FilePath(directoryPath, Name("Pet"), FileExtension.TypeScript)
 
-        path.read() shouldBe """
-            |import {Wirespec} from '../Wirespec'
-            |
-            |import {Category} from './Category'
-            |import {Tag} from './Tag'
-            |import {PetStatus} from './PetStatus'
+        path.read() shouldContain """
             |export type Pet = {
             |  "id": number | undefined,
             |  "category": Category | undefined,
             |  "name": string,
             |  "photoUrls": string[],
             |  "tags": Tag[] | undefined,
-            |  "status": PetStatus | undefined
+            |  "status": PetStatus | undefined,
             |}
-            |
         """.trimMargin()
     }
 

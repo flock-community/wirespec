@@ -23,12 +23,12 @@ class Controller(
 
     override suspend fun addPet(request: AddPet.Request): AddPet.Response<*> {
         service.create(request.body)
-        return AddPet.Response200(request.body, 200)
+        return AddPet.Response200(200, request.body)
     }
 
     override suspend fun getPetById(request: GetPetById.Request): GetPetById.Response<*> = service.list.find { it.id == request.path.petId }
         ?.let { GetPetById.Response200(it) }
-        ?: GetPetById.Response404(Unit)
+        ?: GetPetById.Response404
 
     override suspend fun updatePet(request: UpdatePet.Request): UpdatePet.Response<*> {
         service.update(request.body)
@@ -38,7 +38,7 @@ class Controller(
     override suspend fun deletePet(request: DeletePet.Request): DeletePet.Response<*> {
         val id = 1L
         return service.delete(id).let {
-            DeletePet.Response400(Unit)
+            DeletePet.Response400
         }
     }
 
@@ -58,9 +58,9 @@ class Controller(
 
     override suspend fun requestParrot(request: RequestParrot.Request): RequestParrot.Response<*> = RequestParrot.Response200(
         body = request.body,
-        XRequestID = request.headers.XRequestID,
+        xRequestID = request.headers.xRequestID,
         RanDoMHeADer = request.headers.RanDoMHeADer,
-        QueryParamParrot = request.queries.QueryParam,
+        queryParamParrot = request.queries.queryParam,
         RanDoMQueRYParrot = request.queries.RanDoMQueRY,
     )
 }

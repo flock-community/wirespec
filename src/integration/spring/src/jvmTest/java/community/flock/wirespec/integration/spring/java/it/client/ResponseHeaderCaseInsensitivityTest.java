@@ -105,9 +105,9 @@ public class ResponseHeaderCaseInsensitivityTest {
 
         // Verify headers are accessible regardless of the case they were sent in
         RequestParrot.Response200 response200 = (RequestParrot.Response200) response;
-        assertEquals(Optional.of("request-123"), response200.headers().XRequestID());
+        assertEquals(Optional.of("request-123"), response200.headers().xRequestID());
         assertEquals(Optional.of("header-456"), response200.headers().RanDoMHeADer());
-        assertEquals(Optional.of("test-query"), response200.headers().QueryParamParrot());
+        assertEquals(Optional.of("test-query"), response200.headers().queryParamParrot());
         assertEquals(Optional.of("test-random"), response200.headers().RanDoMQueRYParrot());
     }
 

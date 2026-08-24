@@ -2,20 +2,22 @@ package community.flock.wirespec.integration.avro.extension
 
 import arrow.core.escaped
 import arrow.core.toNonEmptyListOrNull
-import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroModel
-import community.flock.wirespec.emitters.java.JavaEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.Expression
@@ -38,8 +40,8 @@ import kotlinx.serialization.json.Json
  * (Java: a class-like interface with `static` methods; Kotlin: an `object`). Only the genuinely
  * language-specific leaves remain as code strings: the `SCHEMA` field initializer and the
  * per-field conversion expressions (`data.x()` vs `data.x`, casts, streams vs `map`, byte
- * handling). Those are produced by a [JavaAvroSource] / [KotlinAvroSource] which reuse the
- * matching [JavaEmitter] / [KotlinEmitter] rendering helpers.
+ * handling). Those are produced by a [JavaAvroSource] / [KotlinAvroSource] which render the
+ * matching Java / Kotlin identifier and type names.
  *
  * The target [language] is supplied by the plugin (the emitter's [FileExtension]) and selects
  * which source renders the language-specific leaves. Register it on a Java or Kotlin
@@ -141,9 +143,7 @@ private interface AvroSource {
     fun avroFiles(definition: Definition, module: Module): List<File>
 }
 
-private class JavaAvroSource(packageName: PackageName) :
-    JavaEmitter(packageName, EmitShared(false)),
-    AvroSource {
+private class JavaAvroSource(private val packageName: PackageName) : AvroSource {
 
     override fun avroFiles(definition: Definition, module: Module): List<File> = when (definition) {
         is Type -> listOf(
@@ -168,10 +168,57 @@ private class JavaAvroSource(packageName: PackageName) :
         else -> emptyList()
     }
 
+    private fun emit(identifier: Identifier): String = when (identifier) {
+        is DefinitionIdentifier -> identifier.value.sanitizeSymbol()
+        is FieldIdentifier -> identifier.value.sanitizeSymbol().let { if (it in reservedKeywords) "_$it" else it }
+    }
+
+    private fun String.sanitizeSymbol() = this
+        .split(".", " ", "-")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .asSequence()
+        .filter { it.isLetterOrDigit() || it in listOf('_') }
+        .joinToString("")
+        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
+
+    private fun Reference.emit(): String = emitType()
+        .let { if (isNullable) "java.util.Optional<$it>" else it }
+
+    private fun Reference.emitType(): String = when (this) {
+        is Reference.Dict -> "java.util.Map<String, ${reference.emit()}>"
+        is Reference.Iterable -> "java.util.List<${reference.emit()}>"
+        is Reference.Unit -> "void"
+        is Reference.Any -> "Object"
+        is Reference.Custom -> value
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.String -> "String"
+            is Reference.Primitive.Type.Integer -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "Integer"
+                Reference.Primitive.Type.Precision.P64 -> "Long"
+            }
+
+            is Reference.Primitive.Type.Number -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "Float"
+                Reference.Primitive.Type.Precision.P64 -> "Double"
+            }
+
+            is Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.Bytes -> "byte[]"
+        }
+    }
+
+    private fun Reference.emitRoot(): String = when (this) {
+        is Reference.Dict -> reference.emitRoot()
+        is Reference.Iterable -> reference.emitRoot()
+        is Reference.Unit -> "void"
+        else -> emitType()
+    }
+
     private fun schemaField(definition: Definition, module: Module) =
         """
         |public static final org.apache.avro.Schema SCHEMA =
-        |  new org.apache.avro.Schema.Parser().parse("${schema(definition, module)}");
+        |  new org.apache.avro.Schema.Parser().parse("${schema(packageName, definition, module)}");
         |
         """.trimMargin()
 
@@ -205,11 +252,25 @@ private class JavaAvroSource(packageName: PackageName) :
             else -> "(${reference.emit()}) record.get($index)"
         }
     }
+
+    companion object {
+        private val reservedKeywords = setOf(
+            "abstract", "continue", "for", "new", "switch",
+            "assert", "default", "goto", "package", "synchronized",
+            "boolean", "do", "if", "private", "this",
+            "break", "double", "implements", "protected", "throw",
+            "byte", "else", "import", "public", "throws",
+            "case", "enum", "instanceof", "return", "transient",
+            "catch", "extends", "int", "short", "try",
+            "char", "final", "interface", "static", "void",
+            "class", "finally", "long", "strictfp", "volatile",
+            "const", "float", "native", "super", "while",
+            "true", "false",
+        )
+    }
 }
 
-private class KotlinAvroSource(packageName: PackageName) :
-    KotlinEmitter(packageName, EmitShared(false)),
-    AvroSource {
+private class KotlinAvroSource(private val packageName: PackageName) : AvroSource {
 
     override fun avroFiles(definition: Definition, module: Module): List<File> = when (definition) {
         is Type -> listOf(
@@ -234,12 +295,49 @@ private class KotlinAvroSource(packageName: PackageName) :
         else -> emptyList()
     }
 
+    private fun emit(identifier: Identifier): String = when (identifier) {
+        is DefinitionIdentifier -> identifier.sanitize()
+        is FieldIdentifier -> identifier.sanitize().let { if (it in reservedKeywords) it.addBackticks() else it }
+    }
+
+    private fun Identifier.sanitize() = value
+        .split(".", " ")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .asSequence()
+        .filter { it.isLetterOrDigit() || it in listOf('_') }
+        .joinToString("")
+        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
+
+    private fun Reference.emit(): String = when (this) {
+        is Reference.Dict -> "Map<String, ${reference.emit()}>"
+        is Reference.Iterable -> "List<${reference.emit()}>"
+        is Reference.Unit -> "Unit"
+        is Reference.Any -> "Any"
+        is Reference.Custom -> value
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.String -> "String"
+            is Reference.Primitive.Type.Integer -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "Int"
+                Reference.Primitive.Type.Precision.P64 -> "Long"
+            }
+
+            is Reference.Primitive.Type.Number -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "Float"
+                Reference.Primitive.Type.Precision.P64 -> "Double"
+            }
+
+            is Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.Bytes -> "ByteArray"
+        }
+    }.let { if (isNullable) "$it?" else it }
+
     /** The `<Type>Avro` object for [reference], named after the type itself, never its nullability. */
     private fun avroObject(reference: Reference): String = reference.copy(isNullable = false).emit().avroClass()
 
     private fun schemaField(definition: Definition, module: Module, explicitType: Boolean): String {
         val declaration = if (explicitType) "val SCHEMA: org.apache.avro.Schema" else "val SCHEMA"
-        return "$declaration = org.apache.avro.Schema.Parser().parse(\"${schema(definition, module)}\")"
+        return "$declaration = org.apache.avro.Schema.Parser().parse(\"${schema(packageName, definition, module)}\")"
     }
 
     private fun toValue(field: Field): String {
@@ -320,6 +418,17 @@ private class KotlinAvroSource(packageName: PackageName) :
         }
         else -> error("Cannot emit Avro element: $reference")
     }
+
+    companion object {
+        private val reservedKeywords = setOf(
+            "as", "break", "class", "continue", "do",
+            "else", "false", "for", "fun", "if",
+            "in", "interface", "internal", "is", "null",
+            "object", "open", "package", "return", "super",
+            "this", "throw", "true", "try", "typealias",
+            "typeof", "val", "var", "when", "while", "private", "public",
+        )
+    }
 }
 
 /** The escaped Avro schema JSON for [definition], with nested record references restored. */
@@ -327,9 +436,6 @@ private fun schema(packageName: PackageName, definition: Definition, module: Mod
     ?.replace("\\\"<<<<<", "\" + ")
     ?.replace(">>>>>\\\"", "Avro.SCHEMA + \"")
     ?: error("Cannot emit avro: ${definition.identifier.value}")
-
-private fun JavaEmitter.schema(definition: Definition, module: Module): String = schema(packageName, definition, module)
-private fun KotlinEmitter.schema(definition: Definition, module: Module): String = schema(packageName, definition, module)
 
 private fun String.avroClass(): String = replace(".model.", ".avro.") + "Avro"
 

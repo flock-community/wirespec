@@ -6,7 +6,7 @@ slug: /architecture/ir
 
 # IR Model
 
-The IR pipeline described on this page runs **inside an emitter** — specifically, emitters that opt into the IR approach (e.g., `JavaIrEmitter`, `KotlinIrEmitter`, `PythonIrEmitter`, `RustIrEmitter`, `ScalaIrEmitter`, `TypeScriptIrEmitter`). It sits between the parser's AST and the final string output, replacing the direct AST-walking that older emitters (e.g., `PythonEmitter`) use. For where IR-based emitters fit in the overall compiler flow, see [Architecture](./architecture.md).
+The IR pipeline described on this page runs **inside an emitter** — specifically, emitters that opt into the IR approach (e.g., `JavaIrEmitter`, `KotlinIrEmitter`, `PythonIrEmitter`, `RustIrEmitter`, `ScalaIrEmitter`, `TypeScriptIrEmitter`). It sits between the parser's AST and the final string output, replacing the direct AST-walking that older emitters used. For where IR-based emitters fit in the overall compiler flow, see [Architecture](./architecture.md).
 
 Wirespec compiles `.ws` source files into code for multiple target languages. After parsing Wirespec source into an AST, an IR-based emitter uses an **Intermediate Representation (IR)** — a language-neutral tree that sits between the parser and code generation. This page explains the IR pipeline and the model each Wirespec definition is converted into.
 
