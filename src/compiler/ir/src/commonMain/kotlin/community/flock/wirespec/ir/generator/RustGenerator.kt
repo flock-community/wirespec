@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.generator
 
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
@@ -57,7 +58,9 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object RustGenerator : Generator {
+object RustGenerator :
+    Generator,
+    Keywords {
     override val reservedKeywords = setOf(
         "as", "break", "const", "continue", "crate",
         "else", "enum", "extern", "false", "fn",

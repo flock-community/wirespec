@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.generator
 
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
@@ -60,7 +61,9 @@ import community.flock.wirespec.ir.core.annotatedFields
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object KotlinGenerator : Generator {
+object KotlinGenerator :
+    Generator,
+    Keywords {
     override val reservedKeywords = setOf(
         "as", "break", "class", "continue", "do",
         "else", "false", "for", "fun", "if",
