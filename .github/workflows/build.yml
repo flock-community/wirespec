@@ -269,6 +269,8 @@ jobs:
             type: native
           - name: gradle-ktor
             type: gradle
+          - name: gradle-kotest
+            type: gradle
           - name: npm-typescript
             type: npm
           - name: rust-petstore

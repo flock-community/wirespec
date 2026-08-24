@@ -6,9 +6,9 @@ import com.github.tomakehurst.wiremock.http.Request
 import com.github.tomakehurst.wiremock.matching.MatchResult
 import com.github.tomakehurst.wiremock.matching.ValueMatcher
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
-import community.flock.wirespec.integration.kotest.context.ChannelTransport
-import community.flock.wirespec.integration.kotest.context.MockServer
-import community.flock.wirespec.integration.kotest.context.MockStub
+import community.flock.wirespec.integration.kotest.extension.ChannelTransport
+import community.flock.wirespec.integration.kotest.extension.MockServer
+import community.flock.wirespec.integration.kotest.extension.MockStub
 import community.flock.wirespec.integration.kotest.extension.WirespecChannelExtension
 import community.flock.wirespec.integration.kotest.extension.WirespecEndpointExtension
 import community.flock.wirespec.integration.kotest.extension.WirespecMockExtension
