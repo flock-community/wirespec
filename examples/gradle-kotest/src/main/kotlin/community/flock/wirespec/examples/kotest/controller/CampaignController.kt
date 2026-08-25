@@ -20,8 +20,7 @@ class CampaignController(
     ActivateCampaign.Handler,
     DeleteCampaign.Handler {
 
-    override suspend fun getCampaigns(request: GetCampaigns.Request): GetCampaigns.Response<*> =
-        GetCampaigns.Response200(request.queries.status?.let { service.list(it) } ?: service.list())
+    override suspend fun getCampaigns(request: GetCampaigns.Request): GetCampaigns.Response<*> = GetCampaigns.Response200(request.queries.status?.let { service.list(it) } ?: service.list())
 
     override suspend fun getCampaign(request: GetCampaign.Request): GetCampaign.Response<*> = service.get(request.path.id)
         ?.let { GetCampaign.Response200(it) }
