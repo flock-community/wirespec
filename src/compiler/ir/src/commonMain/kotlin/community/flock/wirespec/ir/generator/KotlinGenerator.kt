@@ -66,7 +66,6 @@ object KotlinGenerator : Generator {
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
 
-    /** Render a single [Type] as Kotlin source (e.g. `List<Pet>`, `Map<String, Int>`, `Foo?`). */
     fun generateType(type: Type): String = type.emitGenerics()
 
     private fun emitFile(file: File): String {
@@ -99,9 +98,6 @@ object KotlinGenerator : Generator {
             staticContent + "${modifier}fun main() {\n$content}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
-        // A plain constructor-param field has no standalone rendering (emitted inline within its
-        // enclosing Struct parameter list). A field opting into property markers (mutability,
-        // visibility, an initializer, a getter, an extension receiver) renders as a property.
         is Field -> emitProperty(indent)
         is RawElement -> "$code\n".indentCode(indent)
     }
@@ -183,11 +179,6 @@ object KotlinGenerator : Generator {
         }
     }
 
-    /**
-     * Renders a [Field] that opts into property markers as a standalone property — a class
-     * member, a top-level property, or (when [Field.receiver] is set) an extension property.
-     * A field with none of the markers keeps its empty standalone rendering.
-     */
     private fun Field.emitProperty(indent: Int): String {
         val isProperty = isMutable ||
             visibility != null ||
@@ -310,9 +301,6 @@ object KotlinGenerator : Generator {
         }
         val returnTypeStr = rType?.let { ": $it" }.orEmpty()
         val params = parameters.joinToString(", ") { it.emit(0) }
-        // DSL-authored functions (opting into an explicit visibility) keep their name verbatim so
-        // wire-derived names such as `Refresh-TokenBlock` are backtick-escaped, not camel-cased;
-        // model functions (visibility == null) keep the camelCase normalisation.
         val nameStr = if (visibility != null) name.value().escapeKotlinIdentifier() else name.camelCase()
         val signature = "$annotationPrefix$visibilityPrefix$overridePrefix${suspendPrefix}fun $typeParamsStr$receiverStr$nameStr($params)$returnTypeStr"
 
@@ -334,7 +322,6 @@ object KotlinGenerator : Generator {
         return "${name.camelCase().sanitize()}: ${type.emitGenerics()}$defaultStr".indentCode(indent)
     }
 
-    /** Kotlin visibility keyword with a trailing space, or empty when unset. */
     private fun Visibility?.prefix(): String = when (this) {
         Visibility.PUBLIC -> "public "
         Visibility.INTERNAL -> "internal "
@@ -343,7 +330,6 @@ object KotlinGenerator : Generator {
         null -> ""
     }
 
-    /** Renders class/function/property annotations, each on its own line, as a prefix. */
     private fun List<String>.annotationPrefix(): String = joinToString("") { "$it\n" }
 
     private fun TypeParameter.emit(): String {
@@ -401,7 +387,6 @@ object KotlinGenerator : Generator {
         else -> emit()
     }
 
-    /** Renders the inner type of a `Nullable`, wrapping function types in parens (`(A) -> B)?`). */
     private fun Type.emitNullableInner(): String = when (this) {
         is Type.Function -> "(${emitFunctionType()})?"
         else -> "${emitGenerics()}?"
@@ -619,13 +604,6 @@ private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "`$
 
 private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
-/**
- * Escapes an arbitrary declaration name for use as a Kotlin identifier: backticks it when it
- * is not already a valid identifier (e.g. the wire header name `Refresh-Token`) or collides
- * with a reserved keyword. Unlike [sanitize], this also handles names with non-identifier
- * characters, not just keywords. Public so raw-code emitters (e.g. the Kotest DSL extension)
- * escape names identically to this generator.
- */
 fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in reservedKeywords) this else "`$this`"
 
 private val reservedKeywords = setOf(

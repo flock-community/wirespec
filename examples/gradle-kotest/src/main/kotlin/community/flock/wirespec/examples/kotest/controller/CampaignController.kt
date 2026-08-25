@@ -10,7 +10,6 @@ import community.flock.wirespec.examples.kotest.generated.model.Error
 import community.flock.wirespec.examples.kotest.service.CampaignService
 import org.springframework.web.bind.annotation.RestController
 
-/** Implements the Wirespec-generated campaign `*.Handler` interfaces. */
 @RestController
 class CampaignController(
     private val service: CampaignService,

@@ -17,7 +17,6 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
     data class FakeUser(val email: String, val age: Long)
     data class FakeOrder(val email: String)
 
-    // Mimics a Wirespec-emitted Refined wrapper: single-arg primary ctor.
     data class FakeEmailAddress(val value: String)
 
     @Test
@@ -63,14 +62,8 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
     @Test
     fun `registerField on Refined-typed field auto-wraps the drawn primitive`() {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
-            // Field's Kotlin type is FakeEmailAddress (a Refined wrapper of String).
-            // User provides the inner primitive; the JVM RefinedWrapper wraps it.
             registerField(FakeUser::email) { Arb.constant("auto@wrap.com") }
         }
-        // The shape for FakeUser's email is a KotestFieldShape<FakeEmailAddress>
-        // whose generate callback wraps a String into FakeEmailAddress. The
-        // override fires before the callback runs, so the drawn String must
-        // be passed through the RefinedWrapper.
         val emailFieldShape = Wirespec.GeneratorFieldShape<FakeEmailAddress>(
             annotations = emptyMap(),
             generate = { p ->
@@ -131,7 +124,6 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
             registerField(FakeUser::email) { Arb.constant("user@x") }
         }
-        // FakeOrder also has an `email` field; the override must not match.
         val shape = Wirespec.GeneratorFieldShape<FakeOrder>(
             annotations = emptyMap(),
             generate = { p ->

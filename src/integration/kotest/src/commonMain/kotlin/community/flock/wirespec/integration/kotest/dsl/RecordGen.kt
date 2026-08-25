@@ -4,7 +4,6 @@ import community.flock.wirespec.integration.kotest.generator.KotestWirespecGener
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.arbitrary
 
-/** An [Arb] materialising a random record instance of [T], optionally applying per-field [overrides]. */
 inline fun <reified T : Any> recordGen(
     noinline overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null,
 ): Arb<T> = recordGen(T::class.java, overrides)

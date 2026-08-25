@@ -9,13 +9,6 @@ import org.springframework.stereotype.Component
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.typeOf
 
-/**
- * Consumes [CampaignEvent]s from Kafka and fans them out to handlers registered through the
- * Wirespec-generated [CampaignEvents.Listener]. Decodes with the shared [Wirespec.Serialization] bean.
- *
- * This is the app's own consumer (group `campaign-app`); the scenario tests read the same topic under
- * a different group, so both observe every message independently.
- */
 @Component
 class CampaignEventConsumer(
     private val serialization: Wirespec.Serialization,

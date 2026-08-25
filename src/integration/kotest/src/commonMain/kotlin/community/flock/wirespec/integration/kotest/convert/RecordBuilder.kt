@@ -9,16 +9,10 @@ import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.generator.escapeKotlinIdentifier
 import community.flock.wirespec.ir.core.Type as IrType
 
-/** Builds the reusable per-record builder class `<Type>Builder` as an IR [Struct] and renders its `registerPath` lines. */
 internal object RecordBuilder {
 
-    /**
-     * Records are emitted under their pascal-cased name (`Foo_Bar` -> `FooBar`), so the builder
-     * must be named after that; the raw identifier would not resolve.
-     */
     fun builderName(typeName: String): String = "${Name.of(typeName).pascalCase()}Builder"
 
-    /** Nested fields reference the nested type's own `<Nested>Builder`; this builder never emits it. */
     fun buildBuilderClass(typeName: String, fields: List<BodyFieldShape>): Struct = struct(builderName(typeName)) {
         plainClass()
         annotation("@WirespecScenarioDsl")
@@ -48,13 +42,10 @@ internal object RecordBuilder {
         }
     }
 
-    /** `Gen<[element]>?`, the type of a builder override slot. */
     private fun genNullable(element: IrType): IrType = IrType.Nullable(IrType.Custom("Gen", listOf(element)))
 
-    /** `<nested>.() -> Unit`, the sub-builder block type. */
     private fun blockType(nested: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(nested))
 
-    /** Emits the members for a nested object/list field: the override slot, its setter overloads, and the sub-builder block. */
     private fun StructBuilder.nestedBlock(fieldName: String, nestedTypeName: String, genType: IrType, valueType: IrType) {
         val nested = builderName(nestedTypeName)
         property(
@@ -80,7 +71,6 @@ internal object RecordBuilder {
         }
     }
 
-    /** `registerPath(...)` lines applying a builder's override `Gen`s, drilling into nested `<field>Block` sub-builders. */
     fun renderRegistration(
         fields: List<BodyFieldShape>,
         receiver: String,
@@ -101,7 +91,6 @@ internal object RecordBuilder {
         }
     }
 
-    /** The `<field>Block?.let { … }` drill-down applying a nested sub-builder's registrations. */
     private fun StringBuilder.appendNestedBlock(
         fieldName: String,
         nestedTypeName: String,

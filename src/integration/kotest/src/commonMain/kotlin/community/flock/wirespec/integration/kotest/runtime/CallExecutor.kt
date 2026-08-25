@@ -14,7 +14,6 @@ import io.kotest.property.RandomSource
 import io.kotest.property.arbitrary.arbitrary
 import io.kotest.property.arbitrary.int
 
-/** Executes a single endpoint call eagerly: slot resolution, typed transport, contract validation. */
 internal object CallExecutor {
 
     fun buildRequestGen(call: EndpointCallBuilder<*, *, *>): Arb<Any> = arbitrary { rs -> buildRequestWith(call, rs) }
@@ -25,14 +24,12 @@ internal object CallExecutor {
         return reflection.buildRequest(resolveSlots(call, reflection, rs, arb))
     }
 
-    /** Send a pre-built typed request as-is; returns the response validated against the contract. */
     suspend fun executeRequest(
         client: Wirespec.Client<*, *>,
         endpointObject: Wirespec.Endpoint,
         request: Any,
     ): Any = transportAndValidate(client, EndpointReflection.of(endpointObject), request)
 
-    /** Typed transport of one request through the installed endpoint context, then contract validation. */
     private suspend fun transportAndValidate(
         client: Wirespec.Client<*, *>,
         reflection: EndpointReflection,
@@ -105,11 +102,6 @@ internal object CallExecutor {
         else -> error("${variant.constructor.declaringClass.simpleName}: `body` param has no resolvable type.")
     }
 
-    /**
-     * A generated default for [type]: a primitive [Arb] draw when [type] is primitive-shaped
-     * (String, numbers, ByteArray — which has no package and thus no reflectable `<Model>Generator`),
-     * else the IR-emitted `<Model>Generator` looked up via [arb].
-     */
     private fun generatedValueFor(type: Class<*>, arb: ArbReceiver, rs: RandomSource, path: List<String>): Any = PrimitiveArbs.forTypeOrNull(type)?.draw(rs)
         ?: arb.generatorFor(type).generate(arb.generator, path)
 

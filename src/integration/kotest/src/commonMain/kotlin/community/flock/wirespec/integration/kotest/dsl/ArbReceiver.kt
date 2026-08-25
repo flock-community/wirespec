@@ -7,7 +7,6 @@ import io.kotest.property.RandomSource
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
-/** Per-call holder of the kotest-backed [Wirespec.Generator] plus a cache of the generated `*Generator` adapters. */
 class ArbReceiver internal constructor(private val randomSource: RandomSource) {
 
     @PublishedApi
@@ -25,7 +24,6 @@ class ArbReceiver internal constructor(private val randomSource: RandomSource) {
         return generatorFor(modelClass).generate(generator, emptyList()) as T
     }
 
-    /** Locate (and cache) the IR-emitted `<Model>Generator` for [modelClass]. */
     @PublishedApi
     internal fun generatorFor(modelClass: Class<*>): GeneratorHandle = cache.computeIfAbsent(modelClass) {
         val modelPkg = modelClass.`package`?.name

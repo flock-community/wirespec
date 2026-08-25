@@ -60,11 +60,6 @@ enum class Precision {
     P64,
 }
 
-/**
- * Declaration visibility. `null` on a declaration means "emit no modifier" (the language
- * default), preserving byte-for-byte output for every node that predates this field; a
- * non-null value opts a declaration into an explicit modifier (e.g. Kotlin `public`/`internal`).
- */
 enum class Visibility {
     PUBLIC,
     INTERNAL,
@@ -103,11 +98,6 @@ sealed interface Type {
     data class IntegerLiteral(val value: Int) : Type
     data class StringLiteral(val value: kotlin.String) : Type
 
-    /**
-     * A function type. [receiver] (when non-null) makes it a receiver function type
-     * (Kotlin `Receiver.() -> R`); [isAsync] marks it `suspend` in Kotlin. Both default so plain
-     * `(A, B) -> R` function types are unchanged.
-     */
     data class Function(
         val parameterTypes: List<Type>,
         val returnType: Type,
@@ -151,14 +141,7 @@ data class Struct(
     val typeParameters: List<TypeParameter> = emptyList(),
     val visibility: Visibility? = null,
     val annotations: List<String> = emptyList(),
-    /**
-     * When set, forces a rendering that the field/constructor inference cannot produce.
-     * [Kind.PLAIN_CLASS] emits a stateful `class` (its [elements] are member properties and
-     * methods) instead of an inferred `object`/`data object`/`data class`. `null` keeps the
-     * original inference, so pre-existing structs are unaffected.
-     */
     val kind: Kind? = null,
-    /** Visibility of the primary constructor, e.g. Kotlin `internal constructor()`. */
     val constructorVisibility: Visibility? = null,
 ) : HasName,
     HasElements {
@@ -203,20 +186,11 @@ data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
-    /**
-     * When any of the following are set, the KotlinGenerator renders this [Field] as a
-     * standalone property declaration (as a class member or a top-level/extension property)
-     * rather than a constructor parameter. A field left with all defaults keeps its original
-     * role and renders to nothing on its own, so existing usages are unaffected.
-     */
     val isMutable: Boolean = false,
     val visibility: Visibility? = null,
     val annotations: List<String> = emptyList(),
-    /** Extension-property receiver, e.g. the `Queue` in `val Queue.generate`. */
     val receiver: Type? = null,
-    /** Property initializer (`= <expr>`). Mutually exclusive with [getter] in practice. */
     val initializer: Expression? = null,
-    /** Property getter body (`get() = <expr>`). */
     val getter: Expression? = null,
 ) : Element
 
@@ -229,7 +203,6 @@ data class Function(
     val isAsync: Boolean = false,
     val isStatic: Boolean = false,
     val isOverride: Boolean = false,
-    /** Extension-function receiver, e.g. the `Gen<Request>` in `fun Gen<Request>.call()`. */
     val receiver: Type? = null,
     val visibility: Visibility? = null,
     val annotations: List<String> = emptyList(),
@@ -274,7 +247,6 @@ data class Enum(
 data class Parameter(
     val name: Name,
     val type: Type,
-    /** Default value (`= <expr>`); `null` means the parameter is required. */
     val default: Expression? = null,
 )
 

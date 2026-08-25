@@ -9,7 +9,6 @@ import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.Type as IrType
 
-/** Builds the per-type Kotest DSL file (`<Type>Dsl.kt`): the reusable `<Type>Builder` plus a `generate` entry point. */
 internal object TypeDslFile {
 
     fun build(
@@ -55,7 +54,6 @@ internal object TypeDslFile {
     }
 }
 
-/** The Kotest-DSL view of a standalone record [Type]: its name, field shapes, and model imports. */
 internal data class TypeShape(
     val name: String,
     val fields: List<EndpointShape.BodyFieldShape>,

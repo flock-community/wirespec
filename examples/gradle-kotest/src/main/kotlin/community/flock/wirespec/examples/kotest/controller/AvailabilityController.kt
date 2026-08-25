@@ -8,11 +8,6 @@ import community.flock.wirespec.examples.kotest.generated.model.Error
 import community.flock.wirespec.examples.kotest.service.ProductService
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Serves `GET /products/{id}/availability` by looking up the product, then calling the downstream
- * inventory service (via [InventoryClient]) for its SKU and mapping the stock into an [Availability].
- * The downstream call is what the Kotest `.mock { req -> … }` DSL stubs in `ProductAvailabilityMockTest`.
- */
 @RestController
 class AvailabilityController(
     private val products: ProductService,

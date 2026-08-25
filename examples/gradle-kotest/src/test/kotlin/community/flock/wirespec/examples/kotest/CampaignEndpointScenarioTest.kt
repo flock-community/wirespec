@@ -16,12 +16,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.springframework.boot.test.context.SpringBootTest
 import java.util.UUID
 
-/**
- * End-to-end HTTP scenarios driven through the Wirespec-generated Kotest DSL. Extensions are
- * registered once in [ProjectConfig], so this spec only declares `@SpringBootTest` (a real embedded
- * server on a random port, which the endpoint extension reads for port and serialization).
- * Kafka's listener is disabled here since it isn't needed; event publishing is fire-and-forget.
- */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = ["spring.kafka.listener.auto-startup=false"],
@@ -45,12 +39,10 @@ class CampaignEndpointScenarioTest :
         }
 
         test("request builds a random CreateProduct.Request, pinning only what you set") {
-            // `request { }` returns an `Arb<Request>`; draw one to inspect it.
             val request = CreateProduct.generate.request {
                 body { sku("PINNED-SKU") }
             }.draw()
 
-            // The pinned field is exactly what you set; the rest is generated but present.
             request.body.sku shouldBe "PINNED-SKU"
             request.body.name.shouldBeInstanceOf<String>()
         }

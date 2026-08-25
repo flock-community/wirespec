@@ -14,15 +14,8 @@ import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.generator.KotlinGenerator
 import community.flock.wirespec.ir.core.Type as IrType
 
-/** Builds the per-channel Kotest DSL file (`<Channel>Dsl.kt`). */
 internal object ChannelDslFile {
 
-    /**
-     * [emitSend] guards the `Gen<Payload>.send` extension: two channels carrying the same payload
-     * type would otherwise emit conflicting overloads into one package, so the caller emits it for
-     * the first such channel only. `send` itself is channel-agnostic apart from the default topic
-     * (the channel's simple name), which is never a real topic — production callers pass one.
-     */
     fun build(
         channel: Channel,
         packageName: PackageName,
@@ -101,7 +94,6 @@ internal object ChannelDslFile {
 internal data class ChannelShape(
     val name: String,
     val payloadType: String,
-    /** Payload record fields; empty for a primitive payload. */
     val payloadFieldShapes: List<EndpointShape.BodyFieldShape>,
     val modelImports: List<String>,
 ) {
@@ -127,8 +119,6 @@ internal data class ChannelShape(
             val modelImports = EndpointShape.modelImportsFor(listOf(payloadRef) + directRefs, payloadFieldShapes, types)
 
             return ChannelShape(
-                // The channel object is emitted under its pascal-cased name (`Publish_Event` ->
-                // `PublishEvent`), so the DSL must reference that name, not the raw identifier.
                 name = Name.of(channel.identifier.value).pascalCase(),
                 payloadType = payloadType,
                 payloadFieldShapes = payloadFieldShapes,

@@ -10,13 +10,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 
-/**
- * A JDK-`HttpClient`-backed [Wirespec.Transportation] that turns a generated client's
- * [Wirespec.RawRequest] into a real HTTP call against [baseUrl] and maps the reply back to a
- * [Wirespec.RawResponse]. Dependency-free — only `java.net.http` and coroutines.
- *
- * @param baseUrl scheme + host + optional port, e.g. `http://localhost:8080` (no trailing slash).
- */
 class HttpTransportation(
     private val baseUrl: String,
 ) : Wirespec.Transportation {
@@ -49,7 +42,5 @@ class HttpTransportation(
 
     private fun encode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
 
-    // Path segments use percent-encoding, so translate the `+` that URLEncoder emits for a space
-    // (an `application/x-www-form-urlencoded` convention valid only in the query) back to `%20`.
     private fun encodePathSegment(segment: String): String = encode(segment).replace("+", "%20")
 }

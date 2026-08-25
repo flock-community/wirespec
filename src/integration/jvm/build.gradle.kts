@@ -30,11 +30,7 @@ kotlin {
     sourceSets {
         jvmMain {
             dependencies {
-                // HttpTransportation implements Wirespec.Transportation, part of this
-                // module's public surface, so the runtime is exposed as api.
                 api(project(":src:integration:wirespec"))
-                // transport() runs the java.net.http call off the calling coroutine
-                // via withContext(Dispatchers.IO).
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

@@ -11,13 +11,11 @@ import io.kotest.property.RandomSource
 @DslMarker
 annotation class WirespecScenarioDsl
 
-/** Build an [EndpointCallBuilder] for an endpoint. */
 fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> endpointCall(
     client: Wirespec.Client<Req, Resp>,
     endpointObject: Wirespec.Endpoint,
 ): EndpointCallBuilder<BodyT, Req, Resp> = EndpointCallBuilder(client, endpointObject)
 
-/** Draw one request from [requestGen], transport it, and validate the response against the contract. */
 suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> requestCall(
     client: Wirespec.Client<Req, Resp>,
     endpointObject: Wirespec.Endpoint,
@@ -47,24 +45,18 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
 
     @PublishedApi internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
 
-    /** Reconstruct the request body from per-field override `Gen`s. */
     fun bodyTransform(transform: (Any, RandomSource) -> Any): EndpointCallBuilder<BodyT, Req, Resp> = apply {
         bodyTransform = transform
     }
 
-    /** Number of elements to generate when the request body is a list. */
     fun bodyListSize(gen: Gen<Int>): EndpointCallBuilder<BodyT, Req, Resp> = apply { bodyListSizeGen = gen }
 
-    /** Register a per-field path generator. Called by generated `path(...)`. */
     fun pathGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { pathGens[name] = gen }
 
-    /** Register a per-field query generator. Called by generated `query(...)`. */
     fun queryGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { queryGens[name] = gen }
 
-    /** Register a per-field header generator. Called by generated `header(...)`. */
     fun headerGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { headerGens[name] = gen }
 
-    /** An [Arb] materialising the typed request on each draw. */
     fun buildRequestGen(): Arb<Req> {
         @Suppress("UNCHECKED_CAST")
         return CallExecutor.buildRequestGen(this) as Arb<Req>

@@ -11,7 +11,6 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-/** Installs the endpoint half of the ambient wirespec context around every test. */
 class WirespecEndpointExtension internal constructor(
     private val eager: WirespecEndpointContext?,
     private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
@@ -20,7 +19,6 @@ class WirespecEndpointExtension internal constructor(
 
     constructor(endpoint: WirespecEndpointContext) : this(endpoint, null, null)
 
-    /** Convenience: build the [WirespecEndpointContext] from a [transportation] + [serialization] directly. */
     constructor(
         transportation: Wirespec.Transportation,
         serialization: Wirespec.Serialization,
@@ -36,7 +34,6 @@ class WirespecEndpointExtension internal constructor(
     }
 }
 
-/** Factory-form [WirespecEndpointExtension] that resolves the transportation and serialization per test. */
 fun WirespecEndpointExtension(
     serialization: suspend () -> Wirespec.Serialization,
     transportation: suspend () -> Wirespec.Transportation,
@@ -46,7 +43,6 @@ fun WirespecEndpointExtension(
     transportationFactory = transportation,
 )
 
-/** Framework-neutral handle [WirespecEndpointExtension] installs and the scenario DSL consumes. */
 class WirespecEndpointContext(
     val transportation: Wirespec.Transportation,
     val serialization: Wirespec.Serialization,

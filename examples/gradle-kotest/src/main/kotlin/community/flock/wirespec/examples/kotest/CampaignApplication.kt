@@ -4,12 +4,6 @@ import community.flock.wirespec.integration.spring.kotlin.configuration.EnableWi
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
-/**
- * A small Spring Boot app whose HTTP surface and async messages are both defined by a single Wirespec
- * contract (`src/main/wirespec/campaign.ws`). `@EnableWirespecController` turns the generated
- * `*.Handler` interfaces into Spring MVC controllers and registers the `Wirespec.Serialization` bean
- * (reused by the Kafka layer so wire formats stay identical across REST and messaging).
- */
 @SpringBootApplication
 @EnableWirespecController
 open class CampaignApplication

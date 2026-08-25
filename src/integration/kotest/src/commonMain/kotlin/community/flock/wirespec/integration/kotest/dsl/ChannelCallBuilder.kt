@@ -12,10 +12,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-/** Build a [ChannelCallBuilder] for a channel. Called by generated `*Dsl` wrappers. */
 inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
 
-/** Eager channel scenario runner that generates a typed payload and publishes it through the broker transport. */
 @WirespecScenarioDsl
 class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     @PublishedApi internal val channelClass: KClass<*>,
@@ -28,10 +26,8 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     fun topic(value: String): ChannelCallBuilder<P> = apply { topic = value }
     fun key(value: String): ChannelCallBuilder<P> = apply { key = value }
 
-    /** An [Arb] materialising a random payload on each draw, optionally applying per-field [overrides]. */
     fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Arb<P> = arbitrary { rs -> buildPayload(rs, overrides) }
 
-    /** Draw a payload from [gen], publish it, and return it. */
     suspend fun send(gen: Gen<P>): P {
         val payload = gen.draw(currentRandomSource())
         publish(payload)

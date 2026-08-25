@@ -12,9 +12,6 @@ import java.net.URI
 import java.net.URLDecoder
 
 /**
- * Start building a WireMock stub for a Wirespec endpoint; the endpoint's method and path template
- * drive the request matcher (path parameters match any non-slash segment). The returned builder
- * accepts only [Wirespec.Response] values of the same endpoint — a different one is a compile error.
  *
  * ```
  * server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
@@ -29,9 +26,6 @@ class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
     private val mapping: MappingBuilder,
 ) {
     /**
-     * Serialize [response] through [serialization] (Jackson-backed by default) and attach it as this
-     * stub's response. Returns the underlying [MappingBuilder] so callers can keep chaining WireMock
-     * methods (e.g. `.atPriority(...)`, `.inScenario(...)`).
      */
     fun willReturn(
         response: Res,
@@ -41,11 +35,6 @@ class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
 
 private val defaultSerialization: Wirespec.Serialization by lazy { WirespecSerialization(ObjectMapper()) }
 
-/**
- * A WireMock [MappingBuilder] matching an endpoint's HTTP [method] and [pathTemplate] (path parameters
- * match any non-slash segment). The building block behind [wirespec], reusable directly when a stub
- * needs extra matching (e.g. `.andMatching(...)`) on top of the method/path match.
- */
 fun requestBuilder(method: String, pathTemplate: String): MappingBuilder {
     val urlPattern = urlPatternFor(pathTemplate)
     return when (method.uppercase()) {
@@ -61,7 +50,6 @@ fun requestBuilder(method: String, pathTemplate: String): MappingBuilder {
     }
 }
 
-/** A WireMock [ResponseDefinitionBuilder] mirroring an already-serialized Wirespec [rawResponse]. */
 fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilder {
     val builder = WireMock.aResponse().withStatus(rawResponse.statusCode)
     rawResponse.headers.forEach { (name, values) ->
@@ -71,14 +59,6 @@ fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilde
     return builder
 }
 
-/**
- * Map an incoming WireMock [Request] onto the neutral [Wirespec.RawRequest]. Use it when a stub
- * matches on the request itself (`.andMatching { request -> … request.toRawRequest() … }`) so the
- * matcher can deserialize through a generated endpoint rather than WireMock's own types.
- *
- * Path segments and query values are percent-decoded; a query key without `=` yields an empty value,
- * a repeated key yields all its values in order, and an empty body maps to `null`.
- */
 fun Request.toRawRequest(): Wirespec.RawRequest {
     val uri = URI.create(absoluteUrl)
     val segments = uri.rawPath.split("/").filter(String::isNotEmpty).map(::decode)

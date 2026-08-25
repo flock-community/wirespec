@@ -2,15 +2,12 @@ package community.flock.wirespec.integration.kotest.generator
 
 import kotlin.reflect.KType
 
-/** Generation contract owned by the kotest integration, mirroring `Wirespec.Generator` in commonMain. */
 interface KotestGenerator {
     fun <T> generate(path: List<String>, field: KotestField<T>): T
 }
 
-/** Multiplatform 1:1 mirror of `Wirespec.GeneratorField<T>`. */
 sealed interface KotestField<T>
 
-/** Leaf variants that carry Wirespec field annotations (e.g. `@Seed`). */
 sealed interface KotestLeafField<T> : KotestField<T> {
     val annotations: List<Map<String, Any>>
 }

@@ -6,13 +6,11 @@ import io.kotest.property.Arb
 import io.kotest.property.Gen
 import kotlin.reflect.KClass
 
-/** Build a [ResponseBuilder] for one response variant of an endpoint. */
 fun responseCall(
     endpointObject: Wirespec.Endpoint,
     variantClass: KClass<*>,
 ): ResponseBuilder = ResponseBuilder(endpointObject, variantClass)
 
-/** Builds a single random `Response<status>` instance for an endpoint. */
 @WirespecScenarioDsl
 class ResponseBuilder internal constructor(
     internal val endpointObject: Wirespec.Endpoint,
@@ -23,12 +21,9 @@ class ResponseBuilder internal constructor(
 
     internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
 
-    /** Pin the whole response body. Called by the generated `body = …` setter. */
     fun body(gen: Gen<*>): ResponseBuilder = apply { bodyGen = gen }
 
-    /** Pin a single response header field. Called by the generated header setters. */
     fun headerGen(name: String, gen: Gen<*>): ResponseBuilder = apply { headerGens[name] = gen }
 
-    /** An [Arb] materialising the random response variant on each draw. */
     fun buildGen(): Arb<Any> = CallExecutor.buildResponseGen(this)
 }

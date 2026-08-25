@@ -5,7 +5,6 @@ import community.flock.wirespec.examples.kotest.generated.model.ProductId
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 
-/** In-memory store for [Product]s, keyed by their refined [ProductId]. */
 @Repository
 class ProductRepository {
     private val store = ConcurrentHashMap<String, Product>()

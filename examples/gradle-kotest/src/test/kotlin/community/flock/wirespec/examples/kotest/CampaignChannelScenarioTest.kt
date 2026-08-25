@@ -32,15 +32,6 @@ import kotlin.reflect.typeOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * End-to-end messaging scenarios over an in-JVM Kafka broker (`@EmbeddedKafka`, no Docker). The
- * Wirespec DSL drives the **send** direction only (`generate.message { … }.send()`); asserting on what
- * the app published is done with a plain Kafka consumer ([awaitEvent]). The endpoint and channel
- * ambients compose, so a scenario can act on the REST side that emits events then assert on the topic.
- *
- * `@EmbeddedKafka` starts the broker before the context loads and points the app's
- * `spring.kafka.bootstrap-servers` at it, which the channel extension resolves per spec.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EmbeddedKafka(
     partitions = 1,
@@ -91,16 +82,12 @@ class CampaignChannelScenarioTest :
             activated.shouldBeInstanceOf<ActivateCampaign.Response200>()
             activated.body.status shouldBe CampaignStatus.ACTIVE
 
-            // Filtering by campaignId + eventType isolates this campaign's ACTIVATED event from the
-            // CREATED one (and from other tests sharing the broker), so no draining is needed.
             val event =
                 awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == created.body.id && it.eventType == CampaignEventType.ACTIVATED }
             event.campaignId shouldBe created.body.id
         }
 
         test("a CampaignEvent sent through the channel round-trips over the topic") {
-            // send() takes the destination topic (and an optional key); omit it to fall back to the
-            // channel object's simple name.
             val sent = CampaignEvents.generate
                 .message {
                     eventType(CampaignEventType.ENDED)
@@ -113,11 +100,6 @@ class CampaignChannelScenarioTest :
         }
     })
 
-/**
- * Poll [topic] with a throwaway consumer group (from `earliest`) until an event of type [T] satisfying
- * [predicate] arrives, or [timeout] elapses. Bodies are decoded with the app's own
- * `Wirespec.Serialization` bean (the mirror of what the publisher wrote) so equality with a sent payload holds.
- */
 private suspend inline fun <reified T : Any> awaitEvent(
     topic: String,
     timeout: Duration = 10.seconds,

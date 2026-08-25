@@ -1,5 +1,4 @@
 inventory:
-  # Base URL of the downstream inventory service (inventory.ws). Tests point this at a mock server.
   base-url: ${INVENTORY_BASE_URL:http://localhost:9999}
 
 spring:
@@ -10,7 +9,6 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
-      # Fail fast when no broker is reachable so REST-only runs never hang on metadata.
       properties:
         max.block.ms: 5000
     consumer:

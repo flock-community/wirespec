@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.kotest.generator
 
 import community.flock.wirespec.kotlin.Wirespec
 
-/** JVM-facing factory returning the `Wirespec.Generator` that IR-emitted code expects, wrapping a [KotestGenerator]. */
 fun kotestWirespecKotlinGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
@@ -10,7 +9,6 @@ fun kotestWirespecKotlinGenerator(
     kotestGenerator(seed, refinedWrapper = JvmRefinedWrapper, block = block),
 )
 
-/** Bridges Wirespec's JVM-only Kotlin `Generator`/`GeneratorField*` to kotest's commonMain mirror types. */
 internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator) : Wirespec.Generator {
 
     @Suppress("UNCHECKED_CAST")

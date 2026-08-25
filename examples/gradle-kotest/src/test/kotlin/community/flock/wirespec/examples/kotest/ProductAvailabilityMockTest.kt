@@ -16,16 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 
-/**
- * Mocks a downstream dependency end-to-end with the Kotest response-side DSL. The app's
- * `GET /products/{id}/availability` calls the inventory service (the generated `GetStock` client);
- * this spec stubs that call with `GetStock.generate.response200 { … }.mock { req -> req.path.sku == … }`
- * and asserts the app's response reflects the canned stock.
- *
- * `WirespecMockExtension` is registered once in [ProjectConfig] against the shared [inventoryMockServer];
- * here the spec only points the app's `inventory.base-url` at it (via `@DynamicPropertySource`, before
- * the context boots). `.call()` drives the app over real HTTP while `.mock { }` stubs the downstream.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ProductAvailabilityMockTest :
     FunSpec({
@@ -34,7 +24,6 @@ class ProductAvailabilityMockTest :
             val sku = "SKU-001"
             val productId = createProduct(sku)
 
-            // Only requests for SKU-001 get this canned 200 — the predicate reads the typed request.
             GetStock.generate
                 .response200 {
                     body = StockLevel.generate {

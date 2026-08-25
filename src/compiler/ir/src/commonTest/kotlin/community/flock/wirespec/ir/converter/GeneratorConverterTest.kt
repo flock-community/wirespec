@@ -189,10 +189,6 @@ class GeneratorConverterTest {
 
     @Test
     fun testAnyFieldsGenerateStringLeavesNotNull() {
-        // `any` fields must not emit bare `null` — that breaks compilation in
-        // Kotlin/Java/Rust (non-null `Any`, uninferred `T` on the
-        // GeneratorFieldNullable/Array/Dict lambdas). They fall back to a
-        // GeneratorFieldString leaf instead.
         val message = TypeWirespec(
             comment = null,
             annotations = emptyList(),

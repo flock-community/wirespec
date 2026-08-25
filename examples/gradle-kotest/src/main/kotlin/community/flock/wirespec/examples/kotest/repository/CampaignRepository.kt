@@ -6,7 +6,6 @@ import community.flock.wirespec.examples.kotest.generated.model.CampaignStatus
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 
-/** In-memory store for [Campaign]s, keyed by their refined [CampaignId]. */
 @Repository
 class CampaignRepository {
     private val store = ConcurrentHashMap<String, Campaign>()

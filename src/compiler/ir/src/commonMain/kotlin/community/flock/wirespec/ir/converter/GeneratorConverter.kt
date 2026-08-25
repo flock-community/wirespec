@@ -366,10 +366,6 @@ private fun buildLeafExpr(
             ),
         ),
     )
-    // `any` carries no schema to derive a generator from, but the surrounding
-    // slot (field, Nullable/Array/Dict lambda) still needs a concrete value —
-    // a bare `null` doesn't type-check against `Any`/uninferred `T`. Generate
-    // a String: it is assignable to every target's `any` representation.
     is ReferenceWirespec.Any -> FunctionCall(
         receiver = VariableReference(Name.of("generator")),
         name = Name.of("generate"),

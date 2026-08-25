@@ -23,11 +23,6 @@ interface BaseBuilder {
 
     fun Type.nullable() = Type.Nullable(this)
 
-    /**
-     * A function type, optionally a receiver function type ([receiver] != null → `R.() -> T`)
-     * and/or `suspend`. Used for lambda-typed parameters and properties
-     * (e.g. `block: Builder.() -> Unit`).
-     */
     fun functionType(
         returnType: Type,
         receiver: Type? = null,
@@ -35,7 +30,6 @@ interface BaseBuilder {
         isAsync: Boolean = false,
     ): Type.Function = Type.Function(parameterTypes, returnType, receiver, isAsync)
 
-    /** A raw code fragment usable where an [Expression] is expected (e.g. `returns(rawExpr(...))`). */
     fun rawExpr(code: String): RawExpression = RawExpression(code)
 
     fun literal(value: String) = Literal(value, Type.String)
@@ -68,11 +62,6 @@ interface ContainerBuilder : BaseBuilder {
         elements.add(RawElement(code))
     }
 
-    /**
-     * Adds a property declaration — a class member, a top-level property, or (when [receiver]
-     * is non-null) an extension property. [name] is kept verbatim (single-part [Name]) so wire
-     * names such as `Refresh-Token` are backtick-escaped rather than normalised.
-     */
     fun property(
         name: String,
         type: Type,
@@ -362,7 +351,6 @@ class StructBuilder(private val name: Name) : ContainerBuilder {
         annotations.add(annotation)
     }
 
-    /** Renders as a stateful `class` (members from [elements]) rather than an inferred object/data class. */
     fun plainClass() {
         kind = Struct.Kind.PLAIN_CLASS
     }
@@ -489,7 +477,6 @@ class FunctionBuilder(
         returnType = type
     }
 
-    /** Makes this an extension function on [type] (e.g. `fun Gen<Request>.call()`). */
     fun receiver(type: Type) {
         receiver = type
     }
@@ -510,7 +497,6 @@ class FunctionBuilder(
         parameters.add(Parameter(name, type))
     }
 
-    /** Parameter with a default value (`name: Type = <default>`). */
     fun arg(name: String, type: Type, default: Expression) {
         parameters.add(Parameter(Name.of(name), type, default))
     }

@@ -2,10 +2,8 @@ package community.flock.wirespec.integration.kotest.validation
 
 import community.flock.wirespec.kotlin.Wirespec
 
-/** Kind of contract violation surfaced to test failure messages. */
 enum class ContractViolationKind { UndeclaredStatus, BodyMismatch }
 
-/** Validates a [Wirespec.RawResponse] against an endpoint's contract (status code, then body schema). */
 internal class ContractValidator(
     private val endpoint: EndpointReflection,
     private val serialization: Wirespec.Serialization,

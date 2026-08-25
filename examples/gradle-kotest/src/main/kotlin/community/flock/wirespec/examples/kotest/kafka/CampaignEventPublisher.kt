@@ -12,14 +12,6 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import kotlin.reflect.typeOf
 
-/**
- * Publishes [CampaignEvent]s onto Kafka, implementing the Wirespec-generated [CampaignEvents.Sender]
- * (so the channel contract decides the payload type). Serializes with the shared [Wirespec.Serialization]
- * bean for a wire format identical to what the test DSL deserializes.
- *
- * Publishing is fire-and-forget on a background scope so the REST request thread never blocks on the
- * broker — the endpoint tests run without a Kafka broker present.
- */
 @Component
 class CampaignEventPublisher(
     private val kafkaTemplate: KafkaTemplate<String, ByteArray>,

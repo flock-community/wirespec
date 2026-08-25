@@ -21,7 +21,6 @@ import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.extension.IrExtension
 
-/** Adds a typesafe Kotest scenario DSL to the generated output, one DSL file per endpoint/channel/type. */
 open class KotestDslExtension(
     private val packageName: PackageName,
 ) : IrExtension {
@@ -37,8 +36,6 @@ open class KotestDslExtension(
 
         val typeDsl = types.values.map { TypeDslFile.build(it, packageName, types, refined) }
         val endpointDsl = endpoints.map { EndpointDslFile.build(it, packageName, types, refined) }
-        // Channels sharing a payload type (e.g. new- and legacy-cluster listeners for one event)
-        // must not each emit the identical `Gen<Payload>.send` extension; the first one carries it.
         val sendPayloads = mutableSetOf<String>()
         val channelDsl = channels.map {
             val payload = ChannelShape.from(it, types, refined).payloadType

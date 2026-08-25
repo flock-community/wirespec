@@ -13,7 +13,6 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-/** Installs the channel half of the ambient wirespec context around every test. */
 class WirespecChannelExtension internal constructor(
     private val eager: WirespecChannelContext?,
     private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
@@ -24,7 +23,6 @@ class WirespecChannelExtension internal constructor(
 
     constructor(channel: WirespecChannelContext) : this(channel, null, null, {})
 
-    /** Convenience: build the [WirespecChannelContext] from a [transportation] + [serialization] directly. */
     constructor(
         transportation: ChannelTransport,
         serialization: Wirespec.Serialization,
@@ -48,7 +46,6 @@ class WirespecChannelExtension internal constructor(
     override suspend fun afterSpec(spec: Spec) = transportations.remove(spec)
 }
 
-/** Managed [WirespecChannelExtension] that builds the transportation once per spec from `suspend` factories. */
 fun <T : ChannelTransport> WirespecChannelExtension(
     serialization: suspend () -> Wirespec.Serialization,
     transportation: suspend () -> T,
@@ -63,7 +60,6 @@ fun <T : ChannelTransport> WirespecChannelExtension(
     },
 )
 
-/** Framework-neutral broker handle [WirespecChannelExtension] installs and the channel scenario DSL consumes. */
 class WirespecChannelContext(
     val transport: ChannelTransport,
     val serialization: Wirespec.Serialization,
@@ -77,8 +73,6 @@ internal suspend fun currentChannelContext(): WirespecChannelContext = coroutine
         "`WirespecChannelExtension(channel)` on the spec.",
 )
 
-/** The minimal publish surface a message broker must expose to back the send side of the channel scenario DSL. */
 fun interface ChannelTransport {
-    /** Publish a single serialized message [body] to [topic] under an optional [key]. */
     suspend fun publish(topic: String, key: String?, body: ByteArray)
 }

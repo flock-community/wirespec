@@ -16,7 +16,6 @@ import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.generator.escapeKotlinIdentifier
 import community.flock.wirespec.ir.core.Type as IrType
 
-/** Builds the per-endpoint block-style Kotest DSL file (`<Endpoint>Dsl.kt`). */
 internal object EndpointDslFile {
 
     fun build(
@@ -88,7 +87,6 @@ internal object EndpointDslFile {
         Slot("header", "headerGen", shape.headerFields),
     ).filter { it.fields.isNotEmpty() }
 
-    /** Slots the caller must supply: those carrying at least one non-nullable field. */
     private fun requiredSlots(shape: EndpointShape): List<Slot> = presentSlots(shape).filter { slot -> slot.fields.any { !it.isNullable } }
 
     private fun cap(name: String): String = name.replaceFirstChar(Char::uppercaseChar)
@@ -104,7 +102,6 @@ internal object EndpointDslFile {
     private fun blockType(builder: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(builder))
     private fun suspendScopeType(scope: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(scope), isAsync = true)
 
-    /** The `<Endpoint>Generate` wrapper grouping the scenario builders. */
     private fun FileBuilder.buildGenerateWrapper(shape: EndpointShape) {
         struct("${shape.name}Generate") {
             plainClass()
@@ -130,7 +127,6 @@ internal object EndpointDslFile {
         }
     }
 
-    /** A `call()` extension on `Gen<Request>`: `PutTodo.generate.request { … }.call()`. */
     private fun FileBuilder.buildRequestCall(shape: EndpointShape) {
         asyncFunction("call") {
             visibility(Visibility.PUBLIC)
@@ -140,7 +136,6 @@ internal object EndpointDslFile {
         }
     }
 
-    /** A `mock()` extension on `Gen<Response<*>>`: `PutTodo.generate.response200 { … }.mock { req -> req.path.id == "1" }`. */
     private fun FileBuilder.buildResponseMock(shape: EndpointShape) {
         asyncFunction("mock") {
             visibility(Visibility.PUBLIC)
@@ -151,7 +146,6 @@ internal object EndpointDslFile {
         }
     }
 
-    /** Per-variant response scope, opened by `generate.responseNNN { … }`. */
     private fun FileBuilder.buildResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape) {
         val scopeName = "${shape.name}${variant.className}Scope"
         val variantType = "${shape.name}.${variant.className}"
@@ -215,8 +209,6 @@ internal object EndpointDslFile {
                 }
             }
             if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
-                // A raw primitive body (e.g. ByteArray) has no per-field builder; expose a
-                // whole-value slot mirroring the response scopes' `body`.
                 val bodyType = shape.requireBodyPrimitiveType()
                 property("body", genNullableOf(bodyType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
                 valueSetter("body", bodyType)
@@ -235,7 +227,6 @@ internal object EndpointDslFile {
         }
     }
 
-    /** Body of `flush()`: applies the assigned slot/body lambdas to the runtime call and validates required values. */
     private fun renderFlushBody(shape: EndpointShape, present: List<Slot>, required: List<Slot>): String = buildString {
         val requiredNames = required.map { it.name }.toSet()
         appendLine("if (flushed) return")
@@ -247,8 +238,6 @@ internal object EndpointDslFile {
                 appendLine("val $builderVar = $builderClass().apply(${slot.name} ?: error(\"${shape.name}: required `${slot.name}` block is missing\"))")
                 slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "")) }
             } else {
-                // Optional slot (all fields nullable): register defaults whether or not the block is
-                // supplied, so an omitted block yields null rather than a random value.
                 appendLine("val $builderVar = ${slot.name}?.let { block -> $builderClass().apply(block) }")
                 slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "", nullableBuilder = true)) }
             }
@@ -282,7 +271,6 @@ internal object EndpointDslFile {
         }
     }
 
-    /** A single `inner.<gen>("wire", builder.field ?: …)` registration line for a slot field. */
     private fun registerLine(
         shape: EndpointShape,
         slot: Slot,
@@ -313,7 +301,6 @@ internal object EndpointDslFile {
         }
     }
 
-    /** Emit `$baseExpr.copy(field = <value>, …)` for a body shape, one field per line. */
     private fun StringBuilder.appendBodyCopy(
         baseExpr: String,
         receiver: String,
@@ -327,7 +314,6 @@ internal object EndpointDslFile {
         appendLine("$indent)")
     }
 
-    /** A single body field's reconstructed value: a drawn override or the generated default. */
     private fun copyValueExpr(
         field: EndpointShape.BodyFieldShape,
         baseExpr: String,
@@ -337,9 +323,6 @@ internal object EndpointDslFile {
         val baseField = "$baseExpr.$fieldRef"
         return when (field) {
             is EndpointShape.BodyFieldShape.Primitive ->
-                // Branch on builder-slot presence, not on the drawn value: a configured slot whose gen
-                // draws null (e.g. `endDate(null)` on a nullable field) must stay null, so `?: base`
-                // cannot be used here — it would conflate "slot unset" with "slot set to null".
                 "$receiver.$fieldRef.let { gen -> if (gen == null) $baseField else ${wrapDrawn("gen.draw(rs)", field)} }"
             is EndpointShape.BodyFieldShape.NestedObject ->
                 nestedCopyExpr(field.name, field.typeName, field.fields, baseExpr, receiver, isList = false)
@@ -348,7 +331,6 @@ internal object EndpointDslFile {
         }
     }
 
-    /** The reconstructed value for a nested object/list field. */
     private fun nestedCopyExpr(
         fieldName: String,
         nestedTypeName: String,
@@ -367,16 +349,11 @@ internal object EndpointDslFile {
         val subs = fields.joinToString(", ") {
             "${it.name.escapeKotlinIdentifier()} = ${copyValueExpr(it, elemVar, nestedVar)}"
         }
-        // As in the primitive case, branch the whole-collection override on builder-slot presence, not
-        // on the drawn value, so a configured slot that draws null (a nullable collection set to null)
-        // stays null instead of falling through to the block override or base. The block-override and
-        // base fallback stay chained with `?:` as the `else` branch.
         return "$receiver.$fieldRef.let { gen -> if (gen != null) gen.draw(rs) else " +
             "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
             "$baseField$overBase { $elemVar -> $elemVar.copy($subs) } } ?: $baseField }"
     }
 
-    /** Wrap a drawn body value to match the model field's declared type, re-wrapping refined values. */
     private fun wrapDrawn(drawn: String, field: EndpointShape.BodyFieldShape.Primitive): String {
         val refined = field.refinedTypeName ?: return drawn
         return when {
@@ -387,10 +364,8 @@ internal object EndpointDslFile {
         }
     }
 
-    /** The element type backing this endpoint's body-field shapes; present whenever `bodyFieldShapes` is. */
     private fun EndpointShape.requireBodyElementType(): String = bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for $name")
 
-    /** The IR type of a primitive body; present whenever `bodyKind == Primitive`. */
     private fun EndpointShape.requireBodyPrimitiveType(): IrType = bodyPrimitiveType ?: error("BodyKind.Primitive but no bodyPrimitiveType for $name")
 }
 
@@ -400,28 +375,19 @@ internal data class EndpointShape(
     val queryFields: List<NamedTypedField>,
     val headerFields: List<NamedTypedField>,
     val bodyKind: BodyKind,
-    /** Name of the body's element Type (`"Pet"` for both object and list bodies); `null` for `BodyKind.None`. */
     val bodyElementType: String?,
-    /** IR type of a [BodyKind.Primitive] body (nullability stripped, e.g. `ByteArray`); `null` otherwise. */
     val bodyPrimitiveType: IrType?,
-    /** Recursive classification of body fields. */
     val bodyFieldShapes: List<BodyFieldShape>,
-    /** One entry per declared response variant (`200`, `201`, …), used to build random responses. */
     val responseVariants: List<ResponseVariantShape>,
     val modelImports: List<String>,
 ) {
     data class NamedTypedField(val name: String, val type: IrType, val isNullable: Boolean = false)
 
-    /** A single response variant (`Response<status>`), carrying enough to build a random instance. */
     data class ResponseVariantShape(
-        /** Numeric status, e.g. `"201"`. */
         val status: String,
-        /** Generated variant class simple name, e.g. `"Response201"`. */
         val className: String,
         val bodyKind: BodyKind,
-        /** IR type of the body, e.g. `TodoDto` or `List<TodoDto>` once rendered. `null` when there is no body. */
         val bodyType: IrType?,
-        /** Name of the body's element Type — `"TodoDto"` for both object and list bodies. `null` for no body. */
         val bodyElementType: String?,
         val headerFields: List<NamedTypedField>,
     )
@@ -431,7 +397,6 @@ internal data class EndpointShape(
     sealed interface BodyFieldShape {
         val name: String
 
-        /** Leaf body field declared as `Gen<[type]>?` in the typed builder. */
         data class Primitive(
             override val name: String,
             val type: IrType,
@@ -466,8 +431,6 @@ internal data class EndpointShape(
                 .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
             val bodyRef = endpoint.requests.firstOrNull()?.content?.reference
             val (bodyKind, bodyElementType) = classifyBody(bodyRef)
-            // Nullability is stripped: the flush-time `bodyTransform` must return a non-null body,
-            // so the whole-value slot is declared over the non-null type.
             val bodyPrimitiveType = bodyRef
                 ?.takeIf { bodyKind == BodyKind.Primitive }
                 ?.convert()
@@ -514,8 +477,6 @@ internal data class EndpointShape(
             val modelImports = modelImportsFor(refs + bodyFieldRefs, bodyFieldShapes, types)
 
             return EndpointShape(
-                // The endpoint object is emitted under its pascal-cased name (`Get_ById` ->
-                // `GetById`), so the DSL must reference that name, not the raw identifier.
                 name = Name.of(endpoint.identifier.value).pascalCase(),
                 pathFields = pathFields,
                 queryFields = queryFields,
@@ -529,20 +490,16 @@ internal data class EndpointShape(
             )
         }
 
-        /** Classifies a request/response body reference into its [BodyKind] and element type name. */
         private fun classifyBody(reference: Reference?): Pair<BodyKind, String?> = when (reference) {
             null, is Reference.Unit -> BodyKind.None to null
             is Reference.Custom -> BodyKind.Object to reference.value
             is Reference.Iterable -> (reference.reference as? Reference.Custom)
                 ?.let { BodyKind.List to it.value }
                 ?: (BodyKind.None to null)
-            // A raw primitive body (e.g. `Bytes` from OpenAPI `format: binary`) has no record to
-            // open a per-field builder on; the scope gets a whole-value slot instead.
             is Reference.Primitive -> BodyKind.Primitive to null
             else -> BodyKind.None to null
         }
 
-        /** The distinct model type names an operation's DSL file must import. */
         internal fun modelImportsFor(
             refs: List<Reference>,
             fieldShapes: List<BodyFieldShape>,
@@ -560,7 +517,6 @@ internal data class EndpointShape(
             else -> emptyList()
         }
 
-        /** The custom type a nested body field drills into (`null` for a leaf primitive). */
         private val BodyFieldShape.nestedTypeName: String?
             get() = when (this) {
                 is BodyFieldShape.NestedObject -> typeName
@@ -568,7 +524,6 @@ internal data class EndpointShape(
                 is BodyFieldShape.Primitive -> null
             }
 
-        /** The child field shapes of a nested body field (empty for a leaf primitive). */
         private val BodyFieldShape.childFields: List<BodyFieldShape>
             get() = when (this) {
                 is BodyFieldShape.NestedObject -> fields
@@ -580,7 +535,6 @@ internal data class EndpointShape(
             listOfNotNull(f.nestedTypeName) + collectNestedTypeNames(f.childFields)
         }
 
-        /** Collects the [Reference.Custom] names appearing on nested builder types' own fields. */
         private fun collectFieldTypeNames(
             fields: List<BodyFieldShape>,
             types: Map<String, Type>,
@@ -629,7 +583,6 @@ internal data class EndpointShape(
             }
         }
 
-        /** Build a [BodyFieldShape.Primitive], recording the [Refined] wrapper class (if any). */
         private fun primitiveOf(
             name: String,
             ref: Reference,
@@ -652,7 +605,6 @@ internal data class EndpointShape(
             )
         }
 
-        /** Like [Reference.convert], but replaces a `Reference.Custom` to a [Refined] with the refined's underlying primitive type. */
         private fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): IrType = when (reference) {
             is Reference.Custom -> refined[reference.value]
                 ?.let { r -> r.reference.copy(isNullable = reference.isNullable).convert() }

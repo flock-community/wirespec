@@ -14,8 +14,6 @@ import kotlin.test.assertNotNull
 
 class KotestOverrideTest {
 
-    // ---------- registerPath ----------
-
     @Test
     fun `registerPath fires at the exact path`() {
         val gen = kotestGenerator(seed = 0L) {
@@ -105,8 +103,6 @@ class KotestOverrideTest {
         assertEquals("VALUE-FORM", v)
     }
 
-    // ---------- precedence ----------
-
     @Test
     fun `path override beats default leaf`() {
         val gen = kotestGenerator(seed = 0L) {
@@ -121,8 +117,6 @@ class KotestOverrideTest {
 
     @Test
     fun `Seed beats path override`() {
-        // @Seed handling runs before path overrides; the captured seed value
-        // takes precedence even when a path override is registered.
         val gen = kotestGenerator(seed = 0L) {
             registerPath("my-project-id", "id") { Arb.constant("FROM-PATH") }
         }
@@ -141,8 +135,6 @@ class KotestOverrideTest {
         val result = gen.generate(listOf("my-project-id"), shape)
         assertEquals("my-project-id", result["id"], "@Seed must win over path override")
     }
-
-    // ---------- registerFieldByTypeName ----------
 
     @Test
     fun `registerFieldByTypeName fires when the leaf is a direct child of a matching shape`() {
@@ -173,7 +165,6 @@ class KotestOverrideTest {
                 Arb.constant("a@b.com")
             }
         }
-        // Parent is List<String>, not Map<String, String> — override must not fire.
         val shape = KotestFieldShape<List<String>>(
             annotations = emptyMap(),
             generate = { p ->

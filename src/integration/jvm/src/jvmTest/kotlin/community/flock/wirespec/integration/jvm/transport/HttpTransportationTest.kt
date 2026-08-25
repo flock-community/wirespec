@@ -10,17 +10,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/**
- * Drives [HttpTransportation] against a throwaway in-process JDK [HttpServer] and asserts on what
- * that server actually received, so the request-building (path/query encoding, Content-Type
- * handling) is exercised end-to-end over a real socket rather than mocked.
- */
 class HttpTransportationTest {
 
     private lateinit var server: HttpServer
     private lateinit var transportation: HttpTransportation
 
-    // The exchange the stub handler saw on the most recent call, for post-hoc assertions.
     private var lastExchange: HttpExchange? = null
 
     @BeforeTest
@@ -50,7 +44,6 @@ class HttpTransportationTest {
 
     @Test
     fun `path segments with URI-illegal characters are percent-encoded`() = runBlocking {
-        // A raw space would make URI.create throw before the request is ever sent.
         transportation.transport(rawRequest(path = listOf("todos", "a b#d")))
         assertEquals("/todos/a%20b%23d", lastExchange!!.requestURI.rawPath)
     }

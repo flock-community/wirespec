@@ -24,10 +24,8 @@ internal class EndpointReflection private constructor(
 
     fun responseClassForStatus(status: Int): Class<*>? = responseVariantsByStatus[status]
 
-    /** Reflect (and cache) a response variant's flattened constructor so a random instance can be built. */
     fun responseVariant(variantClass: Class<*>): ResponseVariantReflection = variantCache.getOrPut(variantClass) { introspectVariant(variantClass) }
 
-    /** How to build one `Response<status>` variant: its flattened constructor plus the body's shape. */
     class ResponseVariantReflection(
         val constructor: Constructor<*>,
         val hasBody: Boolean,
@@ -58,10 +56,8 @@ internal class EndpointReflection private constructor(
         private val cache = ConcurrentHashMap<KClass<out Wirespec.Endpoint>, EndpointReflection>()
         private val syntheticParamRegex = Regex("arg\\d+")
 
-        /** Matches a Wirespec response-variant simple name (`Response<NNN>`, e.g. `Response200`). */
         private val responseVariantRegex = Regex("Response(\\d{3})")
 
-        /** Pick the emitter's flattened secondary constructor of [cls], omitting the [excludeParam] param. */
         private fun pickEmitterConstructor(cls: Class<*>, excludeParam: String, label: String): Constructor<*> {
             val ctor = cls.declaredConstructors
                 .filter { c -> c.parameters.none { it.name == excludeParam } }
@@ -72,8 +68,6 @@ internal class EndpointReflection private constructor(
                 "$label constructor parameter names not retained. " +
                     "Ensure the generated module is compiled with `-java-parameters`."
             }
-            // A param-less request/response emitted as a Kotlin `data object` exposes only a private
-            // synthetic constructor; make it accessible so reflective instantiation doesn't fail.
             ctor.isAccessible = true
             return ctor
         }
@@ -81,7 +75,6 @@ internal class EndpointReflection private constructor(
         @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
         private fun Parameter.isListType(): Boolean = java.util.List::class.java.isAssignableFrom(type)
 
-        /** The element `Class<*>` of a `List<…>` body/param, or `null` when it isn't a list. */
         private fun Parameter.listElementClassOrNull(): Class<*>? = takeIf { it.isListType() }
             ?.let { (parameterizedType as? ParameterizedType)?.actualTypeArguments?.firstOrNull() as? Class<*> }
 

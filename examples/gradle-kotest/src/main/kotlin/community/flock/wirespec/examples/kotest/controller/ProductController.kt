@@ -7,11 +7,6 @@ import community.flock.wirespec.examples.kotest.generated.model.Error
 import community.flock.wirespec.examples.kotest.service.ProductService
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Implements the Wirespec-generated product `*.Handler` interfaces. The routing annotations
- * (`@GetMapping`, `@PostMapping`) live on those generated interfaces — added by the Spring IR
- * extension — so this controller only supplies behaviour.
- */
 @RestController
 class ProductController(
     private val service: ProductService,

@@ -8,7 +8,6 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-/** Compile-checked `(parent type, field name)` override via a property reference. */
 inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
     property: KProperty1<Parent, V>,
     noinline factory: () -> Gen<*>,
@@ -23,7 +22,6 @@ inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerFiel
     registerFieldByTypeName(typeOf<Parent>().toString(), property.name, value)
 }
 
-/** JVM-side `RefinedWrapper` that wraps a drawn primitive into the matching single-arg Refined wrapper class. */
 internal object JvmRefinedWrapper : RefinedWrapper {
 
     private object NotRefined

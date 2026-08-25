@@ -15,7 +15,6 @@ import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
 
-/** `KotestGenerator` backed by Kotest [Arb]s; not thread-safe, so create one per test. */
 fun kotestGenerator(
     seed: Long = 0L,
     refinedWrapper: RefinedWrapper = IdentityRefinedWrapper,
@@ -28,12 +27,10 @@ fun kotestGenerator(
 class KotestWirespecGeneratorBuilder internal constructor() {
     internal val overrides: OverrideRegistry = OverrideRegistry()
 
-    /** Override the value generated at an exact path; `*` matches any single segment. */
     fun registerPath(vararg segments: String, factory: () -> Gen<*>) {
         overrides.addPath(segments, factory)
     }
 
-    /** Constant-value form of [registerPath]; the `value` argument must be named. */
     fun registerPath(vararg segments: String, value: Any?) {
         overrides.addPath(segments) { Arb.constant(value) }
     }
@@ -241,7 +238,6 @@ internal class KotestWirespecGenerator(
         .firstOrNull { (_, anns) -> anns.any { it["name"] == "Seed" } }
         ?.key
 
-    /** With a regex constraint, matches it verbatim; otherwise a readable `<fieldName>-XXXXXXXX` token. */
     private fun generateString(field: KotestFieldString, path: List<String>, rs: RandomSource): String {
         val prefix = if (field.regex != null) "" else path.lastOrNull().orEmpty() + "-"
         val regex = field.regex ?: "\\w{8}"
@@ -279,7 +275,6 @@ internal class KotestWirespecGenerator(
     private fun KotestField<*>.fieldAnnotations(): List<Map<String, Any>> = (this as? KotestLeafField<*>)?.annotations ?: emptyList()
 }
 
-/** Draws a single value from any [Gen] (both [Arb] and `Exhaustive`), seeded by [rs]. */
 private fun <A> Gen<A>.drawOne(rs: RandomSource): A = generate(rs).first().value
 
 private inline fun <F, R> withFrame(stack: ArrayDeque<F>, frame: F, block: () -> R): R {

@@ -6,7 +6,6 @@ import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
 
-/** Draw one response from [responseGen], serialize it, and stub it on the ambient mock server for requests matching [predicate]. */
 suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> responseMock(
     server: Wirespec.Server<Req, Res>,
     responseGen: Gen<Res>,
