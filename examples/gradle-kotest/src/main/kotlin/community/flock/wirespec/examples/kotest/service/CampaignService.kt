@@ -33,9 +33,8 @@ class CampaignService(
 
     suspend fun list(status: CampaignStatus?): List<Campaign> = repository.findAll(status)
 
-    suspend fun update(id: CampaignId, input: CampaignInput): Campaign? {
-        val existing = repository.findById(id) ?: return null
-        return repository.save(
+    suspend fun update(id: CampaignId, input: CampaignInput): Campaign? = repository.findById(id)?.let { existing ->
+        repository.save(
             existing.copy(
                 name = input.name,
                 discountPercentage = input.discountPercentage,
@@ -44,11 +43,9 @@ class CampaignService(
         )
     }
 
-    suspend fun activate(id: CampaignId): Campaign? {
-        val existing = repository.findById(id) ?: return null
-        val activated = repository.save(existing.copy(status = CampaignStatus.ACTIVE))
-        publisher.publish(activated, CampaignEventType.ACTIVATED)
-        return activated
+    suspend fun activate(id: CampaignId): Campaign? = repository.findById(id)?.let { existing ->
+        repository.save(existing.copy(status = CampaignStatus.ACTIVE))
+            .also { publisher.publish(it, CampaignEventType.ACTIVATED) }
     }
 
     suspend fun delete(id: CampaignId): Boolean = repository.delete(id)

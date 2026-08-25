@@ -155,48 +155,52 @@ internal class KotestWirespecGenerator(
     @Suppress("UNCHECKED_CAST")
     private fun <T> applyOverride(factory: () -> Gen<*>, field: KotestField<T>, path: List<String>): T = refinedWrapper.wrap(factory().drawOne(rsFor(path)), field, path) as T
 
-    private fun captureSeedIfMatches(path: List<String>, field: KotestField<*>): Any? {
-        val capture = captures.lastOrNull() ?: return null
-        if (capture.seed != null) return null
-        val expectedPrefix = capture.shapePath + capture.fieldName
-        if (path.size < expectedPrefix.size || path.subList(0, expectedPrefix.size) != expectedPrefix) return null
-        val rs = rsFor(path)
-        return when (field) {
-            is KotestFieldString -> generateString(field, path, rs).also { capture.seed = it }
-            is KotestFieldInteger64 -> Arb.long((field.min ?: 0)..(field.max ?: Long.MAX_VALUE)).next(rs)
-                .also { capture.seed = it.toString() }
-
-            is KotestFieldInteger32 -> Arb.int((field.min ?: 0)..(field.max ?: Int.MAX_VALUE)).next(rs)
-                .also { capture.seed = it.toString() }
-
-            else -> null
+    private fun captureSeedIfMatches(path: List<String>, field: KotestField<*>): Any? = captures.lastOrNull()
+        ?.takeIf { it.seed == null }
+        ?.takeIf { capture ->
+            val expectedPrefix = capture.shapePath + capture.fieldName
+            path.size >= expectedPrefix.size && path.subList(0, expectedPrefix.size) == expectedPrefix
         }
-    }
+        ?.let { capture ->
+            val rs = rsFor(path)
+            when (field) {
+                is KotestFieldString -> generateString(field, path, rs).also { capture.seed = it }
+                is KotestFieldInteger64 -> Arb.long((field.min ?: 0)..(field.max ?: Long.MAX_VALUE)).next(rs)
+                    .also { capture.seed = it.toString() }
 
-    private fun consumePendingSeedIfMatches(path: List<String>, field: KotestField<*>): Any? {
-        val pending = pendingSeeds.lastOrNull() ?: return null
-        if (path.size != pending.pathPrefix.size + 1) return null
-        if (path.last() != pending.target) return null
-        if (path.subList(0, pending.pathPrefix.size) != pending.pathPrefix) return null
-        return when (field) {
-            is KotestFieldString -> {
-                pendingSeeds.removeLast()
-                pending.value
+                is KotestFieldInteger32 -> Arb.int((field.min ?: 0)..(field.max ?: Int.MAX_VALUE)).next(rs)
+                    .also { capture.seed = it.toString() }
+
+                else -> null
             }
-
-            is KotestFieldInteger64 -> {
-                pendingSeeds.removeLast()
-                pending.value.toLong()
-            }
-
-            is KotestFieldInteger32 -> {
-                pendingSeeds.removeLast()
-                pending.value.toInt()
-            }
-
-            else -> null
         }
-    }
+
+    private fun consumePendingSeedIfMatches(path: List<String>, field: KotestField<*>): Any? = pendingSeeds.lastOrNull()
+        ?.takeIf { pending ->
+            path.size == pending.pathPrefix.size + 1 &&
+                path.last() == pending.target &&
+                path.subList(0, pending.pathPrefix.size) == pending.pathPrefix
+        }
+        ?.let { pending ->
+            when (field) {
+                is KotestFieldString -> {
+                    pendingSeeds.removeLast()
+                    pending.value
+                }
+
+                is KotestFieldInteger64 -> {
+                    pendingSeeds.removeLast()
+                    pending.value.toLong()
+                }
+
+                is KotestFieldInteger32 -> {
+                    pendingSeeds.removeLast()
+                    pending.value.toInt()
+                }
+
+                else -> null
+            }
+        }
 
     private fun seedAnnotationValueFor(field: KotestField<*>, candidate: String): Any? = when (field) {
         is KotestFieldString -> candidate
@@ -224,10 +228,11 @@ internal class KotestWirespecGenerator(
             }
         }
 
-        val candidate = path.dropLast(1).lastOrNull() ?: return null
-        return withFrame(pendingSeeds, PendingSeed(candidate, seedFieldName, path)) {
-            withParentFrame(ParentFrame(field.type.toString())) {
-                withShapeDepth { field.generate(path) }
+        return path.dropLast(1).lastOrNull()?.let { candidate ->
+            withFrame(pendingSeeds, PendingSeed(candidate, seedFieldName, path)) {
+                withParentFrame(ParentFrame(field.type.toString())) {
+                    withShapeDepth { field.generate(path) }
+                }
             }
         }
     }
