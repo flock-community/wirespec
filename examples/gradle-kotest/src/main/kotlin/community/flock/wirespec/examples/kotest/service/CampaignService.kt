@@ -31,7 +31,9 @@ class CampaignService(
 
     suspend fun get(id: CampaignId): Campaign? = repository.findById(id)
 
-    suspend fun list(status: CampaignStatus?): List<Campaign> = repository.findAll(status)
+    suspend fun list(): List<Campaign> = repository.findAll()
+
+    suspend fun list(status: CampaignStatus): List<Campaign> = repository.findAll(status)
 
     suspend fun update(id: CampaignId, input: CampaignInput): Campaign? = repository.findById(id)?.let { existing ->
         repository.save(

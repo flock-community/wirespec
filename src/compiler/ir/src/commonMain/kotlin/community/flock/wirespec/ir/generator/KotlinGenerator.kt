@@ -201,14 +201,14 @@ object KotlinGenerator : Generator {
     }
 
     private fun Struct.emitPlainClass(indent: Int, parents: List<Element>): String {
-        val pascal = name.pascalCase()
+        val name = name.pascalCase()
         val annotationPrefix = annotations.annotationPrefix()
         val visibilityPrefix = visibility.prefix()
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val ctorStr = constructorVisibility?.let { " ${it.prefix().trim()} constructor()" }.orEmpty()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val content = elements.joinToString("") { it.emit(indent + 1, isStatic = false, parents = parents + this) }
-        val header = "$annotationPrefix$visibilityPrefix" + "class $pascal$typeParamsStr$ctorStr$implStr"
+        val header = "$annotationPrefix$visibilityPrefix" + "class $name$typeParamsStr$ctorStr$implStr"
         return if (content.isEmpty()) {
             "$header\n\n".indentCode(indent)
         } else {
@@ -219,7 +219,7 @@ object KotlinGenerator : Generator {
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         if (kind == Struct.Kind.PLAIN_CLASS) return emitPlainClass(indent, parents)
         val fields = fieldList()
-        val pascal = name.pascalCase()
+        val name = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
@@ -237,17 +237,17 @@ object KotlinGenerator : Generator {
             }
             val bodyContent = listOf(fieldProperties, nestedContent).filter { it.isNotEmpty() }.joinToString("\n")
             return if (bodyContent.isEmpty()) {
-                "data object $pascal$implStr\n\n".indentCode(indent)
+                "data object $name$implStr\n\n".indentCode(indent)
             } else {
-                "data object $pascal$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
+                "data object $name$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
             return if (nestedContent.isEmpty()) {
-                "object $pascal$implStr\n\n".indentCode(indent)
+                "object $name$implStr\n\n".indentCode(indent)
             } else {
-                "object $pascal$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
+                "object $name$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
@@ -259,9 +259,9 @@ object KotlinGenerator : Generator {
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
-            "data class $pascal$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+            "data class $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "data class $pascal$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            "data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 

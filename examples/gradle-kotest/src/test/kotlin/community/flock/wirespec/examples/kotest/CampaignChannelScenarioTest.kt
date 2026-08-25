@@ -12,8 +12,10 @@ import community.flock.wirespec.examples.kotest.generated.model.CampaignInput
 import community.flock.wirespec.examples.kotest.generated.model.CampaignStatus
 import community.flock.wirespec.examples.kotest.kafka.CAMPAIGN_EVENTS_TOPIC
 import community.flock.wirespec.kotlin.Wirespec
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.testContextManager
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -113,14 +115,12 @@ private suspend inline fun <reified T : Any> awaitEvent(
     return withContext(Dispatchers.IO) {
         eventConsumer(bootstrapServers).use { consumer ->
             consumer.subscribe(listOf(topic))
-            val deadline = System.nanoTime() + timeout.inWholeNanoseconds
-            while (System.nanoTime() < deadline) {
-                consumer.poll(ofMillis(500)).forEach { record ->
-                    val event = serialization.deserializeBody<T>(record.value(), typeOf<T>())
-                    if (predicate(event)) return@use event
-                }
+            eventually(timeout) {
+                consumer.poll(ofMillis(500))
+                    .map { serialization.deserializeBody<T>(it.value(), typeOf<T>()) }
+                    .firstOrNull { predicate(it) }
+                    .shouldNotBeNull()
             }
-            error("No matching ${T::class.simpleName} arrived on $topic within $timeout")
         }
     }
 }

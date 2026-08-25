@@ -14,9 +14,9 @@ class CampaignRepository {
 
     suspend fun findById(id: CampaignId): Campaign? = store[id.value]
 
-    suspend fun findAll(status: CampaignStatus?): List<Campaign> = store.values
-        .filter { status == null || it.status == status }
-        .toList()
+    suspend fun findAll(): List<Campaign> = store.values.toList()
+
+    suspend fun findAll(status: CampaignStatus): List<Campaign> = store.values.filter { it.status == status }
 
     suspend fun delete(id: CampaignId): Boolean = store.remove(id.value) != null
 }
