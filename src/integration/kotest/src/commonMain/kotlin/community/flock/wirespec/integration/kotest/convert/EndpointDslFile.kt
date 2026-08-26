@@ -1,0 +1,619 @@
+package community.flock.wirespec.integration.kotest.convert
+
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.ir.converter.convert
+import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FileBuilder
+import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Name
+import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.Visibility
+import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.ir.generator.escapeKotlinIdentifier
+import community.flock.wirespec.ir.core.Type as IrType
+
+internal object EndpointDslFile {
+
+    fun build(
+        endpoint: Endpoint,
+        packageName: PackageName,
+        types: Map<String, Type> = emptyMap(),
+        refined: Map<String, Refined> = emptyMap(),
+    ): File {
+        val shape = EndpointShape.from(endpoint, types, refined)
+        val present = presentSlots(shape)
+        val required = requiredSlots(shape)
+        val kotestPkg = "${packageName.value}.kotest"
+        val endpointPkg = "${packageName.value}.endpoint"
+        val modelPkg = "${packageName.value}.model"
+        val fileName = PackageName(kotestPkg).toDir() + "${shape.name}Dsl"
+
+        return file(Name.of(fileName)) {
+            `package`(kotestPkg)
+
+            import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "requestCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
+            if (shape.responseVariants.isNotEmpty()) {
+                import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
+                import("community.flock.wirespec.integration.kotest.dsl", "responseMock")
+            }
+            if (shape.bodyFieldShapes.isNotEmpty() || shape.bodyKind == EndpointShape.BodyKind.Primitive) {
+                import("community.flock.wirespec.integration.kotest.dsl", "draw")
+            }
+            import(endpointPkg, shape.name)
+            import("io.kotest.property", "Gen")
+            import("io.kotest.property", "Arb")
+            val isListBody = shape.bodyKind == EndpointShape.BodyKind.List
+            val needsArbConstant = (shape.pathFields + shape.queryFields + shape.headerFields).any { it.isNullable } ||
+                present.isNotEmpty() ||
+                shape.bodyKind == EndpointShape.BodyKind.Primitive ||
+                shape.responseVariants.any { it.bodyType != null || it.headerFields.isNotEmpty() }
+            if (isListBody) {
+                import("io.kotest.property.arbitrary", "int")
+            }
+            if (needsArbConstant) {
+                import("io.kotest.property.arbitrary", "constant")
+            }
+            shape.modelImports.forEach { import(modelPkg, Name.of(it).pascalCase()) }
+
+            buildGenerateWrapper(shape)
+            property(
+                name = "generate",
+                type = IrType.Custom("${shape.name}Generate"),
+                visibility = Visibility.PUBLIC,
+                receiver = IrType.Custom(shape.name),
+                getter = FunctionCall(name = Name.of("${shape.name}Generate")),
+            )
+            buildRequestCall(shape)
+            if (shape.responseVariants.isNotEmpty()) {
+                buildResponseMock(shape)
+            }
+            buildScopeClass(shape, present, required)
+            shape.responseVariants.forEach { variant -> buildResponseScope(shape, variant) }
+            present.forEach { slot -> buildSlotBuilder(shape, slot) }
+        }
+    }
+
+    private data class Slot(val name: String, val genFn: String, val fields: List<EndpointShape.NamedTypedField>)
+
+    private fun presentSlots(shape: EndpointShape): List<Slot> = listOf(
+        Slot("path", "pathGen", shape.pathFields),
+        Slot("query", "queryGen", shape.queryFields),
+        Slot("header", "headerGen", shape.headerFields),
+    ).filter { it.fields.isNotEmpty() }
+
+    private fun requiredSlots(shape: EndpointShape): List<Slot> = presentSlots(shape).filter { slot -> slot.fields.any { !it.isNullable } }
+
+    private fun cap(name: String): String = name.replaceFirstChar(Char::uppercaseChar)
+
+    private fun slotBuilderName(shape: EndpointShape, slot: Slot): String = "${shape.name}${cap(slot.name)}Builder"
+
+    private fun genOf(inner: IrType): IrType = IrType.Custom("Gen", listOf(inner))
+    private fun genOf(inner: String): IrType = genOf(IrType.Custom(inner))
+    private fun arbOf(inner: IrType): IrType = IrType.Custom("Arb", listOf(inner))
+    private fun arbOf(inner: String): IrType = arbOf(IrType.Custom(inner))
+    private fun genNullableOf(inner: IrType): IrType = IrType.Nullable(genOf(inner))
+    private fun genNullableOf(inner: String): IrType = genNullableOf(IrType.Custom(inner))
+    private fun blockType(builder: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(builder))
+    private fun suspendScopeType(scope: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(scope), isAsync = true)
+
+    private fun FileBuilder.buildGenerateWrapper(shape: EndpointShape) {
+        struct("${shape.name}Generate") {
+            plainClass()
+            visibility(Visibility.PUBLIC)
+            constructorVisibility(Visibility.INTERNAL)
+            asyncFunction("request") {
+                visibility(Visibility.PUBLIC)
+                arg("block", suspendScopeType("${shape.name}Scope"))
+                returnType(arbOf("${shape.name}.Request"))
+                assign("scope", FunctionCall(name = Name.of("${shape.name}Scope")))
+                functionCall("block", receiver = VariableReference("scope"))
+                returns(FunctionCall(receiver = VariableReference("scope"), name = Name.of("buildRequest")))
+            }
+            shape.responseVariants.forEach { variant ->
+                val scopeName = "${shape.name}${variant.className}Scope"
+                function("response${variant.status}") {
+                    visibility(Visibility.PUBLIC)
+                    arg("block", blockType(scopeName), rawExpr("{}"))
+                    returnType(arbOf("${shape.name}.${variant.className}"))
+                    returns(rawExpr("$scopeName().apply(block).build()"))
+                }
+            }
+        }
+    }
+
+    private fun FileBuilder.buildRequestCall(shape: EndpointShape) {
+        asyncFunction("call") {
+            visibility(Visibility.PUBLIC)
+            receiver(genOf("${shape.name}.Request"))
+            returnType(IrType.Custom("${shape.name}.Response<*>"))
+            returns(rawExpr("requestCall(${shape.name}.Handler, ${shape.name}, this)"))
+        }
+    }
+
+    private fun FileBuilder.buildResponseMock(shape: EndpointShape) {
+        asyncFunction("mock") {
+            visibility(Visibility.PUBLIC)
+            receiver(genOf("${shape.name}.Response<*>"))
+            arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
+            returnType(IrType.Unit)
+            returns(rawExpr("responseMock(${shape.name}.Handler, this, predicate)"))
+        }
+    }
+
+    private fun FileBuilder.buildResponseScope(shape: EndpointShape, variant: EndpointShape.ResponseVariantShape) {
+        val scopeName = "${shape.name}${variant.className}Scope"
+        val variantType = "${shape.name}.${variant.className}"
+        val bodyType = variant.bodyType?.takeIf { variant.bodyKind != EndpointShape.BodyKind.None }
+
+        struct(scopeName) {
+            plainClass()
+            annotation("@WirespecScenarioDsl")
+            visibility(Visibility.PUBLIC)
+            constructorVisibility(Visibility.INTERNAL)
+            raw("private val inner = responseCall(${shape.name}, $variantType::class)")
+            if (bodyType != null) {
+                property("body", genNullableOf(bodyType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter("body", bodyType)
+            }
+            variant.headerFields.forEach { f ->
+                property(f.name, genNullableOf(f.type), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter(f.name, f.type)
+            }
+            function("build") {
+                visibility(Visibility.PUBLIC)
+                returnType(arbOf(variantType))
+                if (bodyType != null) {
+                    raw("body?.let { inner.body(it) }")
+                }
+                variant.headerFields.forEach { f ->
+                    raw("${f.name.escapeKotlinIdentifier()}?.let { inner.headerGen(\"${f.name}\", it) }")
+                }
+                raw("@Suppress(\"UNCHECKED_CAST\")")
+                returns(cast(FunctionCall(receiver = VariableReference("inner"), name = Name.of("buildGen")), arbOf(variantType)))
+            }
+        }
+    }
+
+    private fun FileBuilder.buildScopeClass(shape: EndpointShape, present: List<Slot>, required: List<Slot>) {
+        struct("${shape.name}Scope") {
+            plainClass()
+            annotation("@WirespecScenarioDsl")
+            visibility(Visibility.PUBLIC)
+            constructorVisibility(Visibility.INTERNAL)
+            raw("private val inner = endpointCall(${shape.name}.Handler, ${shape.name})")
+            present.forEach { slot ->
+                val builderClass = slotBuilderName(shape, slot)
+                property(slot.name, IrType.Nullable(blockType(builderClass)), isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("null"))
+                function(slot.name) {
+                    visibility(Visibility.PUBLIC)
+                    arg("block", blockType(builderClass))
+                    raw("this.${slot.name} = block")
+                }
+            }
+            if (shape.bodyFieldShapes.isNotEmpty()) {
+                val builderName = RecordBuilder.builderName(shape.requireBodyElementType())
+                property("body", IrType.Nullable(blockType(builderName)), isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("null"))
+                function("body") {
+                    visibility(Visibility.PUBLIC)
+                    arg("block", blockType(builderName))
+                    raw("this.body = block")
+                }
+                if (shape.bodyKind == EndpointShape.BodyKind.List) {
+                    property("bodyCount", IrType.Custom("IntRange"), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("1..3"))
+                }
+            }
+            if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
+                val bodyType = shape.requireBodyPrimitiveType()
+                property("body", genNullableOf(bodyType), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter("body", bodyType)
+            }
+            property("flushed", IrType.Boolean, isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("false"))
+            function("flush") {
+                visibility(Visibility.PRIVATE)
+                raw(renderFlushBody(shape, present, required).trimEnd())
+            }
+            function("buildRequest") {
+                visibility(Visibility.PUBLIC)
+                returnType(arbOf("${shape.name}.Request"))
+                raw("flush()")
+                returns(rawExpr("inner.buildRequestGen()"))
+            }
+        }
+    }
+
+    private fun renderFlushBody(shape: EndpointShape, present: List<Slot>, required: List<Slot>): String = buildString {
+        val requiredNames = required.map { it.name }.toSet()
+        appendLine("if (flushed) return")
+        appendLine("flushed = true")
+        present.forEach { slot ->
+            val builderClass = slotBuilderName(shape, slot)
+            val builderVar = "${slot.name}Builder"
+            if (slot.name in requiredNames) {
+                appendLine("val $builderVar = $builderClass().apply(${slot.name} ?: error(\"${shape.name}: required `${slot.name}` block is missing\"))")
+                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "")) }
+            } else {
+                appendLine("val $builderVar = ${slot.name}?.let { block -> $builderClass().apply(block) }")
+                slot.fields.forEach { f -> appendLine(registerLine(shape, slot, builderVar, f, "", nullableBuilder = true)) }
+            }
+        }
+        if (shape.bodyFieldShapes.isNotEmpty()) {
+            val builderName = RecordBuilder.builderName(shape.requireBodyElementType())
+            val isList = shape.bodyKind == EndpointShape.BodyKind.List
+            val elementType = shape.bodyElementType
+            appendLine("body?.let { block ->")
+            appendLine("    val builder = $builderName().apply(block)")
+            if (isList) {
+                appendLine("    inner.bodyListSize(Arb.int(bodyCount))")
+            }
+            appendLine("    inner.bodyTransform { rawBase, rs ->")
+            if (isList) {
+                appendLine("        @Suppress(\"UNCHECKED_CAST\")")
+                appendLine("        (rawBase as List<$elementType>).map { base ->")
+                appendBodyCopy("base", "builder", shape, indent = "            ")
+                appendLine("        }")
+            } else {
+                appendLine("        val base = rawBase as $elementType")
+                appendBodyCopy("base", "builder", shape, indent = "        ")
+            }
+            appendLine("    }")
+            appendLine("}")
+        }
+        if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
+            appendLine("body?.let { gen ->")
+            appendLine("    inner.bodyTransform { _, rs -> gen.draw(rs) }")
+            appendLine("}")
+        }
+    }
+
+    private fun registerLine(
+        shape: EndpointShape,
+        slot: Slot,
+        builderVar: String,
+        field: EndpointShape.NamedTypedField,
+        indent: String,
+        nullableBuilder: Boolean = false,
+    ): String {
+        val access = if (nullableBuilder) "?." else "."
+        val ref = "$builderVar$access${field.name.escapeKotlinIdentifier()}"
+        val fallback = if (field.isNullable) {
+            "Arb.constant(null)"
+        } else {
+            "error(\"${shape.name}.${slot.name}: required `${field.name}` is missing\")"
+        }
+        return "${indent}inner.${slot.genFn}(\"${field.name}\", $ref ?: $fallback)"
+    }
+
+    private fun FileBuilder.buildSlotBuilder(shape: EndpointShape, slot: Slot) {
+        struct(slotBuilderName(shape, slot)) {
+            plainClass()
+            annotation("@WirespecScenarioDsl")
+            visibility(Visibility.PUBLIC)
+            slot.fields.forEach { f ->
+                property(f.name, genNullableOf(f.type), isMutable = true, visibility = Visibility.PUBLIC, initializer = rawExpr("null"))
+                valueSetter(f.name, f.type)
+            }
+        }
+    }
+
+    private fun StringBuilder.appendBodyCopy(
+        baseExpr: String,
+        receiver: String,
+        shape: EndpointShape,
+        indent: String,
+    ) {
+        appendLine("$indent$baseExpr.copy(")
+        shape.bodyFieldShapes.forEach { f ->
+            appendLine("$indent    ${f.name.escapeKotlinIdentifier()} = ${copyValueExpr(f, baseExpr, receiver)},")
+        }
+        appendLine("$indent)")
+    }
+
+    private fun copyValueExpr(
+        field: EndpointShape.BodyFieldShape,
+        baseExpr: String,
+        receiver: String,
+    ): String {
+        val fieldRef = field.name.escapeKotlinIdentifier()
+        val baseField = "$baseExpr.$fieldRef"
+        return when (field) {
+            is EndpointShape.BodyFieldShape.Primitive ->
+                "$receiver.$fieldRef.let { gen -> if (gen == null) $baseField else ${wrapDrawn("gen.draw(rs)", field)} }"
+            is EndpointShape.BodyFieldShape.NestedObject ->
+                nestedCopyExpr(field.name, field.typeName, field.fields, baseExpr, receiver, isList = false)
+            is EndpointShape.BodyFieldShape.NestedList ->
+                nestedCopyExpr(field.name, field.elementTypeName, field.fields, baseExpr, receiver, isList = true)
+        }
+    }
+
+    private fun nestedCopyExpr(
+        fieldName: String,
+        nestedTypeName: String,
+        fields: List<EndpointShape.BodyFieldShape>,
+        baseExpr: String,
+        receiver: String,
+        isList: Boolean,
+    ): String {
+        val fieldRef = fieldName.escapeKotlinIdentifier()
+        val blockRef = "_${fieldName}Block".escapeKotlinIdentifier()
+        val baseField = "$baseExpr.$fieldRef"
+        val nestedBuilder = RecordBuilder.builderName(nestedTypeName)
+        val nestedVar = "nested_$fieldName".escapeKotlinIdentifier()
+        val elemVar = "${if (isList) "elem" else "base"}_$fieldName".escapeKotlinIdentifier()
+        val overBase = if (isList) "?.map" else "?.let"
+        val subs = fields.joinToString(", ") {
+            "${it.name.escapeKotlinIdentifier()} = ${copyValueExpr(it, elemVar, nestedVar)}"
+        }
+        return "$receiver.$fieldRef.let { gen -> if (gen != null) gen.draw(rs) else " +
+            "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
+            "$baseField$overBase { $elemVar -> $elemVar.copy($subs) } } ?: $baseField }"
+    }
+
+    private fun wrapDrawn(drawn: String, field: EndpointShape.BodyFieldShape.Primitive): String {
+        val refined = field.refinedTypeName ?: return drawn
+        return when {
+            field.isList && field.isNullable -> "$drawn?.map { $refined(it) }"
+            field.isList -> "$drawn.map { $refined(it) }"
+            field.isNullable -> "$drawn?.let { $refined(it) }"
+            else -> "$refined($drawn)"
+        }
+    }
+
+    private fun EndpointShape.requireBodyElementType(): String = bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for $name")
+
+    private fun EndpointShape.requireBodyPrimitiveType(): IrType = bodyPrimitiveType ?: error("BodyKind.Primitive but no bodyPrimitiveType for $name")
+}
+
+internal data class EndpointShape(
+    val name: String,
+    val pathFields: List<NamedTypedField>,
+    val queryFields: List<NamedTypedField>,
+    val headerFields: List<NamedTypedField>,
+    val bodyKind: BodyKind,
+    val bodyElementType: String?,
+    val bodyPrimitiveType: IrType?,
+    val bodyFieldShapes: List<BodyFieldShape>,
+    val responseVariants: List<ResponseVariantShape>,
+    val modelImports: List<String>,
+) {
+    data class NamedTypedField(val name: String, val type: IrType, val isNullable: Boolean = false)
+
+    data class ResponseVariantShape(
+        val status: String,
+        val className: String,
+        val bodyKind: BodyKind,
+        val bodyType: IrType?,
+        val bodyElementType: String?,
+        val headerFields: List<NamedTypedField>,
+    )
+
+    enum class BodyKind { None, Object, List, Primitive }
+
+    sealed interface BodyFieldShape {
+        val name: String
+
+        data class Primitive(
+            override val name: String,
+            val type: IrType,
+            val refinedTypeName: String? = null,
+            val isList: Boolean = false,
+            val isNullable: Boolean = false,
+        ) : BodyFieldShape
+        data class NestedObject(
+            override val name: String,
+            val typeName: String,
+            val fields: List<BodyFieldShape>,
+        ) : BodyFieldShape
+        data class NestedList(
+            override val name: String,
+            val elementTypeName: String,
+            val fields: List<BodyFieldShape>,
+        ) : BodyFieldShape
+    }
+
+    companion object {
+        fun from(
+            endpoint: Endpoint,
+            types: Map<String, Type> = emptyMap(),
+            refined: Map<String, Refined> = emptyMap(),
+        ): EndpointShape {
+            val pathFields = endpoint.path
+                .filterIsInstance<Endpoint.Segment.Param>()
+                .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
+            val queryFields = endpoint.queries
+                .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
+            val headerFields = endpoint.headers
+                .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
+            val bodyRef = endpoint.requests.firstOrNull()?.content?.reference
+            val (bodyKind, bodyElementType) = classifyBody(bodyRef)
+            val bodyPrimitiveType = bodyRef
+                ?.takeIf { bodyKind == BodyKind.Primitive }
+                ?.convert()
+                ?.let { if (it is IrType.Nullable) it.type else it }
+
+            val bodyFieldShapes: List<BodyFieldShape> = bodyElementType
+                ?.let { extractBodyFields(it, types, refined, visited = emptySet()) }
+                ?: emptyList()
+
+            val responseVariants = endpoint.responses
+                .mapNotNull { response ->
+                    val status = response.status.takeIf { it.all(Char::isDigit) } ?: return@mapNotNull null
+                    val respBodyRef = response.content?.reference
+                    val respBodyType = respBodyRef?.let { if (it is Reference.Unit) null else it.convert() }
+                    val (respBodyKind, respElementName) = classifyBody(respBodyRef)
+                    ResponseVariantShape(
+                        status = status,
+                        className = "Response$status",
+                        bodyKind = respBodyKind,
+                        bodyType = respBodyType,
+                        bodyElementType = respElementName,
+                        headerFields = response.headers.map {
+                            NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable)
+                        },
+                    )
+                }
+                .distinctBy { it.status }
+
+            val refs = buildList {
+                endpoint.path.filterIsInstance<Endpoint.Segment.Param>().forEach { add(it.reference) }
+                endpoint.queries.forEach { add(it.reference) }
+                endpoint.headers.forEach { add(it.reference) }
+                if (bodyRef != null) add(bodyRef)
+                endpoint.responses.forEach { response ->
+                    response.content?.reference?.let { add(it) }
+                    response.headers.forEach { add(it.reference) }
+                }
+            }
+            val bodyFieldRefs = bodyElementType
+                ?.let { types[it] }
+                ?.shape?.value
+                ?.map { it.reference }
+                ?: emptyList()
+            val modelImports = modelImportsFor(refs + bodyFieldRefs, bodyFieldShapes, types)
+
+            return EndpointShape(
+                name = Name.of(endpoint.identifier.value).pascalCase(),
+                pathFields = pathFields,
+                queryFields = queryFields,
+                headerFields = headerFields,
+                bodyKind = bodyKind,
+                bodyElementType = bodyElementType,
+                bodyPrimitiveType = bodyPrimitiveType,
+                bodyFieldShapes = bodyFieldShapes,
+                responseVariants = responseVariants,
+                modelImports = modelImports,
+            )
+        }
+
+        private fun classifyBody(reference: Reference?): Pair<BodyKind, String?> = when (reference) {
+            null, is Reference.Unit -> BodyKind.None to null
+            is Reference.Custom -> BodyKind.Object to reference.value
+            is Reference.Iterable -> (reference.reference as? Reference.Custom)
+                ?.let { BodyKind.List to it.value }
+                ?: (BodyKind.None to null)
+            is Reference.Primitive -> BodyKind.Primitive to null
+            else -> BodyKind.None to null
+        }
+
+        internal fun modelImportsFor(
+            refs: List<Reference>,
+            fieldShapes: List<BodyFieldShape>,
+            types: Map<String, Type>,
+        ): List<String> = (
+            refs.flatMap(::collectCustomNames) +
+                collectNestedTypeNames(fieldShapes) +
+                collectFieldTypeNames(fieldShapes, types)
+            ).distinct()
+
+        private fun collectCustomNames(reference: Reference): List<String> = when (reference) {
+            is Reference.Custom -> listOf(reference.value)
+            is Reference.Iterable -> collectCustomNames(reference.reference)
+            is Reference.Dict -> collectCustomNames(reference.reference)
+            else -> emptyList()
+        }
+
+        private val BodyFieldShape.nestedTypeName: String?
+            get() = when (this) {
+                is BodyFieldShape.NestedObject -> typeName
+                is BodyFieldShape.NestedList -> elementTypeName
+                is BodyFieldShape.Primitive -> null
+            }
+
+        private val BodyFieldShape.childFields: List<BodyFieldShape>
+            get() = when (this) {
+                is BodyFieldShape.NestedObject -> fields
+                is BodyFieldShape.NestedList -> fields
+                is BodyFieldShape.Primitive -> emptyList()
+            }
+
+        private fun collectNestedTypeNames(fields: List<BodyFieldShape>): List<String> = fields.flatMap { f ->
+            listOfNotNull(f.nestedTypeName) + collectNestedTypeNames(f.childFields)
+        }
+
+        private fun collectFieldTypeNames(
+            fields: List<BodyFieldShape>,
+            types: Map<String, Type>,
+        ): List<String> = fields.flatMap { f ->
+            val nestedFieldRefs = f.nestedTypeName
+                ?.let { types[it]?.shape?.value?.flatMap { field -> collectCustomNames(field.reference) } }
+                ?: emptyList()
+            nestedFieldRefs + collectFieldTypeNames(f.childFields, types)
+        }
+
+        internal fun extractBodyFields(
+            typeName: String,
+            types: Map<String, Type>,
+            refined: Map<String, Refined>,
+            visited: Set<String>,
+        ): List<BodyFieldShape> {
+            if (typeName in visited) return emptyList()
+            val type = types[typeName] ?: return emptyList()
+            val nextVisited = visited + typeName
+            return type.shape.value.map { field ->
+                val name = field.identifier.value
+                when (val ref = field.reference) {
+                    is Reference.Custom -> if (ref.value in types) {
+                        BodyFieldShape.NestedObject(
+                            name = name,
+                            typeName = ref.value,
+                            fields = extractBodyFields(ref.value, types, refined, nextVisited),
+                        )
+                    } else {
+                        primitiveOf(name, ref, refined)
+                    }
+                    is Reference.Iterable -> {
+                        val inner = ref.reference
+                        if (inner is Reference.Custom && inner.value in types) {
+                            BodyFieldShape.NestedList(
+                                name = name,
+                                elementTypeName = inner.value,
+                                fields = extractBodyFields(inner.value, types, refined, nextVisited),
+                            )
+                        } else {
+                            primitiveOf(name, ref, refined)
+                        }
+                    }
+                    else -> primitiveOf(name, ref, refined)
+                }
+            }
+        }
+
+        private fun primitiveOf(
+            name: String,
+            ref: Reference,
+            refined: Map<String, Refined>,
+        ): BodyFieldShape.Primitive {
+            val (refinedTypeName, isList) = when {
+                ref is Reference.Custom && ref.value in refined -> ref.value to false
+                ref is Reference.Iterable -> {
+                    val inner = ref.reference
+                    if (inner is Reference.Custom && inner.value in refined) inner.value to true else null to false
+                }
+                else -> null to false
+            }
+            return BodyFieldShape.Primitive(
+                name = name,
+                type = mapWithRefinedUnwrap(ref, refined),
+                refinedTypeName = refinedTypeName,
+                isList = isList,
+                isNullable = ref.isNullable,
+            )
+        }
+
+        private fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): IrType = when (reference) {
+            is Reference.Custom -> refined[reference.value]
+                ?.let { r -> r.reference.copy(isNullable = reference.isNullable).convert() }
+                ?: reference.convert()
+            is Reference.Iterable -> IrType.Array(mapWithRefinedUnwrap(reference.reference, refined))
+                .let { if (reference.isNullable) IrType.Nullable(it) else it }
+            is Reference.Dict -> IrType.Dict(IrType.String, mapWithRefinedUnwrap(reference.reference, refined))
+                .let { if (reference.isNullable) IrType.Nullable(it) else it }
+            else -> reference.convert()
+        }
+    }
+}

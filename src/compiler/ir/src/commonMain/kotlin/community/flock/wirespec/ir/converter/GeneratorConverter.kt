@@ -366,7 +366,21 @@ private fun buildLeafExpr(
             ),
         ),
     )
-    is ReferenceWirespec.Any, is ReferenceWirespec.Unit -> NullLiteral
+    is ReferenceWirespec.Any -> FunctionCall(
+        receiver = VariableReference(Name.of("generator")),
+        name = Name.of("generate"),
+        arguments = mapOf(
+            Name.of("path") to pathExpr,
+            Name.of("field") to ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldString"),
+                namedArguments = mapOf(
+                    Name.of("regex") to NullableEmpty,
+                    Name.of("annotations") to annotationsToIrList(annotations),
+                ),
+            ),
+        ),
+    )
+    is ReferenceWirespec.Unit -> NullLiteral
 }
 
 private fun ReferenceWirespec.toGeneratorExpression(

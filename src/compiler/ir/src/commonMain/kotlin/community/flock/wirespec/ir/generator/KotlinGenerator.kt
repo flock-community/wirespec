@@ -55,6 +55,7 @@ import community.flock.wirespec.ir.core.TypeDescriptor
 import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.Union
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.annotatedFields
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
@@ -64,6 +65,8 @@ object KotlinGenerator : Generator {
         is File -> emitFile(element)
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
+
+    fun generateType(type: Type): String = type.emitGenerics()
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -95,8 +98,7 @@ object KotlinGenerator : Generator {
             staticContent + "${modifier}fun main() {\n$content}\n\n".indentCode(indent)
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
-        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
-        is Field -> ""
+        is Field -> emitProperty(indent)
         is RawElement -> "$code\n".indentCode(indent)
     }
 
@@ -177,9 +179,47 @@ object KotlinGenerator : Generator {
         }
     }
 
+    private fun Field.emitProperty(indent: Int): String {
+        val isProperty = isMutable ||
+            visibility != null ||
+            annotations.isNotEmpty() ||
+            receiver != null ||
+            initializer != null ||
+            getter != null
+        if (!isProperty) return ""
+        val annotationPrefix = annotations.annotationPrefix()
+        val visibilityPrefix = visibility.prefix()
+        val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
+        val keyword = if (isMutable) "var" else "val"
+        val receiverStr = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
+        val signature = "$annotationPrefix$visibilityPrefix$overridePrefix$keyword $receiverStr${name.value().escapeKotlinIdentifier()}: ${type.emitGenerics()}"
+        return when {
+            getter != null -> "$signature\n${"get() = ${getter.emit()}".indentCode(1)}\n\n".indentCode(indent)
+            initializer != null -> "$signature = ${initializer.emit()}\n\n".indentCode(indent)
+            else -> "$signature\n\n".indentCode(indent)
+        }
+    }
+
+    private fun Struct.emitPlainClass(indent: Int, parents: List<Element>): String {
+        val name = name.pascalCase()
+        val annotationPrefix = annotations.annotationPrefix()
+        val visibilityPrefix = visibility.prefix()
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
+        val ctorStr = constructorVisibility?.let { " ${it.prefix().trim()} constructor()" }.orEmpty()
+        val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
+        val content = elements.joinToString("") { it.emit(indent + 1, isStatic = false, parents = parents + this) }
+        val header = "$annotationPrefix$visibilityPrefix" + "class $name$typeParamsStr$ctorStr$implStr"
+        return if (content.isEmpty()) {
+            "$header\n\n".indentCode(indent)
+        } else {
+            "$header {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+        }
+    }
+
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
+        if (kind == Struct.Kind.PLAIN_CLASS) return emitPlainClass(indent, parents)
         val fields = fieldList()
-        val pascal = name.pascalCase()
+        val name = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
@@ -197,17 +237,17 @@ object KotlinGenerator : Generator {
             }
             val bodyContent = listOf(fieldProperties, nestedContent).filter { it.isNotEmpty() }.joinToString("\n")
             return if (bodyContent.isEmpty()) {
-                "data object $pascal$implStr\n\n".indentCode(indent)
+                "data object $name$implStr\n\n".indentCode(indent)
             } else {
-                "data object $pascal$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
+                "data object $name$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
             return if (nestedContent.isEmpty()) {
-                "object $pascal$implStr\n\n".indentCode(indent)
+                "object $name$implStr\n\n".indentCode(indent)
             } else {
-                "object $pascal$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
+                "object $name$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
@@ -219,9 +259,9 @@ object KotlinGenerator : Generator {
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
-            "data class $pascal$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+            "data class $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "data class $pascal$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            "data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -249,16 +289,20 @@ object KotlinGenerator : Generator {
     }
 
     private fun AstFunction.emit(indent: Int, @Suppress("UNUSED_PARAMETER") parents: List<Element>): String {
+        val annotationPrefix = annotations.annotationPrefix()
+        val visibilityPrefix = visibility.prefix()
         val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
         val suspendPrefix = "suspend ".takeIf { isAsync }.orEmpty()
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", "> ") { it.emit() }
+        val receiverStr = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
         val rType = when {
             isAsync -> returnType?.emitGenerics() ?: "Unit"
             else -> returnType?.takeIf { it != Type.Unit }?.emitGenerics()
         }
         val returnTypeStr = rType?.let { ": $it" }.orEmpty()
         val params = parameters.joinToString(", ") { it.emit(0) }
-        val signature = "$overridePrefix${suspendPrefix}fun $typeParamsStr${name.camelCase()}($params)$returnTypeStr"
+        val nameStr = if (visibility != null) name.value().escapeKotlinIdentifier() else name.camelCase()
+        val signature = "$annotationPrefix$visibilityPrefix$overridePrefix${suspendPrefix}fun $typeParamsStr$receiverStr$nameStr($params)$returnTypeStr"
 
         return when {
             body.isEmpty() -> "$signature\n".indentCode(indent)
@@ -273,7 +317,20 @@ object KotlinGenerator : Generator {
         }
     }
 
-    private fun Parameter.emit(indent: Int): String = "${name.camelCase().sanitize()}: ${type.emitGenerics()}".indentCode(indent)
+    private fun Parameter.emit(indent: Int): String {
+        val defaultStr = default?.let { " = ${it.emit()}" }.orEmpty()
+        return "${name.camelCase().sanitize()}: ${type.emitGenerics()}$defaultStr".indentCode(indent)
+    }
+
+    private fun Visibility?.prefix(): String = when (this) {
+        Visibility.PUBLIC -> "public "
+        Visibility.INTERNAL -> "internal "
+        Visibility.PRIVATE -> "private "
+        Visibility.PROTECTED -> "protected "
+        null -> ""
+    }
+
+    private fun List<String>.annotationPrefix(): String = joinToString("") { "$it\n" }
 
     private fun TypeParameter.emit(): String {
         val bounds = extends.takeUnless { it.isEmpty() }?.joinToString(" & ") { it.emitGenerics() } ?: "Any"
@@ -301,10 +358,17 @@ object KotlinGenerator : Generator {
         is Type.Array -> "List"
         is Type.Dict -> "Map"
         is Type.Custom -> name.referenceName()
-        is Type.Nullable -> "${type.emitGenerics()}?"
+        is Type.Nullable -> type.emitNullableInner()
         is Type.IntegerLiteral -> "Int"
         is Type.StringLiteral -> "String"
-        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
+        is Type.Function -> emitFunctionType()
+    }
+
+    private fun Type.Function.emitFunctionType(): String {
+        val suspendPrefix = "suspend ".takeIf { isAsync }.orEmpty()
+        val receiverPrefix = receiver?.let { "${it.emitGenerics()}." }.orEmpty()
+        val params = parameterTypes.joinToString(", ") { it.emitGenerics() }
+        return "$suspendPrefix$receiverPrefix($params) -> ${returnType.emitGenerics()}"
     }
 
     private fun Type.emitGenerics(): String = when (this) {
@@ -318,9 +382,14 @@ object KotlinGenerator : Generator {
             }
         }
 
-        is Type.Nullable -> "${type.emitGenerics()}?"
-        is Type.Function -> "(${parameterTypes.joinToString(", ") { it.emitGenerics() }}) -> ${returnType.emitGenerics()}"
+        is Type.Nullable -> type.emitNullableInner()
+        is Type.Function -> emitFunctionType()
         else -> emit()
+    }
+
+    private fun Type.emitNullableInner(): String = when (this) {
+        is Type.Function -> "(${emitFunctionType()})?"
+        else -> "${emitGenerics()}?"
     }
 
     private fun ConstructorStatement.formatArgs(): String {
@@ -532,6 +601,10 @@ object KotlinGenerator : Generator {
 }
 
 private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "`$this`" else this
+
+private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
+
+fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in reservedKeywords) this else "`$this`"
 
 private val reservedKeywords = setOf(
     "as", "break", "class", "continue", "do",

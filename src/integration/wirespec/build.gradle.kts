@@ -122,7 +122,7 @@ val generateWirespecRuntime = tasks.register<JavaExec>("generateWirespecRuntime"
     )
 }
 
-kotlin.sourceSets.named("jvmMain") {
+kotlin.sourceSets.named("commonMain") {
     kotlin.srcDir(files(generatedKotlinDir).builtBy(generateWirespecRuntime))
 }
 

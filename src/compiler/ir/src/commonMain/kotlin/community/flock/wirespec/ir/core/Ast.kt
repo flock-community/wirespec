@@ -60,6 +60,13 @@ enum class Precision {
     P64,
 }
 
+enum class Visibility {
+    PUBLIC,
+    INTERNAL,
+    PRIVATE,
+    PROTECTED,
+}
+
 sealed interface Type {
     data class Integer(val precision: Precision = Precision.P32) : Type
     data class Number(val precision: Precision = Precision.P64) : Type
@@ -90,7 +97,13 @@ sealed interface Type {
     data class Nullable(val type: Type) : Type
     data class IntegerLiteral(val value: Int) : Type
     data class StringLiteral(val value: kotlin.String) : Type
-    data class Function(val parameterTypes: List<Type>, val returnType: Type) : Type
+
+    data class Function(
+        val parameterTypes: List<Type>,
+        val returnType: Type,
+        val receiver: Type? = null,
+        val isAsync: kotlin.Boolean = false,
+    ) : Type
 }
 
 sealed interface Element
@@ -126,8 +139,14 @@ data class Struct(
     val interfaces: List<Type.Custom> = emptyList(),
     override val elements: List<Element> = emptyList(),
     val typeParameters: List<TypeParameter> = emptyList(),
+    val visibility: Visibility? = null,
+    val annotations: List<String> = emptyList(),
+    val kind: Kind? = null,
+    val constructorVisibility: Visibility? = null,
 ) : HasName,
-    HasElements
+    HasElements {
+    enum class Kind { PLAIN_CLASS }
+}
 
 /**
  * The [Field] entries of this struct's parameter list. A struct's [Struct.fields] may also
@@ -167,6 +186,12 @@ data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
+    val isMutable: Boolean = false,
+    val visibility: Visibility? = null,
+    val annotations: List<String> = emptyList(),
+    val receiver: Type? = null,
+    val initializer: Expression? = null,
+    val getter: Expression? = null,
 ) : Element
 
 data class Function(
@@ -178,6 +203,9 @@ data class Function(
     val isAsync: Boolean = false,
     val isStatic: Boolean = false,
     val isOverride: Boolean = false,
+    val receiver: Type? = null,
+    val visibility: Visibility? = null,
+    val annotations: List<String> = emptyList(),
 ) : HasName
 
 data class Namespace(
@@ -219,6 +247,7 @@ data class Enum(
 data class Parameter(
     val name: Name,
     val type: Type,
+    val default: Expression? = null,
 )
 
 data class TypeParameter(

@@ -13,7 +13,7 @@ import {Wirespec} from '../Wirespec'
 import {Message} from '../model/Message'
 export namespace MessageGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): Message {
-    return { payload: undefined, metadata: generator.generate([...path, ...['metadata']], { kind: 'nullable', generate: (p0: string[]) => undefined }), attachments: generator.generate([...path, ...['attachments']], { kind: 'array', generate: (p0: string[]) => undefined }), extensions: generator.generate([...path, ...['extensions']], { kind: 'dict', generate: (p0: string[]) => undefined }) };
+    return { payload: generator.generate([...path, ...['payload']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), metadata: generator.generate([...path, ...['metadata']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), attachments: generator.generate([...path, ...['attachments']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), extensions: generator.generate([...path, ...['extensions']], { kind: 'dict', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }) };
   }
 }
 
