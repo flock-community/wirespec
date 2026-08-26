@@ -28,7 +28,7 @@ Kotlin Multiplatform project built with Gradle.
 ./gradlew :src:compiler:emitters:kotlin:allTests     # all targets for one module
 ```
 
-Scope tasks to the module you're working on (`:src:compiler:core`, `:src:compiler:ir`, `:src:compiler:emitters:{lang}`, ...) — a full multiplatform build is slow. Spring integration's checked-in generated test classes are rewritten by running the `GenerateTestClasses` test in `:src:integration:spring`.
+Scope tasks to the module you're working on (`:src:compiler:core`, `:src:compiler:ir`, `:src:compiler:emitters:{lang}`, ...) — a full multiplatform build is slow. Integration modules (`jackson`, `wiremock`, `spring`) generate their test sources into `build/generated/sources/wirespec` via a `generateWirespecTestSources` task backed by a private `codegen` compilation; nothing generated is checked in.
 
 ## Emitter Test Fixtures
 
