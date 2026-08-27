@@ -8,13 +8,14 @@ val gradleExamples = projectDir.listFiles().orEmpty()
 
 val cargoBin = File(System.getProperty("user.home"), ".cargo/bin")
 
-fun cargoInstalled() = (System.getenv("PATH").orEmpty().split(File.pathSeparator) + cargoBin.path)
-    .any { File(it, "cargo").canExecute() }
-
 val installCargo = tasks.register<Exec>("installCargo") {
     group = "examples"
     description = "Install the cargo toolchain via rustup when missing"
-    onlyIf { !cargoInstalled() }
+    val cargoBinPath = cargoBin.path
+    onlyIf {
+        (System.getenv("PATH").orEmpty().split(File.pathSeparator) + cargoBinPath)
+            .none { File(it, "cargo").canExecute() }
+    }
     commandLine("bash", "-c", "curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal")
 }
 
