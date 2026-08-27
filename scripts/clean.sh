@@ -9,6 +9,6 @@ docker rmi wirespec
   (cd "$root" && rm -rf kotlin-js-store) &&
   (cd "$root"/src/ide/vscode && npm run clean) &&
   (cd "$root"/src/site && make clean) &&
-  (cd "$root"/examples/ && make clean) &&
+  (cd "$root"/examples/ && ./gradlew clean) &&
   (cd "$root"/types && ./clean.sh) &&
   (cd "$root"/src/test && ./clean.sh)

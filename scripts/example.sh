@@ -6,4 +6,4 @@ dir="$(dirname -- "$0")"
   publishToMavenLocal \
   src:plugin:npm:jsNodeProductionLibraryDistribution &&
 (cd "$dir"/../src/ide/vscode && npm i && npm run build) &&
-(cd "$dir"/../examples && make build)
+(cd "$dir"/../examples && ./gradlew build)
