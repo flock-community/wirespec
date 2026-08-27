@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.support.serviceOf
+
 description = "Drives the builds of all Wirespec example projects"
 
 // Example tasks deliberately avoid lifecycle names (build, check, clean) so the default build
@@ -5,6 +7,30 @@ description = "Drives the builds of all Wirespec example projects"
 val gradleExamples = projectDir.listFiles().orEmpty()
     .filter { it.resolve("settings.gradle.kts").exists() }
     .sortedBy { it.name }
+
+// The Maven wrapper scripts are never checked in: they are downloaded fresh from Maven Central,
+// at the version pinned in .mvn/wrapper/maven-wrapper.properties, and shared by all Maven examples.
+val mavenWrapperVersion = projectDir.resolve(".mvn/wrapper/maven-wrapper.properties").readLines()
+    .single { it.startsWith("wrapperVersion=") }.substringAfter('=')
+
+val mavenWrapper by configurations.creating
+
+dependencies {
+    mavenWrapper("org.apache.maven.wrapper:maven-wrapper-distribution:$mavenWrapperVersion:only-script@zip")
+}
+
+val mvnw = layout.buildDirectory.file("maven-wrapper/mvnw").get().asFile.path
+
+val installMavenWrapper = tasks.register<Sync>("installMavenWrapper") {
+    group = "examples"
+    description = "Download the Maven wrapper fresh from Maven Central"
+    val archives = serviceOf<ArchiveOperations>()
+    from(mavenWrapper.elements.map { zips -> zips.map { archives.zipTree(it.asFile) } })
+    // mvnw locates its wrapper configuration next to the script itself
+    from(layout.projectDirectory.dir(".mvn")) { into(".mvn") }
+    into(layout.buildDirectory.dir("maven-wrapper"))
+    filePermissions { unix("rwxr-xr-x") }
+}
 
 val cargoBin = File(System.getProperty("user.home"), ".cargo/bin")
 
@@ -45,9 +71,9 @@ aggregate("formatExamples", "Format all example projects", "formatExample", list
 aggregate("yoloExamples", "Build all Maven and Gradle example projects without running tests", "yoloExample", listOf("check"), listOf("test"))
 tasks.register("installWrappers") {
     group = "examples"
-    description = "Install the sbt wrapper and the cargo toolchain where missing"
+    description = "Install the Maven and sbt wrappers and the cargo toolchain where missing"
     dependsOn(subprojects.map { project -> project.tasks.matching { it.name == "installWrapper" } })
-    dependsOn(installCargo)
+    dependsOn(installMavenWrapper, installCargo)
 }
 
 subprojects {
@@ -59,11 +85,13 @@ subprojects {
 
     when {
         projectDir.resolve("pom.xml").exists() -> {
-            execExample("buildExample", "../mvnw", "verify")
-            execExample("cleanExample", "../mvnw", "clean")
-            execExample("yoloExample", "../mvnw", "verify", "-DskipTests")
+            fun mvnExample(name: String, vararg args: String) =
+                execExample(name, mvnw, *args).configure { dependsOn(installMavenWrapper) }
+            mvnExample("buildExample", "verify")
+            mvnExample("cleanExample", "clean")
+            mvnExample("yoloExample", "verify", "-DskipTests")
             if (projectDir.resolve("pom.xml").readText().contains("<id>format</id>")) {
-                execExample("formatExample", "../mvnw", "test-compile", "-Pformat")
+                mvnExample("formatExample", "test-compile", "-Pformat")
             }
         }
 

@@ -43,8 +43,9 @@ The npm example additionally needs the npm plugin distribution:
 The example projects carry no wrappers of their own; Gradle is responsible for installing and
 running the right tools:
 
-- **Maven**: one shared Maven wrapper for all Maven examples lives at `examples/mvnw` with its
-  configuration in `examples/.mvn/wrapper`.
+- **Maven**: the Maven wrapper is never checked in — Gradle downloads it fresh from Maven Central
+  into `examples/build/maven-wrapper`, at the versions pinned in
+  `examples/.mvn/wrapper/maven-wrapper.properties`, and all Maven examples share it.
 - **Gradle**: the standalone Gradle examples run as nested builds with the root wrapper's Gradle
   version.
 - **sbt**: `installWrappers` downloads the [sbt-extras](https://github.com/dwijnand/sbt-extras)
