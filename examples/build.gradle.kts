@@ -1,99 +1,109 @@
-import java.io.File
-
 description = "Drives the builds of all Wirespec example projects"
 
-val examples = projectDir.listFiles().orEmpty().filter(File::isDirectory).sortedBy(File::getName)
+// Example tasks deliberately avoid lifecycle names (build, check, clean) so the default build
+// never touches them; they only run via the aggregates below or an explicit task path.
+val gradleExamples = projectDir.listFiles().orEmpty()
+    .filter { it.resolve("settings.gradle.kts").exists() }
+    .sortedBy { it.name }
 
-fun File.taskSuffix() = name.split("-").joinToString("") { it.replaceFirstChar(Char::uppercaseChar) }
+val cargoBin = File(System.getProperty("user.home"), ".cargo/bin")
 
-fun aggregate(name: String, taskDescription: String) = tasks.register(name) {
+fun cargoInstalled() = (System.getenv("PATH").orEmpty().split(File.pathSeparator) + cargoBin.path)
+    .any { File(it, "cargo").canExecute() }
+
+val installCargo = tasks.register<Exec>("installCargo") {
     group = "examples"
-    description = taskDescription
+    description = "Install the cargo toolchain via rustup when missing"
+    onlyIf { !cargoInstalled() }
+    commandLine("bash", "-c", "curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal")
 }
 
-val buildExamples = aggregate("build", "Build and test all example projects")
-val cleanExamples = aggregate("clean", "Clean all example projects")
-val formatExamples = aggregate("format", "Format all example projects")
-val yoloExamples = aggregate("yolo", "Build all Maven and Gradle example projects without running tests")
-val installWrappers = aggregate("installWrappers", "Install the Maven and Gradle wrappers into every example project")
+// The standalone Gradle examples are driven through nested builds, run lazily with this build's
+// Gradle version, so their mavenLocal-only plugins resolve when the task runs, not at configuration.
+fun nestedGradleBuild(example: File, name: String, buildTasks: List<String>, excluded: List<String> = emptyList()) =
+    tasks.register<GradleBuild>(name) {
+        group = "examples"
+        setDir(example)
+        startParameter.setTaskNames(buildTasks)
+        startParameter.setExcludedTaskNames(excluded)
+    }
 
-fun exec(
-    name: String,
-    example: File,
-    into: TaskProvider<Task>,
-    after: TaskProvider<out Task>? = null,
-    vararg command: String,
-) = tasks.register<Exec>(name) {
+fun aggregate(name: String, taskDescription: String, moduleTask: String, nestedTasks: List<String>, excluded: List<String> = emptyList()) =
+    gradleExamples.map { nestedGradleBuild(it, "${moduleTask.removeSuffix("Example")}-${it.name}", nestedTasks, excluded) }.let { nested ->
+        tasks.register(name) {
+            group = "examples"
+            description = taskDescription
+            dependsOn(subprojects.map { project -> project.tasks.matching { it.name == moduleTask } })
+            dependsOn(nested)
+        }
+    }
+
+aggregate("buildExamples", "Build and test all example projects", "buildExample", listOf("check"))
+aggregate("cleanExamples", "Clean all example projects", "cleanExample", listOf("clean"))
+aggregate("formatExamples", "Format all example projects", "formatExample", listOf("spotlessApply"))
+aggregate("yoloExamples", "Build all Maven and Gradle example projects without running tests", "yoloExample", listOf("check"), listOf("test"))
+tasks.register("installWrappers") {
     group = "examples"
-    workingDir = example
-    commandLine(*command)
-    after?.let { dependsOn(it) }
-}.also { task -> into.configure { dependsOn(task) } }
-
-examples.filter { it.resolve("pom.xml").exists() }.forEach { example ->
-    val suffix = example.taskSuffix()
-    val wrapper = tasks.register<Copy>("installMavenWrapper$suffix") {
-        group = "wrapper"
-        description = "Install the Maven wrapper into ${example.name}"
-        from(layout.projectDirectory.dir("maven/wrapper")) { include("mvnw", "mvnw.cmd") }
-        from(layout.projectDirectory.dir("maven/wrapper")) {
-            include("maven-wrapper.properties")
-            into(".mvn/wrapper")
-        }
-        into(example)
-    }.also { task -> installWrappers.configure { dependsOn(task) } }
-    exec("build$suffix", example, buildExamples, wrapper, "./mvnw", "verify")
-    exec("clean$suffix", example, cleanExamples, wrapper, "./mvnw", "clean")
-    exec("yolo$suffix", example, yoloExamples, wrapper, "./mvnw", "verify", "-DskipTests")
-    if (example.resolve("pom.xml").readText().contains("<id>format</id>")) {
-        exec("format$suffix", example, formatExamples, wrapper, "./mvnw", "test-compile", "-Pformat")
-    }
+    description = "Install the sbt wrapper and the cargo toolchain where missing"
+    dependsOn(subprojects.map { project -> project.tasks.matching { it.name == "installWrapper" } })
+    dependsOn(installCargo)
 }
 
-examples.filter { it.resolve("settings.gradle.kts").exists() }.forEach { example ->
-    val suffix = example.taskSuffix()
-    val wrapper = tasks.register<Copy>("installGradleWrapper$suffix") {
-        group = "wrapper"
-        description = "Install the Gradle wrapper into ${example.name}"
-        from(layout.projectDirectory) { include("gradlew", "gradlew.bat", "gradle/wrapper/gradle-wrapper.jar") }
-        from(layout.projectDirectory) {
-            include("gradle/wrapper/gradle-wrapper.properties")
-            // each example pins its own Gradle version; only seed the properties when absent
-            eachFile { if (example.resolve(path).exists()) exclude() }
-        }
-        into(example)
-    }.also { task -> installWrappers.configure { dependsOn(task) } }
-    exec("build$suffix", example, buildExamples, wrapper, "./gradlew", "check")
-    exec("clean$suffix", example, cleanExamples, wrapper, "./gradlew", "clean")
-    exec("format$suffix", example, formatExamples, wrapper, "./gradlew", "spotlessApply")
-    exec("yolo$suffix", example, yoloExamples, wrapper, "./gradlew", "check", "-x", "test")
-}
-
-examples.filter { it.resolve("package.json").exists() }.forEach { example ->
-    val suffix = example.taskSuffix()
-    val install = tasks.register<Exec>("npmInstall$suffix") {
+subprojects {
+    fun execExample(name: String, vararg command: String) = tasks.register<Exec>(name) {
         group = "examples"
-        workingDir = example
-        commandLine("npm", "ci")
+        workingDir = projectDir
+        commandLine(*command)
     }
-    exec("build$suffix", example, buildExamples, install, "npm", "run", "build")
-    exec("clean$suffix", example, cleanExamples, null, "npm", "run", "clean")
-    exec("format$suffix", example, formatExamples, install, "npm", "run", "format")
-}
 
-examples.filter { it.resolve("Cargo.toml").exists() }.forEach { example ->
-    val suffix = example.taskSuffix()
-    val generate = tasks.register<Exec>("generate$suffix") {
-        group = "examples"
-        workingDir = example
-        commandLine("bash", "gen.sh")
+    when {
+        projectDir.resolve("pom.xml").exists() -> {
+            execExample("buildExample", "../mvnw", "verify")
+            execExample("cleanExample", "../mvnw", "clean")
+            execExample("yoloExample", "../mvnw", "verify", "-DskipTests")
+            if (projectDir.resolve("pom.xml").readText().contains("<id>format</id>")) {
+                execExample("formatExample", "../mvnw", "test-compile", "-Pformat")
+            }
+        }
+
+        projectDir.resolve("package.json").exists() -> {
+            val install = execExample("npmInstall", "npm", "ci")
+            execExample("buildExample", "npm", "run", "build").configure { dependsOn(install) }
+            execExample("cleanExample", "npm", "run", "clean")
+            execExample("formatExample", "npm", "run", "format").configure { dependsOn(install) }
+        }
+
+        projectDir.resolve("Cargo.toml").exists() -> {
+            fun cargoExample(name: String, vararg args: String) = execExample(name, "cargo", *args).also { task ->
+                task.configure {
+                    dependsOn(installCargo)
+                    environment("PATH", "$cargoBin${File.pathSeparator}${System.getenv("PATH").orEmpty()}")
+                }
+            }
+            val generate = execExample("generateExample", "bash", "gen.sh")
+            val cargoBuild = cargoExample("cargoBuild", "build").also { it.configure { dependsOn(generate) } }
+            val cargoTest = cargoExample("cargoTest", "test").also { it.configure { dependsOn(cargoBuild) } }
+            tasks.register("buildExample") {
+                group = "examples"
+                dependsOn(cargoTest)
+            }
+            cargoExample("cleanExample", "clean")
+        }
+
+        projectDir.resolve("build.sbt").exists() -> {
+            val sbt = projectDir.resolve("sbt")
+            val installWrapper = tasks.register<Exec>("installWrapper") {
+                group = "examples"
+                description = "Install the sbt wrapper (sbt-extras) into ${project.name}"
+                onlyIf { !sbt.exists() }
+                workingDir = projectDir
+                commandLine(
+                    "bash", "-c",
+                    "curl -fsSL -o sbt https://raw.githubusercontent.com/dwijnand/sbt-extras/master/sbt && chmod +x sbt",
+                )
+            }
+            execExample("buildExample", "./sbt", "compile", "test").configure { dependsOn(installWrapper) }
+            execExample("cleanExample", "./sbt", "clean").configure { dependsOn(installWrapper) }
+        }
     }
-    exec("build$suffix", example, buildExamples, generate, "cargo", "build")
-    exec("clean$suffix", example, cleanExamples, null, "cargo", "clean")
-}
-
-examples.filter { it.resolve("build.sbt").exists() }.forEach { example ->
-    val suffix = example.taskSuffix()
-    exec("build$suffix", example, buildExamples, null, "sbt", "compile")
-    exec("clean$suffix", example, cleanExamples, null, "sbt", "clean")
 }

@@ -316,28 +316,14 @@ jobs:
           name: wirespec-npm
           path: src/plugin/npm/build/dist/js/productionLibrary
       - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'maven'
-        working-directory: examples/${{ matrix.name }}
-        run: ./mvnw verify
+        if: matrix.type == 'maven' || matrix.type == 'npm' || matrix.type == 'rust' || matrix.type == 'scala'
+        run: ./gradlew :examples:${{ matrix.name }}:buildExample
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'native'
         run: cd examples/${{ matrix.name }} && mvn -Pnative verify
       - name: Run ${{ matrix.name }} example
         if: matrix.type == 'gradle'
-        working-directory: examples/${{ matrix.name }}
-        run: ./gradlew check
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'npm'
-        working-directory: examples/${{ matrix.name }}
-        run: npm ci && npm run build
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'rust'
-        working-directory: examples/${{ matrix.name }}
-        run: bash gen.sh && cargo build && cargo test
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'scala'
-        working-directory: examples/${{ matrix.name }}
-        run: sbt compile test
+        run: ./gradlew :examples:build-${{ matrix.name }}
 
   success:
 
