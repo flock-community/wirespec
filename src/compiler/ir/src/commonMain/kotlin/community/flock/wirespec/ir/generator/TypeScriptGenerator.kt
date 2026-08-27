@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.generator
 
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
@@ -57,7 +58,22 @@ import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.forEachElement
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object TypeScriptGenerator : Generator {
+object TypeScriptGenerator :
+    Generator,
+    Keywords {
+    override val reservedKeywords = setOf(
+        "break", "case", "catch", "continue", "debugger",
+        "default", "delete", "do", "else", "finally",
+        "for", "function", "if", "in", "instanceof",
+        "new", "return", "switch", "this", "throw",
+        "try", "typeof", "var", "void", "while",
+        "with", "class", "const", "enum", "export",
+        "extends", "import", "super", "implements",
+        "interface", "let", "package", "private",
+        "protected", "public", "static", "yield",
+        "type", "async", "await",
+    )
+
     private var structsWithConstructors: Set<String> = emptySet()
     private var constructorFuncNames: Set<String> = emptySet()
 

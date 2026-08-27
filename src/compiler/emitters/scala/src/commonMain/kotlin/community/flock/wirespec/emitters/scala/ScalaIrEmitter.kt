@@ -316,18 +316,6 @@ open class ScalaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords {
-        override val reservedKeywords = setOf(
-            "abstract", "case", "class", "def", "do",
-            "else", "extends", "false", "final", "for",
-            "forSome", "if", "implicit", "import", "lazy",
-            "match", "new", "null", "object", "override",
-            "package", "private", "protected", "return", "sealed",
-            "super", "this", "throw", "trait", "true",
-            "try", "type", "val", "var", "while",
-            "with", "yield", "given", "using", "enum",
-            "export", "then",
-        )
-    }
+    companion object : Keywords by ScalaGenerator
 
 }

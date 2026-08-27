@@ -40,9 +40,6 @@ fun CompilationContext.compile(source) = emit(parse(source))
 
 The result is a flattened `List<Emitted>` ready to write to disk.
 
-## Two emitter styles
+## Emitter style
 
-The codebase has two coexisting emitter approaches. Both satisfy the same `Emitter` contract — same input AST, same `List<Emitted>` output. The difference is purely internal:
-
-- **Direct emitters** walk the AST and assemble target-language strings directly. Each language construct is rendered by inspecting the AST node and writing the equivalent target syntax. Example: `PythonEmitter` in `src/compiler/emitters/python/.../PythonEmitter.kt`.
-- **IR-based emitters** run an internal **Convert → Transform → Generate** pipeline. The AST is converted into Wirespec's language-neutral IR, per-language transforms reshape the IR for the target's idioms, and a generator walks the transformed IR to produce the source string. Example: `PythonIrEmitter` in the same package. See **[IR Model](./architecture-ir.md)** for the details of this internal pipeline.
+All built-in language emitters satisfy the same `Emitter` contract — same input AST, same `List<Emitted>` output — and run an internal **Convert → Transform → Generate** pipeline. The AST is converted into Wirespec's language-neutral IR, per-language transforms reshape the IR for the target's idioms, and a generator walks the transformed IR to produce the source string. Example: `PythonIrEmitter` in `src/compiler/emitters/python/.../PythonIrEmitter.kt`. See **[IR Model](./architecture-ir.md)** for the details of this internal pipeline. (The `WirespecEmitter`, which prints Wirespec source itself, still walks the AST directly.)

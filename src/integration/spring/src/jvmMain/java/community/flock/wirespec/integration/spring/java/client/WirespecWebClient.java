@@ -34,26 +34,12 @@ public class WirespecWebClient {
     public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> CompletableFuture<Res> send(Req request) {
         try {
             Class<?> declaringClass = request.getClass().getDeclaringClass();
-            Method toRequest = toRequestCache.computeIfAbsent(declaringClass, cls -> {
-                Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
-                        .filter(c -> c.getSimpleName().equals("Handler"))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
-                return Arrays.stream(handlerClass.getDeclaredMethods())
-                        .filter(m -> (m.getName().equals("toRawRequest") || m.getName().equals("toRequest")) && Modifier.isStatic(m.getModifiers()))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("toRawRequest method not found in " + handlerClass));
-            });
-            Method fromResponse = fromResponseCache.computeIfAbsent(declaringClass, cls -> {
-                Class<?> handlerClass = Arrays.stream(cls.getDeclaredClasses())
-                        .filter(c -> c.getSimpleName().equals("Handler"))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("Handler not found in " + cls));
-                return Arrays.stream(handlerClass.getDeclaredMethods())
-                        .filter(m -> (m.getName().equals("fromRawResponse") || m.getName().equals("fromResponse")) && Modifier.isStatic(m.getModifiers()))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("fromRawResponse method not found in " + handlerClass));
-            });
+            // The IR emitter declares the raw-mapping statics on the endpoint class itself;
+            // the Handler interface is searched as well for emitters that nest them there.
+            Method toRequest = toRequestCache.computeIfAbsent(declaringClass, cls ->
+                    findStaticMethod(cls, "toRawRequest", "toRequest"));
+            Method fromResponse = fromResponseCache.computeIfAbsent(declaringClass, cls ->
+                    findStaticMethod(cls, "fromRawResponse", "fromResponse"));
 
             Wirespec.RawRequest rawRequest = (Wirespec.RawRequest) toRequest.invoke(null, wirespecSerde, request);
             return executeRequest(rawRequest, client)
@@ -70,6 +56,21 @@ public class WirespecWebClient {
             future.completeExceptionally(e);
             return future;
         }
+    }
+
+    private static Method findStaticMethod(Class<?> endpointClass, String... names) {
+        List<String> nameList = Arrays.asList(names);
+        return Arrays.stream(endpointClass.getDeclaredClasses())
+                .filter(c -> c.getSimpleName().equals("Handler"))
+                .findFirst()
+                .map(handler -> Arrays.stream(handler.getDeclaredMethods()))
+                .orElseGet(java.util.stream.Stream::empty)
+                .filter(m -> nameList.contains(m.getName()) && Modifier.isStatic(m.getModifiers()))
+                .findFirst()
+                .orElseGet(() -> Arrays.stream(endpointClass.getDeclaredMethods())
+                        .filter(m -> nameList.contains(m.getName()) && Modifier.isStatic(m.getModifiers()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException(names[0] + " method not found in " + endpointClass)));
     }
 
     private CompletableFuture<Wirespec.RawResponse> executeRequest(Wirespec.RawRequest request, WebClient client) {

@@ -14,6 +14,9 @@ repositories {
     mavenLocal()
 }
 
+val generatedWirespecDir = layout.buildDirectory.dir("generated/sources/wirespec")
+val wirespecTestSourcesDir = layout.projectDirectory.dir("src/jvmTest/resources")
+
 kotlin {
     compilerOptions {
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
@@ -28,10 +31,24 @@ kotlin {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
+        val mainCompilation = compilations.getByName("main")
+        // Private build-time compilation that hosts the Wirespec emitter Main. Kept out
+        // of the published artifact, used only by the generateWirespecTestSources task.
+        // Associated with main so it can register this module's Spring IR extensions.
+        compilations.create("codegen") {
+            associateWith(mainCompilation)
+            defaultSourceSet.dependencies {
+                implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:ir"))
+                implementation(project(":src:compiler:emitters:java"))
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:converter:openapi"))
+                implementation(libs.kotlin.stdlib)
+            }
+        }
         // Spring Boot 4 scenario: a Jackson-3-only test classpath that exercises the
         // conditional wiring (WirespecJackson3Configuration) the regular Jackson-2 test
         // suite cannot, because Jackson 2 and 3 share jackson-annotations.
-        val mainCompilation = compilations.getByName("main")
         compilations.create("jackson3Test") {
             associateWith(mainCompilation)
             defaultSourceSet.dependencies {
@@ -92,6 +109,7 @@ kotlin {
             }
         }
         jvmTest {
+            kotlin.srcDir(generatedWirespecDir.map { it.dir("kotlin") })
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:converter:openapi"))
@@ -119,6 +137,40 @@ configurations
             }
         }
     }
+
+val codegenCompilation = kotlin.jvm().compilations.named("codegen")
+
+val generateWirespecTestSources by tasks.registering(JavaExec::class) {
+    group = "build"
+    description = "Generate Spring-annotated Java + Kotlin Wirespec test sources from petstore.json and todo.ws in src/jvmTest/resources."
+    val compilation = codegenCompilation.get()
+    classpath = files(compilation.output.classesDirs) + compilation.runtimeDependencyFiles
+    mainClass.set("community.flock.wirespec.integration.spring.codegen.MainKt")
+    val inDir = wirespecTestSourcesDir
+    val outDir = generatedWirespecDir
+    inputs.files(inDir.file("petstore.json"), inDir.file("todo.ws")).withPropertyName("wirespecSources")
+    outputs.dir(outDir).withPropertyName("generatedSources")
+    val inputAbsolutePath = inDir.asFile.absolutePath
+    argumentProviders.add(
+        org.gradle.process.CommandLineArgumentProvider {
+            listOf(
+                inputAbsolutePath,
+                outDir.get().asFile.absolutePath,
+                "community.flock.wirespec.integration.spring",
+            )
+        },
+    )
+    dependsOn(compilation.compileTaskProvider)
+}
+
+tasks.named<JavaCompile>("compileJvmTestJava") {
+    source(generatedWirespecDir.map { it.dir("java") })
+    dependsOn(generateWirespecTestSources)
+}
+
+tasks.named("compileTestKotlinJvm") {
+    dependsOn(generateWirespecTestSources)
+}
 
 val jvmJackson3TestCompilation = kotlin.jvm().compilations.named("jackson3Test")
 

@@ -82,9 +82,9 @@ public class Controller implements
     public CompletableFuture<RequestParrot.Response<?>> requestParrot(RequestParrot.Request request) {
         return CompletableFuture.completedFuture(
                 new RequestParrot.Response200(
-                        request.headers().XRequestID(),
+                        request.headers().xRequestID(),
                         request.headers().RanDoMHeADer(),
-                        request.queries().QueryParam(),
+                        request.queries().queryParam(),
                         request.queries().RanDoMQueRY(),
                         request.body())
         );

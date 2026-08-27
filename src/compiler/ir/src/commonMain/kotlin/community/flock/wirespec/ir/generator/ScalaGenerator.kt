@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.generator
 
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
@@ -58,7 +59,21 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object ScalaGenerator : Generator {
+object ScalaGenerator :
+    Generator,
+    Keywords {
+    override val reservedKeywords = setOf(
+        "abstract", "case", "class", "def", "do",
+        "else", "extends", "false", "final", "for",
+        "forSome", "if", "implicit", "import", "lazy",
+        "match", "new", "null", "object", "override",
+        "package", "private", "protected", "return", "sealed",
+        "super", "this", "throw", "trait", "true",
+        "try", "type", "val", "var", "while",
+        "with", "yield", "given", "using", "enum",
+        "export", "then",
+    )
+
     private var objectNames: Set<String> = emptySet()
     private var primaryFieldNames: Map<String, Set<String>> = emptyMap()
 
@@ -633,16 +648,4 @@ object ScalaGenerator : Generator {
     private fun TypeDescriptor.emitTypeDescriptor(): String = "scala.reflect.classTag[${type.emitGenerics()}]"
 }
 
-private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "`$this`" else this
-
-private val reservedKeywords = setOf(
-    "abstract", "case", "class", "def", "do",
-    "else", "extends", "false", "final", "for",
-    "forSome", "if", "implicit", "import", "lazy",
-    "match", "new", "null", "object", "override",
-    "package", "private", "protected", "return", "sealed",
-    "super", "this", "throw", "trait", "true",
-    "try", "type", "val", "var", "while",
-    "with", "yield", "given", "using", "enum",
-    "export", "then",
-)
+private fun String.sanitize(): String = if (ScalaGenerator.reservedKeywords.contains(this)) "`$this`" else this

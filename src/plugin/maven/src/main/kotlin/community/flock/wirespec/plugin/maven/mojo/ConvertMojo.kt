@@ -109,7 +109,6 @@ class ConvertMojo : BaseMojo() {
             logger = logger,
             shared = shared,
             strict = strict,
-            ir = ir,
         ).let(::convert)
     }
 }

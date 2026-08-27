@@ -75,9 +75,9 @@ class ResponseHeaderCaseInsensitivityTest {
         )
 
         val request = RequestParrot.Request(
-            QueryParam = "test-query",
+            queryParam = "test-query",
             RanDoMQueRY = "test-random",
-            XRequestID = "request-123",
+            xRequestID = "request-123",
             RanDoMHeADer = "header-456",
             body = RequestBodyParrot(number = 1, string = "test"),
         )
@@ -90,9 +90,9 @@ class ResponseHeaderCaseInsensitivityTest {
         // Verify headers are accessible regardless of the case they were sent in
         val response200 = response as RequestParrot.Response200
         assertAll({
-            assertEquals("request-123", response200.headers.XRequestID)
+            assertEquals("request-123", response200.headers.xRequestID)
             assertEquals("header-456", response200.headers.RanDoMHeADer)
-            assertEquals("test-query", response200.headers.QueryParamParrot)
+            assertEquals("test-query", response200.headers.queryParamParrot)
             assertEquals("test-random", response200.headers.RanDoMQueRYParrot)
         })
     }

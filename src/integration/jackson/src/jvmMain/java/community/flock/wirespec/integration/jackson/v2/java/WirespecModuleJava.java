@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import community.flock.wirespec.emitters.java.JavaIdentifierEmitter;
+import community.flock.wirespec.emitters.java.JavaIrEmitter;
 import community.flock.wirespec.java.Wirespec;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -204,7 +204,7 @@ public class WirespecModuleJava extends SimpleModule {
 
         private String translate(String key) {
 
-            Set<String> kotlinSet = JavaIdentifierEmitter.Companion.getReservedKeywords();
+            Set<String> kotlinSet = JavaIrEmitter.Companion.getReservedKeywords();
             List<String> keywords = kotlinSet.stream()
                     .map(keyword -> "_" + keyword)
                     .collect(Collectors.toList());

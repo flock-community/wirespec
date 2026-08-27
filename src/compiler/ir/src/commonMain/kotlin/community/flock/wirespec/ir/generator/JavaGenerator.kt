@@ -1,5 +1,6 @@
 package community.flock.wirespec.ir.generator
 
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.ArrayIndexCall
 import community.flock.wirespec.ir.core.AssertStatement
 import community.flock.wirespec.ir.core.Assignment
@@ -59,7 +60,23 @@ import community.flock.wirespec.ir.core.annotatedFields
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object JavaGenerator : Generator {
+object JavaGenerator :
+    Generator,
+    Keywords {
+    override val reservedKeywords = setOf(
+        "abstract", "continue", "for", "new", "switch",
+        "assert", "default", "if", "package", "synchronized",
+        "boolean", "do", "goto", "private", "this",
+        "break", "double", "implements", "protected", "throw",
+        "byte", "else", "import", "public", "throws",
+        "case", "enum", "instanceof", "return", "transient",
+        "catch", "extends", "int", "short", "try",
+        "char", "final", "interface", "static", "void",
+        "class", "finally", "long", "strictfp", "volatile",
+        "const", "float", "native", "super", "while",
+        "true", "false", "null",
+    )
+
     override fun generate(element: Element): String = when (element) {
         is File -> emitFile(element)
         else -> emitFile(File(Name.of(""), listOf(element)))
@@ -637,18 +654,4 @@ object JavaGenerator : Generator {
     )
 }
 
-private fun String.sanitize(): String = if (reservedKeywords.contains(this)) "_$this" else this
-
-private val reservedKeywords = setOf(
-    "abstract", "continue", "for", "new", "switch",
-    "assert", "default", "if", "package", "synchronized",
-    "boolean", "do", "goto", "private", "this",
-    "break", "double", "implements", "protected", "throw",
-    "byte", "else", "import", "public", "throws",
-    "case", "enum", "instanceof", "return", "transient",
-    "catch", "extends", "int", "short", "try",
-    "char", "final", "interface", "static", "void",
-    "class", "finally", "long", "strictfp", "volatile",
-    "const", "float", "native", "super", "while",
-    "true", "false", "null",
-)
+private fun String.sanitize(): String = if (JavaGenerator.reservedKeywords.contains(this)) "_$this" else this

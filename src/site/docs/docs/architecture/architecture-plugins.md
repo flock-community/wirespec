@@ -50,7 +50,7 @@ interface Emitter : HasExtension {
 }
 ```
 
-In practice most custom emitters extend the `LanguageEmitter` abstract base (same package) for boilerplate around comment styles, file extensions, and reusable formatting helpers. The constructor may declare zero or more parameters of type `PackageName` and/or `EmitShared` — the plugin injects both from the build configuration. Any other constructor parameter is rejected at load time.
+In practice most custom emitters extend one of the built-in `IrEmitter` implementations (e.g., `JavaIrEmitter`, `KotlinIrEmitter`) and override the IR produced per definition. The constructor may declare zero or more parameters of type `PackageName` and/or `EmitShared` — the plugin injects both from the build configuration. Any other constructor parameter is rejected at load time.
 
 The plugins load the class from the build classpath via reflection. Maven takes the fully-qualified name as a string:
 
