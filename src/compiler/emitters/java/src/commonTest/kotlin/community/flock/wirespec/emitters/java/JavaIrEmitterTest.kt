@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileGraphqlTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
@@ -60,6 +61,11 @@ class JavaIrEmitterTest {
     @Test
     fun compileChannelTest() {
         CompileChannelTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileChannelTest
+    }
+
+    @Test
+    fun compileGraphqlTest() {
+        CompileGraphqlTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileGraphqlTest
     }
 
     @Test

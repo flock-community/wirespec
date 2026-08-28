@@ -22,3 +22,9 @@ enum TodoCategory {
     WORK,
     LIFE
 }
+
+graphql GetTodo Query todo(id: String) -> Todo?
+
+graphql AddTodo Mutation addTodo(input: TodoInput) -> Todo
+
+graphql OnTodoAdded Subscription todoAdded -> Todo

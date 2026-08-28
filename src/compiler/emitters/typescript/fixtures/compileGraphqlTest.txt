@@ -1,0 +1,169 @@
+import {Wirespec} from '../Wirespec'
+export type Pet = {
+  "id": string,
+  "name": string | undefined,
+  "tags": string[],
+}
+export function validatePet(obj: Pet): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+export type PetInput = {
+  "name": string,
+}
+export function validatePetInput(obj: PetInput): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+export namespace GetPet {
+  export type Input = {
+    "id": string,
+  }
+  export type Data = {
+    "pet": Pet | undefined,
+  }
+  export type Result = {
+    "data": Data | undefined,
+    "errors": Wirespec.GraphQLError[] | undefined,
+  }
+  export type RequestBody = {
+    "query": string,
+    "variables": Input,
+  }
+  export function document(): string {
+    return 'query GetPet($id: String!) { pet(id: $id) { id name tags } }';
+  }
+  export function toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest {
+    return { method: 'POST', path: ['graphql'], queries: {}, headers: {}, body: serialization.serializeBody({ query: document(), variables: input }, "RequestBody") };
+  }
+  export function fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result {
+    return response.body != null ? serialization.deserializeBody(response.body, "Result") : (() => { throw new Error('body is null') })();
+  }
+  export interface Handler extends Wirespec.Handler {
+    getPet(input: Input): Promise<Result>;
+  }
+  export interface Call extends Wirespec.Call {
+    getPet(input: Input): Promise<Result>;
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+export namespace AddPet {
+  export type Input = {
+    "input": PetInput,
+  }
+  export type Data = {
+    "addPet": Pet,
+  }
+  export type Result = {
+    "data": Data | undefined,
+    "errors": Wirespec.GraphQLError[] | undefined,
+  }
+  export type RequestBody = {
+    "query": string,
+    "variables": Input,
+  }
+  export function document(): string {
+    return 'mutation AddPet($input: PetInput!) { addPet(input: $input) { id name tags } }';
+  }
+  export function toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest {
+    return { method: 'POST', path: ['graphql'], queries: {}, headers: {}, body: serialization.serializeBody({ query: document(), variables: input }, "RequestBody") };
+  }
+  export function fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result {
+    return response.body != null ? serialization.deserializeBody(response.body, "Result") : (() => { throw new Error('body is null') })();
+  }
+  export interface Handler extends Wirespec.Handler {
+    addPet(input: Input): Promise<Result>;
+  }
+  export interface Call extends Wirespec.Call {
+    addPet(input: Input): Promise<Result>;
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+export namespace OnPetAdded {
+  export type Input = {}
+  export type Data = {
+    "petAdded": Pet,
+  }
+  export type Result = {
+    "data": Data | undefined,
+    "errors": Wirespec.GraphQLError[] | undefined,
+  }
+  export type RequestBody = {
+    "query": string,
+    "variables": Input,
+  }
+  export function document(): string {
+    return 'subscription OnPetAdded { petAdded { id name tags } }';
+  }
+  export function toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest {
+    return { method: 'POST', path: ['graphql'], queries: {}, headers: {}, body: serialization.serializeBody({ query: document(), variables: input }, "RequestBody") };
+  }
+  export function fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result {
+    return response.body != null ? serialization.deserializeBody(response.body, "Result") : (() => { throw new Error('body is null') })();
+  }
+  export interface Handler extends Wirespec.Handler {
+    onPetAdded(input: Input, onNext: (p0: Result) => void): Wirespec.Cancellable;
+  }
+  export interface Call extends Wirespec.Call {
+    onPetAdded(input: Input, onNext: (p0: Result) => void): Wirespec.Cancellable;
+  }
+}
+
+export type GetPetClient = {
+  "serialization": Wirespec.Serialization,
+  "transportation": Wirespec.Transportation,
+}
+export async function getPet(input: GetPet.Input): GetPet.Result {
+  const rawRequest = GetPet.toRawRequest(serialization, input);
+  const rawResponse = transportation.transport(rawRequest);
+  return GetPet.fromRawResponse(serialization, rawResponse);
+}
+
+export type AddPetClient = {
+  "serialization": Wirespec.Serialization,
+  "transportation": Wirespec.Transportation,
+}
+export async function addPet(input: AddPet.Input): AddPet.Result {
+  const rawRequest = AddPet.toRawRequest(serialization, input);
+  const rawResponse = transportation.transport(rawRequest);
+  return AddPet.fromRawResponse(serialization, rawResponse);
+}
+
+export type OnPetAddedClient = {
+  "serialization": Wirespec.Serialization,
+  "transportation": Wirespec.StreamTransportation,
+}
+export function onPetAdded(input: OnPetAdded.Input, onNext: (p0: OnPetAdded.Result) => void): Wirespec.Cancellable {
+  const rawRequest = OnPetAdded.toRawRequest(serialization, input);
+  return transportation.stream(rawRequest, (raw: Wirespec.RawResponse) => onNext(OnPetAdded.fromRawResponse(serialization, raw)));
+}
+
+import {Wirespec} from '../Wirespec'
+import {Pet} from '../model/Pet'
+export namespace PetGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Pet {
+    return { id: generator.generate([...path, ...['id']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }), name: generator.generate([...path, ...['name']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }), tags: generator.generate([...path, ...['tags']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {PetInput} from '../model/PetInput'
+export namespace PetInputGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): PetInput {
+    return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
+
+import {Wirespec} from './Wirespec'
+export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
+})
+
+export {Pet} from './Pet'
+export {PetInput} from './PetInput'
+export {GetPet} from './GetPet'
+export {AddPet} from './AddPet'
+export {OnPetAdded} from './OnPetAdded'

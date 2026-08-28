@@ -13,6 +13,7 @@ export namespace Wirespec {
   }
   export interface Endpoint {}
   export interface Channel {}
+  export interface GraphQL {}
   export interface Path {}
   export interface Queries {}
   export interface Headers {}
@@ -69,6 +70,22 @@ export namespace Wirespec {
   }
   export interface Transportation {
     transport(request: RawRequest): Promise<RawResponse>;
+  }
+  export type GraphQLErrorLocation = {
+    "line": number,
+    "column": number,
+  }
+  export type GraphQLError = {
+    "message": string,
+    "locations": GraphQLErrorLocation[] | undefined,
+    "path": any[] | undefined,
+    "extensions": any | undefined,
+  }
+  export interface Cancellable {
+    cancel(): void;
+  }
+  export interface StreamTransportation {
+    stream(request: RawRequest, onNext: (p0: RawResponse) => void): Cancellable;
   }
   export interface GeneratorField<T extends any | undefined> {}
   export type GeneratorFieldString = {

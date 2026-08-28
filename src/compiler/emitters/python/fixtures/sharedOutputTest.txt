@@ -26,6 +26,8 @@ class Wirespec:
         pass
     class Channel(ABC):
         pass
+    class GraphQL(ABC):
+        pass
     class Path(ABC):
         pass
     class Queries(ABC):
@@ -110,6 +112,24 @@ class Wirespec:
     class Transportation(ABC):
         @abstractmethod
         async def transport(self, request: Wirespec.RawRequest) -> Wirespec.RawResponse:
+            ...
+    @dataclass
+    class GraphQLErrorLocation:
+        line: int
+        column: int
+    @dataclass
+    class GraphQLError:
+        message: str
+        locations: Optional[list[Wirespec.GraphQLErrorLocation]]
+        path: Optional[list[Any]]
+        extensions: Optional[Any]
+    class Cancellable(ABC):
+        @abstractmethod
+        def cancel(self) -> None:
+            ...
+    class StreamTransportation(ABC):
+        @abstractmethod
+        def stream(self, request: Wirespec.RawRequest, onNext: Callable[[Wirespec.RawResponse], None]) -> Wirespec.Cancellable:
             ...
     class GeneratorField(ABC, Generic[T]):
         pass

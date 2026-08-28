@@ -2,6 +2,7 @@ package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileGraphqlTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
@@ -30,6 +31,11 @@ class TypeScriptIrEmitterTest {
         val typescript = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileGraphqlTest() {
+        CompileGraphqlTest.compiler { TypeScriptIrEmitter() } shouldBeRight EmitterFixtures.compileGraphqlTest
     }
 
     @Test

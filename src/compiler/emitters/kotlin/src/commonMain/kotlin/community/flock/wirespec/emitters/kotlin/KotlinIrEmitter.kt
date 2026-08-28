@@ -228,6 +228,23 @@ open class KotlinIrEmitter(
         )
     }
 
+    override fun emitGraphqlClient(graphql: Graphql): File {
+        val imports = graphql.buildModelImports(packageName)
+        val graphqlImport = import("${packageName.value}.graphql", graphql.identifier.value)
+        val file = super.emitGraphqlClient(graphql).sanitizeNames(sanitizationConfig)
+        val subPackageName = packageName + "client"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = buildList {
+                add(LanguagePackage(subPackageName.value))
+                addAll(wirespecImports)
+                addAll(imports)
+                add(graphqlImport)
+                addAll(file.elements)
+            }
+        )
+    }
+
     override fun emitClient(endpoints: List<Endpoint>, graphqls: List<Graphql>, logger: Logger): File {
         val imports = (endpoints.flatMap { it.importReferences() } + graphqls.flatMap { it.importReferences() })
             .distinctBy { it.value }

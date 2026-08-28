@@ -170,6 +170,22 @@ internal fun Interface.withFullyQualifiedPrefix(prefix: String): Interface = if 
     this
 }
 
+// Java cannot invoke a java.util.function.Function-typed parameter as a bare call;
+// rewrite `param(...)` to `param.apply(...)`.
+internal fun <T : Element> T.callFunctionalParameterWithApply(parameterName: String): T = transform {
+    statementAndExpression { stmt, tr ->
+        when {
+            stmt is FunctionCall && stmt.receiver == null && stmt.name.camelCase() == parameterName -> FunctionCall(
+                receiver = VariableReference(Name.of(parameterName)),
+                name = Name.of("apply"),
+                arguments = stmt.arguments.mapValues { (_, value) -> tr.transformExpression(value) },
+            )
+
+            else -> stmt.transformChildren(tr)
+        }
+    }
+}
+
 internal fun <T : Element> T.transformTypeDescriptors(): T = transform {
     statementAndExpression { stmt, tr ->
         when (stmt) {

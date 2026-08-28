@@ -1,0 +1,253 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Pet(
+  val id: String,
+  val name: String?,
+  val tags: List<String>
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class PetInput(
+  val name: String
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
+package community.flock.wirespec.generated.graphql
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Pet
+object GetPet : Wirespec.GraphQL {
+  data class Input(
+      val id: String
+    )
+  data class Data(
+      val pet: Pet?
+    )
+  data class Result(
+      val data: Data?,
+      val errors: List<Wirespec.GraphQLError>?
+    )
+  data class RequestBody(
+      val query: String,
+      val variables: Input
+    )
+  fun document(): String =
+    "query GetPet(\$id: String!) { pet(id: \$id) { id name tags } }"
+  fun toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = "POST",
+      path = listOf("graphql"),
+      queries = emptyMap<String, List<String>>(),
+      headers = emptyMap<String, List<String>>(),
+      body = serialization.serializeBody<RequestBody>(RequestBody(
+        query = document(),
+        variables = input
+      ), typeOf<RequestBody>())
+    )
+  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result =
+    (response.body?.let { serialization.deserializeBody<Result>(it, typeOf<Result>()) } ?: error("body is null"))
+  fun interface Handler : Wirespec.Handler {
+      suspend fun getPet(input: Input): Result
+  }
+  fun interface Call : Wirespec.Call {
+      suspend fun getPet(input: Input): Result
+  }
+}
+
+package community.flock.wirespec.generated.graphql
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.PetInput
+import community.flock.wirespec.generated.model.Pet
+object AddPet : Wirespec.GraphQL {
+  data class Input(
+      val input: PetInput
+    )
+  data class Data(
+      val addPet: Pet
+    )
+  data class Result(
+      val data: Data?,
+      val errors: List<Wirespec.GraphQLError>?
+    )
+  data class RequestBody(
+      val query: String,
+      val variables: Input
+    )
+  fun document(): String =
+    "mutation AddPet(\$input: PetInput!) { addPet(input: \$input) { id name tags } }"
+  fun toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = "POST",
+      path = listOf("graphql"),
+      queries = emptyMap<String, List<String>>(),
+      headers = emptyMap<String, List<String>>(),
+      body = serialization.serializeBody<RequestBody>(RequestBody(
+        query = document(),
+        variables = input
+      ), typeOf<RequestBody>())
+    )
+  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result =
+    (response.body?.let { serialization.deserializeBody<Result>(it, typeOf<Result>()) } ?: error("body is null"))
+  fun interface Handler : Wirespec.Handler {
+      suspend fun addPet(input: Input): Result
+  }
+  fun interface Call : Wirespec.Call {
+      suspend fun addPet(input: Input): Result
+  }
+}
+
+package community.flock.wirespec.generated.graphql
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Pet
+object OnPetAdded : Wirespec.GraphQL {
+  object Input
+  data class Data(
+      val petAdded: Pet
+    )
+  data class Result(
+      val data: Data?,
+      val errors: List<Wirespec.GraphQLError>?
+    )
+  data class RequestBody(
+      val query: String,
+      val variables: Input
+    )
+  fun document(): String =
+    "subscription OnPetAdded { petAdded { id name tags } }"
+  fun toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = "POST",
+      path = listOf("graphql"),
+      queries = emptyMap<String, List<String>>(),
+      headers = emptyMap<String, List<String>>(),
+      body = serialization.serializeBody<RequestBody>(RequestBody(
+        query = document(),
+        variables = input
+      ), typeOf<RequestBody>())
+    )
+  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result =
+    (response.body?.let { serialization.deserializeBody<Result>(it, typeOf<Result>()) } ?: error("body is null"))
+  fun interface Handler : Wirespec.Handler {
+      fun onPetAdded(input: Input, onNext: (Result) -> Unit): Wirespec.Cancellable
+  }
+  fun interface Call : Wirespec.Call {
+      fun onPetAdded(input: Input, onNext: (Result) -> Unit): Wirespec.Cancellable
+  }
+}
+
+package community.flock.wirespec.generated.client
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Pet
+import community.flock.wirespec.generated.graphql.GetPet
+data class GetPetClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : GetPet.Call {
+  override suspend fun getPet(input: GetPet.Input): GetPet.Result {
+    val rawRequest = GetPet.toRawRequest(serialization, input)
+    val rawResponse = transportation.transport(rawRequest)
+    return GetPet.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+package community.flock.wirespec.generated.client
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.PetInput
+import community.flock.wirespec.generated.model.Pet
+import community.flock.wirespec.generated.graphql.AddPet
+data class AddPetClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : AddPet.Call {
+  override suspend fun addPet(input: AddPet.Input): AddPet.Result {
+    val rawRequest = AddPet.toRawRequest(serialization, input)
+    val rawResponse = transportation.transport(rawRequest)
+    return AddPet.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+package community.flock.wirespec.generated.client
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Pet
+import community.flock.wirespec.generated.graphql.OnPetAdded
+data class OnPetAddedClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.StreamTransportation
+) : OnPetAdded.Call {
+  override fun onPetAdded(input: OnPetAdded.Input, onNext: (OnPetAdded.Result) -> Unit): Wirespec.Cancellable {
+    val rawRequest = OnPetAdded.toRawRequest(serialization, input)
+    return transportation.stream(rawRequest, { raw -> onNext(OnPetAdded.fromRawResponse(serialization, raw)) })
+  }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Pet
+object PetGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Pet =
+    Pet(
+      id = generator.generate(path + listOf("id"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) })),
+      tags = generator.generate(path + listOf("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) }))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.PetInput
+object PetInputGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): PetInput =
+    PetInput(name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      regex = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Pet
+import community.flock.wirespec.generated.model.PetInput
+import community.flock.wirespec.generated.graphql.GetPet
+import community.flock.wirespec.generated.graphql.AddPet
+import community.flock.wirespec.generated.client.GetPetClient
+import community.flock.wirespec.generated.client.AddPetClient
+data class Client(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : GetPet.Call, AddPet.Call {
+  override suspend fun getPet(input: GetPet.Input): GetPet.Result =
+    GetPetClient(
+      serialization = serialization,
+      transportation = transportation
+    ).getPet(input)
+  override suspend fun addPet(input: AddPet.Input): AddPet.Result =
+    AddPetClient(
+      serialization = serialization,
+      transportation = transportation
+    ).addPet(input)
+}

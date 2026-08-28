@@ -13,6 +13,7 @@ object Wirespec {
   }
   trait Endpoint
   trait Channel
+  trait GraphQL
   trait Path
   trait Queries
   trait Headers
@@ -84,6 +85,22 @@ object Wirespec {
     )
   trait Transportation {
       def transport(request: RawRequest): RawResponse
+  }
+  case class GraphQLErrorLocation(
+      val line: Int,
+      val column: Int
+    )
+  case class GraphQLError(
+      val message: String,
+      val locations: Option[List[GraphQLErrorLocation]],
+      val path: Option[List[Any]],
+      val extensions: Option[Any]
+    )
+  trait Cancellable {
+      def cancel(): Unit
+  }
+  trait StreamTransportation {
+      def stream(request: RawRequest, onNext: (RawResponse) => Unit): Cancellable
   }
   sealed trait GeneratorField[T]
   case class GeneratorFieldString(

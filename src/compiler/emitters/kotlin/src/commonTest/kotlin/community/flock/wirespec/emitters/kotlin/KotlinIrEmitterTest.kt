@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileGraphqlTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
@@ -84,6 +85,13 @@ class KotlinIrEmitterTest {
         val kotlin = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun compileGraphqlTest() {
+        val kotlin = EmitterFixtures.compileGraphqlTest
+
+        CompileGraphqlTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
     }
 
     @Test

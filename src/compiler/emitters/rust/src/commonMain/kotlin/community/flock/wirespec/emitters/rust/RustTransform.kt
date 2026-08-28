@@ -313,6 +313,11 @@ object RustTransform {
             else -> "$value"
         }
         is RawExpression -> code
+        is FunctionCall -> {
+            val recv = receiver?.let { "${it.toRawCode()}." } ?: ""
+            val args = arguments.values.joinToString(", ") { it.toRawCode() }
+            "$recv${name.snakeCase().sanitizeKeywords()}($args)"
+        }
         else -> error("Unsupported expression type in toRawCode: ${this::class.simpleName}")
     }
 }

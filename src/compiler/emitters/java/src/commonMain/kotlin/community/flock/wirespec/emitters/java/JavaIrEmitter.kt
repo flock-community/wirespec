@@ -213,6 +213,38 @@ open class JavaIrEmitter(
             .qualifyChannelReferences(fullyQualifiedPrefix)
     }
 
+    override fun emit(graphql: Graphql, module: Module): File = super.emit(graphql, module)
+        .transformTypeDescriptors()
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(graphql.buildModelImports(packageName).takeIf { it.isNotEmpty() })
+
+    override fun emitGraphqlClient(graphql: Graphql): File {
+        val imports = graphql.buildModelImports(packageName)
+        val graphqlImport = import("${packageName.value}.graphql", graphql.identifier.value)
+        val graphqlName = graphql.identifier.value
+
+        val file = super.emitGraphqlClient(graphql)
+            .sanitizeNames(sanitizationConfig)
+            .transformTypeDescriptors()
+            .let {
+                if (graphql.kind != Graphql.Kind.Subscription) {
+                    it.wrapAsyncReturnInThenApply(graphqlName)
+                } else {
+                    it.callFunctionalParameterWithApply("onNext")
+                }
+            }
+
+        val subPackageName = packageName + "client"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(subPackageName.value)) +
+                    wirespecImports +
+                    imports +
+                    listOf(graphqlImport) +
+                    file.elements
+        )
+    }
+
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildModelImports(packageName)
         val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)

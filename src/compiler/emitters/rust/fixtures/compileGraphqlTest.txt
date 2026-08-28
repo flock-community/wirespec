@@ -1,0 +1,194 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Pet {
+    pub id: String,
+    pub name: Option<String>,
+    pub tags: Vec<String>,
+}
+impl Pet {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct PetInput {
+    pub name: String,
+}
+impl PetInput {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+pub mod GetPet {
+    use super::*;
+    pub struct Input {
+        pub id: String,
+    }
+    pub struct Data {
+        pub pet: Option<Pet>,
+    }
+    pub struct Result {
+        pub data: Option<Data>,
+        pub errors: Option<Vec<Wirespec.GraphQLError>>,
+    }
+    pub struct RequestBody {
+        pub query: String,
+        pub variables: Input,
+    }
+    pub fn document() -> String {
+        return String::from("query GetPet($id: String!) { pet(id: $id) { id name tags } }");
+    }
+    pub fn to_raw_request(serialization: Wirespec.Serializer, input: Input) -> Wirespec.RawRequest {
+        return Wirespec.RawRequest { method: String::from("POST"), path: vec![String::from("graphql")], queries: std::collections::HashMap::new(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&RequestBody { query: document(), variables: input }, std::any::TypeId::of::<RequestBody>())) };
+    }
+    pub fn from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> Result {
+        return response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<Result>())).expect("body is null");
+    }
+    pub trait Handler: Wirespec.Handler {
+        async fn get_pet(input: Input) -> Result;
+    }
+    pub trait Call: Wirespec.Call {
+        async fn get_pet(input: Input) -> Result;
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+pub mod AddPet {
+    use super::*;
+    pub struct Input {
+        pub input: PetInput,
+    }
+    pub struct Data {
+        pub add_pet: Pet,
+    }
+    pub struct Result {
+        pub data: Option<Data>,
+        pub errors: Option<Vec<Wirespec.GraphQLError>>,
+    }
+    pub struct RequestBody {
+        pub query: String,
+        pub variables: Input,
+    }
+    pub fn document() -> String {
+        return String::from("mutation AddPet($input: PetInput!) { addPet(input: $input) { id name tags } }");
+    }
+    pub fn to_raw_request(serialization: Wirespec.Serializer, input: Input) -> Wirespec.RawRequest {
+        return Wirespec.RawRequest { method: String::from("POST"), path: vec![String::from("graphql")], queries: std::collections::HashMap::new(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&RequestBody { query: document(), variables: input }, std::any::TypeId::of::<RequestBody>())) };
+    }
+    pub fn from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> Result {
+        return response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<Result>())).expect("body is null");
+    }
+    pub trait Handler: Wirespec.Handler {
+        async fn add_pet(input: Input) -> Result;
+    }
+    pub trait Call: Wirespec.Call {
+        async fn add_pet(input: Input) -> Result;
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+pub mod OnPetAdded {
+    use super::*;
+    pub struct Input;
+    pub struct Data {
+        pub pet_added: Pet,
+    }
+    pub struct Result {
+        pub data: Option<Data>,
+        pub errors: Option<Vec<Wirespec.GraphQLError>>,
+    }
+    pub struct RequestBody {
+        pub query: String,
+        pub variables: Input,
+    }
+    pub fn document() -> String {
+        return String::from("subscription OnPetAdded { petAdded { id name tags } }");
+    }
+    pub fn to_raw_request(serialization: Wirespec.Serializer, input: Input) -> Wirespec.RawRequest {
+        return Wirespec.RawRequest { method: String::from("POST"), path: vec![String::from("graphql")], queries: std::collections::HashMap::new(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&RequestBody { query: document(), variables: input }, std::any::TypeId::of::<RequestBody>())) };
+    }
+    pub fn from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> Result {
+        return response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<Result>())).expect("body is null");
+    }
+    pub trait Handler: Wirespec.Handler {
+        fn on_pet_added(input: Input, on_next: Box<dyn Fn(Result) -> ()>) -> Wirespec.Cancellable;
+    }
+    pub trait Call: Wirespec.Call {
+        fn on_pet_added(input: Input, on_next: Box<dyn Fn(Result) -> ()>) -> Wirespec.Cancellable;
+    }
+}
+
+pub struct GetPetClient {
+    pub serialization: Wirespec.Serialization,
+    pub transportation: Wirespec.Transportation,
+}
+impl GetPetClient {
+    pub async fn get_pet(input: GetPet.Input) -> GetPet.Result {
+        let raw_request = get_pet.to_raw_request(serialization, input);
+        let raw_response = transportation.transport(raw_request);
+        return get_pet.from_raw_response(serialization, raw_response);
+    }
+}
+
+pub struct AddPetClient {
+    pub serialization: Wirespec.Serialization,
+    pub transportation: Wirespec.Transportation,
+}
+impl AddPetClient {
+    pub async fn add_pet(input: AddPet.Input) -> AddPet.Result {
+        let raw_request = add_pet.to_raw_request(serialization, input);
+        let raw_response = transportation.transport(raw_request);
+        return add_pet.from_raw_response(serialization, raw_response);
+    }
+}
+
+pub struct OnPetAddedClient {
+    pub serialization: Wirespec.Serialization,
+    pub transportation: Wirespec.StreamTransportation,
+}
+impl OnPetAddedClient {
+    pub fn on_pet_added(input: OnPetAdded.Input, on_next: Box<dyn Fn(OnPetAdded.Result) -> ()>) -> Wirespec.Cancellable {
+        let raw_request = on_pet_added.to_raw_request(serialization, input);
+        return transportation.stream(raw_request, Box::new(|raw| on_next(on_pet_added.from_raw_response(serialization, raw))));
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::pet::Pet;
+pub struct PetGenerator;
+impl PetGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Pet {
+        return Pet { id: generator.generate(vec![path.as_slice(), vec![String::from("id")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::pet_input::PetInput;
+pub struct PetInputGenerator;
+impl PetInputGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PetInput {
+        return PetInput { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;
+
+use super::wirespec::*;
+pub struct Client<S: Serialization, T: Transportation> {
+    pub serialization: S,
+    pub transportation: T,
+}
