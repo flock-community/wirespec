@@ -211,9 +211,9 @@ class PutTodoClient(PutTodo.Call):
     transportation: Wirespec.Transportation
     async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
         request = Request(id=id, done=done, name=name, token=token, refreshToken=refreshToken, body=body)
-        rawRequest = PutTodo.toRawRequest(serialization=self.serialization, request=request)
+        rawRequest = PutTodo.toRawRequest(self.serialization, request)
         rawResponse = await self.transportation.transport(rawRequest)
-        return PutTodo.fromRawResponse(serialization=self.serialization, response=rawResponse)
+        return PutTodo.fromRawResponse(self.serialization, rawResponse)
 
 from __future__ import annotations
 import re

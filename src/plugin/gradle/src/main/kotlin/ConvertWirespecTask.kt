@@ -49,6 +49,7 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
             is FilePath -> when (inputPath.extension) {
                 FileExtension.JSON -> Source<JSON>(inputPath.name, preProcessorFunction(inputPath.read()))
                 FileExtension.AvroJson -> Source<JSON>(inputPath.name, preProcessorFunction(inputPath.read()))
+                FileExtension.GraphQL -> Source<JSON>(inputPath.name, preProcessorFunction(inputPath.read()))
                 else -> throw JSONFileError()
             }
                 .also { logger.info("Found 1 file to process: $inputPath") }

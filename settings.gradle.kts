@@ -39,6 +39,7 @@ include(
     "src:plugin:gradle",
     "src:converter:common",
     "src:converter:avro",
+    "src:converter:graphql",
     "src:converter:openapi",
     "src:integration:avro",
     "src:integration:jackson",

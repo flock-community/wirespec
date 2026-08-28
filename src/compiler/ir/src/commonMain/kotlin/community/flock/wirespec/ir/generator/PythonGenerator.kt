@@ -350,7 +350,7 @@ object PythonGenerator :
             if (recv != null) {
                 "$awaitPrefix${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
             } else {
-                "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
+                "$awaitPrefix${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
             }
         }
         is ArrayIndexCall -> if (caseSensitive) {
@@ -413,7 +413,7 @@ object PythonGenerator :
             if (recv != null) {
                 "$awaitPrefix${recv.emit()}.${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             } else {
-                "$awaitPrefix${name.value()}(${arguments.map { "${it.key.value()}=${it.value.emit()}" }.joinToString(", ")})"
+                "$awaitPrefix${name.value()}(${arguments.values.joinToString(", ") { it.emit() }})"
             }
         }
         is ArrayIndexCall -> if (caseSensitive) {

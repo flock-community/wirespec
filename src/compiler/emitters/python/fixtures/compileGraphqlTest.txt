@@ -151,26 +151,26 @@ class GetPetClient(GetPet.Call):
     serialization: Wirespec.Serialization
     transportation: Wirespec.Transportation
     async def GetPet(self, input: GetPet.Input) -> GetPet.Result:
-        rawRequest = GetPet.toRawRequest(serialization=serialization, input=input)
+        rawRequest = GetPet.toRawRequest(serialization, input)
         rawResponse = transportation.transport(rawRequest)
-        return GetPet.fromRawResponse(serialization=serialization, response=rawResponse)
+        return GetPet.fromRawResponse(serialization, rawResponse)
 
 @dataclass
 class AddPetClient(AddPet.Call):
     serialization: Wirespec.Serialization
     transportation: Wirespec.Transportation
     async def AddPet(self, input: AddPet.Input) -> AddPet.Result:
-        rawRequest = AddPet.toRawRequest(serialization=serialization, input=input)
+        rawRequest = AddPet.toRawRequest(serialization, input)
         rawResponse = transportation.transport(rawRequest)
-        return AddPet.fromRawResponse(serialization=serialization, response=rawResponse)
+        return AddPet.fromRawResponse(serialization, rawResponse)
 
 @dataclass
 class OnPetAddedClient(OnPetAdded.Call):
     serialization: Wirespec.Serialization
     transportation: Wirespec.StreamTransportation
     def OnPetAdded(self, input: OnPetAdded.Input, onNext: Callable[[OnPetAdded.Result], None]) -> Wirespec.Cancellable:
-        rawRequest = OnPetAdded.toRawRequest(serialization=serialization, input=input)
-        return transportation.stream(rawRequest, lambda raw: onNext(value=OnPetAdded.fromRawResponse(serialization=serialization, response=raw)))
+        rawRequest = OnPetAdded.toRawRequest(serialization, input)
+        return transportation.stream(rawRequest, lambda raw: onNext(OnPetAdded.fromRawResponse(serialization, raw)))
 
 from __future__ import annotations
 import re

@@ -107,9 +107,9 @@ class GetTodosClient(GetTodos.Call):
     transportation: Wirespec.Transportation
     async def get_todos(self) -> Response[Any]:
         request = Request()
-        rawRequest = GetTodos.toRawRequest(serialization=self.serialization, request=request)
+        rawRequest = GetTodos.toRawRequest(self.serialization, request)
         rawResponse = await self.transportation.transport(rawRequest)
-        return GetTodos.fromRawResponse(serialization=self.serialization, response=rawResponse)
+        return GetTodos.fromRawResponse(self.serialization, rawResponse)
 
 from __future__ import annotations
 import re
