@@ -51,13 +51,13 @@ import community.flock.wirespec.openapi.common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
-object OpenAPIV3Emitter : Emitter {
-    data class Options(
+public object OpenAPIV3Emitter : Emitter {
+    public data class Options(
         val title: String,
         val version: String,
     )
 
-    override val extension = FileExtension.JSON
+    override val extension: FileExtension = FileExtension.JSON
 
     override fun emit(
         ast: AST,
@@ -75,7 +75,7 @@ object OpenAPIV3Emitter : Emitter {
         }
         .let { nonEmptyListOf(it) }
 
-    fun emitOpenAPIObject(statements: Statements, options: Options? = null, logger: Logger): OpenAPIV3Model = OpenAPIV30Model(
+    public fun emitOpenAPIObject(statements: Statements, options: Options? = null, logger: Logger): OpenAPIV3Model = OpenAPIV30Model(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",

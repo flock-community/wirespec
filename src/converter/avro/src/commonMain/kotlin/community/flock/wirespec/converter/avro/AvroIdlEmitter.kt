@@ -13,7 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-object AvroIdlEmitter : Emitter {
+internal object AvroIdlEmitter : Emitter {
 
     override val extension = FileExtension.AvroIdl
 

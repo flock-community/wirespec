@@ -7,29 +7,29 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import kotlinx.serialization.json.Json
 
-fun className(vararg arg: String) = arg
+public fun className(vararg arg: String): String = arg
     .flatMap { it.split("-", "/") }
     .joinToString("") { it.firstToUpper() }
 
-fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> = mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
+internal fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> = mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
 
-fun List<Annotation>.findDescription(): String? = find { it.name == "Description" }
+internal fun List<Annotation>.findDescription(): String? = find { it.name == "Description" }
     ?.parameters
     ?.find { it.name == "default" }
     ?.value
     ?.let { (it as? Annotation.Value.Single) }
     ?.value
 
-fun String?.toDescriptionAnnotationList() = this?.let(::toDescriptionAnnotation)?.let(::listOf).orEmpty()
+internal fun String?.toDescriptionAnnotationList() = this?.let(::toDescriptionAnnotation)?.let(::listOf).orEmpty()
 
 private fun toDescriptionAnnotation(description: String): Annotation = Annotation(
     "Description",
     Annotation.Parameter("default", Annotation.Value.Single(description)).let(::listOf),
 )
 
-const val LINK_ANNOTATION_NAME = "Link"
+private const val LINK_ANNOTATION_NAME = "Link"
 
-data class LinkInfo(
+internal data class LinkInfo(
     val name: String,
     val operationId: String?,
     val operationRef: String?,
@@ -39,10 +39,10 @@ data class LinkInfo(
     val serverUrl: String?,
 )
 
-fun List<Annotation>.findLinks(): List<LinkInfo> = filter { it.name == LINK_ANNOTATION_NAME }
+internal fun List<Annotation>.findLinks(): List<LinkInfo> = filter { it.name == LINK_ANNOTATION_NAME }
     .mapNotNull { it.toLinkInfo() }
 
-fun LinkInfo.toAnnotation(): Annotation {
+internal fun LinkInfo.toAnnotation(): Annotation {
     val params = mutableListOf(
         Annotation.Parameter("default", Annotation.Value.Single(name)),
     )
@@ -90,7 +90,7 @@ private fun List<Annotation.Parameter>.dictParam(name: String): Map<String, Stri
     ?.toMap()
     .orEmpty()
 
-fun List<Definition>.resolveEndpointNameCollisions(): List<Definition> {
+internal fun List<Definition>.resolveEndpointNameCollisions(): List<Definition> {
     val nonEndpointNames = filterNot { it is Endpoint }
         .map { it.identifier.value }
         .toSet()
@@ -103,6 +103,6 @@ fun List<Definition>.resolveEndpointNameCollisions(): List<Definition> {
     }
 }
 
-val json = Json { prettyPrint = true }
+public val json: Json = Json { prettyPrint = true }
 
-const val APPLICATION_JSON = "application/json"
+public const val APPLICATION_JSON: String = "application/json"

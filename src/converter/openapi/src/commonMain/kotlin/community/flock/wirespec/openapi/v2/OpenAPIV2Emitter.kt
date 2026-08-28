@@ -37,9 +37,9 @@ import community.flock.wirespec.openapi.common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
-object OpenAPIV2Emitter : Emitter {
+public object OpenAPIV2Emitter : Emitter {
 
-    override val extension = FileExtension.JSON
+    override val extension: FileExtension = FileExtension.JSON
 
     override fun emit(
         ast: AST,
@@ -57,7 +57,7 @@ object OpenAPIV2Emitter : Emitter {
         }
         .let { nonEmptyListOf(it) }
 
-    fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = OpenAPIV20Model(
+    public fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = OpenAPIV20Model(
         swagger = "2.0",
         info = InfoObject(
             title = "Wirespec",
