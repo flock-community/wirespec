@@ -117,7 +117,6 @@ private fun WsGraphql.consume() = Graphql(
     annotations = emptyList(),
     identifier = DefinitionIdentifier(identifier),
     kind = kind.consume(),
-    operation = FieldIdentifier(operation),
     inputs = inputs.map { it.consume() },
     output = output.consume(),
 )
@@ -247,7 +246,6 @@ fun Definition.produce(): WsDefinition = when (this) {
         identifier = identifier.value,
         comment = comment?.value,
         kind = kind.produce(),
-        operation = operation.value,
         inputs = inputs.produce(),
         output = output.produce(),
     )
@@ -404,7 +402,6 @@ data class WsGraphql(
     override val identifier: String,
     override val comment: String?,
     val kind: WsGraphqlKind,
-    val operation: String,
     val inputs: Array<WsField>,
     val output: WsReference,
 ) : WsDefinition

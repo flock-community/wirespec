@@ -143,7 +143,7 @@ class GraphQLParserTest {
         graphqls[0].run {
             identifier.value shouldBe "PetQuery"
             kind shouldBe Graphql.Kind.Query
-            operation.value shouldBe "pet"
+            operation shouldBe "pet"
             inputs.shouldHaveSize(1).first().run {
                 identifier.value shouldBe "id"
                 reference.isNullable shouldBe false

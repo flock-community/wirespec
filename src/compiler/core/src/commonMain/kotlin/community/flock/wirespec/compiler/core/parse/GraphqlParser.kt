@@ -3,17 +3,14 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongGraphqlKindException
-import community.flock.wirespec.compiler.core.parse.TypeParser.parseParenthesizedFields
+import community.flock.wirespec.compiler.core.parse.TypeParser.parseCurlyFields
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Comment
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
-import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 object GraphqlParser {
@@ -38,14 +35,9 @@ object GraphqlParser {
             else -> raiseWrongToken<TypeIdentifier>().bind()
         }.also { eatToken().bind() }
 
-        val operation = when (token.type) {
-            is WirespecIdentifier -> FieldIdentifier(token.value).also { eatToken().bind() }
-            else -> raiseWrongToken<WirespecIdentifier>().bind()
-        }
-
         val inputs = when (token.type) {
-            is LeftParenthesis -> parseParenthesizedFields().bind()
-            else -> emptyList()
+            is LeftCurly -> parseCurlyFields().bind()
+            else -> raiseWrongToken<LeftCurly>().bind()
         }
 
         when (token.type) {
@@ -66,7 +58,6 @@ object GraphqlParser {
             annotations = annotations,
             identifier = identifier,
             kind = kind,
-            operation = operation,
             inputs = inputs,
             output = output,
         )

@@ -63,7 +63,7 @@ object GraphQLEmitter : Emitter {
         val description = graphql.renderDescription()
         val arguments = graphql.inputs.renderArguments(tracker)
         val directives = graphql.annotations.renderDirectives()
-        "$description$INDENT${graphql.operation.value}$arguments: ${graphql.output.render(tracker, graphql.annotations)}$directives"
+        "$description$INDENT${graphql.operation}$arguments: ${graphql.output.render(tracker, graphql.annotations)}$directives"
     }.let { "type ${kind.name} {\n$it\n}" }
 
     private fun Type.render(tracker: ScalarTracker): String {

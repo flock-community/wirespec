@@ -1,5 +1,5 @@
-graphql GetTodo Query todo(id: String) -> TodoResult?
+graphql GetTodo Query {id: String} -> TodoResult?
 
-graphql AddTodo Mutation addTodo(input: TodoInput) -> TodoResult
+graphql AddTodo Mutation {input: TodoInput} -> TodoResult
 
-graphql OnTodoAdded Subscription todoAdded -> TodoResult
+graphql OnTodoAdded Subscription {} -> TodoResult

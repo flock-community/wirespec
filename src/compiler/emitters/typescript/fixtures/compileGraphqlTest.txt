@@ -22,7 +22,7 @@ export namespace GetPet {
     "id": string,
   }
   export type Data = {
-    "pet": Pet | undefined,
+    "getPet": Pet | undefined,
   }
   export type Result = {
     "data": Data | undefined,
@@ -33,7 +33,7 @@ export namespace GetPet {
     "variables": Input,
   }
   export function document(): string {
-    return 'query GetPet($id: String!) { pet(id: $id) { id name tags } }';
+    return 'query GetPet($id: String!) { getPet(id: $id) { id name tags } }';
   }
   export function toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest {
     return { method: 'POST', path: ['graphql'], queries: {}, headers: {}, body: serialization.serializeBody({ query: document(), variables: input }, "RequestBody") };
@@ -86,7 +86,7 @@ import {Wirespec} from '../Wirespec'
 export namespace OnPetAdded {
   export type Input = {}
   export type Data = {
-    "petAdded": Pet,
+    "onPetAdded": Pet,
   }
   export type Result = {
     "data": Data | undefined,
@@ -97,7 +97,7 @@ export namespace OnPetAdded {
     "variables": Input,
   }
   export function document(): string {
-    return 'subscription OnPetAdded { petAdded { id name tags } }';
+    return 'subscription OnPetAdded { onPetAdded { id name tags } }';
   }
   export function toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest {
     return { method: 'POST', path: ['graphql'], queries: {}, headers: {}, body: serialization.serializeBody({ query: document(), variables: input }, "RequestBody") };

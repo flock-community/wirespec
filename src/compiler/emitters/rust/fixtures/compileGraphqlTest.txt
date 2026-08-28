@@ -32,7 +32,7 @@ pub mod GetPet {
         pub id: String,
     }
     pub struct Data {
-        pub pet: Option<Pet>,
+        pub get_pet: Option<Pet>,
     }
     pub struct Result {
         pub data: Option<Data>,
@@ -43,7 +43,7 @@ pub mod GetPet {
         pub variables: Input,
     }
     pub fn document() -> String {
-        return String::from("query GetPet($id: String!) { pet(id: $id) { id name tags } }");
+        return String::from("query GetPet($id: String!) { getPet(id: $id) { id name tags } }");
     }
     pub fn to_raw_request(serialization: Wirespec.Serializer, input: Input) -> Wirespec.RawRequest {
         return Wirespec.RawRequest { method: String::from("POST"), path: vec![String::from("graphql")], queries: std::collections::HashMap::new(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&RequestBody { query: document(), variables: input }, std::any::TypeId::of::<RequestBody>())) };
@@ -100,7 +100,7 @@ pub mod OnPetAdded {
     use super::*;
     pub struct Input;
     pub struct Data {
-        pub pet_added: Pet,
+        pub on_pet_added: Pet,
     }
     pub struct Result {
         pub data: Option<Data>,
@@ -111,7 +111,7 @@ pub mod OnPetAdded {
         pub variables: Input,
     }
     pub fn document() -> String {
-        return String::from("subscription OnPetAdded { petAdded { id name tags } }");
+        return String::from("subscription OnPetAdded { onPetAdded { id name tags } }");
     }
     pub fn to_raw_request(serialization: Wirespec.Serializer, input: Input) -> Wirespec.RawRequest {
         return Wirespec.RawRequest { method: String::from("POST"), path: vec![String::from("graphql")], queries: std::collections::HashMap::new(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&RequestBody { query: document(), variables: input }, std::any::TypeId::of::<RequestBody>())) };

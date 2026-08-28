@@ -31,7 +31,7 @@ public interface GetPet extends Wirespec.GraphQL {
   ) {
   };
   public static record Data (
-    java.util.Optional<Pet> pet
+    java.util.Optional<Pet> getPet
   ) {
   };
   public static record Result (
@@ -45,7 +45,7 @@ public interface GetPet extends Wirespec.GraphQL {
   ) {
   };
   public static String document() {
-    return "query GetPet($id: String!) { pet(id: $id) { id name tags } }";
+    return "query GetPet($id: String!) { getPet(id: $id) { id name tags } }";
   }
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Input input) {
     return new Wirespec.RawRequest(
@@ -126,7 +126,7 @@ public interface OnPetAdded extends Wirespec.GraphQL {
   public static record Input () {
   };
   public static record Data (
-    Pet petAdded
+    Pet onPetAdded
   ) {
   };
   public static record Result (
@@ -140,7 +140,7 @@ public interface OnPetAdded extends Wirespec.GraphQL {
   ) {
   };
   public static String document() {
-    return "subscription OnPetAdded { petAdded { id name tags } }";
+    return "subscription OnPetAdded { onPetAdded { id name tags } }";
   }
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Input input) {
     return new Wirespec.RawRequest(

@@ -81,9 +81,9 @@ class WirespecEmitterTest {
             |  name: String
             |}
             |
-            |graphql GetPet Query pet(id: String) -> Pet?
-            |graphql AddPet Mutation addPet(input: PetInput) -> Pet
-            |graphql OnPetAdded Subscription petAdded -> Pet
+            |graphql GetPet Query {id: String} -> Pet?
+            |graphql AddPet Mutation {input: PetInput} -> Pet
+            |graphql OnPetAdded Subscription {} -> Pet
         """.trimMargin()
 
         CompileGraphqlTest.compiler { WirespecEmitter() } shouldBeRight wirespec

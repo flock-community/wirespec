@@ -58,12 +58,12 @@ object GraphQLConverter {
         }
     }
 
+    // PascalCase(field) + kind: the language derives the field name back by stripping the kind suffix.
     private fun FieldDefinition.toGraphql(kind: Graphql.Kind) = Graphql(
         comment = description?.let { Comment(it) },
         annotations = directives.toAnnotations(),
         identifier = DefinitionIdentifier(name.replaceFirstChar(Char::uppercaseChar) + kind.name),
         kind = kind,
-        operation = FieldIdentifier(name),
         inputs = arguments.map { it.toField() },
         output = type.toReference(),
     )

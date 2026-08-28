@@ -29,7 +29,7 @@ object GetPet : Wirespec.GraphQL {
       val id: String
     )
   data class Data(
-      val pet: Pet?
+      val getPet: Pet?
     )
   data class Result(
       val data: Data?,
@@ -40,7 +40,7 @@ object GetPet : Wirespec.GraphQL {
       val variables: Input
     )
   fun document(): String =
-    "query GetPet(\$id: String!) { pet(id: \$id) { id name tags } }"
+    "query GetPet(\$id: String!) { getPet(id: \$id) { id name tags } }"
   fun toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
     Wirespec.RawRequest(
       method = "POST",
@@ -112,7 +112,7 @@ import community.flock.wirespec.generated.model.Pet
 object OnPetAdded : Wirespec.GraphQL {
   object Input
   data class Data(
-      val petAdded: Pet
+      val onPetAdded: Pet
     )
   data class Result(
       val data: Data?,
@@ -123,7 +123,7 @@ object OnPetAdded : Wirespec.GraphQL {
       val variables: Input
     )
   fun document(): String =
-    "subscription OnPetAdded { petAdded { id name tags } }"
+    "subscription OnPetAdded { onPetAdded { id name tags } }"
   fun toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
     Wirespec.RawRequest(
       method = "POST",

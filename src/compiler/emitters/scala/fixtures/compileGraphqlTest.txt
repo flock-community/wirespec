@@ -28,7 +28,7 @@ object GetPet extends Wirespec.GraphQL {
       val id: String
     )
   case class Data(
-      val pet: Option[Pet]
+      val getPet: Option[Pet]
     )
   case class Result(
       val data: Option[Data],
@@ -39,7 +39,7 @@ object GetPet extends Wirespec.GraphQL {
       val variables: Input
     )
   def document(): String =
-    "query GetPet($id: String!) { pet(id: $id) { id name tags } }"
+    "query GetPet($id: String!) { getPet(id: $id) { id name tags } }"
   def toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
     new Wirespec.RawRequest(
       method = "POST",
@@ -108,7 +108,7 @@ import scala.reflect.ClassTag
 object OnPetAdded extends Wirespec.GraphQL {
   object Input
   case class Data(
-      val petAdded: Pet
+      val onPetAdded: Pet
     )
   case class Result(
       val data: Option[Data],
@@ -119,7 +119,7 @@ object OnPetAdded extends Wirespec.GraphQL {
       val variables: Input.type
     )
   def document(): String =
-    "subscription OnPetAdded { petAdded { id name tags } }"
+    "subscription OnPetAdded { onPetAdded { id name tags } }"
   def toRawRequest(serialization: Wirespec.Serializer, input: Input.type): Wirespec.RawRequest =
     new Wirespec.RawRequest(
       method = "POST",

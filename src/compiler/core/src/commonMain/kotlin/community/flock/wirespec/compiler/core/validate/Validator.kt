@@ -115,7 +115,7 @@ object Validator {
                 .filter { it.value.size > 1 }
                 .flatMap { (name, defs) -> defs.map { DuplicateGraphqlError(name) } }
             val duplicateOperations = definitions
-                .groupBy { it.kind to it.operation.value }
+                .groupBy { it.kind to it.operation }
                 .filter { it.value.size > 1 }
                 .flatMap { (key, defs) -> defs.map { DuplicateGraphqlOperationError(key.first.name, key.second) } }
             duplicateNames + duplicateOperations

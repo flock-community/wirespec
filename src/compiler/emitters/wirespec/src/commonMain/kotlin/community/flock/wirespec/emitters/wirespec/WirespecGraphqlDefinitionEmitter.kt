@@ -7,8 +7,6 @@ interface WirespecGraphqlDefinitionEmitter :
     GraphqlDefinitionEmitter,
     WirespecTypeDefinitionEmitter {
     override fun emit(graphql: Graphql): String = graphql.inputs
-        .takeIf { it.isNotEmpty() }
-        ?.joinToString(", ", "(", ")") { it.emit() }
-        .orEmpty()
-        .let { inputs -> "graphql ${emit(graphql.identifier)} ${graphql.kind.name} ${emit(graphql.operation)}$inputs -> ${graphql.output.emit()}" }
+        .joinToString(", ", "{", "}") { it.emit() }
+        .let { inputs -> "graphql ${emit(graphql.identifier)} ${graphql.kind.name} $inputs -> ${graphql.output.emit()}" }
 }

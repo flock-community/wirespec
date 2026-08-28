@@ -31,7 +31,7 @@ class ParseGraphqlTest {
             // language=ws
             """
             |type Pet { id: String, name: String? }
-            |graphql GetPet Query pet(id: String) -> Pet?
+            |graphql GetPet Query {id: String} -> Pet?
             """.trimMargin()
 
         parser(source)
@@ -41,7 +41,7 @@ class ParseGraphqlTest {
             .run {
                 identifier.value shouldBe "GetPet"
                 kind shouldBe Graphql.Kind.Query
-                operation.value shouldBe "pet"
+                operation shouldBe "getPet"
                 inputs.shouldHaveSize(1).first().run {
                     identifier.value shouldBe "id"
                     reference.shouldBeInstanceOf<Reference.Primitive>().type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
@@ -59,7 +59,7 @@ class ParseGraphqlTest {
             // language=ws
             """
             |type Pet { id: String }
-            |graphql GetPets Query pets -> Pet[]
+            |graphql GetPets Query {} -> Pet[]
             """.trimMargin()
 
         parser(source)
@@ -69,7 +69,7 @@ class ParseGraphqlTest {
             .run {
                 identifier.value shouldBe "GetPets"
                 kind shouldBe Graphql.Kind.Query
-                operation.value shouldBe "pets"
+                operation shouldBe "getPets"
                 inputs.shouldHaveSize(0)
                 output.shouldBeInstanceOf<Reference.Iterable>().run {
                     isNullable shouldBe false
@@ -85,7 +85,7 @@ class ParseGraphqlTest {
             """
             |type Pet { id: String }
             |type PetInput { name: String }
-            |graphql AddPet Mutation addPet(input: PetInput, tag: String?) -> Pet
+            |graphql AddPet Mutation {input: PetInput, tag: String?} -> Pet
             """.trimMargin()
 
         parser(source)
@@ -94,7 +94,7 @@ class ParseGraphqlTest {
             .shouldBeInstanceOf<Graphql>()
             .run {
                 kind shouldBe Graphql.Kind.Mutation
-                operation.value shouldBe "addPet"
+                operation shouldBe "addPet"
                 inputs.shouldHaveSize(2)
                 inputs[0].reference.shouldBeInstanceOf<Reference.Custom>().value shouldBe "PetInput"
                 inputs[1].reference.isNullable shouldBe true
@@ -107,7 +107,7 @@ class ParseGraphqlTest {
             // language=ws
             """
             |type Pet { id: String }
-            |graphql OnPetAdded Subscription petAdded -> Pet
+            |graphql OnPetAdded Subscription {} -> Pet
             """.trimMargin()
 
         parser(source)
@@ -123,7 +123,7 @@ class ParseGraphqlTest {
             // language=ws
             """
             |type Pet { id: String }
-            |graphql GetPet Fetch pet -> Pet
+            |graphql GetPet Fetch {} -> Pet
             """.trimMargin()
 
         parser(source)
@@ -139,15 +139,15 @@ class ParseGraphqlTest {
             // language=ws
             """
             |type Pet { id: String }
-            |graphql GetPet Query pet -> Pet
-            |graphql GetPetAgain Query pet -> Pet
+            |graphql GetPet Query {} -> Pet
+            |graphql GetPetQuery Query {} -> Pet
             """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
             .first()
             .message
-            .shouldContain("Graphql Query field 'pet' is already defined")
+            .shouldContain("Graphql Query field 'getPet' is already defined")
     }
 
     @Test
@@ -156,8 +156,8 @@ class ParseGraphqlTest {
             // language=ws
             """
             |type Pet { id: String }
-            |graphql GetPet Query pet -> Pet
-            |graphql SetPet Mutation pet(id: String) -> Pet
+            |graphql GetPet Query {} -> Pet
+            |graphql GetPetMutation Mutation {id: String} -> Pet
             """.trimMargin()
 
         parser(source).shouldBeRight().shouldHaveSize(3)
@@ -170,7 +170,7 @@ class ParseGraphqlTest {
             """
             |type Post { id: String }
             |type User { posts(first: Integer?, after: String?): Post[] }
-            |graphql GetUser Query user(id: String) -> User?
+            |graphql GetUser Query {id: String} -> User?
             """.trimMargin()
 
         parser(source)

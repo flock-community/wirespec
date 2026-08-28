@@ -7,7 +7,7 @@ sidebar_position: 3
 
 Wirespec supports GraphQL operations as a first-class language construct. Each `graphql` definition describes exactly
 one root operation — queries and mutations are never bundled — with an identifier, an operation kind (`Query`,
-`Mutation` or `Subscription`), the root field name on the server's schema, optional arguments, and a return
+`Mutation` or `Subscription`), a brace-delimited argument shape (`{}` when there are none), and a return
 [type](types).
 
 ```wirespec
@@ -20,13 +20,14 @@ type PetInput {
   name: String
 }
 
-graphql GetPet Query pet(id: String) -> Pet?
-graphql AddPet Mutation addPet(input: PetInput) -> Pet
-graphql OnPetAdded Subscription petAdded -> Pet
+graphql GetPet Query {id: String} -> Pet?
+graphql AddPet Mutation {input: PetInput} -> Pet
+graphql OnPetAdded Subscription {} -> Pet
 ```
 
-The identifier (`GetPet`) names both the generated code and the GraphQL operation; the field name (`pet`) must match
-the root field on the server's schema.
+The identifier names the generated code and the GraphQL operation. The root field sent to the server is derived from
+the identifier — a trailing kind suffix is dropped, then the first letter is lowercased — so `GetPet` calls `getPet`,
+and a definition named `PetQuery` calls `pet`. Name your definition so the derived field matches the server's schema.
 
 ## Generated code
 

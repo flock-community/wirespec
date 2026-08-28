@@ -39,7 +39,7 @@ class GetPet(Wirespec.GraphQL):
         id: str
     @dataclass
     class Data:
-        pet: Optional[Pet]
+        getPet: Optional[Pet]
     @dataclass
     class Result:
         data: Optional[GetPet.Data]
@@ -50,7 +50,7 @@ class GetPet(Wirespec.GraphQL):
         variables: GetPet.Input
     @staticmethod
     def document() -> str:
-        return 'query GetPet($id: String!) { pet(id: $id) { id name tags } }'
+        return 'query GetPet($id: String!) { getPet(id: $id) { id name tags } }'
     @staticmethod
     def toRawRequest(serialization: Wirespec.Serializer, input: GetPet.Input) -> Wirespec.RawRequest:
         return Wirespec.RawRequest(method='POST', path=['graphql'], queries={}, headers={}, body=serialization.serializeBody(RequestBody(query=document(), variables=input), RequestBody))
@@ -119,7 +119,7 @@ class OnPetAdded(Wirespec.GraphQL):
         pass
     @dataclass
     class Data:
-        petAdded: Pet
+        onPetAdded: Pet
     @dataclass
     class Result:
         data: Optional[OnPetAdded.Data]
@@ -130,7 +130,7 @@ class OnPetAdded(Wirespec.GraphQL):
         variables: OnPetAdded.Input
     @staticmethod
     def document() -> str:
-        return 'subscription OnPetAdded { petAdded { id name tags } }'
+        return 'subscription OnPetAdded { onPetAdded { id name tags } }'
     @staticmethod
     def toRawRequest(serialization: Wirespec.Serializer, input: OnPetAdded.Input) -> Wirespec.RawRequest:
         return Wirespec.RawRequest(method='POST', path=['graphql'], queries={}, headers={}, body=serialization.serializeBody(RequestBody(query=document(), variables=input), RequestBody))

@@ -647,7 +647,7 @@ fun GraphqlWirespec.convert(module: Module? = null): File {
                 allInputs.forEach { field(it.identifier.toName(), it.reference.convert()) }
             }
             struct("Data") {
-                field(graphql.operation.toName(), outputType)
+                field(graphql.operation, outputType)
             }
             struct("Result") {
                 field("data", type("Data").nullable())
@@ -1440,7 +1440,7 @@ private fun GraphqlWirespec.buildDocument(module: Module?): GraphqlDocument {
         ?.joinToString(", ", "(", ")") { "${it.identifier.value}: $${it.identifier.value}" }
         .orEmpty()
     val text = "${kind.name.lowercase()} ${identifier.toName().value()}$variableDefinitions" +
-        " { ${operation.value}$operationArguments${selection?.let { " $it" }.orEmpty()} }"
+        " { $operation$operationArguments${selection?.let { " $it" }.orEmpty()} }"
     return GraphqlDocument(text, lifted)
 }
 

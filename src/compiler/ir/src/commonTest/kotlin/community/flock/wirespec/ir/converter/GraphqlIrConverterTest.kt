@@ -51,11 +51,11 @@ class GraphqlIrConverterTest {
                 id: String,
                 name: String?
             }
-            graphql GetPet Query pet(id: String) -> Pet?
+            graphql GetPet Query {id: String} -> Pet?
             """.trimIndent(),
         )
 
-        assertEquals("query GetPet(\$id: String!) { pet(id: \$id) { id name } }", module.document("GetPet"))
+        assertEquals("query GetPet(\$id: String!) { getPet(id: \$id) { id name } }", module.document("GetPet"))
     }
 
     @Test
@@ -66,11 +66,11 @@ class GraphqlIrConverterTest {
                 id: String,
                 friend: Pet?
             }
-            graphql GetPet Query pet -> Pet
+            graphql GetPet Query {} -> Pet
             """.trimIndent(),
         )
 
-        assertEquals("query GetPet { pet { id friend { __typename } } }", module.document("GetPet"))
+        assertEquals("query GetPet { getPet { id friend { __typename } } }", module.document("GetPet"))
     }
 
     @Test
@@ -84,7 +84,7 @@ class GraphqlIrConverterTest {
                 name: String
             }
             type Result = Pet | Owner
-            graphql Search Query search(text: String) -> Result[]
+            graphql Search Query {text: String} -> Result[]
             """.trimIndent(),
         )
 
@@ -104,12 +104,12 @@ class GraphqlIrConverterTest {
             type User {
                 posts(first: Integer32, after: String?): Post[]
             }
-            graphql GetUser Query user(id: String) -> User?
+            graphql GetUser Query {id: String} -> User?
             """.trimIndent(),
         )
 
         assertEquals(
-            "query GetUser(\$id: String!, \$postsFirst: Int!) { user(id: \$id) { posts(first: \$postsFirst) { id } } }",
+            "query GetUser(\$id: String!, \$postsFirst: Int!) { getUser(id: \$id) { posts(first: \$postsFirst) { id } } }",
             module.document("GetUser"),
         )
         assertEquals(listOf("id", "postsFirst"), module.inputFields("GetUser"))
@@ -124,10 +124,10 @@ class GraphqlIrConverterTest {
                 id: String,
                 status: Status
             }
-            graphql GetTicket Query ticket -> Ticket
+            graphql GetTicket Query {} -> Ticket
             """.trimIndent(),
         )
 
-        assertEquals("query GetTicket { ticket { id status } }", module.document("GetTicket"))
+        assertEquals("query GetTicket { getTicket { id status } }", module.document("GetTicket"))
     }
 }

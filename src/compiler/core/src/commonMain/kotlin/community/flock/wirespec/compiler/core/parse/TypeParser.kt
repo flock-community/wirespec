@@ -81,6 +81,31 @@ object TypeParser {
         }.let(Type::Shape)
     }
 
+    fun TokenProvider.parseCurlyFields(): Either<WirespecException, List<Field>> = parseToken {
+        mutableListOf<Field>().apply {
+            if (token.type !is RightCurly) {
+                val firstFieldAnnotations = parseAnnotations().bind()
+                when (token.type) {
+                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations).bind())
+                    else -> raiseWrongToken<WirespecIdentifier>().bind()
+                }
+                while (token.type is Comma) {
+                    eatToken().bind()
+                    val fieldAnnotations = parseAnnotations().bind()
+                    when (token.type) {
+                        is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations).bind())
+                        else -> raiseWrongToken<WirespecIdentifier>().bind()
+                    }
+                }
+            }
+        }.also {
+            when (token.type) {
+                is RightCurly -> eatToken().bind()
+                else -> raiseWrongToken<RightCurly>().bind()
+            }
+        }.toList()
+    }
+
     fun TokenProvider.parseParenthesizedFields(): Either<WirespecException, List<Field>> = parseToken {
         mutableListOf<Field>().apply {
             val firstFieldAnnotations = parseAnnotations().bind()
