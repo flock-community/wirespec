@@ -12,10 +12,10 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
+public inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
 
 @WirespecScenarioDsl
-class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
+public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     @PublishedApi internal val channelClass: KClass<*>,
     @PublishedApi internal val payloadType: KType,
     @PublishedApi internal val payloadClass: Class<*>,
@@ -23,12 +23,12 @@ class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     private var topic: String? = null
     private var key: String? = null
 
-    fun topic(value: String): ChannelCallBuilder<P> = apply { topic = value }
-    fun key(value: String): ChannelCallBuilder<P> = apply { key = value }
+    public fun topic(value: String): ChannelCallBuilder<P> = apply { topic = value }
+    public fun key(value: String): ChannelCallBuilder<P> = apply { key = value }
 
-    fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Arb<P> = arbitrary { rs -> buildPayload(rs, overrides) }
+    public fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Arb<P> = arbitrary { rs -> buildPayload(rs, overrides) }
 
-    suspend fun send(gen: Gen<P>): P {
+    public suspend fun send(gen: Gen<P>): P {
         val payload = gen.draw(currentRandomSource())
         publish(payload)
         return payload

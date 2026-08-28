@@ -2,7 +2,7 @@ package community.flock.wirespec.integration.kotest.validation
 
 import community.flock.wirespec.kotlin.Wirespec
 
-enum class ContractViolationKind { UndeclaredStatus, BodyMismatch }
+private enum class ContractViolationKind { UndeclaredStatus, BodyMismatch }
 
 internal class ContractValidator(
     private val endpoint: EndpointReflection,
@@ -33,7 +33,7 @@ internal class ContractValidator(
     }
 }
 
-class ContractViolation internal constructor(
+private class ContractViolation internal constructor(
     val endpoint: String,
     val kind: ContractViolationKind,
     message: String,

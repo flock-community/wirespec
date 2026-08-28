@@ -22,7 +22,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * [language]. Register alongside [SpringNativeHintsExtension] on a
  * Kotlin or Java [community.flock.wirespec.ir.emit.IrEmitter].
  */
-class SpringMappingAnnotationsExtension(
+public class SpringMappingAnnotationsExtension(
     private val language: FileExtension,
 ) : IrExtension {
 

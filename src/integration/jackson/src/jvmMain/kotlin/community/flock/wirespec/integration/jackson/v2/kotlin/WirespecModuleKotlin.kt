@@ -48,7 +48,7 @@ import kotlin.reflect.KClass
  *
  * @see Wirespec.Refined
  */
-class WirespecModuleKotlin : SimpleModule() {
+public class WirespecModuleKotlin : SimpleModule() {
 
     override fun getModuleName(): String = "Wirespec Jackson Module for Kotlin"
 

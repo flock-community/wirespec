@@ -13,13 +13,13 @@ import java.nio.charset.StandardCharsets
  *
  * The path ends up in either the pathInfo or servletPath
  */
-fun HttpServletRequest.extractPath() = (pathInfo ?: servletPath)
+public fun HttpServletRequest.extractPath(): List<String> = (pathInfo ?: servletPath)
     .split("/")
     .filter { it.isNotEmpty() }
 
-fun HttpServletRequest.extractQueries() = extractQueries(queryString)
+public fun HttpServletRequest.extractQueries(): Map<String, List<String>> = extractQueries(queryString)
 
-fun extractQueries(queryString: String?): Map<String, List<String>> = queryString
+public fun extractQueries(queryString: String?): Map<String, List<String>> = queryString
     ?.let { query ->
         query.split("&").flatMap { param ->
             val (key, value) = param.split("=", limit = 2)
@@ -35,4 +35,4 @@ fun extractQueries(queryString: String?): Map<String, List<String>> = queryStrin
     }
     .orEmpty()
 
-fun Map<String, List<String>>.filterNotEmpty(): Map<String, List<String>> = filter { it.value.isNotEmpty() }
+internal fun Map<String, List<String>>.filterNotEmpty(): Map<String, List<String>> = filter { it.value.isNotEmpty() }

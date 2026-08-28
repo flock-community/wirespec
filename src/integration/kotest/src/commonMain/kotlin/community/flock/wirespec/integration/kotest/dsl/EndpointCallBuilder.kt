@@ -9,14 +9,14 @@ import io.kotest.property.Gen
 import io.kotest.property.RandomSource
 
 @DslMarker
-annotation class WirespecScenarioDsl
+public annotation class WirespecScenarioDsl
 
-fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> endpointCall(
+public fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> endpointCall(
     client: Wirespec.Client<Req, Resp>,
     endpointObject: Wirespec.Endpoint,
 ): EndpointCallBuilder<BodyT, Req, Resp> = EndpointCallBuilder(client, endpointObject)
 
-suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> requestCall(
+public suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> requestCall(
     client: Wirespec.Client<Req, Resp>,
     endpointObject: Wirespec.Endpoint,
     requestGen: Gen<Req>,
@@ -27,7 +27,7 @@ suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Respons
 }
 
 @WirespecScenarioDsl
-class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> internal constructor(
+public class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> internal constructor(
     @PublishedApi internal val client: Wirespec.Client<Req, Resp>,
     endpointObject: Wirespec.Endpoint,
 ) {
@@ -45,19 +45,19 @@ class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wir
 
     @PublishedApi internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
 
-    fun bodyTransform(transform: (Any, RandomSource) -> Any): EndpointCallBuilder<BodyT, Req, Resp> = apply {
+    public fun bodyTransform(transform: (Any, RandomSource) -> Any): EndpointCallBuilder<BodyT, Req, Resp> = apply {
         bodyTransform = transform
     }
 
-    fun bodyListSize(gen: Gen<Int>): EndpointCallBuilder<BodyT, Req, Resp> = apply { bodyListSizeGen = gen }
+    public fun bodyListSize(gen: Gen<Int>): EndpointCallBuilder<BodyT, Req, Resp> = apply { bodyListSizeGen = gen }
 
-    fun pathGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { pathGens[name] = gen }
+    public fun pathGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { pathGens[name] = gen }
 
-    fun queryGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { queryGens[name] = gen }
+    public fun queryGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { queryGens[name] = gen }
 
-    fun headerGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { headerGens[name] = gen }
+    public fun headerGen(name: String, gen: Gen<*>): EndpointCallBuilder<BodyT, Req, Resp> = apply { headerGens[name] = gen }
 
-    fun buildRequestGen(): Arb<Req> {
+    public fun buildRequestGen(): Arb<Req> {
         @Suppress("UNCHECKED_CAST")
         return CallExecutor.buildRequestGen(this) as Arb<Req>
     }

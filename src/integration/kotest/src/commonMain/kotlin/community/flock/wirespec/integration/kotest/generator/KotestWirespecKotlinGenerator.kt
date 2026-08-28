@@ -2,7 +2,7 @@ package community.flock.wirespec.integration.kotest.generator
 
 import community.flock.wirespec.kotlin.Wirespec
 
-fun kotestWirespecKotlinGenerator(
+public fun kotestWirespecKotlinGenerator(
     seed: Long = 0L,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
 ): Wirespec.Generator = WirespecKotlinGeneratorAdapter(

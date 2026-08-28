@@ -11,15 +11,15 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-class WirespecEndpointExtension internal constructor(
+public class WirespecEndpointExtension internal constructor(
     private val eager: WirespecEndpointContext?,
     private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
     private val transportationFactory: (suspend () -> Wirespec.Transportation)?,
 ) : TestCaseExtension {
 
-    constructor(endpoint: WirespecEndpointContext) : this(endpoint, null, null)
+    public constructor(endpoint: WirespecEndpointContext) : this(endpoint, null, null)
 
-    constructor(
+    public constructor(
         transportation: Wirespec.Transportation,
         serialization: Wirespec.Serialization,
     ) : this(WirespecEndpointContext(transportation, serialization))
@@ -34,7 +34,7 @@ class WirespecEndpointExtension internal constructor(
     }
 }
 
-fun WirespecEndpointExtension(
+public fun WirespecEndpointExtension(
     serialization: suspend () -> Wirespec.Serialization,
     transportation: suspend () -> Wirespec.Transportation,
 ): WirespecEndpointExtension = WirespecEndpointExtension(
@@ -43,12 +43,12 @@ fun WirespecEndpointExtension(
     transportationFactory = transportation,
 )
 
-class WirespecEndpointContext(
-    val transportation: Wirespec.Transportation,
-    val serialization: Wirespec.Serialization,
+public class WirespecEndpointContext(
+    public val transportation: Wirespec.Transportation,
+    public val serialization: Wirespec.Serialization,
 ) : AbstractCoroutineContextElement(Key) {
 
-    companion object Key : CoroutineContext.Key<WirespecEndpointContext>
+    public companion object Key : CoroutineContext.Key<WirespecEndpointContext>
 }
 
 internal suspend fun currentEndpointContext(): WirespecEndpointContext = coroutineContext[WirespecEndpointContext] ?: error(

@@ -7,7 +7,7 @@ import io.kotest.property.RandomSource
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
-class ArbReceiver internal constructor(private val randomSource: RandomSource) {
+public class ArbReceiver internal constructor(private val randomSource: RandomSource) {
 
     @PublishedApi
     internal val generator: Wirespec.Generator =

@@ -5,4 +5,4 @@ package community.flock.wirespec.integration.spring.kotlin.configuration
 @MustBeDocumented
 @EnableWirespecController
 @EnableWirespecWebClient
-annotation class EnableWirespec
+public annotation class EnableWirespec

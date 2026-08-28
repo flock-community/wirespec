@@ -21,7 +21,7 @@ import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.extension.IrExtension
 
-open class KotestDslExtension(
+public open class KotestDslExtension(
     private val packageName: PackageName,
 ) : IrExtension {
 

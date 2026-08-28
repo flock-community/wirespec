@@ -15,7 +15,7 @@ import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
 
-fun kotestGenerator(
+internal fun kotestGenerator(
     seed: Long = 0L,
     refinedWrapper: RefinedWrapper = IdentityRefinedWrapper,
     block: KotestWirespecGeneratorBuilder.() -> Unit = {},
@@ -24,22 +24,22 @@ fun kotestGenerator(
     return KotestWirespecGenerator(seed, builder.overrides, refinedWrapper)
 }
 
-class KotestWirespecGeneratorBuilder internal constructor() {
+public class KotestWirespecGeneratorBuilder internal constructor() {
     internal val overrides: OverrideRegistry = OverrideRegistry()
 
-    fun registerPath(vararg segments: String, factory: () -> Gen<*>) {
+    public fun registerPath(vararg segments: String, factory: () -> Gen<*>) {
         overrides.addPath(segments, factory)
     }
 
-    fun registerPath(vararg segments: String, value: Any?) {
+    public fun registerPath(vararg segments: String, value: Any?) {
         overrides.addPath(segments) { Arb.constant(value) }
     }
 
-    fun registerFieldByTypeName(typeName: String, name: String, factory: () -> Gen<*>) {
+    public fun registerFieldByTypeName(typeName: String, name: String, factory: () -> Gen<*>) {
         overrides.addField(FieldKey(typeName, name), factory)
     }
 
-    fun registerFieldByTypeName(typeName: String, name: String, value: Any?) {
+    public fun registerFieldByTypeName(typeName: String, name: String, value: Any?) {
         overrides.addField(FieldKey(typeName, name)) { Arb.constant(value) }
     }
 }

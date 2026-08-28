@@ -75,10 +75,10 @@ internal class OverrideRegistry {
     fun findField(key: FieldKey): (() -> Gen<*>)? = fieldOverrides[key]
 }
 
-fun interface RefinedWrapper {
+internal fun interface RefinedWrapper {
     fun wrap(drawn: Any?, field: KotestField<*>, path: List<String>): Any?
 }
 
-object IdentityRefinedWrapper : RefinedWrapper {
+internal object IdentityRefinedWrapper : RefinedWrapper {
     override fun wrap(drawn: Any?, field: KotestField<*>, path: List<String>): Any? = drawn
 }

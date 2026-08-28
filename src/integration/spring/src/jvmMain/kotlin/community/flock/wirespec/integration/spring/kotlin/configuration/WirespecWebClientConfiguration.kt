@@ -20,14 +20,14 @@ import org.springframework.web.reactive.function.client.WebClient
 @ConditionalOnMissingBean(WirespecWebClient::class)
 @EnableConfigurationProperties(WebClientConfigurationProperties::class)
 @Order(Ordered.LOWEST_PRECEDENCE)
-open class WirespecWebClientConfiguration(
-    val serialization: Wirespec.Serialization,
+public open class WirespecWebClientConfiguration(
+    public val serialization: Wirespec.Serialization,
 ) {
     private val log: Logger = getLogger(javaClass)
 
     @Bean("wirespecSpringWebClient")
     @ConditionalOnMissingBean(name = ["wirespecSpringWebClient"])
-    open fun defaultWebClient(webClientConfigurationProperties: WebClientConfigurationProperties): WebClient {
+    public open fun defaultWebClient(webClientConfigurationProperties: WebClientConfigurationProperties): WebClient {
         log.debug("Initializing a Spring WebClient for Wirespec with qualifier \"wirespecSpringWebClient\"")
         check(!webClientConfigurationProperties.baseUrl.isNullOrEmpty()) {
             "Could not autowire a Wirespec specific WebClient, as there was no base url configured. " +
@@ -40,7 +40,7 @@ open class WirespecWebClientConfiguration(
 
     @Bean
     @ConditionalOnMissingBean(WirespecWebClient::class)
-    open fun wirespecWebClient(
+    public open fun wirespecWebClient(
         @Qualifier("wirespecSpringWebClient") webClient: WebClient,
     ): WirespecWebClient {
         log.debug("Initializing WirespecWebclient for Wirespec, wrapping a Spring WebClient")

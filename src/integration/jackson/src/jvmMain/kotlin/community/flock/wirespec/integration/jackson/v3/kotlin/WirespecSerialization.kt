@@ -18,7 +18,7 @@ import kotlin.reflect.javaType
  * field exactly like the Jackson 2 integration. Parameter and path serialization are
  * delegated to the default Wirespec serializers.
  */
-class WirespecSerialization(
+public class WirespecSerialization(
     jsonMapper: JsonMapper,
 ) : Serialization,
     Wirespec.ParamSerialization by DefaultParamSerialization(),

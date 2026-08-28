@@ -14,7 +14,7 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 @ControllerAdvice
-class WirespecResponseBodyAdvice(
+public class WirespecResponseBodyAdvice(
     private val wirespecSerialization: Wirespec.Serialization,
 ) : ResponseBodyAdvice<Any?> {
 

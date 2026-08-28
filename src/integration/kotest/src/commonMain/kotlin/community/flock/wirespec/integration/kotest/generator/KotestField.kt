@@ -2,77 +2,77 @@ package community.flock.wirespec.integration.kotest.generator
 
 import kotlin.reflect.KType
 
-interface KotestGenerator {
+internal interface KotestGenerator {
     fun <T> generate(path: List<String>, field: KotestField<T>): T
 }
 
-sealed interface KotestField<T>
+public sealed interface KotestField<T>
 
-sealed interface KotestLeafField<T> : KotestField<T> {
+internal sealed interface KotestLeafField<T> : KotestField<T> {
     val annotations: List<Map<String, Any>>
 }
 
-data class KotestFieldString(
+internal data class KotestFieldString(
     val regex: String?,
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<String>
 
-data class KotestFieldInteger64(
+internal data class KotestFieldInteger64(
     val min: Long?,
     val max: Long?,
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<Long>
 
-data class KotestFieldInteger32(
+internal data class KotestFieldInteger32(
     val min: Int?,
     val max: Int?,
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<Int>
 
-data class KotestFieldNumber64(
+internal data class KotestFieldNumber64(
     val min: Double?,
     val max: Double?,
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<Double>
 
-data class KotestFieldNumber32(
+internal data class KotestFieldNumber32(
     val min: Float?,
     val max: Float?,
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<Float>
 
-data class KotestFieldBoolean(
+internal data class KotestFieldBoolean(
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<Boolean>
 
-data class KotestFieldBytes(
+internal data class KotestFieldBytes(
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<ByteArray>
 
-data class KotestFieldEnum(
+internal data class KotestFieldEnum(
     val values: List<String>,
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<String>
 
-data class KotestFieldUnion(
+internal data class KotestFieldUnion(
     val variants: List<String>,
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<String>
 
-data class KotestFieldArray<T : Any>(
+internal data class KotestFieldArray<T : Any>(
     val generate: (List<String>) -> T,
 ) : KotestField<List<T>>
 
-data class KotestFieldNullable<T : Any>(
+internal data class KotestFieldNullable<T : Any>(
     val generate: (List<String>) -> T,
 ) : KotestField<T?>
 
-data class KotestFieldShape<T : Any>(
+internal data class KotestFieldShape<T : Any>(
     val annotations: Map<String, List<Map<String, Any>>>,
     val generate: (List<String>) -> T,
     val type: KType,
 ) : KotestField<T>
 
-data class KotestFieldDict<V : Any>(
+internal data class KotestFieldDict<V : Any>(
     val generate: (List<String>) -> V,
 ) : KotestField<Map<String, V>>

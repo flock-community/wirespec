@@ -10,9 +10,9 @@ import org.springframework.context.annotation.ImportRuntimeHints
 
 @Configuration
 @ImportRuntimeHints(WirespecNativeConfiguration.WirespecLibraryHints::class)
-open class WirespecNativeConfiguration {
+public open class WirespecNativeConfiguration {
 
-    class WirespecLibraryHints : RuntimeHintsRegistrar {
+    public class WirespecLibraryHints : RuntimeHintsRegistrar {
         override fun registerHints(hints: RuntimeHints, classLoader: ClassLoader?) {
             val allMembers = MemberCategory.entries.toTypedArray()
 

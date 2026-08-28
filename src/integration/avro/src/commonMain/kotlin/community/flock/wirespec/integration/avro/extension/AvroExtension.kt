@@ -50,7 +50,7 @@ import kotlinx.serialization.json.Json
  * [community.flock.wirespec.ir.emit.IrEmitter] running in IR mode (add the `avro-jvm` integration
  * to the plugin classpath and list this class under `extensionClasses`).
  */
-class AvroExtension(packageName: PackageName, language: FileExtension) : IrExtension {
+public class AvroExtension(packageName: PackageName, language: FileExtension) : IrExtension {
 
     private val source: AvroSource = when (language) {
         FileExtension.Java -> JavaAvroSource(packageName)

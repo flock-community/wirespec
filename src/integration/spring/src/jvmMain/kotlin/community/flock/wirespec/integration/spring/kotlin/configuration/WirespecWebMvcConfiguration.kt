@@ -9,13 +9,13 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
-open class WirespecWebMvcConfiguration : WebMvcConfigurer {
+public open class WirespecWebMvcConfiguration : WebMvcConfigurer {
 
     @Autowired
-    lateinit var wirespecSerialization: Wirespec.Serialization
+    public lateinit var wirespecSerialization: Wirespec.Serialization
 
     @Autowired
-    lateinit var wirespecJsonMapper: WirespecJsonMapper
+    public lateinit var wirespecJsonMapper: WirespecJsonMapper
 
     override fun addArgumentResolvers(argumentResolvers: MutableList<HandlerMethodArgumentResolver>) {
         argumentResolvers.add(WirespecMethodArgumentResolver(wirespecSerialization, wirespecJsonMapper))

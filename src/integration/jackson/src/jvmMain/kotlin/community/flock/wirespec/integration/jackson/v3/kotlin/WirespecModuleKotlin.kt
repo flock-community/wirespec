@@ -46,7 +46,7 @@ import kotlin.reflect.KClass
  * @see Wirespec.Refined
  * @see WirespecSerialization
  */
-class WirespecModuleKotlin : SimpleModule() {
+public class WirespecModuleKotlin : SimpleModule() {
 
     override fun getModuleName(): String = "Wirespec Jackson 3 Module for Kotlin"
 
@@ -140,7 +140,7 @@ private class WirespecDeserializerModifier : ValueDeserializerModifier() {
     }
 }
 
-class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
+public class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
     private fun translator(reserved: Keywords): String.() -> String = {
         val keywords = reserved.reservedKeywords.map { "_$it" }
@@ -157,7 +157,7 @@ class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
         config: MapperConfig<*>,
         ctorParam: AnnotatedParameter,
         defaultName: String,
-    ) = defaultName.translateIfDataClass(ctorParam.owner.rawType.kotlin)
+    ): String = defaultName.translateIfDataClass(ctorParam.owner.rawType.kotlin)
 
     private fun String.translateIfDataClass(clazz: KClass<*>) = when (clazz.isData) {
         true -> translate()

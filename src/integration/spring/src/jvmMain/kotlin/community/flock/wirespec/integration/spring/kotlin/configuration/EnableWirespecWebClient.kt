@@ -6,4 +6,4 @@ import org.springframework.context.annotation.Import
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Import(WirespecSerializationConfiguration::class, WirespecWebClientConfiguration::class)
-annotation class EnableWirespecWebClient
+public annotation class EnableWirespecWebClient

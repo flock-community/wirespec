@@ -36,7 +36,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * runtime classes come from the wirespec-jvm dependency rather than being re-emitted as
  * source.
  */
-class JacksonExtension : IrExtension {
+public class JacksonExtension : IrExtension {
 
     override fun extend(ir: IR, ast: AST): IR {
         val recordNames = ast.modules.toList()

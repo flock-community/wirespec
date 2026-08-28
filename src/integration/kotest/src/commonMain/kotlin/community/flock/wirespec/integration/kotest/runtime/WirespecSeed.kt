@@ -5,7 +5,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-class WirespecSeed internal constructor(
+internal class WirespecSeed internal constructor(
     val randomSource: RandomSource,
 ) : AbstractCoroutineContextElement(Key) {
 
