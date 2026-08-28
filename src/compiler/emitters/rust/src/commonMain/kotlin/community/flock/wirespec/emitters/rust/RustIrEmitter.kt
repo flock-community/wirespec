@@ -206,6 +206,8 @@ open class RustIrEmitter(
             "PathDeserializer" to RawElement("pub trait PathDeserializer {\n    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;\n}"),
             "ParamSerializer" to RawElement("pub trait ParamSerializer {\n    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;\n}"),
             "ParamDeserializer" to RawElement("pub trait ParamDeserializer {\n    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;\n}"),
+            "Cancellable" to RawElement("pub trait Cancellable {\n    fn cancel(&self);\n}"),
+            "StreamTransportation" to RawElement("pub trait StreamTransportation {\n    fn stream(&self, request: RawRequest, on_next: Box<dyn Fn(RawResponse)>) -> Box<dyn Cancellable>;\n}"),
         )
 
         val transportationTrait = `interface`("Transportation") {

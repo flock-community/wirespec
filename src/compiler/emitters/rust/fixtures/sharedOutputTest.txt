@@ -102,7 +102,7 @@ pub trait Cancellable {
     fn cancel(&self);
 }
 pub trait StreamTransportation {
-    fn stream(&self, request: RawRequest, on_next: Box<dyn Fn(RawResponse) -> ()>) -> Cancellable;
+    fn stream(&self, request: RawRequest, on_next: Box<dyn Fn(RawResponse)>) -> Box<dyn Cancellable>;
 }
 pub trait GeneratorField<T> {}
 pub struct GeneratorFieldString {
