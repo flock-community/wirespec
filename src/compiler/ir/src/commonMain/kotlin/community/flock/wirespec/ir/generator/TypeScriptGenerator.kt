@@ -58,10 +58,10 @@ import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.forEachElement
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object TypeScriptGenerator :
+public object TypeScriptGenerator :
     Generator,
     Keywords {
-    override val reservedKeywords = setOf(
+    override val reservedKeywords: Set<String> = setOf(
         "break", "case", "catch", "continue", "debugger",
         "default", "delete", "do", "else", "finally",
         "for", "function", "if", "in", "instanceof",
@@ -83,7 +83,7 @@ object TypeScriptGenerator :
         return emitFile(file)
     }
 
-    fun generateExpression(expression: Expression): String {
+    public fun generateExpression(expression: Expression): String {
         initCaches(File(Name.of(""), emptyList()))
         return expression.emit()
     }

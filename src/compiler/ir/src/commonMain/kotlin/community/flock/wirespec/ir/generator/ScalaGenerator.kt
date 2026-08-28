@@ -59,10 +59,10 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object ScalaGenerator :
+public object ScalaGenerator :
     Generator,
     Keywords {
-    override val reservedKeywords = setOf(
+    override val reservedKeywords: Set<String> = setOf(
         "abstract", "case", "class", "def", "do",
         "else", "extends", "false", "final", "for",
         "forSome", "if", "implicit", "import", "lazy",
@@ -91,7 +91,7 @@ object ScalaGenerator :
      * common (e.g. each endpoint defines its own `Request`, which may be either an object or a
      * case class) and a local lookup must reflect the local file only.
      */
-    fun setGlobalObjectNames(files: List<File>) {
+    public fun setGlobalObjectNames(files: List<File>) {
         globalObjectNames = files.fold(emptySet()) { acc, f ->
             acc + collectObjectNames(f.elements).filter { '.' in it }
         }

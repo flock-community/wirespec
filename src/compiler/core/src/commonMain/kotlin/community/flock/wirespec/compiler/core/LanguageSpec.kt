@@ -37,6 +37,7 @@ import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.SpecificType
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
@@ -50,22 +51,22 @@ import community.flock.wirespec.compiler.core.tokenize.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.WsString
 import community.flock.wirespec.compiler.core.tokenize.WsUnit
 
-typealias TokenMatcher = Pair<Regex, TokenType>
+private typealias TokenMatcher = Pair<Regex, TokenType>
 
-interface LanguageSpec {
-    val typeIdentifier: TypeIdentifier
-    val fieldIdentifier: FieldIdentifier
-    val orderedMatchers: List<TokenMatcher>
+public interface LanguageSpec {
+    public val typeIdentifier: TypeIdentifier
+    public val fieldIdentifier: FieldIdentifier
+    public val orderedMatchers: List<TokenMatcher>
 }
 
-interface HasLanguageSpec {
-    val spec: LanguageSpec get() = WirespecSpec
+public interface HasLanguageSpec {
+    public val spec: LanguageSpec get() = WirespecSpec
 }
 
-object WirespecSpec : LanguageSpec {
-    override val typeIdentifier = WirespecType
-    override val fieldIdentifier = WirespecField
-    override val orderedMatchers = listOf(
+public object WirespecSpec : LanguageSpec {
+    override val typeIdentifier: TypeIdentifier = WirespecType
+    override val fieldIdentifier: FieldIdentifier = WirespecField
+    override val orderedMatchers: List<TokenMatcher> = listOf(
         Regex("^\\btype\\b") to TypeDefinition,
         Regex("^\\benum\\b") to EnumTypeDefinition,
         Regex("^\\bendpoint\\b") to EndpointDefinition,
@@ -102,8 +103,8 @@ object WirespecSpec : LanguageSpec {
     )
 }
 
-data object WirespecType : TypeIdentifier {
-    override val specificTypes = mapOf(
+public data object WirespecType : TypeIdentifier {
+    override val specificTypes: Map<String, SpecificType> = mapOf(
         "Any" to WsAny,
         "Boolean" to WsBoolean,
         "Bytes" to WsBytes,
@@ -116,7 +117,7 @@ data object WirespecType : TypeIdentifier {
     )
 }
 
-data object WirespecField : FieldIdentifier {
+public data object WirespecField : FieldIdentifier {
     override val caseVariants: List<Pair<Regex, CaseVariant>> = listOf(
         Regex("([A-Z][a-z0-9]+)((\\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?") to PascalCaseIdentifier,
         Regex("[a-z]+((\\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?") to DromedaryCaseIdentifier,

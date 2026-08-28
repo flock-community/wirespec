@@ -6,11 +6,11 @@ import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.name
 import kotlin.reflect.KClass
 
-sealed class ParserException(fileUri: FileUri, coordinates: Token.Coordinates, message: String) : WirespecException(fileUri, message, coordinates)
+public sealed class ParserException(fileUri: FileUri, coordinates: Token.Coordinates, message: String) : WirespecException(fileUri, message, coordinates)
 
-sealed class EatTokenException(fileUri: FileUri, coordinates: Token.Coordinates, message: String) : ParserException(fileUri, coordinates, message)
+internal sealed class EatTokenException(fileUri: FileUri, coordinates: Token.Coordinates, message: String) : ParserException(fileUri, coordinates, message)
 
-class WrongTokenException(fileUri: FileUri, expected: KClass<out TokenType>, actual: Token) :
+internal class WrongTokenException(fileUri: FileUri, expected: KClass<out TokenType>, actual: Token) :
     EatTokenException(
         fileUri,
         actual.coordinates,
@@ -21,25 +21,25 @@ class WrongTokenException(fileUri: FileUri, expected: KClass<out TokenType>, act
     }
 }
 
-class DefinitionNotExistsException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
+internal class DefinitionNotExistsException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
     EatTokenException(
         fileUri,
         coordinates = coordinates,
         message = "Cannot find reference: $referenceName",
     )
 
-class NullableRefinedReferenceException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
+public class NullableRefinedReferenceException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,
         coordinates = coordinates,
         message = "A refined type cannot be nullable: $referenceName",
     )
 
-sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :
+internal sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :
     EatTokenException(
         fileUri,
         coordinates = coordinates,
         message = "$message cannot be null",
     )
 
-class NextException(fileUri: FileUri, coordinates: Token.Coordinates) : NullTokenException(fileUri, "Next Token", coordinates)
+internal class NextException(fileUri: FileUri, coordinates: Token.Coordinates) : NullTokenException(fileUri, "Next Token", coordinates)

@@ -17,6 +17,8 @@ repositories {
 val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
 
 kotlin {
+    explicitApi()
+
     if (enableNative) {
         macosX64()
         macosArm64()

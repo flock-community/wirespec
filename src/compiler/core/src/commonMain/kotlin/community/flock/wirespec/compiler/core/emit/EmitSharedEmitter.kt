@@ -1,5 +1,5 @@
 package community.flock.wirespec.compiler.core.emit
 
-interface EmitSharedEmitter {
+private interface EmitSharedEmitter {
     val emitShared: EmitShared
 }

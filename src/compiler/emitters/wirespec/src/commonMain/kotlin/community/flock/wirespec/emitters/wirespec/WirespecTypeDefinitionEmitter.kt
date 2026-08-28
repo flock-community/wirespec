@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 
-interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentifierEmitter {
+internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentifierEmitter {
 
     override fun emit(type: Type, module: Module) = """
         |type ${emit(type.identifier)} {

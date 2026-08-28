@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileComplexModelTest : Fixture {
+public object CompileComplexModelTest : Fixture {
 
-    override val source =
+    override val source: String =
         // language=ws
         """
         |type Email = String(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}/g)
@@ -33,5 +33,5 @@ object CompileComplexModelTest : Fixture {
         |}
         """.trimMargin()
 
-    override val compiler = source.let(::compile)
+    override val compiler: Compiler = source.let(::compile)
 }

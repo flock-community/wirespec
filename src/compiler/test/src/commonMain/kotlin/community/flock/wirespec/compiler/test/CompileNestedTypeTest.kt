@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileNestedTypeTest : Fixture {
+public object CompileNestedTypeTest : Fixture {
 
-    override val source =
+    override val source: String =
         // language=ws
         """
         |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})${'$'}/g)
@@ -20,5 +20,5 @@ object CompileNestedTypeTest : Fixture {
         |}
         """.trimMargin()
 
-    override val compiler = source.let(::compile)
+    override val compiler: Compiler = source.let(::compile)
 }

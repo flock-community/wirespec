@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileMinimalEndpointTest : Fixture {
+public object CompileMinimalEndpointTest : Fixture {
 
-    override val source =
+    override val source: String =
         // language=ws
         """
         |endpoint GetTodos GET /todos -> {
@@ -13,5 +13,5 @@ object CompileMinimalEndpointTest : Fixture {
         |}
         """.trimMargin()
 
-    override val compiler = source.let(::compile)
+    override val compiler: Compiler = source.let(::compile)
 }

@@ -6,7 +6,7 @@ import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.transform
 
-fun <E : Element> E.toGetterAccessors(
+public fun <E : Element> E.toGetterAccessors(
     renameFunction: (Name) -> Name? = { null },
 ): E = transform {
     matchingElements { iface: Interface ->

@@ -61,10 +61,10 @@ import community.flock.wirespec.ir.core.annotatedFields
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object KotlinGenerator :
+public object KotlinGenerator :
     Generator,
     Keywords {
-    override val reservedKeywords = setOf(
+    override val reservedKeywords: Set<String> = setOf(
         "as", "break", "class", "continue", "do",
         "else", "false", "for", "fun", "if",
         "in", "interface", "internal", "is", "null",
@@ -79,7 +79,7 @@ object KotlinGenerator :
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
 
-    fun generateType(type: Type): String = type.emitGenerics()
+    public fun generateType(type: Type): String = type.emitGenerics()
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -619,4 +619,4 @@ private fun String.sanitize(): String = if (KotlinGenerator.reservedKeywords.con
 
 private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
-fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in KotlinGenerator.reservedKeywords) this else "`$this`"
+public fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in KotlinGenerator.reservedKeywords) this else "`$this`"

@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileEnumTest : Fixture {
+public object CompileEnumTest : Fixture {
 
-    override val source =
+    override val source: String =
         // language=ws
         """
         |enum MyAwesomeEnum {
@@ -10,5 +10,5 @@ object CompileEnumTest : Fixture {
         |}
         """.trimMargin()
 
-    override val compiler = source.let(::compile)
+    override val compiler: Compiler = source.let(::compile)
 }

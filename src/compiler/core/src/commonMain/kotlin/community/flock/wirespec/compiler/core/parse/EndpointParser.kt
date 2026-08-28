@@ -23,7 +23,7 @@ import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
-object EndpointParser {
+internal object EndpointParser {
 
     fun TokenProvider.parseEndpoint(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Endpoint> = parseToken {
         when (token.type) {

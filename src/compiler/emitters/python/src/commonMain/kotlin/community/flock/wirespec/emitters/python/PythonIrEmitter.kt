@@ -41,6 +41,7 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.placeInModule
 import community.flock.wirespec.ir.emit.prependImports
+import community.flock.wirespec.ir.generator.Generator
 import community.flock.wirespec.ir.generator.PythonGenerator
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.injectSelfReceiverToValidate
@@ -49,14 +50,14 @@ import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.sortKey
 
-open class PythonIrEmitter(
+public open class PythonIrEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared()
 ) : IrEmitter {
 
-    override val generator = PythonGenerator
+    override val generator: Generator = PythonGenerator
 
-    override val extension = FileExtension.Python
+    override val extension: FileExtension = FileExtension.Python
 
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
@@ -308,6 +309,6 @@ open class PythonIrEmitter(
         import(wirespecPath, "_raise"),
     )
 
-    companion object : Keywords by PythonGenerator
+    public companion object : Keywords by PythonGenerator
 
 }

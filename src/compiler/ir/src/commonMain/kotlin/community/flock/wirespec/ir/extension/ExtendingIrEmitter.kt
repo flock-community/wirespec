@@ -11,7 +11,7 @@ import community.flock.wirespec.ir.emit.IrEmitter
  * Wraps an [IrEmitter] so the given [extensions] are applied to the IR
  * before code generation, without modifying the wrapped emitter.
  */
-class ExtendingIrEmitter(
+public class ExtendingIrEmitter(
     delegate: IrEmitter,
     override val extensions: List<IrExtension>,
 ) : IrEmitter by delegate {
@@ -20,4 +20,4 @@ class ExtendingIrEmitter(
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger)
 }
 
-fun Emitter.applyExtensions(extensions: List<IrExtension>): Emitter = if (this is IrEmitter && extensions.isNotEmpty()) ExtendingIrEmitter(this, extensions) else this
+public fun Emitter.applyExtensions(extensions: List<IrExtension>): Emitter = if (this is IrEmitter && extensions.isNotEmpty()) ExtendingIrEmitter(this, extensions) else this

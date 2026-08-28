@@ -55,15 +55,16 @@ import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Type as LanguageType
+import community.flock.wirespec.ir.generator.Generator
 
-open class KotlinIrEmitter(
+public open class KotlinIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {
 
-    override val generator = KotlinGenerator
+    override val generator: Generator = KotlinGenerator
 
-    override val extension = FileExtension.Kotlin
+    override val extension: FileExtension = FileExtension.Kotlin
 
     private val wirespecImports = listOf(
         import("$DEFAULT_SHARED_PACKAGE_STRING.kotlin", "Wirespec"),
@@ -277,6 +278,6 @@ open class KotlinIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords by KotlinGenerator
+    public companion object : Keywords by KotlinGenerator
 
 }

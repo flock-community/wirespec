@@ -1,5 +1,5 @@
 package community.flock.wirespec.compiler.core.emit
 
-interface HasPackageName {
-    val packageName: PackageName
+public interface HasPackageName {
+    public val packageName: PackageName
 }

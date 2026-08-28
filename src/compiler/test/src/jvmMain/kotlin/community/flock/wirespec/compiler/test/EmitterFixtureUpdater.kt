@@ -26,7 +26,7 @@ import kotlin.reflect.full.primaryConstructor
  * regenerated. New fixtures must be seeded with an empty file first — this keeps each
  * emitter's set of fixtures explicit on disk instead of buried in code.
  */
-fun main(args: Array<String>) {
+public fun main(args: Array<String>) {
     require(args.size == 2) { "Usage: EmitterFixtureUpdater <fixturesDir> <emitterFqcn>" }
     val (fixturesDir, fqcn) = args
     val root = File(fixturesDir).apply { mkdirs() }

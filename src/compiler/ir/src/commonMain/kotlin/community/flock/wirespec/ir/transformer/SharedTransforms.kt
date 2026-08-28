@@ -22,14 +22,14 @@ import community.flock.wirespec.ir.core.withLabelField
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.Type as LanguageType
 
-fun Struct.markMembersAsOverride(): Struct = copy(
+public fun Struct.markMembersAsOverride(): Struct = copy(
     fields = fields.map { f -> if (f is Field) f.copy(isOverride = true) else f },
     elements = elements.map { element ->
         if (element is Function) element.copy(isOverride = true) else element
     },
 )
 
-fun <E : Element> E.ensureEmptyStructHasConstructor(): E = transform {
+public fun <E : Element> E.ensureEmptyStructHasConstructor(): E = transform {
     matchingElements { struct: Struct ->
         if (struct.fields.isEmpty()) {
             struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
@@ -39,7 +39,7 @@ fun <E : Element> E.ensureEmptyStructHasConstructor(): E = transform {
     }
 }
 
-fun <E : Element> E.injectEnumLabelField(
+public fun <E : Element> E.injectEnumLabelField(
     sanitizeEntry: (String) -> String,
     extraElements: (LanguageEnum) -> List<Element> = { emptyList() },
 ): E = transform {
@@ -54,7 +54,7 @@ fun <E : Element> E.injectEnumLabelField(
     }
 }
 
-fun <E : Element> E.sanitizeEnumEntries(
+public fun <E : Element> E.sanitizeEnumEntries(
     sanitizeEntry: (String) -> String,
 ): E = transform {
     matchingElements { languageEnum: LanguageEnum ->
@@ -66,7 +66,7 @@ fun <E : Element> E.sanitizeEnumEntries(
     }
 }
 
-fun <E : Element> E.injectSelfReceiverToValidate(
+public fun <E : Element> E.injectSelfReceiverToValidate(
     fieldNames: Set<String>,
     selfParamName: String = "self",
 ): E = transform {
@@ -89,7 +89,7 @@ fun <E : Element> E.injectSelfReceiverToValidate(
     }
 }
 
-fun Definition.sortKey(): Int = when (this) {
+public fun Definition.sortKey(): Int = when (this) {
     is Enum -> 1
     is Refined -> 2
     is Type -> 3

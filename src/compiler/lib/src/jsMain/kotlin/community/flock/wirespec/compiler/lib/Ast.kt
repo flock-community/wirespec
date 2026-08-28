@@ -22,16 +22,16 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
-fun WsAST.consume(): AST = AST(
+public fun WsAST.consume(): AST = AST(
     modules = modules.map { it.consume() }.toNonEmptyListOrNull()!!,
 )
 
-fun WsModule.consume(): Module = Module(
+public fun WsModule.consume(): Module = Module(
     fileUri = FileUri("unknown"),
     statements = statements.map { it.consume() }.toNonEmptyListOrNull()!!,
 )
 
-fun WsDefinition.consume(): Definition = when (this) {
+public fun WsDefinition.consume(): Definition = when (this) {
     is WsEndpoint -> consume()
     is WsEnum -> consume()
     is WsRefined -> consume()
@@ -40,7 +40,7 @@ fun WsDefinition.consume(): Definition = when (this) {
     is WsChannel -> consume()
 }
 
-fun WsEndpoint.consume(): Endpoint = Endpoint(
+public fun WsEndpoint.consume(): Endpoint = Endpoint(
     comment = comment?.let { Comment(it) },
     annotations = emptyList(),
     identifier = DefinitionIdentifier(identifier),
@@ -176,11 +176,11 @@ private fun WsPrimitive.consumeType(): Reference.Primitive.Type {
     }
 }
 
-fun AST.produce(): WsAST = WsAST(modules.map { it.produce() }.toTypedArray())
+public fun AST.produce(): WsAST = WsAST(modules.map { it.produce() }.toTypedArray())
 
-fun Module.produce(): WsModule = WsModule(statements.map { it.produce() }.toTypedArray())
+public fun Module.produce(): WsModule = WsModule(statements.map { it.produce() }.toTypedArray())
 
-fun Definition.produce(): WsDefinition = when (this) {
+public fun Definition.produce(): WsDefinition = when (this) {
     is Type -> WsType(
         identifier = identifier.value,
         comment = comment?.value,
@@ -303,36 +303,36 @@ private fun Endpoint.Response.produce() = WsResponse(
 private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArray()
 
 @JsExport
-sealed interface WsNode
+public sealed interface WsNode
 
 @JsExport
-data class WsAST(
+public data class WsAST(
     val modules: Array<WsModule>,
 ) : WsNode
 
 @JsExport
-data class WsModule(
+public data class WsModule(
     val statements: Array<WsDefinition>,
 ) : WsNode
 
 @JsExport
-sealed interface WsDefinition : WsNode {
-    val identifier: String
-    val comment: String?
+public sealed interface WsDefinition : WsNode {
+    public val identifier: String
+    public val comment: String?
 }
 
 @JsExport
-data class WsType(
+public data class WsType(
     override val identifier: String,
     override val comment: String?,
     val shape: WsShape,
 ) : WsDefinition
 
 @JsExport
-data class WsShape(val value: Array<WsField>)
+public data class WsShape(val value: Array<WsField>)
 
 @JsExport
-data class WsEndpoint(
+public data class WsEndpoint(
     override val identifier: String,
     override val comment: String?,
     val method: WsMethod,
@@ -344,110 +344,110 @@ data class WsEndpoint(
 ) : WsDefinition
 
 @JsExport
-data class WsEnum(
+public data class WsEnum(
     override val identifier: String,
     override val comment: String?,
     val entries: Array<String>,
 ) : WsDefinition
 
 @JsExport
-data class WsUnion(
+public data class WsUnion(
     override val identifier: String,
     override val comment: String?,
     val entries: Array<WsReference>,
 ) : WsDefinition
 
 @JsExport
-data class WsChannel(
+public data class WsChannel(
     override val identifier: String,
     override val comment: String?,
     val reference: WsReference,
 ) : WsDefinition
 
 @JsExport
-data class WsRefined(
+public data class WsRefined(
     override val identifier: String,
     override val comment: String?,
     val reference: WsReference,
 ) : WsDefinition
 
 @JsExport
-enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }
+public enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }
 
 @JsExport
-sealed interface WsSegment
+public sealed interface WsSegment
 
 @JsExport
-data class WsLiteral(val value: String) : WsSegment
+public data class WsLiteral(val value: String) : WsSegment
 
 @JsExport
-data class WsParam(
+public data class WsParam(
     val identifier: WsFieldIdentifier,
     val reference: WsReference,
 ) : WsSegment
 
 @JsExport
-data class Shape(val value: Array<WsField>)
+public data class Shape(val value: Array<WsField>)
 
 @JsExport
-data class WsField(val identifier: WsFieldIdentifier, val reference: WsReference)
+public data class WsField(val identifier: WsFieldIdentifier, val reference: WsReference)
 
 @JsExport
-sealed interface WsIdentifier
+public sealed interface WsIdentifier
 
 @JsExport
-data class WsClassIdentifier(val value: String) : WsIdentifier
+public data class WsClassIdentifier(val value: String) : WsIdentifier
 
 @JsExport
-data class WsFieldIdentifier(val value: String) : WsIdentifier
+public data class WsFieldIdentifier(val value: String) : WsIdentifier
 
 @JsExport
-sealed interface WsReference {
-    val isNullable: Boolean
+public sealed interface WsReference {
+    public val isNullable: Boolean
 }
 
 @JsExport
-data class WsAny(override val isNullable: Boolean) : WsReference
+public data class WsAny(override val isNullable: Boolean) : WsReference
 
 @JsExport
-data class WsUnit(override val isNullable: Boolean) : WsReference
+public data class WsUnit(override val isNullable: Boolean) : WsReference
 
 @JsExport
-data class WsIterable(val reference: WsReference, override val isNullable: Boolean) : WsReference
+public data class WsIterable(val reference: WsReference, override val isNullable: Boolean) : WsReference
 
 @JsExport
-data class WsDict(val reference: WsReference, override val isNullable: Boolean) : WsReference
+public data class WsDict(val reference: WsReference, override val isNullable: Boolean) : WsReference
 
 @JsExport
-data class WsCustom(
+public data class WsCustom(
     val value: String,
     override val isNullable: Boolean,
 ) : WsReference
 
 @JsExport
-data class WsPrimitive(
+public data class WsPrimitive(
     val type: WsPrimitiveType,
     override val isNullable: Boolean,
     val constraint: WsConstraint? = null,
 ) : WsReference
 
 @JsExport
-enum class WsPrimitiveType { String, Integer, Integer32, Number, Number32, Boolean, Bytes }
+public enum class WsPrimitiveType { String, Integer, Integer32, Number, Number32, Boolean, Bytes }
 
 @JsExport
-sealed interface WsConstraint
+public sealed interface WsConstraint
 
 @JsExport
-data class WsRegExpConstraint(val value: String) : WsConstraint
+public data class WsRegExpConstraint(val value: String) : WsConstraint
 
 @JsExport
-data class WsBoundConstraint(val min: String?, val max: String?) : WsConstraint
+public data class WsBoundConstraint(val min: String?, val max: String?) : WsConstraint
 
 @JsExport
-data class WsRequest(val content: WsContent?)
+public data class WsRequest(val content: WsContent?)
 
 @JsExport
-data class WsResponse(val status: String, val headers: Array<WsField>, val content: WsContent?)
+public data class WsResponse(val status: String, val headers: Array<WsField>, val content: WsContent?)
 
 @JsExport
-data class WsContent(val type: String, val reference: WsReference, val isNullable: Boolean = false)
+public data class WsContent(val type: String, val reference: WsReference, val isNullable: Boolean = false)

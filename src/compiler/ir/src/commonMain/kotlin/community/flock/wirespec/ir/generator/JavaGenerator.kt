@@ -60,10 +60,10 @@ import community.flock.wirespec.ir.core.annotatedFields
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object JavaGenerator :
+public object JavaGenerator :
     Generator,
     Keywords {
-    override val reservedKeywords = setOf(
+    override val reservedKeywords: Set<String> = setOf(
         "abstract", "continue", "for", "new", "switch",
         "assert", "default", "if", "package", "synchronized",
         "boolean", "do", "goto", "private", "this",

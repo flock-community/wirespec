@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
-fun Definition.importReferences(): List<Reference.Custom> = when (this) {
+public fun Definition.importReferences(): List<Reference.Custom> = when (this) {
     is Endpoint -> listOf(
         path.filterIsInstance<Endpoint.Segment.Param>().map { it.reference },
         headers.map { it.reference },

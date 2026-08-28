@@ -14,7 +14,7 @@ private data class Target(
     val fileName: String,
 )
 
-fun main(args: Array<String>) {
+public fun main(args: Array<String>) {
     require(args.size == 3) {
         "Usage: WirespecRuntimeGenerator <javaRoot> <kotlinRoot> <scalaRoot>"
     }

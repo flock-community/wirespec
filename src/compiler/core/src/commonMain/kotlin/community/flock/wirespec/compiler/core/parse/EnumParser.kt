@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
-object EnumParser {
+internal object EnumParser {
 
     fun TokenProvider.parseEnum(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Enum> = parseToken {
         when (token.type) {

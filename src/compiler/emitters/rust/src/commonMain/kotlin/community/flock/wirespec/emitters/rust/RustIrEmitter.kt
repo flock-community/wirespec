@@ -69,15 +69,16 @@ import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.core.Union as LanguageUnion
+import community.flock.wirespec.ir.generator.Generator
 
-open class RustIrEmitter(
+public open class RustIrEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared()
 ) : IrEmitter {
 
-    override val generator = RustGenerator
+    override val generator: Generator = RustGenerator
 
-    override val extension = FileExtension.Rust
+    override val extension: FileExtension = FileExtension.Rust
 
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
@@ -597,8 +598,8 @@ open class RustIrEmitter(
         return paramsStr to argsStr
     }
 
-    companion object : Keywords by RustGenerator {
-        fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
+    public companion object : Keywords by RustGenerator {
+        public fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
     }
 
 }

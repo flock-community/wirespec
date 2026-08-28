@@ -22,12 +22,12 @@ import community.flock.wirespec.ir.core.IR
 import community.flock.wirespec.ir.extension.IrExtension
 import community.flock.wirespec.ir.generator.Generator
 
-interface IrEmitter : Emitter {
+public interface IrEmitter : Emitter {
 
-    val generator: Generator
+    public val generator: Generator
 
     /** Extensions applied to the complete IR before code generation. */
-    val extensions: List<IrExtension> get() = emptyList()
+    public val extensions: List<IrExtension> get() = emptyList()
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
         val moduleFiles = ast.modules.flatMap { m ->
@@ -49,9 +49,9 @@ interface IrEmitter : Emitter {
     }
 
     /** Hook for emitters that need to inspect the full set of files before per-file generation. */
-    fun beforeGenerate(allFiles: List<File>) {}
+    public fun beforeGenerate(allFiles: List<File>) {}
 
-    fun emit(module: Module, logger: Logger): NonEmptyList<File> {
+    public fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val definitionFiles = module.statements.map { emit(it, module, logger) }
         val clientFiles = module.statements.toList().filterIsInstance<Endpoint>().map { endpoint ->
             logger.info("Emitting Client for endpoint ${endpoint.identifier.value}")
@@ -66,9 +66,9 @@ interface IrEmitter : Emitter {
         return definitionFiles + clientFiles + generatorFiles
     }
 
-    fun emitGenerator(definition: Definition, module: Module): File? = null
+    public fun emitGenerator(definition: Definition, module: Module): File? = null
 
-    fun emit(definition: Definition, module: Module, logger: Logger): File {
+    public fun emit(definition: Definition, module: Module, logger: Logger): File {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
         return when (definition) {
             is Type -> emit(definition, module)
@@ -82,21 +82,21 @@ interface IrEmitter : Emitter {
 
     private fun File.toEmitted(): Emitted = Emitted(name.value() + "." + extension.value, generator.generate(this))
 
-    fun emitEndpointClient(endpoint: Endpoint): File = endpoint.convertEndpointClient()
+    public fun emitEndpointClient(endpoint: Endpoint): File = endpoint.convertEndpointClient()
 
-    fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+    public fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
         return endpoints.convertClient()
     }
 
-    fun emitShared(): File?
+    public fun emitShared(): File?
 
-    fun emit(type: Type, module: Module): File
-    fun emit(enum: Enum, module: Module): File
-    fun emit(refined: Refined): File
-    fun emit(endpoint: Endpoint): File
-    fun emit(union: Union): File
-    fun emit(channel: Channel): File
+    public fun emit(type: Type, module: Module): File
+    public fun emit(enum: Enum, module: Module): File
+    public fun emit(refined: Refined): File
+    public fun emit(endpoint: Endpoint): File
+    public fun emit(union: Union): File
+    public fun emit(channel: Channel): File
 
-    fun transformTestFile(file: File): File = file
+    public fun transformTestFile(file: File): File = file
 }

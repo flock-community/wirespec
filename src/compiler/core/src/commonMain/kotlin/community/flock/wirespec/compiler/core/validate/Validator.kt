@@ -24,9 +24,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
-object Validator {
+public object Validator {
 
-    fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = zipOrAccumulate(
+    public fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = zipOrAccumulate(
         validateWithOptions(ast, options),
         validateEndpoints(ast),
         validateTypes(ast),

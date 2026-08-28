@@ -220,7 +220,7 @@ private fun targetFieldAnnotationsMap(
     }
 }
 
-fun TypeWirespec.convertToGenerator(module: Module? = null): File {
+public fun TypeWirespec.convertToGenerator(module: Module? = null): File {
     val generatorName = identifier.toGeneratorName()
     val typeName = identifier.value
 
@@ -414,7 +414,7 @@ private fun ReferenceWirespec.toGeneratorExpression(
     }
 }
 
-fun RefinedWirespec.convertToGenerator(): File {
+public fun RefinedWirespec.convertToGenerator(): File {
     val generatorName = identifier.toGeneratorName()
     val typeName = identifier.value
 
@@ -444,7 +444,7 @@ fun RefinedWirespec.convertToGenerator(): File {
     }
 }
 
-fun EnumWirespec.convertToGenerator(): File {
+public fun EnumWirespec.convertToGenerator(): File {
     val generatorName = identifier.toGeneratorName()
     val typeName = identifier.value
 
@@ -485,7 +485,7 @@ fun EnumWirespec.convertToGenerator(): File {
     }
 }
 
-fun UnionWirespec.convertToGenerator(): File {
+public fun UnionWirespec.convertToGenerator(): File {
     val generatorName = identifier.toGeneratorName()
     val typeName = identifier.value
     val variantNames = entries.filterIsInstance<ReferenceWirespec.Custom>().map { it.value }

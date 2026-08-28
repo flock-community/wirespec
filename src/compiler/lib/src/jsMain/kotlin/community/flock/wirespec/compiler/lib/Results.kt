@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ast.AST
 
-fun EitherNel<WirespecException, List<Emitted>>.produce(): WsCompilationResult = when (this) {
+public fun EitherNel<WirespecException, List<Emitted>>.produce(): WsCompilationResult = when (this) {
     is Left -> WsCompilationResult(errors = value.map { it.produce() }.toTypedArray())
     is Right -> WsCompilationResult(
         result = WsCompiled(
@@ -20,47 +20,47 @@ fun EitherNel<WirespecException, List<Emitted>>.produce(): WsCompilationResult =
     )
 }
 
-fun Emitted.produce() = WsEmitted(
+public fun Emitted.produce(): WsEmitted = WsEmitted(
     file = file,
     result = result,
 )
 
 @JsExport
-class WsCompilationResult(
-    val result: WsCompiled? = null,
-    val errors: Array<WsError> = emptyArray(),
+public class WsCompilationResult(
+    public val result: WsCompiled? = null,
+    public val errors: Array<WsError> = emptyArray(),
 )
 
 @JsExport
-class WsCompiled(val value: Array<WsEmitted>)
+public class WsCompiled(public val value: Array<WsEmitted>)
 
 @JsExport
-class WsCompiledFile(val name: String, val value: String)
+public class WsCompiledFile(public val name: String, public val value: String)
 
-fun EitherNel<WirespecException, AST>.produce(): WsParseResult = when (this) {
+public fun EitherNel<WirespecException, AST>.produce(): WsParseResult = when (this) {
     is Left -> WsParseResult(errors = value.map { it.produce() }.toTypedArray())
     is Right -> WsParseResult(result = value.produce())
 }
 
 @JsExport
-class WsParseResult(
-    val result: WsAST? = null,
-    val errors: Array<WsError>? = null,
+public class WsParseResult(
+    public val result: WsAST? = null,
+    public val errors: Array<WsError>? = null,
 )
 
-fun EitherNel<WirespecException, String>.produce(): WsStringResult = when (this) {
+public fun EitherNel<WirespecException, String>.produce(): WsStringResult = when (this) {
     is Left -> WsStringResult(errors = value.map { it.produce() }.toTypedArray())
     is Right -> WsStringResult(result = value)
 }
 
 @JsExport
-class WsStringResult(
-    val result: String? = null,
-    val errors: Array<WsError>? = null,
+public class WsStringResult(
+    public val result: String? = null,
+    public val errors: Array<WsError>? = null,
 )
 
 @JsExport
-class WsEmitted(
-    val file: String,
-    val result: String,
+public class WsEmitted(
+    public val file: String,
+    public val result: String,
 )

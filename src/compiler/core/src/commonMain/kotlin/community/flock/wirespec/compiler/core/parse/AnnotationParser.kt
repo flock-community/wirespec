@@ -15,7 +15,7 @@ import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
-object AnnotationParser {
+internal object AnnotationParser {
     fun TokenProvider.parseAnnotations(): Either<WirespecException, List<Annotation>> = either {
         when (token.type) {
             is AnnotationToken -> {

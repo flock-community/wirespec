@@ -30,13 +30,13 @@ import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.compiler.utils.HasLogger
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
-data class ParseOptions(
+public data class ParseOptions(
     val strict: Boolean = false,
     val allowUnions: Boolean = true,
 )
 
-object Parser {
-    fun HasLogger.parse(
+public object Parser {
+    public fun HasLogger.parse(
         modules: NonEmptyList<TokenizedModule>,
         options: ParseOptions = ParseOptions(),
     ): EitherNel<WirespecException, AST> = either {
@@ -50,11 +50,11 @@ object Parser {
     }
 }
 
-fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) = either {
+internal fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) = either {
     block(eatToken().bind())
 }
 
-inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token: Token? = null): Either<WirespecException, Nothing> = either {
+internal inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token: Token? = null): Either<WirespecException, Nothing> = either {
     raise(
         WrongTokenException<T>(
             fileUri,

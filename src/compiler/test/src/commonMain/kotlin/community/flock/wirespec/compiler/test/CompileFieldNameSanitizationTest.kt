@@ -14,9 +14,9 @@ package community.flock.wirespec.compiler.test
  * `house-number` together with `house_number`). Identifier-restricted languages such as
  * Rust map both to the same `house_number` field, which is an unrepresentable collision.
  */
-object CompileFieldNameSanitizationTest : Fixture {
+public object CompileFieldNameSanitizationTest : Fixture {
 
-    override val source =
+    override val source: String =
         // language=ws
         """
         |type FieldNames {
@@ -32,5 +32,5 @@ object CompileFieldNameSanitizationTest : Fixture {
         |}
         """.trimMargin()
 
-    override val compiler = source.let(::compile)
+    override val compiler: Compiler = source.let(::compile)
 }

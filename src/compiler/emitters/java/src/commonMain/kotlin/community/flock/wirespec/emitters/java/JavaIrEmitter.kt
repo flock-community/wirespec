@@ -46,16 +46,17 @@ import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.toGetterAccessors
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
+import community.flock.wirespec.ir.generator.Generator
 
-open class JavaIrEmitter(
+public open class JavaIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {
 
-    override val generator = JavaGenerator
+    override val generator: Generator = JavaGenerator
 
 
-    override val extension = FileExtension.Java
+    override val extension: FileExtension = FileExtension.Java
 
     override fun transformTestFile(file: File): File = file.transformTypeDescriptors()
 
@@ -266,6 +267,6 @@ open class JavaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords by JavaGenerator
+    public companion object : Keywords by JavaGenerator
 
 }

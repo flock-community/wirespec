@@ -2,19 +2,19 @@ package community.flock.wirespec.ir.core
 
 import kotlin.js.JsName
 
-interface Transformer {
-    fun transformType(type: Type): Type = type.transformChildren(this)
-    fun transformElement(element: Element): Element = element.transformChildren(this)
-    fun transformStatement(statement: Statement): Statement = statement.transformChildren(this)
-    fun transformExpression(expression: Expression): Expression = expression.transformChildren(this)
-    fun transformField(field: Field): Field = field.transformChildren(this)
-    fun transformParameter(parameter: Parameter): Parameter = parameter.transformChildren(this)
-    fun transformConstructor(constructor: Constructor): Constructor = constructor.transformChildren(this)
-    fun transformCase(case: Case): Case = case.transformChildren(this)
+public interface Transformer {
+    public fun transformType(type: Type): Type = type.transformChildren(this)
+    public fun transformElement(element: Element): Element = element.transformChildren(this)
+    public fun transformStatement(statement: Statement): Statement = statement.transformChildren(this)
+    public fun transformExpression(expression: Expression): Expression = expression.transformChildren(this)
+    public fun transformField(field: Field): Field = field.transformChildren(this)
+    public fun transformParameter(parameter: Parameter): Parameter = parameter.transformChildren(this)
+    public fun transformConstructor(constructor: Constructor): Constructor = constructor.transformChildren(this)
+    public fun transformCase(case: Case): Case = case.transformChildren(this)
 }
 
 @Dsl
-class TransformerBuilder @PublishedApi internal constructor() {
+public class TransformerBuilder @PublishedApi internal constructor() {
     private var transformType: ((Type, Transformer) -> Type)? = null
     private var transformElement: ((Element, Transformer) -> Element)? = null
     private var transformStatement: ((Statement, Transformer) -> Statement)? = null
@@ -24,34 +24,34 @@ class TransformerBuilder @PublishedApi internal constructor() {
     private var transformConstructor: ((Constructor, Transformer) -> Constructor)? = null
     private var transformCase: ((Case, Transformer) -> Case)? = null
 
-    fun type(transform: (Type, Transformer) -> Type) {
+    public fun type(transform: (Type, Transformer) -> Type) {
         transformType = transform
     }
-    fun element(transform: (Element, Transformer) -> Element) {
+    public fun element(transform: (Element, Transformer) -> Element) {
         transformElement = transform
     }
-    fun statement(transform: (Statement, Transformer) -> Statement) {
+    public fun statement(transform: (Statement, Transformer) -> Statement) {
         transformStatement = transform
     }
-    fun expression(transform: (Expression, Transformer) -> Expression) {
+    public fun expression(transform: (Expression, Transformer) -> Expression) {
         transformExpression = transform
     }
-    fun field(transform: (Field, Transformer) -> Field) {
+    public fun field(transform: (Field, Transformer) -> Field) {
         transformField = transform
     }
-    fun parameter(transform: (Parameter, Transformer) -> Parameter) {
+    public fun parameter(transform: (Parameter, Transformer) -> Parameter) {
         transformParameter = transform
     }
 
     @JsName("constructorNode")
-    fun constructor(transform: (Constructor, Transformer) -> Constructor) {
+    public fun constructor(transform: (Constructor, Transformer) -> Constructor) {
         transformConstructor = transform
     }
-    fun case(transform: (Case, Transformer) -> Case) {
+    public fun case(transform: (Case, Transformer) -> Case) {
         transformCase = transform
     }
 
-    fun statementAndExpression(block: (Statement, Transformer) -> Statement) {
+    public fun statementAndExpression(block: (Statement, Transformer) -> Statement) {
         statement(block)
         expression { e, t ->
             (e as? Statement)?.let { block(it, t) } ?: e.transformChildren(t)
@@ -71,9 +71,9 @@ class TransformerBuilder @PublishedApi internal constructor() {
     }
 }
 
-inline fun transformer(block: TransformerBuilder.() -> Unit): Transformer = TransformerBuilder().apply(block).build()
+public inline fun transformer(block: TransformerBuilder.() -> Unit): Transformer = TransformerBuilder().apply(block).build()
 
-fun Type.transformChildren(transformer: Transformer): Type = when (this) {
+public fun Type.transformChildren(transformer: Transformer): Type = when (this) {
     is Type.Array -> copy(elementType = transformer.transformType(elementType))
     is Type.Dict -> copy(
         keyType = transformer.transformType(keyType),
@@ -88,7 +88,7 @@ fun Type.transformChildren(transformer: Transformer): Type = when (this) {
     is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect, is Type.IntegerLiteral, is Type.StringLiteral -> this
 }
 
-fun Element.transformChildren(transformer: Transformer): Element = when (this) {
+public fun Element.transformChildren(transformer: Transformer): Element = when (this) {
     is File -> copy(elements = elements.map { transformer.transformElement(it) })
     is Package -> this
     is Import -> copy(type = transformer.transformType(type) as Type.Custom)
@@ -136,16 +136,16 @@ fun Element.transformChildren(transformer: Transformer): Element = when (this) {
     is RawElement -> this
 }
 
-fun Field.transformChildren(transformer: Transformer): Field = copy(type = transformer.transformType(type))
+public fun Field.transformChildren(transformer: Transformer): Field = copy(type = transformer.transformType(type))
 
-fun Parameter.transformChildren(transformer: Transformer): Parameter = copy(type = transformer.transformType(type))
+public fun Parameter.transformChildren(transformer: Transformer): Parameter = copy(type = transformer.transformType(type))
 
-fun Constructor.transformChildren(transformer: Transformer): Constructor = copy(
+public fun Constructor.transformChildren(transformer: Transformer): Constructor = copy(
     parameters = parameters.map { transformer.transformParameter(it) },
     body = body.map { transformer.transformStatement(it) },
 )
 
-fun Statement.transformChildren(transformer: Transformer): Statement = when (this) {
+public fun Statement.transformChildren(transformer: Transformer): Statement = when (this) {
     is PrintStatement -> copy(expression = transformer.transformExpression(expression))
     is ReturnStatement -> copy(expression = transformer.transformExpression(expression))
     is ConstructorStatement -> copy(
@@ -239,13 +239,13 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
     )
 }
 
-fun Expression.transformChildren(transformer: Transformer): Expression = when (this) {
+public fun Expression.transformChildren(transformer: Transformer): Expression = when (this) {
     is ClassReference -> copy(type = transformer.transformType(type))
     is RawExpression -> this
     is Statement -> transformChildren(transformer) as Expression
 }
 
-fun Case.transformChildren(transformer: Transformer): Case = copy(
+public fun Case.transformChildren(transformer: Transformer): Case = copy(
     value = transformer.transformExpression(value),
     body = body.map { transformer.transformStatement(it) },
     type = type?.let { transformer.transformType(it) },
@@ -256,103 +256,103 @@ fun Case.transformChildren(transformer: Transformer): Case = copy(
 internal fun <T : Element> T.transform(transformer: Transformer): T = transformer.transformElement(this) as T
 
 @Dsl
-class TransformScope<E : Element> @PublishedApi internal constructor(
+public class TransformScope<E : Element> @PublishedApi internal constructor(
     @PublishedApi internal var element: Element,
 ) {
-    inline fun <reified M : Type> matching(crossinline transform: (M) -> Type) {
+    public inline fun <reified M : Type> matching(crossinline transform: (M) -> Type) {
         element = element.transformMatching(transform)
     }
 
-    inline fun <reified M : Element> matchingElements(crossinline transform: (M) -> Element) {
+    public inline fun <reified M : Element> matchingElements(crossinline transform: (M) -> Element) {
         element = element.transformMatchingElements(transform)
     }
 
-    fun fieldsWhere(predicate: (Field) -> Boolean, transform: (Field) -> Field) {
+    public fun fieldsWhere(predicate: (Field) -> Boolean, transform: (Field) -> Field) {
         element = element.transformFieldsWhere(predicate, transform)
     }
 
-    fun fields(transform: (Field) -> Field) {
+    public fun fields(transform: (Field) -> Field) {
         fieldsWhere({ true }, transform)
     }
 
-    fun parametersWhere(predicate: (Parameter) -> Boolean, transform: (Parameter) -> Parameter) {
+    public fun parametersWhere(predicate: (Parameter) -> Boolean, transform: (Parameter) -> Parameter) {
         element = element.transformParametersWhere(predicate, transform)
     }
 
-    fun parameters(transform: (Parameter) -> Parameter) {
+    public fun parameters(transform: (Parameter) -> Parameter) {
         parametersWhere({ true }, transform)
     }
 
-    fun renameType(oldName: String, newName: String) {
+    public fun renameType(oldName: String, newName: String) {
         element = element.renameType(oldName, newName)
     }
 
-    fun renameField(oldName: Name, newName: Name) {
+    public fun renameField(oldName: Name, newName: Name) {
         element = element.renameField(oldName, newName)
     }
 
-    fun renameField(oldName: String, newName: String) {
+    public fun renameField(oldName: String, newName: String) {
         element = element.renameField(oldName, newName)
     }
 
-    fun typeByName(name: String, transform: (Type.Custom) -> Type) {
+    public fun typeByName(name: String, transform: (Type.Custom) -> Type) {
         element = element.transformTypeByName(name, transform)
     }
 
-    inline fun <reified T> injectBefore(
+    public inline fun <reified T> injectBefore(
         crossinline produce: (T) -> List<Element>,
     )
         where T : Element, T : HasElements {
         element = element.injectBefore(produce)
     }
 
-    inline fun <reified T> injectAfter(
+    public inline fun <reified T> injectAfter(
         crossinline produce: (T) -> List<Element>,
     )
         where T : Element, T : HasElements {
         element = element.injectAfter(produce)
     }
 
-    fun apply(transformer: Transformer) {
+    public fun apply(transformer: Transformer) {
         element = element.transform(transformer)
     }
 
-    fun type(transform: (Type, Transformer) -> Type) {
+    public fun type(transform: (Type, Transformer) -> Type) {
         element = element.transform(transformer { type(transform) })
     }
 
-    fun statement(transform: (Statement, Transformer) -> Statement) {
+    public fun statement(transform: (Statement, Transformer) -> Statement) {
         element = element.transform(transformer { statement(transform) })
     }
 
-    fun expression(transform: (Expression, Transformer) -> Expression) {
+    public fun expression(transform: (Expression, Transformer) -> Expression) {
         element = element.transform(transformer { expression(transform) })
     }
 
-    fun field(transform: (Field, Transformer) -> Field) {
+    public fun field(transform: (Field, Transformer) -> Field) {
         element = element.transform(transformer { field(transform) })
     }
 
-    fun parameter(transform: (Parameter, Transformer) -> Parameter) {
+    public fun parameter(transform: (Parameter, Transformer) -> Parameter) {
         element = element.transform(transformer { parameter(transform) })
     }
 
     @JsName("constructorNode")
-    fun constructor(transform: (Constructor, Transformer) -> Constructor) {
+    public fun constructor(transform: (Constructor, Transformer) -> Constructor) {
         element = element.transform(transformer { constructor(transform) })
     }
 
-    fun case(transform: (Case, Transformer) -> Case) {
+    public fun case(transform: (Case, Transformer) -> Case) {
         element = element.transform(transformer { case(transform) })
     }
 
-    fun statementAndExpression(block: (Statement, Transformer) -> Statement) {
+    public fun statementAndExpression(block: (Statement, Transformer) -> Statement) {
         apply(transformer { statementAndExpression(block) })
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun <E : Element> E.transform(block: TransformScope<E>.() -> Unit): E {
+public inline fun <E : Element> E.transform(block: TransformScope<E>.() -> Unit): E {
     val scope = TransformScope<E>(this)
     scope.block()
     return scope.element as E
@@ -487,17 +487,17 @@ internal fun Element.collectTypes(): List<Type> = buildList {
     forEachType { add(it) }
 }
 
-fun Element.collectCustomTypeNames(): Set<String> = buildSet {
+public fun Element.collectCustomTypeNames(): Set<String> = buildSet {
     forEachType { type ->
         if (type is Type.Custom) add(type.name.pascalCase())
     }
 }
 
-inline fun <reified T : Element> HasElements.findElement(): T? = elements.filterIsInstance<T>().firstOrNull()
+public inline fun <reified T : Element> HasElements.findElement(): T? = elements.filterIsInstance<T>().firstOrNull()
 
-inline fun <reified T : Element> HasElements.findElement(predicate: (T) -> Boolean): T? = elements.filterIsInstance<T>().firstOrNull(predicate)
+public inline fun <reified T : Element> HasElements.findElement(predicate: (T) -> Boolean): T? = elements.filterIsInstance<T>().firstOrNull(predicate)
 
-inline fun <reified T : Element> Element.findAll(): List<T> = buildList {
+public inline fun <reified T : Element> Element.findAll(): List<T> = buildList {
     forEachElement { element ->
         if (element is T) add(element)
     }

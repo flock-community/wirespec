@@ -1,94 +1,94 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-fun TokenType.name(): String = this::class.simpleName!!
+public fun TokenType.name(): String = this::class.simpleName!!
 
-sealed interface TokenType
-data object RightCurly : TokenType
-data object RightParenthesis : TokenType
-data object LeftBracket : TokenType
-data object RightBracket : TokenType
+public sealed interface TokenType
+public data object RightCurly : TokenType
+public data object RightParenthesis : TokenType
+public data object LeftBracket : TokenType
+public data object RightBracket : TokenType
 
-data object Colon : TokenType
-data object Comma : TokenType
-data object QuestionMark : TokenType
-data object Hash : TokenType
-data object Brackets : TokenType
-data object Comment : TokenType
-data object Number : TokenType
-data object Integer : TokenType
+public data object Colon : TokenType
+public data object Comma : TokenType
+public data object QuestionMark : TokenType
+public data object Hash : TokenType
+public data object Brackets : TokenType
+public data object Comment : TokenType
+public data object Number : TokenType
+public data object Integer : TokenType
 
-data object Underscore : TokenType
-data object Character : TokenType
-data object Arrow : TokenType
-data object Pipe : TokenType
-data object LiteralString : TokenType
-data object EndOfProgram : TokenType {
-    const val VALUE = "EOP"
+public data object Underscore : TokenType
+public data object Character : TokenType
+public data object Arrow : TokenType
+public data object Pipe : TokenType
+public data object LiteralString : TokenType
+public data object EndOfProgram : TokenType {
+    const val VALUE: String = "EOP"
 }
 
-sealed interface WirespecIdentifier : TokenType
-interface FieldIdentifier : WirespecIdentifier {
-    val caseVariants: List<Pair<Regex, CaseVariant>>
+public sealed interface WirespecIdentifier : TokenType
+public interface FieldIdentifier : WirespecIdentifier {
+    public val caseVariants: List<Pair<Regex, CaseVariant>>
 }
 
-data object RegExp : TokenType
-sealed interface CaseVariant : WirespecIdentifier
-data object PascalCaseIdentifier : CaseVariant
-data object DromedaryCaseIdentifier : CaseVariant
-data object KebabCaseIdentifier : CaseVariant
-data object ScreamingKebabCaseIdentifier : CaseVariant
-data object SnakeCaseIdentifier : CaseVariant
-data object ScreamingSnakeCaseIdentifier : CaseVariant
+public data object RegExp : TokenType
+public sealed interface CaseVariant : WirespecIdentifier
+public data object PascalCaseIdentifier : CaseVariant
+public data object DromedaryCaseIdentifier : CaseVariant
+public data object KebabCaseIdentifier : CaseVariant
+public data object ScreamingKebabCaseIdentifier : CaseVariant
+public data object SnakeCaseIdentifier : CaseVariant
+public data object ScreamingSnakeCaseIdentifier : CaseVariant
 
-data object Annotation : TokenType
+public data object Annotation : TokenType
 
-sealed interface TypeDefinitionStart : TokenType
-data object LeftCurly : TypeDefinitionStart
-data object LeftParenthesis : TypeDefinitionStart
-data object ForwardSlash : TypeDefinitionStart
-data object Equals : TypeDefinitionStart
+internal sealed interface TypeDefinitionStart : TokenType
+public data object LeftCurly : TypeDefinitionStart
+public data object LeftParenthesis : TypeDefinitionStart
+public data object ForwardSlash : TypeDefinitionStart
+public data object Equals : TypeDefinitionStart
 
-sealed interface WhiteSpace : TokenType
-data object WhiteSpaceExceptNewLine : WhiteSpace
-data object NewLine : WhiteSpace
-data object StartOfProgram : WhiteSpace
+public sealed interface WhiteSpace : TokenType
+internal data object WhiteSpaceExceptNewLine : WhiteSpace
+internal data object NewLine : WhiteSpace
+internal data object StartOfProgram : WhiteSpace
 
-sealed interface Keyword : TokenType
-sealed interface WirespecDefinition : Keyword
-data object TypeDefinition : WirespecDefinition
-data object EnumTypeDefinition : WirespecDefinition
-data object ChannelDefinition : WirespecDefinition
-data object EndpointDefinition : WirespecDefinition
+public sealed interface Keyword : TokenType
+internal sealed interface WirespecDefinition : Keyword
+public data object TypeDefinition : WirespecDefinition
+public data object EnumTypeDefinition : WirespecDefinition
+public data object ChannelDefinition : WirespecDefinition
+public data object EndpointDefinition : WirespecDefinition
 
-sealed interface ChannelTokenType : TokenType
-data object Method : ChannelTokenType
-data object Path : ChannelTokenType
+private sealed interface ChannelTokenType : TokenType
+public data object Method : ChannelTokenType
+public data object Path : ChannelTokenType
 
-sealed interface WirespecType : TokenType
-sealed interface SpecificType : WirespecType
-sealed interface PrimitiveType : SpecificType
-interface TypeIdentifier : WirespecType {
-    val specificTypes: Map<String, SpecificType>
+public sealed interface WirespecType : TokenType
+public sealed interface SpecificType : WirespecType
+internal sealed interface PrimitiveType : SpecificType
+public interface TypeIdentifier : WirespecType {
+    public val specificTypes: Map<String, SpecificType>
 }
 
-data object WsUnit : SpecificType
-data object WsAny : SpecificType
-data object WsString : PrimitiveType
-data object WsBoolean : PrimitiveType
-data object WsBytes : PrimitiveType
-data class WsInteger(override val precision: Precision) :
+public data object WsUnit : SpecificType
+public data object WsAny : SpecificType
+public data object WsString : PrimitiveType
+public data object WsBoolean : PrimitiveType
+public data object WsBytes : PrimitiveType
+public data class WsInteger(override val precision: Precision) :
     PrimitiveType,
     HasPrecision
 
-data class WsNumber(override val precision: Precision) :
+public data class WsNumber(override val precision: Precision) :
     PrimitiveType,
     HasPrecision
 
-interface HasPrecision {
+private interface HasPrecision {
     val precision: Precision
 }
 
-enum class Precision {
+public enum class Precision {
     P32,
     P64,
 }

@@ -14,41 +14,41 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.HasLogger
 
-interface TokenizeContext :
+public interface TokenizeContext :
     HasLanguageSpec,
     HasLogger
 
-interface ParseContext :
+public interface ParseContext :
     TokenizeContext,
     HasLogger
 
-interface EmitContext :
+public interface EmitContext :
     ParseContext,
     HasEmitters,
     HasLogger
 
-interface CompilationContext :
+public interface CompilationContext :
     TokenizeContext,
     ParseContext,
     EmitContext
 
-data class FileUri(override val value: String) : Value<String>
+public data class FileUri(override val value: String) : Value<String>
 
-data class ModuleContent(val fileUri: FileUri, val content: String)
+public data class ModuleContent(val fileUri: FileUri, val content: String)
 
-data class TokenizedModule(val fileUri: FileUri, val tokens: NonEmptyList<Token>)
+public data class TokenizedModule(val fileUri: FileUri, val tokens: NonEmptyList<Token>)
 
-fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
+public fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
     .tokenize(source)
     .also(TOKENIZED::log)
 
-fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.fileUri, tokenize(it.content)) }).also(PARSED::log)
+public fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.fileUri, tokenize(it.content)) }).also(PARSED::log)
 
-fun EmitContext.emit(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
+public fun EmitContext.emit(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 
-fun CompilationContext.compile(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(parse(source))
+public fun CompilationContext.compile(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(parse(source))
 
 private enum class Stage {
     TOKENIZED,
