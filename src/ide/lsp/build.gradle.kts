@@ -13,6 +13,8 @@ repositories {
 }
 
 kotlin {
+    explicitApi()
+
     js(IR) {
         nodejs()
         useEsModules()

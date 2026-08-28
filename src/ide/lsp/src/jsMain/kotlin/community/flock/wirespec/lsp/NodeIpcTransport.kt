@@ -1,6 +1,6 @@
 package community.flock.wirespec.lsp
 
-class NodeIpcTransport : Transport {
+internal class NodeIpcTransport : Transport {
 
     override fun start(onMessage: (String) -> Unit) {
         process.on("message") { message ->

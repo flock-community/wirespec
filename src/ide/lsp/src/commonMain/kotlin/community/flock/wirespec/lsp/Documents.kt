@@ -2,7 +2,7 @@ package community.flock.wirespec.lsp
 
 import community.flock.wirespec.lsp.protocol.Position
 
-class Document(val uri: String, var version: Int, text: String) {
+internal class Document(val uri: String, var version: Int, text: String) {
     var text: String = text
         private set
     private var lineStartsCache: IntArray? = computeLineStarts(text)
@@ -61,7 +61,7 @@ private fun computeLineStarts(text: String): IntArray {
     return starts.toIntArray()
 }
 
-class DocumentStore {
+internal class DocumentStore {
     private val documents = mutableMapOf<String, Document>()
 
     fun open(uri: String, version: Int, text: String): Document = Document(uri, version, text).also { documents[uri] = it }

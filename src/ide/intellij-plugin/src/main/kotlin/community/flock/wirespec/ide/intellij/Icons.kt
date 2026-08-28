@@ -4,6 +4,6 @@ package community.flock.wirespec.ide.intellij
 import com.intellij.openapi.util.IconLoader
 import javax.swing.Icon
 
-object Icons {
+internal object Icons {
     val FILE: Icon = IconLoader.getIcon("/icons/wirespec.svg", Icons::class.java)
 }

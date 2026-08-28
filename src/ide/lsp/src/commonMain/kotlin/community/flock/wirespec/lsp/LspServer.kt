@@ -24,7 +24,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 
-class LspServer(private val transport: Transport) {
+internal class LspServer(private val transport: Transport) {
 
     private val documents = DocumentStore()
     private val json = Json {

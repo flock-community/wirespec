@@ -9,7 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import community.flock.wirespec.ide.intellij.parser.CustomTypeElement
 import community.flock.wirespec.ide.intellij.parser.CustomTypeElementDef
 
-class Reference<A : CustomTypeElement>(element: A) : PsiReferenceBase<A>(element, TextRange(0, element.textLength)) {
+internal class Reference<A : CustomTypeElement>(element: A) : PsiReferenceBase<A>(element, TextRange(0, element.textLength)) {
 
     override fun resolve(): PsiElement? {
         val scope = GlobalSearchScope.allScope(element.project)

@@ -16,15 +16,15 @@ import community.flock.wirespec.ide.intellij.parser.Parser.Body
 import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeDef
 import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeRef
 
-class Parser : PsiParser {
+public class Parser : PsiParser {
 
-    object TypeDef : IElementType("TYPE_DEF", Language)
-    object ChannelDef : IElementType("CHANNEL_DEF", Language)
-    object EndpointDef : IElementType("ENDPOINT_DEF", Language)
-    object EnumDef : IElementType("ENUM_DEF", Language)
-    object CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language)
-    object CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language)
-    object Body : IElementType("BODY", Language)
+    public object TypeDef : IElementType("TYPE_DEF", Language)
+    public object ChannelDef : IElementType("CHANNEL_DEF", Language)
+    public object EndpointDef : IElementType("ENDPOINT_DEF", Language)
+    public object EnumDef : IElementType("ENUM_DEF", Language)
+    public object CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language)
+    public object CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language)
+    public object Body : IElementType("BODY", Language)
 
     override fun parse(root: IElementType, builder: PsiBuilder): ASTNode = builder.apply {
         mark().also {

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
-class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
+public class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
     override val name: String = "Wirespec Kotlin Method Code Vision"
     override val id: String = "wirespec.kotlin.method.code.vision"
 

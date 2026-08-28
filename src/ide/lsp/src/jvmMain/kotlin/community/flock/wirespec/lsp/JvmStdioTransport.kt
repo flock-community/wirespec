@@ -6,7 +6,7 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.io.PrintStream
 
-class JvmStdioTransport(
+internal class JvmStdioTransport(
     private val input: InputStream = System.`in`,
     private val output: OutputStream = System.out,
 ) : Transport {

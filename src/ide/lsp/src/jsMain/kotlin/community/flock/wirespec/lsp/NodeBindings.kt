@@ -1,12 +1,12 @@
 package community.flock.wirespec.lsp
 
-external interface NodeStream {
+internal external interface NodeStream {
     fun on(event: String, listener: (Any) -> Unit)
     fun setEncoding(encoding: String)
     fun write(chunk: String): Boolean
 }
 
-external interface NodeProcess {
+internal external interface NodeProcess {
     val argv: Array<String>
     val stdin: NodeStream
     val stdout: NodeStream
@@ -16,8 +16,8 @@ external interface NodeProcess {
 }
 
 @Suppress("ClassName")
-external object Buffer {
+internal external object Buffer {
     fun byteLength(value: String, encoding: String): Int
 }
 
-external val process: NodeProcess
+internal external val process: NodeProcess

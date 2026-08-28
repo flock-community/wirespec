@@ -2,6 +2,6 @@
 
 package community.flock.wirespec.lsp
 
-fun main() {
+public fun main() {
     LspServer(JvmStdioTransport()).start()
 }

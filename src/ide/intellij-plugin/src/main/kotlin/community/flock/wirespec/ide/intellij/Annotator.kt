@@ -14,7 +14,7 @@ import community.flock.wirespec.compiler.core.parse.Parser.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.NoLogger
 
-class Annotator :
+public class Annotator :
     ExternalAnnotator<Map<PsiFile, TokenizedModule>, List<WirespecException>>(),
     NoLogger {
 

@@ -1,6 +1,6 @@
 package community.flock.wirespec.lsp
 
-class NodeStdioTransport : Transport {
+internal class NodeStdioTransport : Transport {
 
     private val buffer = StringBuilder()
     private var contentLength: Int = -1

@@ -2,7 +2,7 @@ package community.flock.wirespec.verify
 
 import org.testcontainers.images.builder.ImageFromDockerfile
 
-enum class VerifyImage {
+internal enum class VerifyImage {
     KOTLIN_1 {
         override val image by lazy {
             val version = "1.9.24"
