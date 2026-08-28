@@ -39,7 +39,7 @@ quick:
 	./gradlew --no-configuration-cache -x test \
 		publishToMavenLocal \
 		:src:plugin:npm:jsNodeProductionLibraryDistribution && \
-	(cd examples && make yolo)
+	./gradlew yoloExamples
 
 publish:
 	./gradlew -Pwirespec.enableNative=true publish

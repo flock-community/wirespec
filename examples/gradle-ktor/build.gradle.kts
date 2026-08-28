@@ -7,9 +7,9 @@ import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    application
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ktor)
     alias(libs.plugins.spotless)
     alias(libs.plugins.wirespec)
 }
