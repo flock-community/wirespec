@@ -27,7 +27,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope
     requiresDependencyResolution = ResolutionScope.COMPILE,
     threadSafe = true,
 )
-class CompileMojo : BaseMojo() {
+public class CompileMojo : BaseMojo() {
 
     override fun execute() {
         project.addCompileSourceRoot(output)

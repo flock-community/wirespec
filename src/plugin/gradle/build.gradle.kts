@@ -9,6 +9,8 @@ group = "${libs.versions.group.id.get()}.plugin.gradle"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 kotlin {
+    explicitApi()
+
     jvmToolchain(libs.versions.java.get().toInt())
 }
 

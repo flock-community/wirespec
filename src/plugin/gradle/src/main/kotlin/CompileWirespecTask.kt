@@ -19,14 +19,14 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
-abstract class CompileWirespecTask : BaseWirespecTask() {
+public abstract class CompileWirespecTask : BaseWirespecTask() {
 
     @get:InputDirectory
     @get:Option(option = "input", description = "input directory")
-    abstract val input: DirectoryProperty
+    public abstract val input: DirectoryProperty
 
     @TaskAction
-    fun action() {
+    public fun action() {
         val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
         val outputPath = output.get().asFile.absolutePath
         val testOutputPath = testOutput.orNull?.asFile?.absolutePath

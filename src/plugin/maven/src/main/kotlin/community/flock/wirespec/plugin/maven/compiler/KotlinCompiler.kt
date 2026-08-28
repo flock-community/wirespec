@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import java.io.File
 import java.io.PrintStream
 
-class KotlinCompiler(val project: MavenProject, val log: Log, val outputDir: File) {
+internal class KotlinCompiler(val project: MavenProject, val log: Log, val outputDir: File) {
 
     val mavenLogStream: PrintStream = object : PrintStream(System.out) {
         override fun println(s: String?) = log.info(s)

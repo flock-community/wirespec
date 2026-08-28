@@ -4,7 +4,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 @Suppress("unused")
-class WirespecPlugin : Plugin<Project> {
+public class WirespecPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         // Marker plugin: exists so the `community.flock.wirespec.plugin.gradle`
         // id resolves and the task classes (CompileWirespecTask, ConvertWirespecTask)

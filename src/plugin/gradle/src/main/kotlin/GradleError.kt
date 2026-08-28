@@ -2,12 +2,12 @@ package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.FileExtension
 
-class IsNotAFileOrDirectory(input: String?) : RuntimeException("Input is not a file or directory: $input.")
+internal class IsNotAFileOrDirectory(input: String?) : RuntimeException("Input is not a file or directory: $input.")
 
-class ConvertNeedsAFile : RuntimeException("To convert, please specify a file.")
+internal class ConvertNeedsAFile : RuntimeException("To convert, please specify a file.")
 
-sealed class SpecificFile(extension: FileExtension) : RuntimeException("No ${extension.name} file found")
-class JSONFileError : SpecificFile(FileExtension.JSON)
-class WirespecFileError : SpecificFile(FileExtension.Wirespec)
+internal sealed class SpecificFile(extension: FileExtension) : RuntimeException("No ${extension.name} file found")
+internal class JSONFileError : SpecificFile(FileExtension.JSON)
+internal class WirespecFileError : SpecificFile(FileExtension.Wirespec)
 
-class PickAtLeastOneLanguageOrEmitter : RuntimeException("Pick at least one language or emitter.")
+internal class PickAtLeastOneLanguageOrEmitter : RuntimeException("Pick at least one language or emitter.")

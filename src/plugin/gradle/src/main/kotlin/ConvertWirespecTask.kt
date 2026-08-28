@@ -22,22 +22,22 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
-abstract class ConvertWirespecTask : BaseWirespecTask() {
+public abstract class ConvertWirespecTask : BaseWirespecTask() {
 
     @get:InputFile
     @get:Option(option = "input", description = "input directory")
-    abstract val input: RegularFileProperty
+    public abstract val input: RegularFileProperty
 
     @get:Input
     @get:Option(option = "format", description = "formats list")
-    abstract val format: Property<Format>
+    public abstract val format: Property<Format>
 
     @get:Input
     @get:Option(option = "preProcessor", description = "pre-processor")
-    abstract val preProcessor: Property<(String) -> String>
+    public abstract val preProcessor: Property<(String) -> String>
 
     @TaskAction
-    fun convert() {
+    public fun convert() {
         val preProcessorFunction = preProcessor.getOrElse({ it })
         val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
         val outputPath = output.get().asFile.absolutePath

@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.plugin.Language.Wirespec
 import java.io.File as JavaFile
 
-fun List<Emitted>.writeToFiles(
+private fun List<Emitted>.writeToFiles(
     output: JavaFile,
     packageName: PackageName?,
     shared: Shared?,

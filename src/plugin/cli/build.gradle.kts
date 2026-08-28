@@ -19,6 +19,8 @@ repositories {
 val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
 
 kotlin {
+    explicitApi()
+
     targets.all {
         compilations.all {
             compileTaskProvider.configure {
