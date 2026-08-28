@@ -212,6 +212,7 @@ public data class Namespace(
     override val name: Name,
     override val elements: List<Element>,
     val extends: Type.Custom? = null,
+    val visibility: Visibility? = null,
 ) : HasName,
     HasElements
 
@@ -222,6 +223,7 @@ public data class Interface(
     val isSealed: Boolean = false,
     val typeParameters: List<TypeParameter> = emptyList(),
     val fields: List<Field> = emptyList(),
+    val visibility: Visibility? = null,
 ) : HasName,
     HasElements
 
@@ -230,6 +232,7 @@ public data class Union(
     val extends: Type.Custom? = null,
     val members: List<Type.Custom> = emptyList(),
     val typeParameters: List<TypeParameter> = emptyList(),
+    val visibility: Visibility? = null,
 ) : HasName
 
 public data class Enum(
@@ -239,6 +242,7 @@ public data class Enum(
     val fields: List<Field> = emptyList(),
     val constructors: List<Constructor> = emptyList(),
     override val elements: List<Element> = emptyList(),
+    val visibility: Visibility? = null,
 ) : HasName,
     HasElements {
     public data class Entry(val name: Name, val values: List<String>)

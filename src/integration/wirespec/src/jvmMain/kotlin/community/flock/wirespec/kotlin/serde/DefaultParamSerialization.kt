@@ -8,7 +8,7 @@ import community.flock.wirespec.kotlin.serde.DefaultSerialization.isList
 import community.flock.wirespec.kotlin.serde.DefaultSerialization.isWirespecEnum
 import kotlin.reflect.KType
 
-class DefaultParamSerialization : Wirespec.ParamSerialization {
+public class DefaultParamSerialization : Wirespec.ParamSerialization {
 
     override fun <T : Any> serializeParam(value: T, kType: KType): List<String> = when {
         kType.isList() -> (value as List<*>).map { it.toString() }

@@ -56,6 +56,10 @@ import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Type as LanguageType
 import community.flock.wirespec.ir.generator.Generator
+import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.Visibility
+import community.flock.wirespec.ir.core.Interface as LanguageInterface
+import community.flock.wirespec.ir.core.Union as LanguageUnion
 
 public open class KotlinIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -137,9 +141,28 @@ public open class KotlinIrEmitter(
             }
 
         return if (emitShared.value) {
-            wirespecShared
+            wirespecShared.withExplicitVisibility()
         } else {
             null
+        }
+    }
+
+    // The shared runtime is compiled by :src:integration:wirespec, which runs under
+    // explicit API mode, so every declaration in it has to spell its visibility out.
+    private fun File.withExplicitVisibility(): File = transform {
+        matchingElements { element: Element ->
+            when (element) {
+                is Namespace -> element.copy(visibility = Visibility.PUBLIC)
+                is LanguageInterface -> element.copy(
+                    visibility = Visibility.PUBLIC,
+                    fields = element.fields.map { it.copy(visibility = Visibility.PUBLIC) },
+                )
+                is LanguageUnion -> element.copy(visibility = Visibility.PUBLIC)
+                is LanguageEnum -> element.copy(visibility = Visibility.PUBLIC)
+                is Struct -> element.copy(visibility = Visibility.PUBLIC)
+                is LanguageFunction -> element.copy(visibility = Visibility.PUBLIC)
+                else -> element
+            }
         }
     }
 
