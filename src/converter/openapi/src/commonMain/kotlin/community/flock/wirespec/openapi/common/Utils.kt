@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import kotlinx.serialization.json.Json
 
-public fun className(vararg arg: String): String = arg
+internal fun className(vararg arg: String): String = arg
     .flatMap { it.split("-", "/") }
     .joinToString("") { it.firstToUpper() }
 
@@ -103,6 +103,6 @@ internal fun List<Definition>.resolveEndpointNameCollisions(): List<Definition> 
     }
 }
 
-public val json: Json = Json { prettyPrint = true }
+internal val json: Json = Json { prettyPrint = true }
 
-public const val APPLICATION_JSON: String = "application/json"
+internal const val APPLICATION_JSON: String = "application/json"

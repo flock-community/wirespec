@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 
-public class SyntaxHighlighter : SyntaxHighlighterBase() {
+internal class SyntaxHighlighter : SyntaxHighlighterBase() {
 
     override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey?> = when (tokenType) {
         Types.COMMENT -> arrayOf(DOC_COMMENT_MARKUP)
@@ -58,5 +58,5 @@ public class SyntaxHighlighter : SyntaxHighlighterBase() {
 }
 
 public class SyntaxHighlighterFactory : SyntaxHighlighterFactory() {
-    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter = SyntaxHighlighter()
+    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): com.intellij.openapi.fileTypes.SyntaxHighlighter = SyntaxHighlighter()
 }

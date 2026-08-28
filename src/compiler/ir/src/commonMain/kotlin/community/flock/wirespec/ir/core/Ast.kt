@@ -53,7 +53,7 @@ public data class Name(val parts: List<String>) {
     }
 }
 
-public fun name(vararg parts: String): Name = Name(parts.toList())
+internal fun name(vararg parts: String): Name = Name(parts.toList())
 
 public enum class Precision {
     P32,

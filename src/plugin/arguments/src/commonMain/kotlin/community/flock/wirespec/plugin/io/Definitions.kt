@@ -30,7 +30,7 @@ private operator fun Directory.plus(packageName: PackageName) = Directory(path +
 
 public sealed interface FullPath
 
-public fun FullPath.path(): String = when (this) {
+internal fun FullPath.path(): String = when (this) {
     is ClassPath -> value
     is DirectoryPath -> value
     is FilePath -> directory.value

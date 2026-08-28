@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 
-public fun Endpoint.Segment.emit(): String = when (this) {
+internal fun Endpoint.Segment.emit(): String = when (this) {
     is Endpoint.Segment.Literal -> value
     is Endpoint.Segment.Param -> "{${identifier.value}}"
 }
@@ -43,7 +43,7 @@ private fun Endpoint.Response.paramList(): List<Param> = listOf(
     listOfNotNull(content?.toParam()),
 ).flatten()
 
-public data class Param(
+internal data class Param(
     val type: ParamType,
     val identifier: Identifier,
     val reference: Reference,

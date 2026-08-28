@@ -792,13 +792,13 @@ public fun struct(name: Name, block: (StructBuilder.() -> Unit)? = null): Struct
     return builder.build()
 }
 
-public fun enum(name: String, extends: Type.Custom? = null, block: (EnumBuilder.() -> Unit)? = null): Enum {
+internal fun enum(name: String, extends: Type.Custom? = null, block: (EnumBuilder.() -> Unit)? = null): Enum {
     val builder = EnumBuilder(name, extends)
     block?.let { builder.it() }
     return builder.build()
 }
 
-public fun enum(name: Name, extends: Type.Custom? = null, block: (EnumBuilder.() -> Unit)? = null): Enum {
+internal fun enum(name: Name, extends: Type.Custom? = null, block: (EnumBuilder.() -> Unit)? = null): Enum {
     val builder = EnumBuilder(name, extends)
     block?.let { builder.it() }
     return builder.build()
@@ -828,13 +828,13 @@ public fun `interface`(name: Name, isSealed: Boolean = false, block: (InterfaceB
     return builder.build()
 }
 
-public fun namespace(name: String, extends: Type.Custom? = null, block: (NamespaceBuilder.() -> Unit)? = null): Namespace {
+internal fun namespace(name: String, extends: Type.Custom? = null, block: (NamespaceBuilder.() -> Unit)? = null): Namespace {
     val builder = NamespaceBuilder(name, extends)
     block?.let { builder.it() }
     return builder.build()
 }
 
-public fun namespace(name: Name, extends: Type.Custom? = null, block: (NamespaceBuilder.() -> Unit)? = null): Namespace {
+internal fun namespace(name: Name, extends: Type.Custom? = null, block: (NamespaceBuilder.() -> Unit)? = null): Namespace {
     val builder = NamespaceBuilder(name, extends)
     block?.let { builder.it() }
     return builder.build()

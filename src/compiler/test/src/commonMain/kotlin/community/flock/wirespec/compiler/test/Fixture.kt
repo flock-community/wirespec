@@ -5,7 +5,7 @@ import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 
-public typealias Compiler = (() -> Emitter) -> Either<NonEmptyList<WirespecException>, String>
+internal typealias Compiler = (() -> Emitter) -> Either<NonEmptyList<WirespecException>, String>
 
 public interface Fixture {
     public val source: String

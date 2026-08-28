@@ -117,7 +117,7 @@ public data object WirespecType : TypeIdentifier {
     )
 }
 
-public data object WirespecField : FieldIdentifier {
+private data object WirespecField : FieldIdentifier {
     override val caseVariants: List<Pair<Regex, CaseVariant>> = listOf(
         Regex("([A-Z][a-z0-9]+)((\\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?") to PascalCaseIdentifier,
         Regex("[a-z]+((\\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?") to DromedaryCaseIdentifier,

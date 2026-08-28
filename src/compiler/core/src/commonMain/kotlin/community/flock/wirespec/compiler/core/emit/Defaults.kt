@@ -16,7 +16,7 @@ public fun Definition.namespace(): String = when (this) {
     is Model -> "model"
 }
 
-public fun Reference.root(): Reference = when (this) {
+internal fun Reference.root(): Reference = when (this) {
     is Reference.Dict -> reference
     is Reference.Iterable -> reference
     else -> this
