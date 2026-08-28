@@ -18,12 +18,17 @@ From the repository root:
 ./gradlew installWrappers   # install the sbt wrapper and the cargo toolchain where missing
 ```
 
-Single examples:
+Single examples all share one task shape, regardless of build tool:
 
 ```shell
-./gradlew :examples:maven-spring-compile:buildExample   # any Maven, npm, Cargo or sbt example
-./gradlew :examples:build-gradle-ktor                   # the standalone Gradle examples
+./gradlew :examples:build-maven-spring-compile
+./gradlew :examples:build-gradle-ktor
+./gradlew :examples:clean-npm-typescript
 ```
+
+Example builds are self-contained: each task provisions what it needs, and an example declaring the
+GraalVM `native-maven-plugin` automatically builds native when a native toolchain (`GRAALVM_HOME`
+or `native-image` on the `PATH`) is available, and falls back to a plain JVM build otherwise.
 
 Most examples resolve Wirespec artifacts with version `0.0.0-SNAPSHOT` from Maven local; publish
 them first from the repository root:

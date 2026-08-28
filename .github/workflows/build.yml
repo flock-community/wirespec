@@ -246,83 +246,45 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: maven-preprocessor
-            type: maven
-          - name: maven-spring-avro
-            type: maven
-          - name: maven-spring-compile
-            type: maven
-          - name: maven-spring-convert
-            type: maven
-          - name: maven-spring-custom
-            type: maven
-          - name: maven-spring-integration
-            type: maven
-          - name: maven-spring-boot-4-integration
-            type: maven
-          - name: maven-spring-kotlin
-            type: maven
-          - name: maven-wiremock
-            type: maven
-          - name: maven-spring-native
-            type: native
-          - name: gradle-ktor
-            type: gradle
-          - name: gradle-kotest
-            type: gradle
-          - name: npm-typescript
-            type: npm
-          - name: rust-petstore
-            type: rust
-          - name: scala-zio
-            type: scala
+        name:
+          - maven-preprocessor
+          - maven-spring-avro
+          - maven-spring-compile
+          - maven-spring-convert
+          - maven-spring-custom
+          - maven-spring-integration
+          - maven-spring-boot-4-integration
+          - maven-spring-kotlin
+          - maven-wiremock
+          - maven-spring-native
+          - gradle-ktor
+          - gradle-kotest
+          - npm-typescript
+          - rust-petstore
+          - scala-zio
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK
-        if: matrix.type != 'native'
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
       - name: Set up GraalVM
-        if: matrix.type == 'native'
         uses: graalvm/setup-graalvm@v1
         with:
           java-version: '21'
           distribution: 'graalvm'
+          cache: gradle
       - uses: actions/setup-node@v4
-        if: matrix.type == 'npm'
         with:
           node-version: 20
-      - name: Set up Rust
-        if: matrix.type == 'rust'
-        uses: dtolnay/rust-toolchain@stable
-      - name: Set up sbt
-        if: matrix.type == 'scala'
-        uses: sbt/setup-sbt@v1
       - name: Download Maven Local artifacts
-        if: matrix.type != 'npm' && matrix.type != 'rust' && matrix.type != 'scala'
         uses: actions/download-artifact@v4
         with:
           name: wirespec-m2
           path: ~/.m2/repository/community/flock/wirespec
       - name: Download npm library
-        if: matrix.type == 'npm'
         uses: actions/download-artifact@v4
         with:
           name: wirespec-npm
           path: src/plugin/npm/build/dist/js/productionLibrary
       - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'maven' || matrix.type == 'npm' || matrix.type == 'rust' || matrix.type == 'scala'
-        run: ./gradlew :examples:${{ matrix.name }}:buildExample
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'native'
-        run: cd examples/${{ matrix.name }} && mvn -Pnative verify
-      - name: Run ${{ matrix.name }} example
-        if: matrix.type == 'gradle'
         run: ./gradlew :examples:build-${{ matrix.name }}
 
   success:

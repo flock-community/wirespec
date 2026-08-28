@@ -32,6 +32,9 @@ val installMavenWrapper = tasks.register<Sync>("installMavenWrapper") {
     filePermissions { unix("rwxr-xr-x") }
 }
 
+val graalvmAvailable = System.getenv("GRAALVM_HOME") != null ||
+    System.getenv("PATH").orEmpty().split(File.pathSeparator).any { File(it, "native-image").canExecute() }
+
 val cargoBin = File(System.getProperty("user.home"), ".cargo/bin")
 
 val installCargo = tasks.register<Exec>("installCargo") {
@@ -55,13 +58,20 @@ fun nestedGradleBuild(example: File, name: String, buildTasks: List<String>, exc
         startParameter.setExcludedTaskNames(excluded)
     }
 
+// Every example gets a uniform entry point :examples:<verb>-<name>, so callers (CI included) need
+// no knowledge of an example's build tool.
 fun aggregate(name: String, taskDescription: String, moduleTask: String, nestedTasks: List<String>, excluded: List<String> = emptyList()) =
-    gradleExamples.map { nestedGradleBuild(it, "${moduleTask.removeSuffix("Example")}-${it.name}", nestedTasks, excluded) }.let { nested ->
+    moduleTask.removeSuffix("Example").let { verb ->
+        val delegates = subprojects.map { project ->
+            tasks.register("$verb-${project.name}") {
+                group = "examples"
+                dependsOn(project.tasks.matching { it.name == moduleTask })
+            }
+        } + gradleExamples.map { nestedGradleBuild(it, "$verb-${it.name}", nestedTasks, excluded) }
         tasks.register(name) {
             group = "examples"
             description = taskDescription
-            dependsOn(subprojects.map { project -> project.tasks.matching { it.name == moduleTask } })
-            dependsOn(nested)
+            dependsOn(delegates)
         }
     }
 
@@ -87,10 +97,13 @@ subprojects {
         projectDir.resolve("pom.xml").exists() -> {
             fun mvnExample(name: String, vararg args: String) =
                 execExample(name, mvnw, *args).configure { dependsOn(installMavenWrapper) }
-            mvnExample("buildExample", "verify")
+            val pom = projectDir.resolve("pom.xml").readText()
+            // an example declaring the GraalVM plugin builds native when a native toolchain is present
+            val native = pom.contains("native-maven-plugin") && graalvmAvailable
+            mvnExample("buildExample", *(if (native) arrayOf("-Pnative") else emptyArray()), "verify")
             mvnExample("cleanExample", "clean")
             mvnExample("yoloExample", "verify", "-DskipTests")
-            if (projectDir.resolve("pom.xml").readText().contains("<id>format</id>")) {
+            if (pom.contains("<id>format</id>")) {
                 mvnExample("formatExample", "test-compile", "-Pformat")
             }
         }
