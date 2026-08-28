@@ -81,6 +81,29 @@ object TypeParser {
         }.let(Type::Shape)
     }
 
+    fun TokenProvider.parseParenthesizedFields(): Either<WirespecException, List<Field>> = parseToken {
+        mutableListOf<Field>().apply {
+            val firstFieldAnnotations = parseAnnotations().bind()
+            when (token.type) {
+                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations).bind())
+                else -> raiseWrongToken<WirespecIdentifier>().bind()
+            }
+            while (token.type is Comma) {
+                eatToken().bind()
+                val fieldAnnotations = parseAnnotations().bind()
+                when (token.type) {
+                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations).bind())
+                    else -> raiseWrongToken<WirespecIdentifier>().bind()
+                }
+            }
+        }.also {
+            when (token.type) {
+                is RightParenthesis -> eatToken().bind()
+                else -> raiseWrongToken<RightParenthesis>().bind()
+            }
+        }.toList()
+    }
+
     fun TokenProvider.parseDict(): Either<WirespecException, Reference.Dict> = parseToken {
         when (token.type) {
             is WirespecType -> Reference.Dict(
@@ -306,6 +329,11 @@ private fun TokenProvider.parsePrimitiveType(previousToken: Token) = either {
 }
 
 private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>) = parseToken {
+    val parameters = when (token.type) {
+        is LeftParenthesis -> with(TypeParser) { parseParenthesizedFields().bind() }
+        else -> emptyList()
+    }
+
     when (token.type) {
         is Colon -> eatToken().bind()
         else -> raiseWrongToken<Colon>().bind()
@@ -316,12 +344,14 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
             identifier = identifier,
             reference = parseDict().bind(),
             annotations = annotations,
+            parameters = parameters,
         )
 
         is WirespecType -> Field(
             identifier = identifier,
             reference = parseType().bind(),
             annotations = annotations,
+            parameters = parameters,
         )
 
         else -> raiseWrongToken<WirespecType>().bind()

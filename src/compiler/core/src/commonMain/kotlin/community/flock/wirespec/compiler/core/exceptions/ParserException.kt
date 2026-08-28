@@ -28,6 +28,13 @@ class DefinitionNotExistsException(fileUri: FileUri, referenceName: String, coor
         message = "Cannot find reference: $referenceName",
     )
 
+class WrongGraphqlKindException(fileUri: FileUri, actual: Token) :
+    ParserException(
+        fileUri,
+        coordinates = actual.coordinates,
+        message = "Query, Mutation or Subscription expected, not: ${actual.value} at line ${actual.coordinates.line} and position ${actual.coordinates.position - actual.value.length}",
+    )
+
 class NullableRefinedReferenceException(fileUri: FileUri, referenceName: String, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,

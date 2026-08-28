@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -102,4 +103,5 @@ private fun AST.generateObject(def: Definition, random: Random) = when (def) {
     is Union -> generateUnion(def, random)
     is Endpoint -> throw NotImplementedError("Endpoint cannot be generated")
     is Channel -> throw NotImplementedError("Channel cannot be generated")
+    is Graphql -> throw NotImplementedError("Graphql cannot be generated")
 }

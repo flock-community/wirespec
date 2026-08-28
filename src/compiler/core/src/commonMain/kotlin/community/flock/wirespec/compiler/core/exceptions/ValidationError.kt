@@ -39,3 +39,15 @@ class DuplicateChannelError(typeName: String) :
         coordinates = Token.Coordinates(),
         message = "Channel '$typeName' is already defined",
     )
+
+class DuplicateGraphqlError(name: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Graphql operation '$name' is already defined",
+    )
+
+class DuplicateGraphqlOperationError(kind: String, operation: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Graphql $kind field '$operation' is already defined",
+    )

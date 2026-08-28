@@ -9,6 +9,8 @@ import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
+import community.flock.wirespec.compiler.core.exceptions.DuplicateGraphqlError
+import community.flock.wirespec.compiler.core.exceptions.DuplicateGraphqlOperationError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -17,6 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -31,7 +34,8 @@ object Validator {
         validateEndpoints(ast),
         validateTypes(ast),
         validateChannels(ast),
-    ) { a, _, _, _ -> a }
+        validateGraphql(ast),
+    ) { a, _, _, _, _ -> a }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
@@ -47,6 +51,7 @@ object Validator {
             when (definition) {
                 is Channel -> definition
                 is Endpoint -> definition
+                is Graphql -> definition
                 is Enum -> definition
                 is Refined -> definition
                 is Type -> definition.copy(
@@ -98,6 +103,23 @@ object Validator {
         .filter { it.value.size > 1 }
         .map { (name, channels) -> channels.map { DuplicateChannelError(name) } }
         .flatten()
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
+
+    private fun validateGraphql(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
+        .flatMap { it.statements.filterIsInstance<Graphql>() }
+        .let { definitions ->
+            val duplicateNames = definitions
+                .groupBy { it.identifier.value }
+                .filter { it.value.size > 1 }
+                .flatMap { (name, defs) -> defs.map { DuplicateGraphqlError(name) } }
+            val duplicateOperations = definitions
+                .groupBy { it.kind to it.operation.value }
+                .filter { it.value.size > 1 }
+                .flatMap { (key, defs) -> defs.map { DuplicateGraphqlOperationError(key.first.name, key.second) } }
+            duplicateNames + duplicateOperations
+        }
         .toNonEmptyListOrNull()
         ?.left()
         ?: ast.right()

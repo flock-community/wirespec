@@ -14,6 +14,7 @@ interface WirespecEmitters:
     WirespecTypeDefinitionEmitter,
     WirespecEndpointDefinitionEmitter,
     WirespecChannelDefinitionEmitter,
+    WirespecGraphqlDefinitionEmitter,
     WirespecEnumDefinitionEmitter,
     WirespecUnionDefinitionEmitter,
     WirespecRefinedTypeDefinitionEmitter

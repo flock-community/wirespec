@@ -1,6 +1,7 @@
 package community.flock.wirespec.ir.converter
 
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.flattenListDict
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
@@ -16,8 +17,11 @@ import community.flock.wirespec.ir.core.Expression
 import community.flock.wirespec.ir.core.FieldCall
 import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FlatMapIndexed
+import community.flock.wirespec.ir.core.FunctionBuilder
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.IfExpression
+import community.flock.wirespec.ir.core.InterfaceBuilder
+import community.flock.wirespec.ir.core.Lambda
 import community.flock.wirespec.ir.core.ListConcat
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.LiteralList
@@ -29,6 +33,7 @@ import community.flock.wirespec.ir.core.NullCheck
 import community.flock.wirespec.ir.core.NullableEmpty
 import community.flock.wirespec.ir.core.NullableMap
 import community.flock.wirespec.ir.core.NullableOf
+import community.flock.wirespec.ir.core.Parameter
 import community.flock.wirespec.ir.core.Precision
 import community.flock.wirespec.ir.core.ReturnStatement
 import community.flock.wirespec.ir.core.StringTemplate
@@ -43,6 +48,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition as Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint as EndpointWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Field as FieldWirespec
+import community.flock.wirespec.compiler.core.parse.ast.Graphql as GraphqlWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
@@ -56,6 +62,7 @@ fun DefinitionWirespec.convert(): File = when (this) {
     is RefinedWirespec -> convert()
     is ChannelWirespec -> convert()
     is EndpointWirespec -> convert()
+    is GraphqlWirespec -> convert()
 }
 
 fun PackageName.convert(): File = file("Wirespec") {
@@ -82,6 +89,7 @@ fun PackageName.convert(): File = file("Wirespec") {
         }
         `interface`("Endpoint")
         `interface`("Channel")
+        `interface`("GraphQL")
         `interface`("Path")
         `interface`("Queries")
         `interface`("Headers")
@@ -204,6 +212,28 @@ fun PackageName.convert(): File = file("Wirespec") {
             asyncFunction("transport") {
                 returnType(type("RawResponse"))
                 arg("request", type("RawRequest"))
+            }
+        }
+        struct(Name("Graph", "QL", "Error", "Location")) {
+            field("line", integer)
+            field("column", integer)
+        }
+        struct(Name("Graph", "QL", "Error")) {
+            field("message", string)
+            field("locations", list(type("GraphQLErrorLocation")).nullable())
+            field("path", list(Type.Any).nullable())
+            field("extensions", Type.Nullable(Type.Any))
+        }
+        `interface`("Cancellable") {
+            function("cancel") {
+                returnType(unit)
+            }
+        }
+        `interface`(Name("Stream", "Transportation")) {
+            function("stream") {
+                returnType(type("Cancellable"))
+                arg("request", type("RawRequest"))
+                arg(Name("on", "Next"), Type.Function(listOf(type("RawResponse")), unit))
             }
         }
         `interface`("GeneratorField", isSealed = true) {
@@ -599,6 +629,98 @@ fun ChannelWirespec.convert() = file(identifier.toName()) {
             function(identifier.toName()) {
                 arg("handler", Type.Function(listOf(reference.convert()), unit))
                 returnType(unit)
+            }
+        }
+    }
+}
+
+fun GraphqlWirespec.convert(module: Module? = null): File {
+    val graphql = this
+    val name = identifier.toName()
+    val document = buildDocument(module)
+    val allInputs = inputs + document.liftedInputs
+    val outputType = output.convert()
+
+    return file(name) {
+        namespace(name, type("Wirespec.GraphQL")) {
+            struct("Input") {
+                allInputs.forEach { field(it.identifier.toName(), it.reference.convert()) }
+            }
+            struct("Data") {
+                field(graphql.operation.toName(), outputType)
+            }
+            struct("Result") {
+                field("data", type("Data").nullable())
+                field("errors", list(type("Wirespec.GraphQLError")).nullable())
+            }
+            struct("RequestBody") {
+                field("query", string)
+                field("variables", type("Input"))
+            }
+            function(Name.of("document"), isStatic = true) {
+                returnType(string)
+                returns(Literal(document.text, Type.String))
+            }
+            function(Name("to", "Raw", "Request"), isStatic = true) {
+                returnType(type("Wirespec.RawRequest"))
+                arg("serialization", type("Wirespec.Serializer"))
+                arg("input", type("Input"))
+                returns(
+                    construct(type("Wirespec.RawRequest")) {
+                        arg("method", Literal("POST", Type.String))
+                        arg("path", LiteralList(listOf(Literal("graphql", Type.String)), Type.String))
+                        arg("queries", LiteralMap(emptyMap(), Type.String, Type.Custom("List<String>")))
+                        arg("headers", LiteralMap(emptyMap(), Type.String, Type.Custom("List<String>")))
+                        arg(
+                            "body",
+                            NullableOf(
+                                FunctionCall(
+                                    receiver = VariableReference(Name.of("serialization")),
+                                    name = Name("serialize", "Body"),
+                                    typeArguments = listOf(Type.Custom("RequestBody")),
+                                    arguments = mapOf(
+                                        Name.of("value") to ConstructorStatement(
+                                            type = Type.Custom("RequestBody"),
+                                            namedArguments = mapOf(
+                                                Name.of("query") to FunctionCall(name = Name.of("document"), arguments = emptyMap()),
+                                                Name.of("variables") to VariableReference(Name.of("input")),
+                                            ),
+                                        ),
+                                        Name.of("type") to TypeDescriptor(Type.Custom("RequestBody")),
+                                    ),
+                                ),
+                            ),
+                        )
+                    },
+                )
+            }
+            function(Name("from", "Raw", "Response"), isStatic = true) {
+                returnType(type("Result"))
+                arg("serialization", type("Wirespec.Deserializer"))
+                arg("response", type("Wirespec.RawResponse"))
+                returns(
+                    NullableMap(
+                        expression = FieldCall(VariableReference(Name.of("response")), Name.of("body")),
+                        body = FunctionCall(
+                            receiver = VariableReference(Name.of("serialization")),
+                            name = Name("deserialize", "Body"),
+                            typeArguments = listOf(Type.Custom("Result")),
+                            arguments = mapOf(
+                                Name.of("value") to VariableReference(Name.of("it")),
+                                Name.of("type") to TypeDescriptor(Type.Custom("Result")),
+                            ),
+                        ),
+                        alternative = ErrorStatement(Literal("body is null", Type.String)),
+                    ),
+                )
+            }
+            `interface`("Handler") {
+                extends(type("Wirespec.Handler"))
+                graphqlHandlerFunction(graphql, name)
+            }
+            `interface`("Call") {
+                extends(type("Wirespec.Call"))
+                graphqlHandlerFunction(graphql, name)
             }
         }
     }
@@ -1235,7 +1357,7 @@ fun EndpointWirespec.convertEndpointClient(): File {
     }
 }
 
-fun List<EndpointWirespec>.convertClient(): File {
+fun List<EndpointWirespec>.convertClient(graphqls: List<GraphqlWirespec> = emptyList()): File {
     val endpoints = this
     return file(Name.of("Client")) {
         struct(Name.of("Client")) {
@@ -1271,9 +1393,226 @@ fun List<EndpointWirespec>.convertClient(): File {
                     )
                 }
             }
+
+            graphqls.forEach { graphql ->
+                implements(Type.Custom("${graphql.identifier.toName().value()}.Call"))
+            }
+
+            graphqls.forEach { graphql ->
+                val graphqlName = graphql.identifier.toName()
+                val graphqlNameStr = graphqlName.value()
+
+                asyncFunction(graphqlName, isOverride = true) {
+                    arg("input", Type.Custom("$graphqlNameStr.Input"))
+                    returnType(Type.Custom("$graphqlNameStr.Result"))
+
+                    returns(
+                        FunctionCall(
+                            name = Name(listOf(graphqlName.camelCase())),
+                            receiver = ConstructorStatement(
+                                type = Type.Custom("${graphqlNameStr}Client"),
+                                namedArguments = mapOf(
+                                    Name.of("serialization") to FieldCall(field = Name.of("serialization")),
+                                    Name.of("transportation") to FieldCall(field = Name.of("transportation")),
+                                ),
+                            ),
+                            arguments = mapOf(Name.of("input") to VariableReference(Name.of("input"))),
+                        ),
+                    )
+                }
+            }
         }
     }
 }
+
+private data class GraphqlDocument(val text: String, val liftedInputs: List<FieldWirespec>)
+
+private fun GraphqlWirespec.buildDocument(module: Module?): GraphqlDocument {
+    val lifted = mutableListOf<FieldWirespec>()
+    val selection = output.selection(module, emptySet(), emptyList(), lifted)
+    val allInputs = inputs + lifted
+    val variableDefinitions = allInputs
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "(", ")") { "$${it.identifier.value}: ${it.reference.toGraphqlType()}" }
+        .orEmpty()
+    val operationArguments = inputs
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "(", ")") { "${it.identifier.value}: $${it.identifier.value}" }
+        .orEmpty()
+    val text = "${kind.name.lowercase()} ${identifier.toName().value()}$variableDefinitions" +
+        " { ${operation.value}$operationArguments${selection?.let { " $it" }.orEmpty()} }"
+    return GraphqlDocument(text, lifted)
+}
+
+private fun ReferenceWirespec.selection(
+    module: Module?,
+    visited: Set<String>,
+    path: List<String>,
+    lifted: MutableList<FieldWirespec>,
+): String? = when (val root = flattenListDict()) {
+    is ReferenceWirespec.Custom -> when (val definition = module?.statements?.find { it.identifier.value == root.value }) {
+        is TypeWirespec ->
+            if (root.value in visited) {
+                "{ __typename }"
+            } else {
+                definition.shape.value
+                    .joinToString(" ") { it.selection(module, visited + root.value, path, lifted) }
+                    .let { "{ $it }" }
+            }
+
+        is UnionWirespec ->
+            definition.entries
+                .joinToString(" ") { entry ->
+                    "... on ${entry.value}${entry.selection(module, visited + root.value, path, lifted)?.let { " $it" }.orEmpty()}"
+                }
+                .let { "{ __typename $it }" }
+
+        else -> null
+    }
+
+    else -> null
+}
+
+private fun FieldWirespec.selection(
+    module: Module?,
+    visited: Set<String>,
+    path: List<String>,
+    lifted: MutableList<FieldWirespec>,
+): String {
+    val fieldPath = path + identifier.value
+    val arguments = parameters
+        .filter { !it.reference.isNullable }
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "(", ")") { parameter ->
+            val variableName = (fieldPath + parameter.identifier.value).toDromedaryPath()
+            lifted += FieldWirespec(
+                annotations = emptyList(),
+                identifier = FieldIdentifier(variableName),
+                reference = parameter.reference,
+            )
+            "${parameter.identifier.value}: $$variableName"
+        }
+        .orEmpty()
+    return "${identifier.value}$arguments${reference.selection(module, visited, fieldPath, lifted)?.let { " $it" }.orEmpty()}"
+}
+
+private fun List<String>.toDromedaryPath(): String = mapIndexed { index, part ->
+    if (index == 0) part else part.replaceFirstChar(Char::uppercaseChar)
+}.joinToString("")
+
+private fun ReferenceWirespec.toGraphqlType(): String = when (this) {
+    is ReferenceWirespec.Custom -> value
+    is ReferenceWirespec.Iterable -> "[${reference.toGraphqlType()}]"
+    is ReferenceWirespec.Primitive -> when (type) {
+        is ReferenceWirespec.Primitive.Type.String -> "String"
+        is ReferenceWirespec.Primitive.Type.Integer -> "Int"
+        is ReferenceWirespec.Primitive.Type.Number -> "Float"
+        is ReferenceWirespec.Primitive.Type.Boolean -> "Boolean"
+        is ReferenceWirespec.Primitive.Type.Bytes -> "String"
+    }
+
+    is ReferenceWirespec.Any, is ReferenceWirespec.Unit, is ReferenceWirespec.Dict ->
+        error("Reference '$this' cannot be used as a GraphQL variable type")
+}.let { if (isNullable) it else "$it!" }
+
+private fun InterfaceBuilder.graphqlHandlerFunction(graphql: GraphqlWirespec, name: Name) = when (graphql.kind) {
+    GraphqlWirespec.Kind.Subscription -> function(name) {
+        arg("input", Type.Custom("Input"))
+        arg(Name("on", "Next"), Type.Function(listOf(Type.Custom("Result")), Type.Unit))
+        returnType(Type.Custom("Wirespec.Cancellable"))
+    }
+
+    GraphqlWirespec.Kind.Query, GraphqlWirespec.Kind.Mutation -> asyncFunction(name) {
+        arg("input", Type.Custom("Input"))
+        returnType(Type.Custom("Result"))
+    }
+}
+
+fun GraphqlWirespec.convertGraphqlClient(): File {
+    val graphql = this
+    val name = identifier.toName()
+    val nameStr = name.value()
+
+    return file(Name.of("${nameStr}Client")) {
+        struct(Name.of("${nameStr}Client")) {
+            field("serialization", Type.Custom("Wirespec.Serialization"))
+            when (graphql.kind) {
+                GraphqlWirespec.Kind.Subscription -> field("transportation", Type.Custom("Wirespec.StreamTransportation"))
+                else -> field("transportation", Type.Custom("Wirespec.Transportation"))
+            }
+            implements(Type.Custom("$nameStr.Call"))
+
+            when (graphql.kind) {
+                GraphqlWirespec.Kind.Subscription -> function(name, isOverride = true) {
+                    arg("input", Type.Custom("$nameStr.Input"))
+                    arg(Name("on", "Next"), Type.Function(listOf(Type.Custom("$nameStr.Result")), Type.Unit))
+                    returnType(Type.Custom("Wirespec.Cancellable"))
+                    assignRawRequest(nameStr)
+                    returns(
+                        FunctionCall(
+                            receiver = FieldCall(field = Name.of("transportation")),
+                            name = Name.of("stream"),
+                            arguments = mapOf(
+                                Name.of("request") to VariableReference(Name.of("rawRequest")),
+                                Name("on", "Next") to Lambda(
+                                    parameters = listOf(Parameter(Name.of("raw"), Type.Custom("Wirespec.RawResponse"))),
+                                    body = FunctionCall(
+                                        name = Name(listOf("onNext")),
+                                        arguments = mapOf(
+                                            Name.of("value") to FunctionCall(
+                                                name = Name(listOf("$nameStr.fromRawResponse")),
+                                                arguments = mapOf(
+                                                    Name.of("serialization") to FieldCall(field = Name.of("serialization")),
+                                                    Name.of("response") to VariableReference(Name.of("raw")),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    )
+                }
+
+                GraphqlWirespec.Kind.Query, GraphqlWirespec.Kind.Mutation -> asyncFunction(name, isOverride = true) {
+                    arg("input", Type.Custom("$nameStr.Input"))
+                    returnType(Type.Custom("$nameStr.Result"))
+                    assignRawRequest(nameStr)
+                    assign(
+                        "rawResponse",
+                        FunctionCall(
+                            receiver = FieldCall(field = Name.of("transportation")),
+                            name = Name.of("transport"),
+                            arguments = mapOf(
+                                Name.of("request") to VariableReference(Name.of("rawRequest")),
+                            ),
+                        ),
+                    )
+                    returns(
+                        FunctionCall(
+                            name = Name(listOf("$nameStr.fromRawResponse")),
+                            arguments = mapOf(
+                                Name.of("serialization") to FieldCall(field = Name.of("serialization")),
+                                Name.of("response") to VariableReference(Name.of("rawResponse")),
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun FunctionBuilder.assignRawRequest(nameStr: String) = assign(
+    "rawRequest",
+    FunctionCall(
+        name = Name(listOf("$nameStr.toRawRequest")),
+        arguments = mapOf(
+            Name.of("serialization") to FieldCall(field = Name.of("serialization")),
+            Name.of("input") to VariableReference(Name.of("input")),
+        ),
+    ),
+)
 
 fun EndpointWirespec.requestParameters(): List<Pair<Name, Type>> = buildList {
     path.filterIsInstance<EndpointWirespec.Segment.Param>()

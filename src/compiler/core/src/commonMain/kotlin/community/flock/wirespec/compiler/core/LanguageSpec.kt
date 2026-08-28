@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.FieldIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.GraphqlDefinition
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
@@ -70,6 +71,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\benum\\b") to EnumTypeDefinition,
         Regex("^\\bendpoint\\b") to EndpointDefinition,
         Regex("^\\bchannel\\b") to ChannelDefinition,
+        Regex("^\\bgraphql\\b") to GraphqlDefinition,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,
