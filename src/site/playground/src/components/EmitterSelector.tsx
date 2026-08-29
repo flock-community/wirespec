@@ -5,6 +5,7 @@ import {
   type ConverterEmitter,
   type Emitter,
 } from "../routes/index";
+import pkg from "../../package.json";
 
 export function EmitterSelector() {
   const compilerOptions: { value: CompilerEmitter; label: string }[] = [
@@ -18,7 +19,7 @@ export function EmitterSelector() {
   ];
   const converterOption: { value: ConverterEmitter; label: string } = {
     value: "wirespec",
-    label: "Wirespec",
+    label: `Wirespec v${pkg.version}`,
   };
   const navigate = useNavigate({ from: "/" });
   const { emitter, specification } = useSearch({ from: "/" });
