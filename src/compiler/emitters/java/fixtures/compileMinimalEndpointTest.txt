@@ -19,8 +19,8 @@ public interface GetTodos extends Wirespec.Endpoint {
       this(new Path(), Wirespec.Method.GET, new Queries(), new RequestHeaders(), null);
     }
   };
-  public sealed interface Response<T> extends Wirespec.Response<T> permits Response2XX, ResponseListTodoDto {}
-  public sealed interface Response2XX<T> extends Response<T> permits Response200 {}
+  public sealed interface Response<T> extends Wirespec.Response<T> permits ResponseListTodoDto {}
+  public sealed interface Response2XX<T> extends Wirespec.Response2XX<T> permits Response200 {}
   public sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> permits Response200 {}
   public static record Response200Headers () implements Wirespec.Response.Headers {
   };

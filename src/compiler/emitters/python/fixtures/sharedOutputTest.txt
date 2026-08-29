@@ -59,6 +59,16 @@ class Wirespec:
         body: T
         class Headers(ABC):
             pass
+    class Response1XX(Response[T], ABC, Generic[T]):
+        pass
+    class Response2XX(Response[T], ABC, Generic[T]):
+        pass
+    class Response3XX(Response[T], ABC, Generic[T]):
+        pass
+    class Response4XX(Response[T], ABC, Generic[T]):
+        pass
+    class Response5XX(Response[T], ABC, Generic[T]):
+        pass
     class BodySerializer(ABC):
         @abstractmethod
         def serializeBody(self, t: T, type: type[T]) -> bytes:

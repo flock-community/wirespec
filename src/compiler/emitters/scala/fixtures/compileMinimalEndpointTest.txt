@@ -13,7 +13,7 @@ object GetTodos extends Wirespec.Endpoint {
       override val headers: RequestHeaders.type = RequestHeaders
       override val body: Unit = ()  }
   sealed trait Response[T] extends Wirespec.Response[T]
-  sealed trait Response2XX[T] extends Response[T]
+  sealed trait Response2XX[T] extends Wirespec.Response2XX[T]
   sealed trait ResponseListTodoDto extends Response[List[TodoDto]]
   object Response200Headers extends Wirespec.Response.Headers
   case class Response200(
