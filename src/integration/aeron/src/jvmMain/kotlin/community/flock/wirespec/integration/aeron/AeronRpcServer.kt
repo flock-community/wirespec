@@ -73,7 +73,8 @@ class AeronRpcServer<S>(
         poller = thread(name = "wirespec-aeron-server", isDaemon = true) {
             val assembler = FragmentAssembler { buffer, offset, length, _ ->
                 val bytes = ByteArray(length).also { buffer.getBytes(offset, it) }
-                dispatch(RpcFrame.decode(bytes))
+                // A frame this server cannot decode must not kill the poll loop.
+                runCatching { RpcFrame.decode(bytes) }.onSuccess(::dispatch)
             }
             val idle = BackoffIdleStrategy()
             while (running.get()) {
