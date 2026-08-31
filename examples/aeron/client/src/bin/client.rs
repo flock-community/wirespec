@@ -2,13 +2,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
-use wirespec_aeron_client::client::AeronRpcClient;
+use wirespec_aeron::client::AeronRpcClient;
 use wirespec_aeron_client::gen::rpc::get_quote::GetQuote;
-use wirespec_aeron_client::protocol::WATCHLIST_STREAM_ID;
-use wirespec_aeron_client::serialization::{
-    empty_params, get_quote_params, get_quote_response, get_watchlist_quotes_response, ping_response,
-};
-use wirespec_aeron_client::server::serve_watchlist;
+use wirespec_aeron_client::rpc::{empty_params, get_quote_params, get_quote_response, get_watchlist_quotes_response, ping_response};
+use wirespec_aeron_client::terminal::{watchlist_server, WATCHLIST_STREAM_ID};
 
 const TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -28,7 +25,7 @@ fn main() -> Result<(), String> {
     let serving = {
         let aeron_dir = aeron_dir.clone();
         let running = running.clone();
-        std::thread::spawn(move || serve_watchlist(&aeron_dir, WATCHLIST_STREAM_ID, running, ready))
+        std::thread::spawn(move || watchlist_server().serve(&aeron_dir, WATCHLIST_STREAM_ID, running, ready))
     };
     if ready_signal.recv().is_err() {
         return serving.join().unwrap();

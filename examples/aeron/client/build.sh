@@ -15,6 +15,7 @@ fi
 export PATH="$CARGO_BIN:$PATH"
 
 "$SCRIPT_DIR/gen.sh"
+cargo test --release --manifest-path "$SCRIPT_DIR/../../../src/integration/aeron/rust/Cargo.toml"
 cd "$SCRIPT_DIR"
 cargo build --release
 cargo test --release
