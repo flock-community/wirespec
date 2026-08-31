@@ -43,6 +43,7 @@ include(
     "src:converter:avro",
     "src:converter:graphql",
     "src:converter:openapi",
+    "src:integration:aeron",
     "src:integration:avro",
     "src:integration:jackson",
     "src:integration:jvm",
