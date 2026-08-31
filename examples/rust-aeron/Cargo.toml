@@ -1,0 +1,13 @@
+[package]
+name = "wirespec-aeron-client"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "client"
+path = "src/bin/client.rs"
+
+[dependencies]
+aeron-rs = "0.1.8"
+serde_json = "1"
+regex = "1"
