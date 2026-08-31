@@ -6,8 +6,8 @@ public object AeronRpc {
     public const val DEFAULT_REQUEST_STREAM_ID: Int = 1001
     public const val DEFAULT_REPLY_STREAM_ID: Int = 1002
 
-    /** Payload of a request without parameters. */
-    public val EMPTY_PARAMS: ByteArray = "{}".encodeToByteArray()
+    /** Payload of a request without parameters: no bytes, whatever the body serialization. */
+    public val EMPTY_PARAMS: ByteArray = ByteArray(0)
 }
 
 /** Outcome of an rpc declared with an error type (`rpc X {} -> R ! E`). */

@@ -13,16 +13,25 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
 class QuoteRpcTest(
     @Autowired private val aeron: Aeron,
     @Autowired private val serialization: Wirespec.Serialization,
+    @Value("\${wirespec.aeron.requestChannel:aeron:udp?endpoint=localhost:40123}") private val requestChannel: String,
+    @Value("\${wirespec.aeron.watchlistChannel:aeron:udp?endpoint=localhost:40125}") private val watchlistChannel: String,
 ) {
 
     private fun <T> call(block: suspend (AeronRpcClient<Wirespec.Serialization>) -> T): T =
-        AeronRpcClient(aeron, serialization, replyStreamId = 2001).use { client ->
+        AeronRpcClient(
+            aeron,
+            serialization,
+            requestChannel = requestChannel,
+            replyChannel = "aeron:udp?endpoint=localhost:40224",
+            replyStreamId = 2001,
+        ).use { client ->
             client.start()
             runBlocking { block(client) }
         }
@@ -51,7 +60,7 @@ class QuoteRpcTest(
     @Test
     fun `the server calls back into the client's watchlist service`() {
         // Play the client's role: serve GetWatchlist on the stream the server calls out on.
-        AeronRpcServer(aeron, serialization, streamId = AeronConfiguration.WATCHLIST_STREAM_ID).use { watchlistService ->
+        AeronRpcServer(aeron, serialization, channel = watchlistChannel, streamId = AeronConfiguration.WATCHLIST_STREAM_ID).use { watchlistService ->
             watchlistService.bindEmpty("GetWatchlist") { Watchlist(listOf("AAPL", "FLCK")) }
             watchlistService.start()
             assertEquals(
