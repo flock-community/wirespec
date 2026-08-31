@@ -41,17 +41,22 @@ impl AeronRpcClient {
         let channel = CString::new(DEFAULT_CHANNEL).unwrap();
         let publication_id = aeron.add_publication(channel.clone(), request_stream_id).map_err(|e| format!("{e:?}"))?;
         let subscription_id = aeron.add_subscription(channel, reply_stream_id).map_err(|e| format!("{e:?}"))?;
+        // Bounded: the driver can reject either registration (e.g. /dev/shm
+        // exhaustion), which surfaces as find_* failing forever.
+        let deadline = Instant::now() + Duration::from_secs(10);
         let publication = loop {
-            if let Ok(publication) = aeron.find_publication(publication_id) {
-                break publication;
+            match aeron.find_publication(publication_id) {
+                Ok(publication) => break publication,
+                Err(error) if Instant::now() >= deadline => return Err(format!("Request publication not available: {error:?}")),
+                Err(_) => std::thread::yield_now(),
             }
-            std::thread::yield_now();
         };
         let subscription = loop {
-            if let Ok(subscription) = aeron.find_subscription(subscription_id) {
-                break subscription;
+            match aeron.find_subscription(subscription_id) {
+                Ok(subscription) => break subscription,
+                Err(error) if Instant::now() >= deadline => return Err(format!("Reply subscription not available: {error:?}")),
+                Err(_) => std::thread::yield_now(),
             }
-            std::thread::yield_now();
         };
 
         Ok(Self {

@@ -125,11 +125,15 @@ fn publish(
         None => {
             let channel = CString::new(framed.reply_channel.as_str()).map_err(|e| e.to_string())?;
             let publication_id = aeron.add_publication(channel, framed.reply_stream_id).map_err(|e| format!("{e:?}"))?;
+            // Bounded: the driver can reject the publication (e.g. /dev/shm
+            // exhaustion), which surfaces as find_publication failing forever.
+            let deadline = Instant::now() + Duration::from_secs(10);
             let publication = loop {
-                if let Ok(publication) = aeron.find_publication(publication_id) {
-                    break publication;
+                match aeron.find_publication(publication_id) {
+                    Ok(publication) => break publication,
+                    Err(error) if Instant::now() >= deadline => return Err(format!("Reply publication not available: {error:?}")),
+                    Err(_) => std::thread::yield_now(),
                 }
-                std::thread::yield_now();
             };
             publications.insert(key, publication.clone());
             publication
