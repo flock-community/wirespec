@@ -1,0 +1,10 @@
+# Context: client (the release binary) next to this Dockerfile.
+# BASE_IMAGE is overridable for environments that cannot reach Docker Hub;
+# it must carry the glibc the binary was built against.
+ARG BASE_IMAGE=ubuntu:24.04
+FROM ${BASE_IMAGE}
+COPY client /app/client
+RUN chmod +x /app/client
+# The client shares the server's IPC namespace, so this is the server's /dev/shm.
+ENV AERON_DIR=/dev/shm/aeron
+ENTRYPOINT ["/app/client"]
