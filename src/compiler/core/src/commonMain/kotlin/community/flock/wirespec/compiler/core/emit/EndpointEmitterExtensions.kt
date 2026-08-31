@@ -7,12 +7,12 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 
-fun Endpoint.Segment.emit() = when (this) {
+internal fun Endpoint.Segment.emit(): String = when (this) {
     is Endpoint.Segment.Literal -> value
     is Endpoint.Segment.Param -> "{${identifier.value}}"
 }
 
-val Endpoint.indexedPathParams
+private val Endpoint.indexedPathParams
     get() = path.withIndex().mapNotNull { (idx, segment) ->
         when (segment) {
             is Endpoint.Segment.Literal -> null
@@ -20,35 +20,35 @@ val Endpoint.indexedPathParams
         }
     }
 
-fun String.fixStatus(): String = when (this) {
+public fun String.fixStatus(): String = when (this) {
     "default" -> "200"
     else -> this
 }
 
-fun List<Endpoint.Response>.distinctByStatus(): List<Endpoint.Response> = distinctBy { it.status }
+private fun List<Endpoint.Response>.distinctByStatus(): List<Endpoint.Response> = distinctBy { it.status }
 
-fun AST.hasEndpoints() = modules.flatMap { it.statements }.any { it is Endpoint }
+private fun AST.hasEndpoints() = modules.flatMap { it.statements }.any { it is Endpoint }
 
-val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
+private val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
 
-fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
+private fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
     endpoint.pathParams.map { it.toParam() },
     endpoint.queries.map { it.toParam(Param.ParamType.QUERY) },
     endpoint.headers.map { it.toParam(Param.ParamType.HEADER) },
     listOfNotNull(content?.toParam()),
 ).flatten()
 
-fun Endpoint.Response.paramList(): List<Param> = listOf(
+private fun Endpoint.Response.paramList(): List<Param> = listOf(
     headers.map { it.toParam(Param.ParamType.HEADER) },
     listOfNotNull(content?.toParam()),
 ).flatten()
 
-data class Param(
+internal data class Param(
     val type: ParamType,
     val identifier: Identifier,
     val reference: Reference,
 ) {
-    enum class ParamType {
+    public enum class ParamType {
         PATH,
         QUERY,
         HEADER,

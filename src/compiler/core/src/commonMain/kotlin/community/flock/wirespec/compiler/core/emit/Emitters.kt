@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
-interface Emitters :
+internal interface Emitters :
     TypeDefinitionEmitter,
     EnumDefinitionEmitter,
     RefinedTypeDefinitionEmitter,
@@ -22,48 +22,48 @@ interface Emitters :
     ChannelDefinitionEmitter,
     NotYetImplemented
 
-interface TypeDefinitionEmitter {
-    fun emit(type: Type, module: Module): String
+public interface TypeDefinitionEmitter {
+    public fun emit(type: Type, module: Module): String
 
-    fun Type.Shape.emit(): String
+    public fun Type.Shape.emit(): String
 
-    fun Field.emit(): String
+    public fun Field.emit(): String
 
-    fun Reference.emit(): String
+    public fun Reference.emit(): String
 
-    fun Reference.Primitive.Type.Constraint.emit(): String
+    public fun Reference.Primitive.Type.Constraint.emit(): String
 
-    val Reference.Primitive.Type.Constraint.RegExp.expression get() =
+    public val Reference.Primitive.Type.Constraint.RegExp.expression: String get() =
         value.split("/").drop(1).dropLast(1).joinToString("/")
 }
 
-interface EnumDefinitionEmitter {
-    fun emit(enum: Enum, module: Module): String
+public interface EnumDefinitionEmitter {
+    public fun emit(enum: Enum, module: Module): String
 }
 
-interface RefinedTypeDefinitionEmitter {
-    fun emit(refined: Refined): String
+public interface RefinedTypeDefinitionEmitter {
+    public fun emit(refined: Refined): String
 
-    fun Refined.emitValidator(): String
+    public fun Refined.emitValidator(): String
 }
 
-interface EndpointDefinitionEmitter {
-    fun emit(endpoint: Endpoint): String
+public interface EndpointDefinitionEmitter {
+    public fun emit(endpoint: Endpoint): String
 }
 
-interface UnionDefinitionEmitter {
-    fun emit(union: Union): String
+public interface UnionDefinitionEmitter {
+    public fun emit(union: Union): String
 }
 
-interface ChannelDefinitionEmitter {
-    fun emit(channel: Channel): String
+public interface ChannelDefinitionEmitter {
+    public fun emit(channel: Channel): String
 }
 
-interface IdentifierEmitter {
-    fun emit(identifier: Identifier): String
+public interface IdentifierEmitter {
+    public fun emit(identifier: Identifier): String
 }
 
-interface ClientEmitter : HasExtension {
+private interface ClientEmitter : HasExtension {
     fun emitClient(ast: AST): Emitted
 
     fun AST.emitClientEndpointRequest() = modules
@@ -72,7 +72,7 @@ interface ClientEmitter : HasExtension {
         .map { endpoint -> Pair(endpoint, endpoint.requests.first()) }
 }
 
-interface NotYetImplemented {
+internal interface NotYetImplemented {
     val singleLineComment: String
     fun notYetImplemented() = "$singleLineComment TODO(\"Not yet implemented\")\n"
 }

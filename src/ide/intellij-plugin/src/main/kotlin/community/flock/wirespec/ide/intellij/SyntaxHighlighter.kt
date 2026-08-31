@@ -12,15 +12,16 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 
-class SyntaxHighlighter : SyntaxHighlighterBase() {
+internal class SyntaxHighlighter : SyntaxHighlighterBase() {
 
-    override fun getTokenHighlights(tokenType: IElementType) = when (tokenType) {
+    override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey?> = when (tokenType) {
         Types.COMMENT -> arrayOf(DOC_COMMENT_MARKUP)
         Types.BRACKETS -> arrayOf(BRACKETS)
         Types.LEFT_BRACKET -> arrayOf(BRACKETS)
@@ -53,9 +54,9 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         else -> arrayOfNulls(0)
     }
 
-    override fun getHighlightingLexer() = Lexer()
+    override fun getHighlightingLexer(): Lexer = Lexer()
 }
 
-class SyntaxHighlighterFactory : SyntaxHighlighterFactory() {
-    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?) = SyntaxHighlighter()
+public class SyntaxHighlighterFactory : SyntaxHighlighterFactory() {
+    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): com.intellij.openapi.fileTypes.SyntaxHighlighter = SyntaxHighlighter()
 }

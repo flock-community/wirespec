@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import community.flock.wirespec.converter.common.Parser
 
-object AvroIdlParser : Parser {
+internal object AvroIdlParser : Parser {
 
     data class Protocol(
         val name: String,

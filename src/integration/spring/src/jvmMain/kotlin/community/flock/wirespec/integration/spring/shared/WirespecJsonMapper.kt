@@ -7,7 +7,7 @@ package community.flock.wirespec.integration.spring.shared
  * Implementations wrap a concrete Jackson `ObjectMapper`. Returned tree nodes are opaque
  * (`Any`) and must be written back with the same mapper that produced them.
  */
-interface WirespecJsonMapper {
-    fun readTree(bytes: ByteArray): Any
-    fun writeValueAsBytes(value: Any): ByteArray
+public interface WirespecJsonMapper {
+    public fun readTree(bytes: ByteArray): Any
+    public fun writeValueAsBytes(value: Any): ByteArray
 }

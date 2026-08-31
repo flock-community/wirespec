@@ -12,7 +12,7 @@ import javax.tools.JavaFileObject
 import javax.tools.StandardLocation
 import javax.tools.ToolProvider
 
-class JavaCompiler(val project: MavenProject, val log: Log, val outputDir: File) {
+internal class JavaCompiler(val project: MavenProject, val log: Log, val outputDir: File) {
 
     /**
      * Compiles Java source files located in the specified source directory.

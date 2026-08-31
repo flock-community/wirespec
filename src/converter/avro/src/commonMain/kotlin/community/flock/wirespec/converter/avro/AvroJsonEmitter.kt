@@ -17,9 +17,9 @@ import community.flock.wirespec.compiler.utils.Logger
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-object AvroJsonEmitter : Emitter {
+public object AvroJsonEmitter : Emitter {
 
-    override val extension = FileExtension.JSON
+    override val extension: FileExtension = FileExtension.JSON
 
     override fun emit(
         ast: AST,
@@ -32,18 +32,18 @@ object AvroJsonEmitter : Emitter {
         .map { Json.encodeToString(it) }
         .map { Emitted("schema.avsc", it) }
 
-    fun Enum.emit(): AvroModel.EnumType = AvroModel.EnumType(
+    public fun Enum.emit(): AvroModel.EnumType = AvroModel.EnumType(
         type = "enum",
         name = identifier.value,
         symbols = entries.toList(),
     )
 
-    fun Union.emit(): AvroModel.UnionType = AvroModel.UnionType(
+    public fun Union.emit(): AvroModel.UnionType = AvroModel.UnionType(
         name = identifier.value,
         type = AvroModel.TypeList(entries.map { AvroModel.SimpleType(it.value) }),
     )
 
-    fun Reference.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
+    public fun Reference.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
         is Reference.Dict -> AvroModel.MapType(type = "map", values = reference.emit(module, hasEmitted))
         is Reference.Iterable -> AvroModel.ArrayType(type = "array", items = reference.emit(module, hasEmitted))
         is Reference.Primitive -> {
@@ -82,7 +82,7 @@ object AvroJsonEmitter : Emitter {
         is Reference.Unit -> TODO()
     }
 
-    fun Field.emit(module: Module, hasEmitted: MutableList<String>) = when (val ref = reference) {
+    public fun Field.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.Type = when (val ref = reference) {
         is Reference.Iterable -> AvroModel.ArrayType(
             type = "array",
             items = ref.reference.emit(module, hasEmitted),
@@ -91,7 +91,7 @@ object AvroJsonEmitter : Emitter {
         else -> ref.emit(module, hasEmitted)
     }
 
-    fun Type.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
+    public fun Type.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
         name = identifier.value,
         type = "record",
         fields = shape.value.map { field ->
@@ -109,7 +109,7 @@ object AvroJsonEmitter : Emitter {
         },
     )
 
-    fun emit(module: Module): List<AvroModel.Type> {
+    public fun emit(module: Module): List<AvroModel.Type> {
         val hasEmitted = mutableListOf<String>()
         return module.statements.toList()
             .mapNotNull {

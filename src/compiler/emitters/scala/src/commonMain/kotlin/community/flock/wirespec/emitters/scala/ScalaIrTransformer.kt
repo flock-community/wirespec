@@ -39,7 +39,7 @@ internal fun <T : Element> T.addIdentityTypeToCall(): T = transform {
     matchingElements { struct: Struct ->
         struct.copy(
             interfaces = struct.interfaces.map { type ->
-                (type as? LanguageType.Custom)?.takeIf { it.name.pascalCase().endsWith(".Call") }
+                type.takeIf { it.name.pascalCase().endsWith(".Call") }
                     ?.copy(generics = listOf(LanguageType.Custom("[A] =>> A")))
                     ?: type
             },

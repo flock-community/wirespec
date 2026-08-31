@@ -16,7 +16,7 @@ import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 
-fun compile(arguments: CompilerArguments) {
+public fun compile(arguments: CompilerArguments) {
     val ctx = object : CompilationContext {
         override val logger = arguments.logger
         override val emitters = arguments.emitters
@@ -31,7 +31,7 @@ fun compile(arguments: CompilerArguments) {
         .fold(arguments)
 }
 
-fun convert(arguments: ConverterArguments) {
+public fun convert(arguments: ConverterArguments) {
     val parser: Parser = when (arguments.format) {
         Format.OpenAPIV2 -> OpenAPIV2Parser
         Format.OpenAPIV3 -> OpenAPIV3Parser

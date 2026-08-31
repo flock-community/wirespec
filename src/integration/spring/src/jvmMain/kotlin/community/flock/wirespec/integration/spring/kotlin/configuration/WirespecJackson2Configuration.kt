@@ -15,13 +15,13 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 @ConditionalOnMissingClass("tools.jackson.databind.json.JsonMapper")
-open class WirespecJackson2Configuration {
+public open class WirespecJackson2Configuration {
 
     private val objectMapper = jacksonObjectMapper()
 
     @Bean
-    open fun wirespecSerialization(): Serialization = WirespecSerialization(objectMapper)
+    public open fun wirespecSerialization(): Serialization = WirespecSerialization(objectMapper)
 
     @Bean
-    open fun wirespecJsonMapper(): WirespecJsonMapper = Jackson2JsonMapper(objectMapper)
+    public open fun wirespecJsonMapper(): WirespecJsonMapper = Jackson2JsonMapper(objectMapper)
 }

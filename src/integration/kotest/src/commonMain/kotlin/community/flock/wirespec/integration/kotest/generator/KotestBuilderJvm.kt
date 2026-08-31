@@ -8,14 +8,14 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
+public inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
     property: KProperty1<Parent, V>,
     noinline factory: () -> Gen<*>,
 ) {
     registerFieldByTypeName(typeOf<Parent>().toString(), property.name, factory)
 }
 
-inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
+public inline fun <reified Parent : Any, V> KotestWirespecGeneratorBuilder.registerField(
     property: KProperty1<Parent, V>,
     value: Any?,
 ) {

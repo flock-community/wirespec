@@ -6,22 +6,22 @@ import kotlin.jvm.JvmName
 import kotlin.jvm.JvmStatic
 import kotlin.jvm.JvmSynthetic
 
-class PackageName(override val value: String, val createDirectory: Boolean) : Value<String> {
-    override fun toString() = value
+public class PackageName(override val value: String, public val createDirectory: Boolean) : Value<String> {
+    override fun toString(): String = value
 
-    companion object {
+    public companion object {
         @JvmStatic
         @JvmName("of")
-        fun of(value: String) = invoke(value)
+        public fun of(value: String): PackageName = invoke(value)
 
         @JvmSynthetic
-        operator fun invoke(value: String? = null) = value
+        public operator fun invoke(value: String? = null): PackageName = value
             .let { PackageName(it ?: DEFAULT_SHARED_PACKAGE_STRING, it != null) }
     }
 
-    fun toDir(): String = value.replace(".", "/") + "/"
+    public fun toDir(): String = value.replace(".", "/") + "/"
 }
 
-operator fun PackageName.plus(definition: Definition) = this + definition.namespace()
+public operator fun PackageName.plus(definition: Definition): PackageName = this + definition.namespace()
 
-operator fun PackageName.plus(subPackage: String) = PackageName("$value.$subPackage")
+public operator fun PackageName.plus(subPackage: String): PackageName = PackageName("$value.$subPackage")

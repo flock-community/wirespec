@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 
-interface WirespecRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, WirespecTypeDefinitionEmitter {
+internal interface WirespecRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(refined: Refined) =
         "type ${emit(refined.identifier)} = ${refined.reference.copy(isNullable = false).emit()}${refined.emitValidator()}\n"

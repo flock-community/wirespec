@@ -60,12 +60,13 @@ import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
+import community.flock.wirespec.ir.generator.Generator
 
-open class TypeScriptIrEmitter : IrEmitter {
+public open class TypeScriptIrEmitter : IrEmitter {
 
-    override val generator = TypeScriptGenerator
+    override val generator: Generator = TypeScriptGenerator
 
-    override val extension = FileExtension.TypeScript
+    override val extension: FileExtension = FileExtension.TypeScript
 
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
@@ -431,7 +432,7 @@ open class TypeScriptIrEmitter : IrEmitter {
 
     private data class EndpointParam(val name: String, val type: String, val nullable: Boolean)
 
-    companion object : Keywords by TypeScriptGenerator {
+    public companion object : Keywords by TypeScriptGenerator {
         private val GENERATOR_FIELD_KINDS: Map<String, String> = listOf(
             "GeneratorFieldString",
             "GeneratorFieldInteger64", "GeneratorFieldInteger32",

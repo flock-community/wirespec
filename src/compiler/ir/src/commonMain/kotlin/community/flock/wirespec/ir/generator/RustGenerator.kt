@@ -58,10 +58,10 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object RustGenerator :
+public object RustGenerator :
     Generator,
     Keywords {
-    override val reservedKeywords = setOf(
+    override val reservedKeywords: Set<String> = setOf(
         "as", "break", "const", "continue", "crate",
         "else", "enum", "extern", "false", "fn",
         "for", "if", "impl", "in", "let",

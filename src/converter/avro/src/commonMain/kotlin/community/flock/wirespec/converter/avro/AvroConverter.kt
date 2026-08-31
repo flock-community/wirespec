@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
-object AvroConverter {
+internal object AvroConverter {
 
     private val nullType = AvroModel.SimpleType("null")
     private fun AvroModel.TypeList.isNullable() = contains(nullType)

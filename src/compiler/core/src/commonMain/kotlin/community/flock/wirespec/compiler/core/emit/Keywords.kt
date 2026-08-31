@@ -1,5 +1,5 @@
 package community.flock.wirespec.compiler.core.emit
 
-interface Keywords {
-    val reservedKeywords: Set<String>
+public interface Keywords {
+    public val reservedKeywords: Set<String>
 }

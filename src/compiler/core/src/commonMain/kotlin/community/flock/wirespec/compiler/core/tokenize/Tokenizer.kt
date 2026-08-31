@@ -8,13 +8,13 @@ import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 
-data class TokenizeOptions(
+public data class TokenizeOptions(
     val removeWhitespace: Boolean = true,
     val specifyTypes: Boolean = true,
     val specifyFieldIdentifiers: Boolean = true,
 )
 
-fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
+public fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
     .let(optimize(options))
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {

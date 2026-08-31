@@ -11,7 +11,7 @@ import community.flock.wirespec.plugin.io.Source.Type
 import community.flock.wirespec.plugin.io.Source.Type.JSON
 import community.flock.wirespec.plugin.io.Source.Type.Wirespec
 
-sealed interface WirespecArguments {
+internal sealed interface WirespecArguments {
     val input: NonEmptySet<Source<Type>>
     val emitters: NonEmptySet<Emitter>
     val writer: (NonEmptyList<Emitted>) -> Unit
@@ -22,7 +22,7 @@ sealed interface WirespecArguments {
     val strict: Boolean
 }
 
-data class CompilerArguments(
+public data class CompilerArguments(
     override val input: NonEmptySet<Source<Wirespec>>,
     override val emitters: NonEmptySet<Emitter>,
     override val writer: (NonEmptyList<Emitted>) -> Unit,
@@ -33,7 +33,7 @@ data class CompilerArguments(
     override val strict: Boolean,
 ) : WirespecArguments
 
-data class ConverterArguments(
+public data class ConverterArguments(
     val format: Format,
     override val input: NonEmptySet<Source<JSON>>,
     override val emitters: NonEmptySet<Emitter>,
@@ -45,6 +45,6 @@ data class ConverterArguments(
     override val strict: Boolean,
 ) : WirespecArguments
 
-fun PackageName?.toDirectory() = this?.value
+internal fun PackageName?.toDirectory() = this?.value
     ?.replace('.', '/')
     ?: ""

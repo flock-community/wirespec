@@ -6,13 +6,13 @@ import io.kotest.property.Arb
 import io.kotest.property.Gen
 import kotlin.reflect.KClass
 
-fun responseCall(
+public fun responseCall(
     endpointObject: Wirespec.Endpoint,
     variantClass: KClass<*>,
 ): ResponseBuilder = ResponseBuilder(endpointObject, variantClass)
 
 @WirespecScenarioDsl
-class ResponseBuilder internal constructor(
+public class ResponseBuilder internal constructor(
     internal val endpointObject: Wirespec.Endpoint,
     internal val variantClass: KClass<*>,
 ) {
@@ -21,9 +21,9 @@ class ResponseBuilder internal constructor(
 
     internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
 
-    fun body(gen: Gen<*>): ResponseBuilder = apply { bodyGen = gen }
+    public fun body(gen: Gen<*>): ResponseBuilder = apply { bodyGen = gen }
 
-    fun headerGen(name: String, gen: Gen<*>): ResponseBuilder = apply { headerGens[name] = gen }
+    public fun headerGen(name: String, gen: Gen<*>): ResponseBuilder = apply { headerGens[name] = gen }
 
-    fun buildGen(): Arb<Any> = CallExecutor.buildResponseGen(this)
+    public fun buildGen(): Arb<Any> = CallExecutor.buildResponseGen(this)
 }

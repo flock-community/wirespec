@@ -17,17 +17,17 @@ import java.net.URLDecoder
  * server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
  * ```
  */
-fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> wirespec(
+public fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> wirespec(
     endpoint: Wirespec.Server<Req, Res>,
 ): WirespecMappingBuilder<Res> = WirespecMappingBuilder(endpoint, requestBuilder(endpoint.method, endpoint.pathTemplate))
 
-class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
+public class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
     private val endpoint: Wirespec.Server<*, Res>,
     private val mapping: MappingBuilder,
 ) {
     /**
      */
-    fun willReturn(
+    public fun willReturn(
         response: Res,
         serialization: Wirespec.Serialization = defaultSerialization,
     ): MappingBuilder = mapping.willReturn(responseBuilder(endpoint.server(serialization).to(response)))
@@ -35,7 +35,7 @@ class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constructor(
 
 private val defaultSerialization: Wirespec.Serialization by lazy { WirespecSerialization(ObjectMapper()) }
 
-fun requestBuilder(method: String, pathTemplate: String): MappingBuilder {
+public fun requestBuilder(method: String, pathTemplate: String): MappingBuilder {
     val urlPattern = urlPatternFor(pathTemplate)
     return when (method.uppercase()) {
         "GET" -> WireMock.get(urlPattern)
@@ -50,7 +50,7 @@ fun requestBuilder(method: String, pathTemplate: String): MappingBuilder {
     }
 }
 
-fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilder {
+public fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilder {
     val builder = WireMock.aResponse().withStatus(rawResponse.statusCode)
     rawResponse.headers.forEach { (name, values) ->
         values.forEach { value -> builder.withHeader(name, value) }
@@ -59,7 +59,7 @@ fun responseBuilder(rawResponse: Wirespec.RawResponse): ResponseDefinitionBuilde
     return builder
 }
 
-fun Request.toRawRequest(): Wirespec.RawRequest {
+public fun Request.toRawRequest(): Wirespec.RawRequest {
     val uri = URI.create(absoluteUrl)
     val segments = uri.rawPath.split("/").filter(String::isNotEmpty).map(::decode)
     val queries = (uri.rawQuery ?: "").split("&").filter(String::isNotEmpty)

@@ -8,7 +8,7 @@ import community.flock.wirespec.ir.core.Transformer
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 
-data class SanitizationConfig(
+public data class SanitizationConfig(
     val reservedKeywords: Set<String>,
     val escapeKeyword: (String) -> String,
     val fieldNameCase: (Name) -> Name,
@@ -18,7 +18,7 @@ data class SanitizationConfig(
     val escapeFieldKeywords: Boolean = true,
 )
 
-fun <T : Element> T.sanitizeNames(config: SanitizationConfig): T = transform {
+public fun <T : Element> T.sanitizeNames(config: SanitizationConfig): T = transform {
     fields { field ->
         field.copy(name = config.sanitizeFieldName(field.name))
     }
@@ -41,7 +41,7 @@ fun <T : Element> T.sanitizeNames(config: SanitizationConfig): T = transform {
     }
 }
 
-fun SanitizationConfig.sanitizeFieldName(name: Name): Name {
+public fun SanitizationConfig.sanitizeFieldName(name: Name): Name {
     val cased = fieldNameCase(name)
     val sanitized = sanitizeSymbol(cased.value())
     val escaped = if (escapeFieldKeywords && sanitized in reservedKeywords) escapeKeyword(sanitized) else sanitized

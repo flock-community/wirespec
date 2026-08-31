@@ -49,7 +49,7 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import kotlin.reflect.KClass
 import com.intellij.lexer.LexerBase as IntellijLexer
 
-class Lexer : IntellijLexer() {
+public class Lexer : IntellijLexer() {
 
     private var bufferSequence: CharSequence = ""
     private var index = 0
@@ -63,9 +63,9 @@ class Lexer : IntellijLexer() {
         tokens = WirespecSpec.tokenize(buffer.toString(), TokenizeOptions(removeWhitespace = false)).filterNot { it.type is EndOfProgram }
     }
 
-    override fun getBufferSequence() = bufferSequence
+    override fun getBufferSequence(): CharSequence = bufferSequence
 
-    override fun getState() = state
+    override fun getState(): Int = state
 
     override fun getTokenType(): IElementType? {
         val type = tokens.getOrNull(index)?.type ?: return null
@@ -78,11 +78,11 @@ class Lexer : IntellijLexer() {
         }
     }
 
-    override fun getTokenStart() = tokens[index]
+    override fun getTokenStart(): Int = tokens[index]
         .coordinates
         .getStartPos()
 
-    override fun getTokenEnd() = tokens[index]
+    override fun getTokenEnd(): Int = tokens[index]
         .coordinates
         .idxAndLength
         .idx
@@ -91,7 +91,7 @@ class Lexer : IntellijLexer() {
         state = ++index
     }
 
-    override fun getBufferEnd() = bufferSequence.toString().length
+    override fun getBufferEnd(): Int = bufferSequence.toString().length
 
     private companion object {
         private val tokenTypeByClass: Map<KClass<out TokenType>, IElementType> = mapOf(
@@ -136,4 +136,4 @@ class Lexer : IntellijLexer() {
     }
 }
 
-fun Token.Coordinates.getStartPos() = idxAndLength.idx - idxAndLength.length
+private fun Token.Coordinates.getStartPos() = idxAndLength.idx - idxAndLength.length

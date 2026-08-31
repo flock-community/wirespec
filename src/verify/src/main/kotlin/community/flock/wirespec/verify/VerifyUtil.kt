@@ -51,7 +51,7 @@ import org.testcontainers.containers.GenericContainer
 import java.io.File
 import community.flock.wirespec.ir.core.File as AstFile
 
-val languages = mapOf(
+internal val languages = mapOf(
     "java-17" to Language(JavaIrEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:17-jdk" }),
     "java-21" to Language(JavaIrEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:21-jdk" }),
     "kotlin-1" to Language(KotlinIrEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_1.image }),
@@ -62,11 +62,11 @@ val languages = mapOf(
     "scala" to Language(ScalaIrEmitter(emitShared = EmitShared(true)), { VerifyImage.SCALA.image }),
 ).onEach { (name, lang) -> lang.name = name }
 
-class Language(
-    val emitter: IrEmitter,
-    val image: () -> String,
+internal class Language(
+    public val emitter: IrEmitter,
+    public val image: () -> String,
 ) {
-    lateinit var name: String
+    public lateinit var name: String
     override fun toString() = name
     private lateinit var fixture: Fixture
 
@@ -74,7 +74,7 @@ class Language(
         File(System.getProperty("buildDir"), "generated-workspace/${name.lowercase()}").apply { mkdirs() }
     }
 
-    val container: GenericContainer<*> by lazy {
+    public val container: GenericContainer<*> by lazy {
         GenericContainer(image())
             .withFileSystemBind(workspaceDir.absolutePath, "/app/gen", BindMode.READ_ONLY)
             .withCommand("tail", "-f", "/dev/null")
@@ -100,7 +100,7 @@ class Language(
         )
     }
 
-    fun generate(file: AstFile, outputDir: File) {
+    public fun generate(file: AstFile, outputDir: File) {
         val name = file.name.pascalCase()
         val transformed = emitter.transformTestFile(file)
         val (fileName, content) = when (emitter) {
@@ -116,7 +116,7 @@ class Language(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun start(name: String, fixture: Fixture, extraFiles: (File) -> Unit = {}) {
+    public fun start(name: String, fixture: Fixture, extraFiles: (File) -> Unit = {}) {
         this.fixture = fixture
 
         val emitted = object : CompilationContext, NoLogger {
@@ -145,7 +145,7 @@ class Language(
         container
     }
 
-    fun compile() {
+    public fun compile() {
         val verifyCommand = when (emitter) {
             is JavaIrEmitter -> "find /app/gen -name '*.java' | xargs javac -d /tmp/out"
             is KotlinIrEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
@@ -158,7 +158,7 @@ class Language(
         exec(verifyCommand)
     }
 
-    fun run(testFile: AstFile) {
+    public fun run(testFile: AstFile) {
         val resolved = if (emitter is TypeScriptIrEmitter) testFile.adaptForTypeScript(fixture) else testFile
         generate(resolved, workspaceDir)
         compile()
@@ -213,7 +213,7 @@ class Language(
         exec(runCommand)
     }
 
-    fun exec(command: String) {
+    public fun exec(command: String) {
         val result = container.execInContainer("sh", "-c", command)
         if (result.stdout.isNotBlank()) {
             println("=== stdout ===")
@@ -231,7 +231,7 @@ class Language(
     }
 }
 
-fun Fixture.refinedTypeNames(): Set<String> {
+private fun Fixture.refinedTypeNames(): Set<String> {
     val ctx = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
     }
@@ -248,7 +248,7 @@ fun Fixture.refinedTypeNames(): Set<String> {
  * Adapts a canonical (non-TS) test file for TypeScript:
  * inlines refined wrappers, rewrites validate calls, and rebuilds imports.
  */
-fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
+private fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     val refinedTypes = fixture.refinedTypeNames()
     val main = elements.filterIsInstance<Main>().firstOrNull() ?: return this
     val body = main.body
@@ -343,7 +343,7 @@ fun AstFile.adaptForTypeScript(fixture: Fixture): AstFile {
     return copy(elements = newImports + elements.filter { it !is Import && it !is Main } + Main(statics = existingMain?.statics.orEmpty(), body = transformedBody))
 }
 
-fun Fixture.definitions(): List<Definition> {
+internal fun Fixture.definitions(): List<Definition> {
     val ctx = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
     }
@@ -353,16 +353,16 @@ fun Fixture.definitions(): List<Definition> {
 }
 
 
-fun Fixture.endpointNames(): List<String> =
+private fun Fixture.endpointNames(): List<String> =
     definitions().filterIsInstance<Endpoint>().map { it.identifier.value }
 
-fun Fixture.modelNames(): List<String> =
+private fun Fixture.modelNames(): List<String> =
     definitions().filterIsInstance<Endpoint>()
         .flatMap { it.importReferences() }
         .distinctBy { it.value }
         .map { it.value }
 
-fun ContainerBuilder.endpointClientImports(lang: Language, fixture: Fixture) {
+internal fun ContainerBuilder.endpointClientImports(lang: Language, fixture: Fixture) {
     val endpoints = fixture.endpointNames()
     val models = fixture.modelNames()
     clientImportsShared(lang, endpoints, models)
@@ -381,7 +381,7 @@ fun ContainerBuilder.endpointClientImports(lang: Language, fixture: Fixture) {
     }
 }
 
-fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture) {
+internal fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture) {
     val endpoints = fixture.endpointNames()
     val models = fixture.modelNames()
     clientImportsShared(lang, endpoints, models)
@@ -395,7 +395,7 @@ fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture) {
     }
 }
 
-fun ContainerBuilder.endpointImports(lang: Language, fixture: Fixture) {
+internal fun ContainerBuilder.endpointImports(lang: Language, fixture: Fixture) {
     endpointImports(lang, fixture.endpointNames(), fixture.modelNames())
 }
 

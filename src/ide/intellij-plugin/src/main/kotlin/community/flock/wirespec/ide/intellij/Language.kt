@@ -3,6 +3,6 @@ package community.flock.wirespec.ide.intellij
 
 import com.intellij.lang.Language as IntellijLanguage
 
-object Language : IntellijLanguage("wirespec") {
+internal object Language : IntellijLanguage("wirespec") {
     private fun readResolve(): Any = Language
 }

@@ -54,7 +54,7 @@ internal fun Type.Custom.ownedImpl(): Type.Custom = copy(name = Name(listOf("imp
  * `Cow<'a, str>` and `Arc<T>` extension-point helpers ([cowStringFields], [arcWrapFields]) are available
  * but not wired into [apply] until a concrete use case surfaces.
  */
-object RustTransform {
+internal object RustTransform {
 
     fun <T : Element> apply(element: T): T = element
         .transform { apply(primitivesToCustom) }

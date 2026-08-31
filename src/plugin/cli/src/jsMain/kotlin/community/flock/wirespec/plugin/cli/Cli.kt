@@ -14,12 +14,12 @@ import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.NoLogger
 
 @JsExport
-fun cli(args: Array<String>) {
+public fun cli(args: Array<String>) {
     main(args)
 }
 
 @JsExport
-fun parser(source: String): Array<WsNode> = object : ParseContext, NoLogger {}
+public fun parser(source: String): Array<WsNode> = object : ParseContext, NoLogger {}
     .parse(nonEmptyListOf(ModuleContent(FileUri(""), source)))
     .getOrElse { error("Cannot parse source: ${it.joinToString { e -> e.message }}") }
     .modules.flatMap(Module::statements).toList()

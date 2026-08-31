@@ -2,16 +2,16 @@ package community.flock.wirespec.ir.core
 
 import arrow.core.NonEmptyList
 
-typealias IR = NonEmptyList<Element>
+public typealias IR = NonEmptyList<Element>
 
-data class Name(val parts: List<String>) {
-    constructor(vararg parts: String) : this(parts.toList())
+public data class Name(val parts: List<String>) {
+    public constructor(vararg parts: String) : this(parts.toList())
 
-    fun value(): String = parts.joinToString("")
+    public fun value(): String = parts.joinToString("")
 
     private fun wordParts(): List<String> = parts.filter { it.isNotEmpty() && it.any { ch -> ch.isLetterOrDigit() } }
 
-    fun camelCase(): String {
+    public fun camelCase(): String {
         val words = wordParts()
         return if (words.size <= 1) {
             words.firstOrNull()?.replaceFirstChar { it.lowercase() } ?: ""
@@ -22,7 +22,7 @@ data class Name(val parts: List<String>) {
         }
     }
 
-    fun pascalCase(): String {
+    public fun pascalCase(): String {
         val words = wordParts()
         return if (words.size <= 1) {
             words.firstOrNull()?.replaceFirstChar { it.uppercase() } ?: ""
@@ -31,7 +31,7 @@ data class Name(val parts: List<String>) {
         }
     }
 
-    fun snakeCase(): String {
+    public fun snakeCase(): String {
         val words = wordParts()
         return if (words.size <= 1) {
             words.firstOrNull()
@@ -43,49 +43,49 @@ data class Name(val parts: List<String>) {
         }
     }
 
-    fun referenceName(): String = if (parts.size > 1) pascalCase() else value()
+    public fun referenceName(): String = if (parts.size > 1) pascalCase() else value()
 
     override fun toString(): String = camelCase()
 
-    companion object {
+    public companion object {
         private val SPLIT_PATTERN = Regex("[A-Z]{2,}(?=[A-Z][a-z])|[A-Z]?[a-z0-9]+|[A-Z]+|[^a-zA-Z0-9]+")
-        fun of(value: String): Name = Name(SPLIT_PATTERN.findAll(value).map { it.value }.toList())
+        public fun of(value: String): Name = Name(SPLIT_PATTERN.findAll(value).map { it.value }.toList())
     }
 }
 
-fun name(vararg parts: String): Name = Name(parts.toList())
+internal fun name(vararg parts: String): Name = Name(parts.toList())
 
-enum class Precision {
+public enum class Precision {
     P32,
     P64,
 }
 
-enum class Visibility {
+public enum class Visibility {
     PUBLIC,
     INTERNAL,
     PRIVATE,
     PROTECTED,
 }
 
-sealed interface Type {
-    data class Integer(val precision: Precision = Precision.P32) : Type
-    data class Number(val precision: Precision = Precision.P64) : Type
-    object Any : Type
-    object String : Type
-    object Boolean : Type
-    object Bytes : Type
-    object Unit : Type
-    object Wildcard : Type
-    object Reflect : Type
-    data class Array(val elementType: Type) : Type
-    data class Dict(val keyType: Type, val valueType: Type) : Type
-    data class Custom(val name: Name, val generics: List<Type> = emptyList()) : Type {
+public sealed interface Type {
+    public data class Integer(val precision: Precision = Precision.P32) : Type
+    public data class Number(val precision: Precision = Precision.P64) : Type
+    public object Any : Type
+    public object String : Type
+    public object Boolean : Type
+    public object Bytes : Type
+    public object Unit : Type
+    public object Wildcard : Type
+    public object Reflect : Type
+    public data class Array(val elementType: Type) : Type
+    public data class Dict(val keyType: Type, val valueType: Type) : Type
+    public data class Custom(val name: Name, val generics: List<Type> = emptyList()) : Type {
         // Convenience constructor for raw type expressions (e.g. `Wirespec.Model`,
         // `List<String>`, `$x.Call`) that contain non-identifier characters and
         // must be preserved as-is. Names made up of letters, digits, or
         // underscores are routed through `Name.of(...)` so the generator's
         // `pascalCase()` normalises them the same way struct names are.
-        constructor(name: kotlin.String, generics: List<Type> = emptyList()) : this(
+        public constructor(name: kotlin.String, generics: List<Type> = emptyList()) : this(
             if (name.any { c -> !c.isLetterOrDigit() && c != '_' }) {
                 Name(listOf(name))
             } else {
@@ -94,11 +94,11 @@ sealed interface Type {
             generics,
         )
     }
-    data class Nullable(val type: Type) : Type
-    data class IntegerLiteral(val value: Int) : Type
-    data class StringLiteral(val value: kotlin.String) : Type
+    public data class Nullable(val type: Type) : Type
+    public data class IntegerLiteral(val value: Int) : Type
+    public data class StringLiteral(val value: kotlin.String) : Type
 
-    data class Function(
+    public data class Function(
         val parameterTypes: List<Type>,
         val returnType: Type,
         val receiver: Type? = null,
@@ -106,33 +106,33 @@ sealed interface Type {
     ) : Type
 }
 
-sealed interface Element
+public sealed interface Element
 
-sealed interface HasName : Element {
-    val name: Name
+public sealed interface HasName : Element {
+    public val name: Name
 }
 
-sealed interface HasElements {
-    val elements: List<Element>
+public sealed interface HasElements {
+    public val elements: List<Element>
 }
 
-data class File(
+public data class File(
     override val name: Name,
     override val elements: List<Element>,
 ) : HasName,
     HasElements
 
-data class Package(
+public data class Package(
     val path: String,
 ) : Element
 
-data class Import(
+public data class Import(
     val path: String,
     val type: Type.Custom,
     val isTypeOnly: Boolean = false,
 ) : Element
 
-data class Struct(
+public data class Struct(
     override val name: Name,
     val fields: List<Element>,
     val constructors: List<Constructor> = emptyList(),
@@ -145,7 +145,7 @@ data class Struct(
     val constructorVisibility: Visibility? = null,
 ) : HasName,
     HasElements {
-    enum class Kind { PLAIN_CLASS }
+    public enum class Kind { PLAIN_CLASS }
 }
 
 /**
@@ -153,7 +153,7 @@ data class Struct(
  * contain other elements (such as [RawElement] annotations injected before a field by an IR
  * extension); this helper filters those out when only the declared fields are needed.
  */
-fun Struct.fieldList(): List<Field> = fields.filterIsInstance<Field>()
+public fun Struct.fieldList(): List<Field> = fields.filterIsInstance<Field>()
 
 /**
  * Pairs each declared [Field] with the annotation codes that immediately precede it.
@@ -163,7 +163,7 @@ fun Struct.fieldList(): List<Field> = fields.filterIsInstance<Field>()
  * it encounters and attaching the buffer to the next [Field]. Elements that are neither a
  * [Field] nor a [RawElement] are ignored.
  */
-fun Struct.annotatedFields(): List<Pair<Field, List<String>>> = buildList {
+internal fun Struct.annotatedFields(): List<Pair<Field, List<String>>> = buildList {
     val pendingAnnotations = mutableListOf<String>()
     fields.forEach { element ->
         when (element) {
@@ -177,12 +177,12 @@ fun Struct.annotatedFields(): List<Pair<Field, List<String>>> = buildList {
     }
 }
 
-data class Constructor(
+public data class Constructor(
     val parameters: List<Parameter>,
     val body: List<Statement>,
 )
 
-data class Field(
+public data class Field(
     val name: Name,
     val type: Type,
     val isOverride: Boolean = false,
@@ -194,7 +194,7 @@ data class Field(
     val getter: Expression? = null,
 ) : Element
 
-data class Function(
+public data class Function(
     override val name: Name,
     val typeParameters: List<TypeParameter> = emptyList(),
     val parameters: List<Parameter>,
@@ -208,80 +208,84 @@ data class Function(
     val annotations: List<String> = emptyList(),
 ) : HasName
 
-data class Namespace(
+public data class Namespace(
     override val name: Name,
     override val elements: List<Element>,
     val extends: Type.Custom? = null,
+    val visibility: Visibility? = null,
 ) : HasName,
     HasElements
 
-data class Interface(
+public data class Interface(
     override val name: Name,
     override val elements: List<Element>,
     val extends: List<Type.Custom> = emptyList(),
     val isSealed: Boolean = false,
     val typeParameters: List<TypeParameter> = emptyList(),
     val fields: List<Field> = emptyList(),
+    val visibility: Visibility? = null,
 ) : HasName,
     HasElements
 
-data class Union(
+public data class Union(
     override val name: Name,
     val extends: Type.Custom? = null,
     val members: List<Type.Custom> = emptyList(),
     val typeParameters: List<TypeParameter> = emptyList(),
+    val visibility: Visibility? = null,
 ) : HasName
 
-data class Enum(
+public data class Enum(
     override val name: Name,
     val extends: Type.Custom? = null,
     val entries: List<Entry>,
     val fields: List<Field> = emptyList(),
     val constructors: List<Constructor> = emptyList(),
     override val elements: List<Element> = emptyList(),
+    val visibility: Visibility? = null,
 ) : HasName,
     HasElements {
-    data class Entry(val name: Name, val values: List<String>)
+    public data class Entry(val name: Name, val values: List<String>)
 }
 
-data class Parameter(
+public data class Parameter(
     val name: Name,
     val type: Type,
     val default: Expression? = null,
 )
 
-data class TypeParameter(
+public data class TypeParameter(
     val type: Type,
     val extends: List<Type> = emptyList(),
 )
 
-sealed interface Statement : Expression
-sealed interface Expression
+public sealed interface Statement : Expression
+public sealed interface Expression
 
-data class RawExpression(val code: String) : Statement
+public data class RawExpression(val code: String) : Statement
 
 // Main entry point - represents a language-specific main/entry point
 
-data class Main(val statics: List<Element> = emptyList(), val body: List<Statement>, val isAsync: Boolean = false) : Element
+public data class Main(val statics: List<Element> = emptyList(), val body: List<Statement>, val isAsync: Boolean = false) : Element
 
 // Raw element - allows injecting raw code as an Element
-data class RawElement(val code: String) : Element
+public data class RawElement(val code: String) : Element
 
 // Null literal - represents the null value
-data object NullLiteral : Statement, Expression
+internal data object NullLiteral : Statement, Expression
 
 // Nullable empty literal - represents the empty optional value (e.g., Optional.empty() in Java, null in Kotlin)
-data object NullableEmpty : Statement, Expression
+public data object NullableEmpty : Statement, Expression
 
 // Variable/identifier reference - represents a reference to a variable
-data class VariableReference(val name: Name) :
+public data class VariableReference(val name: Name) :
     Statement,
     Expression {
-    constructor(name: String) : this(Name.of(name))
+    public constructor(name: String) : this(Name.of(name))
 }
 
 // Field access - represents accessing a field, optionally on a receiver (e.g., request.body or just body)
-data class FieldCall(
+public data class FieldCall(
     val receiver: Expression? = null,
     val field: Name,
 ) : Statement,
@@ -290,7 +294,7 @@ data class FieldCall(
 // Function/method call - represents calling a function or method, optionally on a receiver
 // If receiver is null, it's a standalone or static function call (e.g., fromRequest(...), java.util.Collections.emptyList())
 // If receiver is present, it's a method call on an object (e.g., list.get(index))
-data class FunctionCall(
+public data class FunctionCall(
     val receiver: Expression? = null,
     val typeArguments: List<Type> = emptyList(),
     val name: Name,
@@ -300,7 +304,7 @@ data class FunctionCall(
     Expression
 
 // Array/map index access - represents bracket syntax (e.g., receiver[index])
-data class ArrayIndexCall(
+public data class ArrayIndexCall(
     val receiver: Expression,
     val index: Expression,
     val caseSensitive: Boolean = true,
@@ -308,7 +312,7 @@ data class ArrayIndexCall(
     Expression
 
 // Enum constant reference - represents an enum constant (e.g., Wirespec.Method.GET)
-data class EnumReference(
+internal data class EnumReference(
     val enumType: Type.Custom,
     val entry: Name,
 ) : Statement,
@@ -316,92 +320,92 @@ data class EnumReference(
 
 // Enum value name access - gets the string name of an enum value
 // In Java: .name(), in Kotlin: .name, in TypeScript: no-op (enums are already strings)
-data class EnumValueCall(
+internal data class EnumValueCall(
     val expression: Expression,
 ) : Statement,
     Expression
 
 // Binary operations - represents binary operators (e.g., "message" + status)
-data class BinaryOp(
+public data class BinaryOp(
     val left: Expression,
     val operator: Operator,
     val right: Expression,
 ) : Statement,
     Expression {
-    enum class Operator { PLUS, EQUALS, NOT_EQUALS, UNTIL }
+    public enum class Operator { PLUS, EQUALS, NOT_EQUALS, UNTIL }
 }
 
 // Type descriptor - represents a runtime type descriptor for serialization
 // In Java this emits Wirespec.getType(Type.class, Container.class)
 // In other languages it may emit different type descriptor patterns
-data class TypeDescriptor(val type: Type) :
+public data class TypeDescriptor(val type: Type) :
     Statement,
     Expression
 
 // Type cast - asserts the static type of `expression` as `targetType`.
 // Kotlin/Scala emit an unchecked cast (`x as T` / `x.asInstanceOf[T]`); Java emits `((T) x)`;
 // Rust emits `x as T`; TypeScript emits `x as T`; Python passes through (no static cast).
-data class Cast(val expression: Expression, val targetType: Type) :
+public data class Cast(val expression: Expression, val targetType: Type) :
     Statement,
     Expression
 
-data class PrintStatement(val expression: Expression) : Statement
-data class ReturnStatement(val expression: Expression) : Statement
-data class ConstructorStatement(val type: Type, val namedArguments: Map<Name, Expression> = emptyMap()) :
+internal data class PrintStatement(val expression: Expression) : Statement
+public data class ReturnStatement(val expression: Expression) : Statement
+public data class ConstructorStatement(val type: Type, val namedArguments: Map<Name, Expression> = emptyMap()) :
     Statement,
     Expression
-data class Literal(val value: Any, val type: Type) :
+public data class Literal(val value: Any, val type: Type) :
     Statement,
     Expression
-data class ClassReference(val type: Type) : Expression
-data class LiteralList(val values: List<Expression>, val type: Type) :
+public data class ClassReference(val type: Type) : Expression
+public data class LiteralList(val values: List<Expression>, val type: Type) :
     Statement,
     Expression
-data class LiteralMap(val values: Map<String, Expression>, val keyType: Type, val valueType: Type) :
+public data class LiteralMap(val values: Map<String, Expression>, val keyType: Type, val valueType: Type) :
     Statement,
     Expression
-data class Assignment(val name: Name, val value: Expression, val isProperty: Boolean = false) : Statement
-data class ErrorStatement(val message: Expression) : Statement
-data class AssertStatement(val expression: Expression, val message: String) : Statement
+public data class Assignment(val name: Name, val value: Expression, val isProperty: Boolean = false) : Statement
+public data class ErrorStatement(val message: Expression) : Statement
+public data class AssertStatement(val expression: Expression, val message: String) : Statement
 
-data class NullCheck(
+public data class NullCheck(
     val expression: Expression,
     val body: Expression,
     val alternative: Expression?,
 ) : Statement,
     Expression
 
-data class NullableMap(
+internal data class NullableMap(
     val expression: Expression,
     val body: Expression,
     val alternative: Expression,
 ) : Statement,
     Expression
 
-data class NullableOf(
+public data class NullableOf(
     val expression: Expression,
 ) : Statement,
     Expression
 
-data class NullableGet(
+public data class NullableGet(
     val expression: Expression,
 ) : Statement,
     Expression
 
-sealed interface Constraint :
+public sealed interface Constraint :
     Statement,
     Expression {
-    data class RegexMatch(val pattern: String, val rawValue: String, val value: Expression) : Constraint
-    data class BoundCheck(val min: String?, val max: String?, val value: Expression) : Constraint
+    public data class RegexMatch(val pattern: String, val rawValue: String, val value: Expression) : Constraint
+    public data class BoundCheck(val min: String?, val max: String?, val value: Expression) : Constraint
 }
 
 // Boolean negation
-data class NotExpression(val expression: Expression) :
+internal data class NotExpression(val expression: Expression) :
     Statement,
     Expression
 
 // Conditional expression (ternary)
-data class IfExpression(
+internal data class IfExpression(
     val condition: Expression,
     val thenExpr: Expression,
     val elseExpr: Expression,
@@ -409,7 +413,7 @@ data class IfExpression(
     Expression
 
 // Map over a list
-data class MapExpression(
+internal data class MapExpression(
     val receiver: Expression,
     val variable: Name,
     val body: Expression,
@@ -417,7 +421,7 @@ data class MapExpression(
     Expression
 
 // Indexed flatMap over a list
-data class FlatMapIndexed(
+internal data class FlatMapIndexed(
     val receiver: Expression,
     val indexVar: Name,
     val elementVar: Name,
@@ -426,19 +430,19 @@ data class FlatMapIndexed(
     Expression
 
 // Concatenate multiple lists
-data class ListConcat(val lists: List<Expression>) :
+internal data class ListConcat(val lists: List<Expression>) :
     Statement,
     Expression
 
 // Lambda / thunk - represents a deferred expression with zero or more parameters.
 // Kotlin: { p -> body }, Java: (p) -> body, TypeScript: (p: T) => body,
 // Python: lambda p: body, Rust: Box::new(|p| body), Scala: (p) => body
-data class Lambda(val parameters: List<Parameter>, val body: Expression) :
+internal data class Lambda(val parameters: List<Parameter>, val body: Expression) :
     Statement,
     Expression
 
 // String interpolation
-data class StringTemplate(val parts: List<Part>) :
+internal data class StringTemplate(val parts: List<Part>) :
     Statement,
     Expression {
     sealed interface Part {
@@ -447,14 +451,14 @@ data class StringTemplate(val parts: List<Part>) :
     }
 }
 
-data class Switch(
+public data class Switch(
     val expression: Expression,
     val cases: List<Case>,
     val default: List<Statement>? = null,
     val variable: Name? = null,
 ) : Statement
 
-data class Case(
+public data class Case(
     val value: Expression,
     val body: List<Statement>,
     val type: Type? = null,

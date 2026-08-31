@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.utils.NoLogger
 
-fun compile(source: String) = { emitter: () -> Emitter ->
+public fun compile(source: String): Compiler = { emitter: () -> Emitter ->
     object : CompilationContext, NoLogger {
         override val spec = WirespecSpec
         override val emitters = nonEmptySetOf(emitter())

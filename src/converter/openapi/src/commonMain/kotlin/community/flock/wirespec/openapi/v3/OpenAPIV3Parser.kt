@@ -81,7 +81,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import community.flock.kotlinx.openapi.bindings.Reference as OpenAPIReference
 
-object OpenAPIV3Parser : Parser {
+public object OpenAPIV3Parser : Parser {
 
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = parseOpenApi(moduleContent) {
         OpenAPIV3(jsonDefault(strict))
@@ -89,7 +89,7 @@ object OpenAPIV3Parser : Parser {
             .parse()
     }
 
-    fun OpenAPIV3Model.parse(): NonEmptyList<Definition> = listOf(
+    public fun OpenAPIV3Model.parse(): NonEmptyList<Definition> = listOf(
         parseEndpoints(),
         parseParameters(),
         parseRequestBody(),

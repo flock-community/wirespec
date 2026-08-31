@@ -4,10 +4,10 @@ import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P64
 import kotlin.jvm.JvmInline
 
-sealed interface Reference : Value<String> {
-    val isNullable: Boolean
+public sealed interface Reference : Value<String> {
+    public val isNullable: Boolean
 
-    fun copy(isNullable: Boolean? = null) = when (this) {
+    public fun copy(isNullable: Boolean? = null): Reference = when (this) {
         is Any -> copy(isNullable = isNullable ?: this.isNullable)
         is Custom -> copy(isNullable = isNullable ?: this.isNullable)
         is Dict -> copy(isNullable = isNullable ?: this.isNullable)
@@ -16,85 +16,85 @@ sealed interface Reference : Value<String> {
         is Unit -> copy(isNullable = isNullable ?: this.isNullable)
     }
 
-    data class Any(
+    public data class Any(
         override val isNullable: Boolean,
     ) : Reference {
-        override val value = "Any"
+        override val value: String = "Any"
     }
 
-    data class Unit(
+    public data class Unit(
         override val isNullable: Boolean,
     ) : Reference {
-        override val value = "Unit"
+        override val value: String = "Unit"
     }
 
-    data class Dict(
+    public data class Dict(
         val reference: Reference,
         override val isNullable: Boolean,
     ) : Reference {
-        override val value = "Dict"
+        override val value: String = "Dict"
     }
 
-    data class Iterable(
+    public data class Iterable(
         val reference: Reference,
         override val isNullable: Boolean,
     ) : Reference {
-        override val value = "Iterable"
+        override val value: String = "Iterable"
     }
 
-    data class Custom(
+    public data class Custom(
         override val value: String,
         override val isNullable: Boolean,
     ) : Reference
 
-    data class Primitive(
+    public data class Primitive(
         val type: Type,
         override val isNullable: Boolean,
     ) : Reference {
 
-        sealed interface Type {
-            val name: kotlin.String
+        public sealed interface Type {
+            public val name: kotlin.String
 
-            enum class Precision { P32, P64 }
+            public enum class Precision { P32, P64 }
 
-            sealed interface Constraint {
+            public sealed interface Constraint {
                 @JvmInline
-                value class RegExp(override val value: kotlin.String) :
+                public value class RegExp(override val value: kotlin.String) :
                     Value<kotlin.String>,
                     Constraint
 
-                data class Bound(val min: kotlin.String?, val max: kotlin.String?) : Constraint
+                public data class Bound(val min: kotlin.String?, val max: kotlin.String?) : Constraint
             }
 
-            interface HasConstraint<C : Constraint> {
-                val constraint: C?
+            public interface HasConstraint<C : Constraint> {
+                public val constraint: C?
             }
 
-            data class String(val constraint: Constraint.RegExp?) : Type {
-                override val name = "String"
+            public data class String(val constraint: Constraint.RegExp?) : Type {
+                override val name: kotlin.String = "String"
             }
 
-            data class Integer(val precision: Precision = P64, override val constraint: Constraint.Bound?) :
+            public data class Integer(val precision: Precision = P64, override val constraint: Constraint.Bound?) :
                 HasConstraint<Constraint.Bound>,
                 Type {
-                override val name = "Integer"
+                override val name: kotlin.String = "Integer"
             }
 
-            data class Number(val precision: Precision = P64, override val constraint: Constraint.Bound?) :
+            public data class Number(val precision: Precision = P64, override val constraint: Constraint.Bound?) :
                 HasConstraint<Constraint.Bound>,
                 Type {
-                override val name = "Number"
+                override val name: kotlin.String = "Number"
             }
 
-            data object Boolean : Type {
-                override val name = "Boolean"
+            public data object Boolean : Type {
+                override val name: kotlin.String = "Boolean"
             }
 
-            data object Bytes : Type {
-                override val name = "Bytes"
+            public data object Bytes : Type {
+                override val name: kotlin.String = "Bytes"
             }
         }
 
-        override val value = type.name
+        override val value: kotlin.String = type.name
     }
 }

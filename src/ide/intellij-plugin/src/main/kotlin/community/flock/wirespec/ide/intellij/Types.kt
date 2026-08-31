@@ -2,7 +2,7 @@ package community.flock.wirespec.ide.intellij
 
 import com.intellij.psi.tree.IElementType
 
-interface Types {
+internal interface Types {
     class ElementType(debugName: String) : IElementType(debugName, Language)
 
     companion object {

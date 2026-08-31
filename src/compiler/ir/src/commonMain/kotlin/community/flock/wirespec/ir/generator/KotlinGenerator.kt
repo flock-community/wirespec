@@ -61,10 +61,10 @@ import community.flock.wirespec.ir.core.annotatedFields
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object KotlinGenerator :
+public object KotlinGenerator :
     Generator,
     Keywords {
-    override val reservedKeywords = setOf(
+    override val reservedKeywords: Set<String> = setOf(
         "as", "break", "class", "continue", "do",
         "else", "false", "for", "fun", "if",
         "in", "interface", "internal", "is", "null",
@@ -79,7 +79,7 @@ object KotlinGenerator :
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
 
-    fun generateType(type: Type): String = type.emitGenerics()
+    public fun generateType(type: Type): String = type.emitGenerics()
 
     private fun emitFile(file: File): String {
         val (packages, rest) = file.elements.partition { it is Package }
@@ -122,7 +122,7 @@ object KotlinGenerator :
     private fun Namespace.emit(indent: Int, parents: List<Element>): String {
         val extStr = extends?.emitGenerics().orEmpty().prefixIfNotEmpty(" : ")
         val content = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
-        return "object ${name.pascalCase()}$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+        return "${visibility.prefix()}object ${name.pascalCase()}$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
     }
 
     private fun Interface.emit(indent: Int, parents: List<Element>): String {
@@ -136,21 +136,21 @@ object KotlinGenerator :
         val extStr = extends.joinNonEmpty(", ", " : ") { it.emitGenerics() }
         val fieldsContent = fields.joinToString("") { field ->
             val overridePrefix = "override ".takeIf { field.isOverride }.orEmpty()
-            "${overridePrefix}val ${field.name.value()}: ${field.type.emitGenerics()}\n".indentCode(indent + 1)
+            "${field.visibility.prefix()}${overridePrefix}val ${field.name.value()}: ${field.type.emitGenerics()}\n".indentCode(indent + 1)
         }
         val elementsContent = elements.joinToString("") { it.emit(indent + 1, isStatic = false, parents = parents + this) }
         val content = fieldsContent + elementsContent
         return if (content.isEmpty()) {
-            "$funStr${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr\n\n".indentCode(indent)
+            "${visibility.prefix()}$funStr${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr\n\n".indentCode(indent)
         } else {
-            "$funStr${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+            "${visibility.prefix()}$funStr${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
         }
     }
 
     private fun Union.emit(indent: Int): String {
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
         val extStr = extends?.emitGenerics().orEmpty().prefixIfNotEmpty(" : ")
-        return "sealed interface ${name.pascalCase()}$typeParamsStr$extStr\n\n".indentCode(indent)
+        return "${visibility.prefix()}sealed interface ${name.pascalCase()}$typeParamsStr$extStr\n\n".indentCode(indent)
     }
 
     private fun Enum.emit(indent: Int): String {
@@ -177,7 +177,7 @@ object KotlinGenerator :
         val sep = "\n".takeIf { functionsStr.isNotEmpty() }.orEmpty()
         val closingBrace = "}".indentCode(indent)
 
-        return "enum class ${name.pascalCase()}$constructorParamsStr$implStr {\n$entriesStr$terminator$sep$functionsStr\n$closingBrace".indentCode(indent).trimEnd()
+        return "${visibility.prefix()}enum class ${name.pascalCase()}$constructorParamsStr$implStr {\n$entriesStr$terminator$sep$functionsStr\n$closingBrace".indentCode(indent).trimEnd()
     }
 
     private fun AstFunction.emitAsMethod(indent: Int, prefix: String): String {
@@ -250,17 +250,17 @@ object KotlinGenerator :
             }
             val bodyContent = listOf(fieldProperties, nestedContent).filter { it.isNotEmpty() }.joinToString("\n")
             return if (bodyContent.isEmpty()) {
-                "data object $name$implStr\n\n".indentCode(indent)
+                "${visibility.prefix()}data object $name$implStr\n\n".indentCode(indent)
             } else {
-                "data object $name$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
+                "${visibility.prefix()}data object $name$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
             return if (nestedContent.isEmpty()) {
-                "object $name$implStr\n\n".indentCode(indent)
+                "${visibility.prefix()}object $name$implStr\n\n".indentCode(indent)
             } else {
-                "object $name$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
+                "${visibility.prefix()}object $name$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
@@ -272,9 +272,9 @@ object KotlinGenerator :
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
-            "data class $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -619,4 +619,4 @@ private fun String.sanitize(): String = if (KotlinGenerator.reservedKeywords.con
 
 private val validIdentifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
-fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in KotlinGenerator.reservedKeywords) this else "`$this`"
+public fun String.escapeKotlinIdentifier(): String = if (validIdentifier.matches(this) && this !in KotlinGenerator.reservedKeywords) this else "`$this`"

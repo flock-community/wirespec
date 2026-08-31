@@ -5,7 +5,7 @@ package community.flock.wirespec.compiler.lib
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 
 @JsExport
-data class WsError(
+public data class WsError(
     @JsName("line") val line: Int,
     @JsName("position") val position: Int,
     @JsName("index") val index: Int,
@@ -13,7 +13,7 @@ data class WsError(
     @JsName("value") val value: String,
 )
 
-fun WirespecException.produce() = WsError(
+public fun WirespecException.produce(): WsError = WsError(
     line = coordinates.line,
     position = coordinates.position,
     index = coordinates.idxAndLength.idx - coordinates.idxAndLength.length,

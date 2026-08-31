@@ -56,10 +56,10 @@ import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.Function as AstFunction
 
-object PythonGenerator :
+public object PythonGenerator :
     Generator,
     Keywords {
-    override val reservedKeywords = setOf(
+    override val reservedKeywords: Set<String> = setOf(
         "False", "None", "True", "and", "as", "assert",
         "break", "class", "continue", "def", "del",
         "elif", "else", "except", "finally", "for",

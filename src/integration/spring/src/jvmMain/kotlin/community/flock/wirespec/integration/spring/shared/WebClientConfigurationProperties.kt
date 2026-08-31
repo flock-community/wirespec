@@ -19,6 +19,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * @property baseUrl The base URL to be used by the WebClient for making requests.
  */
 @ConfigurationProperties(prefix = "wirespec.spring.webclient")
-data class WebClientConfigurationProperties(
+public data class WebClientConfigurationProperties(
     val baseUrl: String? = null,
 )

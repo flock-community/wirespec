@@ -1,13 +1,14 @@
 package community.flock.wirespec.ide.intellij
 
 import com.intellij.openapi.fileTypes.LanguageFileType
+import javax.swing.Icon
 
-object FileType : LanguageFileType(Language) {
-    override fun getName() = "wirespec"
+public object FileType : LanguageFileType(Language) {
+    override fun getName(): String = "wirespec"
 
-    override fun getDescription() = "Wirespec language file"
+    override fun getDescription(): String = "Wirespec language file"
 
-    override fun getDefaultExtension() = "ws"
+    override fun getDefaultExtension(): String = "ws"
 
-    override fun getIcon() = Icons.FILE
+    override fun getIcon(): Icon = Icons.FILE
 }

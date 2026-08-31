@@ -13,7 +13,7 @@ import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import community.flock.wirespec.converter.common.Parser
 import kotlinx.serialization.json.Json
 
-object AvroJsonParser : Parser {
+public object AvroJsonParser : Parser {
 
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST {
         val json = Json {

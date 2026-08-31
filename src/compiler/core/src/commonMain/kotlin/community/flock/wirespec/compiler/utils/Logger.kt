@@ -5,54 +5,54 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 
-open class Logger(logLevel: Level?) {
+public open class Logger(logLevel: Level?) {
 
-    open val shouldDebugLog = when (logLevel) {
+    public open val shouldDebugLog: Boolean = when (logLevel) {
         DEBUG -> true
         null, INFO, WARN, ERROR -> false
     }
 
-    open val shouldInfoLog = when (logLevel) {
+    public open val shouldInfoLog: Boolean = when (logLevel) {
         DEBUG, INFO -> true
         null, WARN, ERROR -> false
     }
 
-    open val shouldWarnLog = when (logLevel) {
+    public open val shouldWarnLog: Boolean = when (logLevel) {
         DEBUG, INFO, WARN -> true
         null, ERROR -> false
     }
 
-    open val shouldErrorLog = when (logLevel) {
+    public open val shouldErrorLog: Boolean = when (logLevel) {
         DEBUG, INFO, WARN, ERROR -> true
         null -> false
     }
 
-    open fun debug(string: String) = string logIf shouldDebugLog
-    open fun info(string: String) = string logIf shouldInfoLog
-    open fun warn(string: String) = string logIf shouldWarnLog
-    open fun error(string: String) = string logIf shouldErrorLog
+    public open fun debug(string: String): Unit = string logIf shouldDebugLog
+    public open fun info(string: String): Unit = string logIf shouldInfoLog
+    public open fun warn(string: String): Unit = string logIf shouldWarnLog
+    public open fun error(string: String): Unit = string logIf shouldErrorLog
 
     private infix fun String.logIf(b: Boolean) = if (b) println(this) else Unit
 
-    enum class Level {
+    public enum class Level {
         DEBUG,
         INFO,
         WARN,
         ERROR,
         ;
 
-        companion object {
-            override fun toString() = entries.joinToString(", ")
+        public companion object {
+            override fun toString(): String = entries.joinToString(", ")
         }
     }
 }
 
-interface HasLogger {
-    val logger: Logger
+public interface HasLogger {
+    public val logger: Logger
 }
 
-interface NoLogger : HasLogger {
-    override val logger get() = noLogger
+public interface NoLogger : HasLogger {
+    override val logger: Logger get() = noLogger
 }
 
-val noLogger = object : Logger(logLevel = null) {}
+public val noLogger: Logger = object : Logger(logLevel = null) {}

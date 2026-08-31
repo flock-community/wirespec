@@ -13,7 +13,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-class WirespecMockExtension internal constructor(
+public class WirespecMockExtension internal constructor(
     private val serverFactory: suspend (Spec) -> MockServer,
     private val serializationFactory: suspend () -> Wirespec.Serialization,
     private val resetBeforeTest: Boolean,
@@ -21,14 +21,14 @@ class WirespecMockExtension internal constructor(
 ) : TestCaseExtension,
     AfterSpecListener {
 
-    constructor(mock: WirespecMockContext) : this(
+    public constructor(mock: WirespecMockContext) : this(
         serverFactory = { mock.server },
         serializationFactory = { mock.serialization },
         resetBeforeTest = false,
         closeAfterSpec = false,
     )
 
-    constructor(
+    public constructor(
         server: MockServer,
         serialization: Wirespec.Serialization,
     ) : this(WirespecMockContext(server, serialization))
@@ -46,10 +46,12 @@ class WirespecMockExtension internal constructor(
         return withContext(mock + seed) { execute(testCase) }
     }
 
-    override suspend fun afterSpec(spec: Spec) = servers.remove(spec)
+    override suspend fun afterSpec(spec: Spec) {
+        servers.remove(spec)
+    }
 }
 
-fun <T : MockServer> WirespecMockExtension(
+public fun <T : MockServer> WirespecMockExtension(
     serialization: suspend () -> Wirespec.Serialization,
     server: suspend () -> T,
 ): WirespecMockExtension = WirespecMockExtension(
@@ -59,7 +61,7 @@ fun <T : MockServer> WirespecMockExtension(
     closeAfterSpec = true,
 )
 
-fun WirespecMockExtension(
+public fun WirespecMockExtension(
     server: MockServer,
     serialization: suspend () -> Wirespec.Serialization,
 ): WirespecMockExtension = WirespecMockExtension(
@@ -69,12 +71,12 @@ fun WirespecMockExtension(
     closeAfterSpec = false,
 )
 
-class WirespecMockContext(
-    val server: MockServer,
-    val serialization: Wirespec.Serialization,
+public class WirespecMockContext(
+    public val server: MockServer,
+    public val serialization: Wirespec.Serialization,
 ) : AbstractCoroutineContextElement(Key) {
 
-    companion object Key : CoroutineContext.Key<WirespecMockContext>
+    public companion object Key : CoroutineContext.Key<WirespecMockContext>
 }
 
 internal suspend fun currentMockContext(): WirespecMockContext = coroutineContext[WirespecMockContext] ?: error(
@@ -82,15 +84,15 @@ internal suspend fun currentMockContext(): WirespecMockContext = coroutineContex
         "`WirespecMockExtension(mock)` on the spec.",
 )
 
-interface MockServer {
-    fun stub(stub: MockStub)
+public interface MockServer {
+    public fun stub(stub: MockStub)
 
-    fun reset()
+    public fun reset()
 }
 
-class MockStub(
-    val method: String,
-    val pathTemplate: String,
-    val matches: (Wirespec.RawRequest) -> Boolean,
-    val response: Wirespec.RawResponse,
+public class MockStub(
+    public val method: String,
+    public val pathTemplate: String,
+    public val matches: (Wirespec.RawRequest) -> Boolean,
+    public val response: Wirespec.RawResponse,
 )

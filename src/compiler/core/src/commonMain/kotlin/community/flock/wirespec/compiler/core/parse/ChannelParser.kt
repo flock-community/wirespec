@@ -11,7 +11,7 @@ import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
-object ChannelParser {
+internal object ChannelParser {
 
     fun TokenProvider.parseChannel(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Channel> = parseToken {
         when (token.type) {

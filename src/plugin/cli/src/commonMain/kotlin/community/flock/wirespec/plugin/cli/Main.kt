@@ -4,7 +4,7 @@ import com.github.ajalt.clikt.core.main
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.convert
 
-fun main(args: Array<String>) {
+public fun main(args: Array<String>) {
     // Filter platform-specific arguments.
     (0 until 20)
         .mapNotNull(args::orNull)

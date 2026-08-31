@@ -49,7 +49,7 @@ import community.flock.wirespec.compiler.core.tokenize.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.WsString
 import community.flock.wirespec.compiler.core.tokenize.WsUnit
 
-object TypeParser {
+internal object TypeParser {
 
     fun TokenProvider.parseType(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Definition> = parseToken {
         when (token.type) {

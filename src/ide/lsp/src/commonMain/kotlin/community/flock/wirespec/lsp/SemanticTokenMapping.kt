@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.tokenize.SpecificType
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 
-object SemanticTokenLegend {
+internal object SemanticTokenLegend {
     const val TYPE_KEYWORD = 0
     const val TYPE_TYPE = 1
     const val TYPE_VARIABLE = 2
@@ -22,9 +22,9 @@ object SemanticTokenLegend {
     val tokenModifiers = listOf<String>()
 }
 
-enum class TokenKind { KEYWORD, BUILT_IN_TYPE, USER_TYPE, FIELD, METHOD }
+internal enum class TokenKind { KEYWORD, BUILT_IN_TYPE, USER_TYPE, FIELD, METHOD }
 
-fun TokenType.toTokenKind(): TokenKind? = when (this) {
+internal fun TokenType.toTokenKind(): TokenKind? = when (this) {
     is Keyword -> TokenKind.KEYWORD
     is SpecificType -> TokenKind.BUILT_IN_TYPE
     is PascalCaseIdentifier -> TokenKind.USER_TYPE
@@ -42,7 +42,7 @@ fun TokenType.toTokenKind(): TokenKind? = when (this) {
     else -> null
 }
 
-fun TokenKind.toSemanticType(): Int = when (this) {
+internal fun TokenKind.toSemanticType(): Int = when (this) {
     TokenKind.KEYWORD -> SemanticTokenLegend.TYPE_KEYWORD
     TokenKind.BUILT_IN_TYPE -> SemanticTokenLegend.TYPE_TYPE
     TokenKind.USER_TYPE -> SemanticTokenLegend.TYPE_TYPE

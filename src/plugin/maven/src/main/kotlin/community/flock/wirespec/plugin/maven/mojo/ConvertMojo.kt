@@ -30,7 +30,7 @@ import java.lang.reflect.Modifier
     requiresDependencyResolution = ResolutionScope.COMPILE,
     threadSafe = true,
 )
-class ConvertMojo : BaseMojo() {
+public class ConvertMojo : BaseMojo() {
 
     /**
      * Specifies the format to convert from: [Format].

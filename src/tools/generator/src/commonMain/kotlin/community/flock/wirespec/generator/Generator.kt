@@ -18,15 +18,15 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.random.Random
 
-fun defaultGenerator(random: Random) = RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
-fun AST.generate(type: String, random: Random = Random.Default): JsonElement = Reference.Custom(
+private fun defaultGenerator(random: Random) = RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
+public fun AST.generate(type: String, random: Random = Random.Default): JsonElement = Reference.Custom(
     value = type.removeSuffix("[]"),
     isNullable = false,
 )
     .let { if (type.endsWith("[]")) Reference.Iterable(reference = it, isNullable = false) else it }
     .let { generate(it, random) }
 
-fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement = generateReference(type, random)
+public fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement = generateReference(type, random)
 
 private fun AST.resolveReference(type: Reference) = modules.flatMap { it.statements }.toList()
     .find { it.identifier.value == type.value }

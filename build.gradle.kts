@@ -12,6 +12,18 @@ repositories {
 }
 
 subprojects {
+    // Explicit API mode: every declaration that ends up in a published artifact has to
+    // state its visibility and its return type. KGP applies this to `main` compilations
+    // and the common-metadata compilation only, so test and `codegen` compilations are
+    // unaffected. The `withId` guards keep it off :src:bom and the :examples:* projects,
+    // which apply no Kotlin plugin.
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> { explicitApi() }
+    }
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> { explicitApi() }
+    }
+
     afterEvaluate {
         val copyTestResourcesForJs by tasks.registering(Copy::class) {
             group = "nodejs"

@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 
-interface WirespecIdentifierEmitter: IdentifierEmitter {
+internal interface WirespecIdentifierEmitter: IdentifierEmitter {
 
     override fun emit(identifier: Identifier) = when (identifier) {
         is DefinitionIdentifier -> identifier.run { if (value in reservedKeywords) value.addBackticks() else value }

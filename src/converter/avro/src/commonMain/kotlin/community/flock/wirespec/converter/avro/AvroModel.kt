@@ -19,9 +19,9 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-object AvroModel {
+public object AvroModel {
     @Serializable
-    data class Field(
+    public data class Field(
         val name: String,
         val type: TypeList,
         val doc: String? = null,
@@ -29,23 +29,23 @@ object AvroModel {
     )
 
     @Serializable(with = TypeListSerializer::class)
-    class TypeList(vararg type: Type) : AbstractList<Type>() {
-        constructor(type: List<Type>) : this(*type.toTypedArray())
-        val list = type.toList()
-        override val size = list.size
-        override fun get(index: Int) = list[index]
+    public class TypeList(vararg type: Type) : AbstractList<Type>() {
+        public constructor(type: List<Type>) : this(*type.toTypedArray())
+        public val list: List<Type> = type.toList()
+        override val size: Int = list.size
+        override fun get(index: Int): Type = list[index]
     }
 
     @Serializable(with = TypeSerializer::class)
-    sealed interface Type
+    public sealed interface Type
 
     @Serializable
-    data class SimpleType(
+    public data class SimpleType(
         val value: String,
     ) : Type
 
     @Serializable
-    data class RecordType(
+    public data class RecordType(
         val type: String,
         val name: String,
         val namespace: String? = null,
@@ -54,19 +54,19 @@ object AvroModel {
     ) : Type
 
     @Serializable
-    data class ArrayType(
+    public data class ArrayType(
         val type: String,
         val items: Type,
     ) : Type
 
     @Serializable
-    data class MapType(
+    public data class MapType(
         val type: String,
         val values: Type,
     ) : Type
 
     @Serializable
-    data class EnumType(
+    public data class EnumType(
         val type: String,
         val name: String,
         val doc: String? = null,
@@ -74,20 +74,20 @@ object AvroModel {
     ) : Type
 
     @Serializable
-    data class UnionType(
+    public data class UnionType(
         val name: String,
         val type: TypeList,
     ) : Type
 
     @Serializable
-    data class LogicalType(
+    public data class LogicalType(
         val type: String,
         val logicalType: String,
         val precision: Int? = null,
         val scale: Int? = null,
     ) : Type
 
-    object TypeListSerializer : KSerializer<TypeList> {
+    public object TypeListSerializer : KSerializer<TypeList> {
 
         override val descriptor: SerialDescriptor = buildSerialDescriptor("TypeListSerializer", PolymorphicKind.SEALED)
 
@@ -113,7 +113,7 @@ object AvroModel {
         }
     }
 
-    object TypeSerializer : KSerializer<Type> {
+    public object TypeSerializer : KSerializer<Type> {
 
         override val descriptor: SerialDescriptor = buildSerialDescriptor("TypeSerializer", PolymorphicKind.SEALED)
 

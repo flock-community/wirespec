@@ -4,41 +4,41 @@ import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.removeCommentMarkers
 import kotlin.jvm.JvmInline
 
-sealed interface MetaData
+private sealed interface MetaData
 
-interface HasMetaData :
+public interface HasMetaData :
     HasAnnotations,
     HasComment
 
-interface HasAnnotations {
-    val annotations: List<Annotation>
+public interface HasAnnotations {
+    public val annotations: List<Annotation>
 }
 
-data class Annotation(
+public data class Annotation(
     val name: String,
     val parameters: List<Parameter>,
 ) : MetaData,
     Node {
-    data class Parameter(
+    public data class Parameter(
         val name: String,
         val value: Value,
     ) : Node
-    sealed interface Value {
-        data class Single(val value: String) : Value
-        data class Array(val value: List<Single>) : Value
-        data class Dict(val value: List<Parameter>) : Value
+    public sealed interface Value {
+        public data class Single(val value: String) : Value
+        public data class Array(val value: List<Single>) : Value
+        public data class Dict(val value: List<Parameter>) : Value
     }
 }
 
-interface HasComment {
-    val comment: Comment?
+public interface HasComment {
+    public val comment: Comment?
 }
 
 @JvmInline
-value class Comment private constructor(override val value: String) :
+public value class Comment private constructor(override val value: String) :
     MetaData,
     Value<String> {
-    companion object {
-        operator fun invoke(comment: String) = Comment(comment.removeCommentMarkers())
+    public companion object {
+        public operator fun invoke(comment: String): Comment = Comment(comment.removeCommentMarkers())
     }
 }

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiReturnStatement
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 
-class JavaMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
+public class JavaMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
     override val name: String = "Wirespec Java Method Code Vision"
     override val id: String = "wirespec.java.method.code.vision"
 

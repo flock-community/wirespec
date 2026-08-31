@@ -49,7 +49,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionWirespec
 import community.flock.wirespec.ir.core.Constraint as LanguageConstraint
 
-fun DefinitionWirespec.convert(): File = when (this) {
+public fun DefinitionWirespec.convert(): File = when (this) {
     is TypeWirespec -> convert()
     is EnumWirespec -> convert()
     is UnionWirespec -> convert()
@@ -58,7 +58,7 @@ fun DefinitionWirespec.convert(): File = when (this) {
     is EndpointWirespec -> convert()
 }
 
-fun PackageName.convert(): File = file("Wirespec") {
+public fun PackageName.convert(): File = file("Wirespec") {
     `package`(value)
     namespace("Wirespec") {
         `interface`("Model")
@@ -299,7 +299,7 @@ fun PackageName.convert(): File = file("Wirespec") {
     }
 }
 
-fun PackageName.convertClientServer(): List<Element> = listOf(
+public fun PackageName.convertClientServer(): List<Element> = listOf(
     `interface`("ServerEdge") {
         typeParam(type("Req"), type("Request", Type.Wildcard))
         typeParam(type("Res"), type("Response", Type.Wildcard))
@@ -361,7 +361,7 @@ private fun Identifier.toName(): Name = when (this) {
     )
 }
 
-fun TypeWirespec.convert() = file(identifier.toName()) {
+public fun TypeWirespec.convert(): File = file(identifier.toName()) {
     struct(identifier.toName()) {
         implements(Type.Custom("Wirespec.Shape"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
@@ -375,7 +375,7 @@ fun TypeWirespec.convert() = file(identifier.toName()) {
     }
 }
 
-data class FieldValidation(
+public data class FieldValidation(
     val fieldName: Name,
     val fieldPath: String,
     val kind: Kind,
@@ -384,9 +384,9 @@ data class FieldValidation(
     val elementIsNullable: Boolean = false,
 )
 
-enum class Kind { MODEL, REFINED, MODEL_ARRAY, REFINED_ARRAY }
+public enum class Kind { MODEL, REFINED, MODEL_ARRAY, REFINED_ARRAY }
 
-fun TypeWirespec.convertWithValidation(module: Module): File {
+public fun TypeWirespec.convertWithValidation(module: Module): File {
     val fieldValidations = classifyValidatableFields(module)
     val file = convert()
     return if (fieldValidations.isNotEmpty()) {
@@ -480,7 +480,7 @@ private fun FieldValidation.toExpression(): Expression {
     }
 }
 
-fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation> = buildList {
+public fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation> = buildList {
     for (field in shape.value) {
         val fieldName = field.identifier.toName()
         val fieldPath = field.identifier.value
@@ -551,19 +551,19 @@ fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation
     }
 }
 
-fun EnumWirespec.convert() = file(identifier.toName()) {
+public fun EnumWirespec.convert(): File = file(identifier.toName()) {
     enum(identifier.toName(), Type.Custom("Wirespec.Enum")) {
         entries.forEach { entry(it, "\"$it\"") }
     }
 }
 
-fun UnionWirespec.convert() = file(identifier.toName()) {
+public fun UnionWirespec.convert(): File = file(identifier.toName()) {
     union(identifier.toName()) {
         entries.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { member(it.name) }
     }
 }
 
-fun RefinedWirespec.convert() = file(identifier.toName()) {
+public fun RefinedWirespec.convert(): File = file(identifier.toName()) {
     struct(identifier.toName()) {
         implements(type("Wirespec.Refined", reference.convert()))
         field("value", reference.convert())
@@ -587,7 +587,7 @@ fun RefinedWirespec.convert() = file(identifier.toName()) {
     }
 }
 
-fun ChannelWirespec.convert() = file(identifier.toName()) {
+public fun ChannelWirespec.convert(): File = file(identifier.toName()) {
     namespace(identifier.toName(), type("Wirespec.Channel")) {
         `interface`("Sender") {
             function(identifier.toName()) {
@@ -604,7 +604,7 @@ fun ChannelWirespec.convert() = file(identifier.toName()) {
     }
 }
 
-fun EndpointWirespec.convert(): File {
+public fun EndpointWirespec.convert(): File {
     val endpoint = this
     val pathParams = path.filterIsInstance<EndpointWirespec.Segment.Param>()
     val requestContent = requests.first().content
@@ -1054,7 +1054,7 @@ private fun Type.toTypeName(): String = when (this) {
     is Type.Function -> "Function"
 }
 
-fun ReferenceWirespec.convert(): Type = when (this) {
+public fun ReferenceWirespec.convert(): Type = when (this) {
     is ReferenceWirespec.Any -> Type.Any
     is ReferenceWirespec.Custom -> Type.Custom(Name.of(value).pascalCase())
     is ReferenceWirespec.Dict -> Type.Dict(Type.String, reference.convert())
@@ -1079,7 +1079,7 @@ fun ReferenceWirespec.convert(): Type = when (this) {
 }
     .let { if (isNullable) Type.Nullable(it) else it }
 
-fun ReferenceWirespec.Primitive.Type.Constraint.convert(value: Expression): LanguageConstraint = when (this) {
+public fun ReferenceWirespec.Primitive.Type.Constraint.convert(value: Expression): LanguageConstraint = when (this) {
     is ReferenceWirespec.Primitive.Type.Constraint.RegExp ->
         LanguageConstraint.RegexMatch(
             pattern = this.value.split("/").drop(1).dropLast(1).joinToString("/"),
@@ -1091,7 +1091,7 @@ fun ReferenceWirespec.Primitive.Type.Constraint.convert(value: Expression): Lang
         LanguageConstraint.BoundCheck(min = min, max = max, value = value)
 }
 
-fun ReferenceWirespec.Primitive.convertConstraint(value: Expression): Expression = when (val t = type) {
+public fun ReferenceWirespec.Primitive.convertConstraint(value: Expression): Expression = when (val t = type) {
     is ReferenceWirespec.Primitive.Type.String -> t.constraint?.convert(value)
     is ReferenceWirespec.Primitive.Type.Integer -> t.constraint?.convert(value)
     is ReferenceWirespec.Primitive.Type.Number -> t.constraint?.convert(value)
@@ -1099,7 +1099,7 @@ fun ReferenceWirespec.Primitive.convertConstraint(value: Expression): Expression
     ReferenceWirespec.Primitive.Type.Bytes -> null
 } ?: Literal(true, Type.Boolean)
 
-fun ReferenceWirespec.convertConstraint(value: Expression): Expression = when (this) {
+public fun ReferenceWirespec.convertConstraint(value: Expression): Expression = when (this) {
     is ReferenceWirespec.Primitive -> convertConstraint(value)
     else -> Literal(true, Type.Boolean)
 }
@@ -1175,7 +1175,7 @@ private fun serializeParamExpression(
     }
 }
 
-fun EndpointWirespec.convertEndpointClient(): File {
+internal fun EndpointWirespec.convertEndpointClient(): File {
     val endpointName = identifier.toName()
     val endpointNameStr = endpointName.value()
 
@@ -1235,7 +1235,7 @@ fun EndpointWirespec.convertEndpointClient(): File {
     }
 }
 
-fun List<EndpointWirespec>.convertClient(): File {
+internal fun List<EndpointWirespec>.convertClient(): File {
     val endpoints = this
     return file(Name.of("Client")) {
         struct(Name.of("Client")) {
@@ -1275,7 +1275,7 @@ fun List<EndpointWirespec>.convertClient(): File {
     }
 }
 
-fun EndpointWirespec.requestParameters(): List<Pair<Name, Type>> = buildList {
+public fun EndpointWirespec.requestParameters(): List<Pair<Name, Type>> = buildList {
     path.filterIsInstance<EndpointWirespec.Segment.Param>()
         .forEach { add(it.identifier.toName() to it.reference.convert()) }
     queries.forEach { add(it.identifier.toName() to it.reference.convert()) }
@@ -1283,7 +1283,7 @@ fun EndpointWirespec.requestParameters(): List<Pair<Name, Type>> = buildList {
     requests.first().content?.let { add(Name.of("body") to it.reference.convert()) }
 }
 
-fun EndpointWirespec.Response.responseParameters(): List<Pair<Name, Type>> = buildList {
+private fun EndpointWirespec.Response.responseParameters(): List<Pair<Name, Type>> = buildList {
     headers.forEach { add(it.identifier.toName() to it.reference.convert()) }
     content?.let { add(Name.of("body") to it.reference.convert()) }
 }

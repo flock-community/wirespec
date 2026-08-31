@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Collectors
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-class WirespecMethodArgumentResolver(
+public class WirespecMethodArgumentResolver(
     private val wirespecSerialization: Wirespec.Serialization,
     private val jsonMapper: WirespecJsonMapper,
 ) : HandlerMethodArgumentResolver {
@@ -43,7 +43,7 @@ class WirespecMethodArgumentResolver(
     }
 
     @OptIn(ExperimentalEncodingApi::class)
-    fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest {
+    public fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest {
         if (contentType?.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE) == true) {
             val req = this as MultipartHttpServletRequest
             val map: Map<String, Any> = req.multiFileMap.values.map { it.first() }.associate {

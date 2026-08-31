@@ -3,12 +3,12 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.Value
 import kotlin.jvm.JvmSynthetic
 
-class EmitShared(override val value: Boolean) : Value<Boolean> {
-    override fun toString() = value.toString()
+public class EmitShared(override val value: Boolean) : Value<Boolean> {
+    override fun toString(): String = value.toString()
 
-    companion object {
+    public companion object {
 
         @JvmSynthetic
-        operator fun invoke(value: Boolean? = null) = EmitShared(value ?: false)
+        public operator fun invoke(value: Boolean? = null): EmitShared = EmitShared(value ?: false)
     }
 }

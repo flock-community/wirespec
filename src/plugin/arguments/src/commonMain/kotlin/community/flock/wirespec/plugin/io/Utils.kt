@@ -13,9 +13,9 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlinx.io.writeString
 
-fun <B> Either<IOError, B>.or(errorFn: (String) -> Nothing) = getOrElse { errorFn(it.message) }
+public fun <B> Either<IOError, B>.or(errorFn: (String) -> Nothing): B = getOrElse { errorFn(it.message) }
 
-fun getFullPath(input: String?, createIfNotExists: Boolean = false): Either<IOError, FullPath?> = either {
+public fun getFullPath(input: String?, createIfNotExists: Boolean = false): Either<IOError, FullPath?> = either {
     when {
         input == null -> null
         input.startsWith("classpath:") -> ClassPath(input.substringAfter("classpath:"))
@@ -32,7 +32,7 @@ fun getFullPath(input: String?, createIfNotExists: Boolean = false): Either<IOEr
     }
 }
 
-fun getOutPutPath(inputPath: FullPath, output: String?): Either<IOError, DirectoryPath> = either {
+public fun getOutPutPath(inputPath: FullPath, output: String?): Either<IOError, DirectoryPath> = either {
     when (val it = getFullPath(output, true).bind()) {
         null -> DirectoryPath("${inputPath.path()}/out")
         is DirectoryPath -> it
@@ -40,17 +40,17 @@ fun getOutPutPath(inputPath: FullPath, output: String?): Either<IOError, Directo
     }
 }
 
-fun Path.createIfNotExists(create: Boolean = true) = also {
+private fun Path.createIfNotExists(create: Boolean = true) = also {
     when {
         create && !SystemFileSystem.exists(this) -> SystemFileSystem.createDirectories(this, true)
         else -> Unit
     }
 }
 
-fun FilePath.read(): String = Path(toString())
+public fun FilePath.read(): String = Path(toString())
     .let { SystemFileSystem.source(it).buffered().readString() }
 
-fun FilePath.write(string: String) = Path(toString())
+public fun FilePath.write(string: String): Unit = Path(toString())
     .also { it.parent?.createIfNotExists() }
     .let {
         SystemFileSystem.sink(it).buffered()
@@ -58,7 +58,7 @@ fun FilePath.write(string: String) = Path(toString())
             .flush()
     }
 
-fun Directory.wirespecSources(logger: Logger): Either<WirespecFileError, NonEmptySet<Source<Source.Type.Wirespec>>> = either {
+public fun Directory.wirespecSources(logger: Logger): Either<WirespecFileError, NonEmptySet<Source<Source.Type.Wirespec>>> = either {
     Path(path.value)
         .let(SystemFileSystem::list)
         .filter(::isRegularFile)

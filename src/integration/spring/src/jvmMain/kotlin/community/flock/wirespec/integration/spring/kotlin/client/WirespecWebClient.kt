@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
-class WirespecWebClient(
+public class WirespecWebClient(
     private val client: WebClient,
     private val wirespecSerde: Serialization,
 ) {
@@ -22,7 +22,7 @@ class WirespecWebClient(
     private val fromResponseCache = ConcurrentHashMap<Class<*>, Method>()
 
     @Suppress("UNCHECKED_CAST")
-    suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
+    public suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
         val declaringClass = request::class.java.declaringClass
         val toRequest = toRequestCache.computeIfAbsent(declaringClass) { cls ->
             cls.declaredMethods.first { it.name == "toRawRequest" || it.name == "toRequest" }

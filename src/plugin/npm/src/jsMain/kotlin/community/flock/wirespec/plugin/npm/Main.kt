@@ -16,7 +16,9 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.lib.WsAST
 import community.flock.wirespec.compiler.lib.WsEmitted
+import community.flock.wirespec.compiler.lib.WsParseResult
 import community.flock.wirespec.compiler.lib.WsStringResult
+import community.flock.wirespec.compiler.lib.WsToken
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -43,7 +45,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @JsExport
-enum class Shared(val source: String) {
+public enum class Shared(public val source: String) {
     KOTLIN(KotlinIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(KotlinGenerator::generate)),
     JAVA(JavaIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(JavaGenerator::generate)),
     TYPESCRIPT(TypeScriptIrEmitter().emitShared()!!.let(TypeScriptGenerator::generate)),
@@ -51,7 +53,7 @@ enum class Shared(val source: String) {
 }
 
 @JsExport
-enum class Emitters {
+public enum class Emitters {
     WIRESPEC,
     TYPESCRIPT,
     JAVA,
@@ -63,42 +65,42 @@ enum class Emitters {
 }
 
 @JsExport
-enum class Converters {
+public enum class Converters {
     OPENAPI_V2,
     OPENAPI_V3,
     AVRO,
 }
 
 @JsExport
-fun cli(args: Array<String>) = main(args)
+public fun cli(args: Array<String>): Unit = main(args)
 
 @JsExport
-fun startLsp(useNodeIpc: Boolean) = community.flock.wirespec.lsp.startLsp(useNodeIpc)
+public fun startLsp(useNodeIpc: Boolean): Unit = community.flock.wirespec.lsp.startLsp(useNodeIpc)
 
 @JsExport
-fun tokenize(source: String) = WirespecSpec
+public fun tokenize(source: String): Array<WsToken> = WirespecSpec
     .tokenize(source)
     .map { it.produce() }
     .toTypedArray()
 
 @JsExport
-fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).produce()
+public fun parse(source: String): WsParseResult = object : ParseContext, NoLogger {}.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).produce()
 
 @JsExport
-fun convert(source: String, converters: Converters, strict: Boolean = false) = when (converters) {
+public fun convert(source: String, converters: Converters, strict: Boolean = false): WsAST = when (converters) {
     Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
     Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
     Converters.AVRO -> AvroJsonParser.parse(ModuleContent(FileUri(""), source), strict).produce()
 }
 
 @JsExport
-fun generate(source: String, type: String): WsStringResult = object : ParseContext, NoLogger {}
+public fun generate(source: String, type: String): WsStringResult = object : ParseContext, NoLogger {}
     .parse(nonEmptyListOf(ModuleContent(FileUri(""), source)))
     .map { it.generate(type).toString() }
     .produce()
 
 @JsExport
-fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boolean): Array<WsEmitted> {
+public fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boolean): Array<WsEmitted> {
     val ast = wsAst.consume()
     return when (emitter) {
         Emitters.WIRESPEC -> WirespecEmitter().emit(ast, noLogger)

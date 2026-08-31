@@ -18,13 +18,13 @@ import tools.jackson.module.kotlin.kotlinModule
 // Referenced by name (not JsonMapper::class): the selection tests register this config by
 // class on a Jackson-3-free classpath, where resolving a Class-valued condition would fail.
 @ConditionalOnClass(name = ["tools.jackson.databind.json.JsonMapper"])
-open class WirespecJackson3Configuration {
+public open class WirespecJackson3Configuration {
 
     private val jsonMapper = jsonMapper { addModule(kotlinModule()) }
 
     @Bean
-    open fun wirespecSerialization(): Serialization = WirespecSerialization(jsonMapper)
+    public open fun wirespecSerialization(): Serialization = WirespecSerialization(jsonMapper)
 
     @Bean
-    open fun wirespecJsonMapper(): WirespecJsonMapper = Jackson3JsonMapper(jsonMapper)
+    public open fun wirespecJsonMapper(): WirespecJsonMapper = Jackson3JsonMapper(jsonMapper)
 }

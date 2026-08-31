@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin
 
 import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.emitters.java.JavaIrEmitter
@@ -13,7 +14,7 @@ import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 
-enum class Language {
+public enum class Language {
     Java,
     Kotlin,
     TypeScript,
@@ -26,13 +27,13 @@ enum class Language {
     Avro,
     ;
 
-    companion object {
-        fun toMap() = entries.associateBy { it.name }
-        override fun toString() = entries.joinToString()
+    public companion object {
+        public fun toMap(): Map<String, Language> = entries.associateBy { it.name }
+        override fun toString(): String = entries.joinToString()
     }
 }
 
-fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared) = when (this) {
+public fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared): Emitter = when (this) {
     Language.Java -> JavaIrEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinIrEmitter(packageName, emitShared)
     Language.Python -> PythonIrEmitter(packageName, emitShared)

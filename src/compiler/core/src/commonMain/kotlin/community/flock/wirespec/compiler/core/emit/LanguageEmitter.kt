@@ -12,11 +12,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-abstract class LanguageEmitter :
+public abstract class LanguageEmitter :
     Emitter,
     Emitters {
 
-    abstract val shared: Shared?
+    public abstract val shared: Shared?
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .modules.flatMap { m ->
@@ -25,11 +25,11 @@ abstract class LanguageEmitter :
         }
         .map { e -> Emitted(e.file + "." + extension.value, e.result) }
 
-    open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
+    public open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements
         .map { emit(it, module, logger) }
 
-    open fun emit(definition: Definition, module: Module, logger: Logger): Emitted = run {
+    public open fun emit(definition: Definition, module: Module, logger: Logger): Emitted = run {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
         when (definition) {
             is Type -> Emitted(emit(definition.identifier), emit(definition, module))
@@ -41,14 +41,14 @@ abstract class LanguageEmitter :
         }
     }
 
-    companion object {
-        fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
-        fun String.firstToLower() = replaceFirstChar(Char::lowercase)
-        fun Module.needImports() = statements.any { it is Endpoint || it is Enum || it is Refined }
-        fun Module.irNeedsWirespecImport() = statements.any {
+    public companion object {
+        public fun String.firstToUpper(): String = replaceFirstChar(Char::uppercase)
+        public fun String.firstToLower(): String = replaceFirstChar(Char::lowercase)
+        public fun Module.needImports(): Boolean = statements.any { it is Endpoint || it is Enum || it is Refined }
+        public fun Module.irNeedsWirespecImport(): Boolean = statements.any {
             it is Endpoint || it is Enum || it is Refined || it is Type || it is Channel
         }
-        fun Module.hasEndpoints() = statements.any { it is Endpoint }
-        fun String.isStatusCode() = toIntOrNull()?.let { it in 100..599 } ?: false
+        public fun Module.hasEndpoints(): Boolean = statements.any { it is Endpoint }
+        public fun String.isStatusCode(): Boolean = toIntOrNull()?.let { it in 100..599 } ?: false
     }
 }

@@ -50,7 +50,7 @@ import community.flock.wirespec.openapi.common.toName
 import community.flock.wirespec.openapi.common.toOperationList
 import community.flock.kotlinx.openapi.bindings.Reference as OpenAPIReference
 
-object OpenAPIV2Parser : Parser {
+public object OpenAPIV2Parser : Parser {
 
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = parseOpenApi(moduleContent) {
         OpenAPIV2(jsonDefault(strict))
@@ -58,7 +58,7 @@ object OpenAPIV2Parser : Parser {
             .parse()
     }
 
-    fun OpenAPIV2Model.parse(): NonEmptyList<Definition> = listOf(
+    public fun OpenAPIV2Model.parse(): NonEmptyList<Definition> = listOf(
         parseEndpoints(),
         parseParameters(),
         parseRequestBody(),

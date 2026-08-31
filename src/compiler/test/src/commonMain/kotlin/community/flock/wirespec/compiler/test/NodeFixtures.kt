@@ -8,9 +8,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 
-object NodeFixtures {
+public object NodeFixtures {
 
-    val refined = Refined(
+    public val refined: Refined = Refined(
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("UUID"),
@@ -22,7 +22,7 @@ object NodeFixtures {
         ),
     )
 
-    val enum = Enum(
+    public val enum: Enum = Enum(
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("TodoStatus"),
@@ -33,7 +33,7 @@ object NodeFixtures {
         ),
     )
 
-    val type = Type(
+    public val type: Type = Type(
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("Todo"),
@@ -79,7 +79,7 @@ object NodeFixtures {
         extends = emptyList(),
     )
 
-    val emptyType = Type(
+    public val emptyType: Type = Type(
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("TodoWithoutProperties"),

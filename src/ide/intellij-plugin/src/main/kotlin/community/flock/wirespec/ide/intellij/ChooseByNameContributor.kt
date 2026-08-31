@@ -11,9 +11,9 @@ import community.flock.wirespec.ide.intellij.parser.CustomTypeElementDef
 import community.flock.wirespec.ide.intellij.parser.TypeDefElement
 import com.intellij.navigation.ChooseByNameContributor as IntellijChooseByNameContributor
 
-class ChooseByNameContributor : IntellijChooseByNameContributor {
+public class ChooseByNameContributor : IntellijChooseByNameContributor {
 
-    fun getMap(project: Project): Map<String, PsiElement> {
+    public fun getMap(project: Project): Map<String, PsiElement> {
         val scope = GlobalSearchScope.allScope(project)
         val files = FileTypeIndex.getFiles(FileType, scope)
         val psiManager = PsiManager.getInstance(project)
@@ -34,7 +34,7 @@ class ChooseByNameContributor : IntellijChooseByNameContributor {
         return map
     }
 
-    override fun getNames(project: Project, includeNonProjectItems: Boolean) = getMap(project).keys.toTypedArray()
+    override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> = getMap(project).keys.toTypedArray()
 
     override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> = listOfNotNull((getMap(project)[name]) as NavigationItem).toTypedArray()
 }

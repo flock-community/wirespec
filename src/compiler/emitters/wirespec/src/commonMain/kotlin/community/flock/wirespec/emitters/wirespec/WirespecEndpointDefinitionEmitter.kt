@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.core.emit.fixStatus
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Field
 
-interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, WirespecTypeDefinitionEmitter {
+internal interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
         |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()}${endpoint.headers.emitHeader()} -> {

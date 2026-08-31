@@ -7,7 +7,7 @@ import com.intellij.psi.tree.TokenSet
 import community.flock.wirespec.ide.intellij.parser.CustomTypeElement
 import com.intellij.lang.findUsages.FindUsagesProvider as IntellijFindUsagesProvider
 
-class FindUsagesProvider : IntellijFindUsagesProvider {
+public class FindUsagesProvider : IntellijFindUsagesProvider {
 
     override fun getWordsScanner(): WordsScanner = DefaultWordsScanner(
         Lexer(),
@@ -16,13 +16,13 @@ class FindUsagesProvider : IntellijFindUsagesProvider {
         TokenSet.EMPTY,
     )
 
-    override fun canFindUsagesFor(psiElement: PsiElement) = psiElement is CustomTypeElement
+    override fun canFindUsagesFor(psiElement: PsiElement): Boolean = psiElement is CustomTypeElement
 
-    override fun getHelpId(psiElement: PsiElement) = null
+    override fun getHelpId(psiElement: PsiElement): String? = null
 
-    override fun getType(element: PsiElement) = if (element is CustomTypeElement) "custom Type" else ""
+    override fun getType(element: PsiElement): String = if (element is CustomTypeElement) "custom Type" else ""
 
-    override fun getDescriptiveName(element: PsiElement) = (element as? CustomTypeElement)?.name ?: ""
+    override fun getDescriptiveName(element: PsiElement): String = (element as? CustomTypeElement)?.name ?: ""
 
-    override fun getNodeText(element: PsiElement, useFullName: Boolean) = getDescriptiveName(element)
+    override fun getNodeText(element: PsiElement, useFullName: Boolean): String = getDescriptiveName(element)
 }

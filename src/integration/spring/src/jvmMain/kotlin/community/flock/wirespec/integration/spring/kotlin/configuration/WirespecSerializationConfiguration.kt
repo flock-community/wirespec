@@ -20,8 +20,8 @@ import org.springframework.context.annotation.Import
     WirespecJackson3Configuration::class,
     WirespecJackson2Configuration::class,
 )
-open class WirespecSerializationConfiguration {
+public open class WirespecSerializationConfiguration {
 
     @Bean
-    open fun queryParamSerde() = DefaultParamSerialization()
+    public open fun queryParamSerde(): DefaultParamSerialization = DefaultParamSerialization()
 }

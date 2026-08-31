@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import community.flock.wirespec.ide.intellij.FileType
 import community.flock.wirespec.ide.intellij.parser.EndpointDefElement
 
-abstract class WirespecMethodCodeVisionProvider : DaemonBoundCodeVisionProvider {
+public abstract class WirespecMethodCodeVisionProvider : DaemonBoundCodeVisionProvider {
 
     override val groupId: String = "references"
     override val relativeOrderings: List<CodeVisionRelativeOrdering> =

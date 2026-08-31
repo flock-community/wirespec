@@ -47,7 +47,7 @@ import community.flock.wirespec.plugin.io.wirespecSources
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
 
-enum class Options(vararg val flags: String) {
+internal enum class Options(public vararg val flags: String) {
     Input("-i", "--input"),
     Output("-o", "--output"),
     Language("-l", "--language"),
@@ -57,7 +57,7 @@ enum class Options(vararg val flags: String) {
     Strict("--strict"),
 }
 
-class WirespecCli : NoOpCliktCommand(name = "wirespec") {
+internal class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
         operator fun invoke(
             compile: (CompilerArguments) -> Unit,

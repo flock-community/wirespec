@@ -10,7 +10,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 
-class HttpTransportation(
+public class HttpTransportation(
     private val baseUrl: String,
 ) : Wirespec.Transportation {
 

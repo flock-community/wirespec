@@ -34,7 +34,7 @@ import java.io.File
 import java.net.URLClassLoader
 import java.util.jar.JarFile
 
-abstract class BaseMojo : AbstractMojo() {
+public abstract class BaseMojo : AbstractMojo() {
 
     /**
      * Specifies the input files or directories.
@@ -107,7 +107,7 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter(defaultValue = "\${plugin.artifacts}", readonly = true, required = true)
     protected lateinit var pluginArtifacts: List<Artifact>
 
-    protected val logger = object : Logger(ERROR) {
+    protected val logger: Logger = object : Logger(ERROR) {
         override fun debug(string: String) = log.debug(string)
         override fun info(string: String) = log.info(string)
         override fun warn(string: String) = log.warn(string)
@@ -152,7 +152,7 @@ abstract class BaseMojo : AbstractMojo() {
         }
     }
 
-    val emitters
+    protected val emitters: NonEmptySet<Emitter>
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
             .plus(emitter)
@@ -180,10 +180,10 @@ abstract class BaseMojo : AbstractMojo() {
         }
     }
 
-    fun classOutputDir() = File(project.build.directory, "wirespec-classes")
+    protected fun classOutputDir(): File = File(project.build.directory, "wirespec-classes")
         .apply { if (!exists()) mkdirs() }
 
-    fun compileSourceDirectory() {
+    protected fun compileSourceDirectory() {
         if (sourceDirectory == null) return
         log.info("Compiling source directory: $sourceDirectory")
         project.addTestCompileSourceRoot(sourceDirectory)

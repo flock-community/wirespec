@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.gradle
 
 import arrow.core.NonEmptyList
+import arrow.core.NonEmptySet
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -30,59 +31,59 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.options.Option
 import java.io.File
 
-abstract class BaseWirespecTask : DefaultTask() {
+public abstract class BaseWirespecTask : DefaultTask() {
 
     @get:OutputDirectory
     @get:Option(option = "output", description = "output directory")
-    abstract val output: DirectoryProperty
+    public abstract val output: DirectoryProperty
 
     @get:OutputDirectory
     @get:Optional
     @get:Option(option = "testOutput", description = "test output directory")
-    abstract val testOutput: DirectoryProperty
+    public abstract val testOutput: DirectoryProperty
 
     @get:Input
     @get:Optional
     @get:Option(option = "languages", description = "languages list")
-    abstract val languages: ListProperty<Language>
+    public abstract val languages: ListProperty<Language>
 
     @get:Input
     @get:Optional
     @get:Option(option = "shared", description = "emit shared code")
-    abstract val shared: Property<Boolean>
+    public abstract val shared: Property<Boolean>
 
     @get:Input
     @get:Optional
     @get:Option(option = "emitterClass", description = "custom emitter class")
-    abstract val emitterClass: Property<Class<*>>
+    public abstract val emitterClass: Property<Class<*>>
 
     @get:Input
     @get:Optional
     @get:Option(option = "extensionClasses", description = "IR extension classes applied when an emitter is an IrEmitter")
-    abstract val extensionClasses: ListProperty<Class<*>>
+    public abstract val extensionClasses: ListProperty<Class<*>>
 
     @get:Input
     @get:Optional
     @get:Option(option = "packageName", description = "package name")
-    abstract val packageName: Property<String>
+    public abstract val packageName: Property<String>
 
     @get:Input
     @get:Optional
     @get:Option(option = "strict", description = "strict parsing mode")
-    abstract val strict: Property<Boolean>
+    public abstract val strict: Property<Boolean>
 
     @Internal
-    val wirespecLogger = object : Logger(Level.INFO) {
+    public val wirespecLogger: Logger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)
         override fun info(string: String) = logger.info(string)
         override fun warn(string: String) = logger.warn(string)
         override fun error(string: String) = logger.error(string)
     }
 
-    protected fun packageNameValue() = packageName.getOrElse(DEFAULT_GENERATED_PACKAGE_STRING).let(PackageName::invoke)
-    protected fun sharedValue() = shared.getOrElse(false).let(EmitShared::invoke)
+    protected fun packageNameValue(): PackageName = packageName.getOrElse(DEFAULT_GENERATED_PACKAGE_STRING).let(PackageName::invoke)
+    protected fun sharedValue(): EmitShared = shared.getOrElse(false).let(EmitShared::invoke)
 
-    protected fun emitter() = try {
+    protected fun emitter(): Emitter? = try {
         emitterClass.orNull?.declaredConstructors?.first()?.let { constructor ->
             val args: List<Any> = constructor.parameters
                 ?.map {
@@ -100,7 +101,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         throw e
     }
 
-    protected fun extensionInstances(language: FileExtension) = extensionClasses.getOrElse(emptyList()).map { extensionClass ->
+    protected fun extensionInstances(language: FileExtension): List<IrExtension> = extensionClasses.getOrElse(emptyList()).map { extensionClass ->
         try {
             val constructor = extensionClass.declaredConstructors.first()
             val args: List<Any> = constructor.parameters
@@ -119,7 +120,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    protected fun emitters() = languages.get()
+    protected fun emitters(): NonEmptySet<Emitter> = languages.get()
         .map { it.toEmitter(packageNameValue(), sharedValue()) }
         .plus(emitter())
         .mapNotNull { it?.applyExtensions(extensionInstances(it.extension)) }
@@ -133,7 +134,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    inline fun <reified E : Source.Type> ClassPath.readFromClasspath(preProcess: ((String) -> String)): Source<E> {
+    public inline fun <reified E : Source.Type> ClassPath.readFromClasspath(preProcess: ((String) -> String)): Source<E> {
         val file = File(value)
         val classLoader = javaClass.classLoader
         val inputStream = classLoader

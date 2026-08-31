@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.test
 
-object CompileUnionTest : Fixture {
+public object CompileUnionTest : Fixture {
 
-    override val source =
+    override val source: String =
         // language=ws
         """
         |type UserAccount = UserAccountPassword | UserAccountToken
@@ -19,5 +19,5 @@ object CompileUnionTest : Fixture {
         |}
         """.trimMargin()
 
-    override val compiler = source.let(::compile)
+    override val compiler: Compiler = source.let(::compile)
 }

@@ -6,7 +6,7 @@ import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.Gen
 
-suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> responseMock(
+public suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> responseMock(
     server: Wirespec.Server<Req, Res>,
     responseGen: Gen<Res>,
     predicate: (Req) -> Boolean,

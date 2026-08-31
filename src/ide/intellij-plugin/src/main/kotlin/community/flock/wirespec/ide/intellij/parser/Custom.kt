@@ -14,7 +14,7 @@ import community.flock.wirespec.ide.intellij.FileType
 import community.flock.wirespec.ide.intellij.Icons
 import community.flock.wirespec.ide.intellij.Reference
 
-abstract class CustomTypeElement(ast: ASTNode) :
+internal abstract class CustomTypeElement(ast: ASTNode) :
     ASTWrapperPsiElement(ast),
     PsiNamedElement {
 
@@ -30,7 +30,7 @@ abstract class CustomTypeElement(ast: ASTNode) :
     }
 }
 
-class CustomTypeElementDef(private val ast: ASTNode) :
+internal class CustomTypeElementDef(private val ast: ASTNode) :
     CustomTypeElement(ast),
     PsiNameIdentifierOwner {
 
@@ -41,7 +41,7 @@ class CustomTypeElementDef(private val ast: ASTNode) :
     override fun getNameIdentifier(): PsiElement = ast.firstChildNode.psi
 }
 
-class CustomTypeElementRef(private val ast: ASTNode) :
+internal class CustomTypeElementRef(private val ast: ASTNode) :
     CustomTypeElement(ast),
     PsiNameIdentifierOwner {
 
@@ -54,14 +54,14 @@ class CustomTypeElementRef(private val ast: ASTNode) :
     override fun getReference(): PsiReference = Reference(this)
 }
 
-fun Project.createDefNode(name: String) = PsiFileFactory
+private fun Project.createDefNode(name: String) = PsiFileFactory
     .getInstance(this)
     .createFileFromText("dummy.ws", FileType, "type $name {}")
     .run { PsiTreeUtil.findChildOfType(firstChild, CustomTypeElementDef::class.java) }
     ?.node
     ?: error("Cannot create new node")
 
-fun Project.createRefNode(name: String) = PsiFileFactory
+private fun Project.createRefNode(name: String) = PsiFileFactory
     .getInstance(this)
     .createFileFromText("dummy.ws", FileType, "type X { y: $name }")
     .run { PsiTreeUtil.findChildOfType(firstChild, CustomTypeElementRef::class.java) }

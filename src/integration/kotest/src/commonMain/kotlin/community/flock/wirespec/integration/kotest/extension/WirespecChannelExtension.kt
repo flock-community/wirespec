@@ -13,7 +13,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-class WirespecChannelExtension internal constructor(
+public class WirespecChannelExtension internal constructor(
     private val eager: WirespecChannelContext?,
     private val serializationFactory: (suspend () -> Wirespec.Serialization)?,
     private val transportationFactory: (suspend () -> ChannelTransport)?,
@@ -21,9 +21,9 @@ class WirespecChannelExtension internal constructor(
 ) : TestCaseExtension,
     AfterSpecListener {
 
-    constructor(channel: WirespecChannelContext) : this(channel, null, null, {})
+    public constructor(channel: WirespecChannelContext) : this(channel, null, null, {})
 
-    constructor(
+    public constructor(
         transportation: ChannelTransport,
         serialization: Wirespec.Serialization,
     ) : this(WirespecChannelContext(transportation, serialization))
@@ -43,10 +43,12 @@ class WirespecChannelExtension internal constructor(
         return withContext(channel + seed) { execute(testCase) }
     }
 
-    override suspend fun afterSpec(spec: Spec) = transportations.remove(spec)
+    override suspend fun afterSpec(spec: Spec) {
+        transportations.remove(spec)
+    }
 }
 
-fun <T : ChannelTransport> WirespecChannelExtension(
+public fun <T : ChannelTransport> WirespecChannelExtension(
     serialization: suspend () -> Wirespec.Serialization,
     transportation: suspend () -> T,
     reset: (T) -> Unit = {},
@@ -60,12 +62,12 @@ fun <T : ChannelTransport> WirespecChannelExtension(
     },
 )
 
-class WirespecChannelContext(
-    val transport: ChannelTransport,
-    val serialization: Wirespec.Serialization,
+public class WirespecChannelContext(
+    public val transport: ChannelTransport,
+    public val serialization: Wirespec.Serialization,
 ) : AbstractCoroutineContextElement(Key) {
 
-    companion object Key : CoroutineContext.Key<WirespecChannelContext>
+    public companion object Key : CoroutineContext.Key<WirespecChannelContext>
 }
 
 internal suspend fun currentChannelContext(): WirespecChannelContext = coroutineContext[WirespecChannelContext] ?: error(
@@ -73,6 +75,6 @@ internal suspend fun currentChannelContext(): WirespecChannelContext = coroutine
         "`WirespecChannelExtension(channel)` on the spec.",
 )
 
-fun interface ChannelTransport {
-    suspend fun publish(topic: String, key: String?, body: ByteArray)
+public fun interface ChannelTransport {
+    public suspend fun publish(topic: String, key: String?, body: ByteArray)
 }

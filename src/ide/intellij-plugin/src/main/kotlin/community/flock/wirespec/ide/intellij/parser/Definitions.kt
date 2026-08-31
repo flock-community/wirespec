@@ -21,7 +21,7 @@ import community.flock.wirespec.ide.intellij.parser.Parser.EndpointDef
 import community.flock.wirespec.ide.intellij.parser.Parser.EnumDef
 import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 
-class ParserDefinition : ParserDefinition {
+public class ParserDefinition : ParserDefinition {
     override fun createLexer(project: Project): Lexer = Lexer()
 
     override fun getCommentTokens(): TokenSet = TokenSet.create()
@@ -46,10 +46,10 @@ class ParserDefinition : ParserDefinition {
     }
 }
 
-class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
-class ChannelDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
-class EnumDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
-class EndpointDefElement(ast: ASTNode) :
+internal class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+private class ChannelDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+private class EnumDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+internal class EndpointDefElement(ast: ASTNode) :
     ASTWrapperPsiElement(ast),
     PsiNameIdentifierOwner {
     override fun getName(): String? = nameIdentifier?.text
@@ -57,4 +57,4 @@ class EndpointDefElement(ast: ASTNode) :
     override fun getNameIdentifier(): PsiElement? = PsiTreeUtil.findChildOfType(this, CustomTypeElementDef::class.java)
     override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
 }
-class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+private class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)

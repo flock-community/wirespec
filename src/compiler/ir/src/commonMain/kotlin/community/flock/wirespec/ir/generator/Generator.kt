@@ -8,6 +8,6 @@ import community.flock.wirespec.ir.core.Element
  * language's reserved keywords; emitters and extensions delegate to it instead of keeping their
  * own copies.
  */
-interface Generator {
-    fun generate(element: Element): String
+public interface Generator {
+    public fun generate(element: Element): String
 }

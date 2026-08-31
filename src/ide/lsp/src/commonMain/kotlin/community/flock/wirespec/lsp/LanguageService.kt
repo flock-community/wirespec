@@ -18,7 +18,7 @@ import community.flock.wirespec.lsp.protocol.SemanticTokens
 import community.flock.wirespec.lsp.protocol.TextEdit
 import community.flock.wirespec.lsp.protocol.WorkspaceEdit
 
-data class LspToken(
+internal data class LspToken(
     val line: Int,
     val character: Int,
     val length: Int,
@@ -28,7 +28,7 @@ data class LspToken(
     val range: Range get() = Range(Position(line, character), Position(line, character + length))
 }
 
-object LanguageService {
+internal object LanguageService {
 
     private val parseContext = object : ParseContext, NoLogger {}
 

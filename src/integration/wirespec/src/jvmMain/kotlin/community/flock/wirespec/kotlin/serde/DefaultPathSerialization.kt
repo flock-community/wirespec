@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
 
-class DefaultPathSerialization : Wirespec.PathSerialization {
+public class DefaultPathSerialization : Wirespec.PathSerialization {
     override fun <T : Any> serializePath(t: T, kType: KType): String = when (t) {
         is Wirespec.Refined<*> -> t.value.toString()
         is Wirespec.Enum -> t.label

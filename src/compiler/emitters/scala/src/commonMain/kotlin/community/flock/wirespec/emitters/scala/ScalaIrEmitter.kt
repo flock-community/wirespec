@@ -67,15 +67,16 @@ import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Import as LanguageImport
 import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Type as LanguageType
+import community.flock.wirespec.ir.generator.Generator
 
-open class ScalaIrEmitter(
+public open class ScalaIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {
 
-    override val generator = ScalaGenerator
+    override val generator: Generator = ScalaGenerator
 
-    override val extension = FileExtension.Scala
+    override val extension: FileExtension = FileExtension.Scala
 
     // Pre-scan all generated files so cross-file constructor expressions can distinguish a
     // singleton object reference (`GetTodos.Request`) from an empty case class (`Foo()`).
@@ -316,6 +317,6 @@ open class ScalaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    companion object : Keywords by ScalaGenerator
+    public companion object : Keywords by ScalaGenerator
 
 }

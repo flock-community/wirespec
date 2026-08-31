@@ -11,4 +11,4 @@ fun noopConverter(block: (ConverterArguments) -> Unit): (ConverterArguments) -> 
     block(it)
 }
 
-fun noopCli() = WirespecCli(noopCompiler { }, noopConverter { })
+internal fun noopCli() = WirespecCli(noopCompiler { }, noopConverter { })
