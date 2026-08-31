@@ -46,7 +46,8 @@ class AeronRpcClient<S>(
         poller = thread(name = "wirespec-aeron-client", isDaemon = true) {
             val assembler = FragmentAssembler { buffer, offset, length, _ ->
                 val bytes = ByteArray(length).also { buffer.getBytes(offset, it) }
-                RpcFrame.decode(bytes).let { frame -> pending.remove(frame.correlationId)?.complete(frame) }
+                // A frame this client cannot decode must not kill the poll loop.
+                runCatching { RpcFrame.decode(bytes) }.getOrNull()?.let { frame -> pending.remove(frame.correlationId)?.complete(frame) }
             }
             val idle = BackoffIdleStrategy()
             while (running.get()) {

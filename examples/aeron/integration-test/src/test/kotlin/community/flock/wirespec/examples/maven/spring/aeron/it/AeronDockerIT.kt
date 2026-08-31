@@ -56,7 +56,8 @@ class AeronDockerIT {
                 .withCreateContainerCmdModifier { cmd -> cmd.hostConfig!!.withIpcMode("container:${server.containerId}") }
                 .withStartupCheckStrategy(OneShotStartupCheckStrategy().withTimeout(Duration.ofMinutes(2)))
             try {
-                client.start()
+                runCatching { client.start() }
+                    .onFailure { throw AssertionError("Client run failed; server logs:\n${server.logs}", it) }
                 val logs = client.logs
                 listOf(
                     "Ping -> pong",
@@ -66,7 +67,7 @@ class AeronDockerIT {
                     "GetWatchlistQuotes -> FLCK 42 EUR",
                     "Serving GetWatchlist for the backend",
                 ).forEach { expected ->
-                    assertTrue(expected in logs) { "Expected client log to contain '$expected'; logs:\n$logs" }
+                    assertTrue(expected in logs) { "Expected client log to contain '$expected'; client logs:\n$logs\nserver logs:\n${server.logs}" }
                 }
             } finally {
                 client.stop()
