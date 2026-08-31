@@ -66,8 +66,11 @@ fn main() -> Result<(), String> {
         }
     }
 
-    // The full loop: this call makes the backend call GetWatchlist on us.
-    let quote_list = get_watchlist_quotes_response(&client.call("GetWatchlistQuotes", empty_params(), TIMEOUT)?)?;
+    // The full loop: this call makes the backend call GetWatchlist on us. Give
+    // it a longer deadline than the backend's own reverse-call timeout, so a
+    // failure inside the loop comes back as the backend's typed error instead
+    // of a silent timeout here.
+    let quote_list = get_watchlist_quotes_response(&client.call("GetWatchlistQuotes", empty_params(), Duration::from_secs(30))?)?;
     for quote in &quote_list.quotes {
         println!("GetWatchlistQuotes -> {} {} {}", quote.symbol, quote.price, quote.currency);
     }
