@@ -25,9 +25,9 @@ import kotlin.time.Duration.Companion.seconds
  * [replyChannel]/[replyStreamId], correlated by id. Give each client sharing a
  * media driver its own reply stream.
  */
-class AeronRpcClient<S>(
+public class AeronRpcClient<S>(
     private val aeron: Aeron,
-    val serialization: S,
+    public val serialization: S,
     private val requestChannel: String = AeronRpc.DEFAULT_CHANNEL,
     private val requestStreamId: Int = AeronRpc.DEFAULT_REQUEST_STREAM_ID,
     private val replyChannel: String = AeronRpc.DEFAULT_CHANNEL,
@@ -40,7 +40,7 @@ class AeronRpcClient<S>(
     private val publication by lazy { aeron.addPublication(requestChannel, requestStreamId) }
     private var poller: Thread? = null
 
-    fun start() {
+    public fun start() {
         check(running.compareAndSet(false, true)) { "AeronRpcClient already started" }
         val subscription = aeron.addSubscription(replyChannel, replyStreamId)
         poller = thread(name = "wirespec-aeron-client", isDaemon = true) {
@@ -58,7 +58,7 @@ class AeronRpcClient<S>(
     }
 
     /** Call on the raw frame level; returns the RESULT or ERROR frame. The typed overloads are usually what you want. */
-    suspend fun call(method: String, payload: ByteArray, timeout: Duration = 10.seconds): RpcFrame {
+    public suspend fun call(method: String, payload: ByteArray, timeout: Duration = 10.seconds): RpcFrame {
         val correlationId = correlationIds.incrementAndGet()
         val deferred = CompletableDeferred<RpcFrame>()
         pending[correlationId] = deferred
@@ -72,19 +72,19 @@ class AeronRpcClient<S>(
     }
 
     /** Call an rpc without an error type: `rpc Method { params } -> R`. */
-    suspend inline fun <reified P : Any, reified R : Any> call(method: String, params: P): R = call(method, serialization.serializeBody(params, typeOf<P>())).toResult(method)
+    public suspend inline fun <reified P : Any, reified R : Any> call(method: String, params: P): R = call(method, serialization.serializeBody(params, typeOf<P>())).toResult(method)
 
     /** Call a parameterless rpc: `rpc Method {} -> R`. */
-    suspend inline fun <reified R : Any> call(method: String): R = call(method, AeronRpc.EMPTY_PARAMS).toResult(method)
+    public suspend inline fun <reified R : Any> call(method: String): R = call(method, AeronRpc.EMPTY_PARAMS).toResult(method)
 
     /** Call an rpc with an error type: `rpc Method { params } -> R ! E`. */
-    suspend inline fun <reified P : Any, reified R : Any, reified E : Any> callResult(method: String, params: P): RpcResult<R, E> = when (val frame = call(method, serialization.serializeBody(params, typeOf<P>()))) {
+    public suspend inline fun <reified P : Any, reified R : Any, reified E : Any> callResult(method: String, params: P): RpcResult<R, E> = when (val frame = call(method, serialization.serializeBody(params, typeOf<P>()))) {
         is RpcFrame.Result -> RpcResult.Success(serialization.deserializeBody(frame.payload, typeOf<R>()))
         is RpcFrame.Error -> RpcResult.Failure(serialization.deserializeBody(frame.payload, typeOf<E>()))
         is RpcFrame.Request -> error("Unexpected REQUEST frame for rpc '$method'")
     }
 
-    inline fun <reified R : Any> RpcFrame.toResult(method: String): R = when (this) {
+    public inline fun <reified R : Any> RpcFrame.toResult(method: String): R = when (this) {
         is RpcFrame.Result -> serialization.deserializeBody(payload, typeOf<R>())
         is RpcFrame.Error -> throw AeronRpcException(method, payload.decodeToString())
         is RpcFrame.Request -> error("Unexpected REQUEST frame for rpc '$method'")

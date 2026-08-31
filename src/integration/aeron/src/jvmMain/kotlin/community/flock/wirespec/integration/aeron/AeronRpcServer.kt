@@ -24,18 +24,18 @@ import kotlin.reflect.typeOf
  * stream the request names, so any number of clients can share the request
  * stream while receiving answers on their own.
  */
-class AeronRpcServer<S>(
+public class AeronRpcServer<S>(
     private val aeron: Aeron,
-    val serialization: S,
+    public val serialization: S,
     private val channel: String = AeronRpc.DEFAULT_CHANNEL,
     private val streamId: Int = AeronRpc.DEFAULT_REQUEST_STREAM_ID,
 ) : AutoCloseable where S : Wirespec.BodySerializer, S : Wirespec.BodyDeserializer {
 
-    sealed interface Reply {
-        val payload: ByteArray
+    public sealed interface Reply {
+        public val payload: ByteArray
 
-        class Result(override val payload: ByteArray) : Reply
-        class Error(override val payload: ByteArray) : Reply
+        public class Result(override val payload: ByteArray) : Reply
+        public class Error(override val payload: ByteArray) : Reply
     }
 
     private val handlers = ConcurrentHashMap<String, suspend (ByteArray) -> Reply>()
@@ -45,29 +45,29 @@ class AeronRpcServer<S>(
     private var poller: Thread? = null
 
     /** Bind a handler on the raw frame level; the typed overloads are usually what you want. */
-    fun bindRaw(method: String, handler: suspend (ByteArray) -> Reply) {
+    public fun bindRaw(method: String, handler: suspend (ByteArray) -> Reply) {
         handlers[method] = handler
     }
 
     /** Bind an rpc without an error type: `rpc Method { params } -> R`. */
-    inline fun <reified P : Any, reified R : Any> bind(method: String, noinline handler: suspend (P) -> R) = bindRaw(method) { payload ->
+    public inline fun <reified P : Any, reified R : Any> bind(method: String, noinline handler: suspend (P) -> R): Unit = bindRaw(method) { payload ->
         Reply.Result(serialization.serializeBody(handler(serialization.deserializeBody(payload, typeOf<P>())), typeOf<R>()))
     }
 
     /** Bind a parameterless rpc: `rpc Method {} -> R`. */
-    inline fun <reified R : Any> bindEmpty(method: String, noinline handler: suspend () -> R) = bindRaw(method) {
+    public inline fun <reified R : Any> bindEmpty(method: String, noinline handler: suspend () -> R): Unit = bindRaw(method) {
         Reply.Result(serialization.serializeBody(handler(), typeOf<R>()))
     }
 
     /** Bind an rpc with an error type: `rpc Method { params } -> R ! E`. */
-    inline fun <reified P : Any, reified R : Any, reified E : Any> bindResult(method: String, noinline handler: suspend (P) -> RpcResult<R, E>) = bindRaw(method) { payload ->
+    public inline fun <reified P : Any, reified R : Any, reified E : Any> bindResult(method: String, noinline handler: suspend (P) -> RpcResult<R, E>): Unit = bindRaw(method) { payload ->
         when (val outcome = handler(serialization.deserializeBody(payload, typeOf<P>()))) {
             is RpcResult.Success -> Reply.Result(serialization.serializeBody(outcome.value, typeOf<R>()))
             is RpcResult.Failure -> Reply.Error(serialization.serializeBody(outcome.error, typeOf<E>()))
         }
     }
 
-    fun start() {
+    public fun start() {
         check(running.compareAndSet(false, true)) { "AeronRpcServer already started" }
         val subscription = aeron.addSubscription(channel, streamId)
         poller = thread(name = "wirespec-aeron-server", isDaemon = true) {

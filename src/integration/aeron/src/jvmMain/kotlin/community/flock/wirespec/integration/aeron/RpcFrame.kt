@@ -25,32 +25,32 @@ import java.nio.ByteOrder
  * the rpc's parameter names; RESULT and ERROR payloads hold the rpc's result and
  * error values respectively.
  */
-sealed interface RpcFrame {
-    val correlationId: Long
-    val method: String
-    val payload: ByteArray
+public sealed interface RpcFrame {
+    public val correlationId: Long
+    public val method: String
+    public val payload: ByteArray
 
-    class Request(
+    public class Request(
         override val correlationId: Long,
         override val method: String,
-        val replyChannel: String,
-        val replyStreamId: Int,
+        public val replyChannel: String,
+        public val replyStreamId: Int,
         override val payload: ByteArray,
     ) : RpcFrame
 
-    class Result(
-        override val correlationId: Long,
-        override val method: String,
-        override val payload: ByteArray,
-    ) : RpcFrame
-
-    class Error(
+    public class Result(
         override val correlationId: Long,
         override val method: String,
         override val payload: ByteArray,
     ) : RpcFrame
 
-    fun encode(): ByteArray {
+    public class Error(
+        override val correlationId: Long,
+        override val method: String,
+        override val payload: ByteArray,
+    ) : RpcFrame
+
+    public fun encode(): ByteArray {
         val method = method.encodeToByteArray()
         val replyChannel = (this as? Request)?.replyChannel?.encodeToByteArray()
         val size = HEADER_SIZE + method.size + (replyChannel?.let { Short.SIZE_BYTES + it.size + Int.SIZE_BYTES } ?: 0) + Int.SIZE_BYTES + payload.size
@@ -76,14 +76,14 @@ sealed interface RpcFrame {
         }.array()
     }
 
-    companion object {
-        const val VERSION: Byte = 1
-        const val KIND_REQUEST: Byte = 1
-        const val KIND_RESULT: Byte = 2
-        const val KIND_ERROR: Byte = 3
+    public companion object {
+        public const val VERSION: Byte = 1
+        public const val KIND_REQUEST: Byte = 1
+        public const val KIND_RESULT: Byte = 2
+        public const val KIND_ERROR: Byte = 3
         private const val HEADER_SIZE = Byte.SIZE_BYTES + Byte.SIZE_BYTES + Long.SIZE_BYTES + Short.SIZE_BYTES
 
-        fun decode(bytes: ByteArray): RpcFrame = with(ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)) {
+        public fun decode(bytes: ByteArray): RpcFrame = with(ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)) {
             val version = get()
             require(version == VERSION) { "Unsupported Wirespec Aeron protocol version: $version" }
             val kind = get()
