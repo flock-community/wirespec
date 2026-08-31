@@ -1,7 +1,7 @@
-//! A synchronous Wirespec RPC client over Aeron: requests go out on the shared
+//! A synchronous Wirespec rpc client over Aeron: requests go out on the shared
 //! request stream, responses come back on this client's own reply stream,
-//! correlated by id. Attach it to the media driver embedded in the Kotlin
-//! Spring Boot backend (../maven-spring-aeron) to talk to it over shared memory.
+//! correlated by id. Attach it to the media driver of the process that serves
+//! the rpcs (for IPC channels, on the same host).
 
 use std::cell::RefCell;
 use std::ffi::CString;
