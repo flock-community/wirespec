@@ -23,24 +23,37 @@ pub struct AeronRpcClient {
     _aeron: Aeron,
     publication: Arc<Mutex<Publication>>,
     subscription: Arc<Mutex<Subscription>>,
+    reply_channel: String,
     reply_stream_id: i32,
     next_correlation_id: i64,
 }
 
 impl AeronRpcClient {
+    /// Connect over shared memory (`aeron:ipc`) on the default streams.
     pub fn connect(aeron_dir: &str) -> Result<Self, String> {
-        Self::connect_streams(aeron_dir, DEFAULT_REQUEST_STREAM_ID, DEFAULT_REPLY_STREAM_ID)
+        Self::connect_channels(aeron_dir, DEFAULT_CHANNEL, DEFAULT_REQUEST_STREAM_ID, DEFAULT_CHANNEL, DEFAULT_REPLY_STREAM_ID)
     }
 
-    pub fn connect_streams(aeron_dir: &str, request_stream_id: i32, reply_stream_id: i32) -> Result<Self, String> {
+    /// Connect on explicit channels, e.g. `aeron:udp?endpoint=host:port` for the
+    /// network: requests go out on `request_channel`, and `reply_channel` - a
+    /// host resolvable by both sides - is subscribed locally and advertised in
+    /// every request for the responses.
+    pub fn connect_channels(
+        aeron_dir: &str,
+        request_channel: &str,
+        request_stream_id: i32,
+        reply_channel: &str,
+        reply_stream_id: i32,
+    ) -> Result<Self, String> {
         let mut context = Context::new();
         context.set_aeron_dir(aeron_dir.to_string());
         context.set_error_handler(|error| eprintln!("Aeron error: {error:?}"));
         let mut aeron = Aeron::new(context).map_err(|e| format!("Cannot attach to media driver at '{aeron_dir}': {e:?}"))?;
 
-        let channel = CString::new(DEFAULT_CHANNEL).unwrap();
-        let publication_id = aeron.add_publication(channel.clone(), request_stream_id).map_err(|e| format!("{e:?}"))?;
-        let subscription_id = aeron.add_subscription(channel, reply_stream_id).map_err(|e| format!("{e:?}"))?;
+        let publication_channel = CString::new(request_channel).map_err(|e| e.to_string())?;
+        let subscription_channel = CString::new(reply_channel).map_err(|e| e.to_string())?;
+        let publication_id = aeron.add_publication(publication_channel, request_stream_id).map_err(|e| format!("{e:?}"))?;
+        let subscription_id = aeron.add_subscription(subscription_channel, reply_stream_id).map_err(|e| format!("{e:?}"))?;
         // Bounded: the driver can reject either registration (e.g. /dev/shm
         // exhaustion), which surfaces as find_* failing forever.
         let deadline = Instant::now() + Duration::from_secs(10);
@@ -63,6 +76,7 @@ impl AeronRpcClient {
             _aeron: aeron,
             publication,
             subscription,
+            reply_channel: reply_channel.to_string(),
             reply_stream_id,
             next_correlation_id: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -78,7 +92,7 @@ impl AeronRpcClient {
         let request = RpcFrame::Request {
             correlation_id,
             method: method.to_string(),
-            reply_channel: DEFAULT_CHANNEL.to_string(),
+            reply_channel: self.reply_channel.clone(),
             reply_stream_id: self.reply_stream_id,
             payload,
         };

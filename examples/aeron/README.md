@@ -1,8 +1,9 @@
 # Wirespec × Aeron: rpc in both directions
 
 One Wirespec spec ([`spec/quote.ws`](spec/quote.ws)), two languages, no HTTP: a Kotlin Spring Boot
-backend and a Rust client exchange Wirespec `rpc` frames through an [Aeron](https://aeron.io/)
-media driver over shared memory, using the wire protocol of the `aeron-jvm` integration
+backend and a Rust client exchange Wirespec `rpc` frames over [Aeron](https://aeron.io/) UDP -
+every channel is an `aeron:udp` endpoint, each side attaches to its own media driver, and the
+payloads are CBOR (binary) - using the wire protocol of the `aeron-jvm` integration
 ([`src/integration/aeron`](../../src/integration/aeron)).
 
 - [`server/`](server) — the Kotlin Spring Boot backend: the `wirespec-maven-plugin` compiles the
@@ -11,8 +12,9 @@ media driver over shared memory, using the wire protocol of the `aeron-jvm` inte
 - [`client/`](client) — the Rust client on [aeron-rs](https://crates.io/crates/aeron-rs):
   `gen.sh` compiles the same spec to Rust, and the generated `GetWatchlist::Service` trait is
   implemented by the client's own serving side.
-- [`integration-test/`](integration-test) — runs both in Docker: two containers sharing one IPC
-  namespace, so both map the same `/dev/shm`.
+- [`integration-test/`](integration-test) — runs both in Docker, connected over the container
+  network: the backend embeds its driver, and the client pod is a media-driver sidecar plus the
+  Rust client sharing one IPC namespace.
 
 The calls flow in both directions. The client calls the backend (`Ping`, `GetQuote`), and when the
 client calls `GetWatchlistQuotes`, the backend turns around and calls the **client's**
@@ -35,8 +37,10 @@ Docker daemon is reachable) the two-container Docker test:
 Requires the Wirespec artifacts in Maven local first (`./gradlew publishToMavenLocal` from the
 repository root).
 
-Run it by hand instead: start the backend, then the client — it attaches to the backend's media
-driver directory (default `${java.io.tmpdir}/wirespec-aeron`):
+Run it by hand instead (single machine: both sides attach to the backend's driver directory,
+default `${java.io.tmpdir}/wirespec-aeron`, and the UDP endpoints default to `localhost`; on
+separate machines, run a media driver next to the client and point the `*_CHANNEL` variables and
+`wirespec.aeron.*Channel` properties at the real hostnames):
 
 ```shell
 ../build/maven-wrapper/mvnw -f server spring-boot:run
