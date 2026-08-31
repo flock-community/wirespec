@@ -28,10 +28,13 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
+import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.extensionsByName
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.DirectoryPath
@@ -55,6 +58,7 @@ internal enum class Options(vararg val flags: String) {
     LogLevel("--log-level"),
     Shared("--shared"),
     Strict("--strict"),
+    Extension("--extension"),
 }
 
 internal class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -99,6 +103,9 @@ private class Compile(
     private val languages by option(*Options.Language.flags, help = "Language")
         .choice(choices = Language.toMap(), ignoreCase = true)
         .multiple(default = listOf(Language.Kotlin))
+    private val extensions by option(*Options.Extension.flags, help = "Built-in extension applied to the emitted code: ${extensionsByName.keys.joinToString()}")
+        .choice(choices = extensionsByName, ignoreCase = true)
+        .multiple()
 
     override fun run() {
         val logger = Logger(logLevel.toLogLevel())
@@ -119,7 +126,7 @@ private class Compile(
             }
         }
 
-        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared), extensions)
 
         val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
@@ -177,6 +184,6 @@ private class Convert(
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
 
-private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared) = this
-    .map { it.toEmitter(packageName, emitShared) }
+private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared, extensions: List<IrExtension> = emptyList()) = this
+    .map { it.toEmitter(packageName, emitShared).applyExtensions(extensions) }
     .toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
