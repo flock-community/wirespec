@@ -1,0 +1,8 @@
+[package]
+name = "wirespec-aeron"
+version = "0.0.0"
+edition = "2021"
+description = "Wirespec rpc over Aeron: the Rust counterpart of the aeron-jvm integration"
+
+[dependencies]
+aeron-rs = "0.1.8"
