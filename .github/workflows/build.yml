@@ -247,8 +247,8 @@ jobs:
       fail-fast: false
       matrix:
         name:
+          - aeron
           - maven-preprocessor
-          - maven-spring-aeron
           - maven-spring-avro
           - maven-spring-compile
           - maven-spring-convert
@@ -261,7 +261,6 @@ jobs:
           - gradle-ktor
           - gradle-kotest
           - npm-typescript
-          - rust-aeron
           - rust-petstore
           - scala-zio
 

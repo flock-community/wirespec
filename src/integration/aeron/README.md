@@ -4,8 +4,8 @@ Serves and calls Wirespec `rpc` definitions over [Aeron](https://aeron.io/), usi
 transport and the Wirespec body serialization contract (JSON) as the payload encoding.
 
 The module is language-neutral on the wire: any client that speaks the frame format below can talk
-to an `AeronRpcServer`, whatever language it is written in (see `examples/rust-aeron` for a Rust
-client talking to a Kotlin Spring Boot backend through shared memory).
+to an `AeronRpcServer`, whatever language it is written in (see `examples/aeron` for a Rust
+client talking to a Kotlin Spring Boot backend through shared memory, in both directions).
 
 ## Wire protocol
 
