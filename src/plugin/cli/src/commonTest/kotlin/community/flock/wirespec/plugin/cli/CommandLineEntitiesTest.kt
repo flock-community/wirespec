@@ -26,6 +26,7 @@ class CommandLineEntitiesTest {
                     Options.Language -> "Wirespec"
                     Options.PackageName -> "packageName"
                     Options.LogLevel -> "error"
+                    Options.Extension -> "RustSerde"
                     // To enable flags, they only need the flag name. Therefore, the 'argument' part is null.
                     Options.Shared -> null
                     Options.Strict -> null
