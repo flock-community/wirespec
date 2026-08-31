@@ -31,6 +31,11 @@ open class AeronConfiguration {
         MediaDriver.Context()
             .aeronDirectoryName(dir.ifBlank { Paths.get(System.getProperty("java.io.tmpdir"), "wirespec-aeron").toString() })
             .threadingMode(ThreadingMode.SHARED)
+            // Aeron's default IPC term buffer is 64MB, i.e. a ~192MB log per
+            // publication - the four publications of the full rpc loop would
+            // brush up against a 1GB /dev/shm. 4MB terms (512KB max message)
+            // are plenty here and keep the whole demo under ~50MB.
+            .ipcTermBufferLength(4 * 1024 * 1024)
             .dirDeleteOnStart(true)
             .dirDeleteOnShutdown(true),
     )
