@@ -62,16 +62,22 @@ impl AeronRpcServer {
         self
     }
 
-    /// Serve on `stream_id` until `running` clears, on a dedicated Aeron
-    /// connection. Signals `ready` once the subscription is in place.
+    /// Serve on `aeron:ipc` - see [Self::serve_channel] for the network.
     pub fn serve(self, aeron_dir: &str, stream_id: i32, running: Arc<AtomicBool>, ready: Sender<()>) -> Result<(), String> {
+        self.serve_channel(aeron_dir, DEFAULT_CHANNEL, stream_id, running, ready)
+    }
+
+    /// Serve on `channel`/`stream_id` (e.g. `aeron:udp?endpoint=host:port`)
+    /// until `running` clears, on a dedicated Aeron connection. Signals `ready`
+    /// once the subscription is in place.
+    pub fn serve_channel(self, aeron_dir: &str, channel: &str, stream_id: i32, running: Arc<AtomicBool>, ready: Sender<()>) -> Result<(), String> {
         let mut context = Context::new();
         context.set_aeron_dir(aeron_dir.to_string());
         context.set_error_handler(|error| eprintln!("Aeron error: {error:?}"));
         let mut aeron = Aeron::new(context).map_err(|e| format!("{e:?}"))?;
 
-        let channel = CString::new(DEFAULT_CHANNEL).unwrap();
-        let subscription_id = aeron.add_subscription(channel, stream_id).map_err(|e| format!("{e:?}"))?;
+        let subscription_channel = CString::new(channel).map_err(|e| e.to_string())?;
+        let subscription_id = aeron.add_subscription(subscription_channel, stream_id).map_err(|e| format!("{e:?}"))?;
         let subscription: Arc<Mutex<Subscription>> = loop {
             if let Ok(subscription) = aeron.find_subscription(subscription_id) {
                 break subscription;

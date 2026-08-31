@@ -2,41 +2,34 @@ use wirespec_aeron::protocol::RpcFrame;
 use wirespec_aeron_client::gen::model::quote::Quote;
 use wirespec_aeron_client::gen::model::quote_error::QuoteError;
 use wirespec_aeron_client::gen::rpc::get_quote::GetQuote;
-use wirespec_aeron_client::rpc::{get_quote_response, ping_response};
-
-fn result_frame(payload: &str) -> RpcFrame {
-    RpcFrame::Result { correlation_id: 42, method: "GetQuote".into(), payload: payload.as_bytes().to_vec() }
-}
+use wirespec_aeron_client::rpc::{from_cbor, get_quote_response, ping_response, to_cbor};
 
 #[test]
-fn generated_models_round_trip_through_serde() {
+fn generated_models_round_trip_through_cbor() {
     let quote = Quote { symbol: "FLCK".into(), price: 42.0, currency: "EUR".into() };
-    let json = serde_json::to_string(&quote).unwrap();
+    let bytes = to_cbor(&quote).unwrap();
 
-    assert_eq!(r#"{"symbol":"FLCK","price":42.0,"currency":"EUR"}"#, json);
-    assert_eq!(quote, serde_json::from_str(&json).unwrap());
+    // Binary on the wire: a CBOR map, not JSON text.
+    assert_ne!(b'{', bytes[0]);
+    assert_eq!(quote, from_cbor(&bytes).unwrap());
     assert!(quote.validate().is_empty());
 }
 
 #[test]
 fn result_frame_maps_to_the_generated_response_enum() {
-    let frame = result_frame(r#"{"symbol":"AAPL","price":1.5,"currency":"USD"}"#);
-    let expected = GetQuote::Response::Result(GetQuote::Result {
-        value: Quote { symbol: "AAPL".into(), price: 1.5, currency: "USD".into() },
-    });
+    let quote = Quote { symbol: "AAPL".into(), price: 1.5, currency: "USD".into() };
+    let frame = RpcFrame::Result { correlation_id: 42, method: "GetQuote".into(), payload: to_cbor(&quote).unwrap() };
+
+    let expected = GetQuote::Response::Result(GetQuote::Result { value: quote });
     assert_eq!(expected, get_quote_response(&frame).unwrap());
 }
 
 #[test]
 fn error_frame_maps_to_the_generated_response_enum() {
-    let frame = RpcFrame::Error {
-        correlation_id: 42,
-        method: "GetQuote".into(),
-        payload: br#"{"code":"UNKNOWN_SYMBOL","message":"nope"}"#.to_vec(),
-    };
-    let expected = GetQuote::Response::Error(GetQuote::Error {
-        value: QuoteError { code: "UNKNOWN_SYMBOL".into(), message: "nope".into() },
-    });
+    let quote_error = QuoteError { code: "UNKNOWN_SYMBOL".into(), message: "nope".into() };
+    let frame = RpcFrame::Error { correlation_id: 42, method: "GetQuote".into(), payload: to_cbor(&quote_error).unwrap() };
+
+    let expected = GetQuote::Response::Error(GetQuote::Error { value: quote_error });
     assert_eq!(expected, get_quote_response(&frame).unwrap());
 }
 

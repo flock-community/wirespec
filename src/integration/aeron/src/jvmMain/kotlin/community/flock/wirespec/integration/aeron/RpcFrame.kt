@@ -20,10 +20,10 @@ import java.nio.ByteOrder
  * u32  payload length, followed by that many bytes of payload
  * ```
  *
- * The payload follows the Wirespec body serialization contract: JSON, with plain
- * string bodies as raw UTF-8 text. A REQUEST payload is a JSON object keyed by
- * the rpc's parameter names; RESULT and ERROR payloads hold the rpc's result and
- * error values respectively.
+ * The payload bytes are produced by the configured body serialization (JSON,
+ * CBOR, ...), with plain string bodies as raw UTF-8 text. A REQUEST payload is
+ * the rpc's parameters keyed by name (empty for a parameterless rpc); RESULT
+ * and ERROR payloads hold the rpc's result and error values respectively.
  */
 public sealed interface RpcFrame {
     public val correlationId: Long
