@@ -20,18 +20,18 @@ public class WirespecSerialization(
 
     private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 
-    override fun <T : Any> serializeBody(t: T, kType: KType): ByteArray = when (t) {
+    override fun <T : Any> serializeBody(t: T, type: KType): ByteArray = when (t) {
         is String -> t.toByteArray()
         else -> wirespecObjectMapper.writeValueAsBytes(t)
     }
 
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalStdlibApi::class)
-    override fun <T : Any> deserializeBody(raw: ByteArray, kType: KType): T = when {
-        kType.classifier == String::class -> raw as T
+    override fun <T : Any> deserializeBody(raw: ByteArray, type: KType): T = when {
+        type.classifier == String::class -> raw as T
         else ->
             wirespecObjectMapper
-                .constructType(kType.javaType)
+                .constructType(type.javaType)
                 .let { wirespecObjectMapper.readValue(raw, it) }
     }
 }

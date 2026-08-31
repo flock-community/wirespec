@@ -91,7 +91,7 @@ internal fun transformPatternSwitchToValueSwitch(): Transformer = transformer {
                 ?.substringAfterLast(".")
                 ?.removePrefix("Response")
                 ?.toIntOrNull()
-            if (statusNum == null || typeName == null) {
+            if (statusNum == null) {
                 return@map case.copy(body = case.body.map { tr.transformStatement(it) })
             }
             val exprCode = TypeScriptGenerator.generateExpression(tr.transformExpression(stmt.expression))

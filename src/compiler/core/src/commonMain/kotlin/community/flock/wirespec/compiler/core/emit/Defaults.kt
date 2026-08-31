@@ -21,8 +21,9 @@ internal fun Reference.root(): Reference = when (this) {
     is Reference.Iterable -> reference
     else -> this
 }
-internal fun Reference.flattenListDict(): Reference = when (this) {
-    is Reference.Dict -> reference.flattenListDict()
-    is Reference.Iterable -> reference.flattenListDict()
+
+internal fun Reference.flatten(): Reference = when (this) {
+    is Reference.Dict -> reference.flatten()
+    is Reference.Iterable -> reference.flatten()
     else -> this
 }

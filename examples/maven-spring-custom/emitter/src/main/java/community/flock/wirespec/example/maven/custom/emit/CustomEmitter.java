@@ -15,11 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A custom emitter built on the IR pipeline. It extends the standard
- * {@link JavaIrEmitter} and replaces the IR {@link File} produced for every
- * Wirespec definition with a minimal custom class in the {@code hello}
- * package. Any IR element (structs, functions, raw code, ...) can be emitted
- * this way; the generator turns the IR tree into Java source.
+ * A custom emitter built on the IR pipeline. It extends the standard {@link JavaIrEmitter} and replaces the IR
+ * {@link File} produced for every Wirespec definition with a minimal custom class in the {@code hello} package. Any IR
+ * element (structs, functions, raw code, ...) can be emitted this way; the generator turns the IR tree into Java
+ * source.
  */
 public class CustomEmitter extends JavaIrEmitter {
 

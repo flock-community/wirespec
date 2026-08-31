@@ -1,11 +1,11 @@
 package community.flock.wirespec.ir.generator
 
 /** Joins to string only if non-empty; returns empty string otherwise. */
-internal inline fun <T> Iterable<T>.joinNonEmpty(
+internal fun <T> Iterable<T>.joinNonEmpty(
     separator: CharSequence = ", ",
     prefix: CharSequence = "",
     postfix: CharSequence = "",
-    noinline transform: ((T) -> CharSequence)? = null,
+    transform: ((T) -> CharSequence)? = null,
 ): String = if (none()) "" else joinToString(separator, prefix, postfix, transform = transform)
 
 /** Wraps the string with a prefix when it is not empty. */

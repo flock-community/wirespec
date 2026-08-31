@@ -15,7 +15,7 @@ internal class WirespecKotlinGeneratorAdapter(private val inner: KotestGenerator
     override fun <T> generate(
         path: List<String>,
         field: Wirespec.GeneratorField<T>,
-    ): T = inner.generate(path, field.toKotestField() as KotestField<T>) as T
+    ): T = inner.generate(path, field.toKotestField() as KotestField<T>)
 
     @Suppress("UNCHECKED_CAST")
     private fun Wirespec.GeneratorField<*>.toKotestField(): KotestField<*> = when (val field = this) {
