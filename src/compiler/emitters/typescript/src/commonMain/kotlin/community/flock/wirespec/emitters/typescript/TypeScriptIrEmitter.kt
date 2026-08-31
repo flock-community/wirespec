@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -356,7 +357,7 @@ open class TypeScriptIrEmitter : IrEmitter {
         )
     }
 
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+    override fun emitClient(endpoints: List<Endpoint>, graphqls: List<Graphql>, logger: Logger): File {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
 
         val clientImports = endpoints.map {

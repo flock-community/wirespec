@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 
@@ -13,6 +14,7 @@ const val DEFAULT_GENERATED_PACKAGE_STRING = "$DEFAULT_PACKAGE.generated"
 fun Definition.namespace() = when (this) {
     is Endpoint -> "endpoint"
     is Channel -> "channel"
+    is Graphql -> "graphql"
     is Model -> "model"
 }
 

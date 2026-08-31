@@ -14,6 +14,7 @@ pub trait Refined<T> {
 }
 pub trait Endpoint {}
 pub trait Channel {}
+pub trait GraphQL {}
 pub trait Path {}
 pub trait Queries {}
 pub trait Headers {}
@@ -85,6 +86,23 @@ pub struct RawResponse {
 }
 pub trait Transportation {
     async fn transport(&self, request: &RawRequest) -> RawResponse;
+}
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GraphQLErrorLocation {
+    pub line: i32,
+    pub column: i32,
+}
+pub struct GraphQLError {
+    pub message: String,
+    pub locations: Option<Vec<GraphQLErrorLocation>>,
+    pub path: Option<Vec<Box<dyn std::any::Any>>>,
+    pub extensions: Option<Box<dyn std::any::Any>>,
+}
+pub trait Cancellable {
+    fn cancel(&self);
+}
+pub trait StreamTransportation {
+    fn stream(&self, request: RawRequest, on_next: Box<dyn Fn(RawResponse)>) -> Box<dyn Cancellable>;
 }
 pub trait GeneratorField<T> {}
 pub struct GeneratorFieldString {

@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -20,6 +21,7 @@ interface Emitters :
     UnionDefinitionEmitter,
     IdentifierEmitter,
     ChannelDefinitionEmitter,
+    GraphqlDefinitionEmitter,
     NotYetImplemented
 
 interface TypeDefinitionEmitter {
@@ -57,6 +59,10 @@ interface UnionDefinitionEmitter {
 
 interface ChannelDefinitionEmitter {
     fun emit(channel: Channel): String
+}
+
+interface GraphqlDefinitionEmitter {
+    fun emit(graphql: Graphql): String
 }
 
 interface IdentifierEmitter {

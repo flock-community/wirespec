@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -38,6 +39,7 @@ abstract class LanguageEmitter :
             is Refined -> Emitted(emit(definition.identifier), emit(definition))
             is Union -> Emitted(emit(definition.identifier), emit(definition))
             is Channel -> Emitted(emit(definition.identifier), emit(definition))
+            is Graphql -> Emitted(emit(definition.identifier), emit(definition))
         }
     }
 
@@ -46,7 +48,7 @@ abstract class LanguageEmitter :
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
         fun Module.needImports() = statements.any { it is Endpoint || it is Enum || it is Refined }
         fun Module.irNeedsWirespecImport() = statements.any {
-            it is Endpoint || it is Enum || it is Refined || it is Type || it is Channel
+            it is Endpoint || it is Enum || it is Refined || it is Type || it is Channel || it is Graphql
         }
         fun Module.hasEndpoints() = statements.any { it is Endpoint }
         fun String.isStatusCode() = toIntOrNull()?.let { it in 100..599 } ?: false

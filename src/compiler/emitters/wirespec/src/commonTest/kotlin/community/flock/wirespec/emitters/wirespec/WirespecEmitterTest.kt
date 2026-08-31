@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileGraphqlTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
@@ -65,6 +66,34 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileChannelTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileGraphqlTest() {
+        val wirespec = """
+            |type Pet {
+            |  id: String,
+            |  name: String?,
+            |  tags: String[]
+            |}
+            |
+            |type PetInput {
+            |  name: String
+            |}
+            |
+            |graphql GetPet Query {id: String} -> Pet?
+            |graphql AddPet Mutation {input: PetInput} -> Pet
+            |graphql OnPetAdded Subscription {} -> Pet
+        """.trimMargin()
+
+        CompileGraphqlTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun graphqlRoundTripTest() {
+        val emitted = CompileGraphqlTest.compiler { WirespecEmitter() }.shouldBeRight()
+        val recompiled = compile(emitted)
+        recompiled { WirespecEmitter() } shouldBeRight emitted
     }
 
     @Test

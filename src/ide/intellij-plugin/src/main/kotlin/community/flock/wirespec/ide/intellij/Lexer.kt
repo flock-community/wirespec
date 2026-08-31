@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.GraphqlDefinition
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftBracket
@@ -113,6 +114,7 @@ class Lexer : IntellijLexer() {
             EnumTypeDefinition::class to Types.ENUM_DEF,
             EndpointDefinition::class to Types.ENDPOINT_DEF,
             ChannelDefinition::class to Types.CHANNEL_DEF,
+            GraphqlDefinition::class to Types.CHANNEL_DEF,
             WsString::class to Types.WS_STRING,
             WsInteger::class to Types.WS_INTEGER,
             WsNumber::class to Types.WS_NUMBER,

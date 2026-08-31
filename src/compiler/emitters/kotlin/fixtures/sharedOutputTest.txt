@@ -14,6 +14,7 @@ object Wirespec {
   }
   interface Endpoint
   interface Channel
+  interface GraphQL
   interface Path
   interface Queries
   interface Headers
@@ -80,6 +81,22 @@ object Wirespec {
     )
   fun interface Transportation {
       suspend fun transport(request: RawRequest): RawResponse
+  }
+  data class GraphQLErrorLocation(
+      val line: Int,
+      val column: Int
+    )
+  data class GraphQLError(
+      val message: String,
+      val locations: List<GraphQLErrorLocation>?,
+      val path: List<Any>?,
+      val extensions: Any?
+    )
+  fun interface Cancellable {
+      fun cancel()
+  }
+  fun interface StreamTransportation {
+      fun stream(request: RawRequest, onNext: (RawResponse) -> Unit): Cancellable
   }
   sealed interface GeneratorField<T: Any?>
   data class GeneratorFieldString(

@@ -3,6 +3,7 @@ package community.flock.wirespec.plugin
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
+import community.flock.wirespec.converter.graphql.GraphQLEmitter
 import community.flock.wirespec.emitters.java.JavaIrEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.emitters.python.PythonIrEmitter
@@ -24,6 +25,7 @@ enum class Language {
     OpenAPIV2,
     OpenAPIV3,
     Avro,
+    GraphQL,
     ;
 
     companion object {
@@ -43,4 +45,5 @@ fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared) = when 
     Language.OpenAPIV2 -> OpenAPIV2Emitter
     Language.OpenAPIV3 -> OpenAPIV3Emitter
     Language.Avro -> AvroJsonEmitter
+    Language.GraphQL -> GraphQLEmitter
 }

@@ -275,7 +275,7 @@ class DslTest {
         assertTrue(javaCode.contains("return new User(1);"))
 
         // Python
-        assertTrue(pythonCode.contains("return myFunc(a=1)"))
+        assertTrue(pythonCode.contains("return myFunc(1)"))
         assertTrue(pythonCode.contains("return User(id=1)"))
 
         // TypeScript
@@ -460,7 +460,7 @@ class DslTest {
 
         // Python
         assertTrue(pythonCode.contains("x = 1"))
-        assertTrue(pythonCode.contains("y = myFunc(a=1)"))
+        assertTrue(pythonCode.contains("y = myFunc(1)"))
 
         // TypeScript
         assertTrue(tsCode.contains("const x = 1;"))

@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
@@ -205,6 +206,8 @@ open class RustIrEmitter(
             "PathDeserializer" to RawElement("pub trait PathDeserializer {\n    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;\n}"),
             "ParamSerializer" to RawElement("pub trait ParamSerializer {\n    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;\n}"),
             "ParamDeserializer" to RawElement("pub trait ParamDeserializer {\n    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;\n}"),
+            "Cancellable" to RawElement("pub trait Cancellable {\n    fn cancel(&self);\n}"),
+            "StreamTransportation" to RawElement("pub trait StreamTransportation {\n    fn stream(&self, request: RawRequest, on_next: Box<dyn Fn(RawResponse)>) -> Box<dyn Cancellable>;\n}"),
         )
 
         val transportationTrait = `interface`("Transportation") {
@@ -475,7 +478,7 @@ open class RustIrEmitter(
         )
     }
 
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+    override fun emitClient(endpoints: List<Endpoint>, graphqls: List<Graphql>, logger: Logger): File {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
 
         val modDeclarations = endpoints.joinToString("\n") { endpoint ->

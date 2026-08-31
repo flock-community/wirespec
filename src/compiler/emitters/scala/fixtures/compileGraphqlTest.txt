@@ -1,0 +1,233 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class Pet(
+  val id: String,
+  val name: Option[String],
+  val tags: List[String]
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    List.empty[String]
+}
+
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class PetInput(
+  val name: String
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    List.empty[String]
+}
+
+package community.flock.wirespec.generated.graphql
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+object GetPet extends Wirespec.GraphQL {
+  case class Input(
+      val id: String
+    )
+  case class Data(
+      val getPet: Option[Pet]
+    )
+  case class Result(
+      val data: Option[Data],
+      val errors: Option[List[Wirespec.GraphQLError]]
+    )
+  case class RequestBody(
+      val query: String,
+      val variables: Input
+    )
+  def document(): String =
+    "query GetPet($id: String!) { getPet(id: $id) { id name tags } }"
+  def toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
+    new Wirespec.RawRequest(
+      method = "POST",
+      path = List("graphql"),
+      queries = Map.empty,
+      headers = Map.empty,
+      body = Some(serialization.serializeBody[RequestBody](RequestBody(
+        query = document(),
+        variables = input
+      ), scala.reflect.classTag[RequestBody]))
+    )
+  def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result =
+    (response.body.map(it => serialization.deserializeBody[Result](it, scala.reflect.classTag[Result])).getOrElse(throw new IllegalStateException("body is null")))
+  trait Handler extends Wirespec.Handler {
+      def getPet(input: Input): Result
+  }
+  trait Call extends Wirespec.Call {
+      def getPet(input: Input): Result
+  }
+}
+
+package community.flock.wirespec.generated.graphql
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+object AddPet extends Wirespec.GraphQL {
+  case class Input(
+      val input: PetInput
+    )
+  case class Data(
+      val addPet: Pet
+    )
+  case class Result(
+      val data: Option[Data],
+      val errors: Option[List[Wirespec.GraphQLError]]
+    )
+  case class RequestBody(
+      val query: String,
+      val variables: Input
+    )
+  def document(): String =
+    "mutation AddPet($input: PetInput!) { addPet(input: $input) { id name tags } }"
+  def toRawRequest(serialization: Wirespec.Serializer, input: Input): Wirespec.RawRequest =
+    new Wirespec.RawRequest(
+      method = "POST",
+      path = List("graphql"),
+      queries = Map.empty,
+      headers = Map.empty,
+      body = Some(serialization.serializeBody[RequestBody](RequestBody(
+        query = document(),
+        variables = input
+      ), scala.reflect.classTag[RequestBody]))
+    )
+  def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result =
+    (response.body.map(it => serialization.deserializeBody[Result](it, scala.reflect.classTag[Result])).getOrElse(throw new IllegalStateException("body is null")))
+  trait Handler extends Wirespec.Handler {
+      def addPet(input: Input): Result
+  }
+  trait Call extends Wirespec.Call {
+      def addPet(input: Input): Result
+  }
+}
+
+package community.flock.wirespec.generated.graphql
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+object OnPetAdded extends Wirespec.GraphQL {
+  object Input
+  case class Data(
+      val onPetAdded: Pet
+    )
+  case class Result(
+      val data: Option[Data],
+      val errors: Option[List[Wirespec.GraphQLError]]
+    )
+  case class RequestBody(
+      val query: String,
+      val variables: Input.type
+    )
+  def document(): String =
+    "subscription OnPetAdded { onPetAdded { id name tags } }"
+  def toRawRequest(serialization: Wirespec.Serializer, input: Input.type): Wirespec.RawRequest =
+    new Wirespec.RawRequest(
+      method = "POST",
+      path = List("graphql"),
+      queries = Map.empty,
+      headers = Map.empty,
+      body = Some(serialization.serializeBody[RequestBody](RequestBody(
+        query = document(),
+        variables = input
+      ), scala.reflect.classTag[RequestBody]))
+    )
+  def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Result =
+    (response.body.map(it => serialization.deserializeBody[Result](it, scala.reflect.classTag[Result])).getOrElse(throw new IllegalStateException("body is null")))
+  trait Handler extends Wirespec.Handler {
+      def onPetAdded(input: Input.type, onNext: (Result) => Unit): Wirespec.Cancellable
+  }
+  trait Call extends Wirespec.Call {
+      def onPetAdded(input: Input.type, onNext: (Result) => Unit): Wirespec.Cancellable
+  }
+}
+
+case class GetPetClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) extends GetPet.Call {
+  override def getPet(input: GetPet.Input): GetPet.Result = {
+    val rawRequest = GetPet.toRawRequest(serialization, input)
+    val rawResponse = transportation.transport(rawRequest)
+    GetPet.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+case class AddPetClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) extends AddPet.Call {
+  override def addPet(input: AddPet.Input): AddPet.Result = {
+    val rawRequest = AddPet.toRawRequest(serialization, input)
+    val rawResponse = transportation.transport(rawRequest)
+    AddPet.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+case class OnPetAddedClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.StreamTransportation
+) extends OnPetAdded.Call {
+  override def onPetAdded(input: OnPetAdded.Input.type, onNext: (OnPetAdded.Result) => Unit): Wirespec.Cancellable = {
+    val rawRequest = OnPetAdded.toRawRequest(serialization, input)
+    transportation.stream(rawRequest, (raw) => onNext(OnPetAdded.fromRawResponse(serialization, raw)))
+  }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Pet
+object PetGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Pet =
+    new Pet(
+      id = generator.generate(path ++ List("id"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )),
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldNullable(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      )))),
+      tags = generator.generate(path ++ List("tags"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      ))))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.PetInput
+object PetInputGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): PetInput =
+    new PetInput(name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+      regex = None,
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Pet
+import community.flock.wirespec.generated.model.PetInput
+import community.flock.wirespec.generated.graphql.GetPet
+import community.flock.wirespec.generated.graphql.AddPet
+import community.flock.wirespec.generated.client.GetPetClient
+import community.flock.wirespec.generated.client.AddPetClient
+case class Client(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) extends GetPet.Call[[A] =>> A] with AddPet.Call[[A] =>> A] {
+  override def getPet(input: GetPet.Input): GetPet.Result =
+    new GetPetClient(
+      serialization = serialization,
+      transportation = transportation
+    ).getPet(input)
+  override def addPet(input: AddPet.Input): AddPet.Result =
+    new AddPetClient(
+      serialization = serialization,
+      transportation = transportation
+    ).addPet(input)
+}

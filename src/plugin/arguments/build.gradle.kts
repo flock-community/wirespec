@@ -47,6 +47,7 @@ kotlin {
                 api(project(":src:compiler:emitters:scala"))
                 api(project(":src:compiler:emitters:wirespec"))
                 implementation(project(":src:converter:avro"))
+                implementation(project(":src:converter:graphql"))
                 implementation(project(":src:converter:openapi"))
                 implementation(libs.kotlinx.io.core)
             }

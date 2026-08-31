@@ -17,7 +17,11 @@ interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentif
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { "$Spacer${it.emit()}" }
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}"
+    override fun Field.emit(): String = "${emit(identifier)}${parameters.emitParameters()}: ${reference.emit()}"
+
+    private fun List<Field>.emitParameters() = takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "(", ")") { it.emit() }
+        ?: ""
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Dict -> "{ ${reference.emit()} }"

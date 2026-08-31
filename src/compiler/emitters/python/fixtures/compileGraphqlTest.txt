@@ -1,0 +1,231 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class Pet(Wirespec.Shape):
+    id: str
+    name: Optional[str]
+    tags: list[str]
+    def validate(self) -> list[str]:
+        return []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class PetInput(Wirespec.Shape):
+    name: str
+    def validate(self) -> list[str]:
+        return []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+class GetPet(Wirespec.GraphQL):
+    @dataclass
+    class Input:
+        id: str
+    @dataclass
+    class Data:
+        getPet: Optional[Pet]
+    @dataclass
+    class Result:
+        data: Optional[GetPet.Data]
+        errors: Optional[list[Wirespec.GraphQLError]]
+    @dataclass
+    class RequestBody:
+        query: str
+        variables: GetPet.Input
+    @staticmethod
+    def document() -> str:
+        return 'query GetPet($id: String!) { getPet(id: $id) { id name tags } }'
+    @staticmethod
+    def toRawRequest(serialization: Wirespec.Serializer, input: GetPet.Input) -> Wirespec.RawRequest:
+        return Wirespec.RawRequest(method='POST', path=['graphql'], queries={}, headers={}, body=serialization.serializeBody(RequestBody(query=document(), variables=input), RequestBody))
+    @staticmethod
+    def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> GetPet.Result:
+        return (serialization.deserializeBody(response.body, Result) if response.body is not None else _raise('body is null'))
+    class Handler(Wirespec.Handler, ABC):
+        @abstractmethod
+        async def GetPet(self, input: GetPet.Input) -> GetPet.Result:
+            ...
+    class Call(Wirespec.Call, ABC):
+        @abstractmethod
+        async def GetPet(self, input: GetPet.Input) -> GetPet.Result:
+            ...
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+class AddPet(Wirespec.GraphQL):
+    @dataclass
+    class Input:
+        input: PetInput
+    @dataclass
+    class Data:
+        addPet: Pet
+    @dataclass
+    class Result:
+        data: Optional[AddPet.Data]
+        errors: Optional[list[Wirespec.GraphQLError]]
+    @dataclass
+    class RequestBody:
+        query: str
+        variables: AddPet.Input
+    @staticmethod
+    def document() -> str:
+        return 'mutation AddPet($input: PetInput!) { addPet(input: $input) { id name tags } }'
+    @staticmethod
+    def toRawRequest(serialization: Wirespec.Serializer, input: AddPet.Input) -> Wirespec.RawRequest:
+        return Wirespec.RawRequest(method='POST', path=['graphql'], queries={}, headers={}, body=serialization.serializeBody(RequestBody(query=document(), variables=input), RequestBody))
+    @staticmethod
+    def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> AddPet.Result:
+        return (serialization.deserializeBody(response.body, Result) if response.body is not None else _raise('body is null'))
+    class Handler(Wirespec.Handler, ABC):
+        @abstractmethod
+        async def AddPet(self, input: AddPet.Input) -> AddPet.Result:
+            ...
+    class Call(Wirespec.Call, ABC):
+        @abstractmethod
+        async def AddPet(self, input: AddPet.Input) -> AddPet.Result:
+            ...
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+class OnPetAdded(Wirespec.GraphQL):
+    @dataclass
+    class Input:
+        pass
+    @dataclass
+    class Data:
+        onPetAdded: Pet
+    @dataclass
+    class Result:
+        data: Optional[OnPetAdded.Data]
+        errors: Optional[list[Wirespec.GraphQLError]]
+    @dataclass
+    class RequestBody:
+        query: str
+        variables: OnPetAdded.Input
+    @staticmethod
+    def document() -> str:
+        return 'subscription OnPetAdded { onPetAdded { id name tags } }'
+    @staticmethod
+    def toRawRequest(serialization: Wirespec.Serializer, input: OnPetAdded.Input) -> Wirespec.RawRequest:
+        return Wirespec.RawRequest(method='POST', path=['graphql'], queries={}, headers={}, body=serialization.serializeBody(RequestBody(query=document(), variables=input), RequestBody))
+    @staticmethod
+    def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> OnPetAdded.Result:
+        return (serialization.deserializeBody(response.body, Result) if response.body is not None else _raise('body is null'))
+    class Handler(Wirespec.Handler, ABC):
+        @abstractmethod
+        def OnPetAdded(self, input: OnPetAdded.Input, onNext: Callable[[OnPetAdded.Result], None]) -> Wirespec.Cancellable:
+            ...
+    class Call(Wirespec.Call, ABC):
+        @abstractmethod
+        def OnPetAdded(self, input: OnPetAdded.Input, onNext: Callable[[OnPetAdded.Result], None]) -> Wirespec.Cancellable:
+            ...
+
+@dataclass
+class GetPetClient(GetPet.Call):
+    serialization: Wirespec.Serialization
+    transportation: Wirespec.Transportation
+    async def GetPet(self, input: GetPet.Input) -> GetPet.Result:
+        rawRequest = GetPet.toRawRequest(serialization, input)
+        rawResponse = transportation.transport(rawRequest)
+        return GetPet.fromRawResponse(serialization, rawResponse)
+
+@dataclass
+class AddPetClient(AddPet.Call):
+    serialization: Wirespec.Serialization
+    transportation: Wirespec.Transportation
+    async def AddPet(self, input: AddPet.Input) -> AddPet.Result:
+        rawRequest = AddPet.toRawRequest(serialization, input)
+        rawResponse = transportation.transport(rawRequest)
+        return AddPet.fromRawResponse(serialization, rawResponse)
+
+@dataclass
+class OnPetAddedClient(OnPetAdded.Call):
+    serialization: Wirespec.Serialization
+    transportation: Wirespec.StreamTransportation
+    def OnPetAdded(self, input: OnPetAdded.Input, onNext: Callable[[OnPetAdded.Result], None]) -> Wirespec.Cancellable:
+        rawRequest = OnPetAdded.toRawRequest(serialization, input)
+        return transportation.stream(rawRequest, lambda raw: onNext(OnPetAdded.fromRawResponse(serialization, raw)))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Pet import Pet
+class PetGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Pet:
+        return Pet(id=generator.generate(path + ['id'], Wirespec.GeneratorFieldString(regex=None, annotations=[])), name=generator.generate(path + ['name'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))), tags=generator.generate(path + ['tags'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex=None, annotations=[])))))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.PetInput import PetInput
+class PetInputGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> PetInput:
+        return PetInput(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from .wirespec import T, Wirespec, _raise
+from .model.Pet import Pet
+from .model.PetInput import PetInput
+from .graphql.GetPet import *
+from .graphql.AddPet import *
+from .client.GetPetClient import GetPetClient
+from .client.AddPetClient import AddPetClient
+@dataclass
+class Client(GetPet.Call, AddPet.Call):
+    serialization: Wirespec.Serialization
+    transportation: Wirespec.Transportation
+    async def get_pet(self, input: GetPet.Input) -> GetPet.Result:
+        return await GetPetClient(serialization=self.serialization, transportation=self.transportation).get_pet(input)
+    async def add_pet(self, input: AddPet.Input) -> AddPet.Result:
+        return await AddPetClient(serialization=self.serialization, transportation=self.transportation).add_pet(input)

@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
@@ -256,16 +257,18 @@ open class PythonIrEmitter(
         )
     }
 
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
-        val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+    override fun emitClient(endpoints: List<Endpoint>, graphqls: List<Graphql>, logger: Logger): File {
+        val modelImports = (endpoints.flatMap { it.importReferences() } + graphqls.flatMap { it.importReferences() })
+            .distinctBy { it.value }
             .map { import(".model.${it.value}", it.value) }
         val endpointImports = endpoints.map { import(".endpoint.${it.identifier.value}", "*") }
-        val clientImports =
-            endpoints.map { import(".client.${it.identifier.value}Client", "${it.identifier.value}Client") }
-        val allImports = modelImports + endpointImports + clientImports
+        val graphqlImports = graphqls.map { import(".graphql.${it.identifier.value}", "*") }
+        val clientImports = (endpoints.map { it.identifier.value } + graphqls.map { it.identifier.value })
+            .map { import(".client.${it}Client", "${it}Client") }
+        val allImports = modelImports + endpointImports + graphqlImports + clientImports
         val endpointNames = endpoints.map { it.identifier.value }
 
-        val file = super.emitClient(endpoints, logger)
+        val file = super.emitClient(endpoints, graphqls, logger)
             .sanitizeNames(sanitizationConfig)
             .addSelfReceiverToClientFields()
             .snakeCaseClientFunctions()

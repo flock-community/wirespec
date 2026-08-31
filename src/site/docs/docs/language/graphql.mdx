@@ -1,0 +1,69 @@
+---
+id: graphql
+title: GraphQL
+slug: /language/graphql
+sidebar_position: 3
+---
+
+Wirespec supports GraphQL operations as a first-class language construct. Each `graphql` definition describes exactly
+one root operation — queries and mutations are never bundled — with an identifier, an operation kind (`Query`,
+`Mutation` or `Subscription`), a brace-delimited argument shape (`{}` when there are none), and a return
+[type](types).
+
+```wirespec
+type Pet {
+  id: String,
+  name: String?
+}
+
+type PetInput {
+  name: String
+}
+
+graphql GetPet Query {id: String} -> Pet?
+graphql AddPet Mutation {input: PetInput} -> Pet
+graphql OnPetAdded Subscription {} -> Pet
+```
+
+The identifier names the generated code and the GraphQL operation. The root field sent to the server is derived from
+the identifier — a trailing kind suffix is dropped, then the first letter is lowercased — so `GetPet` calls `getPet`,
+and a definition named `PetQuery` calls `pet`. Name your definition so the derived field matches the server's schema.
+
+## Generated code
+
+For every operation Wirespec generates a typed `Input`, the `Data`/`Result` response envelope (preserving GraphQL's
+partial-error semantics with `errors: [GraphQLError]`), the complete GraphQL document — including variable definitions
+and a selection set derived from the return type — and a client that sends `{query, variables}` over `POST /graphql`
+using the standard Wirespec transport.
+
+Subscriptions use a callback-based contract (`Wirespec.StreamTransportation`), so the wire protocol (for example
+graphql-ws over WebSocket, or SSE) is supplied by your transport implementation.
+
+## Parameterized fields
+
+Fields on ordinary types can carry GraphQL field arguments:
+
+```wirespec
+type User {
+  posts(first: Integer32?, after: String?): Post[]
+}
+```
+
+Non-nullable parameters of selected fields are lifted into the operation's `Input` as variables; nullable parameters
+are omitted from the generated document, letting the server apply its defaults.
+
+## Converting GraphQL schemas
+
+A GraphQL SDL schema (`.graphqls`) can be converted to Wirespec — `type`, `input`, `interface`, `enum`, `union` and
+`scalar` map onto Wirespec models, and every root field becomes one `graphql` definition. The reverse direction emits
+an SDL schema from Wirespec definitions:
+
+```shell
+wirespec convert -i schema.graphqls -f GraphQL -l Kotlin
+wirespec compile -i api.ws -l GraphQL
+```
+
+## Recursive types
+
+Selection sets are generated at compile time by flattening the return type. Recursive references are cut with
+`__typename`; use nullable back-references in recursive types so the cut branch can deserialize.

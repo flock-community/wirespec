@@ -20,6 +20,8 @@ public interface Wirespec {
   }
   public interface Channel {
   }
+  public interface GraphQL {
+  }
   public interface Path {
   }
   public interface Queries {
@@ -101,6 +103,24 @@ public interface Wirespec {
   };
   public interface Transportation {
     public java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request);
+  }
+  public static record GraphQLErrorLocation (
+    Integer line,
+    Integer column
+  ) {
+  };
+  public static record GraphQLError (
+    String message,
+    java.util.Optional<java.util.List<GraphQLErrorLocation>> locations,
+    java.util.Optional<java.util.List<Object>> path,
+    java.util.Optional<Object> extensions
+  ) {
+  };
+  public interface Cancellable {
+    public void cancel();
+  }
+  public interface StreamTransportation {
+    public Cancellable stream(RawRequest request, java.util.function.Function<RawResponse, Void> onNext);
   }
   public sealed interface GeneratorField<T> {
   }

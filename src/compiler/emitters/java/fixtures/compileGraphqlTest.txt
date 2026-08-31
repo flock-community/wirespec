@@ -1,0 +1,274 @@
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record Pet (
+  String id,
+  java.util.Optional<String> name,
+  java.util.List<String> tags
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+import community.flock.wirespec.java.Wirespec;
+public record PetInput (
+  String name
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.List.<String>of();
+  }
+};
+
+package community.flock.wirespec.generated.graphql;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Pet;
+public interface GetPet extends Wirespec.GraphQL {
+  public static record Input (
+    String id
+  ) {
+  };
+  public static record Data (
+    java.util.Optional<Pet> getPet
+  ) {
+  };
+  public static record Result (
+    java.util.Optional<Data> data,
+    java.util.Optional<java.util.List<Wirespec.GraphQLError>> errors
+  ) {
+  };
+  public static record RequestBody (
+    String query,
+    Input variables
+  ) {
+  };
+  public static String document() {
+    return "query GetPet($id: String!) { getPet(id: $id) { id name tags } }";
+  }
+  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Input input) {
+    return new Wirespec.RawRequest(
+      "POST",
+      java.util.List.of("graphql"),
+      java.util.Collections.emptyMap(),
+      java.util.Collections.emptyMap(),
+      java.util.Optional.of(serialization.<RequestBody>serializeBody(new RequestBody(
+        document(),
+        input
+      ), Wirespec.getType(RequestBody.class, null)))
+    );
+  }
+  public static Result fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    return response.body().map(it -> serialization.<Result>deserializeBody(it, Wirespec.getType(Result.class, null))).orElseThrow(() -> new IllegalStateException("body is null"));
+  }
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Result> getPet(Input input);
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Result> getPet(Input input);
+  }
+}
+
+package community.flock.wirespec.generated.graphql;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.PetInput;
+import community.flock.wirespec.generated.model.Pet;
+public interface AddPet extends Wirespec.GraphQL {
+  public static record Input (
+    PetInput input
+  ) {
+  };
+  public static record Data (
+    Pet addPet
+  ) {
+  };
+  public static record Result (
+    java.util.Optional<Data> data,
+    java.util.Optional<java.util.List<Wirespec.GraphQLError>> errors
+  ) {
+  };
+  public static record RequestBody (
+    String query,
+    Input variables
+  ) {
+  };
+  public static String document() {
+    return "mutation AddPet($input: PetInput!) { addPet(input: $input) { id name tags } }";
+  }
+  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Input input) {
+    return new Wirespec.RawRequest(
+      "POST",
+      java.util.List.of("graphql"),
+      java.util.Collections.emptyMap(),
+      java.util.Collections.emptyMap(),
+      java.util.Optional.of(serialization.<RequestBody>serializeBody(new RequestBody(
+        document(),
+        input
+      ), Wirespec.getType(RequestBody.class, null)))
+    );
+  }
+  public static Result fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    return response.body().map(it -> serialization.<Result>deserializeBody(it, Wirespec.getType(Result.class, null))).orElseThrow(() -> new IllegalStateException("body is null"));
+  }
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Result> addPet(Input input);
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Result> addPet(Input input);
+  }
+}
+
+package community.flock.wirespec.generated.graphql;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Pet;
+public interface OnPetAdded extends Wirespec.GraphQL {
+  public static record Input () {
+  };
+  public static record Data (
+    Pet onPetAdded
+  ) {
+  };
+  public static record Result (
+    java.util.Optional<Data> data,
+    java.util.Optional<java.util.List<Wirespec.GraphQLError>> errors
+  ) {
+  };
+  public static record RequestBody (
+    String query,
+    Input variables
+  ) {
+  };
+  public static String document() {
+    return "subscription OnPetAdded { onPetAdded { id name tags } }";
+  }
+  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Input input) {
+    return new Wirespec.RawRequest(
+      "POST",
+      java.util.List.of("graphql"),
+      java.util.Collections.emptyMap(),
+      java.util.Collections.emptyMap(),
+      java.util.Optional.of(serialization.<RequestBody>serializeBody(new RequestBody(
+        document(),
+        input
+      ), Wirespec.getType(RequestBody.class, null)))
+    );
+  }
+  public static Result fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    return response.body().map(it -> serialization.<Result>deserializeBody(it, Wirespec.getType(Result.class, null))).orElseThrow(() -> new IllegalStateException("body is null"));
+  }
+  public interface Handler extends Wirespec.Handler {
+    public Wirespec.Cancellable onPetAdded(Input input, java.util.function.Function<Result, Void> onNext);
+  }
+  public interface Call extends Wirespec.Call {
+    public Wirespec.Cancellable onPetAdded(Input input, java.util.function.Function<Result, Void> onNext);
+  }
+}
+
+package community.flock.wirespec.generated.client;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Pet;
+import community.flock.wirespec.generated.graphql.GetPet;
+public record GetPetClient (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements GetPet.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<GetPet.Result> getPet(GetPet.Input input) {
+    final var rawRequest = GetPet.toRawRequest(serialization(), input);
+    return transportation().transport(rawRequest).thenApply(rawResponse -> GetPet.fromRawResponse(serialization(), rawResponse));
+  }
+};
+
+package community.flock.wirespec.generated.client;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.PetInput;
+import community.flock.wirespec.generated.model.Pet;
+import community.flock.wirespec.generated.graphql.AddPet;
+public record AddPetClient (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements AddPet.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<AddPet.Result> addPet(AddPet.Input input) {
+    final var rawRequest = AddPet.toRawRequest(serialization(), input);
+    return transportation().transport(rawRequest).thenApply(rawResponse -> AddPet.fromRawResponse(serialization(), rawResponse));
+  }
+};
+
+package community.flock.wirespec.generated.client;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Pet;
+import community.flock.wirespec.generated.graphql.OnPetAdded;
+public record OnPetAddedClient (
+  Wirespec.Serialization serialization,
+  Wirespec.StreamTransportation transportation
+) implements OnPetAdded.Call {
+  @Override
+  public Wirespec.Cancellable onPetAdded(OnPetAdded.Input input, java.util.function.Function<OnPetAdded.Result, Void> onNext) {
+    final var rawRequest = OnPetAdded.toRawRequest(serialization(), input);
+    return transportation().stream(rawRequest, (raw) -> onNext.apply(OnPetAdded.fromRawResponse(serialization(), raw)));
+  }
+};
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Pet;
+public interface PetGenerator {
+  public static Pet generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Pet(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("id")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.PetInput;
+public interface PetInputGenerator {
+  public static PetInput generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new PetInput(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.empty(),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Pet;
+import community.flock.wirespec.generated.model.PetInput;
+import community.flock.wirespec.generated.graphql.GetPet;
+import community.flock.wirespec.generated.graphql.AddPet;
+import community.flock.wirespec.generated.client.GetPetClient;
+import community.flock.wirespec.generated.client.AddPetClient;
+public record Client (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements GetPet.Call, AddPet.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<GetPet.Result> getPet(GetPet.Input input) {
+    return new GetPetClient(
+      serialization(),
+      transportation()
+    ).getPet(input);
+  }
+  @Override
+  public java.util.concurrent.CompletableFuture<AddPet.Result> addPet(AddPet.Input input) {
+    return new AddPetClient(
+      serialization(),
+      transportation()
+    ).addPet(input);
+  }
+};

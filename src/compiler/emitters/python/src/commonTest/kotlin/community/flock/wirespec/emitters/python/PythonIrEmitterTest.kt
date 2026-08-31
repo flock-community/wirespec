@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileGraphqlTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
@@ -31,6 +32,11 @@ class PythonIrEmitterTest {
         val python = EmitterFixtures.compileChannelTest
 
         CompileChannelTest.compiler { PythonIrEmitter() } shouldBeRight python
+    }
+
+    @Test
+    fun compileGraphqlTest() {
+        CompileGraphqlTest.compiler { PythonIrEmitter() } shouldBeRight EmitterFixtures.compileGraphqlTest
     }
 
     @Test

@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Constraint
@@ -38,6 +39,7 @@ fun WsDefinition.consume(): Definition = when (this) {
     is WsType -> consume()
     is WsUnion -> consume()
     is WsChannel -> consume()
+    is WsGraphql -> consume()
 }
 
 fun WsEndpoint.consume(): Endpoint = Endpoint(
@@ -110,10 +112,26 @@ private fun WsChannel.consume() = Channel(
     reference = reference.consume(),
 )
 
-private fun WsField.consume() = Field(
+private fun WsGraphql.consume() = Graphql(
+    comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
+    kind = kind.consume(),
+    inputs = inputs.map { it.consume() },
+    output = output.consume(),
+)
+
+private fun WsGraphqlKind.consume() = when (this) {
+    WsGraphqlKind.Query -> Graphql.Kind.Query
+    WsGraphqlKind.Mutation -> Graphql.Kind.Mutation
+    WsGraphqlKind.Subscription -> Graphql.Kind.Subscription
+}
+
+private fun WsField.consume(): Field = Field(
     identifier = identifier.consume(),
     annotations = emptyList(),
     reference = reference.consume(),
+    parameters = parameters.map { it.consume() },
 )
 
 private fun WsRequest.consume() = Endpoint.Request(
@@ -223,6 +241,20 @@ fun Definition.produce(): WsDefinition = when (this) {
         comment = comment?.value,
         reference = reference.produce(),
     )
+
+    is Graphql -> WsGraphql(
+        identifier = identifier.value,
+        comment = comment?.value,
+        kind = kind.produce(),
+        inputs = inputs.produce(),
+        output = output.produce(),
+    )
+}
+
+private fun Graphql.Kind.produce() = when (this) {
+    Graphql.Kind.Query -> WsGraphqlKind.Query
+    Graphql.Kind.Mutation -> WsGraphqlKind.Mutation
+    Graphql.Kind.Subscription -> WsGraphqlKind.Subscription
 }
 
 private fun Type.Shape.produce() = WsShape(
@@ -236,9 +268,10 @@ private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
     }
 }.toTypedArray()
 
-private fun Field.produce() = WsField(
+private fun Field.produce(): WsField = WsField(
     identifier = identifier.produce(),
     reference = reference.produce(),
+    parameters = parameters.map { it.produce() }.toTypedArray(),
 )
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
@@ -365,6 +398,18 @@ data class WsChannel(
 ) : WsDefinition
 
 @JsExport
+data class WsGraphql(
+    override val identifier: String,
+    override val comment: String?,
+    val kind: WsGraphqlKind,
+    val inputs: Array<WsField>,
+    val output: WsReference,
+) : WsDefinition
+
+@JsExport
+enum class WsGraphqlKind { Query, Mutation, Subscription }
+
+@JsExport
 data class WsRefined(
     override val identifier: String,
     override val comment: String?,
@@ -390,7 +435,11 @@ data class WsParam(
 data class Shape(val value: Array<WsField>)
 
 @JsExport
-data class WsField(val identifier: WsFieldIdentifier, val reference: WsReference)
+data class WsField(
+    val identifier: WsFieldIdentifier,
+    val reference: WsReference,
+    val parameters: Array<WsField> = emptyArray(),
+)
 
 @JsExport
 sealed interface WsIdentifier

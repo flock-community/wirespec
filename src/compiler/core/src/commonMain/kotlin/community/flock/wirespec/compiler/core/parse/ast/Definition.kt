@@ -12,6 +12,7 @@ data class Field(
     override val annotations: List<Annotation>,
     val identifier: FieldIdentifier,
     val reference: Reference,
+    val parameters: List<Field> = emptyList(),
 ) : HasAnnotations
 
 data class Endpoint(
@@ -47,6 +48,25 @@ data class Channel(
     override val identifier: DefinitionIdentifier,
     val reference: Reference,
 ) : Definition
+
+data class Graphql(
+    override val comment: Comment?,
+    override val annotations: List<Annotation>,
+    override val identifier: DefinitionIdentifier,
+    val kind: Kind,
+    val inputs: List<Field>,
+    val output: Reference,
+) : Definition {
+    enum class Kind { Query, Mutation, Subscription }
+
+    // The GraphQL root field name: the identifier, minus a trailing kind suffix, dromedary-cased.
+    // GetPet (Query) -> getPet; PetQuery (Query) -> pet, restoring converted schemas' field names.
+    val operation: String
+        get() = identifier.value
+            .removeSuffix(kind.name)
+            .ifEmpty { identifier.value }
+            .replaceFirstChar(Char::lowercaseChar)
+}
 
 sealed interface Model : Definition
 

@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Graphql
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
@@ -206,6 +207,10 @@ open class KotlinIrEmitter(
         .sanitizeNames(sanitizationConfig)
         .prependImports(channel.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
+    override fun emit(graphql: Graphql, module: Module): File = super.emit(graphql, module)
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(graphql.buildModelImports(packageName).takeIf { it.isNotEmpty() })
+
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildModelImports(packageName)
         val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
@@ -223,15 +228,35 @@ open class KotlinIrEmitter(
         )
     }
 
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
-        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+    override fun emitGraphqlClient(graphql: Graphql): File {
+        val imports = graphql.buildModelImports(packageName)
+        val graphqlImport = import("${packageName.value}.graphql", graphql.identifier.value)
+        val file = super.emitGraphqlClient(graphql).sanitizeNames(sanitizationConfig)
+        val subPackageName = packageName + "client"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase()),
+            elements = buildList {
+                add(LanguagePackage(subPackageName.value))
+                addAll(wirespecImports)
+                addAll(imports)
+                add(graphqlImport)
+                addAll(file.elements)
+            }
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, graphqls: List<Graphql>, logger: Logger): File {
+        val imports = (endpoints.flatMap { it.importReferences() } + graphqls.flatMap { it.importReferences() })
+            .distinctBy { it.value }
             .map { import("${packageName.value}.model", it.value) }
         val endpointImports = endpoints
             .map { import("${packageName.value}.endpoint", it.identifier.value) }
-        val clientImports = endpoints
-            .map { import("${packageName.value}.client", "${it.identifier.value}Client") }
-        val allImports = imports + endpointImports + clientImports
-        val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig)
+        val graphqlImports = graphqls
+            .map { import("${packageName.value}.graphql", it.identifier.value) }
+        val clientImports = (endpoints.map { it.identifier.value } + graphqls.map { it.identifier.value })
+            .map { import("${packageName.value}.client", "${it}Client") }
+        val allImports = imports + endpointImports + graphqlImports + clientImports
+        val file = super.emitClient(endpoints, graphqls, logger).sanitizeNames(sanitizationConfig)
         return File(
             name = Name.of(packageName.toDir() + file.name.pascalCase()),
             elements = buildList {
