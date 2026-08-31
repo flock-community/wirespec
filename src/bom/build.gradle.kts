@@ -13,6 +13,7 @@ dependencies {
         api("$group.converter:avro-jvm:$version")
         api("$group.converter:openapi-jvm:$version")
         api("$group.ir:ir-jvm:$version")
+        api("$group.integration:aeron-jvm:$version")
         api("$group.integration:avro-jvm:$version")
         api("$group.integration:jackson-jvm:$version")
         api("$group.integration:spring-jvm:$version")
