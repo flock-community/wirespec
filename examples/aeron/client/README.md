@@ -6,8 +6,10 @@ the `aeron-jvm` integration, carrying the frame protocol, the correlating rpc cl
 serving loop.
 
 `gen.sh` compiles [`../spec/quote.ws`](../spec/quote.ws) to Rust with the Wirespec CLI, applying
-the `RustSerde` extension so the generated models carry serde derives; the mapping between rpc
-frames and generated types is then a serde one-liner per rpc (`src/rpc.rs`). The example itself is
+the `RustSerde` extension so the generated models carry serde derives; the payloads travel as
+CBOR (binary), so the mapping between rpc frames and generated types is a serde one-liner per rpc
+(`src/rpc.rs`). Channels are `aeron:udp` endpoints, overridable via `REQUEST_CHANNEL`,
+`REPLY_CHANNEL` and `SERVE_CHANNEL`. The example itself is
 only business logic: `src/terminal.rs` implements the generated `GetWatchlist::Service` trait and
 binds it onto a `wirespec_aeron` server, so the backend's server-to-client calls are answered on
 this client's own stream.

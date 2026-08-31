@@ -6,6 +6,7 @@ use wirespec_aeron::server::{block_on, AeronRpcServer};
 
 use crate::gen::model::watchlist::Watchlist;
 use crate::gen::rpc::get_watchlist::GetWatchlist;
+use crate::rpc::to_cbor;
 
 /// The stream this client serves its own rpcs on; the backend calls it there.
 pub const WATCHLIST_STREAM_ID: i32 = 3001;
@@ -24,6 +25,6 @@ pub fn watchlist_server() -> AeronRpcServer {
     AeronRpcServer::new().bind("GetWatchlist", |_params| {
         println!("Serving GetWatchlist for the backend");
         let watchlist = block_on(<TraderTerminal as GetWatchlist::Service>::get_watchlist());
-        serde_json::to_vec(&watchlist).map_err(|e| e.to_string().into_bytes())
+        to_cbor(&watchlist).map_err(String::into_bytes)
     })
 }

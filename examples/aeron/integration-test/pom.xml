@@ -54,6 +54,13 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Copied into target/driver-libs for the client's media-driver sidecar image. -->
+        <dependency>
+            <groupId>io.aeron</groupId>
+            <artifactId>aeron-driver</artifactId>
+            <version>1.53.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -97,6 +104,24 @@
                             <arguments>
                                 <argument>${project.basedir}/../client/build.sh</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-driver-libs</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipTests}</skip>
+                            <includeArtifactIds>aeron-driver,aeron-client,agrona</includeArtifactIds>
+                            <outputDirectory>${project.build.directory}/driver-libs</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

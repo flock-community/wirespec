@@ -1,11 +1,12 @@
 # Wirespec Aeron integration
 
 Serves and calls Wirespec `rpc` definitions over [Aeron](https://aeron.io/), using Aeron as the
-transport and the Wirespec body serialization contract (JSON) as the payload encoding.
+transport and the Wirespec body serialization contract as the payload encoding - any
+`Wirespec.BodySerialization` plugs in, textual (JSON) or binary (e.g. Jackson's `CBORMapper`).
 
 The module is language-neutral on the wire: any client that speaks the frame format below can talk
 to an `AeronRpcServer`, whatever language it is written in (see `examples/aeron` for a Rust
-client talking to a Kotlin Spring Boot backend through shared memory, in both directions).
+client talking to a Kotlin Spring Boot backend over UDP with CBOR payloads, in both directions).
 
 ## Wire protocol
 
@@ -22,10 +23,11 @@ One Aeron message per rpc request or response, version 1, all integers little-en
 | payload          | `u32` length + bytes                                 |
 
 Requests arrive on one shared channel/stream; every request names the channel and stream its
-response should be published on, so each client subscribes to its own reply stream. Payloads follow
-the Wirespec body serialization contract: a REQUEST payload is a JSON object keyed by the rpc's
-parameter names, RESULT and ERROR payloads hold the rpc's result and error values, and a plain
-string value is raw UTF-8 text.
+response should be published on, so each client subscribes to its own reply stream - on any Aeron
+channel, `aeron:ipc` (shared memory) or `aeron:udp` (network) alike. Payload bytes are produced by
+the configured body serialization: a REQUEST payload is the rpc's parameters keyed by name (empty
+for a parameterless rpc), RESULT and ERROR payloads hold the rpc's result and error values, and a
+plain string value is raw UTF-8 text.
 
 ## Usage
 
@@ -41,7 +43,8 @@ client.call<String>("Ping")
 client.callResult<GetQuoteParams, Quote, QuoteError>("GetQuote", GetQuoteParams("AAPL"))
 ```
 
-Any `Wirespec.BodySerialization` works; the Jackson integration provides one. Agrona reaches into
+Any `Wirespec.BodySerialization` works; the Jackson integration provides one, and handing its
+`WirespecSerialization` a `CBORMapper` instead of an `ObjectMapper` makes the payloads binary. Agrona reaches into
 JDK internals, so JVMs running an Aeron media driver or client need:
 
 ```
