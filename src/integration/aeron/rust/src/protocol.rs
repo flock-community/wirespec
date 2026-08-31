@@ -22,9 +22,6 @@ pub const DEFAULT_CHANNEL: &str = "aeron:ipc";
 pub const DEFAULT_REQUEST_STREAM_ID: i32 = 1001;
 pub const DEFAULT_REPLY_STREAM_ID: i32 = 1002;
 
-/// The stream this client serves its own rpcs on; the backend calls it there.
-pub const WATCHLIST_STREAM_ID: i32 = 3001;
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum RpcFrame {
     Request {

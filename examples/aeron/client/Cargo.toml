@@ -8,6 +8,7 @@ name = "client"
 path = "src/bin/client.rs"
 
 [dependencies]
-aeron-rs = "0.1.8"
+wirespec-aeron = { path = "../../../src/integration/aeron/rust" }
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 regex = "1"
