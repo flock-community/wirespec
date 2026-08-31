@@ -116,8 +116,9 @@ impl AeronRpcServer {
             // Publications happen outside the poll closure: offering needs `aeron` mutably.
             let pending: Vec<FramedReply> = responses.borrow_mut().drain(..).collect();
             for framed in pending {
-                if let Err(error) = publish(&mut aeron, &mut publications, &framed) {
-                    eprintln!("Failed to answer {}: {error}", framed.frame.correlation_id());
+                match publish(&mut aeron, &mut publications, &framed) {
+                    Ok(()) => println!("Answered {} on {}", framed.frame.correlation_id(), framed.reply_channel),
+                    Err(error) => eprintln!("Failed to answer {}: {error}", framed.frame.correlation_id()),
                 }
             }
             std::thread::sleep(Duration::from_micros(100));
