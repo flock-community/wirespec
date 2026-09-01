@@ -34,7 +34,6 @@ import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.toIrExtension
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.DirectoryPath
@@ -49,6 +48,7 @@ import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrExtension
 
 internal enum class Options(public vararg val flags: String) {
     Input("-i", "--input"),
