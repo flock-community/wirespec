@@ -1,8 +1,11 @@
 package community.flock.wirespec.examples.maven.spring.aeron
 
+import community.flock.wirespec.generated.examples.aeron.model.Money
 import community.flock.wirespec.generated.examples.aeron.model.Quote
 import community.flock.wirespec.generated.examples.aeron.model.QuoteError
 import community.flock.wirespec.generated.examples.aeron.model.QuoteList
+import community.flock.wirespec.generated.examples.aeron.model.Tick
+import community.flock.wirespec.generated.examples.aeron.model.Venue
 import community.flock.wirespec.generated.examples.aeron.model.Watchlist
 import community.flock.wirespec.generated.examples.aeron.rpc.GetQuote
 import community.flock.wirespec.generated.examples.aeron.rpc.GetWatchlistQuotes
@@ -19,9 +22,27 @@ class QuoteService(
     GetWatchlistQuotes.Service {
 
     private val quotes = listOf(
-        Quote("AAPL", 178.25, "USD"),
-        Quote("GOOG", 141.8, "USD"),
-        Quote("FLCK", 42.0, "EUR"),
+        Quote(
+            symbol = "AAPL",
+            last = Money(178.25, "USD"),
+            previousClose = Money(176.1, "USD"),
+            venue = Venue("XNAS", "New York"),
+            history = listOf(Tick("09:30", Money(177.5, "USD")), Tick("16:00", Money(178.25, "USD"))),
+        ),
+        Quote(
+            symbol = "GOOG",
+            last = Money(141.8, "USD"),
+            previousClose = Money(140.05, "USD"),
+            venue = Venue("XNAS", "New York"),
+            history = listOf(Tick("16:00", Money(141.8, "USD"))),
+        ),
+        Quote(
+            symbol = "FLCK",
+            last = Money(42.0, "EUR"),
+            previousClose = null,
+            venue = Venue("XAMS", "Amsterdam"),
+            history = listOf(Tick("16:00", Money(42.0, "EUR"))),
+        ),
     ).associateBy(Quote::symbol)
 
     override suspend fun getQuote(symbol: String): GetQuote.Response = quotes[symbol]

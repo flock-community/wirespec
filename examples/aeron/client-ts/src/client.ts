@@ -8,7 +8,7 @@ import * as path from "node:path";
 
 import { AeronRpcClient } from "@flock/wirespec-aeron";
 
-import { emptyParams, getQuoteParams, getQuoteResponse, getWatchlistQuotesResponse, pingResponse } from "./rpc";
+import { emptyParams, formatQuote, formatQuoteLine, getQuoteParams, getQuoteResponse, getWatchlistQuotesResponse, pingResponse } from "./rpc";
 
 const TIMEOUT_MS = 10_000;
 
@@ -44,9 +44,8 @@ async function main(): Promise<void> {
 
   for (const symbol of ["AAPL", "GOOG", "FLCK", "NOPE"]) {
     const response = getQuoteResponse(await client.call("GetQuote", getQuoteParams(symbol), TIMEOUT_MS));
-    if ("price" in response.value) {
-      const quote = response.value;
-      console.log(`GetQuote ${symbol} -> ${quote.symbol} ${quote.price} ${quote.currency}`);
+    if ("last" in response.value) {
+      console.log(`GetQuote ${symbol} -> ${formatQuote(response.value)}`);
     } else {
       const quoteError = response.value;
       console.log(`GetQuote ${symbol} -> error ${quoteError.code}: ${quoteError.message}`);
@@ -60,7 +59,7 @@ async function main(): Promise<void> {
   // error instead of a silent timeout here.
   const quoteList = getWatchlistQuotesResponse(await client.call("GetWatchlistQuotes", emptyParams(), 30_000));
   for (const quote of quoteList.quotes) {
-    console.log(`GetWatchlistQuotes -> ${quote.symbol} ${quote.price} ${quote.currency}`);
+    console.log(`GetWatchlistQuotes -> ${formatQuoteLine(quote)}`);
   }
 
   client.close();

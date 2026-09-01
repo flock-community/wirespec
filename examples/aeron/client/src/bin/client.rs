@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 use wirespec_aeron::client::AeronRpcClient;
 use wirespec_aeron_client::gen::rpc::get_quote::GetQuote;
-use wirespec_aeron_client::rpc::{empty_params, get_quote_params, get_quote_response, get_watchlist_quotes_response, ping_response};
+use wirespec_aeron_client::rpc::{empty_params, format_quote, format_quote_line, get_quote_params, get_quote_response, get_watchlist_quotes_response, ping_response};
 use wirespec_aeron_client::terminal::{watchlist_server, WATCHLIST_STREAM_ID};
 
 const TIMEOUT: Duration = Duration::from_secs(10);
@@ -56,8 +56,7 @@ fn main() -> Result<(), String> {
     for symbol in ["AAPL", "GOOG", "FLCK", "NOPE"] {
         match get_quote_response(&client.call("GetQuote", get_quote_params(symbol)?, TIMEOUT)?)? {
             GetQuote::Response::Result(result) => {
-                let quote = result.value;
-                println!("GetQuote {symbol} -> {} {} {}", quote.symbol, quote.price, quote.currency);
+                println!("GetQuote {symbol} -> {}", format_quote(&result.value));
             }
             GetQuote::Response::Error(error) => {
                 let quote_error = error.value;
@@ -72,7 +71,7 @@ fn main() -> Result<(), String> {
     // of a silent timeout here.
     let quote_list = get_watchlist_quotes_response(&client.call("GetWatchlistQuotes", empty_params(), Duration::from_secs(30))?)?;
     for quote in &quote_list.quotes {
-        println!("GetWatchlistQuotes -> {} {} {}", quote.symbol, quote.price, quote.currency);
+        println!("GetWatchlistQuotes -> {}", format_quote_line(quote));
     }
 
     // When asked (the Docker integration test does), keep serving GetWatchlist
