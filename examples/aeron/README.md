@@ -1,10 +1,10 @@
 # Wirespec × Aeron: rpc in both directions
 
-One Wirespec spec ([`spec/quote.ws`](spec/quote.ws)), two languages, no HTTP: a Kotlin Spring Boot
-backend and a Rust client exchange Wirespec `rpc` frames over [Aeron](https://aeron.io/) UDP -
-every channel is an `aeron:udp` endpoint, each side attaches to its own media driver, and the
-payloads are CBOR (binary) - using the wire protocol of the `aeron-jvm` integration
-([`src/integration/aeron`](../../src/integration/aeron)).
+One Wirespec spec ([`spec/quote.ws`](spec/quote.ws)), three languages, no HTTP: a Kotlin Spring
+Boot backend, a Rust client and a TypeScript client exchange Wirespec `rpc` frames over
+[Aeron](https://aeron.io/) UDP - every channel is an `aeron:udp` endpoint, each side attaches to
+its own media driver, and the payloads are CBOR (binary) - using the wire protocol of the
+`aeron-jvm` integration ([`src/integration/aeron`](../../src/integration/aeron)).
 
 - [`server/`](server) — the Kotlin Spring Boot backend: the `wirespec-maven-plugin` compiles the
   spec, `QuoteService` implements the generated `Service` interfaces (`GetQuote`, `Ping`,
@@ -12,23 +12,27 @@ payloads are CBOR (binary) - using the wire protocol of the `aeron-jvm` integrat
 - [`client/`](client) — the Rust client on [aeron-rs](https://crates.io/crates/aeron-rs):
   `gen.sh` compiles the same spec to Rust, and the generated `GetWatchlist::Service` trait is
   implemented by the client's own serving side.
-- [`integration-test/`](integration-test) — runs both in Docker, connected over the container
-  network: the backend embeds its driver, and the client pod is a media-driver sidecar plus the
-  Rust client sharing one IPC namespace.
+- [`client-ts/`](client-ts) — the TypeScript client on the Aeron C client library (via FFI):
+  `gen.sh` compiles the same spec to TypeScript, and each rpc maps onto the generated types
+  through a minimal CBOR codec.
+- [`integration-test/`](integration-test) — runs all of them in Docker, connected over the
+  container network: the backend embeds its driver, and each client pod is a media-driver sidecar
+  plus the client sharing one IPC namespace.
 
-The calls flow in both directions. The client calls the backend (`Ping`, `GetQuote`), and when the
-client calls `GetWatchlistQuotes`, the backend turns around and calls the **client's**
-`GetWatchlist` rpc to learn which symbols to quote — a server-to-client call over the same medium:
+The calls flow in both directions. A client calls the backend (`Ping`, `GetQuote`), and when a
+client calls `GetWatchlistQuotes`, the backend turns around and calls the **Rust client's**
+`GetWatchlist` rpc to learn which symbols to quote — a server-to-client call over the same medium.
+When the TypeScript client asks, the loop crosses three languages:
 
 ```
-client ── GetWatchlistQuotes ──▶ server
-client ◀── GetWatchlist ───────── server      (the reverse direction)
-client ── Watchlist ───────────▶ server
-client ◀── QuoteList ──────────── server
+ts client ── GetWatchlistQuotes ──▶ server
+              rust client ◀── GetWatchlist ── server      (the reverse direction)
+              rust client ── Watchlist ─────▶ server
+ts client ◀── QuoteList ─────────── server
 ```
 
-Build everything and run all tests — the Spring in-JVM tests, the Rust codec tests, and (when a
-Docker daemon is reachable) the two-container Docker test:
+Build everything and run all tests — the Spring in-JVM tests, the Rust and TypeScript codec
+tests, and (when a Docker daemon is reachable) the multi-container Docker test:
 
 ```shell
 ./gradlew :examples:build-aeron
@@ -45,6 +49,7 @@ separate machines, run a media driver next to the client and point the `*_CHANNE
 ```shell
 ../build/maven-wrapper/mvnw -f server spring-boot:run
 cd client && cargo run --release --bin client
+cd client-ts && npm start                        # after ./build.sh; needs a local media driver
 ```
 
 ```
