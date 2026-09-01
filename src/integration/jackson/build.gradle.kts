@@ -84,6 +84,8 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:emitters:java"))
+                // The Wirespec runtime comes from the consumer's wirespec-jvm dependency.
+                compileOnly(project(":src:integration:wirespec"))
                 compileOnly(libs.bundles.jackson2)
                 compileOnly(libs.bundles.jackson3)
             }
