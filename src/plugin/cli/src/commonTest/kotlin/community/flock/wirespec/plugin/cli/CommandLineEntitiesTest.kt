@@ -24,6 +24,7 @@ class CommandLineEntitiesTest {
                     Options.Input -> "src/commonTest/resources/wirespec"
                     Options.Output -> "src/commonTest/resources/wirespec"
                     Options.Language -> "Wirespec"
+                    Options.Extension -> "Jackson"
                     Options.PackageName -> "packageName"
                     Options.LogLevel -> "error"
                     // To enable flags they only need the flag name. Therefore, the 'argument' part is null.
