@@ -18,7 +18,7 @@ class KotestWirespecKotlinGeneratorJvmTest {
     @Test
     fun `adapter handles Wirespec_GeneratorFieldShape with nested string`() {
         val gen = kotestWirespecKotlinGenerator(seed = 0L)
-        val shape = Wirespec.GeneratorFieldShape<Map<String, String>>(
+        val shape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 val name = gen.generate(
@@ -51,12 +51,12 @@ class KotestWirespecKotlinGeneratorJvmTest {
             listOf("u"),
             Wirespec.GeneratorFieldUnion(variants = listOf("V1"), annotations = emptyList(), type = typeOf<String>()),
         )
-        gen.generate(listOf("a"), Wirespec.GeneratorFieldArray<String> { _ -> "x" })
-        gen.generate(listOf("nul"), Wirespec.GeneratorFieldNullable<String> { _ -> "y" })
+        gen.generate(listOf("a"), Wirespec.GeneratorFieldArray { _ -> "x" })
+        gen.generate(listOf("nul"), Wirespec.GeneratorFieldNullable { _ -> "y" })
         gen.generate(
             listOf("sh"),
-            Wirespec.GeneratorFieldShape<Map<String, String>>(emptyMap(), { _ -> mapOf("k" to "v") }, typeOf<Map<String, String>>()),
+            Wirespec.GeneratorFieldShape(emptyMap(), { _ -> mapOf("k" to "v") }, typeOf<Map<String, String>>()),
         )
-        gen.generate(listOf("d"), Wirespec.GeneratorFieldDict<String> { _ -> "v" })
+        gen.generate(listOf("d"), Wirespec.GeneratorFieldDict { _ -> "v" })
     }
 }

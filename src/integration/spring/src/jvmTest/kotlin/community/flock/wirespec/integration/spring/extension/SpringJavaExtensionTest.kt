@@ -13,8 +13,6 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
-import community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension
 import community.flock.wirespec.ir.extension.applyExtensions
 import kotlinx.io.buffered
 import kotlinx.io.files.Path

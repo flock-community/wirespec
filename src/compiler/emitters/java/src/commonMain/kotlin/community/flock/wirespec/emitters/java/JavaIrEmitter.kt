@@ -24,14 +24,13 @@ import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.collectCustomTypeNames
-import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.raw
@@ -40,13 +39,13 @@ import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.emit.placeInPackage
 import community.flock.wirespec.ir.emit.prependImports
+import community.flock.wirespec.ir.generator.Generator
 import community.flock.wirespec.ir.generator.JavaGenerator
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.transformer.toGetterAccessors
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
-import community.flock.wirespec.ir.generator.Generator
 
 public open class JavaIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -91,7 +90,7 @@ public open class JavaIrEmitter(
             import("java.util", "Map"),
         )
 
-        val clientServer = packageName.convertClientServer()
+        val clientServer = convertClientServer()
             .map {
                 it.toGetterAccessors { name ->
                     when (name.value()) {

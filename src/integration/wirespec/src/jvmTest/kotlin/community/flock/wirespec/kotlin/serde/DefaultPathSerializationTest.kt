@@ -108,7 +108,6 @@ class DefaultPathSerializationTest {
     enum class StatusEnum(override val label: String) : Wirespec.Enum {
         ACTIVE("active"),
         PENDING("pending"),
-        INACTIVE("inactive"),
         ;
 
         override fun toString(): String = label

@@ -16,7 +16,7 @@ object Fixtures {
      *  - 14 : `endpoint GetTodos GET /todos -> {`
      *  - 15 : `    200 -> Todo[]`
      */
-    const val TODOS = """type Name = String(/^[a-zA-Z]{1,50}${'$'}/g)
+    const val TODOS = """type Name = String(/^[a-zA-Z]{1,50}$/g)
 
 type Person {
   id: Integer,

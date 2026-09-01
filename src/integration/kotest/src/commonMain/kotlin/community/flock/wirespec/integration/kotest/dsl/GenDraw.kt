@@ -5,9 +5,7 @@ import io.kotest.property.Exhaustive
 import io.kotest.property.Gen
 import io.kotest.property.RandomSource
 
-public fun <T> Gen<T>.draw(rs: RandomSource): T = when (this) {
+public fun <T> Gen<T>.draw(rs: RandomSource = RandomSource.default()): T = when (this) {
     is Arb -> sample(rs).value
     is Exhaustive -> values.random(rs.random)
 }
-
-public fun <T> Gen<T>.draw(): T = draw(RandomSource.default())

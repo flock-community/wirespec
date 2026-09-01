@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * A reusable implementation of Wirespec.Serialization backed by Jackson 3.
- *
+ * <p>
  * It rebuilds the supplied (immutable) {@link JsonMapper} with the
  * {@link WirespecModuleJava} registered. Java records expose their components through
  * accessors, so no visibility configuration is required. Parameter and path
@@ -32,8 +32,8 @@ public class WirespecSerialization implements Serialization, DefaultParamSeriali
 
     @Override
     public <T> byte[] serializeBody(T body, Type type) {
-        if (body instanceof String) {
-            return ((String) body).getBytes(StandardCharsets.UTF_8);
+        if (body instanceof String stringBody) {
+            return stringBody.getBytes(StandardCharsets.UTF_8);
         } else {
             return wirespecObjectMapper.writeValueAsBytes(body);
         }

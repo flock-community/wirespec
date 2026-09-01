@@ -103,14 +103,14 @@ class AvroExtensionTest {
 
         // Maps and arrays of primitives already hold the types the writer wants and pass through
         // untouched; the record-valued ones convert per entry. A nullable collection or record
-        // keeps its null rather than being dereferenced.
+        // keeps it null rather than being dereferenced.
         assertContains(emitted, "record.put(0, data.externalIds)")
         assertContains(emitted, "record.put(1, data.text.mapValues{NestedAvro.to(it.value)})")
         assertContains(emitted, "record.put(2, data.gtins)")
         assertContains(emitted, "record.put(3, data.children?.map{NestedAvro.to(it)})")
         assertContains(emitted, "record.put(4, data.update?.let{NestedAvro.to(it)})")
 
-        // Avro hands strings back as Utf8, and map keys with them, so both go through toString().
+        // Avro hands strings back as Utf8 and map keys with them, so both go through toString().
         assertContains(emitted, "externalIds = (record.get(0) as kotlin.collections.Map<*, *>).entries.associate{it.key.toString() to it.value.toString()}")
         assertContains(emitted, "text = (record.get(1) as kotlin.collections.Map<*, *>).entries.associate{it.key.toString() to NestedAvro.from(it.value as org.apache.avro.generic.GenericData.Record)}")
         assertContains(emitted, "gtins = (record.get(2) as kotlin.collections.List<*>).map{it.toString()}")
@@ -142,7 +142,7 @@ class AvroExtensionTest {
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(recursive, nested))))
         val emitted = kotlinEmitter.emit(ast, noLogger).avro("packageName/avro/NodeAvro.kt").orEmpty()
 
-        // The self reference is a bare Avro name: the record is already defined by the time the
+        // The self-reference is a bare Avro name: the record is already defined by the time the
         // field is read, so there is nothing left to inline.
         assertContains(emitted, """{\"name\":\"parents\",\"type\":{\"type\":\"array\",\"items\":\"Node\"}}""")
         // A nested record is written out in full once...

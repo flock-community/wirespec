@@ -4,9 +4,7 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.tokenize.Token
 
 internal sealed interface Error {
-    public val message: String
+    val message: String
 }
 
 public sealed class WirespecException(public val fileUri: FileUri, override val message: String, public val coordinates: Token.Coordinates) : Error
-
-private sealed class IOException(fileUri: FileUri, message: String) : WirespecException(fileUri, message, Token.Coordinates())

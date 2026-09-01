@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.jackson.v2.java;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import community.flock.wirespec.java.Wirespec.Serialization;
 import community.flock.wirespec.java.serde.DefaultParamSerialization;
 import community.flock.wirespec.java.serde.DefaultPathSerialization;
@@ -26,8 +25,8 @@ public class WirespecSerialization implements Serialization, DefaultParamSeriali
 
     @Override
     public <T> byte[] serializeBody(T body, Type type) {
-        if (body instanceof String) {
-            return ((String) body).getBytes(StandardCharsets.UTF_8);
+        if (body instanceof String stringBody) {
+            return stringBody.getBytes(StandardCharsets.UTF_8);
         } else {
             try {
                 return wirespecObjectMapper.writeValueAsBytes(body);

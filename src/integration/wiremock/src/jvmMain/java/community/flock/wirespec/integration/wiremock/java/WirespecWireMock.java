@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  * </pre>
  *
  * Passing a response from a different endpoint is a compile error.
- *
+ * <p>
  * The endpoint's HTTP method and path template drive the WireMock request matcher
  * (path parameters match any non-slash segment).
  */

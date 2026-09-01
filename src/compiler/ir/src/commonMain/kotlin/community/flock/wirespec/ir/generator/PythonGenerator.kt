@@ -186,7 +186,7 @@ public object PythonGenerator :
     }
 
     private fun Enum.emit(indent: Int): String {
-        val ext = if (extends != null) "(${extends!!.emit()}, enum.Enum)" else "(enum.Enum)"
+        val ext = extends?.let { "(${it.emit()}, enum.Enum)" } ?: "(enum.Enum)"
         val entriesStr = if (entries.isEmpty()) {
             "pass".indentCode(indent + 1)
         } else {
@@ -361,9 +361,9 @@ public object PythonGenerator :
         is EnumReference -> "${enumType.emit()}.${entry.value()}\n".indentCode(indent)
         is EnumValueCall -> "${expression.emit()}.value\n".indentCode(indent)
         is BinaryOp -> {
-            if (operator == BinaryOp.Operator.PLUS && (left is Literal && (left as Literal).type == Type.String || right is Literal && (right as Literal).type == Type.String)) {
-                val leftStr = if (left is Literal && (left as Literal).type == Type.String) left.emit() else "str(${left.emit()})"
-                val rightStr = if (right is Literal && (right as Literal).type == Type.String) right.emit() else "str(${right.emit()})"
+            if (operator == BinaryOp.Operator.PLUS && (left is Literal && left.type == Type.String || right is Literal && right.type == Type.String)) {
+                val leftStr = if (left is Literal && left.type == Type.String) left.emit() else "str(${left.emit()})"
+                val rightStr = if (right is Literal && right.type == Type.String) right.emit() else "str(${right.emit()})"
                 "($leftStr + $rightStr)\n".indentCode(indent)
             } else {
                 "(${left.emit()} ${operator.toPython()} ${right.emit()})\n".indentCode(indent)
@@ -424,9 +424,9 @@ public object PythonGenerator :
         is EnumReference -> "${enumType.emit()}.${entry.value()}"
         is EnumValueCall -> "${expression.emit()}.value"
         is BinaryOp -> {
-            if (operator == BinaryOp.Operator.PLUS && (left is Literal && (left as Literal).type == Type.String || right is Literal && (right as Literal).type == Type.String)) {
-                val leftStr = if (left is Literal && (left as Literal).type == Type.String) left.emit() else "str(${left.emit()})"
-                val rightStr = if (right is Literal && (right as Literal).type == Type.String) right.emit() else "str(${right.emit()})"
+            if (operator == BinaryOp.Operator.PLUS && (left is Literal && left.type == Type.String || right is Literal && right.type == Type.String)) {
+                val leftStr = if (left is Literal && left.type == Type.String) left.emit() else "str(${left.emit()})"
+                val rightStr = if (right is Literal && right.type == Type.String) right.emit() else "str(${right.emit()})"
                 "($leftStr + $rightStr)"
             } else {
                 "(${left.emit()} ${operator.toPython()} ${right.emit()})"

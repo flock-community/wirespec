@@ -4,7 +4,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile
 
 internal enum class VerifyImage {
     KOTLIN_1 {
-        override val image by lazy {
+        override val image: String by lazy {
             val version = "1.9.24"
             ImageFromDockerfile("wirespec-kotlin-verify", false)
                 .withDockerfileFromBuilder { builder ->
@@ -22,7 +22,7 @@ internal enum class VerifyImage {
         }
     },
     KOTLIN_2 {
-        override val image by lazy {
+        override val image: String by lazy {
             val version = "2.0.21"
             ImageFromDockerfile("wirespec-kotlin-verify", false)
                 .withDockerfileFromBuilder { builder ->
@@ -40,7 +40,7 @@ internal enum class VerifyImage {
         }
     },
     PYTHON {
-        override val image by lazy {
+        override val image: String by lazy {
             ImageFromDockerfile("wirespec-python-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder
@@ -52,7 +52,7 @@ internal enum class VerifyImage {
         }
     },
     RUST {
-        override val image by lazy {
+        override val image: String by lazy {
             ImageFromDockerfile("wirespec-rust-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder
@@ -64,7 +64,7 @@ internal enum class VerifyImage {
         }
     },
     SCALA {
-        override val image by lazy {
+        override val image: String by lazy {
             ImageFromDockerfile("wirespec-scala-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder
@@ -81,7 +81,7 @@ internal enum class VerifyImage {
         }
     },
     TYPESCRIPT {
-        override val image by lazy {
+        override val image: String by lazy {
             ImageFromDockerfile("wirespec-typescript-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder

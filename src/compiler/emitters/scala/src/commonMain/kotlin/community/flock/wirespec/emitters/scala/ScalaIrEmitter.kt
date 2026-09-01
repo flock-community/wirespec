@@ -19,7 +19,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -31,43 +30,34 @@ import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.core.ConstructorStatement
 import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.Field
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Interface
 import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.TypeParameter
 import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.function
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.`interface`
-import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.struct
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
 import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.emit.placeInPackage
+import community.flock.wirespec.ir.emit.prependImports
+import community.flock.wirespec.ir.generator.Generator
+import community.flock.wirespec.ir.generator.ScalaGenerator
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
 import community.flock.wirespec.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
-import community.flock.wirespec.ir.emit.placeInPackage
-import community.flock.wirespec.ir.emit.prependImports
-import community.flock.wirespec.ir.generator.ScalaGenerator
-import community.flock.wirespec.ir.core.Function as LanguageFunction
-import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
-import community.flock.wirespec.ir.core.Import as LanguageImport
 import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Type as LanguageType
-import community.flock.wirespec.ir.generator.Generator
 
 public open class ScalaIrEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -134,7 +124,7 @@ public open class ScalaIrEmitter(
             },
         )
 
-        val clientServer = pathSegmentTypes + packageName.convertClientServer().map { element ->
+        val clientServer = pathSegmentTypes + convertClientServer().map { element ->
             if (element is Interface && element.name.pascalCase() in setOf("Client", "Server")) {
                 element.copy(
                     fields = element.fields + Field(Name.of("pathSegments"), LanguageType.Array(LanguageType.Custom("PathSegment"))),

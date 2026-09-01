@@ -36,7 +36,7 @@ internal object AvroIdlParser : Parser {
         return ProtocolParser(tokens).parseProtocol()
     }
 
-    private class ProtocolParser(private val tokens: List<AvroIdlToken>) {
+    private class ProtocolParser(private val tokens: List<AvroIdlToken<*>>) {
         private var pos = 0
 
         fun parseProtocol(): Protocol {
@@ -116,15 +116,7 @@ internal object AvroIdlParser : Parser {
         private fun parseDefaultValue(): String {
             val token = peekToken() ?: error("Expected default value")
             return when (token) {
-                is AvroIdlToken.StringLiteral -> {
-                    advance()
-                    token.value
-                }
-                is AvroIdlToken.NumberLiteral -> {
-                    advance()
-                    token.value
-                }
-                is AvroIdlToken.Identifier -> {
+                is AvroIdlToken.StringLiteral, is AvroIdlToken.NumberLiteral, is AvroIdlToken.Identifier -> {
                     advance()
                     token.value
                 }
@@ -276,11 +268,7 @@ internal object AvroIdlParser : Parser {
             expectSymbol('(')
             val token = peekToken() ?: error("Expected annotation value")
             val value = when (token) {
-                is AvroIdlToken.StringLiteral -> {
-                    advance()
-                    token.value
-                }
-                is AvroIdlToken.Identifier -> {
+                is AvroIdlToken.StringLiteral, is AvroIdlToken.Identifier -> {
                     advance()
                     token.value
                 }
@@ -300,7 +288,7 @@ internal object AvroIdlParser : Parser {
             }
         }
 
-        private fun peekToken(): AvroIdlToken? = if (pos < tokens.size) tokens[pos] else null
+        private fun peekToken(): AvroIdlToken<*>? = if (pos < tokens.size) tokens[pos] else null
 
         private fun peekSymbol(c: Char): Boolean {
             val t = peekToken() ?: return false

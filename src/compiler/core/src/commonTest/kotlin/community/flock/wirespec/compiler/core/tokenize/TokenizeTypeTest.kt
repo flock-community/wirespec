@@ -184,7 +184,7 @@ class TokenizeTypeTest {
             """(?ix-s)^foo(?#comment)(?i:bar)(?-i:BAZ)$""",
             """(a(*PRUNE)b|c(*FAIL))|(?|x(y)z|p(q)r)""",
         )
-        regex.map {
+        regex.forEach {
             testTokenizer(
                 """String(/$it/g)""",
                 WsString,

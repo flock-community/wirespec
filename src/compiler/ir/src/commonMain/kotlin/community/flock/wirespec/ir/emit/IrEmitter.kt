@@ -49,7 +49,7 @@ public interface IrEmitter : Emitter {
     }
 
     /** Hook for emitters that need to inspect the full set of files before per-file generation. */
-    public fun beforeGenerate(allFiles: List<File>) {}
+    public fun beforeGenerate(allFiles: List<File>): Unit = Unit
 
     public fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val definitionFiles = module.statements.map { emit(it, module, logger) }

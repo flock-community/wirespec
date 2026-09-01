@@ -4,7 +4,7 @@ import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.namespace
@@ -25,42 +25,31 @@ import community.flock.wirespec.ir.converter.convertConstraint
 import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
 import community.flock.wirespec.ir.converter.requestParameters
-import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.ir.core.Assignment
-import community.flock.wirespec.ir.core.BinaryOp
 import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.ErrorStatement
-import community.flock.wirespec.ir.core.FieldCall
+import community.flock.wirespec.ir.core.Field
+import community.flock.wirespec.ir.core.File
 import community.flock.wirespec.ir.core.FunctionCall
 import community.flock.wirespec.ir.core.Literal
 import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Parameter
-import community.flock.wirespec.ir.core.Switch
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.Type as LanguageType
-import community.flock.wirespec.ir.core.Case
-import community.flock.wirespec.ir.core.Field
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.RawExpression
 import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.Transformer
+import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.RawExpression
+import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.VariableReference
 import community.flock.wirespec.ir.core.collectCustomTypeNames
-import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.plus
-import community.flock.wirespec.ir.core.raw
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.generator.Generator
+import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.ir.transformer.SanitizationConfig
 import community.flock.wirespec.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.ir.transformer.sanitizeNames
-import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
-import community.flock.wirespec.ir.generator.Generator
+import community.flock.wirespec.ir.core.Type as LanguageType
 
 public open class TypeScriptIrEmitter : IrEmitter {
 

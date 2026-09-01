@@ -69,7 +69,7 @@ public object Validator {
         }
     }
 
-    private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
+    private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> = ast.modules.asSequence()
         .flatMap { it.statements.filterIsInstance<Endpoint>() }
         .groupBy { it.identifier.value }
         .filter { it.value.size > 1 }
@@ -82,17 +82,19 @@ public object Validator {
     private fun validateTypes(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
         .flatMap { module ->
             module.statements
+                .asSequence()
                 .filterIsInstance<Type>()
                 .groupBy { it.identifier.value }
                 .filter { it.value.size > 1 }
                 .map { (name, types) -> types.map { DuplicateTypeError(name) } }
                 .flatten()
+                .toList()
         }
         .toNonEmptyListOrNull()
         ?.left()
         ?: ast.right()
 
-    private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
+    private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.modules.asSequence()
         .flatMap { it.statements.filterIsInstance<Channel>() }
         .groupBy { it.identifier.value }
         .filter { it.value.size > 1 }

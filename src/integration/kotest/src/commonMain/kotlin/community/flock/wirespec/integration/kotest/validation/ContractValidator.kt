@@ -33,7 +33,7 @@ internal class ContractValidator(
     }
 }
 
-private class ContractViolation internal constructor(
+private class ContractViolation(
     val endpoint: String,
     val kind: ContractViolationKind,
     message: String,

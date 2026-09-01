@@ -42,7 +42,7 @@ internal object JvmRefinedWrapper : RefinedWrapper {
         val ctor = ctorFor(shape.type) ?: return drawn
         return try {
             ctor.call(drawn)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             error(
                 "Override at ${path.joinToString("/")}: expected " +
                     "Arb<${ctor.parameters[0].type}> for refined " +

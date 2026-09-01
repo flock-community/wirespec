@@ -852,18 +852,6 @@ public fun function(name: Name, isStatic: Boolean = false, isOverride: Boolean =
     return builder.build()
 }
 
-internal fun asyncFunction(name: String, isStatic: Boolean = false, isOverride: Boolean = false, block: (FunctionBuilder.() -> Unit)? = null): Function {
-    val builder = FunctionBuilder(name, isAsync = true, isStatic = isStatic, isOverride = isOverride)
-    block?.let { builder.it() }
-    return builder.build()
-}
-
-internal fun asyncFunction(name: Name, isStatic: Boolean = false, isOverride: Boolean = false, block: (FunctionBuilder.() -> Unit)? = null): Function {
-    val builder = FunctionBuilder(name, isAsync = true, isStatic = isStatic, isOverride = isOverride)
-    block?.let { builder.it() }
-    return builder.build()
-}
-
 public fun import(path: String, type: Type.Custom, isTypeOnly: Boolean = false): Import = Import(path, type, isTypeOnly)
 
 public fun import(path: String, type: String, isTypeOnly: Boolean = false): Import = Import(path, Type.Custom(type), isTypeOnly)

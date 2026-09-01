@@ -75,7 +75,7 @@ class OpenAPIV2EmitterTest {
         val result = compile(source).invoke { OpenAPIV2Emitter }
 
         val expect =
-            """
+            $$"""
             |{
             |    "swagger": "2.0",
             |    "consumes": [
@@ -138,7 +138,7 @@ class OpenAPIV2EmitterTest {
             |                        "schema": {
             |                            "type": "array",
             |                            "items": {
-            |                                "${'$'}ref": "#/definitions/Todo"
+            |                                "$ref": "#/definitions/Todo"
             |                            }
             |                        },
             |                        "description": "GetTodos 200 response",
@@ -161,7 +161,7 @@ class OpenAPIV2EmitterTest {
         val result = CompileFullEndpointTest.compiler { OpenAPIV2Emitter }
         val expect =
             // language=json
-            """
+            $$"""
             |{
             |  "swagger": "2.0",
             |  "consumes": [
@@ -254,7 +254,7 @@ class OpenAPIV2EmitterTest {
             |            "required": true,
             |            "in": "body",
             |            "schema": {
-            |              "${'$'}ref": "#/definitions/PotentialTodoDto"
+            |              "$ref": "#/definitions/PotentialTodoDto"
             |            },
             |            "name": "RequestBody"
             |          },
@@ -286,14 +286,14 @@ class OpenAPIV2EmitterTest {
             |        "responses": {
             |          "200": {
             |            "schema": {
-            |              "${'$'}ref": "#/definitions/TodoDto"
+            |              "$ref": "#/definitions/TodoDto"
             |            },
             |            "description": "PutTodo 200 response",
             |            "headers": {}
             |          },
             |          "201": {
             |            "schema": {
-            |              "${'$'}ref": "#/definitions/TodoDto"
+            |              "$ref": "#/definitions/TodoDto"
             |            },
             |            "description": "PutTodo 201 response",
             |            "headers": {
@@ -307,7 +307,7 @@ class OpenAPIV2EmitterTest {
             |          },
             |          "500": {
             |            "schema": {
-            |              "${'$'}ref": "#/definitions/Error"
+            |              "$ref": "#/definitions/Error"
             |            },
             |            "description": "PutTodo 500 response",
             |            "headers": {}
@@ -327,7 +327,7 @@ class OpenAPIV2EmitterTest {
         val result = CompileMinimalEndpointTest.compiler { OpenAPIV2Emitter }
         val expect =
             // language=json
-            """
+            $$"""
                 |{
                 |  "swagger": "2.0",
                 |  "info": {
@@ -350,7 +350,7 @@ class OpenAPIV2EmitterTest {
                 |            "schema": {
                 |              "type": "array",
                 |              "items": {
-                |                "${'$'}ref": "#/definitions/TodoDto"
+                |                "$ref": "#/definitions/TodoDto"
                 |              }
                 |            }
                 |          }
@@ -496,7 +496,7 @@ class OpenAPIV2EmitterTest {
         val result = CompileUnionTest.compiler { OpenAPIV2Emitter }
         val expect =
             // language=json
-            """
+            $$"""
             |{
             |  "swagger": "2.0",
             |  "consumes": [
@@ -540,7 +540,7 @@ class OpenAPIV2EmitterTest {
             |          "type": "string"
             |        },
             |        "account": {
-            |          "${'$'}ref": "#/definitions/UserAccount"
+            |          "$ref": "#/definitions/UserAccount"
             |        }
             |      }
             |    }

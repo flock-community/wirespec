@@ -32,7 +32,7 @@ class KotlinxSerializationExtensionTest {
         |  id: TodoId,
         |  name: String
         |}
-        |type TodoId = String(/^[0-9]+${'$'}/g)
+        |type TodoId = String(/^[0-9]+$/g)
         |type UserAccount = UserAccountPassword | UserAccountToken
         |type UserAccountPassword {
         |  username: String,

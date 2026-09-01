@@ -41,7 +41,7 @@ import kotlin.reflect.KClass
  * ```
  * will serialize to:
  * ```json
- * {id:"123", title: "improve API contracts"}
+ * {"id":"123", "title": "improve API contracts"}
  * ```
  * flattening the Wirespec.Refined as a String. Conversely, such JSON will deserialize back
  * into the original `Task`, expanding the `id` field into a type safe `Id` data class.

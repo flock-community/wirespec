@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.spring.java.web;
 
 import community.flock.wirespec.integration.spring.shared.RawJsonBody;
 import community.flock.wirespec.java.Wirespec;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -27,19 +28,18 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     }
 
     @Override
-    public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(MethodParameter returnType, @NotNull Class<? extends HttpMessageConverter<?>> converterType) {
         return Wirespec.Response.class.isAssignableFrom(returnType.getParameterType());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Object beforeBodyWrite(
             Object body,
-            MethodParameter returnType,
-            MediaType selectedContentType,
-            Class<? extends HttpMessageConverter<?>> selectedConverterType,
-            ServerHttpRequest request,
-            ServerHttpResponse response
+            @NotNull MethodParameter returnType,
+            @NotNull MediaType selectedContentType,
+            @NotNull Class<? extends HttpMessageConverter<?>> selectedConverterType,
+            @NotNull ServerHttpRequest request,
+            @NotNull ServerHttpResponse response
     ) {
         try {
             Class<?> declaringClass = returnType.getParameterType().getDeclaringClass();

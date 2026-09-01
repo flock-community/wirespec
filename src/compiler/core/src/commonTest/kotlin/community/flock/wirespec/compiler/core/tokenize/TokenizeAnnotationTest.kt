@@ -1,9 +1,7 @@
 package community.flock.wirespec.compiler.core.tokenize
 
 import community.flock.wirespec.compiler.core.WirespecType
-import community.flock.wirespec.compiler.core.tokenize.LeftBracket
 import community.flock.wirespec.compiler.core.tokenize.Precision.P64
-import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import kotlin.test.Test
 
 class TokenizeAnnotationTest {

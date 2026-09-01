@@ -267,13 +267,6 @@ internal object RustTransform {
 
     internal fun Type.Custom.isGeneratorFieldTrait(): Boolean = name.pascalCase() == "GeneratorField"
 
-    /** `Copy`-like leaves that don't need borrowing in parameter positions. */
-    internal fun Type.Custom.isCopyLike(): Boolean = name.pascalCase() in copyLikeCustomNames
-
-    private val copyLikeCustomNames = setOf(
-        "i32", "i64", "f32", "f64", "bool", "u8", "u16", "u32", "u64", "usize", "isize", "()",
-    )
-
     internal fun Name.isSelfReceiver(): Boolean {
         val v = value()
         return v == "self" || v == "&self" || v == "&mut self"

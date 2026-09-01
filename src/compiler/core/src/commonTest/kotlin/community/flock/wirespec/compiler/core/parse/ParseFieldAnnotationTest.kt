@@ -32,7 +32,7 @@ class ParseFieldAnnotationTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRight { exceptions -> exceptions.joinToString { it.message } }
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
@@ -59,7 +59,7 @@ class ParseFieldAnnotationTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRight { exceptions -> exceptions.joinToString { it.message } }
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
@@ -89,7 +89,7 @@ class ParseFieldAnnotationTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRight { exceptions -> exceptions.joinToString { it.message } }
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
