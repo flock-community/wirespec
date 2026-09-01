@@ -5,8 +5,9 @@ transport and the Wirespec body serialization contract as the payload encoding -
 `Wirespec.BodySerialization` plugs in, textual (JSON) or binary (e.g. Jackson's `CBORMapper`).
 
 The module is language-neutral on the wire: any client that speaks the frame format below can talk
-to an `AeronRpcServer`, whatever language it is written in (see `examples/aeron` for a Rust
-client talking to a Kotlin Spring Boot backend over UDP with CBOR payloads, in both directions).
+to an `AeronRpcServer`, whatever language it is written in (see `examples/aeron` for Rust and
+TypeScript clients talking to a Kotlin Spring Boot backend over UDP with CBOR payloads, in both
+directions).
 
 ## Wire protocol
 
