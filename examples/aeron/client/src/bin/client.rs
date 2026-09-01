@@ -75,6 +75,14 @@ fn main() -> Result<(), String> {
         println!("GetWatchlistQuotes -> {} {} {}", quote.symbol, quote.price, quote.currency);
     }
 
+    // When asked (the Docker integration test does), keep serving GetWatchlist
+    // after our own calls: the TypeScript client (../client-ts) drives the same
+    // backend loop next, and the backend calls the watchlist rpc served here.
+    if let Some(seconds) = std::env::var("LINGER_SECONDS").ok().and_then(|s| s.parse().ok()).filter(|s| *s > 0u64) {
+        println!("Client calls done; serving GetWatchlist for {seconds}s");
+        std::thread::sleep(Duration::from_secs(seconds));
+    }
+
     running.store(false, Ordering::SeqCst);
     serving.join().unwrap()?;
     Ok(())
