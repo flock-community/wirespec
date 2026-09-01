@@ -72,13 +72,13 @@ public class AeronRpcClient<S>(
     }
 
     /** Call an rpc without an error type: `rpc Method { params } -> R`. */
-    public suspend inline fun <reified P : Any, reified R : Any> call(method: String, params: P): R = call(method, serialization.serializeBody(params, typeOf<P>())).toResult(method)
+    public suspend inline fun <reified P : Any, reified R : Any> call(method: String, params: P, timeout: Duration = 10.seconds): R = call(method, serialization.serializeBody(params, typeOf<P>()), timeout).toResult(method)
 
     /** Call a parameterless rpc: `rpc Method {} -> R`. */
-    public suspend inline fun <reified R : Any> call(method: String): R = call(method, AeronRpc.EMPTY_PARAMS).toResult(method)
+    public suspend inline fun <reified R : Any> call(method: String, timeout: Duration = 10.seconds): R = call(method, AeronRpc.EMPTY_PARAMS, timeout).toResult(method)
 
     /** Call an rpc with an error type: `rpc Method { params } -> R ! E`. */
-    public suspend inline fun <reified P : Any, reified R : Any, reified E : Any> callResult(method: String, params: P): RpcResult<R, E> = when (val frame = call(method, serialization.serializeBody(params, typeOf<P>()))) {
+    public suspend inline fun <reified P : Any, reified R : Any, reified E : Any> callResult(method: String, params: P, timeout: Duration = 10.seconds): RpcResult<R, E> = when (val frame = call(method, serialization.serializeBody(params, typeOf<P>()), timeout)) {
         is RpcFrame.Result -> RpcResult.Success(serialization.deserializeBody(frame.payload, typeOf<R>()))
         is RpcFrame.Error -> RpcResult.Failure(serialization.deserializeBody(frame.payload, typeOf<E>()))
         is RpcFrame.Request -> error("Unexpected REQUEST frame for rpc '$method'")

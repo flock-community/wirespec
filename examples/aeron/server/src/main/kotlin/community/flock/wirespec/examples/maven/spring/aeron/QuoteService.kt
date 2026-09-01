@@ -13,6 +13,7 @@ import community.flock.wirespec.generated.examples.aeron.rpc.Ping
 import community.flock.wirespec.integration.aeron.AeronRpcClient
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.stereotype.Service
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class QuoteService(
@@ -51,8 +52,13 @@ class QuoteService(
 
     override suspend fun ping(): String = "pong"
 
-    /** The reverse direction: this server calls the client's GetWatchlist rpc. */
+    /**
+     * The reverse direction: this server calls the client's GetWatchlist rpc.
+     * The generous timeout leaves room for the client's freshly added reply
+     * publication to connect over UDP; callers of GetWatchlistQuotes should
+     * wait longer still, so this hop's failure reaches them as a typed error.
+     */
     override suspend fun getWatchlistQuotes(): QuoteList = watchlistClient
-        .call<Watchlist>("GetWatchlist")
+        .call<Watchlist>("GetWatchlist", timeout = 25.seconds)
         .let { watchlist -> QuoteList(watchlist.symbols.mapNotNull(quotes::get)) }
 }
