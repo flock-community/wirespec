@@ -7,6 +7,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use wirespec_aeron::protocol::RpcFrame;
 
+use crate::gen::model::quote::Quote;
 use crate::gen::model::quote_list::QuoteList;
 use crate::gen::rpc::get_quote::GetQuote;
 
@@ -50,6 +51,25 @@ pub fn get_watchlist_quotes_response(frame: &RpcFrame) -> Result<QuoteList, Stri
         RpcFrame::Error { payload, .. } => Err(format!("Rpc 'GetWatchlistQuotes' failed: {}", String::from_utf8_lossy(payload))),
         RpcFrame::Request { .. } => Err("Unexpected REQUEST frame for rpc 'GetWatchlistQuotes'".into()),
     }
+}
+
+/// One line for a full quote, identical across the Rust and TypeScript clients
+/// (the Docker integration test asserts the same strings from both).
+pub fn format_quote(quote: &Quote) -> String {
+    let prev = quote
+        .previous_close
+        .as_ref()
+        .map(|money| format!("prev {} {}", money.amount, money.currency))
+        .unwrap_or_else(|| "prev n/a".to_string());
+    format!(
+        "{} {} {} on {} ({}), {}, history {}",
+        quote.symbol, quote.last.amount, quote.last.currency, quote.venue.mic, quote.venue.city, prev, quote.history.len(),
+    )
+}
+
+/// The short line for watchlist listings.
+pub fn format_quote_line(quote: &Quote) -> String {
+    format!("{} {} {} on {}", quote.symbol, quote.last.amount, quote.last.currency, quote.venue.mic)
 }
 
 /// Map a Ping response frame onto the rpc's result type: a plain string, sent as raw UTF-8.
