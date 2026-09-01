@@ -156,7 +156,10 @@ fn publish(
     let aligned = AlignedBuffer::with_capacity(bytes.len() as Index);
     let buffer = AtomicBuffer::from_aligned(&aligned);
     buffer.put_bytes(0, &bytes);
-    let deadline = Instant::now() + Duration::from_secs(10);
+    // Generous: a freshly added UDP reply publication offers NOT_CONNECTED
+    // until the transport handshake completes, which can take a while on a
+    // loaded host; dropping the reply here would strand the caller entirely.
+    let deadline = Instant::now() + Duration::from_secs(20);
     loop {
         match publication.lock().unwrap().offer_part(buffer, 0, bytes.len() as Index) {
             Ok(position) if position > 0 => return Ok(()),
