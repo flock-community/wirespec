@@ -18,6 +18,14 @@ val wirespecTestSourcesDir = layout.projectDirectory.dir("src/jvmCodegen/resourc
 val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
 
 kotlin {
+    // Kotlin 2.0 is this module's consumer-compatibility floor, matching the
+    // kotlin_libraries floor: the current compiler rejects the repo-wide 1.9
+    // floor for the JS/native/metadata compilations this module now has, and a
+    // JVM-only 1.9 floor would sit below commonMain's, which KGP forbids.
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
     if (enableNative) {
         macosX64()
         macosArm64()
@@ -28,13 +36,6 @@ kotlin {
         nodejs()
     }
     jvm {
-        // The 1.9 language/api floor is a JVM-consumer compatibility guarantee; the
-        // JS/native/metadata compilations of the current compiler no longer accept 1.9,
-        // so the floor applies to the JVM target only.
-        compilerOptions {
-            apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
-            languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
-        }
         // Private build-time compilation that hosts the Wirespec emitter Main. Kept out
         // of the published artifact, used only by the generateWirespecTestSources task.
         compilations.create("codegen") {
