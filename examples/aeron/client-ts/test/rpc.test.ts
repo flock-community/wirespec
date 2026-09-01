@@ -4,7 +4,16 @@ import { test } from "node:test";
 import { RpcFrame } from "@flock/wirespec-aeron";
 
 import { encodeCbor } from "../src/cbor";
-import { getQuoteParams, getQuoteResponse, getWatchlistQuotesResponse, pingResponse } from "../src/rpc";
+import { formatQuote, getQuoteParams, getQuoteResponse, getWatchlistQuotesResponse, pingResponse } from "../src/rpc";
+import { Quote } from "../src/gen/model";
+
+const flck: Quote = {
+  symbol: "FLCK",
+  last: { amount: 42, currency: "EUR" },
+  previousClose: undefined,
+  venue: { mic: "XAMS", city: "Amsterdam" },
+  history: [{ at: "16:00", price: { amount: 42, currency: "EUR" } }],
+};
 
 const result = (method: string, payload: Uint8Array): RpcFrame => ({
   kind: "result",
@@ -27,9 +36,21 @@ test("GetQuote parameters encode as a CBOR map", () => {
 });
 
 test("a RESULT frame maps onto the generated Quote", () => {
-  const quote = { symbol: "AAPL", price: 178.25, currency: "USD" };
+  const quote: Quote = {
+    symbol: "AAPL",
+    last: { amount: 178.25, currency: "USD" },
+    previousClose: { amount: 176.1, currency: "USD" },
+    venue: { mic: "XNAS", city: "New York" },
+    history: [{ at: "16:00", price: { amount: 178.25, currency: "USD" } }],
+  };
   const response = getQuoteResponse(result("GetQuote", encodeCbor(quote)));
   assert.deepEqual(response.value, quote);
+});
+
+test("quotes format identically across clients", () => {
+  // The Docker integration test asserts this exact line from both the Rust
+  // and the TypeScript client.
+  assert.equal(formatQuote(flck), "FLCK 42 EUR on XAMS (Amsterdam), prev n/a, history 1");
 });
 
 test("an ERROR frame maps onto the generated QuoteError", () => {
@@ -39,7 +60,7 @@ test("an ERROR frame maps onto the generated QuoteError", () => {
 });
 
 test("GetWatchlistQuotes maps onto the generated QuoteList", () => {
-  const quotes = { quotes: [{ symbol: "FLCK", price: 42, currency: "EUR" }] };
+  const quotes = { quotes: [{ ...flck, previousClose: null }] };
   assert.deepEqual(getWatchlistQuotesResponse(result("GetWatchlistQuotes", encodeCbor(quotes))), quotes);
 });
 
