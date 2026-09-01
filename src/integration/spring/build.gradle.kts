@@ -29,11 +29,14 @@ kotlin {
     js(IR) {
         nodejs()
     }
-    compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
-    }
     jvm {
+        // The 1.9 language/api floor is a JVM-consumer compatibility guarantee; the
+        // JS/native/metadata compilations of the current compiler no longer accept 1.9,
+        // so the floor applies to the JVM target only.
+        compilerOptions {
+            apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
+            languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
+        }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
