@@ -42,6 +42,20 @@ export function getWatchlistQuotesResponse(frame: RpcFrame): QuoteList {
   }
 }
 
+/**
+ * One line for a full quote, identical across the Rust and TypeScript clients
+ * (the Docker integration test asserts the same strings from both).
+ */
+export function formatQuote(quote: Quote): string {
+  const prev = quote.previousClose != null ? `prev ${quote.previousClose.amount} ${quote.previousClose.currency}` : "prev n/a";
+  return `${quote.symbol} ${quote.last.amount} ${quote.last.currency} on ${quote.venue.mic} (${quote.venue.city}), ${prev}, history ${quote.history.length}`;
+}
+
+/** The short line for watchlist listings. */
+export function formatQuoteLine(quote: Quote): string {
+  return `${quote.symbol} ${quote.last.amount} ${quote.last.currency} on ${quote.venue.mic}`;
+}
+
 /** Map a Ping response frame onto the rpc's result type: a plain string, sent as raw UTF-8. */
 export function pingResponse(frame: RpcFrame): string {
   switch (frame.kind) {

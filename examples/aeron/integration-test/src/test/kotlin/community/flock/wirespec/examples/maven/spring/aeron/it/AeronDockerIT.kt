@@ -105,10 +105,11 @@ class AeronDockerIT {
                         .onFailure { throw AssertionError("Client run failed; client logs:\n${runCatching { client.logs }.getOrNull()}\nserver logs:\n${server.logs}\ndriver logs:\n${clientDriver.logs}", it) }
                     listOf(
                         "Ping -> pong",
-                        "GetQuote AAPL -> AAPL 178.25 USD",
+                        "GetQuote AAPL -> AAPL 178.25 USD on XNAS (New York), prev 176.1 USD, history 2",
+                        "GetQuote FLCK -> FLCK 42 EUR on XAMS (Amsterdam), prev n/a, history 1",
                         "GetQuote NOPE -> error UNKNOWN_SYMBOL: No quote for symbol 'NOPE'",
-                        "GetWatchlistQuotes -> AAPL 178.25 USD",
-                        "GetWatchlistQuotes -> FLCK 42 EUR",
+                        "GetWatchlistQuotes -> AAPL 178.25 USD on XNAS",
+                        "GetWatchlistQuotes -> FLCK 42 EUR on XAMS",
                         "Serving GetWatchlist for the backend",
                     ).forEach { expected ->
                         assertTrue(expected in client.logs) { "Expected client log to contain '$expected'; client logs:\n${client.logs}\nserver logs:\n${server.logs}" }
@@ -125,11 +126,12 @@ class AeronDockerIT {
                             .onFailure { throw AssertionError("TypeScript client run failed; ts client logs:\n${runCatching { tsClient.logs }.getOrNull()}\nserver logs:\n${server.logs}\nts driver logs:\n${tsClientDriver.logs}", it) }
                         listOf(
                             "Ping -> pong",
-                            "GetQuote AAPL -> AAPL 178.25 USD",
+                            "GetQuote AAPL -> AAPL 178.25 USD on XNAS (New York), prev 176.1 USD, history 2",
+                            "GetQuote FLCK -> FLCK 42 EUR on XAMS (Amsterdam), prev n/a, history 1",
                             "GetQuote NOPE -> error UNKNOWN_SYMBOL: No quote for symbol 'NOPE'",
                             // Kotlin backend -> Rust client -> back here: three languages, one loop.
-                            "GetWatchlistQuotes -> AAPL 178.25 USD",
-                            "GetWatchlistQuotes -> FLCK 42 EUR",
+                            "GetWatchlistQuotes -> AAPL 178.25 USD on XNAS",
+                            "GetWatchlistQuotes -> FLCK 42 EUR on XAMS",
                         ).forEach { expected ->
                             assertTrue(expected in tsClient.logs) { "Expected ts client log to contain '$expected'; ts client logs:\n${tsClient.logs}\nserver logs:\n${server.logs}\nrust client logs:\n${client.logs}" }
                         }

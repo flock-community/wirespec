@@ -54,9 +54,10 @@ cd client-ts && npm start                        # after ./build.sh; needs a loc
 
 ```
 Ping -> pong
-GetQuote AAPL -> AAPL 178.25 USD
+GetQuote AAPL -> AAPL 178.25 USD on XNAS (New York), prev 176.1 USD, history 2
+GetQuote FLCK -> FLCK 42 EUR on XAMS (Amsterdam), prev n/a, history 1
 GetQuote NOPE -> error UNKNOWN_SYMBOL: No quote for symbol 'NOPE'
 Serving GetWatchlist for the backend
-GetWatchlistQuotes -> AAPL 178.25 USD
-GetWatchlistQuotes -> FLCK 42 EUR
+GetWatchlistQuotes -> AAPL 178.25 USD on XNAS
+GetWatchlistQuotes -> FLCK 42 EUR on XAMS
 ```
