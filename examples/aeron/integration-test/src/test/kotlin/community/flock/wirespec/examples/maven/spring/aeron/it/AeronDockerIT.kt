@@ -13,16 +13,19 @@ import java.nio.file.Paths
 import java.time.Duration
 
 /**
- * Runs the Kotlin Spring Boot backend and the Rust client together in Docker,
- * connected over the network: every channel is an `aeron:udp` endpoint on the
- * container network, and the payloads are CBOR. The backend embeds its media
- * driver; the client pod is two containers sharing one IPC namespace — a
- * media-driver sidecar (the pod's network identity, alias `client`) and the
- * Rust client attached to it over /dev/shm.
+ * Runs the Kotlin Spring Boot backend, the Rust client and the TypeScript
+ * client together in Docker, connected over the network: every channel is an
+ * `aeron:udp` endpoint on the container network, and the payloads are CBOR.
+ * The backend embeds its media driver; each client is a pod of two containers
+ * sharing one IPC namespace — a media-driver sidecar (the pod's network
+ * identity) and the client attached to it over /dev/shm.
  *
- * The client calls the backend (Ping, GetQuote) and then GetWatchlistQuotes,
- * which makes the backend call the client's own GetWatchlist rpc: the reverse,
- * server-to-client direction — over UDP both ways.
+ * The Rust client calls the backend (Ping, GetQuote) and then
+ * GetWatchlistQuotes, which makes the backend call the client's own
+ * GetWatchlist rpc: the reverse, server-to-client direction — over UDP both
+ * ways. It then keeps serving while the TypeScript client drives the same
+ * loop, closing a three-language triangle: TypeScript -> Kotlin -> Rust ->
+ * Kotlin -> TypeScript.
  */
 class AeronDockerIT {
 
@@ -48,6 +51,12 @@ class AeronDockerIT {
             .withFileFromPath("Dockerfile", exampleRoot.resolve("docker/Dockerfile.client"))
             .withFileFromPath("client", exampleRoot.resolve("client/target/release/client"))
             .withBuildArg("BASE_IMAGE", clientBase)
+        val tsClientImage = ImageFromDockerfile("wirespec-aeron-client-ts", true)
+            .withFileFromPath("Dockerfile", exampleRoot.resolve("docker/Dockerfile.client-ts"))
+            .withFileFromPath("node", exampleRoot.resolve("client-ts/target/docker/node"))
+            .withFileFromPath("libaeron.so", exampleRoot.resolve("client-ts/target/docker/libaeron.so"))
+            .withFileFromPath("app", exampleRoot.resolve("client-ts/target/docker/app"))
+            .withBuildArg("BASE_IMAGE", clientBase)
 
         Network.newNetwork().use { network ->
             val server = GenericContainer(serverImage)
@@ -59,32 +68,41 @@ class AeronDockerIT {
                 .withCreateContainerCmdModifier { cmd -> cmd.hostConfig!!.withShmSize(1L shl 30) }
                 .waitingFor(Wait.forLogMessage(".*Wirespec Aeron rpc server listening.*", 1))
                 .withStartupTimeout(Duration.ofMinutes(2))
-            // The client's own media driver: the pod's network identity, doing the UDP I/O.
-            val clientDriver = GenericContainer(driverImage)
+            // Each client's own media driver: the pod's network identity, doing the UDP I/O.
+            fun driver(alias: String): GenericContainer<*> = GenericContainer(driverImage)
                 .withNetwork(network)
-                .withNetworkAliases("client")
+                .withNetworkAliases(alias)
                 .withCreateContainerCmdModifier { cmd -> cmd.hostConfig!!.withIpcMode("shareable").withShmSize(1L shl 30) }
                 .waitingFor(Wait.forLogMessage(".*wirespec aeron driver starting.*", 1))
                 .withStartupTimeout(Duration.ofMinutes(2))
+
+            // Join the sidecar's IPC namespace (the driver's /dev/shm)
+            // and its network namespace (one pod, one address).
+            fun GenericContainer<*>.inPodOf(sidecar: GenericContainer<*>): GenericContainer<*> =
+                withCreateContainerCmdModifier { cmd ->
+                    cmd.hostConfig!!
+                        .withIpcMode("container:${sidecar.containerId}")
+                        .withNetworkMode("container:${sidecar.containerId}")
+                }
+
+            val clientDriver = driver("client")
+            val tsClientDriver = driver("tsclient")
             try {
                 server.start()
                 clientDriver.start()
+                // The Rust client runs its calls, then keeps serving GetWatchlist
+                // so the backend can answer the TypeScript client's loop too.
                 val client = GenericContainer(clientImage)
                     .withEnv("REQUEST_CHANNEL", "aeron:udp?endpoint=server:40123")
                     .withEnv("REPLY_CHANNEL", "aeron:udp?endpoint=client:40124")
                     .withEnv("SERVE_CHANNEL", "aeron:udp?endpoint=client:40125")
-                    .withCreateContainerCmdModifier { cmd ->
-                        // Join the sidecar's IPC namespace (the driver's /dev/shm)
-                        // and its network namespace (one pod, one address).
-                        cmd.hostConfig!!
-                            .withIpcMode("container:${clientDriver.containerId}")
-                            .withNetworkMode("container:${clientDriver.containerId}")
-                    }
-                    .withStartupCheckStrategy(OneShotStartupCheckStrategy().withTimeout(Duration.ofMinutes(2)))
+                    .withEnv("LINGER_SECONDS", "300")
+                    .inPodOf(clientDriver)
+                    .waitingFor(Wait.forLogMessage(".*Client calls done; serving GetWatchlist.*", 1))
+                    .withStartupTimeout(Duration.ofMinutes(3))
                 try {
                     runCatching { client.start() }
-                        .onFailure { throw AssertionError("Client run failed; server logs:\n${server.logs}\ndriver logs:\n${clientDriver.logs}", it) }
-                    val logs = client.logs
+                        .onFailure { throw AssertionError("Client run failed; client logs:\n${runCatching { client.logs }.getOrNull()}\nserver logs:\n${server.logs}\ndriver logs:\n${clientDriver.logs}", it) }
                     listOf(
                         "Ping -> pong",
                         "GetQuote AAPL -> AAPL 178.25 USD",
@@ -93,12 +111,36 @@ class AeronDockerIT {
                         "GetWatchlistQuotes -> FLCK 42 EUR",
                         "Serving GetWatchlist for the backend",
                     ).forEach { expected ->
-                        assertTrue(expected in logs) { "Expected client log to contain '$expected'; client logs:\n$logs\nserver logs:\n${server.logs}" }
+                        assertTrue(expected in client.logs) { "Expected client log to contain '$expected'; client logs:\n${client.logs}\nserver logs:\n${server.logs}" }
+                    }
+
+                    tsClientDriver.start()
+                    val tsClient = GenericContainer(tsClientImage)
+                        .withEnv("REQUEST_CHANNEL", "aeron:udp?endpoint=server:40123")
+                        .withEnv("REPLY_CHANNEL", "aeron:udp?endpoint=tsclient:40124")
+                        .inPodOf(tsClientDriver)
+                        .withStartupCheckStrategy(OneShotStartupCheckStrategy().withTimeout(Duration.ofMinutes(2)))
+                    try {
+                        runCatching { tsClient.start() }
+                            .onFailure { throw AssertionError("TypeScript client run failed; ts client logs:\n${runCatching { tsClient.logs }.getOrNull()}\nserver logs:\n${server.logs}\nts driver logs:\n${tsClientDriver.logs}", it) }
+                        listOf(
+                            "Ping -> pong",
+                            "GetQuote AAPL -> AAPL 178.25 USD",
+                            "GetQuote NOPE -> error UNKNOWN_SYMBOL: No quote for symbol 'NOPE'",
+                            // Kotlin backend -> Rust client -> back here: three languages, one loop.
+                            "GetWatchlistQuotes -> AAPL 178.25 USD",
+                            "GetWatchlistQuotes -> FLCK 42 EUR",
+                        ).forEach { expected ->
+                            assertTrue(expected in tsClient.logs) { "Expected ts client log to contain '$expected'; ts client logs:\n${tsClient.logs}\nserver logs:\n${server.logs}\nrust client logs:\n${client.logs}" }
+                        }
+                    } finally {
+                        tsClient.stop()
                     }
                 } finally {
                     client.stop()
                 }
             } finally {
+                tsClientDriver.stop()
                 clientDriver.stop()
                 server.stop()
             }
