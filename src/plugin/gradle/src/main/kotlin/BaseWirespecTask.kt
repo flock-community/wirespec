@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.extension.IrExtension
 import community.flock.wirespec.ir.extension.applyExtensions
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -20,6 +21,7 @@ import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -59,8 +61,14 @@ public abstract class BaseWirespecTask : DefaultTask() {
 
     @get:Input
     @get:Optional
-    @get:Option(option = "extensionClasses", description = "IR extension classes applied when an emitter is an IrEmitter")
+    @get:Option(option = "extensionClasses", description = "custom IR extension classes applied when an emitter is an IrEmitter")
     public abstract val extensionClasses: ListProperty<Class<*>>
+
+    // Named irExtensions because DefaultTask already reserves `extensions` (ExtensionAware).
+    @get:Input
+    @get:Optional
+    @get:Option(option = "irExtensions", description = "bundled IR extensions applied when an emitter is an IrEmitter")
+    public abstract val irExtensions: ListProperty<Extension>
 
     @get:Input
     @get:Optional
@@ -120,10 +128,12 @@ public abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
+    private fun allExtensions(language: FileExtension): List<IrExtension> = irExtensions.getOrElse(emptyList()).map { it.toIrExtension(packageNameValue(), language) } + extensionInstances(language)
+
     protected fun emitters(): NonEmptySet<Emitter> = languages.get()
         .map { it.toEmitter(packageNameValue(), sharedValue()) }
         .plus(emitter())
-        .mapNotNull { it?.applyExtensions(extensionInstances(it.extension)) }
+        .mapNotNull { it?.applyExtensions(allExtensions(it.extension)) }
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguageOrEmitter()
 

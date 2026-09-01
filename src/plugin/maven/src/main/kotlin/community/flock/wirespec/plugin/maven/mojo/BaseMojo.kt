@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.ir.emit.IrEmitter
 import community.flock.wirespec.ir.extension.IrExtension
 import community.flock.wirespec.ir.extension.applyExtensions
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -26,6 +27,7 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrExtension
 import org.apache.maven.artifact.Artifact
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
@@ -78,10 +80,16 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var emitterClass: String? = null
 
     /**
-     * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
+     * Specifies custom IR extension classes to apply when an emitter is an [IrEmitter].
      */
     @Parameter
     protected var extensionClasses: List<String> = listOf()
+
+    /**
+     * Specifies bundled extensions to apply by name when an emitter is an [IrEmitter]: [Extension].
+     */
+    @Parameter
+    protected var extensions: List<Extension> = listOf()
 
     /**
      * Specifies package name, default [DEFAULT_GENERATED_PACKAGE_STRING]
@@ -152,11 +160,13 @@ public abstract class BaseMojo : AbstractMojo() {
         }
     }
 
+    private fun allExtensions(language: FileExtension): List<IrExtension> = extensions.map { it.toIrExtension(PackageName(packageName), language) } + extensionInstances(language)
+
     protected val emitters: NonEmptySet<Emitter>
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
             .plus(emitter)
-            .mapNotNull { it?.applyExtensions(extensionInstances(it.extension)) }
+            .mapNotNull { it?.applyExtensions(allExtensions(it.extension)) }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguageOrEmitter()
 

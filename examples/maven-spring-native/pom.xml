@@ -129,10 +129,10 @@
 					<languages>
 						<language>Java</language>
 					</languages>
-					<extensionClasses>
-						<extensionClass>community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension</extensionClass>
-						<extensionClass>community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension</extensionClass>
-					</extensionClasses>
+					<extensions>
+						<extension>SpringMappingAnnotations</extension>
+						<extension>SpringNativeHints</extension>
+					</extensions>
 				</configuration>
 				<dependencies>
 					<dependency>

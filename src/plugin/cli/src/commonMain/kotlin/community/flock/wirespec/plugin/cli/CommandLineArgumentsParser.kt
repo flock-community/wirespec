@@ -28,10 +28,13 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
+import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.toIrExtension
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.DirectoryPath
@@ -51,6 +54,7 @@ internal enum class Options(public vararg val flags: String) {
     Input("-i", "--input"),
     Output("-o", "--output"),
     Language("-l", "--language"),
+    Extension("-x", "--extension"),
     PackageName("-p", "--package"),
     LogLevel("--log-level"),
     Shared("--shared"),
@@ -69,6 +73,9 @@ internal class WirespecCli : NoOpCliktCommand(name = "wirespec") {
 private abstract class CommonOptions : CliktCommand() {
     val input by option(*Options.Input.flags, help = "Input")
     val output by option(*Options.Output.flags, help = "Output")
+    val extensions by option(*Options.Extension.flags, help = "Extension")
+        .choice(choices = Extension.toMap(), ignoreCase = true)
+        .multiple()
     val packageName by option(*Options.PackageName.flags, help = "Package name")
         .default(DEFAULT_GENERATED_PACKAGE_STRING)
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$INFO")
@@ -119,7 +126,7 @@ private class Compile(
             }
         }
 
-        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared), extensions)
 
         val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
@@ -159,7 +166,7 @@ private class Convert(
                 .also { logger.info("Found 1 file to process: $inputPath") }
         }
 
-        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared), extensions)
         val directory = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         ConverterArguments(
             format = format,
@@ -177,6 +184,7 @@ private class Convert(
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
 
-private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared) = this
+private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared, extensions: List<Extension>) = this
     .map { it.toEmitter(packageName, emitShared) }
+    .map { emitter -> emitter.applyExtensions(extensions.map { it.toIrExtension(packageName, emitter.extension) }) }
     .toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())

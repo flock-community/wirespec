@@ -66,7 +66,7 @@ emitterClass.set(MyCustomEmitter::class.java)
 
 The custom emitter runs *in addition to* any languages selected for the same task — its `Emitted` output is concatenated with the built-ins'. A minimal end-to-end project lives at `examples/maven-spring-custom/`.
 
-Wirespec's own first-party integrations are instead wired in as **IR extensions** (`extensionClasses`): an `IrExtension` reshapes or augments the IR of a built-in IR emitter before code generation. The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
+Wirespec's own first-party integrations are instead wired in as **IR extensions**, bundled with every plugin and enabled by name (`extensions`/`irExtensions`/`--extension`; custom classes via `extensionClasses`): an `IrExtension` reshapes or augments the IR of a built-in IR emitter before code generation. The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
 
 ## Shared contract
 

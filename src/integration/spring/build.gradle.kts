@@ -17,7 +17,18 @@ repositories {
 val generatedWirespecDir = layout.buildDirectory.dir("generated/sources/wirespec")
 val wirespecTestSourcesDir = layout.projectDirectory.dir("src/jvmTest/resources")
 
+val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+
 kotlin {
+    if (enableNative) {
+        macosX64()
+        macosArm64()
+        linuxX64()
+        mingwX64()
+    }
+    js(IR) {
+        nodejs()
+    }
     compilerOptions {
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
@@ -69,19 +80,25 @@ kotlin {
                 // The Spring extensions only reshape the language-neutral IR with
                 // fully-qualified raw annotations/source, so they need the
                 // compiler/IR API at compile time but no Spring runtime — that
-                // comes from the consumer's build.
+                // comes from the consumer's build. compileOnly keeps the compiler
+                // off the JVM consumer's runtime classpath; JS/Native don't support
+                // compileOnly, so those source sets redeclare the same modules as api.
                 compileOnly(project(":src:compiler:core"))
-                compileOnly(project(":src:compiler:emitters:kotlin"))
-                compileOnly(project(":src:compiler:emitters:java"))
+                compileOnly(project(":src:compiler:ir"))
             }
         }
-        commonTest {
+        jsMain {
             dependencies {
-                implementation(libs.kotlin.test)
-                implementation(libs.bundles.kotest)
-                implementation(project(":src:integration:wirespec"))
-                implementation(project(":src:compiler:test"))
-                implementation(project(":src:compiler:core"))
+                api(project(":src:compiler:core"))
+                api(project(":src:compiler:ir"))
+            }
+        }
+        if (enableNative) {
+            nativeMain {
+                dependencies {
+                    api(project(":src:compiler:core"))
+                    api(project(":src:compiler:ir"))
+                }
             }
         }
         jvmMain {
@@ -111,7 +128,10 @@ kotlin {
         jvmTest {
             kotlin.srcDir(generatedWirespecDir.map { it.dir("kotlin") })
             dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.bundles.kotest)
                 implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:test"))
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.spring.boot.test)

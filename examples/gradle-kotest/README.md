@@ -18,7 +18,7 @@ build/generated/.../generated/
 - **One contract, two surfaces.** `campaign.ws` defines products/campaigns REST endpoints and a
   `CampaignEvents` channel. The `SpringMappingAnnotationsExtension` adds Spring routing
   annotations to the generated handler interfaces; the `KotestDslExtension` emits a typed test
-  DSL next to the models. Both are enabled via the Gradle plugin's `extensionClasses`
+  DSL next to the models. Both are bundled with the Gradle plugin and enabled via `irExtensions`
   (see [`build.gradle.kts`](build.gradle.kts)).
 - **Generated handler interfaces → controllers.** `ProductController` / `CampaignController`
   implement the generated `*.Handler` interfaces; `@EnableWirespecController` wires them up.

@@ -43,9 +43,9 @@ The integration works for both producers and consumers, and can be configured wi
                         <languages>
                             <language>Java</language>
                         </languages>
-                        <extensionClasses>
-                            <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
-                        </extensionClasses>
+                        <extensions>
+                            <extension>Avro</extension>
+                        </extensions>
                     </configuration>
                 </execution>
             </executions>
@@ -80,9 +80,9 @@ The integration works for both producers and consumers, and can be configured wi
                         <languages>
                             <language>Kotlin</language>
                         </languages>
-                        <extensionClasses>
-                            <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
-                        </extensionClasses>
+                        <extensions>
+                            <extension>Avro</extension>
+                        </extensions>
                     </configuration>
                 </execution>
             </executions>
@@ -109,7 +109,7 @@ The integration works for both producers and consumers, and can be configured wi
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
             languages = listOf(community.flock.wirespec.plugin.Language.Java)
-            extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
+            irExtensions = listOf(community.flock.wirespec.plugin.Extension.Avro)
         }
         ```
 
@@ -144,7 +144,7 @@ The integration works for both producers and consumers, and can be configured wi
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
             languages = listOf(community.flock.wirespec.plugin.Language.Kotlin)
-            extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
+            irExtensions = listOf(community.flock.wirespec.plugin.Extension.Avro)
         }
         ```
 
