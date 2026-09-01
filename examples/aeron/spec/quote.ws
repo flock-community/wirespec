@@ -1,7 +1,24 @@
+type Money {
+  amount: Number,
+  currency: String
+}
+
+type Venue {
+  mic: String,
+  city: String
+}
+
+type Tick {
+  at: String,
+  price: Money
+}
+
 type Quote {
   symbol: String,
-  price: Number,
-  currency: String
+  last: Money,
+  previousClose: Money?,
+  venue: Venue,
+  history: Tick[]
 }
 
 type QuoteError {
