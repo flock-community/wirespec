@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
+import kotlin.time.Duration.Companion.seconds
 
 @SpringBootTest
 class QuoteRpcTest(
@@ -83,7 +84,8 @@ class QuoteRpcTest(
             watchlistService.start()
             assertEquals(
                 QuoteList(listOf(aapl, flck)),
-                call { it.call<QuoteList>("GetWatchlistQuotes") },
+                // Outlive the server's own 25s reverse-call timeout, like the Docker clients do.
+                call { it.call<QuoteList>("GetWatchlistQuotes", timeout = 30.seconds) },
             )
         }
     }
