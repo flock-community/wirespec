@@ -10,4 +10,4 @@ internal sealed class SpecificFile(extension: FileExtension) : RuntimeException(
 internal class JSONFileError : SpecificFile(FileExtension.JSON)
 internal class WirespecFileError : SpecificFile(FileExtension.Wirespec)
 
-internal class PickAtLeastOneLanguageOrEmitter : RuntimeException("Pick at least one language or emitter.")
+internal class PickAtLeastOneLanguage : RuntimeException("Pick at least one language.")

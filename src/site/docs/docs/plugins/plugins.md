@@ -8,7 +8,7 @@ Wirespec supports various plugins for integration into a variety of ecosystems. 
 
 ## Operations
 
-All plugins support three core operations: Compile, Convert, and Custom.
+All plugins support two core operations: Compile and Convert.
 
 ### Compile
 
@@ -33,36 +33,20 @@ The `Convert` operation facilitates integration with other API specification lan
 
 [Playground convert](http://playground.wirespec.io/covert)
 
-### Custom
-
-The `Custom` operation combines the functionality of both `Compile` and `Convert` and offers additional options for integrating with custom emitters. It accepts the following inputs:
-
-- **input:** Path to the input file or folder.
-- **output:** Path to the output directory.
-- **format:** Input format (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`).
-- **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`,`OpenAPIV2`, `OpenAPIV3`).
-- **package name:** The package name for the generated code.
-- **share:** A flag to indicate whether shared code should be emitted.
-- **strict:** A flag to enable strict mode during processing.
-- **emitterClass:** The fully qualified name of the custom emitter class.
-- **extension:** The file extension for the output files.
-- **split:** A boolean flag indicating whether to split the output into separate files.
-
 ## IR extensions
 
 Before generating code, Wirespec lowers your definitions into a language-neutral **intermediate
 representation** (IR). An `IrExtension` lets you reshape that IR — for example to inject framework-specific
-annotations — without forking an emitter. The transformed IR is then handed to the normal code generator,
-so the output stays idiomatic for the target language.
+annotations, or to add a file per definition — without forking an emitter. The transformed IR is then handed
+to the normal code generator, so the output stays idiomatic for the target language.
 
-You register extensions with the `extensionClasses` parameter of the compile/custom operations. The
+You register extensions with the `extensionClasses` parameter of the compile and convert operations. The
 Maven and Gradle plugins accept a list of `IrExtension` classes and instantiate them for you, injecting the
-`packageName` and `shared` settings into the constructor when the extension needs them.
+`packageName` and `shared` settings and the target language into the constructor when the extension needs them.
 
 :::note
-Extensions only run when the emitter is an `IrEmitter`. The built-in language targets always emit
-through the IR pipeline, so registered extensions take effect out of the box. A custom
-`emitterClass` that implements `IrEmitter` also honors the registered extensions.
+The built-in language targets always emit through the IR pipeline, so registered extensions take effect
+out of the box. Extensions run in the order they are listed.
 :::
 
 Wirespec ships several IR extensions in its integration modules:
@@ -71,9 +55,9 @@ Wirespec ships several IR extensions in its integration modules:
 |---|---|---|
 | `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
 
-Extensions whose constructor only needs `packageName`/`shared` (or nothing at all), such as
-`KotlinxSerializationExtension`, can be registered directly through `extensionClasses`. Extensions
-that need other arguments — for instance the target language — are typically wired into a custom
-`IrEmitter` instead.
+An extension's constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and
+`FileExtension` (the target language of the emitter being extended); the plugins inject all of them. To
+write your own extension, see [Architecture › Plugins](../architecture/architecture-plugins.md#ir-extensions)
+and the worked example at `examples/maven-spring-custom/`.
 
 See [Gradle](./plugins-gradle.md) and [Maven](./plugins-maven.md) for the exact configuration syntax.

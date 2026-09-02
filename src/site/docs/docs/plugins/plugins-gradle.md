@@ -43,26 +43,29 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     preProcessor = { it }
 }
 
-// Example of using a custom emitter class
+// Example of applying a custom IR extension
 tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     description = "Compile Wirespec to Kotlin"
     group = "Wirespec compile"
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName.set("community.flock.wirespec.generated.kotlin")
-    emitterClass.set(KotlinSerializableEmitter::class.java)
+    languages.set(listOf(Language.Kotlin))
+    extensionClasses.set(listOf(SerializableExtension::class.java))
     shared = true
     strict = false
 }
 
-// Example of a custom emitter class built on the IR pipeline: it extends the standard
-// KotlinIrEmitter and reshapes the IR File produced for every definition before generation.
-class KotlinSerializableEmitter(packageName: PackageName) : KotlinIrEmitter(packageName, EmitShared(false)) {
+// Example of an IR extension: it receives the language-neutral IR of every generated file
+// and annotates each top-level struct before the generator turns the tree into Kotlin.
+class SerializableExtension : IrExtension {
 
-    override fun emit(definition: Definition, module: Module, logger: Logger): File =
-        super.emit(definition, module, logger).let { file ->
-            file.copy(elements = listOf(RawElement("@kotlinx.serialization.Serializable")) + file.elements)
-        }
+    override fun extend(ir: IR, ast: AST): IR = ir.map { element ->
+        if (element is File) element.copy(elements = element.elements.flatMap { it.annotated() }) else element
+    }
+
+    private fun Element.annotated(): List<Element> =
+        if (this is Struct) listOf(RawElement("@kotlinx.serialization.Serializable"), this) else listOf(this)
 }
 ```
 
@@ -73,6 +76,13 @@ import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Format
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.ir.core.Element
+import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.IR
+import community.flock.wirespec.ir.core.RawElement
+import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.extension.IrExtension
 ```
 
 ## Task Types
@@ -89,7 +99,6 @@ This task compiles Wirespec definitions to various target languages.
 - `output`: DirectoryProperty - The output directory for generated code
 - `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `emitterClass`: Property&lt;Class&lt;\*&gt;&gt; - Custom emitter class
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
@@ -105,7 +114,6 @@ This task converts from JSON or Avro to other formats.
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro)
 - `preProcessor`: Property&lt;(String) -> String&gt; - Function to preprocess the input content before conversion
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `emitterClass`: Property&lt;Class&lt;\*&gt;&gt; - Custom emitter class
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)

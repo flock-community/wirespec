@@ -35,7 +35,7 @@
                 <dependencies>
                     <dependency>
                         <groupId>community.flock.wirespec.example.maven</groupId>
-                        <artifactId>emitter</artifactId>
+                        <artifactId>extension</artifactId>
                         <version>${project.version}</version>
                     </dependency>
                     <dependency>
@@ -52,8 +52,15 @@
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
-                            <output>${project.build.directory}/generated-sources/java/hello</output>
-                            <emitterClass>community.flock.wirespec.example.maven.custom.emit.CustomEmitter</emitterClass>
+                            <output>${project.build.directory}/generated-sources/java</output>
+                            <packageName>community.flock.wirespec.example.maven.custom.generated</packageName>
+                            <shared>false</shared>
+                            <languages>
+                                <language>Java</language>
+                            </languages>
+                            <extensionClasses>
+                                <extensionClass>community.flock.wirespec.example.maven.custom.extension.CustomExtension</extensionClass>
+                            </extensionClasses>
                         </configuration>
                     </execution>
                     <execution>
@@ -63,8 +70,15 @@
                         </goals>
                         <configuration>
                             <input>classpath:test/spec.ws</input>
-                            <output>${project.build.directory}/generated-sources/java/hello</output>
-                            <emitterClass>community.flock.wirespec.example.maven.custom.emit.CustomEmitter</emitterClass>
+                            <output>${project.build.directory}/generated-sources/java</output>
+                            <packageName>community.flock.wirespec.example.maven.custom.generated</packageName>
+                            <shared>false</shared>
+                            <languages>
+                                <language>Java</language>
+                            </languages>
+                            <extensionClasses>
+                                <extensionClass>community.flock.wirespec.example.maven.custom.extension.CustomExtension</extensionClass>
+                            </extensionClasses>
                         </configuration>
                     </execution>
                     <execution>
