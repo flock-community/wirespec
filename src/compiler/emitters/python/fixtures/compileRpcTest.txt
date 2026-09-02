@@ -1,0 +1,70 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+@dataclass
+class User(Wirespec.Shape):
+    name: str
+    def validate(self) -> list[str]:
+        return []
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.User import User
+class GetUser(Wirespec.Rpc):
+    class Response:
+        pass
+    @dataclass
+    class Result(Response):
+        value: User
+    @dataclass
+    class Error(Response):
+        value: str
+    class Service(ABC):
+        @abstractmethod
+        async def GetUser(self, id: str) -> GetUser.Response:
+            ...
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+class Ping(Wirespec.Rpc):
+    class Service(ABC):
+        @abstractmethod
+        async def Ping(self) -> str:
+            ...
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.User import User
+class UserGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> User:
+        return User(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+

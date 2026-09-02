@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
@@ -26,6 +27,10 @@ public fun Definition.importReferences(): List<Reference.Custom> = when (this) {
             .distinct()
     is Union -> entries.filterIsInstance<Reference.Custom>()
     is Channel -> if (reference is Reference.Custom) listOf(reference) else emptyList()
+    is Rpc -> (shape.value.map { it.reference } + result + listOfNotNull(error))
+        .map { it.flatten() }
+        .filterIsInstance<Reference.Custom>()
+        .distinct()
     is Enum -> emptyList()
     is Refined -> emptyList()
 }

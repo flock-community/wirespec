@@ -73,6 +73,7 @@ private fun IrEmitter.sharedOutputAsString(): String = emitShared()
 private fun compileFixtures(emitterFactory: () -> Emitter): Map<String, () -> String> = linkedMapOf(
     "compileFullEndpointTest" to { compile(CompileFullEndpointTest, emitterFactory) },
     "compileChannelTest" to { compile(CompileChannelTest, emitterFactory) },
+    "compileRpcTest" to { compile(CompileRpcTest, emitterFactory) },
     "compileEnumTest" to { compile(CompileEnumTest, emitterFactory) },
     "compileMinimalEndpointTest" to { compile(CompileMinimalEndpointTest, emitterFactory) },
     "compileRefinedTest" to { compile(CompileRefinedTest, emitterFactory) },

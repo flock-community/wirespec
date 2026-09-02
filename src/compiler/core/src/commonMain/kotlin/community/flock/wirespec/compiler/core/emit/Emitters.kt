@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
@@ -19,6 +20,7 @@ internal interface Emitters :
     UnionDefinitionEmitter,
     IdentifierEmitter,
     ChannelDefinitionEmitter,
+    RpcDefinitionEmitter,
     NotYetImplemented
 
 public interface TypeDefinitionEmitter {
@@ -56,6 +58,10 @@ public interface UnionDefinitionEmitter {
 
 public interface ChannelDefinitionEmitter {
     public fun emit(channel: Channel): String
+}
+
+public fun interface RpcDefinitionEmitter {
+    public fun emit(rpc: Rpc): String
 }
 
 public interface IdentifierEmitter {

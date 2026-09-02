@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 
 private const val DEFAULT_PACKAGE = "community.flock.wirespec"
 public const val DEFAULT_SHARED_PACKAGE_STRING: String = DEFAULT_PACKAGE
@@ -13,6 +14,7 @@ public const val DEFAULT_GENERATED_PACKAGE_STRING: String = "$DEFAULT_PACKAGE.ge
 public fun Definition.namespace(): String = when (this) {
     is Endpoint -> "endpoint"
     is Channel -> "channel"
+    is Rpc -> "rpc"
     is Model -> "model"
 }
 

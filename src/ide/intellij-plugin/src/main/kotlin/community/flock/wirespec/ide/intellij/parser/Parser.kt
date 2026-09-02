@@ -10,6 +10,7 @@ import community.flock.wirespec.ide.intellij.Types.Companion.ENDPOINT_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.ENUM_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.LEFT_CURLY
 import community.flock.wirespec.ide.intellij.Types.Companion.RIGHT_CURLY
+import community.flock.wirespec.ide.intellij.Types.Companion.RPC_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.TYPE_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.TYPE_IDENTIFIER
 import community.flock.wirespec.ide.intellij.parser.Parser.Body
@@ -20,6 +21,7 @@ public class Parser : PsiParser {
 
     public object TypeDef : IElementType("TYPE_DEF", Language)
     public object ChannelDef : IElementType("CHANNEL_DEF", Language)
+    public object RpcDef : IElementType("RPC_DEF", Language)
     public object EndpointDef : IElementType("ENDPOINT_DEF", Language)
     public object EnumDef : IElementType("ENUM_DEF", Language)
     public object CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language)
@@ -39,6 +41,7 @@ private fun PsiBuilder.parse(): Unit = when {
     def() -> {
         val type = when (tokenType) {
             CHANNEL_DEF -> Parser.ChannelDef
+            RPC_DEF -> Parser.RpcDef
             ENDPOINT_DEF -> Parser.EndpointDef
             ENUM_DEF -> Parser.EnumDef
             else -> Parser.TypeDef
@@ -58,7 +61,7 @@ private fun PsiBuilder.parse(): Unit = when {
 }
 
 private fun PsiBuilder.def() = when (tokenType) {
-    TYPE_DEF, CHANNEL_DEF, ENDPOINT_DEF, ENUM_DEF -> true
+    TYPE_DEF, CHANNEL_DEF, RPC_DEF, ENDPOINT_DEF, ENUM_DEF -> true
     else -> false
 }
 
