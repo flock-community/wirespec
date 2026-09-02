@@ -1,0 +1,47 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+case class User(
+  val name: String
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    List.empty[String]
+}
+
+package community.flock.wirespec.generated.rpc
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.User
+object GetUser extends Wirespec.Rpc {
+  sealed trait Response
+  case class Result(
+      val value: User
+    ) extends Response
+  case class Error(
+      val value: String
+    ) extends Response
+  trait Service {
+      def getUser(id: String): Response
+  }
+}
+
+package community.flock.wirespec.generated.rpc
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+object Ping extends Wirespec.Rpc {
+  trait Service {
+      def ping(): String
+  }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.User
+object UserGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): User =
+    new User(name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+      regex = None,
+      annotations = List.empty[Map[String, Any]]
+    )))
+}

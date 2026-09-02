@@ -20,6 +20,8 @@ public interface Wirespec {
   }
   public interface Channel {
   }
+  public interface Rpc {
+  }
   public interface Path {
   }
   public interface Queries {

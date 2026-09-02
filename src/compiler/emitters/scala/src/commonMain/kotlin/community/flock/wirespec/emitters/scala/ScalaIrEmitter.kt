@@ -20,6 +20,7 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -245,6 +246,11 @@ public open class ScalaIrEmitter(
         .convert()
         .sanitizeNames(sanitizationConfig)
         .prependImports(channel.buildModelImports(packageName).takeIf { it.isNotEmpty() })
+
+    override fun emit(rpc: Rpc): File = rpc
+        .convert()
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(rpc.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val imports = endpoint.buildModelImports(packageName)

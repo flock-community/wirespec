@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.compile
@@ -65,6 +66,24 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileChannelTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileRpcTest() {
+        val wirespec = """
+            |type User {
+            |  name: String
+            |}
+            |
+            |rpc GetUser {
+            |  id: String
+            |} -> User ! String
+            |
+            |rpc Ping {} -> String
+            |
+        """.trimMargin()
+
+        CompileRpcTest.compiler { WirespecEmitter() } shouldBeRight wirespec
     }
 
     @Test

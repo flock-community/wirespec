@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.RpcDefinition
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
@@ -103,6 +104,7 @@ private fun TokenProvider.parseDefinition() = either {
             is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment, annotations) }.bind()
             is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment, annotations) }.bind()
             is ChannelDefinition -> with(ChannelParser) { parseChannel(comment, annotations) }.bind()
+            is RpcDefinition -> with(RpcParser) { parseRpc(comment, annotations) }.bind()
         }
 
         else -> raiseWrongToken<WirespecDefinition>().bind()

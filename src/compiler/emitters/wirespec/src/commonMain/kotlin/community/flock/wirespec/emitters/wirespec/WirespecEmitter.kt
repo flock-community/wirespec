@@ -15,6 +15,7 @@ private interface WirespecEmitters:
     WirespecTypeDefinitionEmitter,
     WirespecEndpointDefinitionEmitter,
     WirespecChannelDefinitionEmitter,
+    WirespecRpcDefinitionEmitter,
     WirespecEnumDefinitionEmitter,
     WirespecUnionDefinitionEmitter,
     WirespecRefinedTypeDefinitionEmitter

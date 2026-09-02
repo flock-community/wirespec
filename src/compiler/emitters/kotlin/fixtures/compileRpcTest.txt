@@ -1,0 +1,47 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class User(
+  val name: String
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
+package community.flock.wirespec.generated.rpc
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.User
+object GetUser : Wirespec.Rpc {
+  sealed interface Response
+  data class Result(
+      val value: User
+    ) : Response
+  data class Error(
+      val value: String
+    ) : Response
+  fun interface Service {
+      suspend fun getUser(id: String): Response
+  }
+}
+
+package community.flock.wirespec.generated.rpc
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+object Ping : Wirespec.Rpc {
+  fun interface Service {
+      suspend fun ping(): String
+  }
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.User
+object UserGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): User =
+    User(name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      regex = null,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
