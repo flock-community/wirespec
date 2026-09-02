@@ -43,7 +43,7 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     preProcessor = { it }
 }
 
-// Example of applying a custom IR extension
+// Example of applying a custom extension
 tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     description = "Compile Wirespec to Kotlin"
     group = "Wirespec compile"
