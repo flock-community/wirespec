@@ -517,7 +517,7 @@ class OpenAPIV2ParserTest {
             |}
             """.trimMargin()
 
-        val ast = OpenAPIV2Parser.parse(ModuleContent(FileUri("test.json"), json), false)
+        val ast = parse(ModuleContent(FileUri("test.json"), json), false)
         val definitions = ast.modules.head.statements
 
         val todo = definitions.find { (it as? Type)?.identifier?.value == "Todo" }.shouldBeInstanceOf<Type>()
@@ -570,7 +570,7 @@ class OpenAPIV2ParserTest {
             |}
             """.trimMargin()
 
-        val ast = OpenAPIV2Parser.parse(ModuleContent(FileUri("test.json"), json), false)
+        val ast = parse(ModuleContent(FileUri("test.json"), json), false)
         val definitions = ast.modules.head.statements
 
         val type = definitions.find { (it as? Type)?.identifier?.value == "Pet" }.shouldBeInstanceOf<Type>()

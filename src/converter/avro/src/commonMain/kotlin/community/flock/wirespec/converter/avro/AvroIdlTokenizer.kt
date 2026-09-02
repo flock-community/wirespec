@@ -1,11 +1,12 @@
 package community.flock.wirespec.converter.avro
 
-internal sealed interface AvroIdlToken {
-    data class Identifier(val value: String) : AvroIdlToken
-    data class StringLiteral(val value: String) : AvroIdlToken
-    data class NumberLiteral(val value: String) : AvroIdlToken
-    data class DocComment(val value: String) : AvroIdlToken
-    data class Symbol(val value: Char) : AvroIdlToken
+internal sealed interface AvroIdlToken<T : Any> {
+    val value: T
+    data class Identifier(override val value: String) : AvroIdlToken<String>
+    data class StringLiteral(override val value: String) : AvroIdlToken<String>
+    data class NumberLiteral(override val value: String) : AvroIdlToken<String>
+    data class DocComment(override val value: String) : AvroIdlToken<String>
+    data class Symbol(override val value: Char) : AvroIdlToken<Char>
 }
 
 internal class AvroIdlTokenizer(private val source: String) {
@@ -13,8 +14,8 @@ internal class AvroIdlTokenizer(private val source: String) {
     private var line = 1
     private var column = 1
 
-    fun tokenize(): List<AvroIdlToken> {
-        val tokens = mutableListOf<AvroIdlToken>()
+    fun tokenize(): List<AvroIdlToken<*>> {
+        val tokens = mutableListOf<AvroIdlToken<*>>()
         while (pos < source.length) {
             val c = source[pos]
             when {

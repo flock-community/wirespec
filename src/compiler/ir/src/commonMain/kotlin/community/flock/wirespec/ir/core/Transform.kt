@@ -27,18 +27,23 @@ public class TransformerBuilder @PublishedApi internal constructor() {
     public fun type(transform: (Type, Transformer) -> Type) {
         transformType = transform
     }
+
     public fun element(transform: (Element, Transformer) -> Element) {
         transformElement = transform
     }
+
     public fun statement(transform: (Statement, Transformer) -> Statement) {
         transformStatement = transform
     }
+
     public fun expression(transform: (Expression, Transformer) -> Expression) {
         transformExpression = transform
     }
+
     public fun field(transform: (Field, Transformer) -> Field) {
         transformField = transform
     }
+
     public fun parameter(transform: (Parameter, Transformer) -> Parameter) {
         transformParameter = transform
     }
@@ -47,6 +52,7 @@ public class TransformerBuilder @PublishedApi internal constructor() {
     public fun constructor(transform: (Constructor, Transformer) -> Constructor) {
         transformConstructor = transform
     }
+
     public fun case(transform: (Case, Transformer) -> Case) {
         transformCase = transform
     }
@@ -62,11 +68,16 @@ public class TransformerBuilder @PublishedApi internal constructor() {
     internal fun build(): Transformer = object : Transformer {
         override fun transformType(type: Type): Type = transformType?.invoke(type, this) ?: type.transformChildren(this)
         override fun transformElement(element: Element): Element = transformElement?.invoke(element, this) ?: element.transformChildren(this)
+
         override fun transformStatement(statement: Statement): Statement = transformStatement?.invoke(statement, this) ?: statement.transformChildren(this)
+
         override fun transformExpression(expression: Expression): Expression = transformExpression?.invoke(expression, this) ?: expression.transformChildren(this)
+
         override fun transformField(field: Field): Field = transformField?.invoke(field, this) ?: field.transformChildren(this)
         override fun transformParameter(parameter: Parameter): Parameter = transformParameter?.invoke(parameter, this) ?: parameter.transformChildren(this)
+
         override fun transformConstructor(constructor: Constructor): Constructor = transformConstructor?.invoke(constructor, this) ?: constructor.transformChildren(this)
+
         override fun transformCase(case: Case): Case = transformCase?.invoke(case, this) ?: case.transformChildren(this)
     }
 }
@@ -79,12 +90,14 @@ public fun Type.transformChildren(transformer: Transformer): Type = when (this) 
         keyType = transformer.transformType(keyType),
         valueType = transformer.transformType(valueType),
     )
+
     is Type.Custom -> copy(generics = generics.map { transformer.transformType(it) })
     is Type.Nullable -> copy(type = transformer.transformType(type))
     is Type.Function -> copy(
         parameterTypes = parameterTypes.map { transformer.transformType(it) },
         returnType = transformer.transformType(returnType),
     )
+
     is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect, is Type.IntegerLiteral, is Type.StringLiteral -> this
 }
 
@@ -98,20 +111,24 @@ public fun Element.transformChildren(transformer: Transformer): Element = when (
         interfaces = interfaces.map { transformer.transformType(it) as Type.Custom },
         elements = elements.map { transformer.transformElement(it) },
     )
+
     is Function -> copy(
         parameters = parameters.map { transformer.transformParameter(it) },
         returnType = returnType?.let { transformer.transformType(it) },
         body = body.map { transformer.transformStatement(it) },
     )
+
     is Namespace -> copy(
         elements = elements.map { transformer.transformElement(it) },
         extends = extends?.let { transformer.transformType(it) as Type.Custom },
     )
+
     is Interface -> copy(
         elements = elements.map { transformer.transformElement(it) },
         extends = extends.map { transformer.transformType(it) as Type.Custom },
         fields = fields.map { transformer.transformField(it) },
     )
+
     is Union -> copy(
         extends = extends?.let { transformer.transformType(it) as Type.Custom },
         members = members.map { transformer.transformType(it) as Type.Custom },
@@ -122,16 +139,19 @@ public fun Element.transformChildren(transformer: Transformer): Element = when (
             )
         },
     )
+
     is Enum -> copy(
         extends = extends?.let { transformer.transformType(it) as Type.Custom },
         fields = fields.map { transformer.transformField(it) },
         constructors = constructors.map { transformer.transformConstructor(it) },
         elements = elements.map { transformer.transformElement(it) },
     )
+
     is Main -> copy(
         statics = statics.map { transformer.transformElement(it) },
         body = body.map { transformer.transformStatement(it) },
     )
+
     is Field -> transformChildren(transformer)
     is RawElement -> this
 }
@@ -152,26 +172,31 @@ public fun Statement.transformChildren(transformer: Transformer): Statement = wh
         type = transformer.transformType(type),
         namedArguments = namedArguments.mapValues { transformer.transformExpression(it.value) },
     )
+
     is Literal -> copy(type = transformer.transformType(type))
     is LiteralList -> copy(
         values = values.map { transformer.transformExpression(it) },
         type = transformer.transformType(type),
     )
+
     is LiteralMap -> copy(
         values = values.mapValues { transformer.transformExpression(it.value) },
         keyType = transformer.transformType(keyType),
         valueType = transformer.transformType(valueType),
     )
+
     is Assignment -> copy(value = transformer.transformExpression(value))
     is ErrorStatement -> copy(message = transformer.transformExpression(message))
     is AssertStatement -> copy(
         expression = transformer.transformExpression(expression),
     )
+
     is Switch -> copy(
         expression = transformer.transformExpression(expression),
         cases = cases.map { transformer.transformCase(it) },
         default = default?.map { transformer.transformStatement(it) },
     )
+
     is RawExpression -> this
     is NullLiteral -> this
     is NullableEmpty -> this
@@ -181,31 +206,37 @@ public fun Statement.transformChildren(transformer: Transformer): Statement = wh
         receiver = receiver?.let { transformer.transformExpression(it) },
         arguments = arguments.mapValues { transformer.transformExpression(it.value) },
     )
+
     is ArrayIndexCall -> copy(
         receiver = transformer.transformExpression(receiver),
         index = transformer.transformExpression(index),
     )
+
     is EnumReference -> copy(enumType = transformer.transformType(enumType) as Type.Custom)
     is EnumValueCall -> copy(expression = transformer.transformExpression(expression))
     is BinaryOp -> copy(
         left = transformer.transformExpression(left),
         right = transformer.transformExpression(right),
     )
+
     is TypeDescriptor -> copy(type = transformer.transformType(type))
     is Cast -> copy(
         expression = transformer.transformExpression(expression),
         targetType = transformer.transformType(targetType),
     )
+
     is NullCheck -> copy(
         expression = transformer.transformExpression(expression),
         body = transformer.transformExpression(body),
         alternative = alternative?.let { transformer.transformExpression(it) },
     )
+
     is NullableMap -> copy(
         expression = transformer.transformExpression(expression),
         body = transformer.transformExpression(body),
         alternative = transformer.transformExpression(alternative),
     )
+
     is NullableOf -> copy(expression = transformer.transformExpression(expression))
     is NullableGet -> copy(expression = transformer.transformExpression(expression))
     is Constraint.RegexMatch -> copy(value = transformer.transformExpression(value))
@@ -216,19 +247,23 @@ public fun Statement.transformChildren(transformer: Transformer): Statement = wh
         thenExpr = transformer.transformExpression(thenExpr),
         elseExpr = transformer.transformExpression(elseExpr),
     )
+
     is MapExpression -> copy(
         receiver = transformer.transformExpression(receiver),
         body = transformer.transformExpression(body),
     )
+
     is FlatMapIndexed -> copy(
         receiver = transformer.transformExpression(receiver),
         body = transformer.transformExpression(body),
     )
+
     is ListConcat -> copy(lists = lists.map { transformer.transformExpression(it) })
     is Lambda -> copy(
         parameters = parameters.map { transformer.transformParameter(it) },
         body = transformer.transformExpression(body),
     )
+
     is StringTemplate -> copy(
         parts = parts.map {
             when (it) {
@@ -302,14 +337,14 @@ public class TransformScope<E : Element> @PublishedApi internal constructor(
     public inline fun <reified T> injectBefore(
         crossinline produce: (T) -> List<Element>,
     )
-        where T : Element, T : HasElements {
+            where T : Element, T : HasElements {
         element = element.injectBefore(produce)
     }
 
     public inline fun <reified T> injectAfter(
         crossinline produce: (T) -> List<Element>,
     )
-        where T : Element, T : HasElements {
+            where T : Element, T : HasElements {
         element = element.injectAfter(produce)
     }
 
@@ -421,17 +456,15 @@ internal fun <T : Element> T.transformParametersWhere(
 
 @Suppress("UNCHECKED_CAST")
 @PublishedApi
-internal fun <T : Element> T.withElements(elements: List<Element>): T = (
-    when (this) {
-        is File -> copy(elements = elements)
-        is Struct -> copy(elements = elements)
-        is Namespace -> copy(elements = elements)
-        is Interface -> copy(elements = elements)
-        is Enum -> copy(elements = elements)
-        is Main -> this
-        else -> this
-    }
-    ) as T
+internal inline fun <reified T : Element> T.withElements(elements: List<Element>): T = when (this) {
+    is File -> copy(elements = elements)
+    is Struct -> copy(elements = elements)
+    is Namespace -> copy(elements = elements)
+    is Interface -> copy(elements = elements)
+    is Enum -> copy(elements = elements)
+    is Main -> this
+    else -> this
+} as T
 
 @PublishedApi
 internal inline fun <reified T, E : Element> E.injectBefore(

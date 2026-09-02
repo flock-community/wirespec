@@ -10,15 +10,15 @@ import kotlin.reflect.KType
 
 public class DefaultParamSerialization : Wirespec.ParamSerialization {
 
-    override fun <T : Any> serializeParam(value: T, kType: KType): List<String> = when {
-        kType.isList() -> (value as List<*>).map { it.toString() }
+    override fun <T : Any> serializeParam(value: T, type: KType): List<String> = when {
+        type.isList() -> (value as List<*>).map { it.toString() }
         else -> listOf(value.toString())
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> deserializeParam(values: List<String>, kType: KType): T = when {
-        kType.isList() -> deserializeList(values, kType)
-        kType.isWirespecEnum() -> deserializeEnum(values, kType)
-        else -> deserializePrimitive(values, kType)
+    override fun <T : Any> deserializeParam(values: List<String>, type: KType): T = when {
+        type.isList() -> deserializeList(values, type)
+        type.isWirespecEnum() -> deserializeEnum(values, type)
+        else -> deserializePrimitive(values, type)
     } as T
 }

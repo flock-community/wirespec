@@ -36,13 +36,15 @@ internal fun <T : Element> T.renameValidateAndBindObjReceiver(
             parameters = listOf(Parameter(Name.of("obj"), LanguageType.Custom(typeName))),
         ).transform {
             statementAndExpression { s, t ->
-                when {
-                    s is FunctionCall && s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
+                when (s) {
+                    is FunctionCall if s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
                         val tn = (s.typeArguments.first() as? LanguageType.Custom)?.name?.pascalCase() ?: ""
                         FunctionCall(name = Name.of("validate$tn"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
                     }
-                    s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames ->
+
+                    is FieldCall if s.receiver == null && s.field.camelCase() in fieldNames ->
                         FieldCall(receiver = VariableReference(Name.of("obj")), field = s.field)
+
                     else -> s.transformChildren(t)
                 }
             }

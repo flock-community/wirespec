@@ -4,4 +4,4 @@ public interface Value<T : Any> {
     public val value: T
 }
 
-private operator fun <T : Any> Value<T>.component1(): T = value
+public operator fun <T : Any> Value<T>.component1(): T = value

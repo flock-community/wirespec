@@ -24,7 +24,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
             registerField(FakeUser::email) { Arb.constant("a@b.com") }
         }
-        val shape = Wirespec.GeneratorFieldShape<FakeUser>(
+        val shape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 val email = gen.generate(
@@ -44,7 +44,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
             registerField(FakeUser::age, value = 42L)
         }
-        val shape = Wirespec.GeneratorFieldShape<FakeUser>(
+        val shape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 val age = gen.generate(
@@ -64,7 +64,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
             registerField(FakeUser::email) { Arb.constant("auto@wrap.com") }
         }
-        val emailFieldShape = Wirespec.GeneratorFieldShape<FakeEmailAddress>(
+        val emailFieldShape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 val value = gen.generate(
@@ -75,7 +75,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
             },
             type = typeOf<FakeEmailAddress>(),
         )
-        val userShape = Wirespec.GeneratorFieldShape<Pair<FakeEmailAddress, Long>>(
+        val userShape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 val email = gen.generate(p + "email", emailFieldShape)
@@ -92,7 +92,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
             registerField(FakeUser::email) { Arb.long(0L..10L) }
         }
-        val emailFieldShape = Wirespec.GeneratorFieldShape<FakeEmailAddress>(
+        val emailFieldShape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 FakeEmailAddress(
@@ -104,7 +104,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
             },
             type = typeOf<FakeEmailAddress>(),
         )
-        val userShape = Wirespec.GeneratorFieldShape<Pair<FakeEmailAddress, Long>>(
+        val userShape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 gen.generate(p + "email", emailFieldShape) to 0L
@@ -124,7 +124,7 @@ class KotestWirespecKotlinGeneratorOverrideJvmTest {
         val gen = kotestWirespecKotlinGenerator(seed = 0L) {
             registerField(FakeUser::email) { Arb.constant("user@x") }
         }
-        val shape = Wirespec.GeneratorFieldShape<FakeOrder>(
+        val shape = Wirespec.GeneratorFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 FakeOrder(

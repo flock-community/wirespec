@@ -453,9 +453,9 @@ public object JavaGenerator :
     }
 
     private fun BinaryOp.isPrimitiveLiteral(): Boolean = left is Literal &&
-        ((left as Literal).type is Type.Integer || (left as Literal).type is Type.Number || (left as Literal).type is Type.Boolean) ||
+        (left.type is Type.Integer || left.type is Type.Number || left.type is Type.Boolean) ||
         right is Literal &&
-        ((right as Literal).type is Type.Integer || (right as Literal).type is Type.Number || (right as Literal).type is Type.Boolean)
+        (right.type is Type.Integer || right.type is Type.Number || right.type is Type.Boolean)
 
     private fun Expression.emit(): String = when (this) {
         is ConstructorStatement -> {

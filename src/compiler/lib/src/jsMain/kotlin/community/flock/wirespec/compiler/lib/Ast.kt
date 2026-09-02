@@ -71,7 +71,6 @@ private fun WsMethod.consume() = when (this) {
     WsMethod.TRACE -> Endpoint.Method.TRACE
 }
 
-private fun WsClassIdentifier.consume() = DefinitionIdentifier(value)
 private fun WsFieldIdentifier.consume() = FieldIdentifier(value)
 
 private fun WsEnum.consume() = Enum(
@@ -243,7 +242,6 @@ private fun Field.produce() = WsField(
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
-private fun DefinitionIdentifier.produce() = WsClassIdentifier(value)
 private fun FieldIdentifier.produce() = WsFieldIdentifier(value)
 
 private fun Reference.produce(): WsReference = when (this) {
@@ -261,10 +259,12 @@ private fun Reference.Primitive.Type.produce() = when (this) {
         P32 -> WsPrimitiveType.Integer32
         P64 -> WsPrimitiveType.Integer
     }
+
     is Reference.Primitive.Type.Number -> when (precision) {
         P32 -> WsPrimitiveType.Number32
         P64 -> WsPrimitiveType.Number
     }
+
     is Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
     is Reference.Primitive.Type.Bytes -> WsPrimitiveType.Bytes
 }
@@ -306,13 +306,13 @@ private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArra
 public sealed interface WsNode
 
 @JsExport
-public data class WsAST(
-    val modules: Array<WsModule>,
+public class WsAST(
+    public val modules: Array<WsModule>,
 ) : WsNode
 
 @JsExport
-public data class WsModule(
-    val statements: Array<WsDefinition>,
+public class WsModule(
+    public val statements: Array<WsDefinition>,
 ) : WsNode
 
 @JsExport
@@ -322,53 +322,55 @@ public sealed interface WsDefinition : WsNode {
 }
 
 @JsExport
-public data class WsType(
+public class WsType(
     override val identifier: String,
     override val comment: String?,
-    val shape: WsShape,
+    public val shape: WsShape,
 ) : WsDefinition
 
 @JsExport
-public data class WsShape(val value: Array<WsField>)
+public class WsShape(
+    public val value: Array<WsField>,
+)
 
 @JsExport
-public data class WsEndpoint(
+public class WsEndpoint(
     override val identifier: String,
     override val comment: String?,
-    val method: WsMethod,
-    val path: Array<WsSegment>,
-    val queries: Array<WsField>,
-    val headers: Array<WsField>,
-    val requests: Array<WsRequest>,
-    val responses: Array<WsResponse>,
+    public val method: WsMethod,
+    public val path: Array<WsSegment>,
+    public val queries: Array<WsField>,
+    public val headers: Array<WsField>,
+    public val requests: Array<WsRequest>,
+    public val responses: Array<WsResponse>,
 ) : WsDefinition
 
 @JsExport
-public data class WsEnum(
+public class WsEnum(
     override val identifier: String,
     override val comment: String?,
-    val entries: Array<String>,
+    public val entries: Array<String>,
 ) : WsDefinition
 
 @JsExport
-public data class WsUnion(
+public class WsUnion(
     override val identifier: String,
     override val comment: String?,
-    val entries: Array<WsReference>,
+    public val entries: Array<WsReference>,
 ) : WsDefinition
 
 @JsExport
-public data class WsChannel(
+public class WsChannel(
     override val identifier: String,
     override val comment: String?,
-    val reference: WsReference,
+    public val reference: WsReference,
 ) : WsDefinition
 
 @JsExport
-public data class WsRefined(
+public class WsRefined(
     override val identifier: String,
     override val comment: String?,
-    val reference: WsReference,
+    public val reference: WsReference,
 ) : WsDefinition
 
 @JsExport
@@ -378,28 +380,28 @@ public enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE
 public sealed interface WsSegment
 
 @JsExport
-public data class WsLiteral(val value: String) : WsSegment
+public class WsLiteral(public val value: String) : WsSegment
 
 @JsExport
-public data class WsParam(
-    val identifier: WsFieldIdentifier,
-    val reference: WsReference,
+public class WsParam(
+    public val identifier: WsFieldIdentifier,
+    public val reference: WsReference,
 ) : WsSegment
 
 @JsExport
-public data class Shape(val value: Array<WsField>)
+public class Shape(public val value: Array<WsField>)
 
 @JsExport
-public data class WsField(val identifier: WsFieldIdentifier, val reference: WsReference)
+public class WsField(public val identifier: WsFieldIdentifier, public val reference: WsReference)
 
 @JsExport
 public sealed interface WsIdentifier
 
 @JsExport
-public data class WsClassIdentifier(val value: String) : WsIdentifier
+public class WsClassIdentifier(public val value: String) : WsIdentifier
 
 @JsExport
-public data class WsFieldIdentifier(val value: String) : WsIdentifier
+public class WsFieldIdentifier(public val value: String) : WsIdentifier
 
 @JsExport
 public sealed interface WsReference {
@@ -407,28 +409,28 @@ public sealed interface WsReference {
 }
 
 @JsExport
-public data class WsAny(override val isNullable: Boolean) : WsReference
+public class WsAny(override val isNullable: Boolean) : WsReference
 
 @JsExport
-public data class WsUnit(override val isNullable: Boolean) : WsReference
+public class WsUnit(override val isNullable: Boolean) : WsReference
 
 @JsExport
-public data class WsIterable(val reference: WsReference, override val isNullable: Boolean) : WsReference
+public class WsIterable(public val reference: WsReference, override val isNullable: Boolean) : WsReference
 
 @JsExport
-public data class WsDict(val reference: WsReference, override val isNullable: Boolean) : WsReference
+public class WsDict(public val reference: WsReference, override val isNullable: Boolean) : WsReference
 
 @JsExport
-public data class WsCustom(
-    val value: String,
+public class WsCustom(
+    public val value: String,
     override val isNullable: Boolean,
 ) : WsReference
 
 @JsExport
-public data class WsPrimitive(
-    val type: WsPrimitiveType,
+public class WsPrimitive(
+    public val type: WsPrimitiveType,
     override val isNullable: Boolean,
-    val constraint: WsConstraint? = null,
+    public val constraint: WsConstraint? = null,
 ) : WsReference
 
 @JsExport
@@ -438,16 +440,16 @@ public enum class WsPrimitiveType { String, Integer, Integer32, Number, Number32
 public sealed interface WsConstraint
 
 @JsExport
-public data class WsRegExpConstraint(val value: String) : WsConstraint
+public class WsRegExpConstraint(public val value: String) : WsConstraint
 
 @JsExport
-public data class WsBoundConstraint(val min: String?, val max: String?) : WsConstraint
+public class WsBoundConstraint(public val min: String?, public val max: String?) : WsConstraint
 
 @JsExport
-public data class WsRequest(val content: WsContent?)
+public class WsRequest(public val content: WsContent?)
 
 @JsExport
-public data class WsResponse(val status: String, val headers: Array<WsField>, val content: WsContent?)
+public class WsResponse(public val status: String, public val headers: Array<WsField>, public val content: WsContent?)
 
 @JsExport
-public data class WsContent(val type: String, val reference: WsReference, val isNullable: Boolean = false)
+public class WsContent(public val type: String, public val reference: WsReference, public val isNullable: Boolean = false)

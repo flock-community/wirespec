@@ -1,6 +1,5 @@
 package community.flock.wirespec.java.serde;
 
-import community.flock.wirespec.java.Wirespec;
 import org.junit.Test;
 
 import java.lang.reflect.Type;

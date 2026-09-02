@@ -99,7 +99,7 @@ class SpringKotlinExtensionTest {
         // objects inside an allOf composition: a Type definition whose raw
         // identifier carries an underscore (Contact_embedded). The
         // Kotlin emitter writes that out as ContactEmbedded.kt /
-        // class ContactEmbedded, so the hints file must register
+        // class ContactEmbedded, so the hints-file must register
         // the same pascal-cased name (not the raw underscored one).
         val inline = Type(
             comment = null,

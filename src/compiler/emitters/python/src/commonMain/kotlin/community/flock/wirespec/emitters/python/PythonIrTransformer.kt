@@ -58,9 +58,9 @@ private fun LanguageType.replaceReflectAsTypeAny(): LanguageType = when (this) {
 internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
     matchingElements { struct: Struct ->
         struct.copy(
-            elements = struct.elements.mapNotNull { element ->
-                when {
-                    element is LanguageFunction && element.name == Name.of("validate") -> {
+            elements = struct.elements.map { element ->
+                when (element) {
+                    is LanguageFunction if element.name == Name.of("validate") -> {
                         val constraintExpr = refined.reference.convertConstraint(
                             FieldCall(VariableReference(Name.of("self")), Name.of("value")),
                         )
@@ -70,7 +70,8 @@ internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
                             returns(constraintExpr)
                         }
                     }
-                    element is LanguageFunction && element.name == Name.of("toString") -> {
+
+                    is LanguageFunction if element.name == Name.of("toString") -> {
                         val toStringExpr = when (refined.reference.type) {
                             is Reference.Primitive.Type.String -> "self.value"
                             else -> "str(self.value)"
@@ -81,6 +82,7 @@ internal fun File.replaceRefinedFunctions(refined: Refined): File = transform {
                             returns(RawExpression(toStringExpr))
                         }
                     }
+
                     else -> element
                 }
             },
@@ -130,14 +132,15 @@ internal fun <T : Element> T.addSelfReceiverToClientFields(): T {
 
     return transform {
         statementAndExpression { stmt, tr ->
-            when {
-                stmt is FieldCall && stmt.receiver == null && stmt.field.value() in fieldNames ->
+            when (stmt) {
+                is FieldCall if stmt.receiver == null && stmt.field.value() in fieldNames ->
                     FieldCall(receiver = VariableReference(Name.of("self")), field = stmt.field)
-                stmt is FieldCall ->
-                    FieldCall(
-                        receiver = stmt.receiver?.let { tr.transformExpression(it) },
-                        field = stmt.field,
-                    )
+
+                is FieldCall -> FieldCall(
+                    receiver = stmt.receiver?.let { tr.transformExpression(it) },
+                    field = stmt.field,
+                )
+
                 else -> stmt.transformChildren(tr)
             }
         }

@@ -11,15 +11,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.reactive.function.client.WebClient;
 
+@Order
 @Configuration
 @ConditionalOnClass(WebClient.class)
 @ConditionalOnMissingBean(WirespecWebClient.class)
 @EnableConfigurationProperties(WebClientConfigurationProperties.class)
-@Order(Ordered.LOWEST_PRECEDENCE)
 public class WirespecWebClientConfiguration {
     private final Wirespec.Serialization serialization;
     private final Logger log = LoggerFactory.getLogger(this.getClass());

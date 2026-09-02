@@ -26,12 +26,9 @@ import community.flock.wirespec.ir.core.Precision
 import community.flock.wirespec.ir.core.Struct
 import community.flock.wirespec.ir.core.Type
 import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.enum
 import community.flock.wirespec.ir.core.fieldList
 import community.flock.wirespec.ir.core.file
 import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.struct
-import community.flock.wirespec.ir.core.union
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -160,8 +157,8 @@ class IrConverterTest {
                     returnType(Type.Boolean)
                     returns(
                         Constraint.RegexMatch(
-                            pattern = "^([0-9]{4}[A-Z]{2})\$",
-                            rawValue = "/^([0-9]{4}[A-Z]{2})\$/g",
+                            pattern = "^([0-9]{4}[A-Z]{2})$",
+                            rawValue = "/^([0-9]{4}[A-Z]{2})$/g",
                             value = VariableReference(Name.of("value")),
                         ),
                     )

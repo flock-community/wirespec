@@ -1,7 +1,5 @@
 package community.flock.wirespec.ir.emit
 
-import arrow.core.NonEmptyList
-import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.namespace
 import community.flock.wirespec.compiler.core.emit.plus
@@ -45,8 +43,3 @@ public fun File.placeInModule(
     packageName: PackageName,
     definition: Definition,
 ): File = placeInModule(packageName, definition.namespace())
-
-private fun NonEmptyList<File>.withSharedSource(
-    emitShared: EmitShared,
-    sharedFile: () -> File,
-): NonEmptyList<File> = if (emitShared.value) this + sharedFile() else this

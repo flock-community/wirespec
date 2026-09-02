@@ -5,6 +5,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints
 import org.springframework.aot.hint.RuntimeHintsRegistrar
+import org.springframework.aot.hint.registerType
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.ImportRuntimeHints
 
@@ -16,9 +17,9 @@ public open class WirespecNativeConfiguration {
         override fun registerHints(hints: RuntimeHints, classLoader: ClassLoader?) {
             val allMembers = MemberCategory.entries.toTypedArray()
 
-            hints.reflection().registerType(RawJsonBody::class.java, *allMembers)
-            hints.reflection().registerType(Wirespec.RawRequest::class.java, *allMembers)
-            hints.reflection().registerType(Wirespec.RawResponse::class.java, *allMembers)
+            hints.reflection().registerType<RawJsonBody>(*allMembers)
+            hints.reflection().registerType<Wirespec.RawRequest>(*allMembers)
+            hints.reflection().registerType<Wirespec.RawResponse>(*allMembers)
 
             hints.resources().registerPattern("META-INF/*.kotlin_module")
         }

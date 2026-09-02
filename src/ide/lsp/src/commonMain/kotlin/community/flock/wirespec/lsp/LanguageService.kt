@@ -47,16 +47,16 @@ internal object LanguageService {
         val data = mutableListOf<Int>()
         var prevLine = 0
         var prevChar = 0
-        for (t in tokenize(document)) {
-            val deltaLine = t.line - prevLine
-            val deltaChar = if (deltaLine == 0) t.character - prevChar else t.character
+        for ((line, character, length, kind) in tokenize(document)) {
+            val deltaLine = line - prevLine
+            val deltaChar = if (deltaLine == 0) character - prevChar else character
             data += deltaLine
             data += deltaChar
-            data += t.length
-            data += t.kind.toSemanticType()
+            data += length
+            data += kind.toSemanticType()
             data += 0 // no modifiers in this legend
-            prevLine = t.line
-            prevChar = t.character
+            prevLine = line
+            prevChar = character
         }
         return SemanticTokens(data)
     }

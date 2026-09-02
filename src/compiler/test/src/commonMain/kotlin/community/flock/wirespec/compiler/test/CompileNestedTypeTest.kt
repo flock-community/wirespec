@@ -5,7 +5,7 @@ public object CompileNestedTypeTest : Fixture {
     override val source: String =
         // language=ws
         """
-        |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})${'$'}/g)
+        |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
         |
         |type Address {
         |  street: String,

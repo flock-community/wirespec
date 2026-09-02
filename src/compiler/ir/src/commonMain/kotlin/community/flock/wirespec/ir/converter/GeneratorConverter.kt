@@ -177,26 +177,6 @@ internal fun annotationsToIrList(annotations: List<AnnotationWirespec>): Literal
     type = Type.Dict(Type.String, Type.Any),
 )
 
-// Produces an Optional<GeneratorField<?>>-shaped value: NullableOf(desc) when
-// primitive, NullableEmpty otherwise. In Kotlin this round-trips to a
-// `GeneratorField<*>?`; in Java it becomes `Optional<GeneratorField<?>>`.
-internal fun ReferenceWirespec.toFieldDescriptorOrNull(annotations: List<AnnotationWirespec>): Expression = when (this) {
-    is ReferenceWirespec.Primitive -> NullableOf(toFieldDescriptor(annotations))
-    else -> NullableEmpty
-}
-
-internal fun generatorCallExpression(
-    fieldNameStr: String,
-    fieldDescriptor: Expression,
-): FunctionCall = FunctionCall(
-    receiver = VariableReference(Name.of("generator")),
-    name = Name.of("generate"),
-    arguments = mapOf(
-        Name.of("path") to pathPlus(fieldNameStr),
-        Name.of("field") to fieldDescriptor,
-    ),
-)
-
 // Build the per-field annotations map for a Custom reference's target.
 // Returns the inner field-name → annotations map for record (Type) targets.
 // For Refined/Enum targets the wrapped value is emitted under the synthetic

@@ -105,8 +105,8 @@ internal fun File.flattenForRust(): File {
     val moduleElements = namespace.elements
         .filter { it is Struct || it is LanguageUnion }
         .map { element ->
-            when {
-                element is LanguageUnion && element.name.pascalCase() == "Response" -> {
+            when (element) {
+                is LanguageUnion if element.name.pascalCase() == "Response" -> {
                     val members = namespace.elements
                         .filterIsInstance<Struct>()
                         .map { it.name.pascalCase() }
@@ -114,7 +114,8 @@ internal fun File.flattenForRust(): File {
                         .map { LanguageType.Custom(it) }
                     element.copy(members = members, typeParameters = emptyList())
                 }
-                element is LanguageUnion -> element.copy(typeParameters = emptyList())
+
+                is LanguageUnion -> element.copy(typeParameters = emptyList())
                 else -> element
             }
         }
@@ -203,7 +204,7 @@ internal fun <T : Element> T.injectSelfToHandlerMethods(): T = transform {
     }
 }
 
-internal fun <T : Element> T.injectHandlerImplForClient(endpoint: Endpoint): T = transform {
+internal fun <T : Element> T.injectHandlerImplForClient(): T = transform {
     matchingElements<Namespace> { ns ->
         val handler = ns.elements.filterIsInstance<Interface>().firstOrNull { it.name == Name.of("Handler") }
             ?: return@matchingElements ns

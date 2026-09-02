@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -61,15 +60,6 @@ public interface ChannelDefinitionEmitter {
 
 public interface IdentifierEmitter {
     public fun emit(identifier: Identifier): String
-}
-
-private interface ClientEmitter : HasExtension {
-    fun emitClient(ast: AST): Emitted
-
-    fun AST.emitClientEndpointRequest() = modules
-        .flatMap { it.statements }
-        .filterIsInstance<Endpoint>()
-        .map { endpoint -> Pair(endpoint, endpoint.requests.first()) }
 }
 
 internal interface NotYetImplemented {

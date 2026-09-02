@@ -84,7 +84,7 @@ public sealed interface Type {
         // `List<String>`, `$x.Call`) that contain non-identifier characters and
         // must be preserved as-is. Names made up of letters, digits, or
         // underscores are routed through `Name.of(...)` so the generator's
-        // `pascalCase()` normalises them the same way struct names are.
+        // `pascalCase()` normalizes them the same way struct names are.
         public constructor(name: kotlin.String, generics: List<Type> = emptyList()) : this(
             if (name.any { c -> !c.isLetterOrDigit() && c != '_' }) {
                 Name(listOf(name))

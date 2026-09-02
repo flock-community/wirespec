@@ -1,5 +1,6 @@
 package community.flock.wirespec.ide.intellij
 
+import arrow.core.NonEmptyList
 import arrow.core.toNonEmptyListOrNull
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
@@ -21,12 +22,11 @@ public class Annotator :
     override fun collectInformation(file: PsiFile): Map<PsiFile, TokenizedModule> = file.containingDirectory.files
         .associateWith { file -> TokenizedModule(FileUri(file.name), WirespecSpec.tokenize(file.text)) }
 
-    override fun doAnnotate(collectedInfo: Map<PsiFile, TokenizedModule>): List<WirespecException>? {
-        println(collectedInfo.keys.map { it.name })
-        return collectedInfo.values.toNonEmptyListOrNull()
-            ?.let { parse(it) }
-            ?.fold({ it }, { emptyList() })
-    }
+    override fun doAnnotate(collectedInfo: Map<PsiFile, TokenizedModule>): NonEmptyList<WirespecException>? = collectedInfo
+        .values
+        .toNonEmptyListOrNull()
+        ?.let { parse(it) }
+        ?.fold({ it }, { null })
 
     override fun apply(
         file: PsiFile,

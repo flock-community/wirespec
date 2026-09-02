@@ -89,13 +89,12 @@ public object RustGenerator :
         is Import -> emit(indent)
         is Struct -> emit(indent, parents)
         is AstFunction -> {
-            val isInClass = parents.any { it is Struct || it is Interface || it is Namespace }
             val isInInterface = parents.any { it is Interface }
-            emit(indent, isInClass = isInClass, isStaticScope = isStaticScope, isInInterface = isInInterface)
+            emit(indent, isInInterface = isInInterface)
         }
         is Namespace -> emit(indent, parents)
         is Interface -> emit(indent, parents)
-        is Union -> emit(indent, parents)
+        is Union -> emit(indent)
         is Enum -> emit(indent)
         is Main -> {
             val staticContent = statics.joinToString("") { it.emit(indent, parents, isStaticScope) }
@@ -151,7 +150,7 @@ public object RustGenerator :
         }
     }
 
-    private fun Union.emit(indent: Int, parents: List<Element> = emptyList()): String {
+    private fun Union.emit(indent: Int): String {
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ") { it.emit() }}>" else ""
         val enumDef = if (members.isNotEmpty()) {
@@ -217,7 +216,7 @@ public object RustGenerator :
         val nestedContent = nonFunctions.joinToString("") { it.emit(indent, parents = parents + this, isStaticScope = false) }
 
         val implBlock = if (functions.isNotEmpty()) {
-            val fnsContent = functions.joinToString("") { it.emit(1, isInClass = true, isStaticScope = false, isInInterface = false) }
+            val fnsContent = functions.joinToString("") { it.emit(1, isInInterface = false) }
             "impl $rustName {\n$fnsContent}\n\n".indentCode(indent)
         } else {
             ""
@@ -253,7 +252,7 @@ public object RustGenerator :
         return "impl $structName {\n$fnBody\n}\n\n".indentCode(indent)
     }
 
-    private fun AstFunction.emit(indent: Int, isInClass: Boolean = false, isStaticScope: Boolean = false, isInInterface: Boolean = false): String {
+    private fun AstFunction.emit(indent: Int, isInInterface: Boolean = false): String {
         val params = parameters.joinToString(", ") {
             val paramName = it.name.value()
             if (paramName == "self" || paramName == "&self") paramName else "${it.name.snakeCase().sanitize()}: ${it.type.emit()}"
@@ -558,12 +557,12 @@ public object RustGenerator :
         }
         is ArrayIndexCall -> {
             if (!caseSensitive && index is Literal && index.type is Type.String) {
-                "${receiver.emitWithInlinedIt(replacement)}.iter().find(|(k, _)| k.eq_ignore_ascii_case(\"${(index as Literal).value}\")).map(|(_, v)| v.clone())"
+                "${receiver.emitWithInlinedIt(replacement)}.iter().find(|(k, _)| k.eq_ignore_ascii_case(\"${index.value}\")).map(|(_, v)| v.clone())"
             } else if (index is Literal && index.type is Type.String) {
-                "${receiver.emitWithInlinedIt(replacement)}.get(\"${(index as Literal).value}\")"
+                "${receiver.emitWithInlinedIt(replacement)}.get(\"${index.value}\")"
             } else {
                 val idxStr = if (index is Literal && (index.type is Type.Integer || index.type is Type.Number)) {
-                    "${(index as Literal).value}"
+                    "${index.value}"
                 } else {
                     index.emitWithInlinedIt(replacement)
                 }

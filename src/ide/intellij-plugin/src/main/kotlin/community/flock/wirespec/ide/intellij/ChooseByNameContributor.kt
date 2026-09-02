@@ -15,13 +15,13 @@ public class ChooseByNameContributor : IntellijChooseByNameContributor {
 
     public fun getMap(project: Project): Map<String, PsiElement> {
         val scope = GlobalSearchScope.allScope(project)
-        val files = FileTypeIndex.getFiles(FileType, scope)
+        val files = FileTypeIndex.getFiles(FileType, scope).toList()
         val psiManager = PsiManager.getInstance(project)
         val map = mutableMapOf<String, PsiElement>()
 
         for (file in files) {
             val psiFile = psiManager.findFile(file) ?: continue
-            if (psiFile is community.flock.wirespec.ide.intellij.File) {
+            if (psiFile is File) {
                 val typeDefs = PsiTreeUtil.getChildrenOfType(psiFile, TypeDefElement::class.java).orEmpty()
                 for (typeDef in typeDefs) {
                     val customType = PsiTreeUtil.findChildOfType(typeDef, CustomTypeElementDef::class.java)

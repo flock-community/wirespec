@@ -6,6 +6,7 @@ import community.flock.wirespec.integration.spring.kotlin.configuration.Wirespec
 import community.flock.wirespec.integration.spring.shared.Jackson2JsonMapper
 import community.flock.wirespec.integration.spring.shared.WirespecJsonMapper
 import community.flock.wirespec.kotlin.Wirespec
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -30,11 +31,11 @@ class WirespecJackson2SelectionTest {
     fun `selects the Jackson 2 beans when Jackson 3 is absent`() {
         runner.run { context ->
             assertTrue(
-                context.getBean(WirespecJsonMapper::class.java) is Jackson2JsonMapper,
+                context.getBean<WirespecJsonMapper>() is Jackson2JsonMapper,
                 "expected the Jackson 2 multipart mapper to be selected",
             )
             assertTrue(
-                context.getBean(Wirespec.Serialization::class.java) is WirespecSerialization,
+                context.getBean<Wirespec.Serialization>() is WirespecSerialization,
                 "expected the Jackson 2 Wirespec serialization to be selected",
             )
         }

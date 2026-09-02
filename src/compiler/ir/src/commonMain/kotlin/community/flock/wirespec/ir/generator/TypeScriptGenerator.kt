@@ -441,8 +441,6 @@ public object TypeScriptGenerator :
         }
     }
 
-    private fun Parameter.emit(): String = "${name.camelCase()}: ${type.emit()}"
-
     private fun Parameter.emitWithInlineInterfaces(inlineInterfaces: Map<String, Interface>): String = "${name.camelCase()}: ${type.emitWithInlineInterfaces(inlineInterfaces)}"
 
     private fun Type.emitWithInlineInterfaces(inlineInterfaces: Map<String, Interface>): String = when {
@@ -630,7 +628,7 @@ public object TypeScriptGenerator :
             val exprStr = expression.emit()
             // When expression might be undefined (e.g. case-insensitive header lookup),
             // add non-null assertion for the inlined replacement in the body
-            val bodyReplacement = if (expression is ArrayIndexCall && !(expression as ArrayIndexCall).caseSensitive) "$exprStr!" else exprStr
+            val bodyReplacement = if (expression is ArrayIndexCall && !expression.caseSensitive) "$exprStr!" else exprStr
             val bodyStr = body.emitWithInlinedIt(bodyReplacement)
             val altStr = alternative?.emit() ?: "undefined"
             "$exprStr != null ? $bodyStr : $altStr"
