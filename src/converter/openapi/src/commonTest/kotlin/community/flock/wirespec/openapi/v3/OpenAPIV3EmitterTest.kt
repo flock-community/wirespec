@@ -33,7 +33,7 @@ class OpenAPIV3EmitterTest {
         val res = OpenAPIV3Emitter.emitOpenAPIObject(Ast.array, null, noLogger)
         val openapi = json.encodeToString(res)
         val expect =
-            """
+            $$"""
             |{
             |    "openapi": "3.0.0",
             |    "info": {
@@ -55,7 +55,7 @@ class OpenAPIV3EmitterTest {
             |                                    "nullable": false,
             |                                    "type": "array",
             |                                    "items": {
-            |                                        "${'$'}ref": "#/components/schemas/MessageArray"
+            |                                        "$ref": "#/components/schemas/MessageArray"
             |                                    }
             |                                }
             |                            }
@@ -73,7 +73,7 @@ class OpenAPIV3EmitterTest {
             |                                    "nullable": false,
             |                                    "type": "array",
             |                                    "items": {
-            |                                        "${'$'}ref": "#/components/schemas/ArrayGET200ResponseBody"
+            |                                        "$ref": "#/components/schemas/ArrayGET200ResponseBody"
             |                                    }
             |                                }
             |                            }
@@ -91,7 +91,7 @@ class OpenAPIV3EmitterTest {
             |                                        "nullable": false,
             |                                        "type": "array",
             |                                        "items": {
-            |                                            "${'$'}ref": "#/components/schemas/MessageArray"
+            |                                            "$ref": "#/components/schemas/MessageArray"
             |                                        }
             |                                    }
             |                                }
@@ -195,7 +195,7 @@ class OpenAPIV3EmitterTest {
 
         val expect =
             // language=json
-            """
+            $$"""
             |{
             |    "openapi": "3.0.0",
             |    "info": {
@@ -218,7 +218,7 @@ class OpenAPIV3EmitterTest {
             |                                    "nullable": false,
             |                                    "type": "array",
             |                                    "items": {
-            |                                        "${'$'}ref": "#/components/schemas/Todo"
+            |                                        "$ref": "#/components/schemas/Todo"
             |                                    }
             |                                }
             |                            }
@@ -278,7 +278,7 @@ class OpenAPIV3EmitterTest {
         val result = CompileFullEndpointTest.compiler { OpenAPIV3Emitter }
         val expect =
             // language=json
-            """
+            $$"""
                 |{
                 |  "openapi": "3.0.0",
                 |  "components": {
@@ -388,7 +388,7 @@ class OpenAPIV3EmitterTest {
                 |            "required": true,
                 |            "in": "header",
                 |            "schema": {
-                |              "${'$'}ref": "#/components/schemas/Token"
+                |              "$ref": "#/components/schemas/Token"
                 |            },
                 |            "name": "token"
                 |          },
@@ -396,7 +396,7 @@ class OpenAPIV3EmitterTest {
                 |            "required": false,
                 |            "in": "header",
                 |            "schema": {
-                |              "${'$'}ref": "#/components/schemas/Token"
+                |              "$ref": "#/components/schemas/Token"
                 |            },
                 |            "name": "Refresh-Token"
                 |          }
@@ -405,7 +405,7 @@ class OpenAPIV3EmitterTest {
                 |          "content": {
                 |            "application/json": {
                 |              "schema": {
-                |                "${'$'}ref": "#/components/schemas/PotentialTodoDto"
+                |                "$ref": "#/components/schemas/PotentialTodoDto"
                 |              }
                 |            }
                 |          },
@@ -416,7 +416,7 @@ class OpenAPIV3EmitterTest {
                 |            "content": {
                 |              "application/json": {
                 |                "schema": {
-                |                  "${'$'}ref": "#/components/schemas/TodoDto"
+                |                  "$ref": "#/components/schemas/TodoDto"
                 |                }
                 |              }
                 |            },
@@ -427,17 +427,17 @@ class OpenAPIV3EmitterTest {
                 |            "content": {
                 |              "application/json": {
                 |                "schema": {
-                |                  "${'$'}ref": "#/components/schemas/TodoDto"
+                |                  "$ref": "#/components/schemas/TodoDto"
                 |                }
                 |              }
                 |            },
                 |            "description": "PutTodo 201 response",
                 |            "headers": {
                 |              "token": {
-                |                "${'$'}ref": "#/components/headers/Token"
+                |                "$ref": "#/components/headers/Token"
                 |              },
                 |              "refreshToken": {
-                |                "${'$'}ref": "#/components/headers/Token"
+                |                "$ref": "#/components/headers/Token"
                 |              }
                 |            }
                 |          },
@@ -445,7 +445,7 @@ class OpenAPIV3EmitterTest {
                 |            "content": {
                 |              "application/json": {
                 |                "schema": {
-                |                  "${'$'}ref": "#/components/schemas/Error"
+                |                  "$ref": "#/components/schemas/Error"
                 |                }
                 |              }
                 |            },
@@ -467,7 +467,7 @@ class OpenAPIV3EmitterTest {
         val result = CompileMinimalEndpointTest.compiler { OpenAPIV3Emitter }
         val expect =
             // language=json
-            """
+            $$"""
                 |{
                 |  "openapi": "3.0.0",
                 |  "info": {
@@ -489,7 +489,7 @@ class OpenAPIV3EmitterTest {
                 |                  "nullable": false,
                 |                  "type": "array",
                 |                  "items": {
-                |                    "${'$'}ref": "#/components/schemas/TodoDto"
+                |                    "$ref": "#/components/schemas/TodoDto"
                 |                  }
                 |                }
                 |              }
@@ -638,7 +638,7 @@ class OpenAPIV3EmitterTest {
         val result = CompileUnionTest.compiler { OpenAPIV3Emitter }
         val expect =
             // language=json
-            """
+            $$"""
                 |{
                 |  "openapi": "3.0.0",
                 |  "info": {
@@ -650,8 +650,8 @@ class OpenAPIV3EmitterTest {
                 |    "schemas": {
                 |      "UserAccount": {
                 |        "oneOf": [
-                |          {"${'$'}ref": "#/components/schemas/UserAccountPassword"},
-                |          {"${'$'}ref": "#/components/schemas/UserAccountToken"}
+                |          {"$ref": "#/components/schemas/UserAccountPassword"},
+                |          {"$ref": "#/components/schemas/UserAccountToken"}
                 |        ],
                 |        "type": "string"
                 |      },
@@ -681,7 +681,7 @@ class OpenAPIV3EmitterTest {
                 |            "type": "string"
                 |          },
                 |          "account": {
-                |            "${'$'}ref": "#/components/schemas/UserAccount"
+                |            "$ref": "#/components/schemas/UserAccount"
                 |          }
                 |        }
                 |      }
@@ -762,12 +762,12 @@ class OpenAPIV3EmitterTest {
     fun linkAnnotationFromWirespec() {
         val source =
             // language=ws
-            """
+            $$"""
             |type User { id: String, name: String }
             |
             |endpoint CreateUser POST User /users -> {
-            |    @Link("GetUser", operationId: "GetUserById", parameters: {id: "${'$'}response.body#/id"}, description: "Fetch the just-created user")
-            |    @Link("DeleteUser", operationId: "DeleteUser", parameters: {id: "${'$'}response.body#/id"})
+            |    @Link("GetUser", operationId: "GetUserById", parameters: {id: "$response.body#/id"}, description: "Fetch the just-created user")
+            |    @Link("DeleteUser", operationId: "DeleteUser", parameters: {id: "$response.body#/id"})
             |    201 -> User
             |}
             """.trimMargin()
@@ -784,19 +784,19 @@ class OpenAPIV3EmitterTest {
             .let { it["links"] as kotlinx.serialization.json.JsonObject }
 
         val expectedLinks =
-            """
+            $$"""
             |{
             |  "GetUser": {
             |    "operationId": "GetUserById",
             |    "parameters": {
-            |      "id": "${'$'}response.body#/id"
+            |      "id": "$response.body#/id"
             |    },
             |    "description": "Fetch the just-created user"
             |  },
             |  "DeleteUser": {
             |    "operationId": "DeleteUser",
             |    "parameters": {
-            |      "id": "${'$'}response.body#/id"
+            |      "id": "$response.body#/id"
             |    }
             |  }
             |}
@@ -814,19 +814,19 @@ class OpenAPIV3EmitterTest {
         val emittedJson = json.encodeToString(emitted)
 
         val expectedLinks =
-            """
+            $$"""
             |{
             |  "GetUser": {
             |    "operationId": "GetUserById",
             |    "parameters": {
-            |      "id": "${'$'}response.body#/id"
+            |      "id": "$response.body#/id"
             |    },
             |    "description": "Fetch the just-created user"
             |  },
             |  "DeleteUser": {
             |    "operationId": "DeleteUser",
             |    "parameters": {
-            |      "id": "${'$'}response.body#/id"
+            |      "id": "$response.body#/id"
             |    }
             |  }
             |}

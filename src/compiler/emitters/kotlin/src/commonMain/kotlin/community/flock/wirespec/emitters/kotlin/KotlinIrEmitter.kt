@@ -6,20 +6,6 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.HasPackageName
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Function as LanguageFunction
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.transformer.SanitizationConfig
-import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
-import community.flock.wirespec.ir.transformer.injectEnumLabelField
-import community.flock.wirespec.ir.transformer.markMembersAsOverride
-import community.flock.wirespec.ir.transformer.sanitizeFieldName
-import community.flock.wirespec.ir.transformer.sanitizeNames
-import community.flock.wirespec.ir.emit.placeInPackage
-import community.flock.wirespec.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.irNeedsWirespecImport
@@ -41,24 +27,37 @@ import community.flock.wirespec.ir.converter.convert
 import community.flock.wirespec.ir.converter.convertClientServer
 import community.flock.wirespec.ir.converter.convertToGenerator
 import community.flock.wirespec.ir.converter.convertWithValidation
+import community.flock.wirespec.ir.core.ConstructorStatement
+import community.flock.wirespec.ir.core.Element
 import community.flock.wirespec.ir.core.File
+import community.flock.wirespec.ir.core.FunctionCall
+import community.flock.wirespec.ir.core.Name
 import community.flock.wirespec.ir.core.Namespace
 import community.flock.wirespec.ir.core.Package
 import community.flock.wirespec.ir.core.Struct
+import community.flock.wirespec.ir.core.VariableReference
+import community.flock.wirespec.ir.core.Visibility
 import community.flock.wirespec.ir.core.collectCustomTypeNames
 import community.flock.wirespec.ir.core.findElement
 import community.flock.wirespec.ir.core.import
 import community.flock.wirespec.ir.core.transform
 import community.flock.wirespec.ir.core.transformChildren
+import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.ir.emit.placeInPackage
+import community.flock.wirespec.ir.emit.prependImports
+import community.flock.wirespec.ir.generator.Generator
 import community.flock.wirespec.ir.generator.KotlinGenerator
+import community.flock.wirespec.ir.transformer.SanitizationConfig
+import community.flock.wirespec.ir.transformer.ensureEmptyStructHasConstructor
+import community.flock.wirespec.ir.transformer.injectEnumLabelField
+import community.flock.wirespec.ir.transformer.markMembersAsOverride
+import community.flock.wirespec.ir.transformer.sanitizeFieldName
+import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
-import community.flock.wirespec.ir.core.Package as LanguagePackage
-import community.flock.wirespec.ir.core.Type as LanguageType
-import community.flock.wirespec.ir.generator.Generator
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Visibility
+import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Interface as LanguageInterface
+import community.flock.wirespec.ir.core.Package as LanguagePackage
 import community.flock.wirespec.ir.core.Union as LanguageUnion
 
 public open class KotlinIrEmitter(
@@ -127,7 +126,7 @@ public open class KotlinIrEmitter(
 
         val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.kotlin")
 
-        val clientServer = packageName.convertClientServer()
+        val clientServer = convertClientServer()
 
         val wirespecShared = packageName.convert()
             .transform {

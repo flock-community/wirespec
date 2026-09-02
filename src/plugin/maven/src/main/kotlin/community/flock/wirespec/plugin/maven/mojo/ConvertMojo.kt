@@ -87,11 +87,11 @@ public class ConvertMojo : BaseMojo() {
 
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
-            is ClassPath -> inputPath.readFromClasspath<JSON>().let { (name, content) -> Source<JSON>(name, content) }
+            is ClassPath -> inputPath.readFromClasspath<JSON>().let { (name, content) -> Source(name, content) }
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
                 FileExtension.JSON -> Source<JSON>(inputPath.name, inputPath.read())
-                FileExtension.AvroJson -> Source<JSON>(inputPath.name, inputPath.read())
+                FileExtension.AvroJson -> Source(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
                 .also { logger.info("Found 1 file to process: $inputPath") }

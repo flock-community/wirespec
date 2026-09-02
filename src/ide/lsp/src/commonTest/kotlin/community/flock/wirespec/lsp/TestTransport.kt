@@ -2,7 +2,6 @@ package community.flock.wirespec.lsp
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -66,7 +65,7 @@ class TestTransport : Transport {
 
     /** Return all server-pushed notifications matching [method], without consuming them. */
     fun notificationsOf(method: String): List<JsonObject> = outbox
-        .mapNotNull { it as? JsonObject }
+        .filterIsInstance<JsonObject>()
         .filter { it["method"]?.let { v -> v is JsonPrimitive && v.content == method } == true }
 
     /** Clear the captured outbox. */
@@ -79,8 +78,4 @@ class TestTransport : Transport {
 
     @Suppress("unused")
     fun debugDump(): String = outbox.joinToString("\n") { it.toString() }
-
-    companion object {
-        fun nullElement(): JsonElement = JsonNull
-    }
 }

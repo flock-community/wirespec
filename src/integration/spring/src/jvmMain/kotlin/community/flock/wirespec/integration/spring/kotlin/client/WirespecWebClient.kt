@@ -4,12 +4,11 @@ import community.flock.wirespec.integration.spring.shared.filterNotEmpty
 import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import kotlinx.coroutines.reactor.awaitSingle
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
-import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.core.publisher.Mono
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -57,11 +56,11 @@ public class WirespecWebClient(
             }
         }
         .exchangeToMono { response ->
-            response.bodyToMono(ByteArray::class.java)
+            response.bodyToMono<ByteArray>()
                 .map { body ->
                     Wirespec.RawResponse(
                         statusCode = response.statusCode().value(),
-                        headers = response.headers().asHttpHeaders().toRawHeaders(),
+                        headers = response.headers().asHttpHeaders().toMap(),
                         body = body,
                     )
                 }
@@ -69,7 +68,7 @@ public class WirespecWebClient(
                     Mono.just(
                         Wirespec.RawResponse(
                             statusCode = response.statusCode().value(),
-                            headers = response.headers().asHttpHeaders().toRawHeaders(),
+                            headers = response.headers().asHttpHeaders().toMap(),
                             body = null,
                         ),
                     ),
@@ -80,7 +79,7 @@ public class WirespecWebClient(
                 is WebClientResponseException ->
                     Wirespec.RawResponse(
                         statusCode = throwable.statusCode.value(),
-                        headers = throwable.headers.toRawHeaders(),
+                        headers = throwable.headers.toMap(),
                         body = throwable.responseBodyAsByteArray,
                     ).let { Mono.just(it) }
 
@@ -88,16 +87,4 @@ public class WirespecWebClient(
             }
         }
         .awaitSingle()
-
-    /**
-     * Converts Spring [HttpHeaders] into the [Map] expected by [Wirespec.RawResponse].
-     *
-     * This deliberately avoids casting [HttpHeaders] to [Map]: in Spring Framework 6 [HttpHeaders]
-     * implements [org.springframework.util.MultiValueMap] (and therefore [Map]), but in Spring
-     * Framework 7 it no longer does. Iterating via [HttpHeaders.forEach] works on both versions, so
-     * a jar compiled against Spring 6 keeps working at runtime on Spring 7.
-     */
-    private fun HttpHeaders.toRawHeaders(): Map<String, List<String>> = LinkedMultiValueMap<String, String>().also { map ->
-        forEach { name, values -> map[name] = values }
-    }
 }

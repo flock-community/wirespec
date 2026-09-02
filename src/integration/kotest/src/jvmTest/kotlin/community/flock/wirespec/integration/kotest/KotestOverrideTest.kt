@@ -121,7 +121,7 @@ class KotestOverrideTest {
             registerPath("my-project-id", "id") { Arb.constant("FROM-PATH") }
         }
         val seedAnnotation = mapOf("name" to "Seed", "parameters" to emptyMap<String, Any>())
-        val shape = KotestFieldShape<Map<String, String>>(
+        val shape = KotestFieldShape(
             annotations = mapOf("id" to listOf(seedAnnotation)),
             generate = { p ->
                 val id = gen.generate(
@@ -143,7 +143,7 @@ class KotestOverrideTest {
                 Arb.constant("a@b.com")
             }
         }
-        val shape = KotestFieldShape<Map<String, String>>(
+        val shape = KotestFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 val email = gen.generate(
@@ -165,7 +165,7 @@ class KotestOverrideTest {
                 Arb.constant("a@b.com")
             }
         }
-        val shape = KotestFieldShape<List<String>>(
+        val shape = KotestFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 val email = gen.generate(
@@ -202,7 +202,7 @@ class KotestOverrideTest {
             }
             registerPath("u", "email") { Arb.constant("PATH") }
         }
-        val shape = KotestFieldShape<Map<String, String>>(
+        val shape = KotestFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 mapOf(
@@ -223,7 +223,7 @@ class KotestOverrideTest {
         val gen = kotestGenerator(seed = 0L) {
             registerFieldByTypeName(typeOf<Map<String, String>>().toString(), "email", value = "v@x")
         }
-        val shape = KotestFieldShape<Map<String, String>>(
+        val shape = KotestFieldShape(
             annotations = emptyMap(),
             generate = { p ->
                 mapOf(

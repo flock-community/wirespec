@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Collectors
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 public class WirespecMethodArgumentResolver(
     private val wirespecSerialization: Wirespec.Serialization,
@@ -42,7 +41,6 @@ public class WirespecMethodArgumentResolver(
         return fromRequest.invoke(instance, wirespecSerialization, rawRequest) as Wirespec.Request<*>
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
     public fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest {
         if (contentType?.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE) == true) {
             val req = this as MultipartHttpServletRequest

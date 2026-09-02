@@ -62,7 +62,7 @@ class LspServerTest {
 
         val published = transport.notificationsOf("textDocument/publishDiagnostics").single()
         val diagnostics = published["params"]!!.jsonObject["diagnostics"]!!.jsonArray
-        assertTrue(diagnostics.size >= 1, "expected at least one diagnostic; got $diagnostics")
+        assertTrue(diagnostics.isNotEmpty(), "expected at least one diagnostic; got $diagnostics")
         val first = diagnostics.first().jsonObject
         assertNotNull(first["range"])
         assertNotNull(first["message"])

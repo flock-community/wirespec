@@ -50,7 +50,7 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
 import community.flock.wirespec.plugin.toIrExtension
 
-internal enum class Options(public vararg val flags: String) {
+internal enum class Options(vararg val flags: String) {
     Input("-i", "--input"),
     Output("-o", "--output"),
     Language("-l", "--language"),

@@ -15,7 +15,6 @@ internal external interface NodeProcess {
     fun send(message: Any)
 }
 
-@Suppress("ClassName")
 internal external object Buffer {
     fun byteLength(value: String, encoding: String): Int
 }

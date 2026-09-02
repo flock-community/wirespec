@@ -29,14 +29,12 @@ internal class JavaCompiler(val project: MavenProject, val log: Log, val outputD
      */
     fun compile(sourceDirectory: File): Boolean? {
         if (!sourceDirectory.exists()) {
-            log.info("Source file not found: " + sourceDirectory)
-            throw MojoFailureException("Source file " + sourceDirectory + " does not exist.")
+            log.info("Source file not found: $sourceDirectory")
+            throw MojoFailureException("Source file $sourceDirectory does not exist.")
         }
 
         val compiler = ToolProvider.getSystemJavaCompiler()
-        if (compiler == null) {
-            throw MojoExecutionException("Could not get system Java compiler. Ensure you are running Maven with a JDK, not just a JRE.")
-        }
+            ?: throw MojoExecutionException("Could not get system Java compiler. Ensure you are running Maven with a JDK, not just a JRE.")
 
         val fileManager = compiler.getStandardFileManager(
             null,

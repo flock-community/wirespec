@@ -94,7 +94,7 @@ class TokenizeTest {
 
     @Test
     fun testLiteralStringWithSpecialCharacters() = testTokenizer(
-        "\"Hello @#\$%^&*()_+{}|:<>?[]\\\\;',./ World\"",
+        "\"Hello @#$%^&*()_+{}|:<>?[]\\\\;',./ World\"",
         LiteralString,
         EndOfProgram,
     )

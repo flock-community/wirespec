@@ -63,10 +63,10 @@ internal val languages = mapOf(
 ).onEach { (name, lang) -> lang.name = name }
 
 internal class Language(
-    public val emitter: IrEmitter,
-    public val image: () -> String,
+    val emitter: IrEmitter,
+    val image: () -> String,
 ) {
-    public lateinit var name: String
+    lateinit var name: String
     override fun toString() = name
     private lateinit var fixture: Fixture
 
@@ -74,7 +74,7 @@ internal class Language(
         File(System.getProperty("buildDir"), "generated-workspace/${name.lowercase()}").apply { mkdirs() }
     }
 
-    public val container: GenericContainer<*> by lazy {
+    val container: GenericContainer<*> by lazy {
         GenericContainer(image())
             .withFileSystemBind(workspaceDir.absolutePath, "/app/gen", BindMode.READ_ONLY)
             .withCommand("tail", "-f", "/dev/null")
@@ -100,7 +100,7 @@ internal class Language(
         )
     }
 
-    public fun generate(file: AstFile, outputDir: File) {
+    fun generate(file: AstFile, outputDir: File) {
         val name = file.name.pascalCase()
         val transformed = emitter.transformTestFile(file)
         val (fileName, content) = when (emitter) {
@@ -116,7 +116,7 @@ internal class Language(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    public fun start(name: String, fixture: Fixture, extraFiles: (File) -> Unit = {}) {
+    fun start(name: String, fixture: Fixture, extraFiles: (File) -> Unit = {}) {
         this.fixture = fixture
 
         val emitted = object : CompilationContext, NoLogger {
@@ -145,7 +145,7 @@ internal class Language(
         container
     }
 
-    public fun compile() {
+    fun compile() {
         val verifyCommand = when (emitter) {
             is JavaIrEmitter -> "find /app/gen -name '*.java' | xargs javac -d /tmp/out"
             is KotlinIrEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
@@ -158,7 +158,7 @@ internal class Language(
         exec(verifyCommand)
     }
 
-    public fun run(testFile: AstFile) {
+    fun run(testFile: AstFile) {
         val resolved = if (emitter is TypeScriptIrEmitter) testFile.adaptForTypeScript(fixture) else testFile
         generate(resolved, workspaceDir)
         compile()
@@ -213,7 +213,7 @@ internal class Language(
         exec(runCommand)
     }
 
-    public fun exec(command: String) {
+    fun exec(command: String) {
         val result = container.execInContainer("sh", "-c", command)
         if (result.stdout.isNotBlank()) {
             println("=== stdout ===")

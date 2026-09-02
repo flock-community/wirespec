@@ -3,7 +3,6 @@ package community.flock.wirespec.plugin.io
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.FileExtension.entries
-import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.plugin.io.Source.Type
 import kotlin.jvm.JvmInline
 
@@ -17,16 +16,12 @@ public data class Source<out E : Type>(val name: Name, val content: String) : In
         public data object JSON : Type
     }
 
-    public fun map(fn: (String) -> String): Source<E> = Source<E>(name = name, content = fn(content))
+    public fun map(fn: (String) -> String): Source<E> = Source(name = name, content = fn(content))
 }
-
-private data class Sink(val name: String, val content: String) : Output
 
 public class Directory(public val path: DirectoryPath) :
     Input,
     Output
-
-private operator fun Directory.plus(packageName: PackageName) = Directory(path + packageName)
 
 public sealed interface FullPath
 
@@ -51,11 +46,6 @@ public value class DirectoryPath(override val value: String) :
     public fun resolve(path: String): DirectoryPath = DirectoryPath("$value/$path")
 }
 
-private operator fun DirectoryPath.plus(packageName: PackageName) = when (packageName.createDirectory) {
-    true -> "/${packageName.value.split('.').joinToString("/")}"
-    false -> ""
-}.let { this + it }
-
 public data class FilePath(val directory: DirectoryPath, val name: Name, val extension: FileExtension) : FullPath {
     public companion object {
         public operator fun invoke(input: String): FilePath {
@@ -76,7 +66,3 @@ public data class FilePath(val directory: DirectoryPath, val name: Name, val ext
 public value class Name(override val value: String) : Value<String> {
     override fun toString(): String = value
 }
-
-private operator fun FilePath.plus(string: String) = directory + string
-
-private operator fun DirectoryPath.plus(string: String) = DirectoryPath(value + string)

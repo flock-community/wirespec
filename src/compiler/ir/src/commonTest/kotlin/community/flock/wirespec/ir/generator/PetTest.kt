@@ -287,7 +287,7 @@ class PetTest {
         assertTrue(output.contains("import community.flock.wirespec.java.Wirespec;"))
         assertTrue(output.contains("import community.flock.wirespec.generated.examples.spring.model.Todo;"))
         assertTrue(output.contains("import community.flock.wirespec.generated.examples.spring.model.Error;"))
-        // Verify the imports are correctly composed from path + type
+        // Verify the imports are correctly composed of path + type
 
         assertTrue(output.contains("public sealed interface Response extends Wirespec.Response permits Response2XX, Response4XX {}"))
         assertTrue(output.contains("public sealed interface Response2XX extends Response permits Response200 {}"))

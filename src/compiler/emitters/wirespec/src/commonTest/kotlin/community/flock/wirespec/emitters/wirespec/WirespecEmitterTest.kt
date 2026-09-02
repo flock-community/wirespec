@@ -98,7 +98,7 @@ class WirespecEmitterTest {
     @Test
     fun compileRefinedTest() {
         val wirespec = """
-            |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g)
+            |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
             |
             |type TodoNoRegex = String
             |
@@ -218,7 +218,7 @@ class WirespecEmitterTest {
     @Test
     fun compileNestedTypeTest() {
         val wirespec = """
-            |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})${'$'}/g)
+            |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
             |
             |type Address {
             |  street: String,
@@ -240,11 +240,11 @@ class WirespecEmitterTest {
     @Test
     fun compileComplexModelTest() {
         val wirespec = """
-            |type Email = String(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}${'$'}/g)
+            |type Email = String(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/g)
             |
-            |type PhoneNumber = String(/^\+[1-9]\d{1,14}${'$'}/g)
+            |type PhoneNumber = String(/^\+[1-9]\d{1,14}$/g)
             |
-            |type Tag = String(/^[a-z][a-z0-9-]{0,19}${'$'}/g)
+            |type Tag = String(/^[a-z][a-z0-9-]{0,19}$/g)
             |
             |type EmployeeAge = Integer(18, 65)
             |

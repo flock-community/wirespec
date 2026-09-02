@@ -299,7 +299,7 @@ public fun PackageName.convert(): File = file("Wirespec") {
     }
 }
 
-public fun PackageName.convertClientServer(): List<Element> = listOf(
+public fun convertClientServer(): List<Element> = listOf(
     `interface`("ServerEdge") {
         typeParam(type("Req"), type("Request", Type.Wildcard))
         typeParam(type("Res"), type("Response", Type.Wildcard))

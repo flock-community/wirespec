@@ -56,7 +56,7 @@ public abstract class BaseMojo : AbstractMojo() {
 
     /**
      * Specifies the test output directory. When set, [Emitted] entries flagged as test
-     * output are written here (and registered as a test compile source root) instead of [output].
+     * output are written here (and registered as a test-compile source root) instead of [output].
      */
     @Parameter
     protected var testOutput: String? = null
@@ -109,10 +109,10 @@ public abstract class BaseMojo : AbstractMojo() {
     @Parameter
     protected var sourceDirectory: String? = null
 
-    @Parameter(defaultValue = "\${project}", readonly = true, required = true)
+    @Parameter(defaultValue = $$"${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject
 
-    @Parameter(defaultValue = "\${plugin.artifacts}", readonly = true, required = true)
+    @Parameter(defaultValue = $$"${plugin.artifacts}", readonly = true, required = true)
     protected lateinit var pluginArtifacts: List<Artifact>
 
     protected val logger: Logger = object : Logger(ERROR) {
@@ -210,7 +210,7 @@ public abstract class BaseMojo : AbstractMojo() {
         val content = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         val name = file.name.split(".").first()
         logger.info("Found 1 file from classpath: $file")
-        return Source<E>(name = Name(name), content = content)
+        return Source(name = Name(name), content = content)
     }
 
     /**

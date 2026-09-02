@@ -6,6 +6,7 @@ import community.flock.wirespec.integration.spring.kotlin.configuration.Wirespec
 import community.flock.wirespec.integration.spring.shared.Jackson3JsonMapper
 import community.flock.wirespec.integration.spring.shared.WirespecJsonMapper
 import community.flock.wirespec.kotlin.Wirespec
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -31,11 +32,11 @@ class WirespecJackson3SelectionTest {
     fun `selects the Jackson 3 beans when only Jackson 3 is present`() {
         runner.run { context ->
             assertTrue(
-                context.getBean(WirespecJsonMapper::class.java) is Jackson3JsonMapper,
+                context.getBean<WirespecJsonMapper>() is Jackson3JsonMapper,
                 "expected the Jackson 3 multipart mapper to be selected",
             )
             assertTrue(
-                context.getBean(Wirespec.Serialization::class.java) is WirespecSerialization,
+                context.getBean<Wirespec.Serialization>() is WirespecSerialization,
                 "expected the Jackson 3 Wirespec serialization to be selected",
             )
         }
@@ -44,7 +45,7 @@ class WirespecJackson3SelectionTest {
     @Test
     fun `the selected Jackson 3 mapper initializes and round-trips json`() {
         runner.run { context ->
-            val mapper = context.getBean(WirespecJsonMapper::class.java)
+            val mapper = context.getBean<WirespecJsonMapper>()
             val bytes = mapper.writeValueAsBytes(mapOf("number" to 1, "string" to "test"))
             val tree = mapper.readTree(bytes)
             assertTrue(bytes.isNotEmpty())

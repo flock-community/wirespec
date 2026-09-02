@@ -25,14 +25,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Jackson 3 variant of the Wirespec Java module. It collapses / expands the wrapper
  * class around `Wirespec.Refined` values and serializes `Wirespec.Enum` via
  * `toString()`, mirroring the Jackson 2 module.
- *
+ * <p>
  * Java records expose their components through accessors, so unlike the Kotlin module
  * this module needs no visibility configuration.
  *
@@ -61,7 +59,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Refined
      * @see WirespecModuleJava
      */
-    class RefinedSerializer extends StdSerializer<Wirespec.Refined> {
+    static class RefinedSerializer extends StdSerializer<Wirespec.Refined> {
         public RefinedSerializer() {
             this(null);
         }
@@ -82,7 +80,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Enum
      * @see WirespecModuleJava
      */
-    class EnumSerializer extends StdSerializer<Wirespec.Enum> {
+    static class EnumSerializer extends StdSerializer<Wirespec.Enum> {
 
         public EnumSerializer() {
             this(null);
@@ -104,7 +102,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Refined
      * @see WirespecModuleJava
      */
-    class RefinedDeserializer extends StdDeserializer<Wirespec.Refined> {
+    static class RefinedDeserializer extends StdDeserializer<Wirespec.Refined> {
         private final Class<?> vc;
 
         public RefinedDeserializer(Class<?> vc) {
@@ -131,7 +129,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Enum
      * @see WirespecModuleJava
      */
-    class EnumDeserializer extends StdDeserializer<Enum<?>> {
+    static class EnumDeserializer extends StdDeserializer<Enum<?>> {
         private final Class<?> vc;
 
         public EnumDeserializer(Class<?> vc) {
@@ -162,7 +160,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Enum
      * @see WirespecModuleJava
      */
-    class WirespecDeserializerModifier extends ValueDeserializerModifier {
+    static class WirespecDeserializerModifier extends ValueDeserializerModifier {
         @Override
         public ValueDeserializer<?> modifyEnumDeserializer(
                 DeserializationConfig config,
@@ -193,10 +191,10 @@ public class WirespecModuleJava extends SimpleModule {
 
         private String translate(String key) {
 
-            Set<String> kotlinSet = JavaIrEmitter.Companion.getReservedKeywords();
-            List<String> keywords = kotlinSet.stream()
+            List<String> keywords= JavaIrEmitter.Companion.getReservedKeywords()
+                    .stream()
                     .map(keyword -> "_" + keyword)
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (keywords.contains(key)) {
                 return key.substring(1);

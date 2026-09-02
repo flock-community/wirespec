@@ -63,8 +63,8 @@ public class WirespecWebClient {
         return Arrays.stream(endpointClass.getDeclaredClasses())
                 .filter(c -> c.getSimpleName().equals("Handler"))
                 .findFirst()
-                .map(handler -> Arrays.stream(handler.getDeclaredMethods()))
-                .orElseGet(java.util.stream.Stream::empty)
+                .stream()
+                .flatMap(handler -> Arrays.stream(handler.getDeclaredMethods()))
                 .filter(m -> nameList.contains(m.getName()) && Modifier.isStatic(m.getModifiers()))
                 .findFirst()
                 .orElseGet(() -> Arrays.stream(endpointClass.getDeclaredMethods())
@@ -132,8 +132,8 @@ public class WirespecWebClient {
      * so a jar compiled against Spring 6 keeps working at runtime on Spring 7.
      */
     private static Map<String, List<String>> toRawHeaders(HttpHeaders headers) {
-        LinkedMultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        headers.forEach(map::put);
+        final var map = new LinkedMultiValueMap<String, String>();
+        map.putAll(headers);
         return map;
     }
 }

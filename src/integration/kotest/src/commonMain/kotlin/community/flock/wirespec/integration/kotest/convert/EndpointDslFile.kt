@@ -98,7 +98,6 @@ internal object EndpointDslFile {
     private fun arbOf(inner: IrType): IrType = IrType.Custom("Arb", listOf(inner))
     private fun arbOf(inner: String): IrType = arbOf(IrType.Custom(inner))
     private fun genNullableOf(inner: IrType): IrType = IrType.Nullable(genOf(inner))
-    private fun genNullableOf(inner: String): IrType = genNullableOf(IrType.Custom(inner))
     private fun blockType(builder: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(builder))
     private fun suspendScopeType(scope: String): IrType.Function = IrType.Function(emptyList(), IrType.Unit, IrType.Custom(scope), isAsync = true)
 
@@ -606,8 +605,7 @@ internal data class EndpointShape(
         }
 
         private fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): IrType = when (reference) {
-            is Reference.Custom -> refined[reference.value]
-                ?.let { r -> r.reference.copy(isNullable = reference.isNullable).convert() }
+            is Reference.Custom -> refined[reference.value]?.reference?.copy(isNullable = reference.isNullable)?.convert()
                 ?: reference.convert()
             is Reference.Iterable -> IrType.Array(mapWithRefinedUnwrap(reference.reference, refined))
                 .let { if (reference.isNullable) IrType.Nullable(it) else it }

@@ -39,19 +39,22 @@ import community.flock.wirespec.ir.core.File as LanguageFile
 public class JacksonExtension : IrExtension {
 
     override fun extend(ir: IR, ast: AST): IR {
-        val recordNames = ast.modules.toList()
+        val recordNames = ast.modules.asSequence()
             .flatMap { it.statements }
             .filterIsInstance<TypeDefinition>()
-            .map { Name.of(it.identifier.value).pascalCase() }
+            .map { it.identifier.value }
+            .map(Name::of)
+            .map { it.pascalCase() }
             .toSet()
-        val unionMemberNames = ir.filterIsInstance<LanguageFile>()
+        val unionMemberNames = ir
+            .asSequence()
+            .filterIsInstance<LanguageFile>()
             .flatMap { it.elements }
             .filterIsInstance<Union>()
-            .flatMap { union -> union.members.map { it.name.pascalCase() } }
+            .flatMap { it.members }
+            .map { it.name.pascalCase() }
             .toSet()
-        return ir.map { element ->
-            if (element is LanguageFile) element.annotate(recordNames, unionMemberNames) else element
-        }
+        return ir.map { (it as? LanguageFile)?.annotate(recordNames, unionMemberNames) ?: it }
     }
 
     private fun LanguageFile.annotate(recordNames: Set<String>, unionMemberNames: Set<String>): LanguageFile = copy(
@@ -59,13 +62,13 @@ public class JacksonExtension : IrExtension {
             when (element) {
                 is Union -> listOf(jsonTypeInfo, element)
                 is Struct -> {
-                    val pascal = element.name.pascalCase()
-                    when {
-                        pascal !in recordNames -> listOf(element)
-                        pascal in unionMemberNames -> listOf(jsonTypeName(pascal), element.annotateFields())
+                    when (val pascal = element.name.pascalCase()) {
+                        !in recordNames -> listOf(element)
+                        in unionMemberNames -> listOf(jsonTypeName(pascal), element.annotateFields())
                         else -> listOf(element.annotateFields())
                     }
                 }
+
                 else -> listOf(element)
             }
         },

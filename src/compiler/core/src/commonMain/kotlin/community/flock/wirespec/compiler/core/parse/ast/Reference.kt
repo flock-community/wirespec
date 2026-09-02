@@ -95,6 +95,6 @@ public sealed interface Reference : Value<String> {
             }
         }
 
-        override val value: kotlin.String = type.name
+        override val value: String = type.name
     }
 }

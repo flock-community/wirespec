@@ -25,8 +25,6 @@ public class WirespecMappingBuilder<Res : Wirespec.Response<*>> internal constru
     private val endpoint: Wirespec.Server<*, Res>,
     private val mapping: MappingBuilder,
 ) {
-    /**
-     */
     public fun willReturn(
         response: Res,
         serialization: Wirespec.Serialization = defaultSerialization,

@@ -93,7 +93,7 @@ internal object CallExecutor {
         variant: EndpointReflection.ResponseVariantReflection,
         arb: ArbReceiver,
         rs: RandomSource,
-    ): Any? = when {
+    ): Any = when {
         variant.bodyElementClass != null -> {
             val size = Arb.int(1..3).draw(rs)
             (0 until size).map { i -> generatedValueFor(variant.bodyElementClass, arb, rs, listOf("$i")) }

@@ -36,13 +36,13 @@ public abstract class AbstractWirespecModuleJavaTest {
     protected final String todoJson =
             //language=json
             """
-                    {
-                      "id" : "123",
-                      "name" : "Do It now",
-                      "final" : false,
-                      "category" : "WORK",
-                      "eMail" : "test@wirespec.nl"
-                    }""";
+            {
+              "id" : "123",
+              "name" : "Do It now",
+              "final" : false,
+              "category" : "WORK",
+              "eMail" : "test@wirespec.nl"
+            }""";
 
     protected final TypeWithAllRefined typeWithAllRefined = new TypeWithAllRefined(
             new StringRefinedRegex("string refined regex"),
@@ -60,18 +60,18 @@ public abstract class AbstractWirespecModuleJavaTest {
     protected final String typeJson =
             //language=json
             """
-                    {
-                      "stringRefinedRegex" : "string refined regex",
-                      "stringRefined" : "string refined",
-                      "intRefinedNoBound" : 1,
-                      "intRefinedLowerBound" : 2,
-                      "intRefinedUpperBound" : 3,
-                      "intRefinedLowerAndUpper" : 4,
-                      "numberRefinedNoBound" : 1.0,
-                      "numberRefinedLowerBound" : 2.0,
-                      "numberRefinedUpperBound" : 3.0,
-                      "numberRefinedLowerAndUpper" : 4.0
-                    }""";
+            {
+              "stringRefinedRegex" : "string refined regex",
+              "stringRefined" : "string refined",
+              "intRefinedNoBound" : 1,
+              "intRefinedLowerBound" : 2,
+              "intRefinedUpperBound" : 3,
+              "intRefinedLowerAndUpper" : 4,
+              "numberRefinedNoBound" : 1.0,
+              "numberRefinedLowerBound" : 2.0,
+              "numberRefinedUpperBound" : 3.0,
+              "numberRefinedLowerAndUpper" : 4.0
+            }""";
 
     /** Pretty-print {@code value} as JSON using the module under test. */
     protected abstract String serialize(Object value) throws Exception;

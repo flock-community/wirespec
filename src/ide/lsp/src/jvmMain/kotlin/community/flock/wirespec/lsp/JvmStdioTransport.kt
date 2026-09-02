@@ -8,7 +8,7 @@ import java.io.PrintStream
 
 internal class JvmStdioTransport(
     private val input: InputStream = System.`in`,
-    private val output: OutputStream = System.out,
+    output: OutputStream = System.out,
 ) : Transport {
 
     private val out = PrintStream(output, true, Charsets.UTF_8)

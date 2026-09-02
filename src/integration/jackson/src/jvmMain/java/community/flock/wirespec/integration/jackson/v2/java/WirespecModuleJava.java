@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.jackson.v2.java;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -20,6 +19,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import community.flock.wirespec.emitters.java.JavaIrEmitter;
 import community.flock.wirespec.java.Wirespec;
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -27,18 +27,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * A Jackson module that handles deserialization of all Wirespec.Refined, to ensure
  * collapse / expanse of the wrapper class around the string value.
- *
+ * <p>
  * Example
  * ```kt
  * data class Id(value: String): Wirespec.Refined
  * data class Task(id: Id, title: String)
  * ```
- *
+ * <p>
  * Having an object such as
  * ```
  * Task{id: Id("123"), title: "improve API contracts"}
@@ -73,7 +72,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Refined
      * @see WirespecModuleJava
      */
-    class RefinedSerializer extends StdSerializer<Wirespec.Refined> {
+    static class RefinedSerializer extends StdSerializer<Wirespec.Refined> {
         public RefinedSerializer() {
             this(null);
         }
@@ -94,7 +93,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Enum
      * @see WirespecModuleJava
      */
-    class EnumSerializer extends StdSerializer<Wirespec.Enum> {
+    static class EnumSerializer extends StdSerializer<Wirespec.Enum> {
 
         public EnumSerializer() {
             this(null);
@@ -116,7 +115,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Refined
      * @see WirespecModuleJava
      */
-    class RefinedDeserializer extends StdDeserializer<Wirespec.Refined> {
+    static class RefinedDeserializer extends StdDeserializer<Wirespec.Refined> {
         private final Class<?> vc;
 
         public RefinedDeserializer(Class<?> vc) {
@@ -125,7 +124,7 @@ public class WirespecModuleJava extends SimpleModule {
         }
 
         @Override
-        public Wirespec.Refined deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+        public Wirespec.Refined deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
             JsonNode node = jp.getCodec().readTree(jp);
             Constructor<?> constructor = vc.getDeclaredConstructors()[0];
             Object value = jp.getCodec().treeToValue(node, constructor.getParameterTypes()[0]);
@@ -143,7 +142,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Enum
      * @see WirespecModuleJava
      */
-    class EnumDeserializer extends StdDeserializer<Enum<?>> {
+    static class EnumDeserializer extends StdDeserializer<Enum<?>> {
         private final Class<?> vc;
 
         public EnumDeserializer(Class<?> vc) {
@@ -152,7 +151,7 @@ public class WirespecModuleJava extends SimpleModule {
         }
 
         @Override
-        public Enum<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+        public Enum<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
             JsonNode node = jp.getCodec().readTree(jp);
             return (Enum<?>) Arrays.stream(vc.getEnumConstants())
                     .filter(it -> {
@@ -173,7 +172,7 @@ public class WirespecModuleJava extends SimpleModule {
      * @see Wirespec.Enum
      * @see WirespecModuleJava
      */
-    class WirespecDeserializerModifier extends BeanDeserializerModifier {
+    static class WirespecDeserializerModifier extends BeanDeserializerModifier {
         @Override
         public JsonDeserializer<?> modifyEnumDeserializer(
                 DeserializationConfig config,
@@ -200,14 +199,14 @@ public class WirespecModuleJava extends SimpleModule {
         }
     }
 
-    class JavaReservedKeywordNamingStrategy extends PropertyNamingStrategy {
+    static class JavaReservedKeywordNamingStrategy extends PropertyNamingStrategy {
 
         private String translate(String key) {
 
-            Set<String> kotlinSet = JavaIrEmitter.Companion.getReservedKeywords();
-            List<String> keywords = kotlinSet.stream()
+            List<String> keywords = JavaIrEmitter.Companion.getReservedKeywords()
+                    .stream()
                     .map(keyword -> "_" + keyword)
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (keywords.contains(key)) {
                 return key.substring(1);

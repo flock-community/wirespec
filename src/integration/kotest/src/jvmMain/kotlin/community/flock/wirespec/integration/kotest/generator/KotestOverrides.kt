@@ -79,6 +79,4 @@ internal fun interface RefinedWrapper {
     fun wrap(drawn: Any?, field: KotestField<*>, path: List<String>): Any?
 }
 
-internal object IdentityRefinedWrapper : RefinedWrapper {
-    override fun wrap(drawn: Any?, field: KotestField<*>, path: List<String>): Any? = drawn
-}
+internal val IdentityRefinedWrapper = RefinedWrapper { drawn, _, _ -> drawn }
