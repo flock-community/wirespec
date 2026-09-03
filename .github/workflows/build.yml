@@ -534,9 +534,16 @@ jobs:
     needs:
       - version
 
+    # Publishes via npm trusted publishing (OIDC): the job exchanges a GitHub
+    # id-token for a short-lived registry token, so no long-lived NPM_TOKEN
+    # secret is needed. The trusted publisher for @flock/wirespec on npmjs.com
+    # must point at this repository and workflow file (build.yml).
+    permissions:
+      contents: read
+      id-token: write
+
     env:
       VERSION: ${{needs.version.outputs.version}}
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -549,8 +556,13 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
+      - name: Update npm
+        # Trusted publishing requires npm >= 11.5.1.
+        run: |
+          npm install -g npm@latest
+          npm --version
       - name: Build NPM distribution
         # JS-only build: only the tasks needed to produce
         # src/plugin/npm/build/dist/js/productionLibrary. Skips JVM/native
