@@ -12,10 +12,25 @@ repositories {
     mavenLocal()
 }
 
+val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+
 kotlin {
+    // Kotlin 2.0 is this module's consumer-compatibility floor, matching the
+    // kotlin_libraries floor: the current compiler rejects the repo-wide 1.9
+    // floor for the JS/native/metadata compilations this module now has, and a
+    // JVM-only 1.9 floor would sit below commonMain's, which KGP forbids.
     compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
+    if (enableNative) {
+        macosX64()
+        macosArm64()
+        linuxX64()
+        mingwX64()
+    }
+    js(IR) {
+        nodejs()
     }
     jvm {
         testRuns["test"].executionTask.configure {
@@ -33,27 +48,42 @@ kotlin {
                 // The Wirespec runtime and emitter come from the consumer's
                 // build; this module only reshapes the IR with raw, fully
                 // qualified kotlinx.serialization annotations, so no
-                // kotlinx-serialization dependency is needed here.
+                // kotlinx-serialization dependency is needed here. compileOnly
+                // keeps the compiler off the JVM consumer's runtime classpath;
+                // JS/Native don't support compileOnly, so those source sets
+                // redeclare the same modules as api.
                 compileOnly(project(":src:compiler:core"))
-                compileOnly(project(":src:compiler:emitters:kotlin"))
-                api(project(":src:integration:wirespec"))
+                compileOnly(project(":src:compiler:ir"))
             }
         }
-        commonTest {
+        jsMain {
             dependencies {
-                implementation(libs.kotlin.test)
-                implementation(libs.bundles.kotest)
-                implementation(project(":src:integration:wirespec"))
-                implementation(project(":src:compiler:test"))
-                implementation(project(":src:compiler:core"))
+                api(project(":src:compiler:core"))
+                api(project(":src:compiler:ir"))
+            }
+        }
+        if (enableNative) {
+            nativeMain {
+                dependencies {
+                    api(project(":src:compiler:core"))
+                    api(project(":src:compiler:ir"))
+                }
+            }
+        }
+        jvmMain {
+            dependencies {
+                api(project(":src:integration:wirespec"))
             }
         }
         jvmTest {
             dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.bundles.kotest)
+                implementation(libs.kotlin.junit)
+                implementation(project(":src:integration:wirespec"))
+                implementation(project(":src:compiler:test"))
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:emitters:kotlin"))
-                implementation(project(":src:integration:wirespec"))
-                implementation(libs.kotlin.junit)
             }
         }
     }

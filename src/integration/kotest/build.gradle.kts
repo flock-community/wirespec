@@ -12,7 +12,18 @@ repositories {
     mavenLocal()
 }
 
+val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+
 kotlin {
+    if (enableNative) {
+        macosX64()
+        macosArm64()
+        linuxX64()
+        mingwX64()
+    }
+    js(IR) {
+        nodejs()
+    }
     jvm {
         java {
             toolchain {
@@ -28,10 +39,17 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(libs.kotest.property)
-                implementation(libs.kotlinx.rgxgen)
+                // Only the KotestDslExtension and the IR builders it uses live here,
+                // so the DSL generation works on every compiler target; the Kotest
+                // runtime (DSL, generators, validation) is JVM-only and lives in jvmMain.
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:ir"))
+            }
+        }
+        jvmMain {
+            dependencies {
+                implementation(libs.kotest.property)
+                implementation(libs.kotlinx.rgxgen)
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.kotest.engine)
                 implementation(libs.kotlinx.coroutines.core)
@@ -44,6 +62,11 @@ kotlin {
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:test"))
                 implementation(libs.bundles.kotest)
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation(libs.kotest.property)
             }
         }
     }

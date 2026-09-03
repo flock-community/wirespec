@@ -38,11 +38,6 @@ The integration works for both [producers](#restcontroller) (RestController) and
             <groupId>community.flock.wirespec.plugin.maven</groupId>
             <artifactId>wirespec-maven-plugin</artifactId>
             <version>{{WIRESPEC_VERSION}}</version>
-            <dependency>
-                <groupId>community.flock.wirespec.integration</groupId>
-                <artifactId>spring-jvm</artifactId>
-                <version>{{WIRESPEC_VERSION}}</version>
-            </dependency>
             <executions>
                 <execution>
                     <id>java</id>
@@ -55,9 +50,9 @@ The integration works for both [producers](#restcontroller) (RestController) and
                         <languages>
                             <language>Java</language>
                         </languages>
-                        <extensionClasses>
-                            <extensionClass>community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension</extensionClass>
-                        </extensionClasses>
+                        <extensions>
+                            <extension>SpringMappingAnnotations</extension>
+                        </extensions>
                     </configuration>
                 </execution>
             </executions>
@@ -66,19 +61,8 @@ The integration works for both [producers](#restcontroller) (RestController) and
 
     </TabItem>
     <TabItem value="gradle" label="Gradle">
-        Add the dependency to your depedencies, as well as the plugin dependencies
-
-        For single module project this is in the `build.gradle.kts`
-
-        ```gradle
-        buildscript {
-            dependencies {
-                classpath("community.flock.wirespec.integration:spring:{{WIRESPEC_VERSION}}")
-            }
-        }
-        ```
-
-        For multi-module projects add the plugin dependency also to your `buildSrc/build.gradle.kts`, and the `build.gradle.kts` of the module to which you want to add the wirespec plugin
+        Add the dependency to your dependencies and register a compile task. The Spring extensions
+        are bundled with the Wirespec Gradle plugin, so no buildscript classpath configuration is needed.
 
         ```gradle
         tasks.register<CompileWirespecTask>("wirespec-compile") {
@@ -88,7 +72,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
             languages = listOf(Language.Java)
-            extensionClasses = listOf(community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension::class.java)
+            irExtensions = listOf(community.flock.wirespec.plugin.Extension.SpringMappingAnnotations)
         }
         ```
 

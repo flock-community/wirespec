@@ -1,6 +1,5 @@
 import com.diffplug.gradle.spotless.SpotlessTask
-import community.flock.wirespec.integration.kotest.extension.KotestDslExtension
-import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -47,15 +46,6 @@ dependencies {
     testImplementation(libs.wirespec.integration.wiremock)
 }
 
-buildscript {
-    dependencies {
-        classpath(libs.wirespec.compiler)
-        classpath(libs.wirespec.emitters.kotlin)
-        classpath(libs.wirespec.integration.spring)
-        classpath(libs.wirespec.integration.kotest)
-    }
-}
-
 tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     description = "Compile Wirespec to Kotlin (Spring controllers + Kotest scenario DSL)"
     group = "Wirespec compile"
@@ -63,9 +53,9 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.examples.kotest.generated"
     languages = listOf(Language.Kotlin)
-    extensionClasses = listOf(
-        SpringMappingAnnotationsExtension::class.java,
-        KotestDslExtension::class.java,
+    irExtensions = listOf(
+        Extension.SpringMappingAnnotations,
+        Extension.KotestDsl,
     )
 }
 

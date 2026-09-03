@@ -18,6 +18,7 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 - **output:** Path to the output directory where the generated code will be placed.
 - **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`).
 - **package name:** The package name for the generated code.
+- **extensions:** A list of [bundled IR extensions](#bundled-extensions) to apply by name.
 - **share:** A flag to indicate whether shared code should be emitted.
 - **strict:** A flag to enable strict mode during compilation.
 
@@ -30,6 +31,7 @@ The `Convert` operation facilitates integration with other API specification lan
 - **input:** Path to the input file in the original specification language.
 - **output:** Path to the output directory where the converted Wirespec file will be placed.
 - **format:** The format of the input file (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`).
+- **extensions:** A list of [bundled IR extensions](#bundled-extensions) to apply by name.
 
 [Playground convert](http://playground.wirespec.io/covert)
 
@@ -40,24 +42,40 @@ representation** (IR). An `IrExtension` lets you reshape that IR — for example
 annotations, or to add a file per definition — without forking an emitter. The transformed IR is then handed
 to the normal code generator, so the output stays idiomatic for the target language.
 
-You register extensions with the `extensionClasses` parameter of the compile and convert operations. The
-Maven and Gradle plugins accept a list of `IrExtension` classes and instantiate them for you, injecting the
-`packageName` and `shared` settings and the target language into the constructor when the extension needs them.
-
 :::note
 The built-in language targets always emit through the IR pipeline, so registered extensions take effect
 out of the box. Extensions run in the order they are listed.
 :::
 
-Wirespec ships several IR extensions in its integration modules:
+### Bundled extensions
 
-| Extension | Module | Effect |
+The extensions that ship with Wirespec's integration modules are bundled with every plugin — the CLI
+included — and are enabled by shorthand name; no classpath configuration is needed:
+
+| Name | Targets | Effect |
 |---|---|---|
-| `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+| `Avro` | Java, Kotlin | Appends an Avro schema + converter declaration next to every generated record and enum — see [Avro](../integration/integration-avro.mdx) |
+| `Jackson` | Java, Kotlin | Adds Jackson annotations so generated models (de)serialize correctly — see [Jackson](../integration/integration-jackson.mdx) |
+| `KotlinxSerialization` | Kotlin | Adds `@Serializable`/`@SerialName` to generated models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+| `SpringMappingAnnotations` | Java, Kotlin | Adds Spring MVC mapping annotations to every endpoint handler — see [Spring](../integration/integration-spring.mdx) |
+| `SpringNativeHints` | Java, Kotlin | Emits a `WirespecNativeHints` file registering models and endpoints for GraalVM native images |
+| `KotestDsl` | Kotlin | Generates a typesafe Kotest scenario DSL for endpoints, channels and types |
 
-An extension's constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and
-`FileExtension` (the target language of the emitter being extended); the plugins inject all of them. To
-write your own extension, see [Architecture › Plugins](../architecture/architecture-plugins.md#ir-extensions)
-and the worked example at `examples/maven-spring-custom/`.
+How to enable them per plugin (names are matched against the table above):
 
-See [Gradle](./plugins-gradle.md) and [Maven](./plugins-maven.md) for the exact configuration syntax.
+- **CLI**: repeat `-x`/`--extension`, e.g. `wirespec compile -i openapi.ws -l Kotlin -x Jackson -x SpringMappingAnnotations`
+- **Gradle**: `irExtensions = listOf(Extension.Jackson, Extension.SpringMappingAnnotations)`
+- **Maven**: `<extensions><extension>Jackson</extension><extension>SpringMappingAnnotations</extension></extensions>`
+
+### Custom extensions
+
+The Maven and Gradle plugins additionally accept your own `IrExtension` classes through the
+`extensionClasses` parameter and instantiate them for you. An extension's constructor may declare
+zero or more parameters of type `PackageName`, `EmitShared`, and `FileExtension` (the target
+language of the emitter being extended); the plugins inject all of them. The CLI cannot load custom
+classes, so it supports the bundled extensions only. To write your own extension, see
+[Architecture › Plugins](../architecture/architecture-plugins.md#ir-extensions) and the worked
+example at `examples/maven-spring-custom/`.
+
+See [CLI](./plugins-cli.md), [Gradle](./plugins-gradle.md) and [Maven](./plugins-maven.md) for the
+exact configuration syntax.
