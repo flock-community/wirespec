@@ -104,7 +104,6 @@ The compile mojo supports the following parameters:
 - **packageName**: Package name for the generated code. Default is 'generated'.
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
-- **emitterClass**: Specifies a custom emitter class to use for code generation.
 - **extensions**: List of [bundled IR extensions](./plugins.md#bundled-extensions) to apply by name (e.g. `Jackson`, `SpringMappingAnnotations`). The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`.
 - **extensionClasses**: List of fully qualified custom `IrExtension` class names, applied like **extensions**.
 

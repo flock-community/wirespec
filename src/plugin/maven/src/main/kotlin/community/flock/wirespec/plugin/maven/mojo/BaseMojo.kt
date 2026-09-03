@@ -74,12 +74,6 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var shared: Boolean = true
 
     /**
-     * Specifies what additional custom emitter to use.
-     */
-    @Parameter
-    protected var emitterClass: String? = null
-
-    /**
      * Specifies custom IR extension classes to apply when an emitter is an [IrEmitter].
      */
     @Parameter
@@ -122,24 +116,6 @@ public abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    private val emitter
-        get() = try {
-            val clazz = getClassLoader(project).loadClass(emitterClass)
-            val constructor = clazz.constructors.first()
-            val args: List<Any> = constructor.parameters
-                .map {
-                    when (it.type) {
-                        PackageName::class.java -> PackageName(packageName)
-                        EmitShared::class.java -> EmitShared(shared)
-                        else -> error("Cannot map constructor parameter")
-                    }
-                }
-            constructor.newInstance(*args.toTypedArray()) as Emitter
-        } catch (e: Exception) {
-            logger.debug(e.toString())
-            null
-        }
-
     private fun extensionInstances(language: FileExtension) = extensionClasses.map { extensionClass ->
         try {
             val clazz = getClassLoader(project).loadClass(extensionClass)
@@ -165,10 +141,9 @@ public abstract class BaseMojo : AbstractMojo() {
     protected val emitters: NonEmptySet<Emitter>
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-            .plus(emitter)
-            .mapNotNull { it?.applyExtensions(allExtensions(it.extension)) }
+            .map { it.applyExtensions(allExtensions(it.extension)) }
             .toNonEmptySetOrNull()
-            ?: throw PickAtLeastOneLanguageOrEmitter()
+            ?: throw PickAtLeastOneLanguage()
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements

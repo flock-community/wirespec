@@ -32,7 +32,7 @@ public class ArbReceiver internal constructor(private val randomSource: RandomSo
         val cls = runCatching { Class.forName(generatorName, true, modelClass.classLoader) }.getOrElse {
             error(
                 "Could not locate $generatorName for ${modelClass.simpleName}. The Wirespec IR Kotlin emitter " +
-                    "must be enabled (emitterClass = KotlinIrEmitter::class.java) so per-type generators are emitted.",
+                    "must be enabled (languages = listOf(Language.Kotlin)) so per-type generators are emitted.",
             )
         }
         val instance = cls.getDeclaredField("INSTANCE").get(null)

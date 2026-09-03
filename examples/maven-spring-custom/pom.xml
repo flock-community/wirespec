@@ -16,12 +16,13 @@
 
     <modules>
         <module>app</module>
-        <module>emitter</module>
+        <module>extension</module>
         <module>pre-processor</module>
     </modules>
 
     <properties>
         <java.version>21</java.version>
+        <kotlin.version>2.3.10</kotlin.version>
         <sortpom-maven-plugin.version>3.2.0</sortpom-maven-plugin.version>
         <spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
         <wirespec.version>0.0.0-SNAPSHOT</wirespec.version>
@@ -46,6 +47,15 @@
                     <groupId>community.flock.wirespec.plugin.maven</groupId>
                     <artifactId>wirespec-maven-plugin</artifactId>
                     <version>${wirespec.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <configuration>
+                        <args>
+                            <arg>-Xjsr305=strict</arg>
+                        </args>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -74,6 +84,13 @@
                             <importOrder/>
                             <removeUnusedImports/>
                         </java>
+                        <kotlin>
+                            <includes>
+                                <include>src/main/kotlin/**/*.kt</include>
+                                <include>src/test/kotlin/**/*.kt</include>
+                            </includes>
+                            <ktlint/>
+                        </kotlin>
                     </configuration>
                     <executions>
                         <execution>

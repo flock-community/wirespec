@@ -38,35 +38,37 @@ Every plugin exposes the same two core operations. The shape of the inputs diffe
 
 For the per-option reference and worked invocations, see the [Plugins](../plugins/plugins.md) menu.
 
-## Custom emitters
+## IR extensions
 
-Wirespec accepts a user-supplied emitter alongside the built-in languages. **Maven and Gradle support this**; the CLI and NPM plugins do not.
-
-A custom emitter implements `Emitter` from `compiler/core/.../emit/Emitter.kt`:
+The built-in emitters are customised with **IR extensions** rather than replaced. Every language target lowers the AST into a language-neutral intermediate representation (IR) before generating code; an `IrExtension` receives that complete IR together with the parsed AST and returns the IR that is handed to the code generator. **Maven and Gradle support this**; the CLI and NPM plugins do not.
 
 ```kotlin
-interface Emitter : HasExtension {
-    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted>
+fun interface IrExtension {
+    fun extend(ir: IR, ast: AST): IR
 }
 ```
 
-In practice most custom emitters extend one of the built-in `IrEmitter` implementations (e.g., `JavaIrEmitter`, `KotlinIrEmitter`) and override the IR produced per definition. The constructor may declare zero or more parameters of type `PackageName` and/or `EmitShared` — the plugin injects both from the build configuration. Any other constructor parameter is rejected at load time.
+An extension can add files, drop files, or reshape the elements of existing ones — annotate a struct, append a method, wrap a namespace. Because it operates on the IR rather than on generated text, one extension can serve several target languages and the generator still renders idiomatic code. Extensions are written in Kotlin: the IR is an Arrow `NonEmptyList`, a Kotlin value class that Java code cannot implement an interface against.
 
-The plugins load the class from the build classpath via reflection. Maven takes the fully-qualified name as a string:
+Wirespec's own first-party integrations are wired in this way. The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
+
+The plugins load extension classes from the build classpath via reflection and instantiate them for every emitter of the task. The constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and/or `FileExtension` (the target language of the emitter being extended) — the plugin injects them from the build configuration. Any other constructor parameter is rejected at load time. Maven takes the fully-qualified names as strings:
 
 ```xml
-<emitterClass>com.example.MyCustomEmitter</emitterClass>
+<extensionClasses>
+    <extensionClass>com.example.MyExtension</extensionClass>
+</extensionClasses>
 ```
 
-Gradle takes the class object directly:
+Gradle takes the class objects directly:
 
 ```kotlin
-emitterClass.set(MyCustomEmitter::class.java)
+extensionClasses.set(listOf(MyExtension::class.java))
 ```
 
-The custom emitter runs *in addition to* any languages selected for the same task — its `Emitted` output is concatenated with the built-ins'. A minimal end-to-end project lives at `examples/maven-spring-custom/`.
+Extensions run in the order they are listed, after all built-in files (models, endpoints, clients, shared code) have been produced and before any code is generated. A minimal end-to-end project lives at `examples/maven-spring-custom/`.
 
-Wirespec's own first-party integrations are instead wired in as **IR extensions**, bundled with every plugin and enabled by name (`extensions`/`irExtensions`/`--extension`; custom classes via `extensionClasses`): an `IrExtension` reshapes or augments the IR of a built-in IR emitter before code generation. The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
+Wirespec's own first-party integrations are wired in as **IR extensions**, bundled with every plugin and enabled by name (`extensions`/`irExtensions`/`--extension`; custom classes via `extensionClasses`). The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
 
 ## Shared contract
 
