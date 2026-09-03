@@ -311,9 +311,11 @@ public open class RustIrEmitter(
             val endpoints = module.statements.filterIsInstance<Endpoint>()
             val endpointMods = endpoints.joinToString("\n") { emitMod(it) }
             val clientMod = if (endpoints.isNotEmpty()) "\npub mod client;" else ""
+            val rpcs = module.statements.filterIsInstance<Rpc>()
+            val rpcMod = if (rpcs.isNotEmpty()) "\npub mod rpc;" else ""
             val modRs = File(
                 Name.of(packageName.toDir() + "mod"),
-                listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;${clientMod}\npub mod wirespec;"))
+                listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;${rpcMod}${clientMod}\npub mod wirespec;"))
             )
             val modEndpoint = File(
                 Name.of(packageName.toDir() + "endpoint/" + "mod"),
@@ -323,8 +325,12 @@ public open class RustIrEmitter(
                 Name.of(packageName.toDir() + "model/" + "mod"),
                 listOf(RawElement(module.statements.filterIsInstance<Model>().joinToString("\n") { emitMod(it) }))
             )
+            val modRpc = File(
+                Name.of(packageName.toDir() + "rpc/" + "mod"),
+                listOf(RawElement(rpcs.joinToString("\n") { emitMod(it) }))
+            )
             if (emitShared.value)
-                files + modRs + modEndpoint + modModel
+                files + modRs + modEndpoint + modModel + (if (rpcs.isNotEmpty()) listOf(modRpc) else emptyList())
             else
                 files + modRs
         }

@@ -1,0 +1,14 @@
+# Context: client-ts/target/docker, fully assembled on the host by
+# ../client-ts/build.sh (node binary, libaeron.so, app with production
+# node_modules), so this build needs no network.
+# BASE_IMAGE is overridable for environments that cannot reach Docker Hub;
+# it must carry the glibc the node binary and libaeron.so were built against.
+ARG BASE_IMAGE=ubuntu:24.04
+FROM ${BASE_IMAGE}
+COPY node /usr/local/bin/node
+COPY libaeron.so /usr/local/lib/libaeron.so
+COPY app /app
+# The client shares its media-driver sidecar's IPC namespace (/dev/shm).
+ENV AERON_DIR=/dev/shm/aeron
+ENV WIRESPEC_AERON_LIB=/usr/local/lib/libaeron.so
+ENTRYPOINT ["/usr/local/bin/node", "/app/dist/src/client.js"]

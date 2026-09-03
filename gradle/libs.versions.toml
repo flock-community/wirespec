@@ -1,4 +1,5 @@
 [versions]
+aeron = "1.53.0"
 arrow = "2.2.1.1"
 clikt = "5.1.0"
 default = "0.0.0-SNAPSHOT"
@@ -50,6 +51,8 @@ testcontainers = "2.0.3"
 wiremock = "3.3.1"
 
 [libraries]
+aeron_client = { module = "io.aeron:aeron-client", version.ref = "aeron" }
+aeron_driver = { module = "io.aeron:aeron-driver", version.ref = "aeron" }
 arrow_core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 jackson2_databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson2" }
