@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -50,6 +51,7 @@ class ExtendingIrEmitterTest {
         override fun emit(endpoint: Endpoint): File = TODO()
         override fun emit(union: Union): File = TODO()
         override fun emit(channel: Channel): File = TODO()
+        override fun emit(rpc: Rpc): File = TODO()
     }
 
     private val ast = parseAst(

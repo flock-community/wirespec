@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.tokenize.DromedaryCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
+import community.flock.wirespec.compiler.core.tokenize.ExclamationMark
 import community.flock.wirespec.compiler.core.tokenize.FieldIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
@@ -34,6 +35,7 @@ import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
+import community.flock.wirespec.compiler.core.tokenize.RpcDefinition
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
@@ -71,6 +73,7 @@ public object WirespecSpec : LanguageSpec {
         Regex("^\\benum\\b") to EnumTypeDefinition,
         Regex("^\\bendpoint\\b") to EndpointDefinition,
         Regex("^\\bchannel\\b") to ChannelDefinition,
+        Regex("^\\brpc\\b") to RpcDefinition,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,
@@ -83,6 +86,7 @@ public object WirespecSpec : LanguageSpec {
         Regex("^:") to Colon,
         Regex("^,") to Comma,
         Regex("^\\?") to QuestionMark,
+        Regex("^!") to ExclamationMark,
         Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
         Regex("^\\[") to LeftBracket,

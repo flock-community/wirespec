@@ -26,6 +26,8 @@ class Wirespec:
         pass
     class Channel(ABC):
         pass
+    class Rpc(ABC):
+        pass
     class Path(ABC):
         pass
     class Queries(ABC):
