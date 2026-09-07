@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -231,6 +232,14 @@ public open class PythonIrEmitter(
     override fun emit(channel: Channel): File =
         channel.convert()
             .sanitizeNames(sanitizationConfig)
+
+    override fun emit(rpc: Rpc): File {
+        val rpcImports = rpc.importReferences().distinctBy { it.value }
+            .map { import("..model.${it.value}", it.value) }
+        return rpc.convert()
+            .let { it.copy(elements = rpcImports + it.elements) }
+            .sanitizeNames(sanitizationConfig)
+    }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val modelImports = endpoint.importReferences().distinctBy { it.value }

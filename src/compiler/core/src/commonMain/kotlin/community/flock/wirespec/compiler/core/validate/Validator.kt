@@ -9,17 +9,20 @@ import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
+import community.flock.wirespec.compiler.core.exceptions.DuplicateRpcError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -31,7 +34,8 @@ public object Validator {
         validateEndpoints(ast),
         validateTypes(ast),
         validateChannels(ast),
-    ) { a, _, _, _ -> a }
+        validateRpcs(ast),
+    ) { a, _, _, _, _ -> a }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
@@ -46,6 +50,7 @@ public object Validator {
         map { definition ->
             when (definition) {
                 is Channel -> definition
+                is Rpc -> definition
                 is Endpoint -> definition
                 is Enum -> definition
                 is Refined -> definition
@@ -69,15 +74,7 @@ public object Validator {
         }
     }
 
-    private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> = ast.modules.asSequence()
-        .flatMap { it.statements.filterIsInstance<Endpoint>() }
-        .groupBy { it.identifier.value }
-        .filter { it.value.size > 1 }
-        .map { (name, endpoints) -> endpoints.map { DuplicateEndpointError(name) } }
-        .flatten()
-        .toNonEmptyListOrNull()
-        ?.left()
-        ?: ast.right()
+    private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> = ast.validateNoDuplicates<Endpoint>(::DuplicateEndpointError)
 
     private fun validateTypes(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
         .flatMap { module ->
@@ -94,13 +91,16 @@ public object Validator {
         ?.left()
         ?: ast.right()
 
-    private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.modules.asSequence()
-        .flatMap { it.statements.filterIsInstance<Channel>() }
+    private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.validateNoDuplicates<Channel>(::DuplicateChannelError)
+
+    private fun validateRpcs(ast: AST): EitherNel<WirespecException, AST> = ast.validateNoDuplicates<Rpc>(::DuplicateRpcError)
+
+    private inline fun <reified T : Definition> AST.validateNoDuplicates(toError: (String) -> WirespecException): EitherNel<WirespecException, AST> = modules.asSequence()
+        .flatMap { it.statements.filterIsInstance<T>() }
         .groupBy { it.identifier.value }
         .filter { it.value.size > 1 }
-        .map { (name, channels) -> channels.map { DuplicateChannelError(name) } }
-        .flatten()
+        .flatMap { (name, definitions) -> definitions.map { toError(name) } }
         .toNonEmptyListOrNull()
         ?.left()
-        ?: ast.right()
+        ?: right()
 }

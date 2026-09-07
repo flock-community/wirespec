@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
+import community.flock.wirespec.compiler.core.tokenize.ExclamationMark
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
@@ -30,6 +31,7 @@ import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
+import community.flock.wirespec.compiler.core.tokenize.RpcDefinition
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TokenizeOptions
@@ -100,6 +102,7 @@ public class Lexer : IntellijLexer() {
             Colon::class to Types.COLON,
             Comma::class to Types.COMMA,
             QuestionMark::class to Types.QUESTION_MARK,
+            ExclamationMark::class to Types.EXCLAMATION_MARK,
             Hash::class to Types.HASH,
             Annotation::class to Types.ANNOTATION,
             ForwardSlash::class to Types.FORWARD_SLASH,
@@ -113,6 +116,7 @@ public class Lexer : IntellijLexer() {
             EnumTypeDefinition::class to Types.ENUM_DEF,
             EndpointDefinition::class to Types.ENDPOINT_DEF,
             ChannelDefinition::class to Types.CHANNEL_DEF,
+            RpcDefinition::class to Types.RPC_DEF,
             WsString::class to Types.WS_STRING,
             WsInteger::class to Types.WS_INTEGER,
             WsNumber::class to Types.WS_NUMBER,

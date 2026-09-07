@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P32
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
@@ -38,6 +39,7 @@ public fun WsDefinition.consume(): Definition = when (this) {
     is WsType -> consume()
     is WsUnion -> consume()
     is WsChannel -> consume()
+    is WsRpc -> consume()
 }
 
 public fun WsEndpoint.consume(): Endpoint = Endpoint(
@@ -107,6 +109,15 @@ private fun WsChannel.consume() = Channel(
     annotations = emptyList(),
     identifier = DefinitionIdentifier(identifier),
     reference = reference.consume(),
+)
+
+private fun WsRpc.consume() = Rpc(
+    comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
+    shape = Type.Shape(shape.value.map { it.consume() }),
+    result = result.consume(),
+    error = error?.consume(),
 )
 
 private fun WsField.consume() = Field(
@@ -221,6 +232,14 @@ public fun Definition.produce(): WsDefinition = when (this) {
         identifier = identifier.value,
         comment = comment?.value,
         reference = reference.produce(),
+    )
+
+    is Rpc -> WsRpc(
+        identifier = identifier.value,
+        comment = comment?.value,
+        shape = shape.produce(),
+        result = result.produce(),
+        error = error?.produce(),
     )
 }
 
@@ -364,6 +383,15 @@ public class WsChannel(
     override val identifier: String,
     override val comment: String?,
     public val reference: WsReference,
+) : WsDefinition
+
+@JsExport
+public class WsRpc(
+    override val identifier: String,
+    override val comment: String?,
+    public val shape: WsShape,
+    public val result: WsReference,
+    public val error: WsReference?,
 ) : WsDefinition
 
 @JsExport

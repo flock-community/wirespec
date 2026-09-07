@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.ir.converter.classifyValidatableFields
@@ -50,6 +51,8 @@ import community.flock.wirespec.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.ir.core.Type as LanguageType
+
+private const val MODEL_IMPORT_PATH = "../model"
 
 public open class TypeScriptIrEmitter : IrEmitter {
 
@@ -267,7 +270,7 @@ public open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emit(union: Union): File {
         val imports = union.importReferences().distinctBy { it.value }
-            .map { import("../model", it.value, isTypeOnly = true) }
+            .map { import(MODEL_IMPORT_PATH, it.value, isTypeOnly = true) }
         val file = union.convert().sanitizeNames(sanitizationConfig)
         return if (imports.isNotEmpty()) file.copy(elements = imports + file.elements)
         else file
@@ -287,7 +290,7 @@ public open class TypeScriptIrEmitter : IrEmitter {
 
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.importReferences().distinctBy { it.value }
-            .map { import("../model", it.value, isTypeOnly = true) }
+            .map { import(MODEL_IMPORT_PATH, it.value, isTypeOnly = true) }
         val hasRequestParams = endpoint.requestParameters().isNotEmpty()
 
         fun File.injectApiConst(): File = transform {
@@ -313,12 +316,22 @@ public open class TypeScriptIrEmitter : IrEmitter {
         channel.convert()
             .sanitizeNames(sanitizationConfig)
 
+    override fun emit(rpc: Rpc): File = rpc.convert()
+        .sanitizeNames(sanitizationConfig)
+        .let { file ->
+            rpc.importReferences().distinctBy { it.value }
+                .map { import(MODEL_IMPORT_PATH, it.value, isTypeOnly = true) }
+                .takeIf { it.isNotEmpty() }
+                ?.let { imports -> file.copy(elements = imports + file.elements) }
+                ?: file
+        }
+
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val endpointName = endpoint.identifier.value
         val methodName = endpointName.firstToLower()
 
         val imports = endpoint.importReferences().distinctBy { it.value }
-            .map { import("../model", it.value, isTypeOnly = true) }
+            .map { import(MODEL_IMPORT_PATH, it.value, isTypeOnly = true) }
 
         val params = buildEndpointParams(endpoint)
         val paramList = if (params.isNotEmpty()) "params: $endpointName.RequestParams" else ""

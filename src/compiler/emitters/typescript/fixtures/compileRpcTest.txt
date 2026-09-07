@@ -1,0 +1,41 @@
+import {Wirespec} from '../Wirespec'
+export type User = {
+  "name": string,
+}
+export function validateUser(obj: User): string[] {
+  return [] as string[];
+}
+
+import {Wirespec} from '../Wirespec'
+import {type User} from '../model'
+export namespace GetUser {
+  export type Response = Result | Error
+  export type Result = {
+    "value": User,
+  }
+  export type Error = {
+    "value": string,
+  }
+  export interface Service {
+    getUser(id: string): Promise<Response>;
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+export namespace Ping {
+  export interface Service {
+    ping(): Promise<string>;
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {User} from '../model/User'
+export namespace UserGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): User {
+    return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
+  }
+}
+
+export {User} from './User'
+export {GetUser} from './GetUser'
+export {Ping} from './Ping'

@@ -11,6 +11,7 @@ public data object RightBracket : TokenType
 public data object Colon : TokenType
 public data object Comma : TokenType
 public data object QuestionMark : TokenType
+public data object ExclamationMark : TokenType
 public data object Hash : TokenType
 public data object Brackets : TokenType
 public data object Comment : TokenType
@@ -59,6 +60,7 @@ public data object TypeDefinition : WirespecDefinition
 public data object EnumTypeDefinition : WirespecDefinition
 public data object ChannelDefinition : WirespecDefinition
 public data object EndpointDefinition : WirespecDefinition
+public data object RpcDefinition : WirespecDefinition
 
 private sealed interface ChannelTokenType : TokenType
 public data object Method : ChannelTokenType

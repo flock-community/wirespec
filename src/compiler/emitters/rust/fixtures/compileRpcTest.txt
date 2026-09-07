@@ -1,0 +1,58 @@
+use super::super::wirespec::*;
+use regex;
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct User {
+    pub name: String,
+}
+impl User {
+    pub fn validate(&self) -> Vec<String> {
+        return Vec::<String>::new();
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::user::User;
+pub mod GetUser {
+    use super::*;
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum Response {
+        Result(Result),
+        Error(Error),
+    }
+    #[derive(Debug, Clone, Default, PartialEq)]
+    pub struct Result {
+        pub value: User,
+    }
+    #[derive(Debug, Clone, Default, PartialEq)]
+    pub struct Error {
+        pub value: String,
+    }
+    pub trait Service {
+        async fn get_user(id: &str) -> Response;
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+pub mod Ping {
+    use super::*;
+    pub trait Service {
+        async fn ping() -> String;
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::user::User;
+pub struct UserGenerator;
+impl UserGenerator {
+    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> User {
+        return User { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod wirespec;

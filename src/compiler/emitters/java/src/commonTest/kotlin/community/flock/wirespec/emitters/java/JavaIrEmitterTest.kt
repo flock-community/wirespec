@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
@@ -60,6 +61,11 @@ class JavaIrEmitterTest {
     @Test
     fun compileChannelTest() {
         CompileChannelTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileChannelTest
+    }
+
+    @Test
+    fun compileRpcTest() {
+        CompileRpcTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileRpcTest
     }
 
     @Test

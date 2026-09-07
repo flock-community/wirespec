@@ -48,6 +48,15 @@ public data class Channel(
     val reference: Reference,
 ) : Definition
 
+public data class Rpc(
+    override val comment: Comment?,
+    override val annotations: List<Annotation>,
+    override val identifier: DefinitionIdentifier,
+    val shape: Type.Shape,
+    val result: Reference,
+    val error: Reference?,
+) : Definition
+
 public sealed interface Model : Definition
 
 public data class Type(

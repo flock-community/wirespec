@@ -13,6 +13,7 @@ object Wirespec {
   }
   trait Endpoint
   trait Channel
+  trait Rpc
   trait Path
   trait Queries
   trait Headers

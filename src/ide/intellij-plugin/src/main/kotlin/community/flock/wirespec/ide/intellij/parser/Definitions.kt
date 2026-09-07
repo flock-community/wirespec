@@ -19,6 +19,7 @@ import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeDef
 import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeRef
 import community.flock.wirespec.ide.intellij.parser.Parser.EndpointDef
 import community.flock.wirespec.ide.intellij.parser.Parser.EnumDef
+import community.flock.wirespec.ide.intellij.parser.Parser.RpcDef
 import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 
 public class ParserDefinition : ParserDefinition {
@@ -37,6 +38,7 @@ public class ParserDefinition : ParserDefinition {
     override fun createElement(node: ASTNode): PsiElement = when (node.elementType) {
         is TypeDef -> TypeDefElement(node)
         is ChannelDef -> ChannelDefElement(node)
+        is RpcDef -> RpcDefElement(node)
         is EndpointDef -> EndpointDefElement(node)
         is EnumDef -> EnumDefElement(node)
         is CustomTypeDef -> CustomTypeElementDef(node)
@@ -48,6 +50,7 @@ public class ParserDefinition : ParserDefinition {
 
 internal class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 private class ChannelDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+private class RpcDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 private class EnumDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 internal class EndpointDefElement(ast: ASTNode) :
     ASTWrapperPsiElement(ast),

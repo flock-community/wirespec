@@ -59,6 +59,17 @@ internal object TypeParser {
     }
 
     fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
+        (if (token.type is RightCurly) emptyList() else parseFields().bind())
+            .also {
+                when (token.type) {
+                    is RightCurly -> eatToken().bind()
+                    else -> raiseWrongToken<RightCurly>().bind()
+                }
+            }
+            .let(Type::Shape)
+    }
+
+    private fun TokenProvider.parseFields(): Either<WirespecException, List<Field>> = either {
         mutableListOf<Field>().apply {
             val firstFieldAnnotations = parseAnnotations().bind()
             when (token.type) {
@@ -73,12 +84,7 @@ internal object TypeParser {
                     else -> raiseWrongToken<WirespecIdentifier>().bind()
                 }
             }
-        }.also {
-            when (token.type) {
-                is RightCurly -> eatToken().bind()
-                else -> raiseWrongToken<RightCurly>().bind()
-            }
-        }.let(Type::Shape)
+        }
     }
 
     fun TokenProvider.parseDict(): Either<WirespecException, Reference.Dict> = parseToken {

@@ -39,6 +39,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -86,7 +87,7 @@ public object OpenAPIV3Emitter : Emitter {
     )
 
     private fun Statements.emitComponents(logger: Logger) = this
-        .filter { it !is Endpoint && it !is Channel }
+        .filter { it !is Endpoint && it !is Channel && it !is Rpc }
         .associate { definition ->
             definition.identifier.value to when (definition) {
                 is Enum -> definition.emit()
@@ -95,6 +96,7 @@ public object OpenAPIV3Emitter : Emitter {
                 is Union -> definition.emit()
                 is Endpoint -> error("Cannot emit endpoint")
                 is Channel -> error("Cannot emit channel")
+                is Rpc -> error("Cannot emit rpc")
             }
                 .also { logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}") }
         }

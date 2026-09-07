@@ -14,6 +14,7 @@ pub trait Refined<T> {
 }
 pub trait Endpoint {}
 pub trait Channel {}
+pub trait Rpc {}
 pub trait Path {}
 pub trait Queries {}
 pub trait Headers {}

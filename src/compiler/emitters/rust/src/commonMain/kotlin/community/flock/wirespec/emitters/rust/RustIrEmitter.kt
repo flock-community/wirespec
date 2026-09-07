@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -55,6 +56,8 @@ import community.flock.wirespec.ir.core.Enum as LanguageEnum
 import community.flock.wirespec.ir.core.File as LanguageFile
 import community.flock.wirespec.ir.core.Function as LanguageFunction
 import community.flock.wirespec.ir.core.Type as LanguageType
+
+private const val STRUCT_DERIVE = "#[derive(Debug, Clone, Default, PartialEq)]"
 
 public open class RustIrEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -261,7 +264,7 @@ public open class RustIrEmitter(
                         structFields.any { containsUnderiveable(it.type) } -> ""
                         structFields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"
                         element.name.pascalCase() in setOf("RawRequest", "RawResponse") -> "#[derive(Debug, Clone, PartialEq)]"
-                        else -> "#[derive(Debug, Clone, Default, PartialEq)]"
+                        else -> STRUCT_DERIVE
                     }
                     val prefix = if (derive.isEmpty()) emptyList() else listOf(RawElement(derive))
                     listOf(LanguageFile(element.name, prefix + element))
@@ -337,7 +340,7 @@ public open class RustIrEmitter(
         return File(
             name = Name.of(subPackageName.toDir() + file.name.pascalCase().toSnakeCase()),
             elements = importHeader + file.elements.flatMap { element ->
-                if (element is Struct) listOf(RawElement("#[derive(Debug, Clone, Default, PartialEq)]"), element)
+                if (element is Struct) listOf(RawElement(STRUCT_DERIVE), element)
                 else listOf(element)
             }
         )
@@ -422,6 +425,23 @@ public open class RustIrEmitter(
 
     override fun emit(channel: Channel): File =
         channel.convert()
+
+    override fun emit(rpc: Rpc): File = rpc.convert()
+        .let { file ->
+            val rpcImports = rpc.importReferences().distinctBy { it.value }
+                .map { import("super::super::model::${it.value.toSnakeCase()}", Name.of(it.value).pascalCase()) }
+            file.copy(
+                elements = rpcImports + file.elements.map { element ->
+                    if (element is Namespace) element.copy(
+                        elements = element.elements.flatMap {
+                            if (it is Struct) listOf(RawElement(STRUCT_DERIVE), it)
+                            else listOf(it)
+                        },
+                    )
+                    else element
+                },
+            )
+        }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val endpointName = endpoint.identifier.value

@@ -45,6 +45,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Field as FieldWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
+import community.flock.wirespec.compiler.core.parse.ast.Rpc as RpcWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionWirespec
 import community.flock.wirespec.ir.core.Constraint as LanguageConstraint
@@ -55,6 +56,7 @@ public fun DefinitionWirespec.convert(): File = when (this) {
     is UnionWirespec -> convert()
     is RefinedWirespec -> convert()
     is ChannelWirespec -> convert()
+    is RpcWirespec -> convert()
     is EndpointWirespec -> convert()
 }
 
@@ -82,6 +84,7 @@ public fun PackageName.convert(): File = file("Wirespec") {
         }
         `interface`("Endpoint")
         `interface`("Channel")
+        `interface`("Rpc")
         `interface`("Path")
         `interface`("Queries")
         `interface`("Headers")
@@ -599,6 +602,32 @@ public fun ChannelWirespec.convert(): File = file(identifier.toName()) {
             function(identifier.toName()) {
                 arg("handler", Type.Function(listOf(reference.convert()), unit))
                 returnType(unit)
+            }
+        }
+    }
+}
+
+public fun RpcWirespec.convert(): File = file(identifier.toName()) {
+    namespace(identifier.toName(), type("Wirespec.Rpc")) {
+        val response = type("Response")
+        error?.let { errorReference ->
+            union(response.name) {
+                member("Result")
+                member("Error")
+            }
+            struct("Result") {
+                implements(response)
+                field("value", result.convert())
+            }
+            struct("Error") {
+                implements(response)
+                field("value", errorReference.convert())
+            }
+        }
+        `interface`("Service") {
+            asyncFunction(identifier.toName()) {
+                shape.value.forEach { arg(it.identifier.toName(), it.reference.convert()) }
+                returnType(error?.let { response } ?: result.convert())
             }
         }
     }
