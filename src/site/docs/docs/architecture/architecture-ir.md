@@ -41,11 +41,11 @@ Wirespec AST (produced by parser, consumed by emitter)
 
 ## Shared Model
 
-The converter produces a **shared model** — a single file called `Wirespec` that contains the base interfaces and types all generated code depends on. This file is emitted once per target language and provides the common vocabulary that generated types, endpoints, and channels build upon.
+The converter produces a **shared model** — a single file called `Wirespec` that contains the base interfaces and types all generated code depends on. This file is emitted once per target language and provides the common vocabulary that generated types, endpoints, channels, and rpcs build upon.
 
 The shared model is wrapped in a `Wirespec` namespace and defines:
 
-- **Core interfaces** — `Model`, `Enum`, `Refined<T>`, `Endpoint`, and `Channel`. Every generated definition implements one of these. For example, all generated types implement `Wirespec.Model` which provides a `validate` function.
+- **Core interfaces** — `Model`, `Enum`, `Refined<T>`, `Endpoint`, `Channel`, and `Rpc`. Every generated definition implements one of these. For example, all generated types implement `Wirespec.Model` which provides a `validate` function.
 - **HTTP primitives** — A `Method` enum (`GET`, `POST`, etc.) and typed `Request<T>` / `Response<T>` interfaces that describe HTTP messages with path, queries, headers, and body.
 - **Serialization contracts** — Serializer and deserializer interfaces for three layers: body (binary), path (string), and params (string lists). These combine into a unified `Serialization` interface.
 - **Raw transport** — `RawRequest` and `RawResponse` structs for untyped HTTP messages, and a `Transportation` interface that users implement to plug in their HTTP client.
@@ -142,6 +142,47 @@ channel OrderEvents -> OrderEvent
 File("OrderEvents") {
     Interface("OrderEvents") extends Wirespec.Channel {
         Function("invoke")(message: OrderEvent) → Unit
+    }
+}
+```
+
+## Rpc
+
+A Wirespec `rpc` is converted into a namespace that extends `Wirespec.Rpc` and holds a `Service` interface with a single asynchronous function. The function takes the RPC parameters as arguments and returns the result type.
+
+```wirespec
+rpc Ping {} -> String
+```
+
+```
+File("Ping") {
+    Namespace("Ping") extends Wirespec.Rpc {
+        Interface("Service") {
+            AsyncFunction("Ping")() → String
+        }
+    }
+}
+```
+
+When the `rpc` declares an error type, the converter additionally emits a `Response` union with a `Result` and an `Error` struct, and the service function returns that union instead of the bare result.
+
+```wirespec
+rpc GetUser { id: String } -> User ! String
+```
+
+```
+File("GetUser") {
+    Namespace("GetUser") extends Wirespec.Rpc {
+        Union("Response") { Result, Error }
+        Struct("Result") implements Response {
+            Field("value", User)
+        }
+        Struct("Error") implements Response {
+            Field("value", String)
+        }
+        Interface("Service") {
+            AsyncFunction("GetUser")(id: String) → Response
+        }
     }
 }
 ```

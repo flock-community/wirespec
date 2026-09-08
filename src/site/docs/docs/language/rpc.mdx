@@ -1,0 +1,294 @@
+---
+id: rpc
+title: RPC
+slug: /language/rpc
+sidebar_position: 3
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+An RPC (remote procedure call) is a named operation with a set of parameters, a result and an optional error. Where an
+[endpoint](endpoints) describes an HTTP call in terms of method, path and status codes, and a [channel](channels)
+describes one-way message passing, an `rpc` describes a plain request/response call without prescribing a transport.
+
+RPCs are defined using the `rpc` keyword, followed by an identifier, the parameters between curly braces, an arrow `->`
+and the result [type](types):
+
+```wirespec
+rpc GetTodo {
+    id: Integer
+} -> Todo
+
+type Todo {
+    id: Integer,
+    task: String,
+    done: Boolean
+}
+```
+
+## Parameters
+
+The parameters of an RPC are written like the shape of a [type](types): a comma separated list of explicitly typed
+`name: Type` fields. Every reference that is valid in a type shape is valid here as well, including custom types,
+lists, dictionaries and nullable references:
+
+```wirespec
+rpc SearchTodos {
+    query: String,
+    done: Boolean?,
+    tags: String[],
+    labels: { String }
+} -> Todo[]
+```
+
+The curly braces are mandatory, also when the RPC takes no parameters at all:
+
+```wirespec
+rpc Ping {} -> String
+```
+
+Leaving them out is a parse error:
+
+```wirespec
+// Not valid: an rpc always declares its parameters
+rpc GetTodo -> Todo
+```
+
+## Result
+
+Every RPC has exactly one result, written after the `->`. The result is a single [type](types) reference, so
+primitives, custom types, lists, dictionaries and `Unit` are all allowed:
+
+```wirespec
+rpc CountTodos {} -> Integer
+
+rpc ListTodos {
+    done: Boolean
+} -> Todo[]
+
+rpc DeleteTodo {
+    id: Integer
+} -> Unit
+```
+
+## Errors
+
+An RPC can declare an error type after the result, separated by an exclamation mark `!`:
+
+```wirespec
+rpc GetTodo {
+    id: Integer
+} -> Todo ! TodoError
+
+type TodoError {
+    reason: String
+}
+```
+
+The error is optional. When it is present, the generated code models the result and the error as two variants of one
+response type; when it is absent, the generated function simply returns the result. See
+[Generated code](#generated-code) below.
+
+## Comments and annotations
+
+Like every other definition, an RPC can be documented with a comment and decorated with annotations. Annotations come
+first, followed by the comment and then the definition itself. Note that you need to write an
+[IR extension](../plugins/plugins.md#ir-extensions) to make use of these annotations:
+
+```wirespec
+@Deprecated("Use GetTodoV2 instead")
+@Timeout(seconds: 5)
+/*
+  Look up a single todo by id
+ */
+rpc GetTodo {
+    id: Integer
+} -> Todo ! TodoError
+```
+
+## Generated code
+
+An RPC is emitted into the `rpc` namespace of the generated output, next to the `model`, `endpoint` and `channel`
+namespaces. Each definition becomes a namespace of its own that implements the shared `Wirespec.Rpc` interface and
+contains a single-method `Service` interface, which you implement on the server side and call on the client side.
+
+The following definition:
+
+```wirespec
+type User {
+    name: String
+}
+
+rpc GetUser {
+    id: String
+} -> User ! String
+
+rpc Ping {} -> String
+```
+
+generates:
+
+<Tabs groupId="language">
+    <TabItem value="kotlin" label="Kotlin">
+        ```kotlin title="community/flock/wirespec/generated/rpc/GetUser.kt"
+        package community.flock.wirespec.generated.rpc
+
+        import community.flock.wirespec.kotlin.Wirespec
+        import kotlin.reflect.typeOf
+        import community.flock.wirespec.generated.model.User
+
+        object GetUser : Wirespec.Rpc {
+          sealed interface Response
+          data class Result(
+              val value: User
+            ) : Response
+          data class Error(
+              val value: String
+            ) : Response
+          fun interface Service {
+              suspend fun getUser(id: String): Response
+          }
+        }
+        ```
+
+        ```kotlin title="community/flock/wirespec/generated/rpc/Ping.kt"
+        package community.flock.wirespec.generated.rpc
+
+        import community.flock.wirespec.kotlin.Wirespec
+        import kotlin.reflect.typeOf
+
+        object Ping : Wirespec.Rpc {
+          fun interface Service {
+              suspend fun ping(): String
+          }
+        }
+        ```
+    </TabItem>
+    <TabItem value="java" label="Java">
+        ```java title="community/flock/wirespec/generated/rpc/GetUser.java"
+        package community.flock.wirespec.generated.rpc;
+
+        import community.flock.wirespec.java.Wirespec;
+        import community.flock.wirespec.generated.model.User;
+
+        public interface GetUser extends Wirespec.Rpc {
+          public sealed interface Response permits Result, Error {}
+          public static record Result (
+            User value
+          ) implements Response {
+          };
+          public static record Error (
+            String value
+          ) implements Response {
+          };
+          public interface Service {
+            public java.util.concurrent.CompletableFuture<Response> getUser(String id);
+          }
+        }
+        ```
+
+        ```java title="community/flock/wirespec/generated/rpc/Ping.java"
+        package community.flock.wirespec.generated.rpc;
+
+        import community.flock.wirespec.java.Wirespec;
+
+        public interface Ping extends Wirespec.Rpc {
+          public interface Service {
+            public java.util.concurrent.CompletableFuture<String> ping();
+          }
+        }
+        ```
+    </TabItem>
+    <TabItem value="typescript" label="TypeScript">
+        ```typescript title="rpc/GetUser.ts"
+        import {Wirespec} from '../Wirespec'
+        import {type User} from '../model'
+
+        export namespace GetUser {
+          export type Response = Result | Error
+          export type Result = {
+            "value": User,
+          }
+          export type Error = {
+            "value": string,
+          }
+          export interface Service {
+            getUser(id: string): Promise<Response>;
+          }
+        }
+        ```
+
+        ```typescript title="rpc/Ping.ts"
+        import {Wirespec} from '../Wirespec'
+
+        export namespace Ping {
+          export interface Service {
+            ping(): Promise<string>;
+          }
+        }
+        ```
+    </TabItem>
+    <TabItem value="python" label="Python">
+        ```python title="rpc/GetUser.py"
+        from __future__ import annotations
+        import re
+        from abc import ABC, abstractmethod
+        from dataclasses import dataclass
+        from typing import Any, Generic, List, Optional
+        import enum
+        from ..wirespec import T, Wirespec, _raise
+        from ..model.User import User
+
+        class GetUser(Wirespec.Rpc):
+            class Response:
+                pass
+            @dataclass
+            class Result(Response):
+                value: User
+            @dataclass
+            class Error(Response):
+                value: str
+            class Service(ABC):
+                @abstractmethod
+                async def GetUser(self, id: str) -> GetUser.Response:
+                    ...
+        ```
+
+        ```python title="rpc/Ping.py"
+        from __future__ import annotations
+        import re
+        from abc import ABC, abstractmethod
+        from dataclasses import dataclass
+        from typing import Any, Generic, List, Optional
+        import enum
+        from ..wirespec import T, Wirespec, _raise
+
+        class Ping(Wirespec.Rpc):
+            class Service(ABC):
+                @abstractmethod
+                async def Ping(self) -> str:
+                    ...
+        ```
+    </TabItem>
+
+</Tabs>
+
+Two things to note in the output above:
+
+- `GetUser` declares an error, so a `Response` type with a `Result` and an `Error` variant is generated and the service
+  function returns that response. Callers handle both outcomes exhaustively instead of catching exceptions.
+- `Ping` has no error and no parameters, so no response type is generated: the service function takes no arguments and
+  returns the result type directly.
+
+The service function is asynchronous wherever the target language has a native notion of it: `suspend` in Kotlin,
+`CompletableFuture` in Java, `Promise` in TypeScript, `async def` in Python and `async fn` in Rust. Scala emits a plain
+method returning the response.
+
+## Limitations
+
+- RPC identifiers must be unique within a compilation. Defining the same name twice fails with
+  `Rpc 'GetTodo' is already defined`.
+- The [OpenAPI converters](../converters/openapi.md) describe HTTP APIs and have no counterpart for an `rpc`. RPC
+  definitions are skipped when emitting OpenAPI, so an API you want to publish as OAS should be described with
+  [endpoints](endpoints).

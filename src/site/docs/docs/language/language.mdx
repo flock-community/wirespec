@@ -12,6 +12,7 @@ necessary for creating these definitions:
 
 - [Endpoint](language/endpoints)
 - [Channel](language/channels)
+- [RPC](language/rpc)
 - [Type](language/types)
 
 A Wirespec file consists of a set of definitions in any order.
@@ -42,7 +43,7 @@ this behavior may vary depending on the target language and emitter implementati
 ## Annotations
 
 Annotations provide a way to attach metadata to definitions in Wirespec. They are denoted by the `@` symbol followed by
-an identifier and can optionally include parameters. Annotations can be applied to endpoints, channels, types, and
+an identifier and can optionally include parameters. Annotations can be applied to endpoints, channels, rpcs, types, and
 enums to provide additional information for code generation or processing. Note that you need to write an
 [IR extension](../plugins/plugins.md#ir-extensions) to make use of these annotations:
 
