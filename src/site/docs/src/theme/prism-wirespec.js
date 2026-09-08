@@ -2,7 +2,7 @@
 // https://prismjs.com/tokens.html
 Prism.languages["wirespec"] = Prism.languages.extend("clike", {
   keyword: {
-    pattern: /\b(type|enum|endpoint|channel)\b/,
+    pattern: /\b(type|enum|endpoint|channel|rpc)\b/,
     greedy: true,
   },
   builtin: {

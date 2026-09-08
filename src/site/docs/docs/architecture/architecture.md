@@ -28,7 +28,7 @@ The first stage scans the raw source string into a sequence of typed tokens — 
 
 ## Parse
 
-The parser consumes the token stream and produces a typed AST. The top-level entry point is `Parser.parse` in `src/compiler/core/.../parse/Parser.kt`. Per-construct parsers handle each Wirespec definition: `TypeParser`, `EndpointParser`, `ChannelParser`, `EnumParser`, and `AnnotationParser`. The output is an `AST` value shaped as `Root → Module[] → Definition[]`, where `Definition` is a sealed hierarchy with six variants: `Type`, `Enum`, `Union`, `Refined`, `Endpoint`, and `Channel`. References inside definitions resolve against a small reference type system (`Custom`, `Primitive`, `Iterable`, `Dict`, `Any`, `Unit`), each of which can be marked nullable.
+The parser consumes the token stream and produces a typed AST. The top-level entry point is `Parser.parse` in `src/compiler/core/.../parse/Parser.kt`. Per-construct parsers handle each Wirespec definition: `TypeParser`, `EndpointParser`, `ChannelParser`, `RpcParser`, `EnumParser`, and `AnnotationParser`. The output is an `AST` value shaped as `Root → Module[] → Definition[]`, where `Definition` is a sealed hierarchy with seven variants: `Type`, `Enum`, `Union`, `Refined`, `Endpoint`, `Channel`, and `Rpc`. References inside definitions resolve against a small reference type system (`Custom`, `Primitive`, `Iterable`, `Dict`, `Any`, `Unit`), each of which can be marked nullable.
 
 ## Emit
 

@@ -3,6 +3,10 @@
 Wirespec supports conversion from OAS v2 and v3. During conversion, all specified paths are converted to endpoints, with
 corresponding schemas transformed into Wirespec types.
 
+Conversion in the other direction covers types, enums, unions, refined types and endpoints. OAS describes HTTP APIs, so
+[channels](../language/channels.mdx) and [rpcs](../language/rpc.mdx) have no OpenAPI counterpart and are skipped by the
+OpenAPI emitters.
+
 ## Type Conversion
 
 Primitve types are mapped as follows:
