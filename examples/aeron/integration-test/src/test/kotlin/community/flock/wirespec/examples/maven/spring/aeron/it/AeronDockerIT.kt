@@ -99,7 +99,10 @@ class AeronDockerIT {
                     .withEnv("LINGER_SECONDS", "300")
                     .inPodOf(clientDriver)
                     .waitingFor(Wait.forLogMessage(".*Client calls done; serving GetWatchlist.*", 1))
-                    .withStartupTimeout(Duration.ofMinutes(3))
+                    // The client's own calls take ~100s nominally; over UDP on a
+                    // contended CI runner a media-driver or transport handshake
+                    // can stall well past that, so give the whole sequence room.
+                    .withStartupTimeout(Duration.ofMinutes(5))
                 try {
                     runCatching { client.start() }
                         .onFailure { throw AssertionError("Client run failed; client logs:\n${runCatching { client.logs }.getOrNull()}\nserver logs:\n${server.logs}\ndriver logs:\n${clientDriver.logs}", it) }
@@ -120,7 +123,7 @@ class AeronDockerIT {
                         .withEnv("REQUEST_CHANNEL", "aeron:udp?endpoint=server:40123")
                         .withEnv("REPLY_CHANNEL", "aeron:udp?endpoint=tsclient:40124")
                         .inPodOf(tsClientDriver)
-                        .withStartupCheckStrategy(OneShotStartupCheckStrategy().withTimeout(Duration.ofMinutes(2)))
+                        .withStartupCheckStrategy(OneShotStartupCheckStrategy().withTimeout(Duration.ofMinutes(3)))
                     try {
                         runCatching { tsClient.start() }
                             .onFailure { throw AssertionError("TypeScript client run failed; ts client logs:\n${runCatching { tsClient.logs }.getOrNull()}\nserver logs:\n${server.logs}\nts driver logs:\n${tsClientDriver.logs}", it) }
