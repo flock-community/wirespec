@@ -64,6 +64,18 @@ internal inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token:
     )
 }
 
+/**
+ * Consumes the current token when it is a [T], and reports [T] as the expected token when it
+ * is not. Writing the check and the error out by hand let them drift apart — `ChannelParser`
+ * tested for an arrow and reported a missing colon.
+ */
+internal inline fun <reified T : TokenType> TokenProvider.expect(): Either<WirespecException, Token> = either {
+    when (token.type) {
+        is T -> eatToken().bind()
+        else -> raiseWrongToken<T>().bind()
+    }
+}
+
 private fun NonEmptyList<TokenizedModule>.allDefinitions() = flatMap { it.tokens }
     .zipWithNext()
     .mapNotNull { (first, second) ->

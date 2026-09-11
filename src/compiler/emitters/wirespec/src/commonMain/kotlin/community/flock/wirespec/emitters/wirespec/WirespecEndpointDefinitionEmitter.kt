@@ -10,7 +10,7 @@ internal interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter
 
     override fun emit(endpoint: Endpoint) = """
         |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()}${endpoint.headers.emitHeader()} -> {
-        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.reference?.isNullable == true) "?" else ""}${it.headers.emitHeader()}" }}
+        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${it.headers.emitHeader()}" }}
         |}
         |
     """.trimMargin()

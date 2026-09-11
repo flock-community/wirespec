@@ -52,8 +52,10 @@ kotlin {
         }
         commonTest {
             dependencies {
+                implementation(project(":src:compiler:test"))
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
+                implementation(libs.kotest.property)
             }
         }
     }

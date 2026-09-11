@@ -30,10 +30,7 @@ internal object RpcParser {
             else -> raiseWrongToken<LeftCurly>().bind()
         }
 
-        when (token.type) {
-            is Arrow -> eatToken().bind()
-            else -> raiseWrongToken<Arrow>().bind()
-        }
+        expect<Arrow>().bind()
 
         val result = parseReference().bind()
 

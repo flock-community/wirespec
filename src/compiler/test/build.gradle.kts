@@ -46,6 +46,7 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
+                implementation(libs.kotest.property)
             }
         }
         jvmMain {

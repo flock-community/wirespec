@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -40,6 +41,20 @@ class ParseChannelTest {
                 reference.value shouldBe "Todo"
                 reference.isNullable shouldBe false
             }
+    }
+
+    @Test
+    fun testChannelParserWithoutArrow() {
+        val source =
+            // language=ws
+            """
+            |type Todo { name: String }
+            |channel TodosChannel Todo
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeLeft()
+            .head.message shouldBe "Arrow expected, not: WirespecType at line 2 and position 22"
     }
 
     @Test
