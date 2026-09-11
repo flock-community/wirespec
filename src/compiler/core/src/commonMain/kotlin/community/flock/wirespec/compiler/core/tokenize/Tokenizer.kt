@@ -21,27 +21,21 @@ public fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = Toke
 /**
  * Walks the source once, carrying a position rather than slicing.
  *
- * The accumulator is mutable on purpose: appending to a persistent list copied every token
- * that came before it, which made tokenizing a file quadratic in its size. It never leaves
- * this function.
+ * Each step yields its tokens to a sequence rather than appending them to an accumulator:
+ * appending to a persistent list copied every token that came before it, which made
+ * tokenizing a file quadratic in its size.
  */
-private fun LanguageSpec.scan(source: String): List<Token> = buildList {
-    add(Token(value = "", type = StartOfProgram, coordinates = Coordinates()))
-    var index = 0
-    while (true) {
-        val (token, next) = extractToken(source, index, last().coordinates)
-        add(token)
-        if (token.type is EndOfProgram) break
-        index = when (token.type) {
-            // A `/` after `(` opens a regex literal, which the matchers cannot describe.
-            is LeftParenthesis -> {
-                val (lookahead, resume) = potentialRegex(source, next, token)
-                addAll(lookahead)
-                resume
-            }
+private fun LanguageSpec.scan(source: String): List<Token> = generateSequence(Token(value = "", type = StartOfProgram, coordinates = Coordinates()).nel() to 0) { (tokens, index) ->
+    tokens.last().takeUnless { it.type is EndOfProgram }?.let { scanStep(source, index, it) }
+}
+    .flatMap { (tokens, _) -> tokens }
+    .toList()
 
-            else -> next
-        }
+private fun LanguageSpec.scanStep(source: String, index: Int, previous: Token): Pair<NonEmptyList<Token>, Int> = extractToken(source, index, previous.coordinates).let { (token, next) ->
+    when (token.type) {
+        // A `/` after `(` opens a regex literal, which the matchers cannot describe.
+        is LeftParenthesis -> potentialRegex(source, next, token).let { (lookahead, resume) -> (token.nel() + lookahead) to resume }
+        else -> token.nel() to next
     }
 }
 
@@ -49,26 +43,19 @@ private fun LanguageSpec.scan(source: String): List<Token> = buildList {
  * Looks past the whitespace that may follow a `(` for the `/` that opens a regex literal.
  * Returns the tokens to append — the whitespace it consumed, plus the regex literal if it
  * found one — and the position to carry on from. When there is no regex the lookahead is
- * given back untouched, so the main loop re-reads it.
+ * given back untouched, so the scan re-reads it.
  */
-private fun LanguageSpec.potentialRegex(source: String, index: Int, previous: Token): Pair<List<Token>, Int> {
-    val whitespace = mutableListOf<Token>()
-    var last = previous
-    var cursor = index
-    while (true) {
-        val (token, next) = extractToken(source, cursor, last.coordinates)
-        when (token.type) {
-            is WhiteSpaceExceptNewLine -> {
-                whitespace += token
-                last = token
-                cursor = next
-            }
-
-            is ForwardSlash -> return extractRegex(source, cursor, cursor + 1, last)
-                .let { (regex, resume) -> (whitespace + regex) to resume }
-
-            else -> return whitespace to cursor
-        }
+private tailrec fun LanguageSpec.potentialRegex(
+    source: String,
+    index: Int,
+    previous: Token,
+    whitespace: List<Token> = emptyList(),
+): Pair<List<Token>, Int> {
+    val (token, next) = extractToken(source, index, previous.coordinates)
+    return when (token.type) {
+        is WhiteSpaceExceptNewLine -> potentialRegex(source, next, token, whitespace + token)
+        is ForwardSlash -> extractRegex(source, index, index + 1, previous).let { (regex, resume) -> (whitespace + regex) to resume }
+        else -> whitespace to index
     }
 }
 
