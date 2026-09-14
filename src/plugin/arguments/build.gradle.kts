@@ -39,6 +39,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":src:compiler:core"))
+                api(project(":src:compiler:ir"))
                 api(project(":src:compiler:emitters:kotlin"))
                 api(project(":src:compiler:emitters:java"))
                 api(project(":src:compiler:emitters:typescript"))
@@ -48,6 +49,11 @@ kotlin {
                 api(project(":src:compiler:emitters:wirespec"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
+                implementation(project(":src:integration:avro"))
+                implementation(project(":src:integration:jackson"))
+                implementation(project(":src:integration:kotest"))
+                implementation(project(":src:integration:kotlinx-serialization"))
+                implementation(project(":src:integration:spring"))
                 implementation(libs.kotlinx.io.core)
             }
         }

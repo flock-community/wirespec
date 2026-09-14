@@ -99,7 +99,8 @@ This task compiles Wirespec definitions to various target languages.
 - `output`: DirectoryProperty - The output directory for generated code
 - `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
+- `irExtensions`: ListProperty&lt;Extension&gt; - [bundled IR extensions](./plugins.md#bundled-extensions) applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
+- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - custom `IrExtension` classes, applied like `irExtensions`
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 
@@ -114,24 +115,45 @@ This task converts from JSON or Avro to other formats.
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro)
 - `preProcessor`: Property&lt;(String) -> String&gt; - Function to preprocess the input content before conversion
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
+- `irExtensions`: ListProperty&lt;Extension&gt; - [bundled IR extensions](./plugins.md#bundled-extensions) applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
+- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - custom `IrExtension` classes, applied like `irExtensions`
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 
 ## Applying IR extensions
 
-[IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` property. Put the
-integration artifact that provides the extension on the `buildscript` classpath, then reference the class
-directly. The built-in language targets always emit through the IR pipeline:
+The [bundled IR extensions](./plugins.md#bundled-extensions) are enabled with the `irExtensions`
+property (named this way because Gradle itself reserves `extensions` on every task); they ship with
+the plugin, so no extra classpath configuration is needed. The built-in language targets always emit
+through the IR pipeline:
 
 ```gradle title="build.gradle.kts"
-import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
+import community.flock.wirespec.plugin.Extension
+import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+
+tasks.register<CompileWirespecTask>("wirespec-compile") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated")
+    packageName = "community.flock.wirespec.generated.kotlin"
+    languages = listOf(Language.Kotlin)
+    shared = false
+    irExtensions = listOf(Extension.KotlinxSerialization)
+}
+```
+
+Custom extensions are registered with the `extensionClasses` property. Put the artifact that
+provides the extension on the `buildscript` classpath, then reference the class directly; both
+properties can be combined:
+
+```gradle title="build.gradle.kts"
+import com.example.wirespec.MyCustomExtension
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import community.flock.wirespec.plugin.Language
 
 buildscript {
     dependencies {
-        classpath("community.flock.wirespec.integration:kotlinx-serialization:{{WIRESPEC_VERSION}}")
+        classpath("com.example:my-wirespec-extension:1.0.0")
     }
 }
 
@@ -141,6 +163,6 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
     packageName = "community.flock.wirespec.generated.kotlin"
     languages = listOf(Language.Kotlin)
     shared = false
-    extensionClasses = listOf(KotlinxSerializationExtension::class.java)
+    extensionClasses = listOf(MyCustomExtension::class.java)
 }
 ```

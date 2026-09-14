@@ -1,5 +1,5 @@
 import com.diffplug.gradle.spotless.SpotlessTask
-import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
@@ -82,14 +82,6 @@ spotless {
     }
 }
 
-buildscript {
-    dependencies {
-        classpath(libs.wirespec.compiler)
-        classpath(libs.wirespec.emitters.kotlin)
-        classpath(libs.wirespec.kotlinx.serialization)
-    }
-}
-
 tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     description = "Compile Wirespec to Kotlin"
     group = "Wirespec compile"
@@ -97,7 +89,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
     languages = listOf(Language.Kotlin)
-    extensionClasses = listOf(KotlinxSerializationExtension::class.java)
+    irExtensions = listOf(Extension.KotlinxSerialization)
 }
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {

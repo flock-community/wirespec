@@ -2,8 +2,8 @@
 
 This example converts an Avro schema (`src/main/avro/test_avro_001.avsc`) into Wirespec and
 generates Java sources with the Wirespec IR emitter. The Avro schema + converter classes
-(`<Type>Avro`) are added by the `AvroExtension`, a Wirespec `IrExtension` registered on the
-emitter via `extensionClasses`.
+(`<Type>Avro`) are added by the `Avro` extension, a Wirespec `IrExtension` bundled with the
+plugin and enabled via `extensions`.
 
 ## Wirespec Maven Plugin Configuration
 
@@ -24,10 +24,9 @@ emitter via `extensionClasses`.
                 <languages>
                     <language>Java</language>
                 </languages>
-                <ir>true</ir>
-                <extensionClasses>
-                    <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
-                </extensionClasses>
+                <extensions>
+                    <extension>Avro</extension>
+                </extensions>
                 <packageName>com.eventloopsoftware.kafka</packageName>
             </configuration>
         </execution>

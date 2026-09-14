@@ -68,6 +68,8 @@ extensionClasses.set(listOf(MyExtension::class.java))
 
 Extensions run in the order they are listed, after all built-in files (models, endpoints, clients, shared code) have been produced and before any code is generated. A minimal end-to-end project lives at `examples/maven-spring-custom/`.
 
+Wirespec's own first-party integrations are wired in as **IR extensions**, bundled with every plugin and enabled by name (`extensions`/`irExtensions`/`--extension`; custom classes via `extensionClasses`). The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
+
 ## Shared contract
 
 The `arguments` module is the seam between the compiler and the plugins. Every plugin builds a `WirespecArguments` value (input sources, emitters, writer, error handler, package name, logger, plus the `shared` / `strict` / `ir` flags) and calls the top-level `compile(args)` or `convert(args)` function:

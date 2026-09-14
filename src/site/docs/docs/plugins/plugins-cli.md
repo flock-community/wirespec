@@ -62,6 +62,7 @@ Usage: wirespec compile [<options>]
 Options:
   -i, --input=<text>                                                          Input
   -o, --output=<text>                                                         Output
+  -x, --extension=(Avro|Jackson|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints|KotestDsl) Extension
   -p, --package=<text>                                                        Package name
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code
@@ -74,6 +75,13 @@ Options:
 wirespec compile "type SomeType { someField: String }"
 ```
 
+The [bundled IR extensions](./plugins.md#bundled-extensions) are built into the CLI; enable them by
+name with `-x`/`--extension` (repeat the option to apply several, names are case-insensitive):
+
+```shell
+wirespec compile -i ./todo.ws -o ./generated -l Kotlin -x Jackson -x SpringMappingAnnotations
+```
+
 ### convert
 
 ```shell
@@ -82,6 +90,7 @@ Usage: wirespec convert [<options>] <format>
 Options:
   -i, --input=<text>                                                          Input
   -o, --output=<text>                                                         Output
+  -x, --extension=(Avro|Jackson|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints|KotestDsl) Extension
   -p, --package=<text>                                                        Package name
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code

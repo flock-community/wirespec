@@ -15,10 +15,25 @@ repositories {
     maven(uri("https://packages.confluent.io/maven"))
 }
 
+val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+
 kotlin {
+    // Kotlin 2.0 is this module's consumer-compatibility floor, matching the
+    // kotlin_libraries floor: the current compiler rejects the repo-wide 1.9
+    // floor for the JS/native/metadata compilations this module now has, and a
+    // JVM-only 1.9 floor would sit below commonMain's, which KGP forbids.
     compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
+    if (enableNative) {
+        macosX64()
+        macosArm64()
+        linuxX64()
+        mingwX64()
+    }
+    js(IR) {
+        nodejs()
     }
     jvm {
         testRuns["test"].executionTask.configure {
@@ -37,19 +52,10 @@ kotlin {
                 // Avro schema model; the actual Avro runtime (kafka.avro) is only
                 // referenced by fully-qualified name in generated source, so it is
                 // not a compile dependency here.
-                compileOnly(project(":src:compiler:core"))
-                implementation(project(":src:compiler:emitters:kotlin"))
-                implementation(project(":src:compiler:emitters:java"))
+                implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:ir"))
                 implementation(project(":src:converter:avro"))
                 implementation(libs.kotlinx.serialization)
-            }
-        }
-        commonTest {
-            dependencies {
-                implementation(libs.kotlin.test)
-                implementation(libs.bundles.kotest)
-                implementation(project(":src:integration:wirespec"))
-                implementation(project(":src:compiler:test"))
             }
         }
         jvmTest {

@@ -40,6 +40,23 @@ class WirespecCliTest {
     }
 
     @Test
+    fun testCliBundledExtension() {
+        val packageDir = DEFAULT_GENERATED_PACKAGE_STRING.replace(".", "/")
+        val input = "$inputDir/wirespec"
+        val output = outputDir()
+
+        WirespecCli(::compile, ::convert)
+            .main(arrayOf("compile", "-i", input, "-o", output, "-l", "Kotlin", "-x", "jackson", "--extension", "KotlinxSerialization"))
+
+        val directoryPath = DirectoryPath("$output/$packageDir")
+
+        FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Kotlin).read().let { content ->
+            content shouldContain "com.fasterxml.jackson.annotation.JsonProperty"
+            content shouldContain "@kotlinx.serialization.Serializable"
+        }
+    }
+
+    @Test
     fun testCliJavaPackage() {
         val packageName = "community.flock.next"
         val packageDir = packageName.replace(".", "/")

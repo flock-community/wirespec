@@ -15,10 +15,25 @@ repositories {
 val generatedWirespecDir = layout.buildDirectory.dir("generated/sources/wirespec")
 val wirespecTestSourcesDir = layout.projectDirectory.dir("src/jvmCodegen/resources/wirespec")
 
+val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+
 kotlin {
+    // Kotlin 2.0 is this module's consumer-compatibility floor, matching the
+    // kotlin_libraries floor: the current compiler rejects the repo-wide 1.9
+    // floor for the JS/native/metadata compilations this module now has, and a
+    // JVM-only 1.9 floor would sit below commonMain's, which KGP forbids.
     compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
+    if (enableNative) {
+        macosX64()
+        macosArm64()
+        linuxX64()
+        mingwX64()
+    }
+    js(IR) {
+        nodejs()
     }
     jvm {
         // Private build-time compilation that hosts the Wirespec emitter Main. Kept out
@@ -43,18 +58,25 @@ kotlin {
                 // The JacksonExtension only reshapes the language-neutral IR with
                 // fully-qualified raw annotations, so it needs the compiler/IR API
                 // at compile time but no Jackson runtime — that comes from the
-                // consumer's build.
+                // consumer's build. compileOnly keeps the compiler off the JVM
+                // consumer's runtime classpath; JS/Native don't support compileOnly,
+                // so those source sets redeclare the same modules as api.
                 compileOnly(project(":src:compiler:core"))
-                compileOnly(project(":src:compiler:emitters:kotlin"))
-                compileOnly(project(":src:compiler:emitters:java"))
-                compileOnly(project(":src:integration:wirespec"))
+                compileOnly(project(":src:compiler:ir"))
             }
         }
-        commonTest {
+        jsMain {
             dependencies {
-                implementation(project(":src:integration:wirespec"))
-                implementation(libs.bundles.kotlin.test)
-                implementation(libs.bundles.kotest)
+                api(project(":src:compiler:core"))
+                api(project(":src:compiler:ir"))
+            }
+        }
+        if (enableNative) {
+            nativeMain {
+                dependencies {
+                    api(project(":src:compiler:core"))
+                    api(project(":src:compiler:ir"))
+                }
             }
         }
         jvmMain {
@@ -62,6 +84,8 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:emitters:java"))
+                // The Wirespec runtime comes from the consumer's wirespec-jvm dependency.
+                compileOnly(project(":src:integration:wirespec"))
                 compileOnly(libs.bundles.jackson2)
                 compileOnly(libs.bundles.jackson3)
             }
@@ -72,6 +96,9 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:emitters:java"))
+                implementation(project(":src:integration:wirespec"))
+                implementation(libs.bundles.kotlin.test)
+                implementation(libs.bundles.kotest)
                 implementation(libs.bundles.jackson2)
                 implementation(libs.bundles.jackson3)
             }
