@@ -61,10 +61,7 @@ internal object TypeParser {
     fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
         (if (token.type is RightCurly) emptyList() else parseFields().bind())
             .also {
-                when (token.type) {
-                    is RightCurly -> eatToken().bind()
-                    else -> raiseWrongToken<RightCurly>().bind()
-                }
+                expect<RightCurly>().bind()
             }
             .let(Type::Shape)
     }
@@ -224,24 +221,15 @@ private fun TokenProvider.parseTypeConstraint() = parseToken {
         is RegExp -> Reference.Primitive.Type.Constraint.RegExp(token.value).also { eatToken().bind() }
         else -> raiseWrongToken<RegExp>().bind()
     }.also {
-        when (token.type) {
-            is RightParenthesis -> eatToken().bind()
-            else -> raiseWrongToken<RightParenthesis>().bind()
-        }
+        expect<RightParenthesis>().bind()
     }
 }
 
 private inline fun <reified T : TokenType> TokenProvider.parseTypeBound() = parseToken {
     val min = parseTypeBoundValue<T>().bind()
-    when (token.type) {
-        is Comma -> eatToken().bind()
-        else -> raiseWrongToken<Comma>().bind()
-    }
+    expect<Comma>().bind()
     val max = parseTypeBoundValue<T>().bind()
-    when (token.type) {
-        is RightParenthesis -> eatToken().bind()
-        else -> raiseWrongToken<RightParenthesis>().bind()
-    }
+    expect<RightParenthesis>().bind()
     Reference.Primitive.Type.Constraint.Bound(min, max)
 }
 
@@ -312,10 +300,7 @@ private fun TokenProvider.parsePrimitiveType(previousToken: Token) = either {
 }
 
 private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>) = parseToken {
-    when (token.type) {
-        is Colon -> eatToken().bind()
-        else -> raiseWrongToken<Colon>().bind()
-    }
+    expect<Colon>().bind()
 
     when (token.type) {
         is LeftCurly -> Field(

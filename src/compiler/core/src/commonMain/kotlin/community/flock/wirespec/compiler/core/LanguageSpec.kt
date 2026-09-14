@@ -68,42 +68,52 @@ public interface HasLanguageSpec {
 public object WirespecSpec : LanguageSpec {
     override val typeIdentifier: TypeIdentifier = WirespecType
     override val fieldIdentifier: FieldIdentifier = WirespecField
+
+    /**
+     * Applied with [Regex.matchAt] at the tokenizer's current position, so a pattern must not
+     * be anchored with `^` — that would only ever match at the start of the file. A leading
+     * `\b` is equally wrong: at a position the engine sees the real preceding character.
+     * A trailing `\b` is meaningful and keeps `type` from matching the start of `types`.
+     */
     override val orderedMatchers: List<TokenMatcher> = listOf(
-        Regex("^\\btype\\b") to TypeDefinition,
-        Regex("^\\benum\\b") to EnumTypeDefinition,
-        Regex("^\\bendpoint\\b") to EndpointDefinition,
-        Regex("^\\bchannel\\b") to ChannelDefinition,
-        Regex("^\\brpc\\b") to RpcDefinition,
-        Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
-        Regex("^[\\r\\n]") to NewLine,
-        Regex("^\\{") to LeftCurly,
-        Regex("^\\}") to RightCurly,
-        Regex("^\\(") to LeftParenthesis,
-        Regex("^\\)") to RightParenthesis,
-        Regex("^->") to Arrow,
-        Regex("^=") to Equals,
-        Regex("^\\|") to Pipe,
-        Regex("^:") to Colon,
-        Regex("^,") to Comma,
-        Regex("^\\?") to QuestionMark,
-        Regex("^!") to ExclamationMark,
-        Regex("^#") to Hash,
-        Regex("^\\[\\]") to Brackets,
-        Regex("^\\[") to LeftBracket,
-        Regex("^\\]") to RightBracket,
-        Regex("^\\b(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
-        Regex("^@[A-Z][a-zA-Z0-9_]*") to Annotation,
-        Regex("^[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
-        Regex("^\\b[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
-        Regex("^/[a-zA-Z0-9-_]+") to Path,
-        Regex("^//.*\n") to Comment,
-        Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to Comment,
-        Regex("^\"([^\"\\\\]|\\\\.)*\"") to LiteralString,
-        Regex("^/") to ForwardSlash,
-        Regex("^-?[0-9]+\\.[0-9]+") to Number,
-        Regex("^-?[0-9]+") to Integer,
-        Regex("^_") to Underscore,
-        Regex("^.") to Character, // Catch-all regular expression if none of the above matched
+        Regex("type\\b") to TypeDefinition,
+        Regex("enum\\b") to EnumTypeDefinition,
+        Regex("endpoint\\b") to EndpointDefinition,
+        Regex("channel\\b") to ChannelDefinition,
+        Regex("rpc\\b") to RpcDefinition,
+        Regex("[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
+        Regex("[\\r\\n]") to NewLine,
+        Regex("\\{") to LeftCurly,
+        Regex("\\}") to RightCurly,
+        Regex("\\(") to LeftParenthesis,
+        Regex("\\)") to RightParenthesis,
+        Regex("->") to Arrow,
+        Regex("=") to Equals,
+        Regex("\\|") to Pipe,
+        Regex(":") to Colon,
+        Regex(",") to Comma,
+        Regex("\\?") to QuestionMark,
+        Regex("!") to ExclamationMark,
+        Regex("#") to Hash,
+        Regex("\\[\\]") to Brackets,
+        Regex("\\[") to LeftBracket,
+        Regex("\\]") to RightBracket,
+        Regex("(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
+        Regex("@[A-Z][a-zA-Z0-9_]*") to Annotation,
+        Regex("[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
+        Regex("[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
+        Regex("/[a-zA-Z0-9-_]+") to Path,
+        Regex("//.*\n") to Comment,
+        // Both of these are written in the unrolled form that never backtracks. The textbook
+        // `(\*(?!/)|[^*])*` shape recurses once per character inside java.util.regex, which
+        // overflows the stack on a comment of a few thousand characters.
+        Regex("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/") to Comment,
+        Regex("\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"") to LiteralString,
+        Regex("/") to ForwardSlash,
+        Regex("-?[0-9]+\\.[0-9]+") to Number,
+        Regex("-?[0-9]+") to Integer,
+        Regex("_") to Underscore,
+        Regex(".") to Character, // Catch-all regular expression if none of the above matched
     )
 }
 

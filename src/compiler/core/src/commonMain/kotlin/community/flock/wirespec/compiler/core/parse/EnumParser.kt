@@ -32,10 +32,7 @@ internal object EnumParser {
 
             else -> raiseWrongToken<LeftCurly>().bind()
         }.also {
-            when (token.type) {
-                is RightCurly -> eatToken().bind()
-                else -> raiseWrongToken<RightCurly>().bind()
-            }
+            expect<RightCurly>().bind()
         }
     }
 

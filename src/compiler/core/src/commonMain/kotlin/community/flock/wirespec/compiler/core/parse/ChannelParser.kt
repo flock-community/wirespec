@@ -7,7 +7,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Comment
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Arrow
-import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
@@ -21,10 +20,7 @@ internal object ChannelParser {
     }
 
     private fun TokenProvider.parseChannelDefinition(comment: Comment?, annotations: List<Annotation>, identifier: DefinitionIdentifier) = parseToken {
-        when (token.type) {
-            is Arrow -> eatToken().bind()
-            else -> raiseWrongToken<Colon>().bind()
-        }
+        expect<Arrow>().bind()
 
         val reference = with(TypeParser) {
             when (token.type) {

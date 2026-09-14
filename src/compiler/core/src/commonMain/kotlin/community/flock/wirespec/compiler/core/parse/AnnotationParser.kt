@@ -17,14 +17,10 @@ import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationT
 
 internal object AnnotationParser {
     fun TokenProvider.parseAnnotations(): Either<WirespecException, List<Annotation>> = either {
-        when (token.type) {
-            is AnnotationToken -> {
-                val annotation = parseAnnotation().bind()
-                val remaining = parseAnnotations().bind()
-                listOf(annotation) + remaining
+        buildList {
+            while (token.type is AnnotationToken) {
+                add(parseAnnotation().bind())
             }
-
-            else -> emptyList()
         }
     }
 }
@@ -35,10 +31,7 @@ private fun TokenProvider.parseAnnotation() = either {
         is LeftParenthesis -> {
             eatToken().bind() // consume (
             parseAnnotationParameters().bind().also {
-                when (token.type) {
-                    RightParenthesis -> eatToken().bind() // consume )
-                    else -> raiseWrongToken<RightParenthesis>().bind()
-                }
+                expect<RightParenthesis>().bind()
             }
         }
 
@@ -48,19 +41,13 @@ private fun TokenProvider.parseAnnotation() = either {
 }
 
 private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException, List<Annotation.Parameter>> = either {
-    when (token.type) {
-        is RightParenthesis -> emptyList()
-        else -> {
-            val params = parseAnnotationParameter().bind()
-            val remaining = when (token.type) {
-                is Comma -> {
-                    eatToken().bind()
-                    parseAnnotationParameters().bind()
-                }
-
-                else -> emptyList()
+    buildList {
+        while (token.type !is RightParenthesis) {
+            addAll(parseAnnotationParameter().bind())
+            when (token.type) {
+                is Comma -> eatToken().bind()
+                else -> break
             }
-            params + remaining
         }
     }
 }
@@ -120,34 +107,22 @@ private fun TokenProvider.parseAnnotationValue(): Either<WirespecException, Anno
 }
 
 private fun TokenProvider.parseDict(): Either<WirespecException, List<Annotation.Parameter>> = either {
-    when (token.type) {
-        is LeftCurly -> eatToken().bind()
-        else -> raiseWrongToken<LeftCurly>().bind()
-    }
+    expect<LeftCurly>().bind()
     val params = mutableListOf<Annotation.Parameter>()
     while (token.type !is RightCurly) {
         val key = token.value
         eatToken().bind()
-        when (token.type) {
-            is Colon -> eatToken().bind()
-            else -> raiseWrongToken<Colon>().bind()
-        }
+        expect<Colon>().bind()
         val value = parseAnnotationValue().bind()
         params.add(Annotation.Parameter(key, value))
         if (token.type is Comma) eatToken().bind()
     }
-    when (token.type) {
-        is RightCurly -> eatToken().bind()
-        else -> raiseWrongToken<RightCurly>().bind()
-    }
+    expect<RightCurly>().bind()
     params
 }
 
 private fun TokenProvider.parseArray(): Either<WirespecException, List<Annotation.Value.Single>> = either {
-    when (token.type) {
-        is LeftBracket -> eatToken().bind()
-        else -> raiseWrongToken<LeftBracket>().bind()
-    }
+    expect<LeftBracket>().bind()
     val items = mutableListOf<Annotation.Value.Single>()
     while (token.type != RightBracket) {
         val v = when (token.type) {
@@ -158,9 +133,6 @@ private fun TokenProvider.parseArray(): Either<WirespecException, List<Annotatio
         eatToken().bind()
         if (token.type is Comma) eatToken().bind()
     }
-    when (token.type) {
-        RightBracket -> eatToken().bind()
-        else -> raiseWrongToken<RightBracket>().bind()
-    }
+    expect<RightBracket>().bind()
     items
 }

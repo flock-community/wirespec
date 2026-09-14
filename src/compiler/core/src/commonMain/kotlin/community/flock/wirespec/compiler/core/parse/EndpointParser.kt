@@ -77,15 +77,9 @@ internal object EndpointParser {
 
         val headers = parseHeaders().bind()
 
-        when (token.type) {
-            is Arrow -> eatToken().bind()
-            else -> raiseWrongToken<Arrow>().bind()
-        }
+        expect<Arrow>().bind()
 
-        when (token.type) {
-            is LeftCurly -> Unit
-            else -> raiseWrongToken<LeftCurly>().bind()
-        }.also { eatToken().bind() }
+        expect<LeftCurly>().bind()
 
         val responses = parseEndpointResponses().bind()
 
@@ -111,18 +105,12 @@ internal object EndpointParser {
     }
 
     private fun TokenProvider.parseEndpointSegmentParam() = parseToken {
-        when (token.type) {
-            is LeftCurly -> eatToken().bind()
-            else -> raiseWrongToken<LeftCurly>().bind()
-        }
+        expect<LeftCurly>().bind()
         val identifier = when (token.type) {
             is WirespecIdentifier -> FieldIdentifier(token.value).also { eatToken().bind() }
             else -> raiseWrongToken<WirespecIdentifier>().bind()
         }
-        when (token.type) {
-            is Colon -> eatToken().bind()
-            else -> raiseWrongToken<Colon>().bind()
-        }
+        expect<Colon>().bind()
         val reference = with(TypeParser) {
             when (token.type) {
                 is LeftCurly -> parseDict().bind()
@@ -130,10 +118,7 @@ internal object EndpointParser {
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }
-        when (token.type) {
-            is RightCurly -> eatToken().bind()
-            else -> raiseWrongToken<RightCurly>().bind()
-        }
+        expect<RightCurly>().bind()
         Endpoint.Segment.Param(
             identifier = identifier,
             reference = reference,
@@ -149,19 +134,12 @@ internal object EndpointParser {
                 else -> raiseWrongToken<Integer>().bind()
             }
         }
-        when (token.type) {
-            is RightCurly -> Unit
-            else -> raiseWrongToken<RightCurly>().bind()
-        }.also { eatToken().bind() }
+        expect<RightCurly>().bind()
         responses.toList()
     }
 
     private fun TokenProvider.parseEndpointResponse(statusCode: String, annotations: List<Annotation>) = parseToken {
-        when (token.type) {
-            is Arrow -> Unit
-            else -> raiseWrongToken<Arrow>().bind()
-        }
-        eatToken().bind()
+        expect<Arrow>().bind()
 
         val reference = with(TypeParser) {
             when (token.type) {
