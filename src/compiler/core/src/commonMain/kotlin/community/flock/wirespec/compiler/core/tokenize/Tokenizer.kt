@@ -14,8 +14,6 @@ public data class TokenizeOptions(
 )
 
 public fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = scan(source)
-    .toNonEmptyListOrNull()
-    .let { it ?: endToken().nel() }
     .let(optimize(options))
 
 /**
@@ -25,11 +23,9 @@ public fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = Toke
  * appending to a persistent list copied every token that came before it, which made
  * tokenizing a file quadratic in its size.
  */
-private fun LanguageSpec.scan(source: String): List<Token> = generateSequence(Token(value = "", type = StartOfProgram, coordinates = Coordinates()).nel() to 0) { (tokens, index) ->
+private fun LanguageSpec.scan(source: String): NonEmptyList<Token> = generateSequence(Token(value = "", type = StartOfProgram, coordinates = Coordinates()).nel() to 0) { (tokens, index) ->
     tokens.last().takeUnless { it.type is EndOfProgram }?.let { scanStep(source, index, it) }
-}
-    .flatMap { (tokens, _) -> tokens }
-    .toList()
+}.flatMap { (tokens, _) -> tokens }.toList().toNonEmptyListOrNull() ?: endToken().nel()
 
 private fun LanguageSpec.scanStep(source: String, index: Int, previous: Token): Pair<NonEmptyList<Token>, Int> = extractToken(source, index, previous.coordinates).let { (token, next) ->
     when (token.type) {

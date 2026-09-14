@@ -21,6 +21,7 @@ internal class TokenProvider(
 ) {
 
     var token: Token = tokens.head
+        private set
 
     private val tokenIterator = tokens.tail.iterator()
     private var nextToken = nextToken()
