@@ -77,11 +77,11 @@ import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.compiler.core.ir.core.Element
-import community.flock.wirespec.compiler.core.ir.core.File
-import community.flock.wirespec.compiler.core.ir.core.IR
-import community.flock.wirespec.compiler.core.ir.core.RawElement
-import community.flock.wirespec.compiler.core.ir.core.Struct
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 ```
 

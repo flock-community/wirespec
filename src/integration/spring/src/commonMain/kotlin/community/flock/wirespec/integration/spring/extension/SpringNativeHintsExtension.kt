@@ -2,15 +2,15 @@ package community.flock.wirespec.integration.spring.extension
 
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.ir.core.IR
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.file
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Model
-import community.flock.wirespec.compiler.core.ir.core.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 
 /**
  * Emits a WirespecNativeHints file registering all models and endpoints for

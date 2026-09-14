@@ -1,4 +1,4 @@
-package community.flock.wirespec.compiler.core.ir.core
+package community.flock.wirespec.compiler.core.ir
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

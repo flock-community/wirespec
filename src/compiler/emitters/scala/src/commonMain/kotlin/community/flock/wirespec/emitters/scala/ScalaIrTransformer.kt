@@ -2,24 +2,24 @@ package community.flock.wirespec.emitters.scala
 
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
-import community.flock.wirespec.compiler.core.ir.core.Element
-import community.flock.wirespec.compiler.core.ir.core.FieldCall
-import community.flock.wirespec.compiler.core.ir.core.FunctionCall
-import community.flock.wirespec.compiler.core.ir.core.Interface
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.Namespace
-import community.flock.wirespec.compiler.core.ir.core.Struct
-import community.flock.wirespec.compiler.core.ir.core.TypeParameter
-import community.flock.wirespec.compiler.core.ir.core.import
-import community.flock.wirespec.compiler.core.ir.core.raw
-import community.flock.wirespec.compiler.core.ir.core.transform
-import community.flock.wirespec.compiler.core.ir.core.transformChildren
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.TypeParameter
+import community.flock.wirespec.compiler.core.ir.import
+import community.flock.wirespec.compiler.core.ir.raw
+import community.flock.wirespec.compiler.core.ir.transform
+import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
-import community.flock.wirespec.compiler.core.ir.core.Function as LanguageFunction
-import community.flock.wirespec.compiler.core.ir.core.Import as LanguageImport
-import community.flock.wirespec.compiler.core.ir.core.Type as LanguageType
+import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
+import community.flock.wirespec.compiler.core.ir.Import as LanguageImport
+import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 internal fun Definition.buildModelImports(packageName: PackageName): List<LanguageImport> = importReferences()
     .distinctBy { it.value }

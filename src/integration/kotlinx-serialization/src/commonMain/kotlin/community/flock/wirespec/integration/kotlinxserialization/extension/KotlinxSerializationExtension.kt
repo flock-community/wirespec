@@ -1,16 +1,16 @@
 package community.flock.wirespec.integration.kotlinxserialization.extension
 
-import community.flock.wirespec.compiler.core.ir.core.Enum
-import community.flock.wirespec.compiler.core.ir.core.HasName
-import community.flock.wirespec.compiler.core.ir.core.IR
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.RawElement
-import community.flock.wirespec.compiler.core.ir.core.Struct
-import community.flock.wirespec.compiler.core.ir.core.Union
+import community.flock.wirespec.compiler.core.ir.Enum
+import community.flock.wirespec.compiler.core.ir.HasName
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.compiler.core.ir.core.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition

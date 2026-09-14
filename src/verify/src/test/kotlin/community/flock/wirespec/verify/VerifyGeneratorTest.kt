@@ -3,16 +3,16 @@ package community.flock.wirespec.verify
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.emitters.rust.RustIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
-import community.flock.wirespec.compiler.core.ir.core.ArrayIndexCall
-import community.flock.wirespec.compiler.core.ir.core.BinaryOp
-import community.flock.wirespec.compiler.core.ir.core.FieldCall
-import community.flock.wirespec.compiler.core.ir.core.Literal
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.Precision
-import community.flock.wirespec.compiler.core.ir.core.RawExpression
-import community.flock.wirespec.compiler.core.ir.core.Type
-import community.flock.wirespec.compiler.core.ir.core.VariableReference
-import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.ArrayIndexCall
+import community.flock.wirespec.compiler.core.ir.BinaryOp
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Precision
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
 import io.kotest.core.spec.style.FunSpec
 
 class VerifyGeneratorTest : FunSpec({

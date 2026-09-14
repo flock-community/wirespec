@@ -4,10 +4,10 @@ import arrow.core.NonEmptyList
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.converter.convertClient
 import community.flock.wirespec.compiler.core.ir.converter.convertEndpointClient
-import community.flock.wirespec.compiler.core.ir.core.File
-import community.flock.wirespec.compiler.core.ir.core.IR
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.parse.ast.AST

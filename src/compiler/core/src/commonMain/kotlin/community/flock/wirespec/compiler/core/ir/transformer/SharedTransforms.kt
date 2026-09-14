@@ -1,17 +1,17 @@
 package community.flock.wirespec.compiler.core.ir.transformer
 
-import community.flock.wirespec.compiler.core.ir.core.Constructor
-import community.flock.wirespec.compiler.core.ir.core.Element
-import community.flock.wirespec.compiler.core.ir.core.Field
-import community.flock.wirespec.compiler.core.ir.core.FieldCall
-import community.flock.wirespec.compiler.core.ir.core.Function
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.Parameter
-import community.flock.wirespec.compiler.core.ir.core.Struct
-import community.flock.wirespec.compiler.core.ir.core.VariableReference
-import community.flock.wirespec.compiler.core.ir.core.transform
-import community.flock.wirespec.compiler.core.ir.core.transformChildren
-import community.flock.wirespec.compiler.core.ir.core.withLabelField
+import community.flock.wirespec.compiler.core.ir.Constructor
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.Field
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.Function
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Parameter
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.transform
+import community.flock.wirespec.compiler.core.ir.transformChildren
+import community.flock.wirespec.compiler.core.ir.withLabelField
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -20,8 +20,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
-import community.flock.wirespec.compiler.core.ir.core.Enum as LanguageEnum
-import community.flock.wirespec.compiler.core.ir.core.Type as LanguageType
+import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
+import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 public fun Struct.markMembersAsOverride(): Struct = copy(
     fields = fields.map { f -> if (f is Field) f.copy(isOverride = true) else f },

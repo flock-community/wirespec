@@ -1,11 +1,11 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
-import community.flock.wirespec.compiler.core.ir.core.BinaryOp
-import community.flock.wirespec.compiler.core.ir.core.NullableEmpty
-import community.flock.wirespec.compiler.core.ir.core.NullableOf
-import community.flock.wirespec.compiler.core.ir.core.VariableReference
-import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.BinaryOp
+import community.flock.wirespec.compiler.core.ir.NullableEmpty
+import community.flock.wirespec.compiler.core.ir.NullableOf
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
 import io.kotest.core.spec.style.FunSpec
 
 class VerifyComplexModelTest : FunSpec({

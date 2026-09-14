@@ -1,14 +1,14 @@
 package community.flock.wirespec.compiler.core.ir.generator
 
-import community.flock.wirespec.compiler.core.ir.core.FieldCall
-import community.flock.wirespec.compiler.core.ir.core.FunctionCall
-import community.flock.wirespec.compiler.core.ir.core.LiteralList
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.NullCheck
-import community.flock.wirespec.compiler.core.ir.core.RawExpression
-import community.flock.wirespec.compiler.core.ir.core.Type
-import community.flock.wirespec.compiler.core.ir.core.VariableReference
-import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.NullCheck
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

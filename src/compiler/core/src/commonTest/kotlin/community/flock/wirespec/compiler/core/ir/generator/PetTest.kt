@@ -1,12 +1,12 @@
 package community.flock.wirespec.compiler.core.ir.generator
 
-import community.flock.wirespec.compiler.core.ir.core.EnumReference
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.NullCheck
-import community.flock.wirespec.compiler.core.ir.core.NullLiteral
-import community.flock.wirespec.compiler.core.ir.core.RawExpression
-import community.flock.wirespec.compiler.core.ir.core.Type
-import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.EnumReference
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.NullCheck
+import community.flock.wirespec.compiler.core.ir.NullLiteral
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.file
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

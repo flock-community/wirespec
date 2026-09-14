@@ -1,13 +1,13 @@
 package community.flock.wirespec.integration.kotest.convert
 
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.Struct
-import community.flock.wirespec.compiler.core.ir.core.StructBuilder
-import community.flock.wirespec.compiler.core.ir.core.Visibility
-import community.flock.wirespec.compiler.core.ir.core.struct
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.StructBuilder
+import community.flock.wirespec.compiler.core.ir.Visibility
 import community.flock.wirespec.compiler.core.ir.generator.escapeKotlinIdentifier
+import community.flock.wirespec.compiler.core.ir.struct
 import community.flock.wirespec.integration.kotest.convert.EndpointShape.BodyFieldShape
-import community.flock.wirespec.compiler.core.ir.core.Type as IrType
+import community.flock.wirespec.compiler.core.ir.Type as IrType
 
 internal object RecordBuilder {
 

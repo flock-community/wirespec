@@ -1,44 +1,44 @@
 package community.flock.wirespec.compiler.core.ir.converter
 
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.ir.core.ArrayIndexCall
-import community.flock.wirespec.compiler.core.ir.core.BinaryOp
-import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
-import community.flock.wirespec.compiler.core.ir.core.Element
-import community.flock.wirespec.compiler.core.ir.core.EnumReference
-import community.flock.wirespec.compiler.core.ir.core.EnumValueCall
-import community.flock.wirespec.compiler.core.ir.core.ErrorStatement
-import community.flock.wirespec.compiler.core.ir.core.Expression
-import community.flock.wirespec.compiler.core.ir.core.FieldCall
-import community.flock.wirespec.compiler.core.ir.core.File
-import community.flock.wirespec.compiler.core.ir.core.FlatMapIndexed
-import community.flock.wirespec.compiler.core.ir.core.FunctionCall
-import community.flock.wirespec.compiler.core.ir.core.IfExpression
-import community.flock.wirespec.compiler.core.ir.core.ListConcat
-import community.flock.wirespec.compiler.core.ir.core.Literal
-import community.flock.wirespec.compiler.core.ir.core.LiteralList
-import community.flock.wirespec.compiler.core.ir.core.LiteralMap
-import community.flock.wirespec.compiler.core.ir.core.MapExpression
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.NotExpression
-import community.flock.wirespec.compiler.core.ir.core.NullCheck
-import community.flock.wirespec.compiler.core.ir.core.NullableEmpty
-import community.flock.wirespec.compiler.core.ir.core.NullableMap
-import community.flock.wirespec.compiler.core.ir.core.NullableOf
-import community.flock.wirespec.compiler.core.ir.core.Precision
-import community.flock.wirespec.compiler.core.ir.core.ReturnStatement
-import community.flock.wirespec.compiler.core.ir.core.StringTemplate
-import community.flock.wirespec.compiler.core.ir.core.Type
-import community.flock.wirespec.compiler.core.ir.core.TypeDescriptor
-import community.flock.wirespec.compiler.core.ir.core.VariableReference
-import community.flock.wirespec.compiler.core.ir.core.file
-import community.flock.wirespec.compiler.core.ir.core.`interface`
-import community.flock.wirespec.compiler.core.ir.core.transformMatchingElements
+import community.flock.wirespec.compiler.core.ir.ArrayIndexCall
+import community.flock.wirespec.compiler.core.ir.BinaryOp
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.EnumReference
+import community.flock.wirespec.compiler.core.ir.EnumValueCall
+import community.flock.wirespec.compiler.core.ir.ErrorStatement
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.IfExpression
+import community.flock.wirespec.compiler.core.ir.ListConcat
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.LiteralMap
+import community.flock.wirespec.compiler.core.ir.MapExpression
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.NotExpression
+import community.flock.wirespec.compiler.core.ir.NullCheck
+import community.flock.wirespec.compiler.core.ir.NullableEmpty
+import community.flock.wirespec.compiler.core.ir.NullableMap
+import community.flock.wirespec.compiler.core.ir.NullableOf
+import community.flock.wirespec.compiler.core.ir.Precision
+import community.flock.wirespec.compiler.core.ir.ReturnStatement
+import community.flock.wirespec.compiler.core.ir.StringTemplate
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.TypeDescriptor
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
+import community.flock.wirespec.compiler.core.ir.`interface`
+import community.flock.wirespec.compiler.core.ir.transformMatchingElements
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.ir.core.Constraint as LanguageConstraint
+import community.flock.wirespec.compiler.core.ir.Constraint as LanguageConstraint
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint as EndpointWirespec
@@ -393,7 +393,7 @@ public fun TypeWirespec.convertWithValidation(module: Module): File {
     val fieldValidations = classifyValidatableFields(module)
     val file = convert()
     return if (fieldValidations.isNotEmpty()) {
-        file.transformMatchingElements { fn: community.flock.wirespec.compiler.core.ir.core.Function ->
+        file.transformMatchingElements { fn: community.flock.wirespec.compiler.core.ir.Function ->
             if (fn.name == Name.of("validate")) {
                 fn.copy(body = listOf(ReturnStatement(buildValidateBody(fieldValidations))))
             } else {

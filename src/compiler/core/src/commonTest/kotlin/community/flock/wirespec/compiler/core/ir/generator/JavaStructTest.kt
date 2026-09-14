@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.ir.generator
 
-import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.file
 import kotlin.test.Test
 import kotlin.test.assertContains
 

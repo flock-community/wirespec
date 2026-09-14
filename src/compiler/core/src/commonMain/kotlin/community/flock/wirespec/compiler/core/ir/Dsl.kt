@@ -1,4 +1,4 @@
-package community.flock.wirespec.compiler.core.ir.core
+package community.flock.wirespec.compiler.core.ir
 
 @DslMarker
 internal annotation class Dsl

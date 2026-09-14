@@ -1,14 +1,14 @@
 package community.flock.wirespec.integration.jackson.extension
 
-import community.flock.wirespec.compiler.core.ir.core.Field
-import community.flock.wirespec.compiler.core.ir.core.IR
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.RawElement
-import community.flock.wirespec.compiler.core.ir.core.Struct
-import community.flock.wirespec.compiler.core.ir.core.Union
+import community.flock.wirespec.compiler.core.ir.Field
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.compiler.core.ir.core.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 
 /**

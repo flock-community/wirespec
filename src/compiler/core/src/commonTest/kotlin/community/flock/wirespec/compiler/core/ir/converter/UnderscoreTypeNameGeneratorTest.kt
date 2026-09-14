@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.ir.converter
 
-import community.flock.wirespec.compiler.core.ir.core.Element
+import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
 import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator

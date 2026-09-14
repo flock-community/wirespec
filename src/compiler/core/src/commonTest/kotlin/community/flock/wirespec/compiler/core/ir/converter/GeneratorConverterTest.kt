@@ -1,20 +1,20 @@
 package community.flock.wirespec.compiler.core.ir.converter
 
-import community.flock.wirespec.compiler.core.ir.core.ClassReference
-import community.flock.wirespec.compiler.core.ir.core.Expression
-import community.flock.wirespec.compiler.core.ir.core.File
-import community.flock.wirespec.compiler.core.ir.core.Function
-import community.flock.wirespec.compiler.core.ir.core.Literal
-import community.flock.wirespec.compiler.core.ir.core.LiteralList
-import community.flock.wirespec.compiler.core.ir.core.LiteralMap
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.Namespace
-import community.flock.wirespec.compiler.core.ir.core.Statement
-import community.flock.wirespec.compiler.core.ir.core.Switch
-import community.flock.wirespec.compiler.core.ir.core.Type
-import community.flock.wirespec.compiler.core.ir.core.findElement
-import community.flock.wirespec.compiler.core.ir.core.transformChildren
-import community.flock.wirespec.compiler.core.ir.core.transformer
+import community.flock.wirespec.compiler.core.ir.ClassReference
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.Function
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.LiteralMap
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Statement
+import community.flock.wirespec.compiler.core.ir.Switch
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.findElement
+import community.flock.wirespec.compiler.core.ir.transformChildren
+import community.flock.wirespec.compiler.core.ir.transformer
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
@@ -207,10 +207,10 @@ class GeneratorConverterTest {
         val file = message.convertToGenerator()
 
         assertTrue(
-            file.collectExpressions<community.flock.wirespec.compiler.core.ir.core.NullLiteral>().isEmpty(),
+            file.collectExpressions<community.flock.wirespec.compiler.core.ir.NullLiteral>().isEmpty(),
             "any-typed fields must not produce null literals",
         )
-        val stringLeaves = file.collectStatements<community.flock.wirespec.compiler.core.ir.core.ConstructorStatement>()
+        val stringLeaves = file.collectStatements<community.flock.wirespec.compiler.core.ir.ConstructorStatement>()
             .filter { it.type == Type.Custom("Wirespec.GeneratorFieldString") }
         assertEquals(4, stringLeaves.size, "each any-typed slot should generate through a GeneratorFieldString leaf")
     }
@@ -375,18 +375,18 @@ class GeneratorConverterTest {
         )
 
         val file = person.convertToGenerator()
-        val calls = file.collectExpressions<community.flock.wirespec.compiler.core.ir.core.FunctionCall>()
-            .filter { it.name == Name.of("generate") && it.receiver is community.flock.wirespec.compiler.core.ir.core.VariableReference }
+        val calls = file.collectExpressions<community.flock.wirespec.compiler.core.ir.FunctionCall>()
+            .filter { it.name == Name.of("generate") && it.receiver is community.flock.wirespec.compiler.core.ir.VariableReference }
 
         assertEquals(2, calls.size, "expected one generator.generate() call per primitive field")
 
-        val emailField = calls[0].arguments.getValue(Name.of("field")) as community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
+        val emailField = calls[0].arguments.getValue(Name.of("field")) as community.flock.wirespec.compiler.core.ir.ConstructorStatement
         val emailAnnotations = emailField.namedArguments.getValue(Name.of("annotations")) as LiteralList
         assertEquals(1, emailAnnotations.values.size)
         val emailAnn = emailAnnotations.values.single() as LiteralMap
         assertEquals(Literal("Email", Type.String), emailAnn.values.getValue("name"))
 
-        val nameField = calls[1].arguments.getValue(Name.of("field")) as community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
+        val nameField = calls[1].arguments.getValue(Name.of("field")) as community.flock.wirespec.compiler.core.ir.ConstructorStatement
         val nameAnnotations = nameField.namedArguments.getValue(Name.of("annotations")) as LiteralList
         assertTrue(nameAnnotations.values.isEmpty(), "field with no annotations should pass empty list")
     }

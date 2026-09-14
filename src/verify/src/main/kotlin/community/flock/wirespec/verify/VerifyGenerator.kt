@@ -5,7 +5,7 @@ import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.emitters.python.PythonIrEmitter
 import community.flock.wirespec.emitters.scala.ScalaIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
-import community.flock.wirespec.compiler.core.ir.core.ContainerBuilder
+import community.flock.wirespec.compiler.core.ir.ContainerBuilder
 
 private const val WIRESPEC = "Wirespec"
 private const val GENERATOR_PACKAGE = "community.flock.wirespec.generated.generator"

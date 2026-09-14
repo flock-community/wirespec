@@ -1,4 +1,4 @@
-package community.flock.wirespec.compiler.core.ir.core
+package community.flock.wirespec.compiler.core.ir
 
 public fun Expression.fieldCall(field: String): FieldCall = FieldCall(receiver = this, field = Name.of(field))
 

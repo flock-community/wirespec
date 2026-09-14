@@ -27,22 +27,22 @@ import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
 import community.flock.wirespec.compiler.core.ir.converter.convertWithValidation
 import community.flock.wirespec.compiler.core.ir.converter.requestParameters
-import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
-import community.flock.wirespec.compiler.core.ir.core.Element
-import community.flock.wirespec.compiler.core.ir.core.File
-import community.flock.wirespec.compiler.core.ir.core.Interface
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.Namespace
-import community.flock.wirespec.compiler.core.ir.core.RawElement
-import community.flock.wirespec.compiler.core.ir.core.RawExpression
-import community.flock.wirespec.compiler.core.ir.core.Struct
-import community.flock.wirespec.compiler.core.ir.core.VariableReference
-import community.flock.wirespec.compiler.core.ir.core.collectCustomTypeNames
-import community.flock.wirespec.compiler.core.ir.core.fieldList
-import community.flock.wirespec.compiler.core.ir.core.import
-import community.flock.wirespec.compiler.core.ir.core.`interface`
-import community.flock.wirespec.compiler.core.ir.core.transform
-import community.flock.wirespec.compiler.core.ir.core.transformChildren
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.collectCustomTypeNames
+import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.import
+import community.flock.wirespec.compiler.core.ir.`interface`
+import community.flock.wirespec.compiler.core.ir.transform
+import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.ir.generator.RustGenerator
@@ -52,10 +52,10 @@ import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.sortKey
-import community.flock.wirespec.compiler.core.ir.core.Enum as LanguageEnum
-import community.flock.wirespec.compiler.core.ir.core.File as LanguageFile
-import community.flock.wirespec.compiler.core.ir.core.Function as LanguageFunction
-import community.flock.wirespec.compiler.core.ir.core.Type as LanguageType
+import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
+import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 private const val STRUCT_DERIVE = "#[derive(Debug, Clone, Default, PartialEq)]"
 
@@ -286,8 +286,8 @@ public open class RustIrEmitter(
             }
             .let { file ->
                 val groups = file.elements.fold(mutableListOf<MutableList<Element>>()) { acc, element ->
-                    val isImport = element is community.flock.wirespec.compiler.core.ir.core.Import
-                    val lastGroupIsImports = acc.lastOrNull()?.firstOrNull() is community.flock.wirespec.compiler.core.ir.core.Import
+                    val isImport = element is community.flock.wirespec.compiler.core.ir.Import
+                    val lastGroupIsImports = acc.lastOrNull()?.firstOrNull() is community.flock.wirespec.compiler.core.ir.Import
                     if (isImport && lastGroupIsImports) acc.last().add(element)
                     else acc.add(mutableListOf(element))
                     acc

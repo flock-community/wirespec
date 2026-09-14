@@ -2,22 +2,22 @@ package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.compiler.core.ir.core.BinaryOp
-import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
-import community.flock.wirespec.compiler.core.ir.core.Expression
-import community.flock.wirespec.compiler.core.ir.core.fieldCall
-import community.flock.wirespec.compiler.core.ir.core.FunctionCall
-import community.flock.wirespec.compiler.core.ir.core.Literal
-import community.flock.wirespec.compiler.core.ir.core.LiteralList
-import community.flock.wirespec.compiler.core.ir.core.Name
-import community.flock.wirespec.compiler.core.ir.core.NullableEmpty
-import community.flock.wirespec.compiler.core.ir.core.NullableGet
-import community.flock.wirespec.compiler.core.ir.core.NullableOf
-import community.flock.wirespec.compiler.core.ir.core.RawExpression
-import community.flock.wirespec.compiler.core.ir.core.Type
-import community.flock.wirespec.compiler.core.ir.core.TypeDescriptor
-import community.flock.wirespec.compiler.core.ir.core.VariableReference
-import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.BinaryOp
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.fieldCall
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.NullableEmpty
+import community.flock.wirespec.compiler.core.ir.NullableGet
+import community.flock.wirespec.compiler.core.ir.NullableOf
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.TypeDescriptor
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
 import io.kotest.core.spec.style.FunSpec
 
 /**
@@ -133,4 +133,3 @@ class VerifyCaseInsensitivityTest : FunSpec({
         }
     }
 })
-

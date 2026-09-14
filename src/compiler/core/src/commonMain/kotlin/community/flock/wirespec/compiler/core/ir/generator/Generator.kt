@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.ir.generator
 
-import community.flock.wirespec.compiler.core.ir.core.Element
+import community.flock.wirespec.compiler.core.ir.Element
 
 /**
  * Renders an IR tree to target-language source. Each language's generator also implements
