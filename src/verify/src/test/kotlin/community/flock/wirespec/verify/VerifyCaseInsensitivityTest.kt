@@ -2,22 +2,22 @@ package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.fieldCall
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Literal
-import community.flock.wirespec.ir.core.LiteralList
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.NullableEmpty
-import community.flock.wirespec.ir.core.NullableGet
-import community.flock.wirespec.ir.core.NullableOf
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.TypeDescriptor
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.compiler.core.ir.core.BinaryOp
+import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.core.Expression
+import community.flock.wirespec.compiler.core.ir.core.fieldCall
+import community.flock.wirespec.compiler.core.ir.core.FunctionCall
+import community.flock.wirespec.compiler.core.ir.core.Literal
+import community.flock.wirespec.compiler.core.ir.core.LiteralList
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.NullableEmpty
+import community.flock.wirespec.compiler.core.ir.core.NullableGet
+import community.flock.wirespec.compiler.core.ir.core.NullableOf
+import community.flock.wirespec.compiler.core.ir.core.RawExpression
+import community.flock.wirespec.compiler.core.ir.core.Type
+import community.flock.wirespec.compiler.core.ir.core.TypeDescriptor
+import community.flock.wirespec.compiler.core.ir.core.VariableReference
+import community.flock.wirespec.compiler.core.ir.core.file
 import io.kotest.core.spec.style.FunSpec
 
 /**

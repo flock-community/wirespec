@@ -47,6 +47,7 @@ kotlin {
                 api(libs.kotlin.stdlib)
                 api(libs.arrow.core)
                 implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlinx.openapi.bindings)
             }
         }

@@ -12,6 +12,10 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
+import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
+import community.flock.wirespec.compiler.core.ir.generator.PythonGenerator
+import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.lib.WsAST
@@ -31,10 +35,6 @@ import community.flock.wirespec.emitters.python.PythonIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.generator.generate
-import community.flock.wirespec.ir.generator.JavaGenerator
-import community.flock.wirespec.ir.generator.KotlinGenerator
-import community.flock.wirespec.ir.generator.PythonGenerator
-import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter

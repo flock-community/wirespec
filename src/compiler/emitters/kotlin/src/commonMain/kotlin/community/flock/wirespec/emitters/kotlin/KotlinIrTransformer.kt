@@ -2,16 +2,16 @@ package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.ir.core.Import
+import community.flock.wirespec.compiler.core.ir.core.Interface
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.Namespace
+import community.flock.wirespec.compiler.core.ir.core.RawElement
+import community.flock.wirespec.compiler.core.ir.core.import
+import community.flock.wirespec.compiler.core.ir.core.raw
+import community.flock.wirespec.compiler.core.ir.core.transform
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.ir.core.Import
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.raw
-import community.flock.wirespec.ir.core.transform
 
 internal fun Definition.buildModelImports(packageName: PackageName): List<Import> = importReferences()
     .distinctBy { it.value }

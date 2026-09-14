@@ -7,16 +7,16 @@ import community.flock.wirespec.emitters.python.PythonIrEmitter
 import community.flock.wirespec.emitters.rust.RustIrEmitter
 import community.flock.wirespec.emitters.scala.ScalaIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
-import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.Literal
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.compiler.core.ir.core.BinaryOp
+import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.core.Expression
+import community.flock.wirespec.compiler.core.ir.core.FieldCall
+import community.flock.wirespec.compiler.core.ir.core.Literal
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.RawExpression
+import community.flock.wirespec.compiler.core.ir.core.Type
+import community.flock.wirespec.compiler.core.ir.core.VariableReference
+import community.flock.wirespec.compiler.core.ir.core.file
 import io.kotest.core.spec.style.FunSpec
 
 class VerifyConversionTest : FunSpec({

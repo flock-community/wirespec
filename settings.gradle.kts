@@ -49,7 +49,6 @@ include(
     "src:integration:wiremock",
     "src:integration:spring",
     "src:tools:generator",
-    "src:compiler:ir",
     "src:verify",
 )
 

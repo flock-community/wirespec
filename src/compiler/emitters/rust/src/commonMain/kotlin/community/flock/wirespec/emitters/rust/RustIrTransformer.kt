@@ -1,37 +1,37 @@
 package community.flock.wirespec.emitters.rust
 
 import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.ir.converter.convertConstraint
+import community.flock.wirespec.compiler.core.ir.core.Case
+import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.core.Element
+import community.flock.wirespec.compiler.core.ir.core.FieldCall
+import community.flock.wirespec.compiler.core.ir.core.File
+import community.flock.wirespec.compiler.core.ir.core.FunctionCall
+import community.flock.wirespec.compiler.core.ir.core.Interface
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.Namespace
+import community.flock.wirespec.compiler.core.ir.core.Parameter
+import community.flock.wirespec.compiler.core.ir.core.RawElement
+import community.flock.wirespec.compiler.core.ir.core.RawExpression
+import community.flock.wirespec.compiler.core.ir.core.Struct
+import community.flock.wirespec.compiler.core.ir.core.Switch
+import community.flock.wirespec.compiler.core.ir.core.Transformer
+import community.flock.wirespec.compiler.core.ir.core.VariableReference
+import community.flock.wirespec.compiler.core.ir.core.findElement
+import community.flock.wirespec.compiler.core.ir.core.function
+import community.flock.wirespec.compiler.core.ir.core.import
+import community.flock.wirespec.compiler.core.ir.core.transform
+import community.flock.wirespec.compiler.core.ir.core.transformChildren
+import community.flock.wirespec.compiler.core.ir.core.transformer
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.ir.converter.convertConstraint
-import community.flock.wirespec.ir.core.Case
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.Parameter
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.Switch
-import community.flock.wirespec.ir.core.Transformer
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.function
-import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.compiler.core.ir.core.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.core.Function as LanguageFunction
+import community.flock.wirespec.compiler.core.ir.core.Type as LanguageType
+import community.flock.wirespec.compiler.core.ir.core.Union as LanguageUnion
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
-import community.flock.wirespec.ir.core.File as LanguageFile
-import community.flock.wirespec.ir.core.Function as LanguageFunction
-import community.flock.wirespec.ir.core.Type as LanguageType
-import community.flock.wirespec.ir.core.Union as LanguageUnion
 
 internal val rustSelfParam = Parameter(Name.of("&self"), LanguageType.Custom(""))
 internal val rustResponsePattern = Regex("Response(\\d+|Default)")

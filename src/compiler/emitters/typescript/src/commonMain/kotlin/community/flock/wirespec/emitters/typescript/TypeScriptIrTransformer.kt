@@ -1,29 +1,29 @@
 package community.flock.wirespec.emitters.typescript
 
+import community.flock.wirespec.compiler.core.ir.core.Assignment
+import community.flock.wirespec.compiler.core.ir.core.BinaryOp
+import community.flock.wirespec.compiler.core.ir.core.Case
+import community.flock.wirespec.compiler.core.ir.core.Element
+import community.flock.wirespec.compiler.core.ir.core.ErrorStatement
+import community.flock.wirespec.compiler.core.ir.core.FieldCall
+import community.flock.wirespec.compiler.core.ir.core.FunctionCall
+import community.flock.wirespec.compiler.core.ir.core.Interface
+import community.flock.wirespec.compiler.core.ir.core.Literal
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.Parameter
+import community.flock.wirespec.compiler.core.ir.core.RawElement
+import community.flock.wirespec.compiler.core.ir.core.RawExpression
+import community.flock.wirespec.compiler.core.ir.core.Switch
+import community.flock.wirespec.compiler.core.ir.core.Transformer
+import community.flock.wirespec.compiler.core.ir.core.VariableReference
+import community.flock.wirespec.compiler.core.ir.core.raw
+import community.flock.wirespec.compiler.core.ir.core.transform
+import community.flock.wirespec.compiler.core.ir.core.transformChildren
+import community.flock.wirespec.compiler.core.ir.core.transformer
+import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.ir.core.Assignment
-import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.Case
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.ErrorStatement
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Literal
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Parameter
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Switch
-import community.flock.wirespec.ir.core.Transformer
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.raw
-import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformer
-import community.flock.wirespec.ir.generator.TypeScriptGenerator
-import community.flock.wirespec.ir.core.Function as LanguageFunction
-import community.flock.wirespec.ir.core.Type as LanguageType
+import community.flock.wirespec.compiler.core.ir.core.Function as LanguageFunction
+import community.flock.wirespec.compiler.core.ir.core.Type as LanguageType
 
 internal fun <T : Element> T.renameValidateAndBindObjReceiver(
     typeName: String,

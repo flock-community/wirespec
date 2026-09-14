@@ -1,23 +1,23 @@
 package community.flock.wirespec.emitters.rust
 
-import community.flock.wirespec.ir.core.ArrayIndexCall
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.Function
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Literal
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Precision
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Transformer
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.compiler.core.ir.core.ArrayIndexCall
+import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.core.Element
+import community.flock.wirespec.compiler.core.ir.core.Expression
+import community.flock.wirespec.compiler.core.ir.core.FieldCall
+import community.flock.wirespec.compiler.core.ir.core.Function
+import community.flock.wirespec.compiler.core.ir.core.FunctionCall
+import community.flock.wirespec.compiler.core.ir.core.Interface
+import community.flock.wirespec.compiler.core.ir.core.Literal
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.Precision
+import community.flock.wirespec.compiler.core.ir.core.RawExpression
+import community.flock.wirespec.compiler.core.ir.core.Transformer
+import community.flock.wirespec.compiler.core.ir.core.Type
+import community.flock.wirespec.compiler.core.ir.core.VariableReference
+import community.flock.wirespec.compiler.core.ir.core.transform
+import community.flock.wirespec.compiler.core.ir.core.transformChildren
+import community.flock.wirespec.compiler.core.ir.core.transformer
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Low-level borrow primitives (package-private top-level extensions).

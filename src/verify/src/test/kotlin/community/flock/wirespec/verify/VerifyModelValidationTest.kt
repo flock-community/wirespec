@@ -1,9 +1,9 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
-import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.compiler.core.ir.core.BinaryOp
+import community.flock.wirespec.compiler.core.ir.core.VariableReference
+import community.flock.wirespec.compiler.core.ir.core.file
 import io.kotest.core.spec.style.FunSpec
 
 class VerifyModelValidationTest : FunSpec({

@@ -8,11 +8,11 @@ import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.utils.NoLogger
-import community.flock.wirespec.ir.emit.IrEmitter
 import java.io.File
 import kotlin.reflect.full.primaryConstructor
 

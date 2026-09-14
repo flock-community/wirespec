@@ -14,7 +14,7 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.ir.core.ContainerBuilder
+import community.flock.wirespec.compiler.core.ir.core.ContainerBuilder
 import community.flock.wirespec.compiler.test.Fixture
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.emitters.java.JavaIrEmitter
@@ -23,33 +23,33 @@ import community.flock.wirespec.emitters.python.PythonIrEmitter
 import community.flock.wirespec.emitters.rust.RustIrEmitter
 import community.flock.wirespec.emitters.scala.ScalaIrEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
-import community.flock.wirespec.ir.core.AssertStatement
-import community.flock.wirespec.ir.core.Assignment
-import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Import
-import community.flock.wirespec.ir.core.Main
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformer
-import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.generator.JavaGenerator
-import community.flock.wirespec.ir.generator.KotlinGenerator
-import community.flock.wirespec.ir.generator.PythonGenerator
-import community.flock.wirespec.ir.generator.RustGenerator
-import community.flock.wirespec.ir.generator.ScalaGenerator
-import community.flock.wirespec.ir.generator.TypeScriptGenerator
+import community.flock.wirespec.compiler.core.ir.core.AssertStatement
+import community.flock.wirespec.compiler.core.ir.core.Assignment
+import community.flock.wirespec.compiler.core.ir.core.BinaryOp
+import community.flock.wirespec.compiler.core.ir.core.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.core.Expression
+import community.flock.wirespec.compiler.core.ir.core.FieldCall
+import community.flock.wirespec.compiler.core.ir.core.FunctionCall
+import community.flock.wirespec.compiler.core.ir.core.RawExpression
+import community.flock.wirespec.compiler.core.ir.core.Import
+import community.flock.wirespec.compiler.core.ir.core.Main
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.Type
+import community.flock.wirespec.compiler.core.ir.core.VariableReference
+import community.flock.wirespec.compiler.core.ir.core.transformChildren
+import community.flock.wirespec.compiler.core.ir.core.transformer
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
+import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
+import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
+import community.flock.wirespec.compiler.core.ir.generator.PythonGenerator
+import community.flock.wirespec.compiler.core.ir.generator.RustGenerator
+import community.flock.wirespec.compiler.core.ir.generator.ScalaGenerator
+import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import io.kotest.matchers.shouldBe
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
 import java.io.File
-import community.flock.wirespec.ir.core.File as AstFile
+import community.flock.wirespec.compiler.core.ir.core.File as AstFile
 
 internal val languages = mapOf(
     "java-17" to Language(JavaIrEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:17-jdk" }),

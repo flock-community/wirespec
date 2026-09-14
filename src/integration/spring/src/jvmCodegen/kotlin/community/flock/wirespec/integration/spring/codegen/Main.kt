@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
+import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -18,7 +19,6 @@ import community.flock.wirespec.emitters.java.JavaIrEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
 import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
 import community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension
-import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import java.io.File
 

@@ -1,18 +1,18 @@
 package community.flock.wirespec.integration.kotest.convert
 
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.converter.convert
+import community.flock.wirespec.compiler.core.ir.core.File
+import community.flock.wirespec.compiler.core.ir.core.FunctionCall
+import community.flock.wirespec.compiler.core.ir.core.Name
+import community.flock.wirespec.compiler.core.ir.core.Visibility
+import community.flock.wirespec.compiler.core.ir.core.file
+import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.ir.converter.convert
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Visibility
-import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.generator.KotlinGenerator
-import community.flock.wirespec.ir.core.Type as IrType
+import community.flock.wirespec.compiler.core.ir.core.Type as IrType
 
 internal object ChannelDslFile {
 

@@ -1,5 +1,6 @@
 package community.flock.wirespec.emitters.typescript
 
+import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
@@ -12,7 +13,6 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
-import community.flock.wirespec.ir.generator.TypeScriptGenerator
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test

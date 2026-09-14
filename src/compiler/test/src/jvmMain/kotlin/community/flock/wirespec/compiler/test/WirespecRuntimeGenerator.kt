@@ -3,7 +3,7 @@
 package community.flock.wirespec.compiler.test
 
 import community.flock.wirespec.compiler.core.emit.EmitShared
-import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import java.io.File
 import kotlin.reflect.full.primaryConstructor
 

@@ -1,8 +1,0 @@
-package community.flock.wirespec.ir.extension
-
-import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.ir.core.IR
-
-public fun interface IrExtension {
-    public fun extend(ir: IR, ast: AST): IR
-}
