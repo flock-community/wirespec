@@ -17,12 +17,12 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.ir.ContainerBuilder
 import community.flock.wirespec.compiler.test.Fixture
 import community.flock.wirespec.compiler.utils.NoLogger
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.emitters.python.PythonIrEmitter
-import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.emitters.scala.ScalaIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
+import community.flock.wirespec.emitters.scala.ScalaEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.ir.AssertStatement
 import community.flock.wirespec.compiler.core.ir.Assignment
 import community.flock.wirespec.compiler.core.ir.BinaryOp
@@ -52,14 +52,14 @@ import java.io.File
 import community.flock.wirespec.compiler.core.ir.File as AstFile
 
 internal val languages = mapOf(
-    "java-17" to Language(JavaIrEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:17-jdk" }),
-    "java-21" to Language(JavaIrEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:21-jdk" }),
-    "kotlin-1" to Language(KotlinIrEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_1.image }),
-    "kotlin-2" to Language(KotlinIrEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_2.image }),
-    "python" to Language(PythonIrEmitter(emitShared = EmitShared(true)), { VerifyImage.PYTHON.image }),
-    "typescript" to Language(TypeScriptIrEmitter(), { VerifyImage.TYPESCRIPT.image }),
-    "rust" to Language(RustIrEmitter(emitShared = EmitShared(true)), { VerifyImage.RUST.image }),
-    "scala" to Language(ScalaIrEmitter(emitShared = EmitShared(true)), { VerifyImage.SCALA.image }),
+    "java-17" to Language(JavaEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:17-jdk" }),
+    "java-21" to Language(JavaEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:21-jdk" }),
+    "kotlin-1" to Language(KotlinEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_1.image }),
+    "kotlin-2" to Language(KotlinEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_2.image }),
+    "python" to Language(PythonEmitter(emitShared = EmitShared(true)), { VerifyImage.PYTHON.image }),
+    "typescript" to Language(TypeScriptEmitter(), { VerifyImage.TYPESCRIPT.image }),
+    "rust" to Language(RustEmitter(emitShared = EmitShared(true)), { VerifyImage.RUST.image }),
+    "scala" to Language(ScalaEmitter(emitShared = EmitShared(true)), { VerifyImage.SCALA.image }),
 ).onEach { (name, lang) -> lang.name = name }
 
 internal class Language(
@@ -104,12 +104,12 @@ internal class Language(
         val name = file.name.pascalCase()
         val transformed = emitter.transformTestFile(file)
         val (fileName, content) = when (emitter) {
-            is JavaIrEmitter -> "${name}.java" to JavaGenerator.generate(transformed)
-            is KotlinIrEmitter -> "${name}.kt" to KotlinGenerator.generate(transformed)
-            is PythonIrEmitter -> "${name}.py" to PythonGenerator.generate(transformed)
-            is RustIrEmitter -> "${name}.rs" to RustGenerator.generate(transformed)
-            is ScalaIrEmitter -> "${name}.scala" to ScalaGenerator.generate(transformed)
-            is TypeScriptIrEmitter -> "${name}.ts" to TypeScriptGenerator.generate(transformed)
+            is JavaEmitter -> "${name}.java" to JavaGenerator.generate(transformed)
+            is KotlinEmitter -> "${name}.kt" to KotlinGenerator.generate(transformed)
+            is PythonEmitter -> "${name}.py" to PythonGenerator.generate(transformed)
+            is RustEmitter -> "${name}.rs" to RustGenerator.generate(transformed)
+            is ScalaEmitter -> "${name}.scala" to ScalaGenerator.generate(transformed)
+            is TypeScriptEmitter -> "${name}.ts" to TypeScriptGenerator.generate(transformed)
             else -> error("Unknown language: $name")
         }
         outputDir.resolve(fileName).writeText(content)
@@ -147,27 +147,27 @@ internal class Language(
 
     fun compile() {
         val verifyCommand = when (emitter) {
-            is JavaIrEmitter -> "find /app/gen -name '*.java' | xargs javac -d /tmp/out"
-            is KotlinIrEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
-            is PythonIrEmitter -> "python -m mypy --disable-error-code=empty-body --disable-error-code=arg-type /app/gen/"
-            is RustIrEmitter -> "rm -rf /app/src/generated && cp -r /app/gen/community/flock/wirespec/generated /app/src/generated && printf 'mod generated;\\nfn main() {}\\n' > /app/src/main.rs && cd /app && cargo build"
-            is ScalaIrEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile --server=false"
-            is TypeScriptIrEmitter -> "cd /app/gen && tsc --noEmit"
+            is JavaEmitter -> "find /app/gen -name '*.java' | xargs javac -d /tmp/out"
+            is KotlinEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
+            is PythonEmitter -> "python -m mypy --disable-error-code=empty-body --disable-error-code=arg-type /app/gen/"
+            is RustEmitter -> "rm -rf /app/src/generated && cp -r /app/gen/community/flock/wirespec/generated /app/src/generated && printf 'mod generated;\\nfn main() {}\\n' > /app/src/main.rs && cd /app && cargo build"
+            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile --server=false"
+            is TypeScriptEmitter -> "cd /app/gen && tsc --noEmit"
             else -> error("Unknown language: ${emitter::class.simpleName}")
         }
         exec(verifyCommand)
     }
 
     fun run(testFile: AstFile) {
-        val resolved = if (emitter is TypeScriptIrEmitter) testFile.adaptForTypeScript(fixture) else testFile
+        val resolved = if (emitter is TypeScriptEmitter) testFile.adaptForTypeScript(fixture) else testFile
         generate(resolved, workspaceDir)
         compile()
         val fileName = testFile.name.pascalCase()
         val runCommand: String = when (emitter) {
-            is JavaIrEmitter -> "java -ea -cp /tmp/out $fileName"
-            is KotlinIrEmitter -> "java -ea -cp /tmp/run.jar ${fileName}Kt"
-            is PythonIrEmitter -> "cd /app/gen && python ${fileName}.py"
-            is RustIrEmitter -> {
+            is JavaEmitter -> "java -ea -cp /tmp/out $fileName"
+            is KotlinEmitter -> "java -ea -cp /tmp/run.jar ${fileName}Kt"
+            is PythonEmitter -> "cd /app/gen && python ${fileName}.py"
+            is RustEmitter -> {
                 // Build use statements from the test file's imports
                 val imports = resolved.elements.filterIsInstance<Import>()
                 val hasEndpointImports = imports.any { it.path.contains("endpoint") }
@@ -206,8 +206,8 @@ internal class Language(
                 "cd /app && cargo build && cargo run"
             }
 
-            is ScalaIrEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --server=false --main-class ${fileName}"
-            is TypeScriptIrEmitter -> "cd /app/gen && tsx ${fileName}.ts"
+            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --server=false --main-class ${fileName}"
+            is TypeScriptEmitter -> "cd /app/gen && tsx ${fileName}.ts"
             else -> error("Unknown language: ${name}")
         }
         exec(runCommand)
@@ -367,17 +367,17 @@ internal fun ContainerBuilder.endpointClientImports(lang: Language, fixture: Fix
     val models = fixture.modelNames()
     clientImportsShared(lang, endpoints, models)
     when (lang.emitter) {
-        is JavaIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
-        is KotlinIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
-        is TypeScriptIrEmitter -> endpoints.forEach {
+        is JavaEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
+        is KotlinEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
+        is TypeScriptEmitter -> endpoints.forEach {
             val camel = Name.of(it).camelCase()
             import("./client/${it}Client", "${camel}Client")
         }
-        is PythonIrEmitter -> endpoints.forEach {
+        is PythonEmitter -> endpoints.forEach {
             raw("from community.flock.wirespec.generated.client.${it}Client import ${it}Client")
         }
-        is ScalaIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
-        is RustIrEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
+        is ScalaEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
+        is RustEmitter -> endpoints.forEach { import("community.flock.wirespec.generated.client", "${it}Client") }
     }
 }
 
@@ -386,12 +386,12 @@ internal fun ContainerBuilder.mainClientImports(lang: Language, fixture: Fixture
     val models = fixture.modelNames()
     clientImportsShared(lang, endpoints, models)
     when (lang.emitter) {
-        is JavaIrEmitter -> import("community.flock.wirespec.generated", "Client")
-        is KotlinIrEmitter -> import("community.flock.wirespec.generated", "Client")
-        is TypeScriptIrEmitter -> import("./Client", "client")
-        is PythonIrEmitter -> raw("from community.flock.wirespec.generated.Client import Client")
-        is ScalaIrEmitter -> import("community.flock.wirespec.generated", "Client")
-        is RustIrEmitter -> import("community.flock.wirespec.generated", "Client")
+        is JavaEmitter -> import("community.flock.wirespec.generated", "Client")
+        is KotlinEmitter -> import("community.flock.wirespec.generated", "Client")
+        is TypeScriptEmitter -> import("./Client", "client")
+        is PythonEmitter -> raw("from community.flock.wirespec.generated.Client import Client")
+        is ScalaEmitter -> import("community.flock.wirespec.generated", "Client")
+        is RustEmitter -> import("community.flock.wirespec.generated", "Client")
     }
 }
 
@@ -402,11 +402,11 @@ internal fun ContainerBuilder.endpointImports(lang: Language, fixture: Fixture) 
 private fun ContainerBuilder.clientImportsShared(lang: Language, endpoints: List<String>, models: List<String>) {
     endpointImports(lang, endpoints, models)
     when (lang.emitter) {
-        is KotlinIrEmitter -> {
+        is KotlinEmitter -> {
             import("kotlin.coroutines", "createCoroutine")
             import("kotlin.coroutines", "resume")
         }
-        is PythonIrEmitter -> {
+        is PythonEmitter -> {
             endpoints.forEach { raw("from community.flock.wirespec.generated.endpoint.$it import Response200") }
             raw("import asyncio")
         }
@@ -416,33 +416,33 @@ private fun ContainerBuilder.clientImportsShared(lang: Language, endpoints: List
 
 private fun ContainerBuilder.endpointImports(lang: Language, endpoints: List<String>, models: List<String>) {
     when (lang.emitter) {
-        is JavaIrEmitter -> {
+        is JavaEmitter -> {
             import("community.flock.wirespec.java", "Wirespec")
             endpoints.forEach { import("community.flock.wirespec.generated.endpoint", it) }
             models.forEach { import("community.flock.wirespec.generated.model", it) }
         }
-        is KotlinIrEmitter -> {
+        is KotlinEmitter -> {
             import("community.flock.wirespec.kotlin", "Wirespec")
             import("kotlin.reflect", "typeOf")
             endpoints.forEach { import("community.flock.wirespec.generated.endpoint", it) }
             models.forEach { import("community.flock.wirespec.generated.model", it) }
         }
-        is TypeScriptIrEmitter -> {
+        is TypeScriptEmitter -> {
             import("./Wirespec", "Wirespec")
             endpoints.forEach { import("./endpoint/$it", it) }
             models.forEach { import("./model/$it", it) }
         }
-        is PythonIrEmitter -> {
+        is PythonEmitter -> {
             import("community.flock.wirespec.generated.wirespec", "Wirespec")
             endpoints.forEach { import("community.flock.wirespec.generated.endpoint.$it", it) }
             models.forEach { import("community.flock.wirespec.generated.model.$it", it) }
         }
-        is ScalaIrEmitter -> {
+        is ScalaEmitter -> {
             import("community.flock.wirespec.scala", "Wirespec")
             endpoints.forEach { import("community.flock.wirespec.generated.endpoint", it) }
             models.forEach { import("community.flock.wirespec.generated.model", it) }
         }
-        is RustIrEmitter -> {
+        is RustEmitter -> {
             endpoints.forEach { import("community.flock.wirespec.generated.endpoint", it) }
             models.forEach { import("community.flock.wirespec.generated.model", it) }
         }

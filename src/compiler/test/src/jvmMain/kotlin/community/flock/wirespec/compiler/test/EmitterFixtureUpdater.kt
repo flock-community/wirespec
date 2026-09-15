@@ -18,7 +18,7 @@ import kotlin.reflect.full.primaryConstructor
 
 /**
  * Single shared updater entry point used by every emitter's `updateEmitterFixtures`
- * Gradle task. The emitter's fully-qualified class name is passed as the second arg,
+ * Gradle task. The emitter's fully qualified class name is passed as the second arg,
  * and we reflectively build a factory that supplies `EmitShared(true)` to its primary
  * constructor when applicable, so the generator can produce the shared file.
  *

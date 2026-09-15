@@ -27,10 +27,10 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class KotlinIrEmitterTest {
+class KotlinEmitterTest {
 
     private val emitContext = object : EmitContext, NoLogger {
-        override val emitters = nonEmptySetOf(KotlinIrEmitter())
+        override val emitters = nonEmptySetOf(KotlinEmitter())
     }
 
     @Test
@@ -77,91 +77,91 @@ class KotlinIrEmitterTest {
     fun compileFullEndpointTest() {
         val kotlin = EmitterFixtures.compileFullEndpointTest
 
-        CompileFullEndpointTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileFullEndpointTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileChannelTest() {
         val kotlin = EmitterFixtures.compileChannelTest
 
-        CompileChannelTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileChannelTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileRpcTest() {
         val kotlin = EmitterFixtures.compileRpcTest
 
-        CompileRpcTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileRpcTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileEnumTest() {
         val kotlin = EmitterFixtures.compileEnumTest
 
-        CompileEnumTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileEnumTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileMinimalEndpointTest() {
         val kotlin = EmitterFixtures.compileMinimalEndpointTest
 
-        CompileMinimalEndpointTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileMinimalEndpointTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileRefinedTest() {
         val kotlin = EmitterFixtures.compileRefinedTest
 
-        CompileRefinedTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileRefinedTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileUnionTest() {
         val kotlin = EmitterFixtures.compileUnionTest
 
-        CompileUnionTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileUnionTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileTypeTest() {
         val kotlin = EmitterFixtures.compileTypeTest
 
-        CompileTypeTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileTypeTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileAnyTest() {
         val kotlin = EmitterFixtures.compileAnyTest
 
-        CompileAnyTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileAnyTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileFieldNameSanitizationTest() {
         val kotlin = EmitterFixtures.compileFieldNameSanitizationTest
 
-        CompileFieldNameSanitizationTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileFieldNameSanitizationTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileNestedTypeTest() {
         val kotlin = EmitterFixtures.compileNestedTypeTest
 
-        CompileNestedTypeTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileNestedTypeTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun compileComplexModelTest() {
         val kotlin = EmitterFixtures.compileComplexModelTest
 
-        CompileComplexModelTest.compiler { KotlinIrEmitter() } shouldBeRight kotlin
+        CompileComplexModelTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun sharedOutputTest() {
         val expected = EmitterFixtures.sharedOutputTest
 
-        val emitter = KotlinIrEmitter(emitShared = EmitShared(true))
+        val emitter = KotlinEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(KotlinGenerator::generate) shouldBe expected
     }
 

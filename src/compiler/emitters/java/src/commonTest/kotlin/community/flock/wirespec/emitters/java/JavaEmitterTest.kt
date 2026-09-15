@@ -27,10 +27,10 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class JavaIrEmitterTest {
+class JavaEmitterTest {
 
     private val emitContext = object : EmitContext, NoLogger {
-        override val emitters = nonEmptySetOf(JavaIrEmitter())
+        override val emitters = nonEmptySetOf(JavaEmitter())
     }
 
     @Test
@@ -55,67 +55,67 @@ class JavaIrEmitterTest {
 
     @Test
     fun compileFullEndpointTest() {
-        CompileFullEndpointTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileFullEndpointTest
+        CompileFullEndpointTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileFullEndpointTest
     }
 
     @Test
     fun compileChannelTest() {
-        CompileChannelTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileChannelTest
+        CompileChannelTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileChannelTest
     }
 
     @Test
     fun compileRpcTest() {
-        CompileRpcTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileRpcTest
+        CompileRpcTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileRpcTest
     }
 
     @Test
     fun compileEnumTest() {
-        CompileEnumTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileEnumTest
+        CompileEnumTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileEnumTest
     }
 
     @Test
     fun compileMinimalEndpointTest() {
-        CompileMinimalEndpointTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileMinimalEndpointTest
+        CompileMinimalEndpointTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileMinimalEndpointTest
     }
 
     @Test
     fun compileRefinedTest() {
-        CompileRefinedTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileRefinedTest
+        CompileRefinedTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileRefinedTest
     }
 
     @Test
     fun compileUnionTest() {
-        CompileUnionTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileUnionTest
+        CompileUnionTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileUnionTest
     }
 
     @Test
     fun compileTypeTest() {
-        CompileTypeTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileTypeTest
+        CompileTypeTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileTypeTest
     }
 
     @Test
     fun compileAnyTest() {
-        CompileAnyTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileAnyTest
+        CompileAnyTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileAnyTest
     }
 
     @Test
     fun compileFieldNameSanitizationTest() {
-        CompileFieldNameSanitizationTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileFieldNameSanitizationTest
+        CompileFieldNameSanitizationTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileFieldNameSanitizationTest
     }
 
     @Test
     fun compileNestedTypeTest() {
-        CompileNestedTypeTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileNestedTypeTest
+        CompileNestedTypeTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileNestedTypeTest
     }
 
     @Test
     fun compileComplexModelTest() {
-        CompileComplexModelTest.compiler { JavaIrEmitter() } shouldBeRight EmitterFixtures.compileComplexModelTest
+        CompileComplexModelTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileComplexModelTest
     }
 
     @Test
     fun sharedOutputTest() {
-        val emitter = JavaIrEmitter(emitShared = EmitShared(true))
+        val emitter = JavaEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(JavaGenerator::generate) shouldBe EmitterFixtures.sharedOutputTest
     }
 

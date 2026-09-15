@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core.ir.extension
 
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.Logger
@@ -20,4 +19,4 @@ public class ExtendingIrEmitter(
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger)
 }
 
-public fun Emitter.applyExtensions(extensions: List<IrExtension>): Emitter = if (this is IrEmitter && extensions.isNotEmpty()) ExtendingIrEmitter(this, extensions) else this
+public fun IrEmitter.applyExtensions(extensions: NonEmptyList<IrExtension>): IrEmitter = ExtendingIrEmitter(this, extensions)

@@ -9,6 +9,6 @@ public class EmitShared(override val value: Boolean) : Value<Boolean> {
     public companion object {
 
         @JvmSynthetic
-        public operator fun invoke(value: Boolean? = null): EmitShared = EmitShared(value ?: false)
+        public operator fun invoke(value: Boolean? = null): EmitShared = EmitShared(value == true)
     }
 }

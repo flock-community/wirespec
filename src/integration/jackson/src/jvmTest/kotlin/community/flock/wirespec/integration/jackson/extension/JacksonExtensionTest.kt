@@ -6,15 +6,15 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.EmitShared
-import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
@@ -43,12 +43,12 @@ class JacksonExtensionTest {
         |enum Color { Red, Green, Blue }
         """.trimMargin()
 
-    private fun emit(emitter: Emitter) = emitter
-        .applyExtensions(listOf(JacksonExtension()))
+    private fun emit(emitter: IrEmitter) = emitter
+        .applyExtensions(nonEmptyListOf(JacksonExtension()))
         .emit(parse(source), noLogger)
 
-    private fun kotlin() = emit(KotlinIrEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false)))
-    private fun java() = emit(JavaIrEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false)))
+    private fun kotlin() = emit(KotlinEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false)))
+    private fun java() = emit(JavaEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false)))
 
     private fun List<community.flock.wirespec.compiler.core.emit.Emitted>.file(suffix: String) = single { it.file.endsWith(suffix) }.result
 

@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest.extension
 
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -8,7 +9,7 @@ import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.compile
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -19,7 +20,7 @@ class KotestDslExtensionTest {
 
     private val pkg = PackageName("com.example.api")
 
-    private fun emitter(): Emitter = KotlinIrEmitter(pkg, EmitShared(false)).applyExtensions(listOf(KotestDslExtension(pkg)))
+    private fun emitter(): Emitter = KotlinEmitter(pkg, EmitShared(false)).applyExtensions(nonEmptyListOf(KotestDslExtension(pkg)))
 
     @Test
     fun emitsPerEndpointDslWithGenerateExtension() {

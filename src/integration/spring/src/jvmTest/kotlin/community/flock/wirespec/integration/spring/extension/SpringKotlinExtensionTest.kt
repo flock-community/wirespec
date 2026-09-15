@@ -19,7 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -34,9 +34,9 @@ class SpringKotlinExtensionTest {
         override val spec = WirespecSpec
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
-    private fun springEmitter(packageName: PackageName) = KotlinIrEmitter(packageName, EmitShared(false))
+    private fun springEmitter(packageName: PackageName) = KotlinEmitter(packageName, EmitShared(false))
         .applyExtensions(
-            listOf(
+            nonEmptyListOf(
                 SpringMappingAnnotationsExtension(FileExtension.Kotlin),
                 SpringNativeHintsExtension(packageName, FileExtension.Kotlin),
             ),

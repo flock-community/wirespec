@@ -1,8 +1,8 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
-import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.ir.ArrayIndexCall
 import community.flock.wirespec.compiler.core.ir.BinaryOp
 import community.flock.wirespec.compiler.core.ir.FieldCall
@@ -19,9 +19,9 @@ class VerifyGeneratorTest : FunSpec({
 
     // Rust is excluded: the Rust emitter's generator output is not wired into the generated
     // module tree (lib.rs lacks `pub mod generator`) and does not compile yet.
-    languages.values.filterNot { it.emitter is RustIrEmitter }.forEach { lang ->
+    languages.values.filterNot { it.emitter is RustEmitter }.forEach { lang ->
         test("generated test data - $lang") {
-            val isTypeScript = lang.emitter is TypeScriptIrEmitter
+            val isTypeScript = lang.emitter is TypeScriptEmitter
 
             val testFile = file("GeneratorDataTest") {
                 generatorImports(lang, listOf("Person"))

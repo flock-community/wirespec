@@ -61,7 +61,7 @@ import community.flock.wirespec.compiler.core.ir.Interface as LanguageInterface
 import community.flock.wirespec.compiler.core.ir.Package as LanguagePackage
 import community.flock.wirespec.compiler.core.ir.Union as LanguageUnion
 
-public open class KotlinIrEmitter(
+public open class KotlinEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {

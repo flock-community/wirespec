@@ -1,7 +1,7 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
-import community.flock.wirespec.emitters.rust.RustIrEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
 import community.flock.wirespec.compiler.core.ir.BinaryOp
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Expression
@@ -40,7 +40,7 @@ class VerifyCaseInsensitivityTest : FunSpec({
 
     languages.values.forEach { lang ->
         test("header case insensitivity - $lang") {
-            val isRust = lang.emitter is RustIrEmitter
+            val isRust = lang.emitter is RustEmitter
             val endpointRef: Expression = RawExpression("PutTodo")
 
             val testFile = file("CaseInsensitivityTest") {
@@ -91,7 +91,7 @@ class VerifyCaseInsensitivityTest : FunSpec({
 
                     // fromRawRequest call
                     assign("fromRaw", functionCall("fromRawRequest", receiver = if (isRust) null else endpointRef) {
-                        arg("serialization", if (isRust) with(RustIrEmitter) { VariableReference("serialization").borrow() } else VariableReference("serialization"))
+                        arg("serialization", if (isRust) with(RustEmitter) { VariableReference("serialization").borrow() } else VariableReference("serialization"))
                         arg("rawRequest", VariableReference("rawRequest"))
                     })
 

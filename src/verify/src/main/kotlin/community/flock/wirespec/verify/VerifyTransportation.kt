@@ -1,14 +1,14 @@
 package community.flock.wirespec.verify
 
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.emitters.python.PythonIrEmitter
-import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.emitters.scala.ScalaIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
+import community.flock.wirespec.emitters.scala.ScalaEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 
 internal fun transportationCode(lang: Language): String = when (lang.emitter) {
-    is JavaIrEmitter -> """
+    is JavaEmitter -> """
         |static Wirespec.Transportation transportation = (Wirespec.RawRequest rawRequest) -> {
         |    assert rawRequest.method().equals("GET") : "Method should be GET";
         |    assert rawRequest.path().get(0).equals("todos") : "Path should start with todos";
@@ -18,7 +18,7 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
         |};
     """.trimMargin()
 
-    is KotlinIrEmitter -> """
+    is KotlinEmitter -> """
         |val transportation = object : Wirespec.Transportation {
         |    override suspend fun transport(request: Wirespec.RawRequest): Wirespec.RawResponse {
         |        assert(request.method == "GET") { "Method should be GET" }
@@ -30,7 +30,7 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
         |}
     """.trimMargin()
 
-    is TypeScriptIrEmitter -> """
+    is TypeScriptEmitter -> """
         |const transportation: Wirespec.Transportation = {
         |    transport: async (request: Wirespec.RawRequest): Promise<Wirespec.RawResponse> => {
         |        if (request.method !== "GET") throw new Error("Method should be GET");
@@ -42,7 +42,7 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
         |}
     """.trimMargin()
 
-    is PythonIrEmitter -> """
+    is PythonEmitter -> """
         |class TestTransportation(Wirespec.Transportation):
         |    def __init__(self, serialization):
         |        self.serialization = serialization
@@ -55,7 +55,7 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
         |transportation = TestTransportation(serialization)
     """.trimMargin()
 
-    is RustIrEmitter -> """
+    is RustEmitter -> """
         |use generated::wirespec::Transportation;
         |struct MockTransport<'a, S: Serialization> {
         |    serialization: &'a S,
@@ -73,7 +73,7 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
         |static transportation: MockTransport<'static, MockSer> = MockTransport { serialization: &serialization };
     """.trimMargin()
 
-    is ScalaIrEmitter -> """
+    is ScalaEmitter -> """
         |val transportation = new Wirespec.Transportation {
         |    override def transport(request: Wirespec.RawRequest): Wirespec.RawResponse = {
         |        assert(request.method == "GET", "Method should be GET")

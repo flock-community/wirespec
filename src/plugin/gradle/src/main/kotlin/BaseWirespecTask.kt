@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin.gradle
 
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
+import arrow.core.toNonEmptyListOrNull
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -9,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.utils.Logger
@@ -99,7 +101,11 @@ public abstract class BaseWirespecTask : DefaultTask() {
 
     protected fun emitters(): NonEmptySet<Emitter> = languages.get()
         .map { it.toEmitter(packageNameValue(), sharedValue()) }
-        .map { it.applyExtensions(extensionInstances(it.extension)) }
+        .map { emitter ->
+            extensionInstances(emitter.extension).toNonEmptyListOrNull()
+                ?.let { (emitter as? IrEmitter)?.applyExtensions(it) }
+                ?: emitter
+        }
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguage()
 

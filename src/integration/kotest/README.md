@@ -125,7 +125,7 @@ it emits one `<Endpoint>Dsl.kt` / `<Channel>Dsl.kt` per operation into
 `<packageName>.kotest`, alongside the models the base emitter produces.
 
 ```kotlin
-KotlinIrEmitter(pkg, EmitShared(false)).applyExtensions(listOf(KotestDslExtension(pkg)))
+KotlinEmitter(pkg, EmitShared(false)).applyExtensions(nonEmptyListOf(KotestDslExtension(pkg)))
 ```
 
 Each generated file hangs the entry points off a `generate` extension property

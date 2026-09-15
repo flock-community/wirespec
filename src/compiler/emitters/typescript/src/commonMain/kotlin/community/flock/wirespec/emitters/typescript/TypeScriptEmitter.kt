@@ -54,7 +54,7 @@ import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 private const val MODEL_IMPORT_PATH = "../model"
 
-public open class TypeScriptIrEmitter : IrEmitter {
+public open class TypeScriptEmitter : IrEmitter {
 
     override val generator: Generator = TypeScriptGenerator
 

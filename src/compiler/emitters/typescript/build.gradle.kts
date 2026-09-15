@@ -63,5 +63,5 @@ kotlin.sourceSets.named("commonTest") {
 }
 
 emitterFixtures {
-    emitterClass = "community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter"
+    emitterClass = "community.flock.wirespec.emitters.typescript.TypeScriptEmitter"
 }

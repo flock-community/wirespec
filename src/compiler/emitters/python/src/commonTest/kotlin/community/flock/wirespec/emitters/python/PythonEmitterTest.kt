@@ -18,97 +18,97 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class PythonIrEmitterTest {
+class PythonEmitterTest {
 
     @Test
     fun compileFullEndpointTest() {
         val python = EmitterFixtures.compileFullEndpointTest
 
-        CompileFullEndpointTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileFullEndpointTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileChannelTest() {
         val python = EmitterFixtures.compileChannelTest
 
-        CompileChannelTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileChannelTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileRpcTest() {
         val python = EmitterFixtures.compileRpcTest
 
-        CompileRpcTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileRpcTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileEnumTest() {
         val python = EmitterFixtures.compileEnumTest
 
-        CompileEnumTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileEnumTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileMinimalEndpointTest() {
         val python = EmitterFixtures.compileMinimalEndpointTest
 
-        CompileMinimalEndpointTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileMinimalEndpointTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileRefinedTest() {
         val python = EmitterFixtures.compileRefinedTest
 
-        CompileRefinedTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileRefinedTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileUnionTest() {
         val python = EmitterFixtures.compileUnionTest
 
-        CompileUnionTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileUnionTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileTypeTest() {
         val python = EmitterFixtures.compileTypeTest
 
-        CompileTypeTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileTypeTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileAnyTest() {
         val python = EmitterFixtures.compileAnyTest
 
-        CompileAnyTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileAnyTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileFieldNameSanitizationTest() {
         val python = EmitterFixtures.compileFieldNameSanitizationTest
 
-        CompileFieldNameSanitizationTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileFieldNameSanitizationTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileNestedTypeTest() {
         val python = EmitterFixtures.compileNestedTypeTest
 
-        CompileNestedTypeTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileNestedTypeTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun compileComplexModelTest() {
         val python = EmitterFixtures.compileComplexModelTest
 
-        CompileComplexModelTest.compiler { PythonIrEmitter() } shouldBeRight python
+        CompileComplexModelTest.compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun sharedOutputTest() {
         val expected = EmitterFixtures.sharedOutputTest
 
-        val emitter = PythonIrEmitter(emitShared = EmitShared(true))
+        val emitter = PythonEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(PythonGenerator::generate) shouldBe expected
     }
 }

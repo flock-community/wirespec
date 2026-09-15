@@ -60,7 +60,7 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.ir.Package as LanguagePackage
 import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
-public open class ScalaIrEmitter(
+public open class ScalaEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {

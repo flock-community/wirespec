@@ -1,10 +1,10 @@
 package community.flock.wirespec.verify
 
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.emitters.python.PythonIrEmitter
-import community.flock.wirespec.emitters.scala.ScalaIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.scala.ScalaEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.ir.ContainerBuilder
 
 private const val WIRESPEC = "Wirespec"
@@ -16,23 +16,23 @@ private const val GENERATOR_PACKAGE = "community.flock.wirespec.generated.genera
  */
 internal fun ContainerBuilder.generatorImports(lang: Language, definitionNames: List<String>) {
     when (lang.emitter) {
-        is JavaIrEmitter -> {
+        is JavaEmitter -> {
             import("community.flock.wirespec.java", WIRESPEC)
             definitionNames.forEach { import(GENERATOR_PACKAGE, "${it}Generator") }
         }
-        is KotlinIrEmitter -> {
+        is KotlinEmitter -> {
             import("community.flock.wirespec.kotlin", WIRESPEC)
             definitionNames.forEach { import(GENERATOR_PACKAGE, "${it}Generator") }
         }
-        is ScalaIrEmitter -> {
+        is ScalaEmitter -> {
             import("community.flock.wirespec.scala", WIRESPEC)
             definitionNames.forEach { import(GENERATOR_PACKAGE, "${it}Generator") }
         }
-        is TypeScriptIrEmitter -> {
+        is TypeScriptEmitter -> {
             import("./Wirespec", WIRESPEC)
             definitionNames.forEach { import("./generator/${it}Generator", "${it}Generator") }
         }
-        is PythonIrEmitter -> {
+        is PythonEmitter -> {
             import("community.flock.wirespec.generated.wirespec", WIRESPEC)
             definitionNames.forEach { import("$GENERATOR_PACKAGE.${it}Generator", "${it}Generator") }
         }
@@ -48,7 +48,7 @@ internal fun ContainerBuilder.generatorImports(lang: Language, definitionNames: 
  * (shape, array, nullable, dict) recurse via the field's own generate callback.
  */
 internal fun generatorCode(lang: Language): String = when (lang.emitter) {
-    is JavaIrEmitter -> """
+    is JavaEmitter -> """
         |static Wirespec.Generator generator = new Wirespec.Generator() {
         |    @SuppressWarnings("unchecked")
         |    @Override
@@ -74,7 +74,7 @@ internal fun generatorCode(lang: Language): String = when (lang.emitter) {
         |};
     """.trimMargin()
 
-    is KotlinIrEmitter -> """
+    is KotlinEmitter -> """
         |@Suppress("UNCHECKED_CAST")
         |val generator = object : Wirespec.Generator {
         |    override fun <T> generate(path: List<String>, field: Wirespec.GeneratorField<T>): T = when (field) {
@@ -95,7 +95,7 @@ internal fun generatorCode(lang: Language): String = when (lang.emitter) {
         |}
     """.trimMargin()
 
-    is TypeScriptIrEmitter -> """
+    is TypeScriptEmitter -> """
         |const generator: Wirespec.Generator = {
         |    generate: <T>(path: string[], field: Wirespec.GeneratorField<T>): T => {
         |        const f = field as any;
@@ -119,7 +119,7 @@ internal fun generatorCode(lang: Language): String = when (lang.emitter) {
         |};
     """.trimMargin()
 
-    is PythonIrEmitter -> """
+    is PythonEmitter -> """
         |class TestGenerator(Wirespec.Generator):
         |    def generate(self, path, field):
         |        if isinstance(field, Wirespec.GeneratorFieldString):
@@ -148,7 +148,7 @@ internal fun generatorCode(lang: Language): String = when (lang.emitter) {
         |generator = TestGenerator()
     """.trimMargin()
 
-    is ScalaIrEmitter -> """
+    is ScalaEmitter -> """
         |val generator: Wirespec.Generator = new Wirespec.Generator {
         |    def generate[T](path: List[String], field: Wirespec.GeneratorField[T]): T = (field match {
         |        case f: Wirespec.GeneratorFieldString => if (f.regex.isDefined) "1234AB" else "string"

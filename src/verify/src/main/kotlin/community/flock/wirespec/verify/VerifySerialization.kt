@@ -2,15 +2,15 @@ package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.compiler.test.Fixture
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.emitters.python.PythonIrEmitter
-import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.emitters.scala.ScalaIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
+import community.flock.wirespec.emitters.scala.ScalaEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 
 internal fun serializationCode(lang: Language, fixture: Fixture? = null): String = when (lang.emitter) {
-    is JavaIrEmitter -> """
+    is JavaEmitter -> """
         |static Wirespec.Serialization serialization = new Wirespec.Serialization() {
         |    private final java.util.Map<String, Object> store = new java.util.HashMap<>();
         |    private String randomKey() { return java.util.UUID.randomUUID().toString(); }
@@ -30,7 +30,7 @@ internal fun serializationCode(lang: Language, fixture: Fixture? = null): String
         |};
     """.trimMargin()
 
-    is KotlinIrEmitter -> """
+    is KotlinEmitter -> """
         |val serialization = object : Wirespec.Serialization {
         |    private val store = mutableMapOf<String, Any>()
         |    private fun randomKey() = java.util.UUID.randomUUID().toString()
@@ -50,7 +50,7 @@ internal fun serializationCode(lang: Language, fixture: Fixture? = null): String
         |}
     """.trimMargin()
 
-    is TypeScriptIrEmitter -> """
+    is TypeScriptEmitter -> """
         |const store: Record<string, unknown> = {};
         |let counter = 0;
         |const serialization: Wirespec.Serialization = {
@@ -69,7 +69,7 @@ internal fun serializationCode(lang: Language, fixture: Fixture? = null): String
         |}
     """.trimMargin()
 
-    is PythonIrEmitter -> """
+    is PythonEmitter -> """
         |class TestSerialization(Wirespec.Serialization):
         |    def __init__(self):
         |        self.store = {}
@@ -96,9 +96,9 @@ internal fun serializationCode(lang: Language, fixture: Fixture? = null): String
         |serialization = TestSerialization()
     """.trimMargin()
 
-    is RustIrEmitter -> rustSerializationCode(fixture)
+    is RustEmitter -> rustSerializationCode(fixture)
 
-    is ScalaIrEmitter -> """
+    is ScalaEmitter -> """
         |val serialization = new Wirespec.Serialization {
         |    private val store = scala.collection.mutable.Map[String, Any]()
         |    private def randomKey(): String = java.util.UUID.randomUUID().toString

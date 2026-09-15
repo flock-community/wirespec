@@ -59,7 +59,7 @@ import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 private const val STRUCT_DERIVE = "#[derive(Debug, Clone, Default, PartialEq)]"
 
-public open class RustIrEmitter(
+public open class RustEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared()
 ) : IrEmitter {

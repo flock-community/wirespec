@@ -1,12 +1,12 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.emitters.python.PythonIrEmitter
-import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.emitters.scala.ScalaIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
+import community.flock.wirespec.emitters.scala.ScalaEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.ir.BinaryOp
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Expression
@@ -23,9 +23,9 @@ class VerifyConversionTest : FunSpec({
 
     languages.values.forEach { lang ->
         test("conversion functions - $lang") {
-            val isRust = lang.emitter is RustIrEmitter
-            val isTypeScript = lang.emitter is TypeScriptIrEmitter
-            val isPython = lang.emitter is PythonIrEmitter
+            val isRust = lang.emitter is RustEmitter
+            val isTypeScript = lang.emitter is TypeScriptEmitter
+            val isPython = lang.emitter is PythonEmitter
             val endpointRef: Expression? = if (isRust) null else RawExpression("GetTodos")
             val requestType = if (isRust || isPython) Type.Custom("Request") else Type.Custom("GetTodos.Request")
             val response200Type = if (isRust || isPython) Type.Custom("Response200") else Type.Custom("GetTodos.Response200")
@@ -33,25 +33,25 @@ class VerifyConversionTest : FunSpec({
 
             val testFile = file("ConversionTest") {
                 when (lang.emitter) {
-                    is JavaIrEmitter -> {
+                    is JavaEmitter -> {
                         import("community.flock.wirespec.java", "Wirespec")
                         import("community.flock.wirespec.generated.endpoint", "GetTodos")
                         import("community.flock.wirespec.generated.model", "TodoDto")
                     }
 
-                    is KotlinIrEmitter -> {
+                    is KotlinEmitter -> {
                         import("community.flock.wirespec.kotlin", "Wirespec")
                         import("community.flock.wirespec.generated.endpoint", "GetTodos")
                         import("community.flock.wirespec.generated.model", "TodoDto")
                     }
 
-                    is TypeScriptIrEmitter -> {
+                    is TypeScriptEmitter -> {
                         import("./Wirespec", "Wirespec")
                         import("./endpoint/GetTodos", "GetTodos")
                         import("./model/TodoDto", "TodoDto")
                     }
 
-                    is PythonIrEmitter -> {
+                    is PythonEmitter -> {
                         import("community.flock.wirespec.generated.wirespec", "Wirespec")
                         import("community.flock.wirespec.generated.endpoint.GetTodos", "GetTodos")
                         import("community.flock.wirespec.generated.endpoint.GetTodos", "Request")
@@ -59,13 +59,13 @@ class VerifyConversionTest : FunSpec({
                         import("community.flock.wirespec.generated.model.TodoDto", "TodoDto")
                     }
 
-                    is ScalaIrEmitter -> {
+                    is ScalaEmitter -> {
                         import("community.flock.wirespec.scala", "Wirespec")
                         import("community.flock.wirespec.generated.endpoint", "GetTodos")
                         import("community.flock.wirespec.generated.model", "TodoDto")
                     }
 
-                    is RustIrEmitter -> {
+                    is RustEmitter -> {
                         // Rust imports are handled by run() use statements
                         import("community.flock.wirespec.generated.endpoint", "GetTodos")
                         import("community.flock.wirespec.generated.model", "TodoDto")

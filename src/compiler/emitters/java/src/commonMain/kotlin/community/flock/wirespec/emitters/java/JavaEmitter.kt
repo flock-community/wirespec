@@ -48,7 +48,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.toGetterAccessors
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 
-public open class JavaIrEmitter(
+public open class JavaEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
 ) : IrEmitter, HasPackageName {
@@ -271,6 +271,6 @@ public open class JavaIrEmitter(
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()
 
-    public companion object : Keywords by JavaGenerator
+     public companion object : Keywords by JavaGenerator
 
 }

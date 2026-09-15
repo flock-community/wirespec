@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
@@ -23,8 +23,8 @@ class KotlinxSerializationExtensionTest {
         override val spec = WirespecSpec
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
-    private fun serializableEmitter(packageName: PackageName) = KotlinIrEmitter(packageName, EmitShared(false))
-        .applyExtensions(listOf(KotlinxSerializationExtension()))
+    private fun serializableEmitter(packageName: PackageName) = KotlinEmitter(packageName, EmitShared(false))
+        .applyExtensions(nonEmptyListOf(KotlinxSerializationExtension()))
 
     private val source =
         """

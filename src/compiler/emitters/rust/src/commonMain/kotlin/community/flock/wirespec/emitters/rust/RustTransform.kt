@@ -249,7 +249,7 @@ internal object RustTransform {
 
     /**
      * Renders a [Type] to its Rust type string, applying [borrow] rules as if the position were
-     * a function parameter. Used by `RustIrEmitter.buildClientParams` where params are emitted
+     * a function parameter. Used by `RustEmitter.buildClientParams` where params are emitted
      * as raw strings (bypassing the IR).
      */
     fun Type.toBorrowedParamRustName(): String = applyBorrowRule(this).rustName()
@@ -274,10 +274,10 @@ internal object RustTransform {
 
     private fun Expression.toBorrowedRaw(): RawExpression = RawExpression("&${toRawCode()}")
 
-    private fun String.sanitizeKeywords(): String = if (this in RustIrEmitter.reservedKeywords) "r#$this" else this
+    private fun String.sanitizeKeywords(): String = if (this in RustEmitter.reservedKeywords) "r#$this" else this
 
     /** Renders a Rust-side expression to its raw source-code form. Mirrors the pre-refactor
-     * behavior that previously lived in `RustIrEmitter.toRawCode`. */
+     * behavior that previously lived in `RustEmitter.toRawCode`. */
     private fun Expression.toRawCode(): String = when (this) {
         is VariableReference -> name.snakeCase().sanitizeKeywords()
         is FieldCall -> {

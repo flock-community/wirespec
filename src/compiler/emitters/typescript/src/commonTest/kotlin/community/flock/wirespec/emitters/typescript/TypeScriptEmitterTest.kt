@@ -17,97 +17,97 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class TypeScriptIrEmitterTest {
+class TypeScriptEmitterTest {
 
     @Test
     fun compileFullEndpointTest() {
         val typescript = EmitterFixtures.compileFullEndpointTest
 
-        CompileFullEndpointTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileFullEndpointTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileChannelTest() {
         val typescript = EmitterFixtures.compileChannelTest
 
-        CompileChannelTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileChannelTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileRpcTest() {
         val typescript = EmitterFixtures.compileRpcTest
 
-        CompileRpcTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileRpcTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileEnumTest() {
         val typescript = EmitterFixtures.compileEnumTest
 
-        CompileEnumTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileEnumTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileMinimalEndpointTest() {
         val typescript = EmitterFixtures.compileMinimalEndpointTest
 
-        CompileMinimalEndpointTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileMinimalEndpointTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileRefinedTest() {
         val typescript = EmitterFixtures.compileRefinedTest
 
-        CompileRefinedTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileRefinedTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileUnionTest() {
         val typescript = EmitterFixtures.compileUnionTest
 
-        CompileUnionTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileUnionTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileTypeTest() {
         val typescript = EmitterFixtures.compileTypeTest
 
-        CompileTypeTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileTypeTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileAnyTest() {
         val typescript = EmitterFixtures.compileAnyTest
 
-        CompileAnyTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileAnyTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileFieldNameSanitizationTest() {
         val typescript = EmitterFixtures.compileFieldNameSanitizationTest
 
-        CompileFieldNameSanitizationTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileFieldNameSanitizationTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileNestedTypeTest() {
         val typescript = EmitterFixtures.compileNestedTypeTest
 
-        CompileNestedTypeTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileNestedTypeTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun compileComplexModelTest() {
         val typescript = EmitterFixtures.compileComplexModelTest
 
-        CompileComplexModelTest.compiler { TypeScriptIrEmitter() } shouldBeRight typescript
+        CompileComplexModelTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test
     fun sharedOutputTest() {
         val expected = EmitterFixtures.sharedOutputTest
 
-        val emitter = TypeScriptIrEmitter()
+        val emitter = TypeScriptEmitter()
         emitter.emitShared()?.let(TypeScriptGenerator::generate) shouldBe expected
     }
 }

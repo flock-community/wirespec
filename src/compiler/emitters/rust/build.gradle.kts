@@ -63,5 +63,5 @@ kotlin.sourceSets.named("commonTest") {
 }
 
 emitterFixtures {
-    emitterClass = "community.flock.wirespec.emitters.rust.RustIrEmitter"
+    emitterClass = "community.flock.wirespec.emitters.rust.RustEmitter"
 }

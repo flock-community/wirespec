@@ -18,97 +18,97 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class RustIrEmitterTest {
+class RustEmitterTest {
 
     @Test
     fun compileEnumTest() {
         val rust = EmitterFixtures.compileEnumTest
 
-        CompileEnumTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileEnumTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileTypeTest() {
         val rust = EmitterFixtures.compileTypeTest
 
-        CompileTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileTypeTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileAnyTest() {
         val rust = EmitterFixtures.compileAnyTest
 
-        CompileAnyTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileAnyTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileFieldNameSanitizationTest() {
         val rust = EmitterFixtures.compileFieldNameSanitizationTest
 
-        CompileFieldNameSanitizationTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileFieldNameSanitizationTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileChannelTest() {
         val rust = EmitterFixtures.compileChannelTest
 
-        CompileChannelTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileChannelTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileRpcTest() {
         val rust = EmitterFixtures.compileRpcTest
 
-        CompileRpcTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileRpcTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileRefinedTest() {
         val rust = EmitterFixtures.compileRefinedTest
 
-        CompileRefinedTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileRefinedTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileUnionTest() {
         val rust = EmitterFixtures.compileUnionTest
 
-        CompileUnionTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileUnionTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileMinimalEndpointTest() {
         val rust = EmitterFixtures.compileMinimalEndpointTest
 
-        CompileMinimalEndpointTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileMinimalEndpointTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileFullEndpointTest() {
         val rust = EmitterFixtures.compileFullEndpointTest
 
-        CompileFullEndpointTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileFullEndpointTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileNestedTypeTest() {
         val rust = EmitterFixtures.compileNestedTypeTest
 
-        CompileNestedTypeTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileNestedTypeTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun compileComplexModelTest() {
         val rust = EmitterFixtures.compileComplexModelTest
 
-        CompileComplexModelTest.compiler { RustIrEmitter() } shouldBeRight rust
+        CompileComplexModelTest.compiler { RustEmitter() } shouldBeRight rust
     }
 
     @Test
     fun sharedOutputTest() {
         val expected = EmitterFixtures.sharedOutputTest
 
-        val emitter = RustIrEmitter(emitShared = EmitShared(true))
+        val emitter = RustEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(RustGenerator::generate) shouldBe expected
     }
 }

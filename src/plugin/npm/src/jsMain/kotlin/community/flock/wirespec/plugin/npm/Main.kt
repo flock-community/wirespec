@@ -29,10 +29,10 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroJsonParser
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.emitters.python.PythonIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.generator.generate
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
@@ -46,10 +46,10 @@ import kotlinx.serialization.json.Json
 
 @JsExport
 public enum class Shared(public val source: String) {
-    KOTLIN(KotlinIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(KotlinGenerator::generate)),
-    JAVA(JavaIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(JavaGenerator::generate)),
-    TYPESCRIPT(TypeScriptIrEmitter().emitShared()!!.let(TypeScriptGenerator::generate)),
-    PYTHON(PythonIrEmitter(emitShared = EmitShared(true)).emitShared()!!.let(PythonGenerator::generate)),
+    KOTLIN(KotlinEmitter(emitShared = EmitShared(true)).emitShared()!!.let(KotlinGenerator::generate)),
+    JAVA(JavaEmitter(emitShared = EmitShared(true)).emitShared()!!.let(JavaGenerator::generate)),
+    TYPESCRIPT(TypeScriptEmitter().emitShared()!!.let(TypeScriptGenerator::generate)),
+    PYTHON(PythonEmitter(emitShared = EmitShared(true)).emitShared()!!.let(PythonGenerator::generate)),
 }
 
 @JsExport
@@ -104,10 +104,10 @@ public fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared
     val ast = wsAst.consume()
     return when (emitter) {
         Emitters.WIRESPEC -> WirespecEmitter().emit(ast, noLogger)
-        Emitters.TYPESCRIPT -> TypeScriptIrEmitter().emit(ast, noLogger)
-        Emitters.JAVA -> JavaIrEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
-        Emitters.KOTLIN -> KotlinIrEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
-        Emitters.PYTHON -> PythonIrEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
+        Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(ast, noLogger)
+        Emitters.JAVA -> JavaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
+        Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
+        Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
         Emitters.OPENAPI_V2 ->
             OpenAPIV2Emitter
                 .emitSwaggerObject(ast.modules.flatMap { it.statements }, noLogger)

@@ -96,10 +96,9 @@ class ExtendingIrEmitterTest {
     }
 
     @Test
-    fun applyExtensionsShouldOnlyWrapIrEmitters() {
+    fun applyExtensionsShouldWrapIrEmitter() {
         val extension = IrExtension { ir, _ -> ir }
 
-        assertIs<ExtendingIrEmitter>(TestEmitter.applyExtensions(listOf(extension)))
-        assertSame(TestEmitter, TestEmitter.applyExtensions(emptyList()))
+        assertIs<ExtendingIrEmitter>(TestEmitter.applyExtensions(nonEmptyListOf(extension)))
     }
 }
