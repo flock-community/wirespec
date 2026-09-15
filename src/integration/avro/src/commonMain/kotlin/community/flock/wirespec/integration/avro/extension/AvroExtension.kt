@@ -6,6 +6,18 @@ import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.file
+import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
+import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -18,18 +30,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroModel
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.extension.IrExtension
-import community.flock.wirespec.ir.generator.JavaGenerator
-import community.flock.wirespec.ir.generator.KotlinGenerator
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -47,7 +47,7 @@ import kotlinx.serialization.json.Json
  *
  * The target [language] is supplied by the plugin (the emitter's [FileExtension]) and selects
  * which source renders the language-specific leaves. Register it on a Java or Kotlin
- * [community.flock.wirespec.ir.emit.IrEmitter] running in IR mode (add the `avro-jvm` integration
+ * [community.flock.wirespec.compiler.core.ir.emit.IrEmitter] running in IR mode (add the `avro-jvm` integration
  * to the plugin classpath and list this class under `extensionClasses`).
  */
 public class AvroExtension(packageName: PackageName, language: FileExtension) : IrExtension {

@@ -92,8 +92,8 @@ val generatedJavaDir = layout.buildDirectory.dir("generated/wirespec-runtime/jav
 val generatedKotlinDir = layout.buildDirectory.dir("generated/wirespec-runtime/kotlin")
 val generatedScalaDir = layout.buildDirectory.dir("generated/wirespec-runtime/scala")
 
-// Regenerates Wirespec.{java,kt,scala} from the JavaIrEmitter / KotlinIrEmitter
-// / ScalaIrEmitter `emitShared()` outputs so the runtime base library is always
+// Regenerates Wirespec.{java,kt,scala} from the JavaEmitter / KotlinEmitter
+// / ScalaEmitter `emitShared()` outputs so the runtime base library is always
 // in sync with the emitters. Wired as a source generator for the three JVM
 // language source sets below.
 val generateWirespecRuntime = tasks.register<JavaExec>("generateWirespecRuntime") {

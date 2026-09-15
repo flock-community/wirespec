@@ -11,7 +11,7 @@ import org.gradle.process.CommandLineArgumentProvider
 // Apply alongside the Kotlin Multiplatform plugin and configure via:
 //
 //     emitterFixtures {
-//         emitterClass = "community.flock.wirespec.emitters.java.JavaIrEmitter"
+//         emitterClass = "community.flock.wirespec.emitters.java.JavaEmitter"
 //     }
 //
 // The emitter's build.gradle.kts wires the generated source dir into commonTest:

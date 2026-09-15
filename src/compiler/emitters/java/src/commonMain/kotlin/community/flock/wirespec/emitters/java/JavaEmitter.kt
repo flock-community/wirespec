@@ -1,0 +1,276 @@
+package community.flock.wirespec.emitters.java
+
+import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.HasPackageName
+import community.flock.wirespec.compiler.core.emit.Keywords
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.irNeedsWirespecImport
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.plus
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.core.ir.converter.convert
+import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
+import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
+import community.flock.wirespec.compiler.core.ir.converter.convertWithValidation
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Package
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.collectCustomTypeNames
+import community.flock.wirespec.compiler.core.ir.function
+import community.flock.wirespec.compiler.core.ir.import
+import community.flock.wirespec.compiler.core.ir.raw
+import community.flock.wirespec.compiler.core.ir.transform
+import community.flock.wirespec.compiler.core.ir.transformChildren
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
+import community.flock.wirespec.compiler.core.ir.emit.placeInPackage
+import community.flock.wirespec.compiler.core.ir.emit.prependImports
+import community.flock.wirespec.compiler.core.ir.generator.Generator
+import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
+import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
+import community.flock.wirespec.compiler.core.ir.transformer.injectEnumLabelField
+import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
+import community.flock.wirespec.compiler.core.ir.transformer.toGetterAccessors
+import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
+
+public open class JavaEmitter(
+    override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
+    private val emitShared: EmitShared = EmitShared(),
+) : IrEmitter, HasPackageName {
+
+    override val generator: Generator = JavaGenerator
+
+
+    override val extension: FileExtension = FileExtension.Java
+
+    override fun transformTestFile(file: File): File = file.transformTypeDescriptors()
+
+    private val wirespecImports = listOf(import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec"))
+
+    private val sanitizationConfig = SanitizationConfig(
+        reservedKeywords = reservedKeywords,
+        escapeKeyword = { "_$it" },
+        fieldNameCase = { name ->
+            if (name.parts.size > 1) Name(listOf(name.camelCase())) else name
+        },
+        parameterNameCase = { name -> Name(listOf(name.camelCase())) },
+        sanitizeSymbol = { it.sanitizeSymbol() },
+        extraStatementTransforms = { stmt, tr ->
+            when {
+                stmt is FunctionCall && stmt.name.value() == "validate" ->
+                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+
+                else -> stmt.transformChildren(tr)
+            }
+        },
+    )
+
+    override fun emitShared(): File? {
+
+        val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.java")
+
+        val imports = listOf(
+            import("java.lang.reflect", "Type"),
+            import("java.lang.reflect", "ParameterizedType"),
+            import("java.util", "List"),
+            import("java.util", "Map"),
+        )
+
+        val clientServer = convertClientServer()
+            .map {
+                it.toGetterAccessors { name ->
+                    when (name.value()) {
+                        "client" -> Name.of("getClient")
+                        "server" -> Name.of("getServer")
+                        else -> null
+                    }
+                }
+            }
+            .plus(
+                raw(
+                    """
+                    |public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
+                    |  if(rawType != null) {
+                    |    return new ParameterizedType() {
+                    |      public Type getRawType() { return rawType; }
+                    |      public Type[] getActualTypeArguments() { return new Class<?>[]{actualTypeArguments}; }
+                    |      public Type getOwnerType() { return null; }
+                    |    };
+                    |  }
+                    |  else { return actualTypeArguments; }
+                    |}
+                """.trimMargin(),
+                ),
+            )
+
+        val wirespecShared = packageName.convert()
+            .transform {
+                matchingElements { file: File ->
+                    val (packageElements, rest) = file.elements.partition { it is Package }
+                    file.copy(elements = packageElements + imports + rest)
+                }
+                injectAfter { namespace: Namespace ->
+                    if (namespace.name == Name.of("Wirespec")) clientServer else emptyList()
+                }
+            }
+
+        return if (emitShared.value) {
+            wirespecShared
+        } else {
+            null
+        }
+    }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): File {
+        val file = super.emit(definition, module, logger)
+        return file.copy(name = Name.of(file.name.pascalCase().sanitizeSymbol()))
+            .prependImports(wirespecImports.takeIf { module.irNeedsWirespecImport() })
+            .placeInPackage(packageName = packageName, definition = definition)
+    }
+
+    override fun emitGenerator(definition: Definition, module: Module): File? {
+        val generatorFile = when (definition) {
+            is AstType -> definition.convertToGenerator(module)
+            is Enum -> definition.convertToGenerator()
+            is Refined -> definition.convertToGenerator()
+            is Union -> definition.convertToGenerator()
+            else -> return null
+        }
+        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        val generatorOwnName = "${definition.identifier.value}Generator"
+        val modelImports = sanitized.collectCustomTypeNames()
+            .asSequence()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .filterNot { it == generatorOwnName }
+            .map { it.substringBefore('<') }
+            .distinct()
+            .map { import("${packageName.value}.model", it) }
+            .toList()
+        return sanitized
+            .prependImports(wirespecImports + modelImports)
+            .placeInPackage(packageName = packageName, subPackage = "generator")
+    }
+
+    override fun emit(type: AstType, module: Module): File =
+        type.convertWithValidation(module)
+            .sanitizeNames(sanitizationConfig)
+
+    override fun emit(enum: Enum, module: Module): File = enum
+        .convert()
+        .injectEnumLabelField(
+            sanitizeEntry = { it.sanitizeEnum() },
+            extraElements = {
+                listOf(
+                    function("label") {
+                        returnType(Type.String)
+                        returns(VariableReference(Name.of("label")))
+                    }
+                )
+            },
+        )
+        .sanitizeNames(sanitizationConfig)
+
+    override fun emit(union: Union): File = union
+        .convert()
+        .sanitizeNames(sanitizationConfig)
+
+    override fun emit(refined: Refined): File = refined
+        .convert()
+        .applyRefinedStructShape(refined)
+        .sanitizeNames(sanitizationConfig)
+
+    override fun emit(endpoint: Endpoint): File = endpoint
+        .convert()
+        .injectHandleFunction(endpoint)
+        .injectApiField()
+        .transformTypeDescriptors()
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })
+
+    override fun emit(channel: Channel): File {
+        val fullyQualifiedPrefix = if (channel.identifier.value == channel.reference.value) {
+            "${packageName.value}.model."
+        } else {
+            ""
+        }
+        return channel.convert()
+            .sanitizeNames(sanitizationConfig)
+            .qualifyChannelReferences(fullyQualifiedPrefix)
+    }
+
+    override fun emit(rpc: Rpc): File = rpc.convert()
+        .sanitizeNames(sanitizationConfig)
+        .prependImports(rpc.buildModelImports(packageName).takeIf { it.isNotEmpty() })
+
+    override fun emitEndpointClient(endpoint: Endpoint): File {
+        val imports = endpoint.buildModelImports(packageName)
+        val endpointImport = import("${packageName.value}.endpoint", endpoint.identifier.value)
+        val endpointName = endpoint.identifier.value
+
+        val file = super.emitEndpointClient(endpoint)
+            .sanitizeNames(sanitizationConfig)
+            .transformTypeDescriptors()
+            .wrapAsyncReturnInThenApply(endpointName)
+
+        val subPackageName = packageName + "client"
+        return File(
+            name = Name.of(subPackageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(subPackageName.value)) +
+                    wirespecImports +
+                    imports +
+                    listOf(endpointImport) +
+                    file.elements
+        )
+    }
+
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        val imports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
+            .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
+            .map { import("${packageName.value}.model", it.value) }
+        val endpointImports = endpoints.map { import("${packageName.value}.endpoint", it.identifier.value) }
+        val clientImports = endpoints.map { import("${packageName.value}.client", "${it.identifier.value}Client") }
+        val allImports = imports + endpointImports + clientImports
+        val file = super.emitClient(endpoints, logger).sanitizeNames(sanitizationConfig)
+        return File(
+            name = Name.of(packageName.toDir() + file.name.pascalCase().sanitizeSymbol()),
+            elements = listOf(Package(packageName.value)) +
+                    wirespecImports +
+                    allImports +
+                    file.elements
+        )
+    }
+
+    private fun String.sanitizeSymbol(): String = this
+        .split(".", " ", "-")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .filter { it.isLetterOrDigit() || it == '_' }
+        .sanitizeFirstIsDigit()
+
+    private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
+
+    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+
+    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
+        .joinToString("_")
+        .sanitizeFirstIsDigit()
+        .sanitizeKeywords()
+
+     public companion object : Keywords by JavaGenerator
+
+}

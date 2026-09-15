@@ -1,20 +1,20 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
-import community.flock.wirespec.emitters.python.PythonIrEmitter
-import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.emitters.typescript.TypeScriptIrEmitter
-import community.flock.wirespec.ir.core.ArrayIndexCall
-import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.emitters.rust.RustIrEmitter.Companion.borrow
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.FunctionBuilder
-import community.flock.wirespec.ir.core.Literal
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.ir.ArrayIndexCall
+import community.flock.wirespec.compiler.core.ir.BinaryOp
+import community.flock.wirespec.emitters.rust.RustEmitter.Companion.borrow
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.FunctionBuilder
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
 import io.kotest.core.spec.style.FunSpec
 
 class VerifyClientTest : FunSpec({
@@ -23,9 +23,9 @@ class VerifyClientTest : FunSpec({
         test("endpoint client - $lang") {
             lang.start(name = "client-test", fixture = CompileMinimalEndpointTest)
 
-            val isRust = lang.emitter is RustIrEmitter
-            val isPython = lang.emitter is PythonIrEmitter
-            val isTypeScript = lang.emitter is TypeScriptIrEmitter
+            val isRust = lang.emitter is RustEmitter
+            val isPython = lang.emitter is PythonEmitter
+            val isTypeScript = lang.emitter is TypeScriptEmitter
             val response200Type = response200Type(isRust, isPython)
 
             val testFile = file("EndpointClientTest") {
@@ -68,9 +68,9 @@ class VerifyClientTest : FunSpec({
         test("main client - $lang") {
             lang.start(name = "client-test", fixture = CompileMinimalEndpointTest)
 
-            val isRust = lang.emitter is RustIrEmitter
-            val isPython = lang.emitter is PythonIrEmitter
-            val isTypeScript = lang.emitter is TypeScriptIrEmitter
+            val isRust = lang.emitter is RustEmitter
+            val isPython = lang.emitter is PythonEmitter
+            val isTypeScript = lang.emitter is TypeScriptEmitter
             val response200Type = response200Type(isRust, isPython)
 
             val testFile = file("MainClientTest") {

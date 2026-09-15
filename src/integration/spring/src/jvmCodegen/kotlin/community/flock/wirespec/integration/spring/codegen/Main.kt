@@ -10,15 +10,15 @@ import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
+import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
 import community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension
-import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import java.io.File
 
@@ -42,18 +42,18 @@ fun main(args: Array<String>) {
     val kotlinPkg = basePackage + "kotlin.generated"
     val javaPkg = basePackage + "java.generated"
 
-    KotlinIrEmitter(kotlinPkg, EmitShared(false))
+    KotlinEmitter(kotlinPkg, EmitShared(false))
         .applyExtensions(
-            listOf(
+            nonEmptyListOf(
                 SpringMappingAnnotationsExtension(FileExtension.Kotlin),
                 SpringNativeHintsExtension(kotlinPkg, FileExtension.Kotlin),
             ),
         )
         .emitAll(outputDir.resolve("kotlin"), petstore, todo)
 
-    JavaIrEmitter(javaPkg, EmitShared(false))
+    JavaEmitter(javaPkg, EmitShared(false))
         .applyExtensions(
-            listOf(
+            nonEmptyListOf(
                 SpringMappingAnnotationsExtension(FileExtension.Java),
                 SpringNativeHintsExtension(javaPkg, FileExtension.Java),
             ),

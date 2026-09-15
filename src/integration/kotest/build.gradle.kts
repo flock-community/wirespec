@@ -31,7 +31,6 @@ kotlin {
                 implementation(libs.kotest.property)
                 implementation(libs.kotlinx.rgxgen)
                 implementation(project(":src:compiler:core"))
-                implementation(project(":src:compiler:ir"))
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.kotest.engine)
                 implementation(libs.kotlinx.coroutines.core)

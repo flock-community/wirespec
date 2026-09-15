@@ -1,0 +1,657 @@
+package community.flock.wirespec.compiler.core.ir.generator
+
+import community.flock.wirespec.compiler.core.emit.Keywords
+import community.flock.wirespec.compiler.core.ir.ArrayIndexCall
+import community.flock.wirespec.compiler.core.ir.AssertStatement
+import community.flock.wirespec.compiler.core.ir.Assignment
+import community.flock.wirespec.compiler.core.ir.BinaryOp
+import community.flock.wirespec.compiler.core.ir.Cast
+import community.flock.wirespec.compiler.core.ir.ClassReference
+import community.flock.wirespec.compiler.core.ir.Constraint
+import community.flock.wirespec.compiler.core.ir.Constructor
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.Enum
+import community.flock.wirespec.compiler.core.ir.EnumReference
+import community.flock.wirespec.compiler.core.ir.EnumValueCall
+import community.flock.wirespec.compiler.core.ir.ErrorStatement
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.Field
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.IfExpression
+import community.flock.wirespec.compiler.core.ir.Import
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Lambda
+import community.flock.wirespec.compiler.core.ir.ListConcat
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.LiteralMap
+import community.flock.wirespec.compiler.core.ir.Main
+import community.flock.wirespec.compiler.core.ir.MapExpression
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.NotExpression
+import community.flock.wirespec.compiler.core.ir.NullCheck
+import community.flock.wirespec.compiler.core.ir.NullLiteral
+import community.flock.wirespec.compiler.core.ir.NullableEmpty
+import community.flock.wirespec.compiler.core.ir.NullableGet
+import community.flock.wirespec.compiler.core.ir.NullableMap
+import community.flock.wirespec.compiler.core.ir.NullableOf
+import community.flock.wirespec.compiler.core.ir.Package
+import community.flock.wirespec.compiler.core.ir.Parameter
+import community.flock.wirespec.compiler.core.ir.Precision
+import community.flock.wirespec.compiler.core.ir.PrintStatement
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.ReturnStatement
+import community.flock.wirespec.compiler.core.ir.Statement
+import community.flock.wirespec.compiler.core.ir.StringTemplate
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Switch
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.TypeDescriptor
+import community.flock.wirespec.compiler.core.ir.TypeParameter
+import community.flock.wirespec.compiler.core.ir.Union
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.annotatedFields
+import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.Function as AstFunction
+
+public object JavaGenerator :
+    Generator,
+    Keywords {
+    override val reservedKeywords: Set<String> = setOf(
+        "abstract", "continue", "for", "new", "switch",
+        "assert", "default", "if", "package", "synchronized",
+        "boolean", "do", "goto", "private", "this",
+        "break", "double", "implements", "protected", "throw",
+        "byte", "else", "import", "public", "throws",
+        "case", "enum", "instanceof", "return", "transient",
+        "catch", "extends", "int", "short", "try",
+        "char", "final", "interface", "static", "void",
+        "class", "finally", "long", "strictfp", "volatile",
+        "const", "float", "native", "super", "while",
+        "true", "false", "null",
+    )
+
+    override fun generate(element: Element): String = when (element) {
+        is File -> emitFile(element)
+        else -> emitFile(File(Name.of(""), listOf(element)))
+    }
+
+    private fun emitFile(file: File): String {
+        val (packages, rest) = file.elements.partition { it is Package }
+        val (imports, others) = rest.partition { it is Import }
+        return buildString {
+            packages.forEach { append((it as Package).emit(0)) }
+            imports.forEach { append((it as Import).emit(0)) }
+            others.forEach { append(it.emit(0, parents = listOf(file))) }
+        }.compact()
+    }
+
+    private fun String.indentCode(level: Int): String = indentLines(level)
+
+    private fun Element.emit(indent: Int, isStatic: Boolean = true, parents: List<Element>): String = when (this) {
+        is Package -> emit(indent)
+        is Import -> emit(indent)
+        is Struct -> emit(indent, parents)
+        is AstFunction -> emitWithModifier(indent, isStatic, parents)
+        is Namespace -> emit(indent, parents)
+        is Interface -> emit(indent, parents)
+        is Union -> emit(indent, parents)
+        is Enum -> emit(indent)
+        is Main -> {
+            val fileName = parents.filterIsInstance<File>().firstOrNull()?.name?.pascalCase().orEmpty()
+            val staticContent = statics.joinToString("") { it.emit(1, true, parents) }
+            val content = body.joinToString("") { it.emit(1) }
+            "public class $fileName {\n$staticContent  public static void main(String[] args) {\n$content  }\n}\n"
+        }
+        is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
+        is Field -> ""
+        is RawElement -> code.indentCode(indent)
+    }
+
+    private fun AstFunction.emitWithModifier(indent: Int, isStatic: Boolean, parents: List<Element>): String {
+        val lastParent = parents.lastOrNull()
+        val isInterface = lastParent is Interface
+        val isStaticContainer = lastParent is Namespace
+        val isInsideStruct = lastParent is Struct
+        val shouldBeStatic = (isStatic || isStaticContainer || this.isStatic) && !isInterface && (!isInsideStruct || this.isStatic)
+        val overridePrefix = "@Override\n".takeIf { isOverride }.orEmpty()
+
+        return when {
+            indent == 0 -> emit(indent, isStatic = true, modifier = "public")
+            isInterface && body.isNotEmpty() -> when {
+                this.isStatic -> emit(indent, isStatic = true, modifier = "public")
+                else -> emit(indent, isStatic = false, modifier = "${overridePrefix}default")
+            }
+            else -> {
+                val modParts = listOfNotNull(
+                    "public".takeIf { indent == 1 },
+                    "static".takeIf { shouldBeStatic },
+                ).joinToString(" ")
+                val fullModifier = when {
+                    !isOverride -> modParts
+                    modParts.isNotEmpty() -> "$overridePrefix$modParts"
+                    else -> "@Override"
+                }
+                emit(indent, isStatic = shouldBeStatic, modifier = fullModifier)
+            }
+        }
+    }
+
+    private fun Package.emit(indent: Int): String = "package $path;\n\n".indentCode(indent)
+
+    private fun Import.emit(indent: Int): String = "import $path.${type.name.value()};\n".indentCode(indent)
+
+    private fun Namespace.emit(indent: Int, parents: List<Element>): String {
+        val extStr = extends?.let { " extends ${it.emitGenerics()}" } ?: ""
+        val content = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
+        return "public interface ${name.pascalCase()}$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+    }
+
+    private fun Interface.emit(indent: Int, parents: List<Element>): String {
+        val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
+        val publicStr = "public ".takeIf { indent == 0 || isInsideStaticOrInterface }.orEmpty()
+        val sealedStr = "sealed ".takeIf { isSealed }.orEmpty()
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
+        val extStr = extends.joinNonEmpty(", ", " extends ") { it.emitGenerics() }
+        val fieldsContent = fields.joinToString("") { field ->
+            "${field.type.emitGenerics()} ${field.name.value()}();\n".indentCode(1)
+        }
+        val elementsContent = elements.joinToString("") { it.emit(1, isStatic = false, parents = parents + this) }
+        val content = fieldsContent + elementsContent
+        val body = if (content.isEmpty()) "{\n}" else "{\n$content${"}".indentCode(0)}"
+        return "$publicStr${sealedStr}interface ${name.pascalCase()}$typeParamsStr$extStr $body\n\n".indentCode(indent)
+    }
+
+    private fun Union.emit(indent: Int, parents: List<Element>): String {
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
+        val extendsName = extends?.name?.pascalCase()
+        val ext = (
+            listOfNotNull(extends?.emitGenerics()) +
+                parents.filterIsInstance<Union>().filter { it.name.pascalCase() != extendsName }.map { it.name.pascalCase() }
+            )
+            .distinct()
+        val extStr = ext.joinNonEmpty(", ", " extends ")
+        val permitsStr = members.joinNonEmpty(", ", " permits ") { it.name.pascalCase() }
+        return "public sealed interface ${name.pascalCase()}$typeParamsStr$extStr$permitsStr {}\n\n".indentCode(indent)
+    }
+
+    private fun Enum.emit(indent: Int): String {
+        val entriesStr = entries.joinToString(",\n") { entry ->
+            (entry.name.value() + entry.values.joinNonEmpty(", ", "(", ")")).indentCode(indent + 1)
+        }
+        val implStr = extends?.emitGenerics()?.let { " implements $it" }.orEmpty()
+        val hasContent = fields.isNotEmpty() || constructors.isNotEmpty() || elements.isNotEmpty()
+        val terminator = ";\n".takeIf { hasContent }.orEmpty()
+
+        val fieldsStr = fields.joinToString("\n") {
+            "public final ${it.type.emitGenerics()} ${it.name.value()};".indentCode(indent + 1)
+        }
+        val constructorsStr = constructors.joinToString("\n") { it.emit(name.pascalCase(), fields, indent + 1, false, "") }
+        val functionsStr = elements.filterIsInstance<AstFunction>().joinToString("\n") {
+            val isOverride = it.isOverride || it.name.camelCase() == "toString" || it.name.camelCase() == "getLabel"
+            val overridePrefix = "@Override\n${"".indentCode(indent + 1)}".takeIf { _ -> isOverride }.orEmpty()
+            val staticStr = "static".takeIf { _ -> it.isStatic }.orEmpty()
+            val fullModifier = "$overridePrefix" + listOf("public", staticStr).filter { s -> s.isNotEmpty() }.joinToString(" ")
+            it.emit(indent + 1, it.isStatic, fullModifier).trimEnd()
+        }
+
+        val content = listOf(fieldsStr, constructorsStr, functionsStr).filter { it.isNotEmpty() }.joinToString("\n")
+        val sep = "\n".takeIf { content.isNotEmpty() }.orEmpty()
+        val closingBrace = "}".indentCode(indent)
+        return "public enum ${name.pascalCase()}$implStr {\n$entriesStr$terminator$sep$content\n$closingBrace\n".indentCode(indent).trimEnd()
+    }
+
+    private fun Struct.emit(indent: Int, parents: List<Element>): String {
+        val fields = fieldList()
+        val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " implements ")
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emitGenerics() }
+        val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
+        val typeModifier = when {
+            indent == 0 -> "public record"
+            isInsideStaticOrInterface -> "public static record"
+            else -> "record"
+        }
+
+        val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
+        val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
+
+        val paramParts = annotatedFields().map { (field, annotations) ->
+            val annotationPrefix = annotations.joinToString("") { "$it " }
+            "$annotationPrefix${field.type.emitGenerics()} ${field.name.value().sanitize()}".indentCode(1)
+        }
+        val paramsStr = if (paramParts.isEmpty()) " ()" else paramParts.joinToString(",\n", " (\n", "\n)")
+
+        return "$typeModifier ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
+    }
+
+    private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int, isRecord: Boolean, modifier: String = "public"): String {
+        val params = parameters.joinToString(", ") { it.emit(0) }
+        val isDelegating = body.any { it is ConstructorStatement }
+        val prefix = modifier.wrapIfNotEmpty("", " ")
+        val fieldNames = structFields.map { it.name.value() }.toSet()
+
+        val bodyContent = if (isRecord && !isDelegating) {
+            val assignments = body.filterIsInstance<Assignment>()
+                .associate { it.name.value().removePrefix("this.") to it.value.emit() }
+            val constructorArgs = structFields.joinToString(", ") { assignments[it.name.value()] ?: "null" }
+            val otherStatements = body.filter {
+                it !is Assignment || it.name.value().removePrefix("this.") !in fieldNames
+            }
+            (listOf("this($constructorArgs);\n") + otherStatements.map { it.emit(0) })
+                .joinToString("") { it.indentCode(1) }
+        } else {
+            body.joinToString("") { it.emit(1, isInsideConstructor = true) }
+        }
+
+        return "$prefix$structName($params) {\n$bodyContent}\n".indentCode(indent)
+    }
+
+    private fun AstFunction.emit(indent: Int, isStatic: Boolean, modifier: String): String {
+        val rType = when {
+            isAsync -> "java.util.concurrent.CompletableFuture<${returnType?.emitGenerics() ?: "Void"}>"
+            else -> returnType?.takeIf { it != Type.Unit }?.emitGenerics() ?: "void"
+        }
+        val params = parameters.joinToString(", ") { it.emit(0) }
+        val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", "> ") { it.emit() }
+        val fullPrefix = listOfNotNull(
+            "public".takeIf { indent == 1 && !modifier.contains("public") },
+            "static".takeIf { isStatic && !modifier.contains("static") },
+            modifier.takeIf { it.isNotEmpty() },
+        ).joinToString(" ").wrapIfNotEmpty("", " ")
+
+        val signature = "$fullPrefix$typeParamsStr$rType ${name.camelCase()}($params)"
+        return if (body.isEmpty()) {
+            "$signature;\n".indentCode(indent)
+        } else {
+            val content = body.joinToString("") { it.emit(1) }
+            "$signature {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+        }
+    }
+
+    private fun Parameter.emit(indent: Int): String = "${type.emitGenerics()} ${name.camelCase().sanitize()}".indentCode(indent)
+
+    private fun TypeParameter.emit(): String {
+        val typeStr = type.emitGenerics()
+        // Treat `T : Any?` (`Type.Nullable(Type.Any)`) as the unbounded case — Java has no
+        // analogue to Kotlin's nullable upper bound, and `T extends Optional<Object>` excludes
+        // every primitive wrapper so primitive type arguments fail to compile.
+        val effectiveExtends = extends.filterNot { it is Type.Nullable && it.type == Type.Any }
+        val bounds = effectiveExtends.joinNonEmpty(" & ", " extends ") { it.emitGenerics() }
+        return "$typeStr$bounds"
+    }
+
+    private fun Type.emit(): String = when (this) {
+        is Type.Integer -> when (precision) {
+            Precision.P32 -> "Integer"
+            Precision.P64 -> "Long"
+        }
+        is Type.Number -> when (precision) {
+            Precision.P32 -> "Float"
+            Precision.P64 -> "Double"
+        }
+        Type.Any -> "Object"
+        Type.String -> "String"
+        Type.Bytes -> "byte[]"
+        Type.Boolean -> "Boolean"
+        Type.Unit -> "Void"
+        Type.Wildcard -> "?"
+        Type.Reflect -> "Type"
+        is Type.Array -> "java.util.List"
+        is Type.Dict -> "java.util.Map"
+        is Type.Custom -> name.referenceName()
+        is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
+        is Type.IntegerLiteral -> "Integer"
+        is Type.StringLiteral -> "String"
+        is Type.Function -> when (parameterTypes.size) {
+            0 -> "java.util.function.Supplier<${returnType.emitGenerics()}>"
+            1 -> "java.util.function.Function<${parameterTypes[0].emitGenerics()}, ${returnType.emitGenerics()}>"
+            2 -> "java.util.function.BiFunction<${parameterTypes[0].emitGenerics()}, ${parameterTypes[1].emitGenerics()}, ${returnType.emitGenerics()}>"
+            else -> error("Java emitter only supports 0-, 1-, or 2-arg function types, got ${parameterTypes.size}")
+        }
+    }
+
+    /**
+     * Emit a type for use as a constructor target (`new X...`). For Wirespec runtime
+     * generic records (`GeneratorFieldArray`, `GeneratorFieldNullable`, `GeneratorFieldShape`,
+     * `GeneratorFieldDict`) we append `<>` so javac infers the type argument from the
+     * constructor's lambda; without the diamond the type is raw and `Generator.generate`
+     * returns `Object`, which fails to assign to the surrounding record component.
+     */
+    private fun Type.emitConstructorType(): String {
+        val str = emitGenerics()
+        val needsDiamond = this is Type.Custom && generics.isEmpty() && str in PARAMETRIC_RUNTIME_TYPES
+        return if (needsDiamond) "$str<>" else str
+    }
+
+    private fun Type.emitGenerics(): String = when (this) {
+        is Type.Array -> "${emit()}<${elementType.emitGenerics()}>"
+        is Type.Dict -> "${emit()}<${keyType.emitGenerics()}, ${valueType.emitGenerics()}>"
+        is Type.Custom -> {
+            if (generics.isEmpty()) {
+                emit()
+            } else {
+                "${emit()}<${generics.joinToString(", ") { it.emitGenerics() }}>"
+            }
+        }
+        is Type.Nullable -> "java.util.Optional<${type.emitGenerics()}>"
+        is Type.Function -> emit()
+        else -> emit()
+    }
+
+    private fun ConstructorStatement.formatArgs(): String {
+        val allArgs = namedArguments.map { it.value.emit() }
+        return when {
+            allArgs.isEmpty() -> "()"
+            allArgs.size == 1 -> "(${allArgs.first()})"
+            else -> "(\n${allArgs.joinToString(",\n") { it.indentCode(1) }}\n)"
+        }
+    }
+
+    private fun Statement.emit(indent: Int, isInsideConstructor: Boolean = false): String = when (this) {
+        is PrintStatement -> "System.out.println(${expression.emit()});\n".indentCode(indent)
+        is ReturnStatement -> when (val expr = expression) {
+            // Java has no switch-expression with type patterns; rewrite each
+            // branch's terminal expression into `return X` so the existing
+            // if/else-if/instanceof Switch emit handles it.
+            is Switch -> expr.rewriteAsReturnChain().emit(indent)
+            else -> "return ${expression.emit()};\n".indentCode(indent)
+        }
+        is ConstructorStatement -> {
+            val expr = when {
+                type == Type.Unit -> "null"
+                isInsideConstructor -> "this${formatArgs()}"
+                else -> "new ${type.emitConstructorType()}${formatArgs()}"
+            }
+            "$expr;\n".indentCode(indent)
+        }
+        is Literal -> "${emit()};\n".indentCode(indent)
+        is LiteralList -> "${emit()};\n".indentCode(indent)
+        is LiteralMap -> "${emit()};\n".indentCode(indent)
+        is Assignment -> {
+            val expr = (value as? ConstructorStatement)?.let { c ->
+                if (c.type == Type.Unit) "null" else "new ${c.type.emitConstructorType()}${c.formatArgs()}"
+            } ?: value.emit()
+            val lhs = if (isProperty) name.value().sanitize() else "final var ${name.camelCase().sanitize()}"
+            "$lhs = $expr;\n".indentCode(indent)
+        }
+        is ErrorStatement -> "throw new IllegalStateException(${message.emit()});\n".indentCode(indent)
+        is AssertStatement -> "assert ${expression.emit()} : \"$message\";\n".indentCode(indent)
+        is Switch -> {
+            val isPatternSwitch = cases.any { it.type != null }
+            if (isPatternSwitch) {
+                // Use if-else chain with instanceof for pattern matching (Java 16+)
+                val casesStr = cases.mapIndexed { index, case ->
+                    val bodyStr = case.body.joinToString("") { it.emit(1) }
+                    val typeStr = case.type?.emitGenerics() ?: "Object"
+                    // Java reserves `_` as an identifier, so fall back to a
+                    // synthesized name when no pattern variable is supplied.
+                    // Callers that need to use the narrowed binding inside case
+                    // bodies must set Switch.variable and reference it there.
+                    val varName = variable?.camelCase() ?: "__matched"
+                    val prefix = if (index == 0) "if" else " else if"
+                    "$prefix (${expression.emit()} instanceof $typeStr $varName) {\n$bodyStr}"
+                }.joinToString("")
+                val defaultStr = default?.let {
+                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
+                    " else {\n$bodyStr}"
+                } ?: ""
+                "$casesStr$defaultStr\n".indentCode(indent)
+            } else {
+                // Regular switch with arrow syntax
+                val casesStr = cases.joinToString("") { case ->
+                    val bodyStr = case.body.joinToString("") { it.emit(1) }
+                    "case ${case.value.emit()} -> {\n$bodyStr}\n".indentCode(indent + 1)
+                }
+                val defaultStr = default?.let {
+                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
+                    "default -> {\n$bodyStr}\n".indentCode(indent + 1)
+                } ?: ""
+                "switch (${expression.emit()}) {\n$casesStr$defaultStr}\n".indentCode(indent)
+            }
+        }
+        is RawExpression -> "$code;\n".indentCode(indent)
+        is NullLiteral -> "null;\n".indentCode(indent)
+        is NullableEmpty -> "java.util.Optional.empty();\n".indentCode(indent)
+        is VariableReference -> "${name.camelCase().sanitize()};\n".indentCode(indent)
+        is FieldCall -> "${emit()};\n".indentCode(indent)
+        is FunctionCall -> "${emit()};\n".indentCode(indent)
+        is ArrayIndexCall -> "${emit()};\n".indentCode(indent)
+        is EnumReference -> "${emit()};\n".indentCode(indent)
+        is EnumValueCall -> "${emit()};\n".indentCode(indent)
+        is BinaryOp -> "${emit()};\n".indentCode(indent)
+        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        // Route primitive expressions through Object: Java won't auto-box
+        // during an unchecked cast to a type parameter T.
+        is Cast -> "((${targetType.emitGenerics()}) (Object) ${expression.emit()});\n".indentCode(indent)
+        is NullCheck -> "${emit()};\n".indentCode(indent)
+        is NullableMap -> "${emit()};\n".indentCode(indent)
+        is NullableOf -> "${emit()};\n".indentCode(indent)
+        is NullableGet -> "${emit()};\n".indentCode(indent)
+        is Constraint.RegexMatch -> "${emit()};\n".indentCode(indent)
+        is Constraint.BoundCheck -> "${emit()};\n".indentCode(indent)
+        is NotExpression -> "!${expression.emit()};\n".indentCode(indent)
+        is IfExpression -> "${emit()};\n".indentCode(indent)
+        is MapExpression -> "${emit()};\n".indentCode(indent)
+        is FlatMapIndexed -> "${emit()};\n".indentCode(indent)
+        is ListConcat -> "${emit()};\n".indentCode(indent)
+        is StringTemplate -> "${emit()};\n".indentCode(indent)
+        is Lambda -> "${emit()};\n".indentCode(indent)
+    }
+
+    private fun BinaryOp.Operator.toJava(): String = when (this) {
+        BinaryOp.Operator.PLUS -> "+"
+        BinaryOp.Operator.EQUALS -> "=="
+        BinaryOp.Operator.NOT_EQUALS -> "!="
+        BinaryOp.Operator.UNTIL -> throw IllegalArgumentException("UNTIL operator is not supported in Java")
+    }
+
+    private fun BinaryOp.isPrimitiveLiteral(): Boolean = left is Literal &&
+        (left.type is Type.Integer || left.type is Type.Number || left.type is Type.Boolean) ||
+        right is Literal &&
+        (right.type is Type.Integer || right.type is Type.Number || right.type is Type.Boolean)
+
+    private fun Expression.emit(): String = when (this) {
+        is ConstructorStatement -> {
+            if (type == Type.Unit) "null" else "new ${type.emitConstructorType()}${formatArgs()}"
+        }
+        is Literal -> emit()
+        is LiteralList -> emit()
+        is LiteralMap -> emit()
+        is ClassReference -> "${type.emitGenerics()}.class"
+        is RawExpression -> code
+        is NullLiteral -> "null"
+        is NullableEmpty -> "java.util.Optional.empty()"
+        is VariableReference -> name.camelCase().sanitize()
+        is FieldCall -> {
+            val receiverStr = receiver?.emit()?.plus(".").orEmpty()
+            "$receiverStr${field.value().sanitize()}()"
+        }
+        is FunctionCall -> {
+            val typeArgsStr = typeArguments.joinNonEmpty(", ", "<", ">") { it.emitGenerics() }
+            val receiverStr = receiver?.emit()?.plus(".").orEmpty()
+            val awaitSuffix = ".join()".takeIf { isAwait }.orEmpty()
+            val args = arguments.values.joinToString(", ") { it.emit() }
+            "$receiverStr$typeArgsStr${name.value().sanitize()}($args)$awaitSuffix"
+        }
+        is ArrayIndexCall -> if (caseSensitive) {
+            "${receiver.emit()}.get(${index.emit()})"
+        } else {
+            "${receiver.emit()}.entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase(${index.emit()})).findFirst().map(java.util.Map.Entry::getValue).orElse(null)"
+        }
+        is EnumReference -> "${enumType.emitGenerics()}.${entry.value()}"
+        is EnumValueCall -> "${expression.emit()}.name()"
+        is BinaryOp -> when {
+            operator == BinaryOp.Operator.EQUALS && right is NullLiteral -> "(${left.emit()} == null)"
+            operator == BinaryOp.Operator.NOT_EQUALS && right is NullLiteral -> "(${left.emit()} != null)"
+            operator == BinaryOp.Operator.EQUALS && left is NullLiteral -> "(null == ${right.emit()})"
+            operator == BinaryOp.Operator.NOT_EQUALS && left is NullLiteral -> "(null != ${right.emit()})"
+            operator == BinaryOp.Operator.EQUALS && isPrimitiveLiteral() -> "(${left.emit()} == ${right.emit()})"
+            operator == BinaryOp.Operator.NOT_EQUALS && isPrimitiveLiteral() -> "(${left.emit()} != ${right.emit()})"
+            operator == BinaryOp.Operator.EQUALS -> "(${left.emit()}.equals(${right.emit()}))"
+            operator == BinaryOp.Operator.NOT_EQUALS -> "(!${left.emit()}.equals(${right.emit()}))"
+            else -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
+        }
+        is TypeDescriptor -> error("TypeDescriptor should be transformed before reaching the generator")
+        is Cast -> "((${targetType.emitGenerics()}) (Object) ${expression.emit()})"
+        is NullCheck -> {
+            val orElse = when (val alt = alternative) {
+                is ErrorStatement -> ".orElseThrow(() -> new IllegalStateException(${alt.message.emit()}))"
+                null -> ""
+                else -> ".orElse(${alt.emit()})"
+            }
+            "java.util.Optional.ofNullable(${expression.emit()}).map(it -> ${body.emit()})$orElse"
+        }
+        is NullableMap -> {
+            val orElse = when (val alt = alternative) {
+                is ErrorStatement -> "orElseThrow(() -> new IllegalStateException(${alt.message.emit()}))"
+                else -> "orElse(${alternative.emit()})"
+            }
+            "${expression.emit()}.map(it -> ${body.emit()}).$orElse"
+        }
+        is NullableOf -> "java.util.Optional.of(${expression.emit()})"
+        is NullableGet -> "${expression.emit()}.get()"
+        is Constraint.RegexMatch -> "java.util.regex.Pattern.compile(\"${pattern.replace("\\", "\\\\")}\").matcher(${value.emit()}).find()"
+        is Constraint.BoundCheck -> {
+            val checks = listOfNotNull(
+                min?.let { "$it <= ${value.emit()}" },
+                max?.let { "${value.emit()} <= $it" },
+            ).joinToString(" && ").ifEmpty { "true" }
+            checks
+        }
+        is ErrorStatement -> "throw new IllegalStateException(${message.emit()});"
+        is AssertStatement -> throw IllegalArgumentException("AssertStatement cannot be an expression in Java")
+        is Switch -> throw IllegalArgumentException("Switch cannot be an expression in Java")
+        is Assignment -> throw IllegalArgumentException("Assignment cannot be an expression in Java")
+        is PrintStatement -> throw IllegalArgumentException("PrintStatement cannot be an expression in Java")
+        is ReturnStatement -> throw IllegalArgumentException("ReturnStatement cannot be an expression in Java")
+        is NotExpression -> "!${expression.emit()}"
+        is IfExpression -> "(${condition.emit()} ? ${thenExpr.emit()} : ${elseExpr.emit()})"
+        is MapExpression -> {
+            // `(0 until N).map { i -> ... }` from the generator converter becomes
+            // `IntStream.range(0, N).mapToObj(i -> ...).toList()` in Java.
+            val recv = receiver
+            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
+                "java.util.stream.IntStream.range(${recv.left.emit()}, ${recv.right.emit()}).mapToObj(${variable.camelCase()} -> ${body.emit()}).toList()"
+            } else {
+                "${receiver.emit()}.stream().map(${variable.camelCase()} -> ${body.emit()}).toList()"
+            }
+        }
+        is FlatMapIndexed -> {
+            val recv = receiver.emit()
+            val bodyWithSubstitution = body.emitWithSubstitution(elementVar, "$recv.get(${indexVar.camelCase()})")
+            "java.util.stream.IntStream.range(0, $recv.size()).mapToObj(${indexVar.camelCase()} -> $bodyWithSubstitution).flatMap(java.util.Collection::stream).toList()"
+        }
+        is ListConcat -> when {
+            lists.isEmpty() -> "java.util.List.of()"
+            lists.size == 1 -> lists.single().emit()
+            else -> "java.util.stream.Stream.of(${lists.joinToString(", ") { it.emit() }}).flatMap(java.util.Collection::stream).toList()"
+        }
+        is StringTemplate -> parts.joinToString(" + ") {
+            when (it) {
+                is StringTemplate.Part.Text -> "\"${it.value}\""
+                is StringTemplate.Part.Expr -> it.expression.emit()
+            }
+        }
+        is Lambda -> {
+            val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
+            "($params) -> ${body.emit()}"
+        }
+    }
+
+    private fun Expression.emitWithSubstitution(varName: Name, replacement: String): String = when (this) {
+        is VariableReference -> if (name == varName) replacement else emit()
+        is FunctionCall -> {
+            val recv = receiver?.emitWithSubstitution(varName, replacement)
+            val args = arguments.values.map { it.emitWithSubstitution(varName, replacement) }
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
+            val receiverStr = recv?.let { "$it." } ?: ""
+            "$receiverStr$typeArgsStr${name.value().sanitize()}(${args.joinToString(", ")})"
+        }
+        is FieldCall -> {
+            val recv = receiver?.emitWithSubstitution(varName, replacement) ?: ""
+            val dot = if (recv.isNotEmpty()) "." else ""
+            "$recv$dot${field.value().sanitize()}()"
+        }
+        is NotExpression -> "!${expression.emitWithSubstitution(varName, replacement)}"
+        is IfExpression -> "(${condition.emitWithSubstitution(varName, replacement)} ? ${thenExpr.emitWithSubstitution(varName, replacement)} : ${elseExpr.emitWithSubstitution(varName, replacement)})"
+        is MapExpression -> "${receiver.emitWithSubstitution(varName, replacement)}.stream().map(${variable.camelCase()} -> ${body.emitWithSubstitution(varName, replacement)}).toList()"
+        is LiteralList -> {
+            if (values.isEmpty()) {
+                "java.util.List.<${type.emitGenerics()}>of()"
+            } else {
+                val list = values.map { it.emitWithSubstitution(varName, replacement) }.joinToString(", ")
+                "java.util.List.of($list)"
+            }
+        }
+        is StringTemplate -> parts.joinToString(" + ") {
+            when (it) {
+                is StringTemplate.Part.Text -> "\"${it.value}\""
+                is StringTemplate.Part.Expr -> it.expression.emitWithSubstitution(varName, replacement)
+            }
+        }
+        else -> emit()
+    }
+
+    private fun LiteralList.emit(): String {
+        if (values.isEmpty()) return "java.util.List.<${type.emitGenerics()}>of()"
+        val list = values.joinToString(", ") { it.emit() }
+        return "java.util.List.of($list)"
+    }
+
+    private fun LiteralMap.emit(): String {
+        if (values.isEmpty()) return "java.util.Collections.emptyMap()"
+        val map = values.entries.joinToString(", ") {
+            "java.util.Map.entry(${Literal(it.key, keyType).emit()}, ${it.value.emit()})"
+        }
+        return "java.util.Map.ofEntries($map)"
+    }
+
+    private fun Literal.emit(): String = when {
+        type is Type.String -> "\"${value.toString().escapeJavaString()}\""
+        value is Long -> "${value}L"
+        else -> value.toString()
+    }
+
+    private fun String.escapeJavaString(): String = buildString {
+        for (c in this@escapeJavaString) {
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
+        }
+    }
+
+    private fun Switch.rewriteAsReturnChain(): Switch = copy(
+        cases = cases.map { it.copy(body = it.body.asReturn()) },
+        default = default?.asReturn() ?: listOf(
+            ErrorStatement(Literal("switch expression must be exhaustive", Type.String)),
+        ),
+    )
+
+    private fun List<Statement>.asReturn(): List<Statement> {
+        if (isEmpty()) return this
+        val last = last()
+        if (last is ReturnStatement) return this
+        return dropLast(1) + ReturnStatement(last as Expression)
+    }
+
+    private val PARAMETRIC_RUNTIME_TYPES = setOf(
+        "Wirespec.GeneratorFieldArray",
+        "Wirespec.GeneratorFieldNullable",
+        "Wirespec.GeneratorFieldShape",
+        "Wirespec.GeneratorFieldDict",
+    )
+}
+
+private fun String.sanitize(): String = if (JavaGenerator.reservedKeywords.contains(this)) "_$this" else this

@@ -1,23 +1,23 @@
 package community.flock.wirespec.emitters.rust
 
-import community.flock.wirespec.ir.core.ArrayIndexCall
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.Function
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Literal
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Precision
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Transformer
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.transformer
+import community.flock.wirespec.compiler.core.ir.ArrayIndexCall
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.Function
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Precision
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Transformer
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.transform
+import community.flock.wirespec.compiler.core.ir.transformChildren
+import community.flock.wirespec.compiler.core.ir.transformer
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Low-level borrow primitives (package-private top-level extensions).
@@ -249,7 +249,7 @@ internal object RustTransform {
 
     /**
      * Renders a [Type] to its Rust type string, applying [borrow] rules as if the position were
-     * a function parameter. Used by `RustIrEmitter.buildClientParams` where params are emitted
+     * a function parameter. Used by `RustEmitter.buildClientParams` where params are emitted
      * as raw strings (bypassing the IR).
      */
     fun Type.toBorrowedParamRustName(): String = applyBorrowRule(this).rustName()
@@ -274,10 +274,10 @@ internal object RustTransform {
 
     private fun Expression.toBorrowedRaw(): RawExpression = RawExpression("&${toRawCode()}")
 
-    private fun String.sanitizeKeywords(): String = if (this in RustIrEmitter.reservedKeywords) "r#$this" else this
+    private fun String.sanitizeKeywords(): String = if (this in RustEmitter.reservedKeywords) "r#$this" else this
 
     /** Renders a Rust-side expression to its raw source-code form. Mirrors the pre-refactor
-     * behavior that previously lived in `RustIrEmitter.toRawCode`. */
+     * behavior that previously lived in `RustEmitter.toRawCode`. */
     private fun Expression.toRawCode(): String = when (this) {
         is VariableReference -> name.snakeCase().sanitizeKeywords()
         is FieldCall -> {

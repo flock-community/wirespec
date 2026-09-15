@@ -1,17 +1,17 @@
 package community.flock.wirespec.integration.spring.extension
 
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.findAll
+import community.flock.wirespec.compiler.core.ir.transform
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.findAll
-import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.extension.IrExtension
-import community.flock.wirespec.ir.core.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 
 /**
  * Adds Spring MVC mapping annotations (`@GetMapping`, `@PostMapping`, ...) to
@@ -20,7 +20,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * The IR is language-neutral, so the matching is shared across targets; only
  * the array-valued `@RequestMapping` syntax for OPTIONS/HEAD/TRACE differs per
  * [language]. Register alongside [SpringNativeHintsExtension] on a
- * Kotlin or Java [community.flock.wirespec.ir.emit.IrEmitter].
+ * Kotlin or Java [community.flock.wirespec.compiler.core.ir.emit.IrEmitter].
  */
 public class SpringMappingAnnotationsExtension(
     private val language: FileExtension,

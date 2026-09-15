@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.jackson.v3.java;
 
-import community.flock.wirespec.emitters.java.JavaIrEmitter;
+import community.flock.wirespec.emitters.java.JavaEmitter;
 import community.flock.wirespec.java.Wirespec;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.JsonParser;
@@ -191,7 +191,7 @@ public class WirespecModuleJava extends SimpleModule {
 
         private String translate(String key) {
 
-            List<String> keywords= JavaIrEmitter.Companion.getReservedKeywords()
+            List<String> keywords= JavaEmitter.Companion.getReservedKeywords()
                     .stream()
                     .map(keyword -> "_" + keyword)
                     .toList();

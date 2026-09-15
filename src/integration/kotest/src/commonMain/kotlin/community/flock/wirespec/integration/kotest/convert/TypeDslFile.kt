@@ -1,13 +1,13 @@
 package community.flock.wirespec.integration.kotest.convert
 
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Visibility
+import community.flock.wirespec.compiler.core.ir.file
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Visibility
-import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.core.Type as IrType
+import community.flock.wirespec.compiler.core.ir.Type as IrType
 
 internal object TypeDslFile {
 

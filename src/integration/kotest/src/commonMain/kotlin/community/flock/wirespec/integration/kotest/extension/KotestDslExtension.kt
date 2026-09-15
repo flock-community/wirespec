@@ -1,6 +1,16 @@
 package community.flock.wirespec.integration.kotest.extension
 
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Package
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.raw
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -10,16 +20,6 @@ import community.flock.wirespec.integration.kotest.convert.ChannelDslFile
 import community.flock.wirespec.integration.kotest.convert.ChannelShape
 import community.flock.wirespec.integration.kotest.convert.EndpointDslFile
 import community.flock.wirespec.integration.kotest.convert.TypeDslFile
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Package
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.fieldList
-import community.flock.wirespec.ir.core.raw
-import community.flock.wirespec.ir.extension.IrExtension
 
 public open class KotestDslExtension(
     private val packageName: PackageName,

@@ -1,0 +1,292 @@
+package community.flock.wirespec.compiler.core.ir.converter
+
+import arrow.core.getOrElse
+import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.ParseContext
+import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.Constraint
+import community.flock.wirespec.compiler.core.ir.Function
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Precision
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.file
+import community.flock.wirespec.compiler.core.ir.findElement
+import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.utils.NoLogger
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
+import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
+import community.flock.wirespec.compiler.core.parse.ast.Refined as AstRefined
+import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
+
+class IrConverterTest {
+
+    private inline fun <reified T> parse(source: String): T = object : ParseContext, NoLogger {
+        override val spec = WirespecSpec
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
+        .map { it.modules.flatMap(Module::statements) }
+        .getOrElse { fail("Parse failed: $it") }
+        .first()
+        .let { it as? T ?: fail("Expected ${T::class.simpleName} but got ${it::class.simpleName}") }
+
+    private fun parseNodes(source: String): List<Definition> = object : ParseContext, NoLogger {
+        override val spec = WirespecSpec
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
+        .map { it.modules.flatMap(Module::statements) }
+        .getOrElse { fail("Parse failed: $it") }
+
+    @Test
+    fun testLanguageConverter() {
+        val source = """
+            type Foo {
+                bar: String
+            }
+        """.trimIndent()
+
+        val result = parse<AstType>(source).convert()
+
+        val expected = file("Foo") {
+            struct("Foo") {
+                implements(Type.Custom("Wirespec.Shape"))
+                field(Name(listOf("bar")), string)
+                function("validate", isOverride = true) {
+                    returnType(Type.Array(Type.String))
+                    returns(LiteralList(emptyList(), Type.String))
+                }
+            }
+        }
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testEnumConversion() {
+        val source = """
+            enum MyEnum {
+                FOO, BAR
+            }
+        """.trimIndent()
+
+        val result = parse<AstEnum>(source).convert()
+
+        val expected = file("MyEnum") {
+            enum("MyEnum", Type.Custom("Wirespec.Enum")) {
+                entry("FOO", "\"FOO\"")
+                entry("BAR", "\"BAR\"")
+            }
+        }
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testUnionConversion() {
+        val source = """
+            type MyUnion = Foo | Bar
+            type Foo { a: String }
+            type Bar { b: String }
+        """.trimIndent()
+
+        val result = parseNodes(source).map { it.convert() }
+
+        val expected = listOf(
+            file("MyUnion") {
+                union("MyUnion") {
+                    member("Foo")
+                    member("Bar")
+                }
+            },
+            file("Foo") {
+                struct("Foo") {
+                    implements(Type.Custom("Wirespec.Shape"))
+                    implements(Type.Custom("MyUnion"))
+                    field(Name(listOf("a")), string)
+                    function("validate", isOverride = true) {
+                        returnType(Type.Array(Type.String))
+                        returns(LiteralList(emptyList(), Type.String))
+                    }
+                }
+            },
+            file("Bar") {
+                struct("Bar") {
+                    implements(Type.Custom("Wirespec.Shape"))
+                    implements(Type.Custom("MyUnion"))
+                    field(Name(listOf("b")), string)
+                    function("validate", isOverride = true) {
+                        returnType(Type.Array(Type.String))
+                        returns(LiteralList(emptyList(), Type.String))
+                    }
+                }
+            },
+        )
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testRefinedConversion() {
+        val source = """
+            type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
+        """.trimIndent()
+
+        val result = parse<AstRefined>(source).convert()
+
+        val expected = file("DutchPostalCode") {
+            struct("DutchPostalCode") {
+                implements(type("Wirespec.Refined", string))
+                field("value", Type.String)
+                function("validate") {
+                    returnType(Type.Boolean)
+                    returns(
+                        Constraint.RegexMatch(
+                            pattern = "^([0-9]{4}[A-Z]{2})$",
+                            rawValue = "/^([0-9]{4}[A-Z]{2})$/g",
+                            value = VariableReference(Name.of("value")),
+                        ),
+                    )
+                }
+                function("toString") {
+                    returnType(Type.String)
+                    returns(VariableReference(Name.of("value")))
+                }
+            }
+        }
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testReferenceCustomWithUnderscoreMatchesDefinitionName() {
+        // Simulates an OpenAPI _embedded inline allOf type. The parser produces
+        // both a Type definition and a Reference.Custom that share the same raw
+        // name with an underscore (e.g. "Contact_embedded"). After IR
+        // conversion, the struct's emitted class name (Struct.name.pascalCase)
+        // and the field's Type.Custom reference (Type.Custom.name.value) must
+        // agree so the generated code compiles.
+        val rawName = "Contact_embedded"
+
+        val parent = AstType(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Contact"),
+            shape = AstType.Shape(
+                listOf(
+                    Field(
+                        identifier = FieldIdentifier("_embedded"),
+                        annotations = emptyList(),
+                        reference = Reference.Custom(rawName, isNullable = true),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        )
+        val inline = AstType(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier(rawName),
+            shape = AstType.Shape(emptyList()),
+            extends = emptyList(),
+        )
+
+        val parentStruct = parent.convert().findElement<Struct>()!!
+        val inlineStruct = inline.convert().findElement<Struct>()!!
+
+        val emittedStructName = inlineStruct.name.pascalCase()
+        val embeddedField = parentStruct.fieldList().single()
+        val customRef = ((embeddedField.type as Type.Nullable).type as Type.Custom).name.value()
+
+        assertEquals(emittedStructName, customRef)
+    }
+
+    @Test
+    fun testRefinedIntegerConversion() {
+        val source = """
+            type Age = Integer(0, 150)
+        """.trimIndent()
+
+        val result = parse<AstRefined>(source).convert()
+
+        val expected = file("Age") {
+            struct("Age") {
+                implements(type("Wirespec.Refined", Type.Integer(Precision.P64)))
+                field("value", Type.Integer(Precision.P64))
+                function("validate") {
+                    returnType(Type.Boolean)
+                    returns(
+                        Constraint.BoundCheck(
+                            min = "0",
+                            max = "150",
+                            value = VariableReference(Name.of("value")),
+                        ),
+                    )
+                }
+                function("toString") {
+                    returnType(Type.String)
+                    returns(
+                        FunctionCall(
+                            receiver = VariableReference(Name.of("value")),
+                            name = Name.of("toString"),
+                        ),
+                    )
+                }
+            }
+        }
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testSharedContainsGeneratorField() {
+        val file = PackageName("com.example").convert()
+        val wirespecNamespace = file.elements
+            .filterIsInstance<Namespace>()
+            .first { it.name == Name.of("Wirespec") }
+        val interfaces = wirespecNamespace.elements
+            .filterIsInstance<Interface>()
+        val structs = wirespecNamespace.elements
+            .filterIsInstance<Struct>()
+
+        val generatorField = interfaces.first { it.name == Name.of("GeneratorField") }
+        assertTrue(generatorField.isSealed, "GeneratorField should be sealed")
+
+        val generator = interfaces.first { it.name == Name.of("Generator") }
+        val generateFn = generator.elements
+            .filterIsInstance<Function>()
+            .first { it.name == Name.of("generate") }
+        assertEquals(2, generateFn.parameters.size, "generate() should take path and field")
+        assertEquals(Name.of("path"), generateFn.parameters[0].name, "first param must be 'path'")
+        assertEquals(Name.of("field"), generateFn.parameters[1].name, "second param must be 'field'")
+
+        val expectedVariants = setOf(
+            "GeneratorFieldString",
+            "GeneratorFieldInteger64", "GeneratorFieldInteger32",
+            "GeneratorFieldNumber64", "GeneratorFieldNumber32",
+            "GeneratorFieldBoolean", "GeneratorFieldBytes", "GeneratorFieldEnum",
+            "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
+            "GeneratorFieldDict",
+        )
+        val actualVariants = structs.map { it.name.value() }.toSet()
+        assertTrue(
+            expectedVariants.all { it in actualVariants },
+            "Missing variants: ${expectedVariants - actualVariants}",
+        )
+    }
+}

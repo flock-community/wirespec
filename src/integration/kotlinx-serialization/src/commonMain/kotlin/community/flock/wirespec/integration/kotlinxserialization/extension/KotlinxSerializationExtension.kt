@@ -1,19 +1,19 @@
 package community.flock.wirespec.integration.kotlinxserialization.extension
 
+import community.flock.wirespec.compiler.core.ir.Enum
+import community.flock.wirespec.compiler.core.ir.HasName
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Union
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.ir.core.Enum
-import community.flock.wirespec.ir.core.HasName
-import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.Union
-import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
-import community.flock.wirespec.ir.core.File as LanguageFile
 
 /**
  * Adds kotlinx.serialization annotations to every generated model declaration:
@@ -28,7 +28,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * Only the top-level model declarations of each [LanguageFile] are annotated;
  * endpoint-internal structs live nested inside their endpoint `Namespace` and are
  * left untouched. Register on a Kotlin
- * [community.flock.wirespec.ir.emit.IrEmitter] built with `EmitShared(false)`, so
+ * [community.flock.wirespec.compiler.core.ir.emit.IrEmitter] built with `EmitShared(false)`, so
  * the runtime classes come from the wirespec-jvm dependency rather than being
  * re-emitted as source.
  */

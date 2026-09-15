@@ -1,0 +1,105 @@
+package community.flock.wirespec.compiler.core.ir.emit
+
+import arrow.core.NonEmptyList
+import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.converter.convertClient
+import community.flock.wirespec.compiler.core.ir.converter.convertEndpointClient
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.generator.Generator
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Model
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.utils.Logger
+
+public interface IrEmitter : Emitter {
+
+    public val generator: Generator
+
+    /** Extensions applied to the complete IR before code generation. */
+    public val extensions: List<IrExtension> get() = emptyList()
+
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
+        val moduleFiles = ast.modules.flatMap { m ->
+            logger.info("Emitting Nodes from ${m.fileUri.value} ")
+            emit(m, logger)
+        }
+        val sharedFile = emitShared()
+        val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
+        val mainClientFile = allEndpoints.takeIf { it.isNotEmpty() }?.let { emitClient(it, logger) }
+
+        val allFiles: IR = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
+        val transformedFiles = extensions
+            .fold(allFiles) { ir, extension -> extension.extend(ir, ast) }
+            .filterIsInstance<File>()
+        beforeGenerate(transformedFiles)
+
+        return transformedFiles.map { it.toEmitted() }.toNonEmptyListOrNull()
+            ?: error("Extensions must leave at least one File in the IR")
+    }
+
+    /** Hook for emitters that need to inspect the full set of files before per-file generation. */
+    public fun beforeGenerate(allFiles: List<File>): Unit = Unit
+
+    public fun emit(module: Module, logger: Logger): NonEmptyList<File> {
+        val definitionFiles = module.statements.map { emit(it, module, logger) }
+        val clientFiles = module.statements.toList().filterIsInstance<Endpoint>().map { endpoint ->
+            logger.info("Emitting Client for endpoint ${endpoint.identifier.value}")
+            emitEndpointClient(endpoint)
+        }
+        val generatorFiles = module.statements.toList()
+            .filterIsInstance<Model>()
+            .mapNotNull { model ->
+                logger.info("Emitting Generator for ${model::class.simpleName} ${model.identifier.value}")
+                emitGenerator(model, module)
+            }
+        return definitionFiles + clientFiles + generatorFiles
+    }
+
+    public fun emitGenerator(definition: Definition, module: Module): File? = null
+
+    public fun emit(definition: Definition, module: Module, logger: Logger): File {
+        logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
+        return when (definition) {
+            is Type -> emit(definition, module)
+            is Endpoint -> emit(definition)
+            is Enum -> emit(definition, module)
+            is Refined -> emit(definition)
+            is Union -> emit(definition)
+            is Channel -> emit(definition)
+            is Rpc -> emit(definition)
+        }
+    }
+
+    private fun File.toEmitted(): Emitted = Emitted(name.value() + "." + extension.value, generator.generate(this))
+
+    public fun emitEndpointClient(endpoint: Endpoint): File = endpoint.convertEndpointClient()
+
+    public fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
+        logger.info("Emitting main Client for ${endpoints.size} endpoints")
+        return endpoints.convertClient()
+    }
+
+    public fun emitShared(): File?
+
+    public fun emit(type: Type, module: Module): File
+    public fun emit(enum: Enum, module: Module): File
+    public fun emit(refined: Refined): File
+    public fun emit(endpoint: Endpoint): File
+    public fun emit(union: Union): File
+    public fun emit(channel: Channel): File
+    public fun emit(rpc: Rpc): File
+
+    public fun transformTestFile(file: File): File = file
+}

@@ -8,17 +8,17 @@ import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.utils.NoLogger
-import community.flock.wirespec.ir.emit.IrEmitter
 import java.io.File
 import kotlin.reflect.full.primaryConstructor
 
 /**
  * Single shared updater entry point used by every emitter's `updateEmitterFixtures`
- * Gradle task. The emitter's fully-qualified class name is passed as the second arg,
+ * Gradle task. The emitter's fully qualified class name is passed as the second arg,
  * and we reflectively build a factory that supplies `EmitShared(true)` to its primary
  * constructor when applicable, so the generator can produce the shared file.
  *

@@ -1,13 +1,13 @@
 package community.flock.wirespec.example.maven.custom.extension
 
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Package
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Package
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.extension.IrExtension
 
 /**
  * An IR extension that appends a minimal `<Definition>Custom` class for every Wirespec definition,

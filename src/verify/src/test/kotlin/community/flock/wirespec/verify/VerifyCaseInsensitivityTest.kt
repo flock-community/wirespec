@@ -1,23 +1,23 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
-import community.flock.wirespec.emitters.rust.RustIrEmitter
-import community.flock.wirespec.ir.core.BinaryOp
-import community.flock.wirespec.ir.core.ConstructorStatement
-import community.flock.wirespec.ir.core.Expression
-import community.flock.wirespec.ir.core.fieldCall
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Literal
-import community.flock.wirespec.ir.core.LiteralList
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.NullableEmpty
-import community.flock.wirespec.ir.core.NullableGet
-import community.flock.wirespec.ir.core.NullableOf
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.TypeDescriptor
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.emitters.rust.RustEmitter
+import community.flock.wirespec.compiler.core.ir.BinaryOp
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.fieldCall
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.NullableEmpty
+import community.flock.wirespec.compiler.core.ir.NullableGet
+import community.flock.wirespec.compiler.core.ir.NullableOf
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.TypeDescriptor
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
 import io.kotest.core.spec.style.FunSpec
 
 /**
@@ -40,7 +40,7 @@ class VerifyCaseInsensitivityTest : FunSpec({
 
     languages.values.forEach { lang ->
         test("header case insensitivity - $lang") {
-            val isRust = lang.emitter is RustIrEmitter
+            val isRust = lang.emitter is RustEmitter
             val endpointRef: Expression = RawExpression("PutTodo")
 
             val testFile = file("CaseInsensitivityTest") {
@@ -91,7 +91,7 @@ class VerifyCaseInsensitivityTest : FunSpec({
 
                     // fromRawRequest call
                     assign("fromRaw", functionCall("fromRawRequest", receiver = if (isRust) null else endpointRef) {
-                        arg("serialization", if (isRust) with(RustIrEmitter) { VariableReference("serialization").borrow() } else VariableReference("serialization"))
+                        arg("serialization", if (isRust) with(RustEmitter) { VariableReference("serialization").borrow() } else VariableReference("serialization"))
                         arg("rawRequest", VariableReference("rawRequest"))
                     })
 
@@ -133,4 +133,3 @@ class VerifyCaseInsensitivityTest : FunSpec({
         }
     }
 })
-

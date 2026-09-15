@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import community.flock.wirespec.emitters.java.JavaIrEmitter;
+import community.flock.wirespec.emitters.java.JavaEmitter;
 import community.flock.wirespec.java.Wirespec;
 
 import java.io.IOException;
@@ -26,7 +26,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * A Jackson module that handles deserialization of all Wirespec.Refined, to ensure
@@ -203,7 +202,7 @@ public class WirespecModuleJava extends SimpleModule {
 
         private String translate(String key) {
 
-            List<String> keywords = JavaIrEmitter.Companion.getReservedKeywords()
+            List<String> keywords = JavaEmitter.Companion.getReservedKeywords()
                     .stream()
                     .map(keyword -> "_" + keyword)
                     .toList();

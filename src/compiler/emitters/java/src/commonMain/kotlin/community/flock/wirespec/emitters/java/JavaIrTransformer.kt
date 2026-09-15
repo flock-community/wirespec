@@ -2,33 +2,33 @@ package community.flock.wirespec.emitters.java
 
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.ir.Assignment
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Import
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Precision
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.ReturnStatement
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.TypeDescriptor
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.converter.convert
+import community.flock.wirespec.compiler.core.ir.function
+import community.flock.wirespec.compiler.core.ir.import
+import community.flock.wirespec.compiler.core.ir.plus
+import community.flock.wirespec.compiler.core.ir.struct
+import community.flock.wirespec.compiler.core.ir.transform
+import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.ir.converter.convert
-import community.flock.wirespec.ir.core.Assignment
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Import
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.Precision
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.ReturnStatement
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.Type
-import community.flock.wirespec.ir.core.TypeDescriptor
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.function
-import community.flock.wirespec.ir.core.import
-import community.flock.wirespec.ir.core.plus
-import community.flock.wirespec.ir.core.struct
-import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.Function as LanguageFunction
+import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
 
 internal fun Definition.buildModelImports(packageName: PackageName): List<Import> = importReferences()
     .filter { identifier.value != it.value }

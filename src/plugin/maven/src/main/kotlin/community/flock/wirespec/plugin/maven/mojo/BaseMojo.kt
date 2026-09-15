@@ -3,6 +3,7 @@ package community.flock.wirespec.plugin.maven.mojo
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptySetOf
+import arrow.core.toNonEmptyListOrNull
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -10,11 +11,11 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
-import community.flock.wirespec.ir.emit.IrEmitter
-import community.flock.wirespec.ir.extension.IrExtension
-import community.flock.wirespec.ir.extension.applyExtensions
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -131,7 +132,11 @@ public abstract class BaseMojo : AbstractMojo() {
     protected val emitters: NonEmptySet<Emitter>
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-            .map { it.applyExtensions(extensionInstances(it.extension)) }
+            .map { emitter ->
+                extensionInstances(emitter.extension).toNonEmptyListOrNull()
+                    ?.let { (emitter as? IrEmitter)?.applyExtensions(it) }
+                    ?: emitter
+            }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguage()
 

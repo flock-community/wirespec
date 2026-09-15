@@ -39,7 +39,6 @@ kotlin {
             associateWith(mainCompilation)
             defaultSourceSet.dependencies {
                 implementation(project(":src:compiler:core"))
-                implementation(project(":src:compiler:ir"))
                 implementation(project(":src:compiler:emitters:java"))
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:converter:openapi"))

@@ -1,29 +1,29 @@
 package community.flock.wirespec.emitters.python
 
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.Field
+import community.flock.wirespec.compiler.core.ir.FieldCall
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Parameter
+import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.converter.convertConstraint
+import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.findElement
+import community.flock.wirespec.compiler.core.ir.function
+import community.flock.wirespec.compiler.core.ir.transform
+import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.ir.converter.convertConstraint
-import community.flock.wirespec.ir.core.Element
-import community.flock.wirespec.ir.core.Field
-import community.flock.wirespec.ir.core.FieldCall
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Interface
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.Namespace
-import community.flock.wirespec.ir.core.Parameter
-import community.flock.wirespec.ir.core.RawExpression
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.fieldList
-import community.flock.wirespec.ir.core.findElement
-import community.flock.wirespec.ir.core.function
-import community.flock.wirespec.ir.core.transform
-import community.flock.wirespec.ir.core.transformChildren
-import community.flock.wirespec.ir.core.File as LanguageFile
-import community.flock.wirespec.ir.core.Function as LanguageFunction
-import community.flock.wirespec.ir.core.Type as LanguageType
-import community.flock.wirespec.ir.core.Union as LanguageUnion
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
+import community.flock.wirespec.compiler.core.ir.Type as LanguageType
+import community.flock.wirespec.compiler.core.ir.Union as LanguageUnion
 
 /**
  * `Type.Reflect` emits as `type[T]` in Python, which is only legal where `T` is in scope —

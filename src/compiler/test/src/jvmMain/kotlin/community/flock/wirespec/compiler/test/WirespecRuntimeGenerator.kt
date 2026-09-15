@@ -3,7 +3,7 @@
 package community.flock.wirespec.compiler.test
 
 import community.flock.wirespec.compiler.core.emit.EmitShared
-import community.flock.wirespec.ir.emit.IrEmitter
+import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import java.io.File
 import kotlin.reflect.full.primaryConstructor
 
@@ -22,19 +22,19 @@ public fun main(args: Array<String>) {
     listOf(
         Target(
             outputRoot = javaRoot,
-            fqcn = "community.flock.wirespec.emitters.java.JavaIrEmitter",
+            fqcn = "community.flock.wirespec.emitters.java.JavaEmitter",
             packagePath = "community/flock/wirespec/java",
             fileName = "Wirespec.java",
         ),
         Target(
             outputRoot = kotlinRoot,
-            fqcn = "community.flock.wirespec.emitters.kotlin.KotlinIrEmitter",
+            fqcn = "community.flock.wirespec.emitters.kotlin.KotlinEmitter",
             packagePath = "community/flock/wirespec/kotlin",
             fileName = "Wirespec.kt",
         ),
         Target(
             outputRoot = scalaRoot,
-            fqcn = "community.flock.wirespec.emitters.scala.ScalaIrEmitter",
+            fqcn = "community.flock.wirespec.emitters.scala.ScalaEmitter",
             packagePath = "community/flock/wirespec/scala",
             fileName = "Wirespec.scala",
         ),

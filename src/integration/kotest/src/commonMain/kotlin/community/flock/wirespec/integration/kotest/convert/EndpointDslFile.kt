@@ -1,20 +1,20 @@
 package community.flock.wirespec.integration.kotest.convert
 
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FileBuilder
+import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.Visibility
+import community.flock.wirespec.compiler.core.ir.converter.convert
+import community.flock.wirespec.compiler.core.ir.file
+import community.flock.wirespec.compiler.core.ir.generator.escapeKotlinIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.ir.converter.convert
-import community.flock.wirespec.ir.core.File
-import community.flock.wirespec.ir.core.FileBuilder
-import community.flock.wirespec.ir.core.FunctionCall
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.Visibility
-import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.generator.escapeKotlinIdentifier
-import community.flock.wirespec.ir.core.Type as IrType
+import community.flock.wirespec.compiler.core.ir.Type as IrType
 
 internal object EndpointDslFile {
 

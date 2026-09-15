@@ -44,6 +44,9 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:emitters:java"))
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:compiler:emitters:scala"))
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
                 implementation(libs.kotest.property)
@@ -51,7 +54,6 @@ kotlin {
         }
         jvmMain {
             dependencies {
-                implementation(project(":src:compiler:ir"))
                 implementation(libs.kotlin.reflect)
             }
         }

@@ -8,12 +8,12 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.ir.extension.applyExtensions
+import community.flock.wirespec.emitters.java.JavaEmitter
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -28,9 +28,9 @@ class SpringJavaExtensionTest {
         override val spec = WirespecSpec
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
-    private fun springEmitter(packageName: PackageName) = JavaIrEmitter(packageName, EmitShared(false))
+    private fun springEmitter(packageName: PackageName) = JavaEmitter(packageName, EmitShared(false))
         .applyExtensions(
-            listOf(
+            nonEmptyListOf(
                 SpringMappingAnnotationsExtension(FileExtension.Java),
                 SpringNativeHintsExtension(packageName, FileExtension.Java),
             ),

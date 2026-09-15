@@ -2,15 +2,15 @@ package community.flock.wirespec.integration.spring.extension
 
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.file
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Model
-import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.file
-import community.flock.wirespec.ir.extension.IrExtension
-import community.flock.wirespec.ir.core.File as LanguageFile
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 
 /**
  * Emits a WirespecNativeHints file registering all models and endpoints for
@@ -18,7 +18,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  *
  * The hints class body is hand-written source and so differs per [language].
  * Register alongside [SpringMappingAnnotationsExtension] on a Kotlin
- * or Java [community.flock.wirespec.ir.emit.IrEmitter].
+ * or Java [community.flock.wirespec.compiler.core.ir.emit.IrEmitter].
  */
 public class SpringNativeHintsExtension(
     private val packageName: PackageName,

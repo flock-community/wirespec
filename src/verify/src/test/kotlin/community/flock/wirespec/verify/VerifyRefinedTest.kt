@@ -1,8 +1,8 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.test.CompileRefinedTest
-import community.flock.wirespec.ir.core.VariableReference
-import community.flock.wirespec.ir.core.file
+import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.file
 import io.kotest.core.spec.style.FunSpec
 
 class VerifyRefinedTest : FunSpec({

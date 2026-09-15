@@ -1,15 +1,15 @@
 package community.flock.wirespec.integration.jackson.extension
 
+import community.flock.wirespec.compiler.core.ir.Field
+import community.flock.wirespec.compiler.core.ir.IR
+import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Union
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.ir.core.Field
-import community.flock.wirespec.ir.core.IR
-import community.flock.wirespec.ir.core.Name
-import community.flock.wirespec.ir.core.RawElement
-import community.flock.wirespec.ir.core.Struct
-import community.flock.wirespec.ir.core.Union
-import community.flock.wirespec.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
-import community.flock.wirespec.ir.core.File as LanguageFile
 
 /**
  * Adds Jackson annotations to every generated model declaration so the emitted
@@ -32,7 +32,7 @@ import community.flock.wirespec.ir.core.File as LanguageFile
  * Only the top-level model declarations of each [LanguageFile] are annotated;
  * endpoint-internal structs live nested inside their endpoint `Namespace` and are
  * left untouched. Register on a Java or Kotlin
- * [community.flock.wirespec.ir.emit.IrEmitter] built with `EmitShared(false)`, so the
+ * [community.flock.wirespec.compiler.core.ir.emit.IrEmitter] built with `EmitShared(false)`, so the
  * runtime classes come from the wirespec-jvm dependency rather than being re-emitted as
  * source.
  */

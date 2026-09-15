@@ -16,10 +16,6 @@
             <artifactId>core-jvm</artifactId>
         </dependency>
         <dependency>
-            <groupId>community.flock.wirespec.ir</groupId>
-            <artifactId>ir-jvm</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
         </dependency>

@@ -46,7 +46,6 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":src:compiler:core"))
-                api(project(":src:compiler:ir"))
             }
         }
         commonTest {
@@ -64,5 +63,5 @@ kotlin.sourceSets.named("commonTest") {
 }
 
 emitterFixtures {
-    emitterClass = "community.flock.wirespec.emitters.scala.ScalaIrEmitter"
+    emitterClass = "community.flock.wirespec.emitters.scala.ScalaEmitter"
 }

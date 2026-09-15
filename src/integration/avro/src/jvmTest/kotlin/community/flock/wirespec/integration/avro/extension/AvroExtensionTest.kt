@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.ir.extension.ExtendingIrEmitter
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -15,9 +16,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.emitters.java.JavaIrEmitter
-import community.flock.wirespec.emitters.kotlin.KotlinIrEmitter
-import community.flock.wirespec.ir.extension.ExtendingIrEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -26,12 +26,12 @@ class AvroExtensionTest {
     private val packageName = PackageName("packageName")
 
     private val javaEmitter = ExtendingIrEmitter(
-        JavaIrEmitter(packageName, EmitShared(true)),
+        JavaEmitter(packageName, EmitShared(true)),
         listOf(AvroExtension(packageName, FileExtension.Java)),
     )
 
     private val kotlinEmitter = ExtendingIrEmitter(
-        KotlinIrEmitter(packageName, EmitShared(true)),
+        KotlinEmitter(packageName, EmitShared(true)),
         listOf(AvroExtension(packageName, FileExtension.Kotlin)),
     )
 
