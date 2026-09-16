@@ -229,7 +229,8 @@ public object RustGenerator :
 
         val fieldsStr = fields.joinToString("\n") {
             val fieldName = it.name.snakeCase().sanitize()
-            "pub $fieldName: ${it.type.emit()},".indentCode(1)
+            val annotations = it.annotations.joinToString("") { annotation -> "$annotation\n".indentCode(1) }
+            "$annotations${"pub $fieldName: ${it.type.emit()},".indentCode(1)}"
         }
         val structDef = "pub struct $rustName$typeParamsStr {\n$fieldsStr\n}\n\n".indentCode(indent)
 

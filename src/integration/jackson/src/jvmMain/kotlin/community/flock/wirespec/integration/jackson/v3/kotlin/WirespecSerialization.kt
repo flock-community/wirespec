@@ -42,7 +42,7 @@ public class WirespecSerialization(
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalStdlibApi::class)
     override fun <T : Any> deserializeBody(raw: ByteArray, type: KType): T = when {
-        type.classifier == String::class -> raw as T
+        type.classifier == String::class -> raw.decodeToString() as T
         else ->
             wirespecObjectMapper
                 .constructType(type.javaType)
