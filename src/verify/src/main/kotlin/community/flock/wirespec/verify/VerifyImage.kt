@@ -6,7 +6,7 @@ internal enum class VerifyImage {
     KOTLIN_1 {
         override val image: String by lazy {
             val version = "1.9.24"
-            ImageFromDockerfile("wirespec-kotlin-verify", false)
+            ImageFromDockerfile("wirespec-kotlin-1-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder
                         .from("eclipse-temurin:17-jdk")
@@ -24,7 +24,7 @@ internal enum class VerifyImage {
     KOTLIN_2 {
         override val image: String by lazy {
             val version = "2.0.21"
-            ImageFromDockerfile("wirespec-kotlin-verify", false)
+            ImageFromDockerfile("wirespec-kotlin-2-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder
                         .from("eclipse-temurin:17-jdk")
@@ -74,6 +74,12 @@ internal enum class VerifyImage {
                             "curl -sSLf https://scala-cli.virtuslab.org/get | sh && " +
                                 "ln -s /root/.cache/scalacli/local-repo/bin/scala-cli/scala-cli /usr/local/bin/scala-cli && " +
                                 "scala-cli version"
+                        )
+                        // Fetch the Scala compiler and the Bloop compile server into the image: fetching them
+                        // in every fresh container made its first compile take a minute.
+                        .run(
+                            "mkdir -p /tmp/warm && echo 'object Warm' > /tmp/warm/Warm.scala && " +
+                                "scala-cli compile /tmp/warm/Warm.scala && scala-cli --power bloop exit && rm -rf /tmp/warm"
                         )
                         .build()
                 }

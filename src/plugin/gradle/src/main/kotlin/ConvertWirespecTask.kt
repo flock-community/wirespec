@@ -19,12 +19,17 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
+import org.gradle.work.DisableCachingByDefault
 
+@DisableCachingByDefault(because = "Extension classes and the pre-processor function are only tracked by class name, not by implementation")
 public abstract class ConvertWirespecTask : BaseWirespecTask() {
 
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:Option(option = "input", description = "input directory")
     public abstract val input: RegularFileProperty
 

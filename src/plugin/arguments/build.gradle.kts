@@ -1,6 +1,7 @@
 plugins {
     id("module.publication")
     id("module.spotless")
+    id("module.native-targets")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
@@ -9,15 +10,7 @@ plugins {
 group = "${libs.versions.group.id.get()}.plugin.arguments"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
-val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
-
 kotlin {
-    if (enableNative) {
-        macosX64()
-        macosArm64()
-        linuxX64()
-        mingwX64()
-    }
     js(IR) {
         nodejs()
     }

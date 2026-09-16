@@ -1,8 +1,10 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
     id("module.spotless")
+    id("module.native-targets")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
@@ -16,8 +18,6 @@ repositories {
     mavenLocal()
 }
 
-val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
-
 kotlin {
     targets.all {
         compilations.all {
@@ -27,12 +27,7 @@ kotlin {
         }
     }
 
-    if (enableNative) {
-        macosX64 { build() }
-        macosArm64 { build() }
-        linuxX64 { build() }
-        mingwX64 { build() }
-    }
+    targets.withType<KotlinNativeTarget>().configureEach { build() }
     js(IR) { build() }
     jvm {
         java {
@@ -82,9 +77,10 @@ tasks.named<Jar>("jvmJar") {
     from(jvmRuntimeJarTrees)
 }
 
-fun KotlinNativeTargetWithHostTests.build() {
+fun KotlinNativeTarget.build() {
     binaries {
-        executable {
+        // Release only: nothing uses the debug executables.
+        executable(listOf(NativeBuildType.RELEASE)) {
             entryPoint = "community.flock.wirespec.plugin.cli.main"
         }
     }

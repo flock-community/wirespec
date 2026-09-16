@@ -25,7 +25,7 @@ subprojects {
     }
 
     afterEvaluate {
-        val copyTestResourcesForJs by tasks.registering(Copy::class) {
+        val copyTestResourcesForJs = tasks.register<Copy>("copyTestResourcesForJs") {
             group = "nodejs"
             description = "Copy js specific test-resources for nodejs test task (located at src/*Test/resources)"
 

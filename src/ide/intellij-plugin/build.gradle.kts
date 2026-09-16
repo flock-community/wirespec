@@ -49,7 +49,7 @@ tasks {
 }
 
 tasks {
-    val createOpenAPISourceJar by registering(Jar::class) {
+    val createOpenAPISourceJar = register<Jar>("createOpenAPISourceJar") {
         // Java sources
         from(sourceSets.main.get().java) {
             include("**/community/flock/**/*.java")

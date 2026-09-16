@@ -46,21 +46,28 @@ import community.flock.wirespec.compiler.core.ir.generator.RustGenerator
 import community.flock.wirespec.compiler.core.ir.generator.ScalaGenerator
 import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import io.kotest.matchers.shouldBe
-import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.utility.MountableFile
 import java.io.File
 import community.flock.wirespec.compiler.core.ir.File as AstFile
 
 internal val languages = mapOf(
-    "java-17" to Language(JavaEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:17-jdk" }),
-    "java-21" to Language(JavaEmitter(emitShared = EmitShared(true)), { "eclipse-temurin:21-jdk" }),
-    "kotlin-1" to Language(KotlinEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_1.image }),
-    "kotlin-2" to Language(KotlinEmitter(emitShared = EmitShared(true)), { VerifyImage.KOTLIN_2.image }),
-    "python" to Language(PythonEmitter(emitShared = EmitShared(true)), { VerifyImage.PYTHON.image }),
-    "typescript" to Language(TypeScriptEmitter(), { VerifyImage.TYPESCRIPT.image }),
-    "rust" to Language(RustEmitter(emitShared = EmitShared(true)), { VerifyImage.RUST.image }),
-    "scala" to Language(ScalaEmitter(emitShared = EmitShared(true)), { VerifyImage.SCALA.image }),
+    "java-17" to Language(JavaEmitter(emitShared = EmitShared(true))) { "eclipse-temurin:17-jdk" },
+    "java-21" to Language(JavaEmitter(emitShared = EmitShared(true))) { "eclipse-temurin:21-jdk" },
+    "kotlin-1" to Language(KotlinEmitter(emitShared = EmitShared(true))) { VerifyImage.KOTLIN_1.image },
+    "kotlin-2" to Language(KotlinEmitter(emitShared = EmitShared(true))) { VerifyImage.KOTLIN_2.image },
+    "python" to Language(PythonEmitter(emitShared = EmitShared(true))) { VerifyImage.PYTHON.image },
+    "typescript" to Language(TypeScriptEmitter()) { VerifyImage.TYPESCRIPT.image },
+    "rust" to Language(RustEmitter(emitShared = EmitShared(true))) { VerifyImage.RUST.image },
+    "scala" to Language(ScalaEmitter(emitShared = EmitShared(true))) { VerifyImage.SCALA.image },
 ).onEach { (name, lang) -> lang.name = name }
+    .let { all ->
+        // Set by the per-language test tasks in src/verify/build.gradle.kts
+        System.getProperty("verify.languages")?.split(',')?.toSet()?.let { declared ->
+            check(declared == all.keys) { "src/verify/build.gradle.kts declares languages $declared, but VerifyUtil.kt has ${all.keys}" }
+        }
+        System.getProperty("verify.language")?.let { language -> all.filterKeys { it == language } } ?: all
+    }
 
 internal class Language(
     val emitter: IrEmitter,
@@ -76,7 +83,6 @@ internal class Language(
 
     val container: GenericContainer<*> by lazy {
         GenericContainer(image())
-            .withFileSystemBind(workspaceDir.absolutePath, "/app/gen", BindMode.READ_ONLY)
             .withCommand("tail", "-f", "/dev/null")
             .also { it.start() }
     }
@@ -129,8 +135,6 @@ internal class Language(
             { it }
         )
 
-        // Clear the workspace contents (not the dir itself — its inode is bound to /app/gen
-        // in the container, and replacing it via delete+mkdirs breaks the mount on macOS FUSE).
         workspaceDir.mkdirs()
         workspaceDir.listFiles()?.forEach { it.deleteRecursively() }
         files.forEach { file ->
@@ -146,12 +150,16 @@ internal class Language(
     }
 
     fun compile() {
+        // Copied in rather than bind-mounted: on macOS a bind mount can lag behind files just written
+        // on the host, so the container compiled half-updated sources, mostly with languages in parallel.
+        exec("rm -rf /app/gen")
+        container.copyFileToContainer(MountableFile.forHostPath(workspaceDir.path), "/app/gen")
         val verifyCommand = when (emitter) {
             is JavaEmitter -> "find /app/gen -name '*.java' | xargs javac -d /tmp/out"
             is KotlinEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
             is PythonEmitter -> "python -m mypy --disable-error-code=empty-body --disable-error-code=arg-type /app/gen/"
             is RustEmitter -> "rm -rf /app/src/generated && cp -r /app/gen/community/flock/wirespec/generated /app/src/generated && printf 'mod generated;\\nfn main() {}\\n' > /app/src/main.rs && cd /app && cargo build"
-            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile --server=false"
+            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile"
             is TypeScriptEmitter -> "cd /app/gen && tsc --noEmit"
             else -> error("Unknown language: ${emitter::class.simpleName}")
         }
@@ -206,9 +214,9 @@ internal class Language(
                 "cd /app && cargo build && cargo run"
             }
 
-            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --server=false --main-class ${fileName}"
+            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --main-class $fileName"
             is TypeScriptEmitter -> "cd /app/gen && tsx ${fileName}.ts"
-            else -> error("Unknown language: ${name}")
+            else -> error("Unknown language: $name")
         }
         exec(runCommand)
     }
