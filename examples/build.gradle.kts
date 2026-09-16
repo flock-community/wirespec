@@ -1,3 +1,4 @@
+import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.kotlin.dsl.support.serviceOf
 
 description = "Drives the builds of all Wirespec example projects"
@@ -19,7 +20,7 @@ dependencies {
     mavenWrapper("org.apache.maven.wrapper:maven-wrapper-distribution:$mavenWrapperVersion:only-script@zip")
 }
 
-val mvnw = layout.buildDirectory.file("maven-wrapper/mvnw").get().asFile.path
+val mvnw: String = layout.buildDirectory.file("maven-wrapper/mvnw").get().asFile.path
 
 val installMavenWrapper = tasks.register<Sync>("installMavenWrapper") {
     group = "examples"
@@ -43,6 +44,11 @@ val graalvmAvailable = System.getenv("GRAALVM_HOME") != null ||
 
 val cargoBin = File(System.getProperty("user.home"), ".cargo/bin")
 
+// Examples resolve Wirespec from Maven local, so publishing it in the same invocation must finish first.
+val publishToMavenLocal = rootProject.subprojects
+    .filter { it.path.startsWith(":src:") }
+    .map { it.tasks.withType<PublishToMavenLocal>() }
+
 val installCargo = tasks.register<Exec>("installCargo") {
     group = "examples"
     description = "Install the cargo toolchain via rustup when missing"
@@ -59,9 +65,10 @@ val installCargo = tasks.register<Exec>("installCargo") {
 fun nestedGradleBuild(example: File, name: String, buildTasks: List<String>, excluded: List<String> = emptyList()) =
     tasks.register<GradleBuild>(name) {
         group = "examples"
-        setDir(example)
+        dir = example
         startParameter.setTaskNames(buildTasks)
         startParameter.setExcludedTaskNames(excluded)
+        mustRunAfter(publishToMavenLocal)
     }
 
 // Every example gets a uniform entry point :examples:<verb>-<name>, so callers (CI included) need
@@ -109,6 +116,7 @@ subprojects {
         group = "examples"
         workingDir = projectDir
         commandLine(*command)
+        mustRunAfter(publishToMavenLocal)
     }
 
     // Cleaning deletes an example's build output directly: starting Maven, npm, cargo or sbt
@@ -139,7 +147,9 @@ subprojects {
         }
 
         projectDir.resolve("package.json").exists() -> {
-            val install = execExample("npmInstall", "npm", "ci")
+            val install = execExample("npmInstall", "npm", "ci").also {
+                it.configure { mustRunAfter(":src:plugin:npm:jsNodeProductionLibraryDistribution") }
+            }
             val format = execExample("formatExample", "npm", "run", "format").also { it.configure { dependsOn(install) } }
             execExample("buildExample", "npm", "run", "build").configure { dependsOn(format) }
             // `npm run clean` also removes node_modules, but that holds dependencies, not build output

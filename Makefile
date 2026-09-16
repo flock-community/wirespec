@@ -28,7 +28,7 @@ compile:
 	./gradlew assemble
 
 example:
-	./gradlew publishToMavenLocal src:plugin:npm:jsNodeProductionLibraryDistribution && ./gradlew buildExamples
+	./gradlew publishToMavenLocal src:plugin:npm:jsNodeProductionLibraryDistribution buildExamples
 
 format:
 	./gradlew spotlessApply formatExamples
@@ -45,15 +45,6 @@ jvm:
 local:
 	$(shell pwd)/scripts/local.sh
 
-# Fast build: JVM + JS only (no klib/native), no tests, then run examples without
-# their own tests. Use this for tight local iteration. Native artifacts can be
-# produced by adding e.g. `-Pwirespec.nativeTargets=macosArm64` to the gradle command.
-quick:
-	./gradlew -x test \
-		publishToMavenLocal \
-		:src:plugin:npm:jsNodeProductionLibraryDistribution && \
-	./gradlew yoloExamples
-
 publish:
 	./gradlew -Pwirespec.nativeTargets=macosX64,macosArm64,linuxX64,mingwX64 publish
 
@@ -67,4 +58,4 @@ verify:
 	./gradlew :src:verify:allTests -Pverify
 
 yolo:
-	./gradlew src:bom:build compileKotlinJvm -x test && ./gradlew publishToMavenLocal && ./gradlew yoloExamples
+	./gradlew publishToMavenLocal yoloExamples
