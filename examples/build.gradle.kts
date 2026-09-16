@@ -60,14 +60,14 @@ fun nestedGradleBuild(example: File, name: String, buildTasks: List<String>, exc
 
 // Every example gets a uniform entry point :examples:<verb>-<name>, so callers (CI included) need
 // no knowledge of an example's build tool.
-fun aggregate(name: String, taskDescription: String, moduleTask: String, nestedTasks: List<String>, excluded: List<String> = emptyList()) =
+fun aggregate(name: String, taskDescription: String, moduleTask: String, gradleExample: (File, String) -> TaskProvider<*>) =
     moduleTask.removeSuffix("Example").let { verb ->
         val delegates = subprojects.map { project ->
             tasks.register("$verb-${project.name}") {
                 group = "examples"
                 dependsOn(project.tasks.matching { it.name == moduleTask })
             }
-        } + gradleExamples.map { nestedGradleBuild(it, "$verb-${it.name}", nestedTasks, excluded) }
+        } + gradleExamples.map { gradleExample(it, "$verb-${it.name}") }
         tasks.register(name) {
             group = "examples"
             description = taskDescription
@@ -75,10 +75,21 @@ fun aggregate(name: String, taskDescription: String, moduleTask: String, nestedT
         }
     }
 
-aggregate("buildExamples", "Build and test all example projects", "buildExample", listOf("check"))
-aggregate("cleanExamples", "Clean all example projects", "cleanExample", listOf("clean"))
-aggregate("formatExamples", "Format all example projects", "formatExample", listOf("spotlessApply"))
-aggregate("yoloExamples", "Build all Maven and Gradle example projects without running tests", "yoloExample", listOf("check"), listOf("test"))
+aggregate("buildExamples", "Build and test all example projects", "buildExample") { example, taskName ->
+    nestedGradleBuild(example, taskName, listOf("check"))
+}
+aggregate("cleanExamples", "Clean all example projects", "cleanExample") { example, taskName ->
+    tasks.register<Delete>(taskName) {
+        group = "examples"
+        delete(example.resolve("build"))
+    }
+}
+aggregate("formatExamples", "Format all example projects", "formatExample") { example, taskName ->
+    nestedGradleBuild(example, taskName, listOf("spotlessApply"))
+}
+aggregate("yoloExamples", "Build all Maven and Gradle example projects without running tests", "yoloExample") { example, taskName ->
+    nestedGradleBuild(example, taskName, listOf("check"), listOf("test"))
+}
 tasks.register("installWrappers") {
     group = "examples"
     description = "Install the Maven and sbt wrappers and the cargo toolchain where missing"
@@ -93,6 +104,13 @@ subprojects {
         commandLine(*command)
     }
 
+    // Cleaning deletes an example's build output directly: starting Maven, npm, cargo or sbt
+    // only to delete a directory is slow.
+    fun deleteOutputs(outputs: List<String>) = tasks.register<Delete>("cleanExample") {
+        group = "examples"
+        delete(outputs.map { projectDir.resolve(it) })
+    }
+
     when {
         projectDir.resolve("pom.xml").exists() -> {
             fun mvnExample(name: String, vararg args: String) =
@@ -101,7 +119,8 @@ subprojects {
             // an example declaring the GraalVM plugin builds native when a native toolchain is present
             val native = pom.contains("native-maven-plugin") && graalvmAvailable
             mvnExample("buildExample", *(if (native) arrayOf("-Pnative") else emptyArray()), "verify")
-            mvnExample("cleanExample", "clean")
+            // what `mvn clean` removes: the target directory of the project and of each module
+            deleteOutputs(listOf("target") + Regex("<module>(.+?)</module>").findAll(pom).map { "${it.groupValues[1]}/target" })
             mvnExample("yoloExample", "verify", "-DskipTests")
             if (pom.contains("<id>format</id>")) {
                 mvnExample("formatExample", "test-compile", "-Pformat")
@@ -111,7 +130,8 @@ subprojects {
         projectDir.resolve("package.json").exists() -> {
             val install = execExample("npmInstall", "npm", "ci")
             execExample("buildExample", "npm", "run", "build").configure { dependsOn(install) }
-            execExample("cleanExample", "npm", "run", "clean")
+            // `npm run clean` also removes node_modules, but that holds dependencies, not build output
+            deleteOutputs(listOf("src/gen", "lib"))
             execExample("formatExample", "npm", "run", "format").configure { dependsOn(install) }
         }
 
@@ -129,7 +149,7 @@ subprojects {
                 group = "examples"
                 dependsOn(cargoTest)
             }
-            cargoExample("cleanExample", "clean")
+            deleteOutputs(listOf("target"))
         }
 
         projectDir.resolve("build.sbt").exists() -> {
@@ -145,7 +165,7 @@ subprojects {
                 )
             }
             execExample("buildExample", "./sbt", "compile", "test").configure { dependsOn(installWrapper) }
-            execExample("cleanExample", "./sbt", "clean").configure { dependsOn(installWrapper) }
+            deleteOutputs(listOf("target"))
         }
     }
 }

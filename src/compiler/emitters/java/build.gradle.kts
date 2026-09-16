@@ -2,6 +2,7 @@ plugins {
     id("module.publication")
     id("module.spotless")
     id("module.emitter-fixtures")
+    id("module.native-targets")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
@@ -15,15 +16,7 @@ repositories {
     mavenLocal()
 }
 
-val enableNative = providers.gradleProperty("wirespec.enableNative").orNull.toBoolean()
-
 kotlin {
-    if (enableNative) {
-        macosX64()
-        macosArm64()
-        linuxX64()
-        mingwX64()
-    }
     js(IR) {
         nodejs()
         useEsModules()

@@ -4,6 +4,7 @@ pluginManagement {
     includeBuild("gradle/plugins/publish-sonatype")
     includeBuild("gradle/plugins/spotless")
     includeBuild("gradle/plugins/emitter-fixtures")
+    includeBuild("gradle/plugins/native-targets")
     repositories {
         mavenLocal()
         gradlePluginPortal()

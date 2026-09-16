@@ -63,7 +63,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run Linux native tests
-        run: ./gradlew -Pwirespec.enableNative=true linuxX64Test
+        run: ./gradlew -Pwirespec.nativeTargets=linuxX64 linuxX64Test
 
   js-test:
 
@@ -98,7 +98,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Run native tests
-        run: ./gradlew -Pwirespec.enableNative=true macosArm64Test macosX64Test
+        run: ./gradlew -Pwirespec.nativeTargets=macosArm64,macosX64 macosArm64Test macosX64Test
 
   windows-native-test:
 
@@ -114,7 +114,7 @@ jobs:
           cache: gradle
       - name: Run Windows native tests
         shell: bash
-        run: ./gradlew -Pwirespec.enableNative=true mingwX64Test
+        run: ./gradlew -Pwirespec.nativeTargets=mingwX64 mingwX64Test
 
   site:
 
@@ -362,7 +362,7 @@ jobs:
           cache: gradle
       - name: Build CLI release executables
         run: |
-          ./gradlew -Pwirespec.enableNative=true \
+          ./gradlew -Pwirespec.nativeTargets=macosX64,macosArm64,linuxX64,mingwX64 \
                     :src:plugin:cli:linkReleaseExecutableLinuxX64 \
                     :src:plugin:cli:linkReleaseExecutableMacosX64 \
                     :src:plugin:cli:linkReleaseExecutableMacosArm64 \
@@ -525,7 +525,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Publish to Maven Central
-        run: ./gradlew -Pwirespec.enableNative=true publishAndReleaseToMavenCentral -Dorg.gradle.parallel=false --no-configuration-cache
+        run: ./gradlew -Pwirespec.nativeTargets=macosX64,macosArm64,linuxX64,mingwX64 publishAndReleaseToMavenCentral -Dorg.gradle.parallel=false --no-configuration-cache
 
   release-lib-npm:
 

@@ -1,4 +1,3 @@
 dir="$(dirname -- "$0")"
 
-./gradlew spotlessApply &&
-  ./gradlew formatExamples
+./gradlew spotlessApply formatExamples
