@@ -28,10 +28,10 @@ compile:
 	./gradlew assemble
 
 example:
-	$(shell pwd)/scripts/example.sh
+	./gradlew publishToMavenLocal src:plugin:npm:jsNodeProductionLibraryDistribution && ./gradlew buildExamples
 
 format:
-	$(shell pwd)/scripts/format.sh
+	./gradlew spotlessApply formatExamples
 
 format-wirespec:
 	./gradlew spotlessApply
@@ -67,4 +67,4 @@ verify:
 	./gradlew :src:verify:allTests -Pverify
 
 yolo:
-	$(shell pwd)/scripts/yolo.sh
+	./gradlew src:bom:build compileKotlinJvm -x test && ./gradlew publishToMavenLocal && ./gradlew yoloExamples
