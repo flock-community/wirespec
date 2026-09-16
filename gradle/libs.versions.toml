@@ -13,7 +13,7 @@ junit_launcher = "1.11.3"
 kafka_avro = "7.7.1"
 kotest = "6.1.4"
 ksp = "2.3.6"
-kotlin = "2.3.10"
+kotlin = "2.3.21"
 kotlin_api = "1.9"
 kotlin_language = "1.9"
 kotlin_compiler = "2.3"
@@ -24,7 +24,7 @@ kotlin_compiler = "2.3"
 # language version ahead), keeping the integrations consumable from Kotlin 2.0.
 # Named so it does not nest under the `kotlin_compiler` catalog accessor.
 kotlin_runtime_language = "2.1"
-kotlin_embedded = "2.3.10"
+kotlin_embedded = "2.3.21"
 # Lowest Kotlin version that consumers of the published JVM integrations must be
 # able to read. The integrations are compiled with Kotlin language/api 1.9 (so
 # their own metadata stays widely readable), but any Kotlin runtime library they
@@ -45,7 +45,7 @@ vanniktech-maven-publish = "0.30.0"
 spotless = "7.2.1"
 spring_boot = "3.3.4"
 spring_webflux = "6.1.13"
-spring_dependency_management = "1.1.6"
+spring_dependency_management = "1.1.7"
 testcontainers = "2.0.3"
 wiremock = "3.3.1"
 

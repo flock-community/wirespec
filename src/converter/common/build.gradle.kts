@@ -12,7 +12,7 @@ repositories {
     mavenLocal()
 }
 
-val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+val enableNative = providers.gradleProperty("wirespec.enableNative").orNull.toBoolean()
 
 kotlin {
     if (enableNative) {

@@ -139,7 +139,7 @@ configurations
 
 val codegenCompilation = kotlin.jvm().compilations.named("codegen")
 
-val generateWirespecTestSources by tasks.registering(JavaExec::class) {
+val generateWirespecTestSources = tasks.register<JavaExec>("generateWirespecTestSources") {
     group = "build"
     description = "Generate Spring-annotated Java + Kotlin Wirespec test sources from petstore.json and todo.ws in src/jvmTest/resources."
     val compilation = codegenCompilation.get()
@@ -173,7 +173,7 @@ tasks.named("compileTestKotlinJvm") {
 
 val jvmJackson3TestCompilation = kotlin.jvm().compilations.named("jackson3Test")
 
-val jvmJackson3Test by tasks.registering(Test::class) {
+val jvmJackson3Test = tasks.register<Test>("jvmJackson3Test") {
     description = "Runs Spring integration tests on a Jackson-3-only classpath (Spring Boot 4 scenario)."
     group = "verification"
     val compilation = jvmJackson3TestCompilation.get()

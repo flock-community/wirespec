@@ -56,7 +56,7 @@ kotlin {
 // classpath alongside the Java and Kotlin variants), but the Scala tool
 // classpath has to be wired in by hand — the full `scala` plugin would do this
 // automatically, but it pulls in `java`, which Kotlin Multiplatform rejects.
-val scalaToolClasspath: Configuration by configurations.creating {
+val scalaToolClasspath = configurations.create("scalaToolClasspath") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -65,7 +65,7 @@ val scalaToolClasspath: Configuration by configurations.creating {
 // isolated from the module's compile/runtime classpaths because the three
 // emitters and `:src:compiler:test` are build-time tooling and must never
 // leak onto consumers.
-val emitterRuntimeClasspath: Configuration by configurations.creating {
+val emitterRuntimeClasspath = configurations.create("emitterRuntimeClasspath") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }

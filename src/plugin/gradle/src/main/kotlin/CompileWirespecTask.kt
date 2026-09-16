@@ -16,12 +16,17 @@ import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
+import org.gradle.work.DisableCachingByDefault
 
+@DisableCachingByDefault(because = "Extension classes are only tracked by class name, not by implementation")
 public abstract class CompileWirespecTask : BaseWirespecTask() {
 
     @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:Option(option = "input", description = "input directory")
     public abstract val input: DirectoryProperty
 

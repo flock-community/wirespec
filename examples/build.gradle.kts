@@ -13,7 +13,7 @@ val gradleExamples = projectDir.listFiles().orEmpty()
 val mavenWrapperVersion = projectDir.resolve(".mvn/wrapper/maven-wrapper.properties").readLines()
     .single { it.startsWith("wrapperVersion=") }.substringAfter('=')
 
-val mavenWrapper by configurations.creating
+val mavenWrapper = configurations.create("mavenWrapper")
 
 dependencies {
     mavenWrapper("org.apache.maven.wrapper:maven-wrapper-distribution:$mavenWrapperVersion:only-script@zip")

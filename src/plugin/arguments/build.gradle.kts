@@ -9,7 +9,7 @@ plugins {
 group = "${libs.versions.group.id.get()}.plugin.arguments"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
-val enableNative = (findProperty("wirespec.enableNative") as String?).toBoolean()
+val enableNative = providers.gradleProperty("wirespec.enableNative").orNull.toBoolean()
 
 kotlin {
     if (enableNative) {

@@ -81,7 +81,7 @@ kotlin {
 
 val codegenCompilation = kotlin.jvm().compilations.named("codegen")
 
-val generateWirespecTestSources by tasks.registering(JavaExec::class) {
+val generateWirespecTestSources = tasks.register<JavaExec>("generateWirespecTestSources") {
     group = "build"
     description = "Generate Java + Kotlin Wirespec test sources from .ws files in src/jvmCodegen/resources/wirespec."
     val compilation = codegenCompilation.get()

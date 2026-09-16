@@ -31,8 +31,10 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.options.Option
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
+@DisableCachingByDefault(because = "Abstract base class of the Wirespec tasks")
 public abstract class BaseWirespecTask : DefaultTask() {
 
     @get:OutputDirectory

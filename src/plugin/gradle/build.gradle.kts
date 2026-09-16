@@ -29,7 +29,7 @@ java {
 }
 
 gradlePlugin {
-    val kotlin by plugins.creating {
+    plugins.create("kotlin") {
         id = "${libs.versions.group.id.get()}.plugin.gradle"
         implementationClass = "community.flock.wirespec.plugin.gradle.WirespecPlugin"
         displayName = "Wirespec gradle plugin"
