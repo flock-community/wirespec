@@ -159,7 +159,7 @@ internal class Language(
             is KotlinEmitter -> "/opt/kotlinc/bin/kotlinc -nowarn -include-runtime /app/gen/ -d /tmp/run.jar"
             is PythonEmitter -> "python -m mypy --disable-error-code=empty-body --disable-error-code=arg-type /app/gen/"
             is RustEmitter -> "rm -rf /app/src/generated && cp -r /app/gen/community/flock/wirespec/generated /app/src/generated && printf 'mod generated;\\nfn main() {}\\n' > /app/src/main.rs && cd /app && cargo build"
-            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile --server=false"
+            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli compile"
             is TypeScriptEmitter -> "cd /app/gen && tsc --noEmit"
             else -> error("Unknown language: ${emitter::class.simpleName}")
         }
@@ -214,9 +214,9 @@ internal class Language(
                 "cd /app && cargo build && cargo run"
             }
 
-            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --server=false --main-class ${fileName}"
+            is ScalaEmitter -> "find /app/gen -name '*.scala' | xargs scala-cli run --main-class $fileName"
             is TypeScriptEmitter -> "cd /app/gen && tsx ${fileName}.ts"
-            else -> error("Unknown language: ${name}")
+            else -> error("Unknown language: $name")
         }
         exec(runCommand)
     }

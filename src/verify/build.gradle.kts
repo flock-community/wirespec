@@ -34,6 +34,9 @@ val languageTests = languages.map { language ->
         classpath = sourceSets.test.get().runtimeClasspath
         systemProperty("verify.language", language)
         systemProperty("verify.languages", languages.joinToString(","))
+        // With all languages starting containers at once, Testcontainers' Ryuk container sometimes takes
+        // longer than its default 30 seconds to accept connections, which failed a language's whole run.
+        environment("TESTCONTAINERS_RYUK_CONTAINER_TIMEOUT", "120")
     }
 }
 

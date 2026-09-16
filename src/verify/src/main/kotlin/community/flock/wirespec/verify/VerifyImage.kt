@@ -75,6 +75,12 @@ internal enum class VerifyImage {
                                 "ln -s /root/.cache/scalacli/local-repo/bin/scala-cli/scala-cli /usr/local/bin/scala-cli && " +
                                 "scala-cli version"
                         )
+                        // Fetch the Scala compiler and the Bloop compile server into the image: fetching them
+                        // in every fresh container made its first compile take a minute.
+                        .run(
+                            "mkdir -p /tmp/warm && echo 'object Warm' > /tmp/warm/Warm.scala && " +
+                                "scala-cli compile /tmp/warm/Warm.scala && scala-cli --power bloop exit && rm -rf /tmp/warm"
+                        )
                         .build()
                 }
                 .get()
