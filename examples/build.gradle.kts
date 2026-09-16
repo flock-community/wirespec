@@ -81,8 +81,9 @@ fun aggregate(name: String, taskDescription: String, moduleTask: String, gradleE
         }
     }
 
-aggregate("buildExamples", "Build and test all example projects", "buildExample") { example, taskName ->
-    nestedGradleBuild(example, taskName, listOf("check"))
+// Building an example also formats it: formatting in a separate pass compiles every example twice.
+aggregate("buildExamples", "Format, build and test all example projects", "buildExample") { example, taskName ->
+    nestedGradleBuild(example, taskName, listOf("spotlessApply", "check"))
 }
 aggregate("cleanExamples", "Clean all example projects", "cleanExample") { example, taskName ->
     tasks.register<Delete>(taskName) {
@@ -127,21 +128,22 @@ subprojects {
             val pom = projectDir.resolve("pom.xml").readText()
             // an example declaring the GraalVM plugin builds native when a native toolchain is present
             val native = pom.contains("native-maven-plugin") && graalvmAvailable
-            mvnExample("buildExample", *(if (native) arrayOf("-Pnative") else emptyArray()), "verify")
+            val formatted = pom.contains("<id>format</id>")
+            mvnExample("buildExample", *listOfNotNull("-Pnative".takeIf { native }, "-Pformat".takeIf { formatted }, "verify").toTypedArray())
             // what `mvn clean` removes: the target directory of the project and of each module
             deleteOutputs(listOf("target") + Regex("<module>(.+?)</module>").findAll(pom).map { "${it.groupValues[1]}/target" })
             mvnExample("yoloExample", "verify", "-DskipTests")
-            if (pom.contains("<id>format</id>")) {
+            if (formatted) {
                 mvnExample("formatExample", "test-compile", "-Pformat")
             }
         }
 
         projectDir.resolve("package.json").exists() -> {
             val install = execExample("npmInstall", "npm", "ci")
-            execExample("buildExample", "npm", "run", "build").configure { dependsOn(install) }
+            val format = execExample("formatExample", "npm", "run", "format").also { it.configure { dependsOn(install) } }
+            execExample("buildExample", "npm", "run", "build").configure { dependsOn(format) }
             // `npm run clean` also removes node_modules, but that holds dependencies, not build output
             deleteOutputs(listOf("src/gen", "lib"))
-            execExample("formatExample", "npm", "run", "format").configure { dependsOn(install) }
         }
 
         projectDir.resolve("Cargo.toml").exists() -> {

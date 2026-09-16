@@ -15,10 +15,32 @@ kotlin {
 }
 
 val verifyEnabled = providers.gradleProperty("verify").isPresent
-tasks.test {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     systemProperty("buildDir", layout.buildDirectory.get().asFile.absolutePath)
     enabled = verifyEnabled
+}
+
+// `allTests` gives every language its own test task, and those run in parallel: only the tests of a
+// single language share a container and workspace, so only they have to run one after another.
+// VerifyUtil.kt fails when this list and its `languages` differ.
+val languages = listOf("java-17", "java-21", "kotlin-1", "kotlin-2", "python", "typescript", "rust", "scala")
+
+val languageTests = languages.map { language ->
+    tasks.register<Test>("test-$language") {
+        group = "verification"
+        description = "Runs the verify tests for $language"
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        systemProperty("verify.language", language)
+        systemProperty("verify.languages", languages.joinToString(","))
+    }
+}
+
+tasks.register("allTests") {
+    group = "verification"
+    description = "Runs the verify tests of all languages in parallel"
+    dependsOn(languageTests)
 }
 
 dependencies {

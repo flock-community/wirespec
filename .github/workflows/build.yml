@@ -210,7 +210,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Verify
-        run: ./gradlew :src:verify:test -Pverify
+        run: ./gradlew :src:verify:allTests -Pverify
 
   example-build:
 
@@ -225,7 +225,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Publish wirespec to Maven Local
-        run: ./gradlew --no-configuration-cache publishToMavenLocal :src:plugin:npm:jsNodeProductionLibraryDistribution
+        run: ./gradlew publishToMavenLocal :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Upload Maven Local artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -448,7 +448,7 @@ jobs:
           node-version: 20
       - name: Build lib
         run: |
-          ./gradlew --no-configuration-cache publishToMavenLocal \
+          ./gradlew publishToMavenLocal \
                     :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build vscode extension
         working-directory: ./src/ide/vscode

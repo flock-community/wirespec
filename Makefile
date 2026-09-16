@@ -7,7 +7,8 @@ NATIVE_HOST_Linux_x86_64 := linuxX64
 NATIVE_HOST := $(NATIVE_HOST_$(shell uname -s)_$(shell uname -m))
 
 # The first command will be invoked with `make` only and should be `all`
-all: build image test example format verify
+# Formatting comes first so the build's spotlessCheck passes; examples format as part of their build.
+all: format-wirespec build image test example verify
 
 build: build-wirespec build-site
 
@@ -32,6 +33,9 @@ example:
 format:
 	$(shell pwd)/scripts/format.sh
 
+format-wirespec:
+	./gradlew spotlessApply
+
 image:
 	$(shell pwd)/scripts/image.sh
 
@@ -45,7 +49,7 @@ local:
 # their own tests. Use this for tight local iteration. Native artifacts can be
 # produced by adding e.g. `-Pwirespec.nativeTargets=macosArm64` to the gradle command.
 quick:
-	./gradlew --no-configuration-cache -x test \
+	./gradlew -x test \
 		publishToMavenLocal \
 		:src:plugin:npm:jsNodeProductionLibraryDistribution && \
 	./gradlew yoloExamples
@@ -60,7 +64,7 @@ update:
 	npm install -g @vscode/vsce
 
 verify:
-	./gradlew :src:verify:test -Pverify
+	./gradlew :src:verify:allTests -Pverify
 
 yolo:
 	$(shell pwd)/scripts/yolo.sh

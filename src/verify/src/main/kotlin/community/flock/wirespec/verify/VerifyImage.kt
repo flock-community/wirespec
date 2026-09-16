@@ -6,7 +6,7 @@ internal enum class VerifyImage {
     KOTLIN_1 {
         override val image: String by lazy {
             val version = "1.9.24"
-            ImageFromDockerfile("wirespec-kotlin-verify", false)
+            ImageFromDockerfile("wirespec-kotlin-1-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder
                         .from("eclipse-temurin:17-jdk")
@@ -24,7 +24,7 @@ internal enum class VerifyImage {
     KOTLIN_2 {
         override val image: String by lazy {
             val version = "2.0.21"
-            ImageFromDockerfile("wirespec-kotlin-verify", false)
+            ImageFromDockerfile("wirespec-kotlin-2-verify", false)
                 .withDockerfileFromBuilder { builder ->
                     builder
                         .from("eclipse-temurin:17-jdk")
