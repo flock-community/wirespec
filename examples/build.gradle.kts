@@ -32,6 +32,12 @@ val installMavenWrapper = tasks.register<Sync>("installMavenWrapper") {
     filePermissions { unix("rwxr-xr-x") }
 }
 
+// The Maven examples compile for Java 21. mvnw takes JAVA_HOME from the shell that started Gradle,
+// which may be on another JDK, so it gets a Java 21 toolchain instead.
+val mavenJavaHome = serviceOf<JavaToolchainService>()
+    .launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    .map { it.metadata.installationPath.asFile.path }
+
 val graalvmAvailable = System.getenv("GRAALVM_HOME") != null ||
     System.getenv("PATH").orEmpty().split(File.pathSeparator).any { File(it, "native-image").canExecute() }
 
@@ -114,7 +120,10 @@ subprojects {
     when {
         projectDir.resolve("pom.xml").exists() -> {
             fun mvnExample(name: String, vararg args: String) =
-                execExample(name, mvnw, *args).configure { dependsOn(installMavenWrapper) }
+                execExample(name, mvnw, *args).configure {
+                    dependsOn(installMavenWrapper)
+                    environment("JAVA_HOME", mavenJavaHome.get())
+                }
             val pom = projectDir.resolve("pom.xml").readText()
             // an example declaring the GraalVM plugin builds native when a native toolchain is present
             val native = pom.contains("native-maven-plugin") && graalvmAvailable

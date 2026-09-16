@@ -65,3 +65,9 @@ kotlin {
         }
     }
 }
+
+// The dependency-management plugin hooks into POM generation with a reference to the Project, which
+// the configuration cache can't store. Publishing then runs without the cache instead of failing.
+tasks.withType<GenerateMavenPom>().configureEach {
+    notCompatibleWithConfigurationCache("io.spring.dependency-management's POM customization references the Project")
+}

@@ -7,6 +7,10 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 //
 // Apply alongside the Kotlin Multiplatform plugin.
 
+check(!providers.gradleProperty("wirespec.enableNative").isPresent) {
+    "wirespec.enableNative was replaced by wirespec.nativeTargets, e.g. -Pwirespec.nativeTargets=macosX64,macosArm64,linuxX64,mingwX64"
+}
+
 val nativeTargets = providers.gradleProperty("wirespec.nativeTargets").orNull.orEmpty()
     .split(',')
     .map(String::trim)
