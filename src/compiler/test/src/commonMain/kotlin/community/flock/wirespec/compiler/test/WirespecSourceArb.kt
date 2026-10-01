@@ -28,8 +28,8 @@ public data class WirespecFeatures(
 
         /** The subset `WirespecEmitter` reproduces verbatim. */
         public val roundTrippable: WirespecFeatures = WirespecFeatures(
-            annotations = false,
-            comments = false,
+            annotations = true,
+            comments = true,
             constrainedReferences = false,
         )
     }
