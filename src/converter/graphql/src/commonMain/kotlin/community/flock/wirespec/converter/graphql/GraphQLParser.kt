@@ -1,0 +1,356 @@
+package community.flock.wirespec.converter.graphql
+
+import arrow.core.nonEmptyListOf
+import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ARGUMENT
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT_PARAMETER
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DESCRIPTION
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_DEFINITION
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.NAME
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION_MEMBERS
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotation
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.parameter
+import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.Document
+import community.flock.wirespec.converter.graphql.GraphQLModel.EnumTypeDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.FieldDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.InputObjectTypeDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.InputValueDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.InterfaceTypeDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.ObjectTypeDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.Operation
+import community.flock.wirespec.converter.graphql.GraphQLModel.ScalarTypeDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.SchemaDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.TypeDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.TypeRef
+import community.flock.wirespec.converter.graphql.GraphQLModel.UnionTypeDefinition
+import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
+import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as GraphQLDirective
+
+/**
+ * Converts a GraphQL schema (SDL) into Wirespec.
+ *
+ * Objects, interfaces and input objects become types, scalars become refined types, enums and unions map onto
+ * their Wirespec counterparts and every field of a root operation type (`Query`, `Mutation`, `Subscription`)
+ * becomes an `rpc`. Whatever Wirespec cannot express natively — descriptions, directives, field arguments,
+ * default values, extensions, interface implementations — is kept in annotations, so the schema can be rebuilt
+ * from the Wirespec definitions without loss.
+ */
+public object GraphQLParser : Parser {
+
+    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = GraphQLDocumentParser(moduleContent.content)
+        .parseDocument()
+        .let { GraphQLConverter(it).convert() }
+        .toNonEmptyListOrNull()
+        ?.let { AST(nonEmptyListOf(Module(moduleContent.fileUri, it))) }
+        ?: error("Cannot yield an empty AST from GraphQL document ${moduleContent.fileUri.value}")
+}
+
+private class GraphQLConverter(private val document: Document) {
+
+    private val roots: Set<String> = document.definitions.filterIsInstance<SchemaDefinition>().let { schemas ->
+        val declared = schemas.flatMap { it.operationTypes }
+        val defaults = Operation.entries
+            .filter { operation -> schemas.none { !it.extension } && declared.none { it.operation == operation } }
+            .map { it.defaultTypeName }
+        (declared.map { it.type } + defaults).toSet()
+    }
+
+    private val declared: List<String> = document.definitions
+        .filterIsInstance<TypeDefinition>()
+        .filterNot { it.extension }
+        .map { it.name }
+        .distinct()
+
+    private val referenced: List<String> = document.typeReferences().distinct().filterNot { it in PRIMITIVES || it in declared }
+
+    private val needsBuiltInId = BUILT_IN_ID in referenced
+
+    private val unresolvable: Set<String> = referenced.filterNot { it.isValidTypeName() || it == BUILT_IN_ID }.toSet()
+
+    private val taken = (declared + referenced).filter { it.isValidTypeName() }.toMutableSet()
+
+    private val names: Map<String, String> = taken.associateWith { it } +
+        (declared + unresolvable).filterNot { it.isValidTypeName() }.associateWith { claim(it.sanitize()) }
+
+    fun convert(): List<Definition> = document.definitions.flatMap { definition ->
+        when (definition) {
+            is SchemaDefinition -> definition.convert().let(::listOf)
+            is DirectiveDefinition -> definition.convert().let(::listOf)
+            is ScalarTypeDefinition -> definition.convert().let(::listOf)
+            is ObjectTypeDefinition -> definition.convert()
+            is InterfaceTypeDefinition -> definition.convert().let(::listOf)
+            is UnionTypeDefinition -> definition.convert().let(::listOf)
+            is EnumTypeDefinition -> definition.convert().let(::listOf)
+            is InputObjectTypeDefinition -> definition.convert().let(::listOf)
+        }
+    } + listOfNotNull(builtInId())
+
+    private fun SchemaDefinition.convert(): Type = type(
+        identifier = claim(if (extension) "SchemaExtension" else "Schema"),
+        annotations = listOf(annotation(SCHEMA)) +
+            listOfNotNull(annotation(EXTEND).takeIf { extension }) +
+            description.toAnnotations() +
+            directives.toAnnotations(),
+        fields = operationTypes.map { operationType ->
+            TypeRef.NonNull(TypeRef.Named(operationType.type)).let {
+                Field(annotations = it.toAnnotations(), identifier = FieldIdentifier(operationType.operation.keyword), reference = it.toReference())
+            }
+        },
+    )
+
+    private fun DirectiveDefinition.convert(): Type = type(
+        identifier = claim("${name.sanitize()}Directive"),
+        annotations = listOf(
+            annotation(
+                DIRECTIVE_DEFINITION,
+                parameter("name", name),
+                parameter("locations", locations),
+                parameter("repeatable", "true").takeIf { repeatable },
+            ),
+        ) + description.toAnnotations(),
+        fields = arguments.map { it.toField() },
+    )
+
+    private fun ScalarTypeDefinition.convert(): Refined = Refined(
+        comment = null,
+        annotations = commonAnnotations(),
+        identifier = DefinitionIdentifier(identifier()),
+        reference = Reference.Primitive(type = name.scalarType(), isNullable = false),
+    )
+
+    private fun ObjectTypeDefinition.convert(): List<Definition> = when (name) {
+        in roots -> identifier().let { identifier ->
+            val prefix = names[name] ?: name.sanitize()
+            listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + fields.map { it.toRpc(identifier, prefix) }
+        }
+        else -> type(identifier(), commonAnnotations(interfaces), fields.map { it.toField() }).let(::listOf)
+    }
+
+    private fun InterfaceTypeDefinition.convert(): Type = type(
+        identifier = identifier(),
+        annotations = listOf(annotation(INTERFACE)) + commonAnnotations(interfaces),
+        fields = fields.map { it.toField() },
+    )
+
+    private fun UnionTypeDefinition.convert(): Definition = when {
+        members.isEmpty() -> type(identifier(), listOf(annotation(UNION)) + commonAnnotations(), emptyList())
+        else -> Union(
+            comment = null,
+            annotations = commonAnnotations() +
+                listOfNotNull(annotation(UNION_MEMBERS, parameter(DEFAULT_PARAMETER, members)).takeIf { members.any { it in unresolvable } }),
+            identifier = DefinitionIdentifier(identifier()),
+            entries = members.map { Reference.Custom(value = it.resolve(), isNullable = false) }.toSet(),
+        )
+    }
+
+    private fun EnumTypeDefinition.convert(): Definition = when {
+        values.isEmpty() -> type(identifier(), listOf(annotation(ENUM)) + commonAnnotations(), emptyList())
+        else -> Enum(
+            comment = null,
+            annotations = commonAnnotations() + values
+                .filter { it.description != null || it.directives.isNotEmpty() }
+                .map {
+                    annotation(
+                        ENUM_VALUE,
+                        parameter("value", it.name),
+                        it.description?.let { description -> parameter("description", description) },
+                        parameter("directives", it.directives.map { directive -> directive.print() }),
+                    )
+                },
+            identifier = DefinitionIdentifier(identifier()),
+            entries = values.map { it.name }.toSet(),
+        )
+    }
+
+    private fun InputObjectTypeDefinition.convert(): Type = type(
+        identifier = identifier(),
+        annotations = listOf(annotation(INPUT)) + commonAnnotations(),
+        fields = fields.map { it.toField() },
+    )
+
+    private fun FieldDefinition.toField(): Field = Field(
+        annotations = description.toAnnotations() + arguments.map { it.toArgumentAnnotation() } + directives.toAnnotations() + type.toAnnotations(),
+        identifier = FieldIdentifier(name),
+        reference = type.toReference(),
+    )
+
+    private fun FieldDefinition.toRpc(parent: String, prefix: String): Rpc = Rpc(
+        comment = null,
+        annotations = listOf(annotation(FIELD, parameter("parent", parent), parameter("name", name))) +
+            description.toAnnotations() +
+            directives.toAnnotations() +
+            type.toAnnotations(),
+        identifier = DefinitionIdentifier(claim(prefix + name.trimStart('_').replaceFirstChar(Char::uppercase))),
+        shape = Type.Shape(arguments.map { it.toField() }),
+        result = type.toReference(),
+        error = null,
+    )
+
+    private fun InputValueDefinition.toField(): Field = Field(
+        annotations = description.toAnnotations() +
+            listOfNotNull(defaultValue?.let { annotation(DEFAULT, it.print()) }) +
+            directives.toAnnotations() +
+            type.toAnnotations(),
+        identifier = FieldIdentifier(name),
+        reference = type.toReference(),
+    )
+
+    private fun InputValueDefinition.toArgumentAnnotation(): Annotation = annotation(
+        ARGUMENT,
+        parameter("name", name),
+        parameter("type", type.print()),
+        defaultValue?.let { parameter("defaultValue", it.print()) },
+        description?.let { parameter("description", it) },
+        parameter("directives", directives.map { it.print() }),
+    )
+
+    private fun TypeDefinition.identifier(): String = when {
+        extension -> claim("${names[name] ?: name.sanitize()}Extension")
+        else -> names.getValue(name)
+    }
+
+    private fun TypeDefinition.commonAnnotations(interfaces: List<String> = emptyList()): List<Annotation> = listOfNotNull(
+        annotation(EXTEND, name).takeIf { extension },
+        annotation(NAME, name).takeIf { !extension && names[name] != name },
+        annotation(IMPLEMENTS, parameter(DEFAULT_PARAMETER, interfaces)).takeIf { interfaces.isNotEmpty() },
+    ) + description().toAnnotations() + directives().toAnnotations()
+
+    private fun TypeDefinition.description(): String? = when (this) {
+        is ScalarTypeDefinition -> description
+        is ObjectTypeDefinition -> description
+        is InterfaceTypeDefinition -> description
+        is UnionTypeDefinition -> description
+        is EnumTypeDefinition -> description
+        is InputObjectTypeDefinition -> description
+    }
+
+    private fun TypeDefinition.directives(): List<GraphQLDirective> = when (this) {
+        is ScalarTypeDefinition -> directives
+        is ObjectTypeDefinition -> directives
+        is InterfaceTypeDefinition -> directives
+        is UnionTypeDefinition -> directives
+        is EnumTypeDefinition -> directives
+        is InputObjectTypeDefinition -> directives
+    }
+
+    private fun String?.toAnnotations(): List<Annotation> = listOfNotNull(this?.let { annotation(DESCRIPTION, it) })
+
+    private fun List<GraphQLDirective>.toAnnotations(): List<Annotation> = map { annotation(DIRECTIVE, it.print()) }
+
+    /** The exact GraphQL type, for the rare reference to an undeclared type whose name Wirespec cannot spell. */
+    private fun TypeRef.toAnnotations(): List<Annotation> = listOfNotNull(annotation(TYPE, print()).takeIf { name() in unresolvable })
+
+    private fun TypeRef.name(): String = when (this) {
+        is TypeRef.Named -> name
+        is TypeRef.ListOf -> type.name()
+        is TypeRef.NonNull -> type.name()
+    }
+
+    private fun TypeRef.toReference(isNullable: Boolean = true): Reference = when (this) {
+        is TypeRef.NonNull -> type.toReference(isNullable = false)
+        is TypeRef.ListOf -> Reference.Iterable(reference = type.toReference(), isNullable = isNullable)
+        is TypeRef.Named -> when (name) {
+            "Int" -> Reference.Primitive(type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null), isNullable = isNullable)
+            "Float" -> Reference.Primitive(type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null), isNullable = isNullable)
+            "String" -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
+            "Boolean" -> Reference.Primitive(type = Reference.Primitive.Type.Boolean, isNullable = isNullable)
+            else -> Reference.Custom(value = name.resolve(), isNullable = isNullable)
+        }
+    }
+
+    private fun String.resolve(): String = names[this] ?: this
+
+    private fun String.scalarType(): Reference.Primitive.Type = when (this) {
+        "Int" -> Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null)
+        "Float" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null)
+        "Boolean" -> Reference.Primitive.Type.Boolean
+        else -> Reference.Primitive.Type.String(null)
+    }
+
+    private fun builtInId(): Refined? = Refined(
+        comment = null,
+        annotations = listOf(annotation(BUILT_IN)),
+        identifier = DefinitionIdentifier(BUILT_IN_ID),
+        reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = false),
+    ).takeIf { needsBuiltInId }
+
+    private fun type(identifier: String, annotations: List<Annotation>, fields: List<Field>): Type = Type(
+        comment = null,
+        annotations = annotations,
+        identifier = DefinitionIdentifier(identifier),
+        shape = Type.Shape(fields),
+        extends = emptyList(),
+    )
+
+    private fun claim(candidate: String): String = generateSequence(2) { it + 1 }
+        .map { "$candidate$it" }
+        .let { sequenceOf(candidate) + it }
+        .first { it !in taken }
+        .also { taken += it }
+
+    private companion object {
+        const val BUILT_IN_ID = "ID"
+        val PRIMITIVES = setOf("Int", "Float", "String", "Boolean")
+        val TYPE_NAME = Regex("[A-Z][a-zA-Z0-9_]*")
+        val RESERVED = setOf(
+            "Any", "Boolean", "Bytes", "Integer", "Integer32", "Number", "Number32", "String", "Unit",
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH", "TRACE",
+        )
+
+        fun String.isValidTypeName() = TYPE_NAME.matches(this) && this !in RESERVED
+
+        fun String.sanitize(): String = trimStart('_')
+            .replaceFirstChar(Char::uppercase)
+            .let { if (it.firstOrNull()?.isLetter() == true && it !in RESERVED) it else "GraphQL$it" }
+
+        fun Document.typeReferences(): List<String> = definitions.flatMap { definition ->
+            when (definition) {
+                is SchemaDefinition -> definition.operationTypes.map { it.type }
+                is DirectiveDefinition -> definition.arguments.map { it.type.leaf() }
+                is ScalarTypeDefinition -> emptyList()
+                is ObjectTypeDefinition -> definition.fields.flatMap { it.references() }
+                is InterfaceTypeDefinition -> definition.fields.flatMap { it.references() }
+                is UnionTypeDefinition -> definition.members
+                is EnumTypeDefinition -> emptyList()
+                is InputObjectTypeDefinition -> definition.fields.map { it.type.leaf() }
+            }
+        }
+
+        fun FieldDefinition.references(): List<String> = listOf(type.leaf()) + arguments.map { it.type.leaf() }
+
+        fun TypeRef.leaf(): String = when (this) {
+            is TypeRef.Named -> name
+            is TypeRef.ListOf -> type.leaf()
+            is TypeRef.NonNull -> type.leaf()
+        }
+    }
+}

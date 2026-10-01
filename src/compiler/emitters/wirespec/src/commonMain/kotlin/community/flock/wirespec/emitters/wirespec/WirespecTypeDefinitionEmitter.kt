@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 
-internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentifierEmitter {
+internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentifierEmitter, WirespecMetaDataEmitter {
 
     override fun emit(type: Type, module: Module) = """
         |type ${emit(type.identifier)} {
@@ -18,9 +18,16 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
         |}
         |""".trimMargin()
 
-    override fun Type.Shape.emit() = entries.joinToString(",\n") { "$Spacer${it.emit()}" }
+    override fun Type.Shape.emit() = entries.joinToString(",\n") { entry ->
+        when (entry) {
+            is Field -> entry.annotations.joinToString("") { "$Spacer${it.emit()}\n" } + "$Spacer${entry.emitDeclaration()}"
+            is Spread -> "$Spacer${entry.emit()}"
+        }
+    }
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${defaultValue?.let { " = ${it.emit()}" }.orEmpty()}"
+    override fun Field.emit() = annotations.joinToString("") { "${it.emit()} " } + emitDeclaration()
+
+    private fun Field.emitDeclaration() = "${emit(identifier)}: ${reference.emit()}${defaultValue?.let { " = ${it.emit()}" }.orEmpty()}"
 
     private fun DefaultValue.emit(): String = when (this) {
         is DefaultValue.StringValue -> "\"${value.escape()}\""

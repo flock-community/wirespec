@@ -20,6 +20,7 @@ repositories {
 dependencies {
     implementation(project(":src:compiler:core"))
     implementation(project(":src:converter:avro"))
+    implementation(project(":src:converter:graphql"))
     implementation(project(":src:converter:openapi"))
     implementation(project(":src:plugin:arguments"))
     implementation(libs.kotlin.reflect)
@@ -56,6 +57,7 @@ publishing {
 tasks.publishToMavenLocal {
     dependsOn(":src:compiler:core:publishToMavenLocal")
     dependsOn(":src:converter:openapi:publishToMavenLocal")
+    dependsOn(":src:converter:graphql:publishToMavenLocal")
     dependsOn(":src:plugin:arguments:publishToMavenLocal")
 }
 

@@ -138,13 +138,19 @@ internal object TypeParser {
 
             else -> raiseWrongToken<TypeDefinitionStart>(previousToken).bind()
         }
+        parseIterable(reference).bind()
+    }
+
+    private fun TokenProvider.parseIterable(reference: Reference): Either<WirespecException, Reference> = either {
         when (token.type) {
             is Brackets -> {
                 eatToken().bind()
-                Reference.Iterable(
-                    reference = reference,
-                    isNullable = isNullable().bind(),
-                )
+                parseIterable(
+                    Reference.Iterable(
+                        reference = reference,
+                        isNullable = isNullable().bind(),
+                    ),
+                ).bind()
             }
 
             else -> reference

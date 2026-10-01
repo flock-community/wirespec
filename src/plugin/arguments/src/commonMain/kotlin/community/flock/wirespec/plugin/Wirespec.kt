@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.converter.avro.AvroJsonParser
 import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.converter.graphql.GraphQLParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 
@@ -47,6 +48,7 @@ public fun convert(arguments: ConverterArguments) {
         Format.OpenAPIV2 -> OpenAPIV2Parser
         Format.OpenAPIV3 -> OpenAPIV3Parser
         Format.Avro -> AvroJsonParser
+        Format.GraphQL -> GraphQLParser
     }
     val options = ParseOptions(
         strict = arguments.strict,
