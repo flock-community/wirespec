@@ -5,6 +5,7 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -16,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.coerceTo
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ARGUMENT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
@@ -210,18 +212,27 @@ private class GraphQLConverter(private val document: Document) {
             directives.toAnnotations() +
             type.toAnnotations(),
         identifier = DefinitionIdentifier(claim(prefix + name.trimStart('_').replaceFirstChar(Char::uppercase))),
-        shape = Type.Shape(arguments.map { it.toField() }),
+        shape = Type.Shape(arguments.map { it.toParameter() }),
         result = type.toReference(),
         error = null,
     )
 
-    private fun InputValueDefinition.toField(): Field = Field(
+    /** A default becomes a Wirespec default when it reads back as the same GraphQL literal, otherwise it stays in an annotation. */
+    private fun InputValueDefinition.toField(): Field = type.toReference().let { reference ->
+        toField(reference, defaultValue?.toDefaultValue(reference))
+    }
+
+    /** Wirespec only allows defaults on the fields of a type, so an rpc parameter keeps its default in an annotation. */
+    private fun InputValueDefinition.toParameter(): Field = toField(type.toReference(), null)
+
+    private fun InputValueDefinition.toField(reference: Reference, native: DefaultValue?): Field = Field(
         annotations = description.toAnnotations() +
-            listOfNotNull(defaultValue?.let { annotation(DEFAULT, it.print()) }) +
+            listOfNotNull(defaultValue?.takeIf { native == null }?.let { annotation(DEFAULT, it.print()) }) +
             directives.toAnnotations() +
             type.toAnnotations(),
         identifier = FieldIdentifier(name),
-        reference = type.toReference(),
+        reference = reference,
+        defaultValue = native,
     )
 
     private fun InputValueDefinition.toArgumentAnnotation(): Annotation = annotation(
@@ -347,10 +358,29 @@ private class GraphQLConverter(private val document: Document) {
 
         fun FieldDefinition.references(): List<String> = listOf(type.leaf()) + arguments.map { it.type.leaf() }
 
+        val NUMBER = Regex("-?[0-9]+\\.[0-9]+")
+
+        fun GraphQLModel.Value.toDefaultValue(reference: Reference): DefaultValue? = when (this) {
+            is GraphQLModel.Value.StringValue -> DefaultValue.StringValue(value)
+            is GraphQLModel.Value.IntValue -> DefaultValue.IntegerValue(raw)
+            is GraphQLModel.Value.FloatValue -> DefaultValue.NumberValue(raw).takeIf { NUMBER.matches(raw) }
+            is GraphQLModel.Value.BooleanValue -> DefaultValue.BooleanValue(value)
+            is GraphQLModel.Value.NullValue -> DefaultValue.NullValue
+            is GraphQLModel.Value.EnumValue, is GraphQLModel.Value.ListValue, is GraphQLModel.Value.ObjectValue -> null
+        }?.coerceTo(reference)?.takeIf { it.toGraphQLValue() == this }
+
         fun TypeRef.leaf(): String = when (this) {
             is TypeRef.Named -> name
             is TypeRef.ListOf -> type.leaf()
             is TypeRef.NonNull -> type.leaf()
         }
     }
+}
+
+internal fun DefaultValue.toGraphQLValue(): GraphQLModel.Value = when (this) {
+    is DefaultValue.StringValue -> GraphQLModel.Value.StringValue(value)
+    is DefaultValue.IntegerValue -> GraphQLModel.Value.IntValue(value)
+    is DefaultValue.NumberValue -> GraphQLModel.Value.FloatValue(value)
+    is DefaultValue.BooleanValue -> GraphQLModel.Value.BooleanValue(value)
+    DefaultValue.NullValue -> GraphQLModel.Value.NullValue
 }
