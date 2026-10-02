@@ -21,6 +21,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.coerceTo
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
@@ -326,43 +327,24 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
 private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowDefaults: Boolean) = parseToken { equals ->
     if (!allowDefaults) raise(DefaultValueNotAllowedException(fileUri, identifier.value, equals.coordinates))
     eatToken().bind().let { valueToken ->
-        valueToken.toDefaultValue(reference)
+        valueToken.toDefaultValue()?.coerceTo(reference)
             ?: raise(InvalidDefaultValueException(fileUri, identifier.value, valueToken.value, reference, valueToken.coordinates))
     }
 }
 
-private fun Token.toDefaultValue(reference: Reference): DefaultValue? = when {
-    type is WirespecIdentifier && value == "null" -> DefaultValue.NullValue.takeIf { reference.isNullable }
-    reference is Reference.Primitive -> when (val primitive = reference.type) {
-        is Reference.Primitive.Type.String -> takeIf { type is LiteralString }
-            ?.let { DefaultValue.StringValue(it.value.removeSurrounding("\"").unescape()) }
-
-        is Reference.Primitive.Type.Boolean -> takeIf { type is WirespecIdentifier }
-            ?.value?.toBooleanStrictOrNull()
-            ?.let(DefaultValue::BooleanValue)
-
-        is Reference.Primitive.Type.Integer -> takeIf { type is Integer }
-            ?.value?.toLongOrNull()
-            ?.takeIf { it.fitsIn(primitive.precision) && primitive.constraint.admits(it.toDouble()) }
-            ?.let { DefaultValue.IntegerValue(it.toString()) }
-
-        is Reference.Primitive.Type.Number -> takeIf { type is Number || type is Integer }
-            ?.value?.takeIf { primitive.constraint.admits(it.toDouble()) }
-            ?.let(DefaultValue::NumberValue)
-
-        is Reference.Primitive.Type.Bytes -> null
+private fun Token.toDefaultValue(): DefaultValue? = when (type) {
+    is LiteralString -> DefaultValue.StringValue(value.removeSurrounding("\"").unescape())
+    is Integer -> DefaultValue.IntegerValue(value)
+    is Number -> DefaultValue.NumberValue(value)
+    is WirespecIdentifier -> when (value) {
+        "true" -> DefaultValue.BooleanValue(true)
+        "false" -> DefaultValue.BooleanValue(false)
+        "null" -> DefaultValue.NullValue
+        else -> null
     }
 
     else -> null
 }
-
-private fun Long.fitsIn(precision: Reference.Primitive.Type.Precision) = when (precision) {
-    Reference.Primitive.Type.Precision.P32 -> this in Int.MIN_VALUE..Int.MAX_VALUE
-    Reference.Primitive.Type.Precision.P64 -> true
-}
-
-private fun Reference.Primitive.Type.Constraint.Bound?.admits(value: Double) = this == null ||
-    (min?.toDouble()?.let { value >= it } ?: true) && (max?.toDouble()?.let { value <= it } ?: true)
 
 private fun String.unescape(): String = Regex("\\\\(.)").replace(this) { match ->
     when (val escaped = match.groupValues[1]) {

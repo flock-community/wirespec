@@ -28,6 +28,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":src:compiler:core"))
+                api(libs.kotlinx.serialization)
             }
         }
     }

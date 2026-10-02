@@ -5,13 +5,16 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.common.toJsonElement
 
 internal object AvroIdlEmitter : Emitter {
 
@@ -48,10 +51,22 @@ internal object AvroIdlEmitter : Emitter {
     private fun renderRecord(type: Type): String {
         val doc = type.comment?.value?.let { renderDoc(it, INDENT) }.orEmpty()
         val fields = type.shape.value.joinToString("") { field ->
-            "$INDENT$INDENT${renderReference(field.reference)} ${field.identifier.value};\n"
+            "$INDENT$INDENT${renderFieldType(field)} ${field.identifier.value}${renderDefault(field.defaultValue)};\n"
         }
         return "$doc${INDENT}record ${type.identifier.value} {\n$fields$INDENT}\n"
     }
+
+    // Avro checks a union's default against its first branch.
+    private fun renderFieldType(field: Field): String = when {
+        field.reference.isNullable && field.defaultValue.isNonNull() ->
+            "union { ${renderReference(field.reference.copy(isNullable = false))}, null }"
+
+        else -> renderReference(field.reference)
+    }
+
+    private fun DefaultValue?.isNonNull() = this != null && this != DefaultValue.NullValue
+
+    private fun renderDefault(default: DefaultValue?): String = default?.let { " = ${it.toJsonElement()}" }.orEmpty()
 
     private fun renderEnum(enum: Enum): String {
         val doc = enum.comment?.value?.let { renderDoc(it, INDENT) }.orEmpty()

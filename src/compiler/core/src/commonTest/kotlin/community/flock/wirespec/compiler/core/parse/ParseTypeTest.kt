@@ -316,12 +316,33 @@ class ParseTypeTest {
             "count" to DefaultValue.IntegerValue("-1"),
             "port" to DefaultValue.IntegerValue("8080"),
             "ratio" to DefaultValue.NumberValue("1.5"),
-            "scale" to DefaultValue.NumberValue("2"),
+            "scale" to DefaultValue.NumberValue("2.0"),
             "active" to DefaultValue.BooleanValue(false),
             "nickname" to DefaultValue.NullValue,
             "limit" to DefaultValue.IntegerValue("10"),
             "tags" to null,
         )
+    }
+
+    @Test
+    fun testNullDefaultOnAnyNullableField() {
+        val source =
+            // language=ws
+            """
+            |type Bar { a: String }
+            |type Foo {
+            |    bar: Bar? = null,
+            |    tags: String[]? = null,
+            |    meta: { String }? = null
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .last()
+            .shouldBeInstanceOf<Type>()
+            .shape.value
+            .map { it.defaultValue } shouldBe listOf(DefaultValue.NullValue, DefaultValue.NullValue, DefaultValue.NullValue)
     }
 
     @Test

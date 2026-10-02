@@ -138,7 +138,7 @@ type Settings {
 
 #### Supported values
 
-Defaults can be set on fields of a primitive type, and nullable fields can also default to `null`:
+Defaults can be set on fields of a primitive type, and any nullable field can default to `null`:
 
 | Field type                 | Default value                                | Example                          |
 |----------------------------|----------------------------------------------|----------------------------------|
@@ -146,12 +146,13 @@ Defaults can be set on fields of a primitive type, and nullable fields can also 
 | `Integer`, `Integer32`     | An integer literal, which may be negative    | `offset: Integer = -1`           |
 | `Number`, `Number32`       | A number or an integer literal               | `ratio: Number = 1.5`            |
 | `Boolean`                  | `true` or `false`                            | `active: Boolean = true`         |
-| Any nullable field above   | `null` or a value of the field's type        | `limit: Integer? = 10`           |
+| Any nullable field         | `null`                                       | `tags: String[]? = null`         |
+| A nullable primitive field | `null` or a value of the field's type        | `limit: Integer? = 10`           |
 
 String literals support the escapes `\"`, `\\`, `\n`, `\r` and `\t`. An integer literal on a `Number` field is read as a
 number, so `scale: Number = 2` is the same as `scale: Number = 2.0`.
 
-Defaults are not supported on lists, dictionaries, enums, refined types or references to other types.
+Apart from `null`, defaults are not supported on lists, dictionaries, enums, refined types or references to other types.
 
 #### Validation
 
@@ -182,7 +183,11 @@ endpoint GetTodos GET /todos ? {limit: Integer = 10} -> {
 |-------------------------------------------|--------------------------------------------------------------------------|
 | Kotlin                                    | Generated as constructor parameter defaults, see the [Kotlin emitter](../emitters/emitters-kotlin.mdx#default-values) |
 | Java, TypeScript, Python, Rust and Scala  | Not generated yet, the fields are emitted without a default              |
-| Wirespec, OpenAPI and Avro                | Not written to the output yet                                            |
+| Wirespec                                  | Written as `field: Type = value`                                         |
+| OpenAPI v2 and v3                         | Written as the `default` of the property schema, see [OpenAPI](../converters/openapi.md#defaults) |
+| Avro                                      | Written as the `default` of the record field, see [Avro](../converters/avro.md#defaults) |
+
+The OpenAPI and Avro converters also read defaults, so they survive a conversion from OpenAPI or Avro to Wirespec.
 
 #### Ignoring defaults
 

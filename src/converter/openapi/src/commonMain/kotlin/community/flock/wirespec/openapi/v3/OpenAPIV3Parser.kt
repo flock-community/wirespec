@@ -60,6 +60,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.converter.common.toDefaultValue
 import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.className
 import community.flock.wirespec.openapi.common.flatMapRequests
@@ -664,20 +665,21 @@ private fun Schema.toPrimitive() = when (this.primitiveType) {
 private fun OpenAPIV3Model.toField(schema: Schema, name: String) = schema.properties.orEmpty().map { (key, value) ->
     val isNullable = !(schema.required?.contains(key) ?: false)
     when (value) {
-        is Schema -> {
+        is Schema -> when {
+            value.enum != null -> toReference(value, isNullable, className(name, key))
+            value.primitiveType == OpenAPIV30Type.ARRAY -> toReference(
+                value,
+                isNullable,
+                className(name, key, "Array"),
+            )
+
+            else -> toReference(value, isNullable, className(name, key))
+        }.let { reference ->
             Field(
                 identifier = FieldIdentifier(key),
                 annotations = value.description.toDescriptionAnnotationList(),
-                reference = when {
-                    value.enum != null -> toReference(value, isNullable, className(name, key))
-                    value.primitiveType == OpenAPIV30Type.ARRAY -> toReference(
-                        value,
-                        isNullable,
-                        className(name, key, "Array"),
-                    )
-
-                    else -> toReference(value, isNullable, className(name, key))
-                },
+                reference = reference,
+                defaultValue = value.default?.toDefaultValue(reference),
             )
         }
 

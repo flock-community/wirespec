@@ -49,6 +49,7 @@ import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.findLinks
 import community.flock.wirespec.openapi.common.json
+import community.flock.wirespec.openapi.common.toSchemaDefault
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -255,7 +256,7 @@ public object OpenAPIV3Emitter : Emitter {
 
     private fun Field.emitSchema(): Pair<String, OpenAPIV30SchemaOrReference> = identifier.value to reference.emitSchema().let {
         when (it) {
-            is OpenAPIV30Schema -> it.copy(description = annotations.findDescription())
+            is OpenAPIV30Schema -> it.copy(description = annotations.findDescription(), default = defaultValue.toSchemaDefault())
             is OpenAPIV30Reference -> it
         }
     }
