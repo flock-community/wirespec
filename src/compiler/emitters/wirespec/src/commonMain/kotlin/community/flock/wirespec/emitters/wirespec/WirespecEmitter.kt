@@ -7,6 +7,8 @@ import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Shared
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -33,6 +35,12 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
         super<LanguageEmitter>.emit(ast, logger)
             .let { e -> Emitted("wirespec.${extension.value}", e.map {it.result }.joinToString("\n")).nel() }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
+        super<LanguageEmitter>.emit(definition, module, logger).let { emitted ->
+            val metaData = definition.annotations.map { it.emit() } + listOfNotNull(definition.comment?.emit())
+            emitted.copy(result = metaData.joinToString("") { "$it\n" } + emitted.result)
+        }
 
     override fun Reference.Primitive.Type.Constraint.emit(): String = when(this){
         is Reference.Primitive.Type.Constraint.RegExp -> "(${value})"
