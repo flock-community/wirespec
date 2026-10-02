@@ -2,6 +2,8 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import arrow.core.raise.either
+import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
+import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
@@ -10,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.TypeParser.parseType
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseTypeShape
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Comment
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
@@ -25,6 +28,7 @@ import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision
@@ -58,26 +62,26 @@ internal object TypeParser {
         }
     }
 
-    fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
-        (if (token.type is RightCurly) emptyList() else parseFields().bind())
+    fun TokenProvider.parseTypeShape(allowDefaults: Boolean = false): Either<WirespecException, Type.Shape> = parseToken {
+        (if (token.type is RightCurly) emptyList() else parseFields(allowDefaults).bind())
             .also {
                 expect<RightCurly>().bind()
             }
             .let(Type::Shape)
     }
 
-    private fun TokenProvider.parseFields(): Either<WirespecException, List<Field>> = either {
+    private fun TokenProvider.parseFields(allowDefaults: Boolean): Either<WirespecException, List<Field>> = either {
         mutableListOf<Field>().apply {
             val firstFieldAnnotations = parseAnnotations().bind()
             when (token.type) {
-                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations).bind())
+                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations, allowDefaults).bind())
                 else -> raiseWrongToken<WirespecIdentifier>().bind()
             }
             while (token.type is Comma) {
                 eatToken().bind()
                 val fieldAnnotations = parseAnnotations().bind()
                 when (token.type) {
-                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations).bind())
+                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations, allowDefaults).bind())
                     else -> raiseWrongToken<WirespecIdentifier>().bind()
                 }
             }
@@ -148,7 +152,7 @@ private fun TokenProvider.parseTypeDefinition(comment: Comment?, annotations: Li
             comment = comment,
             annotations = annotations,
             identifier = typeName,
-            shape = parseTypeShape().bind(),
+            shape = parseTypeShape(allowDefaults = true).bind(),
             extends = emptyList(),
         )
 
@@ -299,23 +303,73 @@ private fun TokenProvider.parsePrimitiveType(previousToken: Token) = either {
     }
 }
 
-private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>) = parseToken {
+private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowDefaults: Boolean) = parseToken {
     expect<Colon>().bind()
 
-    when (token.type) {
-        is LeftCurly -> Field(
-            identifier = identifier,
-            reference = parseDict().bind(),
-            annotations = annotations,
-        )
-
-        is WirespecType -> Field(
-            identifier = identifier,
-            reference = parseType().bind(),
-            annotations = annotations,
-        )
-
+    val reference = when (token.type) {
+        is LeftCurly -> parseDict().bind()
+        is WirespecType -> parseType().bind()
         else -> raiseWrongToken<WirespecType>().bind()
+    }
+
+    Field(
+        identifier = identifier,
+        reference = reference,
+        annotations = annotations,
+        defaultValue = when (token.type) {
+            is Equals -> parseDefaultValue(identifier, reference, allowDefaults).bind()
+            else -> null
+        },
+    )
+}
+
+private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowDefaults: Boolean) = parseToken { equals ->
+    if (!allowDefaults) raise(DefaultValueNotAllowedException(fileUri, identifier.value, equals.coordinates))
+    eatToken().bind().let { valueToken ->
+        valueToken.toDefaultValue(reference)
+            ?: raise(InvalidDefaultValueException(fileUri, identifier.value, valueToken.value, reference, valueToken.coordinates))
+    }
+}
+
+private fun Token.toDefaultValue(reference: Reference): DefaultValue? = when {
+    type is WirespecIdentifier && value == "null" -> DefaultValue.NullValue.takeIf { reference.isNullable }
+    reference is Reference.Primitive -> when (val primitive = reference.type) {
+        is Reference.Primitive.Type.String -> takeIf { type is LiteralString }
+            ?.let { DefaultValue.StringValue(it.value.removeSurrounding("\"").unescape()) }
+
+        is Reference.Primitive.Type.Boolean -> takeIf { type is WirespecIdentifier }
+            ?.value?.toBooleanStrictOrNull()
+            ?.let(DefaultValue::BooleanValue)
+
+        is Reference.Primitive.Type.Integer -> takeIf { type is Integer }
+            ?.value?.toLongOrNull()
+            ?.takeIf { it.fitsIn(primitive.precision) && primitive.constraint.admits(it.toDouble()) }
+            ?.let { DefaultValue.IntegerValue(it.toString()) }
+
+        is Reference.Primitive.Type.Number -> takeIf { type is Number || type is Integer }
+            ?.value?.takeIf { primitive.constraint.admits(it.toDouble()) }
+            ?.let(DefaultValue::NumberValue)
+
+        is Reference.Primitive.Type.Bytes -> null
+    }
+
+    else -> null
+}
+
+private fun Long.fitsIn(precision: Reference.Primitive.Type.Precision) = when (precision) {
+    Reference.Primitive.Type.Precision.P32 -> this in Int.MIN_VALUE..Int.MAX_VALUE
+    Reference.Primitive.Type.Precision.P64 -> true
+}
+
+private fun Reference.Primitive.Type.Constraint.Bound?.admits(value: Double) = this == null ||
+    (min?.toDouble()?.let { value >= it } ?: true) && (max?.toDouble()?.let { value <= it } ?: true)
+
+private fun String.unescape(): String = Regex("\\\\(.)").replace(this) { match ->
+    when (val escaped = match.groupValues[1]) {
+        "n" -> "\n"
+        "r" -> "\r"
+        "t" -> "\t"
+        else -> escaped
     }
 }
 

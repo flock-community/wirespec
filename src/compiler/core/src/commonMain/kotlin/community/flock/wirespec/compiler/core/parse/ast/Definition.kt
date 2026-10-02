@@ -12,7 +12,16 @@ public data class Field(
     override val annotations: List<Annotation>,
     val identifier: FieldIdentifier,
     val reference: Reference,
+    val defaultValue: DefaultValue? = null,
 ) : HasAnnotations
+
+public sealed interface DefaultValue {
+    public data class StringValue(val value: String) : DefaultValue
+    public data class IntegerValue(val value: String) : DefaultValue
+    public data class NumberValue(val value: String) : DefaultValue
+    public data class BooleanValue(val value: Boolean) : DefaultValue
+    public data object NullValue : DefaultValue
+}
 
 public data class Endpoint(
     override val comment: Comment?,

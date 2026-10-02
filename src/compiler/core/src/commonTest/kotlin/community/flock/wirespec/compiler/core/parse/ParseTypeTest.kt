@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
@@ -16,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldHaveSize
@@ -284,5 +286,74 @@ class ParseTypeTest {
                     ),
                 )
             }
+    }
+
+    @Test
+    fun testDefaultValueParser() {
+        val source =
+            // language=ws
+            """
+            |type Foo {
+            |    name: String = "Hello \"world\"",
+            |    count: Integer = -1,
+            |    port: Integer32(0, 65535) = 8080,
+            |    ratio: Number = 1.5,
+            |    scale: Number = 2,
+            |    active: Boolean = false,
+            |    nickname: String? = null,
+            |    limit: Integer? = 10,
+            |    tags: String[]
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .shape.value
+            .map { it.identifier.value to it.defaultValue } shouldBe listOf(
+            "name" to DefaultValue.StringValue("Hello \"world\""),
+            "count" to DefaultValue.IntegerValue("-1"),
+            "port" to DefaultValue.IntegerValue("8080"),
+            "ratio" to DefaultValue.NumberValue("1.5"),
+            "scale" to DefaultValue.NumberValue("2"),
+            "active" to DefaultValue.BooleanValue(false),
+            "nickname" to DefaultValue.NullValue,
+            "limit" to DefaultValue.IntegerValue("10"),
+            "tags" to null,
+        )
+    }
+
+    @Test
+    fun testInvalidDefaultValues() {
+        listOf(
+            "type Foo { name: String = 1 }" to "Invalid default value 1 for field name of type String",
+            "type Foo { count: Integer = \"1\" }" to "Invalid default value \"1\" for field count of type Integer",
+            "type Foo { count: Integer = 1.5 }" to "Invalid default value 1.5 for field count of type Integer",
+            "type Foo { count: Integer32 = 2147483648 }" to "Invalid default value 2147483648 for field count of type Integer",
+            "type Foo { count: Integer(0, 10) = 11 }" to "Invalid default value 11 for field count of type Integer",
+            "type Foo { ratio: Number(0.0, 1.0) = 1.5 }" to "Invalid default value 1.5 for field ratio of type Number",
+            "type Foo { active: Boolean = yes }" to "Invalid default value yes for field active of type Boolean",
+            "type Foo { name: String = null }" to "Invalid default value null for field name of type String",
+            "type Foo { tags: String[] = \"a\" }" to "Invalid default value \"a\" for field tags of type Iterable",
+            "type Bar { a: String } type Foo { bar: Bar = \"a\" }" to "Invalid default value \"a\" for field bar of type Bar",
+        ).forEach { (source, message) ->
+            parser(source).shouldBeLeft().head.message shouldBe message
+        }
+    }
+
+    @Test
+    fun testDefaultValueOutsideTypeIsRejected() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetTodos GET /todos ? {limit: Integer = 10} -> {
+            |  200 -> String
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeLeft()
+            .head.message shouldBe "Default values are only allowed on fields of a type definition, not on: limit"
     }
 }

@@ -120,6 +120,26 @@ type Person {
 }
 ```
 
+### Default values
+
+Fields of a primitive type can declare a default value with `=`. Nullable fields can also default to `null`:
+
+```wirespec
+type Settings {
+    name: String = "anonymous",
+    retries: Integer = 3,
+    ratio: Number = 1.5,
+    active: Boolean = true,
+    nickname: String? = null
+}
+```
+
+A default has to match the field's type and fall within its bounds, so `port: Integer32(0, 65535) = 70000` is a
+compile error. Defaults are only allowed on the fields of a `type`, not on endpoint queries, headers or rpc
+parameters, and not on lists, dictionaries or references to other types.
+
+Only the Kotlin emitter generates defaults (as constructor parameter defaults). The other emitters ignore them for now.
+
 ## Enum
 
 Enums (enumerations) in Wirespec are used to define a type that can only take on one of a predefined set of named
