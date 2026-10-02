@@ -12,6 +12,7 @@ public data class Field(
     override val annotations: List<Annotation>,
     val identifier: FieldIdentifier,
     val reference: Reference,
+    val defaultValue: DefaultValue? = null,
 ) : HasAnnotations
 
 public data class Endpoint(

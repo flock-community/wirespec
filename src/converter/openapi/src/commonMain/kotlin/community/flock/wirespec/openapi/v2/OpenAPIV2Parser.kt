@@ -34,6 +34,7 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.converter.common.toDefaultValue
 import community.flock.wirespec.openapi.common.APPLICATION_JSON
 import community.flock.wirespec.openapi.common.className
 import community.flock.wirespec.openapi.common.flatMapRequests
@@ -534,20 +535,21 @@ private fun OpenAPIV2Model.toField(header: Header, identifier: String): Field {
 private fun OpenAPIV2Model.toField(schema: Schema, name: String) = schema.properties.orEmpty().map { (key, value) ->
     val isNullable = !(schema.required?.contains(key) ?: false)
     when (value) {
-        is Schema -> {
+        is Schema -> when {
+            value.enum != null -> toReference(value, className(name, key), isNullable)
+            value.primitiveType == OpenAPIV20Type.ARRAY -> toReference(
+                value,
+                className(name, key, "Array"),
+                isNullable,
+            )
+
+            else -> toReference(value, className(name, key), isNullable)
+        }.let { reference ->
             Field(
                 identifier = FieldIdentifier(key),
                 annotations = emptyList(),
-                reference = when {
-                    value.enum != null -> toReference(value, className(name, key), isNullable)
-                    value.primitiveType == OpenAPIV20Type.ARRAY -> toReference(
-                        value,
-                        className(name, key, "Array"),
-                        isNullable,
-                    )
-
-                    else -> toReference(value, className(name, key), isNullable)
-                },
+                reference = reference,
+                defaultValue = value.default?.toDefaultValue(reference),
             )
         }
 

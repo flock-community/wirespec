@@ -1,0 +1,82 @@
+package community.flock.wirespec.generated.model
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+data class Settings(
+  val name: String = "anonymous",
+  val greeting: String = "Hello \"\$name\"",
+  val retries: Long = 3L,
+  val offset: Long = -1L,
+  val port: Int = 8080,
+  val ratio: Double = 1.5,
+  val scale: Double = 2.0,
+  val weight: Float = 0.5f,
+  val active: Boolean = true,
+  val nickname: String? = null,
+  val limit: Long? = 10L,
+  val tags: List<String>
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    emptyList<String>()
+}
+
+package community.flock.wirespec.generated.generator
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Settings
+object SettingsGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Settings =
+    Settings(
+      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      greeting = generator.generate(path + listOf("greeting"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      retries = generator.generate(path + listOf("retries"), Wirespec.GeneratorFieldInteger64(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      offset = generator.generate(path + listOf("offset"), Wirespec.GeneratorFieldInteger64(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      port = generator.generate(path + listOf("port"), Wirespec.GeneratorFieldInteger32(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      ratio = generator.generate(path + listOf("ratio"), Wirespec.GeneratorFieldNumber64(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      scale = generator.generate(path + listOf("scale"), Wirespec.GeneratorFieldNumber64(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      weight = generator.generate(path + listOf("weight"), Wirespec.GeneratorFieldNumber32(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      active = generator.generate(path + listOf("active"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>())),
+      nickname = generator.generate(path + listOf("nickname"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) })),
+      limit = generator.generate(path + listOf("limit"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldInteger64(
+        min = null,
+        max = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) })),
+      tags = generator.generate(path + listOf("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      )) }))
+    )
+}

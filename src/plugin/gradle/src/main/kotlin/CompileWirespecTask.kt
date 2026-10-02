@@ -57,6 +57,7 @@ public abstract class CompileWirespecTask : BaseWirespecTask() {
             logger = wirespecLogger,
             shared = shared.getOrElse(true),
             strict = strict.getOrElse(false),
+            ignoreDefaults = ignoreDefaults.getOrElse(false),
         ).let(::compile)
     }
 }

@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.converter.common.toDefaultValue
 
 internal object AvroConverter {
 
@@ -57,11 +58,14 @@ internal object AvroConverter {
         extends = emptyList(),
         shape = Type.Shape(
             fields.map {
-                Field(
-                    identifier = FieldIdentifier(it.name),
-                    annotations = emptyList(),
-                    reference = it.type.toReference(),
-                )
+                it.type.toReference().let { reference ->
+                    Field(
+                        identifier = FieldIdentifier(it.name),
+                        annotations = emptyList(),
+                        reference = reference,
+                        defaultValue = it.default?.toDefaultValue(reference),
+                    )
+                }
             },
         ),
     )

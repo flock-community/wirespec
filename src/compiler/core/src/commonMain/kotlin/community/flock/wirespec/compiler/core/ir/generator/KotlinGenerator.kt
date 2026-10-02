@@ -267,7 +267,8 @@ public object KotlinGenerator :
         val paramParts = annotatedFields().map { (field, annotations) ->
             val annotationPrefix = annotations.joinToString("") { "$it " }
             val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
-            "$annotationPrefix${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}".indentCode(indent + 1)
+            val defaultStr = field.initializer?.let { " = ${it.emit()}" }.orEmpty()
+            "$annotationPrefix${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}$defaultStr".indentCode(indent + 1)
         }
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
@@ -595,6 +596,7 @@ public object KotlinGenerator :
     private fun Literal.emit(): String = when (val t = type) {
         Type.String -> "\"${value.toString().escapeKotlinString()}\""
         is Type.Integer -> if (t.precision == Precision.P64) "${value}L" else value.toString()
+        is Type.Number -> if (t.precision == Precision.P32) "${value}f" else value.toString()
         else -> value.toString()
     }
 

@@ -117,6 +117,7 @@ Options:
     --languages, -l -> Language type { Value should be one of [Java, Kotlin, TypeScript, Python, Wirespec] }
     --packageName, -p [community.flock.wirespec.generated] -> Package name { String }
     --strict, -s [false] -> Strict mode 
+    --ignore-defaults [false] -> Leave field default values out of the emitted code 
     --help, -h -> Usage info 
 ```
 
