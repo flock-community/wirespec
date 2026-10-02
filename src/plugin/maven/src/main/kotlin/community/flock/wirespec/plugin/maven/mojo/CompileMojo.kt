@@ -55,6 +55,7 @@ public class CompileMojo : BaseMojo() {
             logger = logger,
             shared = shared,
             strict = strict,
+            ignoreDefaults = ignoreDefaults,
         ).let(::compile)
     }
 }

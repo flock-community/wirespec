@@ -66,6 +66,7 @@ Options:
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
+  --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -h, --help                                                                  Show this message and exit
 ```
@@ -86,6 +87,7 @@ Options:
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
+  --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -h, --help                                                                  Show this message and exit
 

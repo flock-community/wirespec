@@ -139,6 +139,8 @@ compile error. Defaults are only allowed on the fields of a `type`, not on endpo
 parameters, and not on lists, dictionaries or references to other types.
 
 Only the Kotlin emitter generates defaults (as constructor parameter defaults). The other emitters ignore them for now.
+To leave defaults out of the generated code, pass `--ignore-defaults` to the CLI, or set `ignoreDefaults` in the Gradle
+or Maven plugin.
 
 ## Enum
 
