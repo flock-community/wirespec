@@ -160,7 +160,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
         description = annotations.description(),
         name = identifier.value,
         type = typeRef(),
-        defaultValue = annotations.single(DEFAULT)?.let(::parseValue),
+        defaultValue = annotations.single(DEFAULT)?.let(::parseValue) ?: defaultValue?.toGraphQLValue(),
         directives = annotations.directives(),
     )
 

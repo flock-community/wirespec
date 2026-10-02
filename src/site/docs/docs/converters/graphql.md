@@ -56,6 +56,34 @@ when there is none. Each of their fields becomes an `rpc` named after the root t
 the field arguments and whose result is the field type. The root type itself stays as an empty `type`, so it keeps its
 own annotations and can still be referenced.
 
+### Default values
+
+A default value of an input field or a directive argument becomes a Wirespec [default value](../language/types.mdx)
+when Wirespec can hold it exactly: a string, integer, float, boolean or `null` on a field of the matching type.
+
+```graphql
+input Filter {
+  limit: Int = 10
+  query: String = "*"
+  order: Order = ASC
+}
+```
+
+```wirespec
+@GraphQLInput
+type Filter {
+  limit: Integer32? = 10,
+  query: String? = "*",
+  @GraphQLDefault("ASC")
+  order: Order?
+}
+```
+
+Every other default is kept in `@GraphQLDefault`, in GraphQL syntax. That covers enum values, lists, input objects,
+defaults on custom scalars and `ID`, and literals that Wirespec would write differently, such as `2` on a `Float` or
+`1e3`. Arguments of root fields become `rpc` parameters, which cannot have a Wirespec default, so their defaults are
+always kept in `@GraphQLDefault`.
+
 ## Annotations
 
 | Annotation                                                                    | Carries                                                                                    |
@@ -64,7 +92,7 @@ own annotations and can still be referenced.
 | `@GraphQLDirective("@key(fields: \"id\")")`                                   | an applied directive, in GraphQL syntax; repeated for every directive                       |
 | `@GraphQLImplements(["Node"])`                                                | the interfaces an object or interface implements                                           |
 | `@GraphQLArgument(name: "first", type: "Int", defaultValue: "10", ...)`       | an argument of a field that is not an `rpc`; also `description` and `directives`            |
-| `@GraphQLDefault("10")`                                                       | the default value of an input field, `rpc` parameter or directive argument, in GraphQL syntax |
+| `@GraphQLDefault("MEDIUM")`                                                   | a default value that cannot be a Wirespec default (see below), in GraphQL syntax            |
 | `@GraphQLField(parent: "Query", name: "user")`                                | the root type (its Wirespec name) and field name an `rpc` came from                        |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`    | the description and directives of an enum value                                            |
 | `@GraphQLInterface`, `@GraphQLInput`                                          | the kind of a `type`                                                                       |

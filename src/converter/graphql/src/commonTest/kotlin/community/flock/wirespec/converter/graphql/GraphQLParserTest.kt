@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -189,7 +190,36 @@ class GraphQLParserTest {
     fun escapesDescriptionsAndDefaultValues() {
         val source = "input I { \"a \\\"quoted\\\" \\\\ value\\nwith newline\" s: String = \"x\\\"y\" }"
         source.toWirespec() shouldContain "@Description(\"a \\\"quoted\\\" \\\\ value\\nwith newline\")"
-        source.toWirespec() shouldContain "@GraphQLDefault(\"\\\"x\\\\\\\"y\\\"\")"
+        source.toWirespec() shouldContain "s: String? = \"x\\\"y\""
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun usesWirespecDefaultsWhereTheyFit() {
+        val source = """
+            input I { a: Int = 1, b: Float = 0.5, c: Boolean = true, d: String = "x", e: String = null, f: Int! = -3, g: Float = 2, h: Float = 1e3, i: Role = ADMIN, j: [Int] = [1], k: ID = "x" }
+            enum Role { ADMIN }
+            type Query { q(a: Int = 1): Int }
+        """.trimIndent()
+        val fields = convert(source).definition<Type>("I").shape.value
+        fields.map { it.defaultValue } shouldContainExactly listOf(
+            DefaultValue.IntegerValue("1"),
+            DefaultValue.NumberValue("0.5"),
+            DefaultValue.BooleanValue(true),
+            DefaultValue.StringValue("x"),
+            DefaultValue.NullValue,
+            DefaultValue.IntegerValue("-3"),
+            null,
+            null,
+            null,
+            null,
+            null,
+        )
+        fields.drop(6).map { field -> field.annotations.map { it.name } } shouldContainExactly List(5) { listOf("GraphQLDefault") }
+        convert(source).definition<Rpc>("QueryQ").shape.value.single().run {
+            defaultValue shouldBe null
+            annotations.map { it.name } shouldContainExactly listOf("GraphQLDefault")
+        }
         source.shouldRoundTrip()
     }
 
