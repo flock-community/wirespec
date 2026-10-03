@@ -8,11 +8,29 @@ public sealed interface Definition :
     public val identifier: Identifier
 }
 
+public sealed interface ShapeEntry
+
 public data class Field(
     override val annotations: List<Annotation>,
     val identifier: FieldIdentifier,
     val reference: Reference,
-) : HasAnnotations
+) : HasAnnotations,
+    ShapeEntry
+
+public data class Spread(val identifier: DefinitionIdentifier) : ShapeEntry
+
+/**
+ * A reusable set of fields that is only ever spread into shapes, never emitted on its own.
+ * Every [Spread] is flattened into plain [Field]s during validation; the source layout stays
+ * available through the `entries` properties for consumers that need to reproduce it.
+ */
+public data class Part(
+    override val comment: Comment?,
+    override val annotations: List<Annotation>,
+    val identifier: DefinitionIdentifier,
+    val shape: Type.Shape,
+) : HasMetaData,
+    Node
 
 public data class Endpoint(
     override val comment: Comment?,
@@ -24,6 +42,8 @@ public data class Endpoint(
     val headers: List<Field>,
     val requests: List<Request>,
     val responses: List<Response>,
+    val queryEntries: List<ShapeEntry> = queries,
+    val headerEntries: List<ShapeEntry> = headers,
 ) : Definition {
     public enum class Method { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     public sealed interface Segment {
@@ -37,7 +57,13 @@ public data class Endpoint(
     }
 
     public data class Request(val content: Content?)
-    public data class Response(val status: String, val headers: List<Field>, val content: Content?, val annotations: List<Annotation>)
+    public data class Response(
+        val status: String,
+        val headers: List<Field>,
+        val content: Content?,
+        val annotations: List<Annotation>,
+        val headerEntries: List<ShapeEntry> = headers,
+    )
     public data class Content(val type: String, val reference: Reference)
 }
 
@@ -66,7 +92,10 @@ public data class Type(
     val shape: Shape,
     val extends: List<Reference>,
 ) : Model {
-    public data class Shape(override val value: List<Field>) : Value<List<Field>>
+    public data class Shape(
+        override val value: List<Field>,
+        val entries: List<ShapeEntry> = value,
+    ) : Value<List<Field>>
 }
 
 public data class Enum(

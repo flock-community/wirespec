@@ -4,13 +4,13 @@ import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.fixStatus
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 
 internal interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
-        |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()}${endpoint.headers.emitHeader()} -> {
-        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${it.headers.emitHeader()}" }}
+        |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queryEntries.emitQuery()}${endpoint.headerEntries.emitHeader()} -> {
+        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${it.headerEntries.emitHeader()}" }}
         |}
         |
     """.trimMargin()
@@ -25,12 +25,12 @@ internal interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter
     private fun List<Endpoint.Request>.emitRequest() =
         firstOrNull()?.content?.reference?.emit()?.let { " $it" }.orEmpty()
 
-    private fun List<Field>.emitQuery() = takeIf { it.isNotEmpty() }
+    private fun List<ShapeEntry>.emitQuery() = takeIf { it.isNotEmpty() }
         ?.joinToString(",", "{", "}") { it.emit() }
         ?.let { " ?$it" }
         .orEmpty()
 
-    private fun List<Field>.emitHeader() = takeIf { it.isNotEmpty() }
+    private fun List<ShapeEntry>.emitHeader() = takeIf { it.isNotEmpty() }
         ?.joinToString(",", "{", "}") { it.emit() }
         ?.let { " #$it" }
         .orEmpty()
