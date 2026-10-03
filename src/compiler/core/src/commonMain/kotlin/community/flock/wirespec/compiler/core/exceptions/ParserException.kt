@@ -35,6 +35,13 @@ public class NullableRefinedReferenceException(fileUri: FileUri, referenceName: 
         message = "A refined type cannot be nullable: $referenceName",
     )
 
+internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A spread cannot be annotated; annotate the fields of the part instead",
+    )
+
 internal sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :
     EatTokenException(
         fileUri,

@@ -45,3 +45,33 @@ internal class DuplicateRpcError(typeName: String) :
         coordinates = Token.Coordinates(),
         message = "Rpc '$typeName' is already defined",
     )
+
+internal class DuplicatePartError(partName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Part '$partName' is already defined",
+    )
+
+internal class SpreadNonPartError(name: String, owner: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Cannot spread '$name' into $owner: only parts can be spread",
+    )
+
+internal class PartAsReferenceError(partName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Part '$partName' cannot be used as a type; spread it into a shape with ...$partName",
+    )
+
+internal class CyclicPartError(partNames: List<String>) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Parts cannot spread themselves, directly or indirectly: ${partNames.joinToString()}",
+    )
+
+internal class DuplicateFieldError(fieldName: String, owner: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Field '$fieldName' is defined more than once in $owner",
+    )

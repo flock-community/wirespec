@@ -18,7 +18,8 @@ private interface WirespecEmitters:
     WirespecRpcDefinitionEmitter,
     WirespecEnumDefinitionEmitter,
     WirespecUnionDefinitionEmitter,
-    WirespecRefinedTypeDefinitionEmitter
+    WirespecRefinedTypeDefinitionEmitter,
+    WirespecPartDefinitionEmitter
 
 public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
@@ -32,7 +33,7 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
         super<LanguageEmitter>.emit(ast, logger)
-            .let { e -> Emitted("wirespec.${extension.value}", e.map {it.result }.joinToString("\n")).nel() }
+            .let { e -> Emitted("wirespec.${extension.value}", (ast.parts.map { emit(it) } + e.map { it.result }).joinToString("\n")).nel() }
 
     override fun Reference.Primitive.Type.Constraint.emit(): String = when(this){
         is Reference.Primitive.Type.Constraint.RegExp -> "(${value})"
