@@ -50,14 +50,15 @@ GraphQL types are nullable unless marked with `!`; Wirespec references are requi
 | `union`                                        | `type X = A \| B`                                         |
 | `scalar`                                       | refined `type X = String`                                 |
 | fields of `Query`, `Mutation`, `Subscription`  | [`rpc`](../language/rpc.mdx), one per field               |
-| `schema`                                       | `type Schema` with `@GraphQLSchema`                       |
+| `schema`                                       | `type Schema` with `@GraphQLSchema(query: "...", ...)`    |
 | `directive @x`                                 | `type XDirective` with `@GraphQLDirectiveDefinition`      |
 | `extend ...`                                   | a definition named `...Extension` with `@GraphQLExtend`   |
 
 The root operation types are taken from the `schema` definition, or default to `Query`, `Mutation` and `Subscription`
 when there is none. Each of their fields becomes an `rpc` named after the root type and the field, whose parameters are
-the field arguments and whose result is the field type. The root type itself stays as an empty `type`, so it keeps its
-own annotations and can still be referenced.
+the field arguments and whose result is the field type. `@GraphQLField` names the root type each `rpc` belongs to, so
+the root type is rebuilt from its rpcs and needs no Wirespec definition of its own. It only gets one, an empty `type`
+holding its annotations, when it has a description, directives or interfaces, has no fields, or is referenced as a type.
 
 ### Interfaces
 
@@ -132,12 +133,12 @@ always kept in `@GraphQLDefault`.
 | `@GraphQLImplements(["Node"])`                                                | the interfaces an object or interface implements                                           |
 | `@GraphQLArgument(name: "first", type: "Int", defaultValue: "10", ...)`       | an argument of a field that is not an `rpc`; also `description` and `directives`            |
 | `@GraphQLDefault("MEDIUM")`                                                   | a default value that cannot be a Wirespec default (see below), in GraphQL syntax            |
-| `@GraphQLField(parent: "Query", name: "user")`                                | the root type (its Wirespec name) and field name an `rpc` came from                        |
+| `@GraphQLField(parent: "Query", name: "user")`                                | the root type and field name an `rpc` came from; `extend: "1"` marks the first `extend type` block of a root type without a Wirespec type of its own, and so on |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`    | the description and directives of an enum value                                            |
 | `@GraphQLInterface("NodeFields")`                                             | an interface, naming the part that holds its fields (bare when the interface has no fields) |
 | `@GraphQLInput`                                                               | an input object                                                                            |
 | `@GraphQLUnion`, `@GraphQLEnum`                                               | a union or enum without members, which Wirespec cannot write as `union` or `enum`          |
-| `@GraphQLSchema`                                                              | a `schema` definition; its fields map operations to root types                              |
+| `@GraphQLSchema(query: "Root")`                                               | a `schema` definition, mapping each operation to its root type                              |
 | `@GraphQLDirectiveDefinition(name: "key", locations: [...], repeatable: "true")` | a directive definition; its fields are the directive arguments                          |
 | `@GraphQLExtend("User")`                                                      | an extension of the named type (`@GraphQLExtend` alone for a schema extension)             |
 | `@GraphQLName("_Service")`                                                    | the GraphQL name of a definition whose name is not a valid Wirespec type name               |
@@ -204,14 +205,10 @@ type NewTodo {
   priority: Priority?
 }
 
-type Query {}
-
 @GraphQLField(parent: "Query", name: "todo")
 rpc QueryTodo {
   id: ID
 } -> Todo?
-
-type Mutation {}
 
 @GraphQLField(parent: "Mutation", name: "addTodo")
 rpc MutationAddTodo {

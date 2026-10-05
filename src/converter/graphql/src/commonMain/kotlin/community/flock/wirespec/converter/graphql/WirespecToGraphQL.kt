@@ -63,9 +63,11 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
         .filterNot { it is Rpc || it.annotations.has(EXTEND) || it.annotations.has(SCHEMA) || it.annotations.has(DIRECTIVE_DEFINITION) }
         .associate { it.identifier.value to (it.annotations.single(NAME) ?: it.identifier.value) }
 
-    /** The rpcs of each object type; an rpc that did not come from a GraphQL root field belongs to `Query`. */
-    private val rpcs: Map<String, List<Rpc>> = definitions.filterIsInstance<Rpc>()
-        .groupBy { rpc -> rpc.annotations.firstOrNull { it.name == FIELD }?.single("parent") ?: QUERY }
+    /**
+     * The rpcs of each root operation type, by type and extension block. An rpc that did not come from a GraphQL root
+     * field belongs to `Query`.
+     */
+    private val rpcs: Map<Pair<String, String?>, List<Rpc>> = definitions.filterIsInstance<Rpc>().groupBy { it.rootType() }
 
     private val types: Map<String, Type> = definitions.filterIsInstance<Type>().associateBy { it.identifier.value }
 
@@ -82,11 +84,16 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
     )
 
     fun convert(): Document = Document(
-        definitions.flatMap { it.convert() } + listOfNotNull(query()) + customScalars(),
+        definitions.flatMap { it.convert() } + customScalars(),
     )
 
     private fun Definition.convert(): List<GraphQLModel.Definition> = when (this) {
-        is Rpc -> emptyList()
+        is Rpc -> rootType().let { rootType ->
+            rpcs.getValue(rootType)
+                .takeIf { rootType.first !in types && it.first() === this }
+                ?.let { listOf(ObjectTypeDefinition(null, rootType.first, emptyList(), emptyList(), it.map { rpc -> rpc.toFieldDefinition() }, rootType.second != null)) }
+                .orEmpty()
+        }
         is Endpoint -> emptyList<GraphQLModel.Definition>().also { logger.warn("Endpoint ${identifier.value} has no GraphQL counterpart and is left out") }
         is Channel -> emptyList<GraphQLModel.Definition>().also { logger.warn("Channel ${identifier.value} has no GraphQL counterpart and is left out") }
         is Refined -> when {
@@ -131,7 +138,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
             name = graphQLName(),
             interfaces = interfaces,
             directives = directives,
-            fields = fields.map { it.toFieldDefinition() } + rpcs[identifier.value].orEmpty().map { it.toFieldDefinition() },
+            fields = fields.map { it.toFieldDefinition() } + rpcs[identifier.value to null].orEmpty().map { it.toFieldDefinition() },
             extension = extension,
         )
         return when {
@@ -139,8 +146,8 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
                 SchemaDefinition(
                     description = description,
                     directives = directives,
-                    operationTypes = fields.map { field ->
-                        OperationTypeDefinition(Operation.entries.first { it.keyword == field.identifier.value }, (field.typeRef() as TypeRef.NonNull).type.let { (it as TypeRef.Named).name })
+                    operationTypes = annotations.first { it.name == SCHEMA }.let { schema ->
+                        schema.parameters.map { parameter -> OperationTypeDefinition(Operation.entries.first { it.keyword == parameter.name }, schema.single(parameter.name)!!) }
                     },
                     extension = extension,
                 ),
@@ -166,11 +173,6 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
         }
     }
 
-    /** `Query` holds the rpcs that did not come from GraphQL, unless the Wirespec already has a `Query` type for them. */
-    private fun query(): ObjectTypeDefinition? = rpcs[QUERY]
-        ?.takeIf { QUERY !in types }
-        ?.let { ObjectTypeDefinition(null, QUERY, emptyList(), emptyList(), it.map { rpc -> rpc.toFieldDefinition() }, false) }
-
     /** Declares the custom scalars that stand in for the Wirespec types GraphQL has no built-in for. */
     private fun customScalars(): List<ScalarTypeDefinition> = definitions
         .flatMap { definition ->
@@ -184,6 +186,10 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
         .distinct()
         .filterNot { it in names }
         .map { ScalarTypeDefinition(null, it, emptyList(), false) }
+
+    /** The root operation type an rpc is a field of, rebuilt at the first of its rpcs unless a Wirespec type holds it. */
+    private fun Rpc.rootType(): Pair<String, String?> = annotations.firstOrNull { it.name == FIELD }
+        .let { (it?.single("parent") ?: QUERY) to it?.single("extend") }
 
     private fun Definition.graphQLName(): String = annotations.single(EXTEND) ?: annotations.single(NAME) ?: identifier.value
 

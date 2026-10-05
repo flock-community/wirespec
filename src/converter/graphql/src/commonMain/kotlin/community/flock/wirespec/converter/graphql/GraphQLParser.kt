@@ -92,6 +92,18 @@ private class GraphQLConverter(private val document: Document) {
         (declared.map { it.type } + defaults).toSet()
     }
 
+    /** The types that a field or union refers to; a root operation type among them needs a type of its own. */
+    private val referencedAsType: Set<String> = document.definitions
+        .flatMap {
+            when (it) {
+                is ObjectTypeDefinition -> it.fields.map { field -> field.type.leaf() }
+                is InterfaceTypeDefinition -> it.fields.map { field -> field.type.leaf() }
+                is UnionTypeDefinition -> it.members
+                else -> emptyList()
+            }
+        }
+        .toSet()
+
     private val declared: List<String> = document.definitions
         .filterIsInstance<TypeDefinition>()
         .filterNot { it.extension }
@@ -142,15 +154,11 @@ private class GraphQLConverter(private val document: Document) {
 
     private fun SchemaDefinition.convert(): Type = type(
         identifier = claim(if (extension) "SchemaExtension" else "Schema"),
-        annotations = listOf(annotation(SCHEMA)) +
+        annotations = listOf(annotation(SCHEMA, *operationTypes.map { parameter(it.operation.keyword, it.type) }.toTypedArray())) +
             listOfNotNull(annotation(EXTEND).takeIf { extension }) +
             description.toAnnotations() +
             directives.toAnnotations(),
-        fields = operationTypes.map { operationType ->
-            TypeRef.NonNull(TypeRef.Named(operationType.type)).let {
-                Field(annotations = it.toAnnotations(), identifier = FieldIdentifier(operationType.operation.keyword), reference = it.toReference())
-            }
-        },
+        fields = emptyList(),
     )
 
     private fun DirectiveDefinition.convert(): Type = type(
@@ -174,9 +182,13 @@ private class GraphQLConverter(private val document: Document) {
     )
 
     private fun ObjectTypeDefinition.convert(): List<Definition> = when (name) {
-        in roots -> identifier().let { identifier ->
-            val prefix = names[name] ?: name.sanitize()
-            listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + fields.map { it.toRpc(identifier, prefix) }
+        in roots -> (names[name] ?: name.sanitize()).let { prefix ->
+            when {
+                needsType() -> identifier().let { identifier ->
+                    listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + fields.map { it.toRpc(prefix, parameter("parent", identifier)) }
+                }
+                else -> fields.map { it.toRpc(prefix, parameter("parent", name), extensionBlock()?.let { block -> parameter("extend", block.toString()) }) }
+            }
         }
         else -> fields.map { it.toField() }.let { fields ->
             type(identifier(), commonAnnotations(interfaces), fields, fields.spread(interfaces)).let(::listOf)
@@ -249,9 +261,27 @@ private class GraphQLConverter(private val document: Document) {
         reference = type.toReference(),
     )
 
-    private fun FieldDefinition.toRpc(parent: String, prefix: String): Rpc = Rpc(
+    /**
+     * A root operation type is rebuilt from the rpcs of its fields, so it only needs a type of its own for what an rpc
+     * cannot carry: its description, directives and interfaces, being referenced as a type, or having no fields.
+     */
+    private fun ObjectTypeDefinition.needsType(): Boolean = description != null ||
+        directives.isNotEmpty() ||
+        interfaces.isNotEmpty() ||
+        fields.isEmpty() ||
+        (!extension && name in referencedAsType)
+
+    /** Which extension of a root type this is, counting the extensions without a type of their own, to keep them apart. */
+    private fun ObjectTypeDefinition.extensionBlock(): Int? = takeIf { extension }?.let {
+        document.definitions
+            .filterIsInstance<ObjectTypeDefinition>()
+            .filter { it.extension && it.name == name && !it.needsType() }
+            .indexOfFirst { it === this } + 1
+    }
+
+    private fun FieldDefinition.toRpc(prefix: String, vararg location: Annotation.Parameter?): Rpc = Rpc(
         comment = null,
-        annotations = listOf(annotation(FIELD, parameter("parent", parent), parameter("name", name))) +
+        annotations = listOf(annotation(FIELD, *location, parameter("name", name))) +
             description.toAnnotations() +
             directives.toAnnotations() +
             type.toAnnotations(),

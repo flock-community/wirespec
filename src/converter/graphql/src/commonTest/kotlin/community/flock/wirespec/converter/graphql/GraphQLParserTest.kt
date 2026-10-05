@@ -77,10 +77,6 @@ class GraphQLParserTest {
             |  priority: Priority?
             |}
             |
-            |type Query {
-            |
-            |}
-            |
             |@GraphQLField(parent: "Query", name: "todos")
             |rpc QueryTodos {
             |  done: Boolean?
@@ -91,10 +87,6 @@ class GraphQLParserTest {
             |  id: ID
             |} -> Todo?
             |
-            |type Mutation {
-            |
-            |}
-            |
             |@GraphQLField(parent: "Mutation", name: "addTodo")
             |rpc MutationAddTodo {
             |  input: NewTodo
@@ -104,10 +96,6 @@ class GraphQLParserTest {
             |rpc MutationCompleteTodo {
             |  id: ID
             |} -> Todo?
-            |
-            |type Subscription {
-            |
-            |}
             |
             |@GraphQLField(parent: "Subscription", name: "todoAdded")
             |rpc SubscriptionTodoAdded {} -> Todo
@@ -149,10 +137,6 @@ class GraphQLParserTest {
             |  ...NodeFields,
             |  ...NamedFields,
             |  email: String?
-            |}
-            |
-            |type Query {
-            |
             |}
             |
             |@GraphQLField(parent: "Query", name: "node")
@@ -238,6 +222,28 @@ class GraphQLParserTest {
     }
 
     @Test
+    fun keepsARootTypeOnlyWhenItNeedsOne() {
+        val types = { source: String -> convert(source).filterIsInstance<Type>().map { it.identifier.value } }
+        types("type Query { a: Int }") shouldBe emptyList()
+        types("\"The entry point\" type Query { a: Int }") shouldContainExactly listOf("Query")
+        types("type Query @cached { a: Int }") shouldContainExactly listOf("Query")
+        types("type Query { a: Int } type User { viewer: Query }") shouldContainExactly listOf("Query", "User")
+        types("type Query") shouldContainExactly listOf("Query")
+        types("schema { query: Root } type Root { a: Int }") shouldContainExactly listOf("Schema")
+    }
+
+    @Test
+    fun keepsExtensionsOfRootTypesApart() {
+        val source = "type Query { a: Int } extend type Query { b: Int } extend type Query { c: Int }"
+        convert(source).filterIsInstance<Rpc>().map { rpc -> rpc.annotations.first().parameters.map { it.name to (it.value as Annotation.Value.Single).value } } shouldContainExactly listOf(
+            listOf("parent" to "Query", "name" to "a"),
+            listOf("parent" to "Query", "extend" to "1", "name" to "b"),
+            listOf("parent" to "Query", "extend" to "2", "name" to "c"),
+        )
+        source.shouldRoundTrip()
+    }
+
+    @Test
     fun usesTheSchemaDefinitionForRootTypes() {
         val definitions = convert("schema { query: Root } type Root { ping: Boolean } type Query { notRoot: Boolean }")
         definitions.definition<Rpc>("RootPing")
@@ -254,7 +260,7 @@ class GraphQLParserTest {
     @Test
     fun avoidsNameCollisions() {
         convert("type QueryUser { a: Int } type Query { user: QueryUser }").map { it.identifier.value } shouldContainExactly
-            listOf("QueryUser", "Query", "QueryUser2")
+            listOf("QueryUser", "QueryUser2")
     }
 
     @Test

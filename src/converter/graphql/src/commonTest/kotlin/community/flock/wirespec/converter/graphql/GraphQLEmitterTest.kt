@@ -120,9 +120,9 @@ class GraphQLEmitterTest {
         """.trimMargin()
         GraphQLDocumentParser(emitted.result).parseDocument()
         warnings shouldContainExactly listOf(
+            "The error type of rpc CreateUser has no GraphQL counterpart and is left out",
             "Endpoint GetTodo has no GraphQL counterpart and is left out",
             "Channel Events has no GraphQL counterpart and is left out",
-            "The error type of rpc CreateUser has no GraphQL counterpart and is left out",
         )
     }
 
