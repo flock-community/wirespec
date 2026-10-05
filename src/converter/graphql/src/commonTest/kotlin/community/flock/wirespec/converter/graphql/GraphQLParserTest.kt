@@ -365,7 +365,8 @@ class GraphQLParserTest {
 
         parsed.modules.head.statements.toList() shouldBe converted.modules.head.statements.toList()
         parsed.parts shouldBe converted.parts
-        WirespecToGraphQL(parsed.modules.head.statements.toList()).convert() shouldBe document
+        WirespecToGraphQL(parsed.modules.head.statements.toList(), noLogger).convert() shouldBe document
+        GraphQLDocumentParser(GraphQLEmitter.emit(parsed.copy(modules = nonEmptyListOf(parsed.modules.head)), noLogger).single().result).parseDocument() shouldBe document
         GraphQLDocumentParser(document.print()).parseDocument() shouldBe document
     }
 

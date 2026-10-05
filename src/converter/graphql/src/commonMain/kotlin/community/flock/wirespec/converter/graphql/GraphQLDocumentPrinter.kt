@@ -16,7 +16,7 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.UnionTypeDefiniti
 import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
 import community.flock.wirespec.converter.graphql.GraphQLPrinter.quote
 
-/** Prints a document back to SDL, so tests can show that nothing was lost on the way through Wirespec. */
+/** Prints a GraphQL document as SDL. Descriptions are written as plain strings, which keeps every value exact. */
 internal object GraphQLDocumentPrinter {
 
     fun Document.print(): String = definitions.joinToString("\n\n") { it.print() } + "\n"

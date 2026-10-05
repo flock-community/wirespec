@@ -8,6 +8,9 @@ values, interface implementations and extensions can all be read back from the W
 Only schema documents can be converted. Executable documents (queries, mutations, subscriptions and fragments) are
 rejected.
 
+Wirespec also emits GraphQL: Wirespec converted from GraphQL becomes the exact schema it came from, and any other
+Wirespec becomes the closest GraphQL schema. See [Emitting GraphQL](#emitting-graphql).
+
 ## Type Conversion
 
 ### Scalars
@@ -217,6 +220,58 @@ rpc MutationAddTodo {
 
 @GraphQLBuiltIn
 type ID = String
+```
+
+## Emitting GraphQL
+
+The `GraphQL` emitter writes one `schema.graphql` for all modules together:
+
+```shell
+wirespec compile -i ./wirespec -l GraphQL
+```
+
+Wirespec converted from GraphQL carries the annotations above, and the emitter turns it back into the exact schema it
+came from. Any other Wirespec gets the closest GraphQL:
+
+| Wirespec                                | GraphQL                                                                   |
+|-----------------------------------------|---------------------------------------------------------------------------|
+| `type`                                  | `type`, or `input` when an rpc takes it                                   |
+| a `type` an rpc both takes and returns  | `type X` and `input XInput`                                               |
+| `enum`, `type U = A \| B`               | `enum`, `union`                                                           |
+| refined `type X = String(...)`          | `scalar X` (the constraint is left out)                                   |
+| `rpc`                                   | a field of `Query`, its parameters as arguments                           |
+| `Integer32` / `Number` / `String` / `Boolean` | `Int` / `Float` / `String` / `Boolean`                              |
+| `Integer`, `Bytes`, `Any` and dictionaries, `Unit` | the custom scalars `Long`, `Bytes`, `JSON`, `Void`, declared in the schema |
+| a comment on a definition               | its description                                                           |
+| field defaults                          | default values of input fields                                            |
+
+Field names and enum values that are not valid GraphQL names, such as `due-date`, have the invalid characters
+replaced by `_`. Endpoints, channels and rpc error types have no GraphQL counterpart: they are left out with a warning.
+
+```wirespec
+type User {
+  name: String
+}
+
+rpc CreateUser {
+  user: User
+} -> User
+```
+
+```graphql
+type User {
+  name: String!
+}
+
+input UserInput {
+  name: String!
+}
+
+type Query {
+  createUser(
+    user: UserInput!
+  ): User!
+}
 ```
 
 ## Limitations

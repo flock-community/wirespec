@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroJsonParser
+import community.flock.wirespec.converter.graphql.GraphQLEmitter
 import community.flock.wirespec.converter.graphql.GraphQLParser
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
@@ -63,6 +64,7 @@ public enum class Emitters {
     OPENAPI_V2,
     OPENAPI_V3,
     AVRO,
+    GRAPHQL,
 }
 
 @JsExport
@@ -128,6 +130,7 @@ public fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared
                 .map { ast -> AvroJsonEmitter.emit(ast) }
                 .map { Json.encodeToString(it) }
                 .map { Emitted("avro.json", it) }
+        Emitters.GRAPHQL -> GraphQLEmitter.emit(ast, noLogger)
     }
         .map { it.produce() }
         .toTypedArray()

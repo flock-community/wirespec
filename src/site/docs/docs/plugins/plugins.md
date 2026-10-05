@@ -16,7 +16,7 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 
 - **input:** Path to the input Wirespec file or directory.
 - **output:** Path to the output directory where the generated code will be placed.
-- **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`).
+- **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`, `GraphQL`).
 - **package name:** The package name for the generated code.
 - **share:** A flag to indicate whether shared code should be emitted.
 - **strict:** A flag to enable strict mode during compilation.
@@ -30,7 +30,7 @@ The `Convert` operation facilitates integration with other API specification lan
 
 - **input:** Path to the input file in the original specification language.
 - **output:** Path to the output directory where the converted Wirespec file will be placed.
-- **format:** The format of the input file (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`).
+- **format:** The format of the input file (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`, `GraphQL`).
 
 [Playground convert](http://playground.wirespec.io/covert)
 

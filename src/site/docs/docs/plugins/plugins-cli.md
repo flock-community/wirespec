@@ -67,7 +67,7 @@ Options:
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
-  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3|GraphQL) Language
   -h, --help                                                                  Show this message and exit
 ```
 
