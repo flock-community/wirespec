@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
+import community.flock.wirespec.compiler.test.CompilePartTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
@@ -19,6 +20,11 @@ import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class RustEmitterTest {
+
+    @Test
+    fun compilePartTest() {
+        CompilePartTest.compiler { RustEmitter() }.shouldBeRight() shouldBe CompilePartTest.expandedCompiler { RustEmitter() }.shouldBeRight()
+    }
 
     @Test
     fun compileEnumTest() {

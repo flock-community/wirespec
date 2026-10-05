@@ -2,6 +2,8 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import arrow.core.raise.either
+import arrow.core.raise.ensure
+import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
 import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
@@ -19,12 +21,15 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
+import community.flock.wirespec.compiler.core.tokenize.Ellipsis
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
@@ -64,28 +69,29 @@ internal object TypeParser {
     }
 
     fun TokenProvider.parseTypeShape(allowDefaults: Boolean = false): Either<WirespecException, Type.Shape> = parseToken {
-        (if (token.type is RightCurly) emptyList() else parseFields(allowDefaults).bind())
+        (if (token.type is RightCurly) emptyList() else parseShapeEntries(allowDefaults).bind())
             .also {
                 expect<RightCurly>().bind()
             }
-            .let(Type::Shape)
+            .let { Type.Shape(value = it.filterIsInstance<Field>(), entries = it) }
     }
 
-    private fun TokenProvider.parseFields(allowDefaults: Boolean): Either<WirespecException, List<Field>> = either {
-        mutableListOf<Field>().apply {
-            val firstFieldAnnotations = parseAnnotations().bind()
-            when (token.type) {
-                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations, allowDefaults).bind())
-                else -> raiseWrongToken<WirespecIdentifier>().bind()
-            }
+    private fun TokenProvider.parseShapeEntries(allowDefaults: Boolean): Either<WirespecException, List<ShapeEntry>> = either {
+        mutableListOf<ShapeEntry>().apply {
+            add(parseShapeEntry(allowDefaults).bind())
             while (token.type is Comma) {
                 eatToken().bind()
-                val fieldAnnotations = parseAnnotations().bind()
-                when (token.type) {
-                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations, allowDefaults).bind())
-                    else -> raiseWrongToken<WirespecIdentifier>().bind()
-                }
+                add(parseShapeEntry(allowDefaults).bind())
             }
+        }
+    }
+
+    private fun TokenProvider.parseShapeEntry(allowDefaults: Boolean): Either<WirespecException, ShapeEntry> = either {
+        val annotations = parseAnnotations().bind()
+        when (token.type) {
+            is WirespecIdentifier -> parseField(FieldIdentifier(token.value), annotations, allowDefaults).bind()
+            is Ellipsis -> parseSpread(annotations).bind()
+            else -> raiseWrongToken<WirespecIdentifier>().bind()
         }
     }
 
@@ -301,6 +307,14 @@ private fun TokenProvider.parsePrimitiveType(previousToken: Token) = either {
             )
         }
         else -> raiseWrongToken<PrimitiveType>().bind()
+    }
+}
+
+private fun TokenProvider.parseSpread(annotations: List<Annotation>) = parseToken { ellipsis ->
+    ensure(annotations.isEmpty()) { AnnotatedSpreadException(fileUri, ellipsis.coordinates) }
+    when (token.type) {
+        is WirespecType -> Spread(DefinitionIdentifier(token.shouldBeDefined().bind().value)).also { eatToken().bind() }
+        else -> raiseWrongToken<WirespecType>().bind()
     }
 }
 
