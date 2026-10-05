@@ -32,19 +32,22 @@ import community.flock.wirespec.compiler.core.parse.ast.isEntryOf
 
 public object Validator {
 
-    public fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = zipOrAccumulate(
-        validateWithOptions(ast, options),
-        validateEndpoints(ast),
-        validateTypes(ast),
-        validateChannels(ast),
-        validateRpcs(ast),
-        validateEnumDefaults(ast),
-    ) { a, _, _, _, _, _ -> a }
+    public fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = either {
+        val resolved = PartResolver.resolve(ast).bind()
+        zipOrAccumulate(
+            validateWithOptions(resolved, options),
+            validateEndpoints(resolved),
+            validateTypes(resolved),
+            validateChannels(resolved),
+            validateRpcs(resolved),
+            validateEnumDefaults(resolved),
+        ) { a, _, _, _, _, _ -> a }.bind()
+    }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
         .let { either { it.bindAll() } }
-        .map { AST(it) }
+        .map { ast.copy(modules = it) }
 
     private fun runValidateOptions(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { it.runOption(options.allowUnions) { fillExtendsClause() } }
 

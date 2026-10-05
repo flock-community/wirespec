@@ -10,6 +10,7 @@ import arrow.core.raise.Raise
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -18,16 +19,20 @@ import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnota
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Node
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.PartDefinition
 import community.flock.wirespec.compiler.core.tokenize.RpcDefinition
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.validate.Validator
+import community.flock.wirespec.compiler.core.validate.unusedParts
 import community.flock.wirespec.compiler.utils.HasLogger
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
@@ -44,10 +49,17 @@ public object Parser {
         modules
             .map { it.toProvider(modules.allDefinitions(), logger).parseModule() }
             .flattenOrAccumulate().bind()
-            .toNonEmptyListOrNull()
-            .let { ensureNotNull(it) { EmptyModule().nel() } }
-            .let { AST(it) }
+            .let { parsed ->
+                AST(
+                    modules = parsed
+                        .mapNotNull { (fileUri, nodes) -> nodes.filterIsInstance<Definition>().toNonEmptyListOrNull()?.let { Module(fileUri, it) } }
+                        .toNonEmptyListOrNull()
+                        .let { ensureNotNull(it) { EmptyModule().nel() } },
+                    parts = parsed.flatMap { (_, nodes) -> nodes.filterIsInstance<Part>() },
+                )
+            }
             .let { Validator.validate(options, it).bind() }
+            .also { it.unusedParts().forEach { part -> logger.warn("Part '${part.identifier.value}' is never spread") } }
     }
 }
 
@@ -86,8 +98,10 @@ private fun NonEmptyList<TokenizedModule>.allDefinitions() = flatMap { it.tokens
     }
     .toSet()
 
-private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = either {
-    mutableListOf<Either<WirespecException, Definition>>()
+private data class ParsedModule(val fileUri: FileUri, val nodes: NonEmptyList<Node>)
+
+private fun TokenProvider.parseModule(): EitherNel<WirespecException, ParsedModule> = either {
+    mutableListOf<Either<WirespecException, Node>>()
         .apply {
             while (hasNext()) {
                 when (token.type) {
@@ -101,10 +115,10 @@ private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = 
         .mapOrAccumulate { it.bind() }.bind()
         .toNonEmptyListOrNull()
         .let { ensureNotNull(it) { EmptyModule().nel() } }
-        .let { Module(fileUri, it) }
+        .let { ParsedModule(fileUri, it) }
 }
 
-private fun TokenProvider.parseDefinition() = either {
+private fun TokenProvider.parseDefinition(): Either<WirespecException, Node> = either {
     val annotations = parseAnnotations().bind()
     val comment = when (token.type) {
         is Comment -> community.flock.wirespec.compiler.core.parse.ast.Comment(token.value).also { eatToken().bind() }
@@ -117,6 +131,7 @@ private fun TokenProvider.parseDefinition() = either {
             is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment, annotations) }.bind()
             is ChannelDefinition -> with(ChannelParser) { parseChannel(comment, annotations) }.bind()
             is RpcDefinition -> with(RpcParser) { parseRpc(comment, annotations) }.bind()
+            is PartDefinition -> with(PartParser) { parsePart(comment, annotations) }.bind()
         }
 
         else -> raiseWrongToken<WirespecDefinition>().bind()

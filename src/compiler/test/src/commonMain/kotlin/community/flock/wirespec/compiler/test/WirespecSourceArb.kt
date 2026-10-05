@@ -28,8 +28,8 @@ public data class WirespecFeatures(
 
         /** The subset `WirespecEmitter` reproduces verbatim. */
         public val roundTrippable: WirespecFeatures = WirespecFeatures(
-            annotations = false,
-            comments = false,
+            annotations = true,
+            comments = true,
             constrainedReferences = false,
         )
     }
@@ -66,54 +66,65 @@ private fun Random.module(features: WirespecFeatures): String {
     val models = List(nextInt(2, 6)) { "${pick(NOUNS)}$it" }
     // The first two models are never unions, so a union always has defined entries to point at.
     val kinds = models.indices.map { if (it < 2) pick(listOf(ModelKind.TYPE, ModelKind.REFINED, ModelKind.ENUM)) else pick(ModelKind.entries) }
-    val modelDefinitions = models.mapIndexed { index, name -> model(kinds[index], name, models, features) }
-    val otherDefinitions = List(nextInt(0, 4)) { index -> other(pick(OtherKind.entries), "${pick(NOUNS)}Api$index", models, features) }
-    return (modelDefinitions + otherDefinitions).joinToString("\n")
+    val parts = List(nextInt(0, 3)) { "Shared$it" }
+    val modelDefinitions = models.mapIndexed { index, name -> model(kinds[index], name, models, parts, features) }
+    val otherDefinitions = List(nextInt(0, 4)) { index -> other(pick(OtherKind.entries), "${pick(NOUNS)}Api$index", models, parts, features) }
+    // Parts come last, so every spread of them is a forward reference.
+    val partDefinitions = parts.mapIndexed { index, name -> part(name, index, models, features) }
+    return (modelDefinitions + otherDefinitions + partDefinitions).joinToString("\n")
 }
 
-private fun Random.model(kind: ModelKind, name: String, models: List<String>, features: WirespecFeatures): String = metadata(features) + when (kind) {
-    ModelKind.TYPE -> "type $name {\n${shape(models, features)}\n}\n"
+/** Part fields are named apart from shape fields, and parts never spread each other, so no spread can collide. */
+private fun Random.part(name: String, index: Int, models: List<String>, features: WirespecFeatures): String {
+    val fields = List(nextInt(0, 3)) { field -> annotationBlock(features, indent = "  ") + "  common${index}x$field: ${reference(models, features)}" }
+    return metadata(features) + "part $name {\n${fields.joinToString(",\n")}\n}\n"
+}
+
+private fun Random.spreads(parts: List<String>): List<String> = parts.filter { nextInt(3) == 0 }.map { "...$it" }
+
+private fun Random.model(kind: ModelKind, name: String, models: List<String>, parts: List<String>, features: WirespecFeatures): String = metadata(features) + when (kind) {
+    ModelKind.TYPE -> "type $name {\n${shape(models, parts, features)}\n}\n"
     ModelKind.REFINED -> "type $name = ${refinedReference()}\n"
     ModelKind.ENUM -> "enum $name {\n  ${enumEntries().joinToString(", ")}\n}\n"
     ModelKind.UNION -> "type $name = ${unionEntries(models, name).joinToString(" | ")}\n"
 }
 
-private fun Random.other(kind: OtherKind, name: String, models: List<String>, features: WirespecFeatures): String = metadata(features) + when (kind) {
+private fun Random.other(kind: OtherKind, name: String, models: List<String>, parts: List<String>, features: WirespecFeatures): String = metadata(features) + when (kind) {
     OtherKind.CHANNEL -> "channel $name -> ${reference(models, features)}\n"
-    OtherKind.RPC -> rpc(name, models, features)
-    OtherKind.ENDPOINT -> endpoint(name, models, features)
+    OtherKind.RPC -> rpc(name, models, parts, features)
+    OtherKind.ENDPOINT -> endpoint(name, models, parts, features)
 }
 
-private fun Random.rpc(name: String, models: List<String>, features: WirespecFeatures): String {
-    val shape = if (nextInt(4) == 0) "{}" else "{\n${shape(models, features)}\n}"
+private fun Random.rpc(name: String, models: List<String>, parts: List<String>, features: WirespecFeatures): String {
+    val shape = if (nextInt(4) == 0) "{}" else "{\n${shape(models, parts, features)}\n}"
     // `RpcParser.parseReference` only accepts a `WirespecType`, so an rpc result or error
     // cannot be a dict — unlike a channel reference or an endpoint response.
     val error = if (nextBoolean()) " ! ${reference(models, features, allowDict = false)}" else ""
     return "rpc $name $shape -> ${reference(models, features, allowUnit = true, allowDict = false)}$error\n"
 }
 
-private fun Random.endpoint(name: String, models: List<String>, features: WirespecFeatures): String {
+private fun Random.endpoint(name: String, models: List<String>, parts: List<String>, features: WirespecFeatures): String {
     val request = if (nextBoolean()) " ${simpleReference(models)}" else ""
     // Path parameters keep dromedary names on purpose: the emitter writes them without
     // backticks, so anything needing them cannot survive a round trip.
     val path = List(nextInt(1, 4)) { index ->
         if (nextBoolean()) "/segment$index" else "/{param$index: ${simpleReference(models)}}"
     }.joinToString("")
-    val queries = inlineShape(models, features)?.let { " ?{$it}" }.orEmpty()
-    val headers = inlineShape(models, features)?.let { " #{$it}" }.orEmpty()
+    val queries = inlineShape(models, parts, features)?.let { " ?{$it}" }.orEmpty()
+    val headers = inlineShape(models, parts, features)?.let { " #{$it}" }.orEmpty()
     val responses = STATUSES.shuffled(this).take(nextInt(1, 4)).joinToString("\n") { status ->
-        val responseHeaders = inlineShape(models, features)?.let { " #{$it}" }.orEmpty()
+        val responseHeaders = inlineShape(models, parts, features)?.let { " #{$it}" }.orEmpty()
         "  $status -> ${reference(models, features, allowUnit = true)}$responseHeaders"
     }
     return "endpoint $name ${pick(METHODS)}$request $path$queries$headers -> {\n$responses\n}\n"
 }
 
-private fun Random.shape(models: List<String>, features: WirespecFeatures): String = List(nextInt(1, 5)) { index ->
+private fun Random.shape(models: List<String>, parts: List<String>, features: WirespecFeatures): String = List(nextInt(1, 5)) { index ->
     annotationBlock(features, indent = "  ") + "  ${fieldName(index)}: ${reference(models, features)}"
-}.joinToString(",\n")
+}.plus(spreads(parts).map { "  $it" }).shuffled(this).joinToString(",\n")
 
-private fun Random.inlineShape(models: List<String>, features: WirespecFeatures): String? = when (nextInt(3)) {
-    0 -> List(nextInt(1, 3)) { index -> "field$index: ${reference(models, features)}" }.joinToString(", ")
+private fun Random.inlineShape(models: List<String>, parts: List<String>, features: WirespecFeatures): String? = when (nextInt(3)) {
+    0 -> List(nextInt(1, 3)) { index -> "field$index: ${reference(models, features)}" }.plus(spreads(parts)).shuffled(this).joinToString(", ")
     else -> null
 }
 
@@ -218,7 +229,7 @@ private fun Random.noise(): String = when (nextInt(4)) {
 private fun Random.randomChars(): String = List(nextInt(0, 400)) { NOISE_CHARS[nextInt(NOISE_CHARS.length)] }.joinToString("")
 
 private fun Random.randomTokens(): String = List(nextInt(0, 60)) {
-    pick(listOf("type", "enum", "endpoint", "channel", "rpc", "{", "}", "(", ")", "->", "=", "|", ":", ",", "?", "!", "#", "[]", "GET", "String", "Integer", "Foo", "bar", "/x", "@Ann", "\"s\"", "/re/", "//c\n", "_", "42", "-1.5"))
+    pick(listOf("type", "enum", "endpoint", "channel", "rpc", "part", "...", "{", "}", "(", ")", "->", "=", "|", ":", ",", "?", "!", "#", "[]", "GET", "String", "Integer", "Foo", "bar", "/x", "@Ann", "\"s\"", "/re/", "//c\n", "_", "42", "-1.5"))
 }.joinToString(" ")
 
 private fun Random.mutate(source: String): String = when {

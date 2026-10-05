@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.DromedaryCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.Ellipsis
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
@@ -26,6 +27,7 @@ import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
 import community.flock.wirespec.compiler.core.tokenize.Number
+import community.flock.wirespec.compiler.core.tokenize.PartDefinition
 import community.flock.wirespec.compiler.core.tokenize.PascalCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
@@ -81,6 +83,7 @@ public object WirespecSpec : LanguageSpec {
         Regex("endpoint\\b") to EndpointDefinition,
         Regex("channel\\b") to ChannelDefinition,
         Regex("rpc\\b") to RpcDefinition,
+        Regex("part\\b") to PartDefinition,
         Regex("[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("[\\r\\n]") to NewLine,
         Regex("\\{") to LeftCurly,
@@ -96,6 +99,7 @@ public object WirespecSpec : LanguageSpec {
         Regex("!") to ExclamationMark,
         Regex("#") to Hash,
         Regex("\\[\\]") to Brackets,
+        Regex("\\.\\.\\.") to Ellipsis,
         Regex("\\[") to LeftBracket,
         Regex("\\]") to RightBracket,
         Regex("(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,

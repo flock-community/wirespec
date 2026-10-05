@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
@@ -67,12 +68,12 @@ internal object EndpointParser {
             is QuestionMark -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
+                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }
                     else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }
 
-            else -> emptyList()
+            else -> Type.Shape(emptyList())
         }
 
         val headers = parseHeaders().bind()
@@ -89,10 +90,12 @@ internal object EndpointParser {
             identifier = name,
             method = method,
             path = segments,
-            queries = queryParams,
-            headers = headers,
+            queries = queryParams.value,
+            headers = headers.value,
             requests = requests,
             responses = responses,
+            queryEntries = queryParams.entries,
+            headerEntries = headers.entries,
         )
     }
 
@@ -163,9 +166,10 @@ internal object EndpointParser {
 
         Endpoint.Response(
             status = statusCode,
-            headers = headers,
+            headers = headers.value,
             content = content,
             annotations = annotations,
+            headerEntries = headers.entries,
         )
     }
 
@@ -174,12 +178,12 @@ internal object EndpointParser {
             is Hash -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
+                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }
                     else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }
 
-            else -> emptyList()
+            else -> Type.Shape(emptyList())
         }
     }
 }

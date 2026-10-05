@@ -10,6 +10,7 @@ public sealed interface Node
 
 public data class Root(
     val modules: NonEmptyList<Module>,
+    val parts: List<Part> = emptyList(),
 ) : Node
 
 public data class Module(

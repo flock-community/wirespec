@@ -351,6 +351,33 @@ class ParseTypeTest {
     }
 
     @Test
+    fun testBacktickedEnumDefaultValue() {
+        val source =
+            // language=ws
+            """
+            |type Query {
+            |    order: Order = `asc`,
+            |    method: Method = `GET`,
+            |    flag: Flag = `true`
+            |}
+            |enum Order { `asc`, `desc` }
+            |enum Method { `GET`, `POST` }
+            |enum Flag { `true`, `false` }
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .shape.value
+            .map { it.defaultValue } shouldBe listOf(
+            DefaultValue.EnumValue("asc"),
+            DefaultValue.EnumValue("GET"),
+            DefaultValue.EnumValue("true"),
+        )
+    }
+
+    @Test
     fun testInvalidEnumDefaultValues() {
         listOf(
             "type Task { status: Status = DOING } enum Status { TODO, DONE }" to "Invalid default value DOING for field status of type Status",

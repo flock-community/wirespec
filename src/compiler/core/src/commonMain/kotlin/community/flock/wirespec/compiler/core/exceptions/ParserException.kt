@@ -50,6 +50,13 @@ internal class InvalidDefaultValueException(fileUri: FileUri, fieldName: String,
         message = "Invalid default value $value for field $fieldName of type ${reference.value}${if (reference.isNullable) "?" else ""}",
     )
 
+internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A spread cannot be annotated; annotate the fields of the part instead",
+    )
+
 internal sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :
     EatTokenException(
         fileUri,

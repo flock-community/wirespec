@@ -6,9 +6,11 @@ import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 
-internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentifierEmitter {
+internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentifierEmitter, WirespecMetaDataEmitter {
 
     override fun emit(type: Type, module: Module) = """
         |type ${emit(type.identifier)} {
@@ -16,17 +18,23 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
         |}
         |""".trimMargin()
 
-    override fun Type.Shape.emit() = value.joinToString(",\n") { "$Spacer${it.emit()}" }
+    override fun Type.Shape.emit() = entries.joinToString(",\n") { entry ->
+        when (entry) {
+            is Field -> entry.annotations.joinToString("") { "$Spacer${it.emit()}\n" } + "$Spacer${entry.emitDeclaration()}"
+            is Spread -> "$Spacer${entry.emit()}"
+        }
+    }
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${defaultValue?.let { " = ${it.emit()}" }.orEmpty()}"
+    override fun Field.emit() = annotations.joinToString("") { "${it.emit()} " } + emitDeclaration()
+
+    private fun Field.emitDeclaration() = "${emit(identifier)}: ${reference.emit()}${defaultValue?.let { " = ${it.emit()}" }.orEmpty()}"
 
     private fun DefaultValue.emit(): String = when (this) {
         is DefaultValue.StringValue -> "\"${value.escape()}\""
         is DefaultValue.IntegerValue -> value
         is DefaultValue.NumberValue -> value
         is DefaultValue.BooleanValue -> value.toString()
-        // Entries are capitalized like the enum emitter does, so `available` becomes `Available`.
-        is DefaultValue.EnumValue -> value.replaceFirstChar { it.uppercase() }
+        is DefaultValue.EnumValue -> value.emitEnumEntry()
         DefaultValue.NullValue -> "null"
     }
 
@@ -36,6 +44,11 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
         .replace("\n", "\\n")
         .replace("\r", "\\r")
         .replace("\t", "\\t")
+
+    fun ShapeEntry.emit(): String = when (this) {
+        is Field -> emit()
+        is Spread -> "...${emit(identifier)}"
+    }
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Dict -> "{ ${reference.emit()} }"

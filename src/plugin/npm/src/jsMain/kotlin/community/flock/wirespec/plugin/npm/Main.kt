@@ -29,6 +29,8 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroJsonParser
+import community.flock.wirespec.converter.graphql.GraphQLEmitter
+import community.flock.wirespec.converter.graphql.GraphQLParser
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.python.PythonEmitter
@@ -62,6 +64,7 @@ public enum class Emitters {
     OPENAPI_V2,
     OPENAPI_V3,
     AVRO,
+    GRAPHQL,
 }
 
 @JsExport
@@ -69,6 +72,7 @@ public enum class Converters {
     OPENAPI_V2,
     OPENAPI_V3,
     AVRO,
+    GRAPHQL,
 }
 
 @JsExport
@@ -91,6 +95,7 @@ public fun convert(source: String, converters: Converters, strict: Boolean = fal
     Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
     Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
     Converters.AVRO -> AvroJsonParser.parse(ModuleContent(FileUri(""), source), strict).produce()
+    Converters.GRAPHQL -> GraphQLParser.parse(ModuleContent(FileUri(""), source), strict).produce()
 }
 
 @JsExport
@@ -125,6 +130,7 @@ public fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared
                 .map { ast -> AvroJsonEmitter.emit(ast) }
                 .map { Json.encodeToString(it) }
                 .map { Emitted("avro.json", it) }
+        Emitters.GRAPHQL -> GraphQLEmitter.emit(ast, noLogger)
     }
         .map { it.produce() }
         .toTypedArray()
