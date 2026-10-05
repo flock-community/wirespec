@@ -183,12 +183,14 @@ private class GraphQLConverter(private val document: Document) {
         }
     }
 
-    private fun InterfaceTypeDefinition.convert(): Type = fields.map { it.toField() }.let { fields ->
-        type(
+    private fun InterfaceTypeDefinition.convert(): Type {
+        val fields = fields.map { it.toField() }
+        val part = interfaceParts.find { it.first === this }?.second
+        return type(
             identifier = identifier(),
-            annotations = listOf(annotation(INTERFACE)) + commonAnnotations(interfaces),
+            annotations = listOf(part?.let { annotation(INTERFACE, it.identifier.value) } ?: annotation(INTERFACE)) + commonAnnotations(interfaces),
             fields = fields,
-            entries = interfaceParts.find { it.first === this }?.let { (_, part) -> listOf(Spread(part.identifier)) } ?: fields,
+            entries = part?.let { listOf(Spread(it.identifier)) } ?: fields,
         )
     }
 

@@ -41,7 +41,7 @@ GraphQL types are nullable unless marked with `!`; Wirespec references are requi
 | GraphQL                                        | Wirespec                                                  |
 |------------------------------------------------|-----------------------------------------------------------|
 | `type`                                         | `type`                                                    |
-| `interface`                                    | `part` with the fields, spread into a `type` with `@GraphQLInterface` |
+| `interface`                                    | `part` with the fields, spread into a `type` with `@GraphQLInterface("<part>")` |
 | `input`                                        | `type` with `@GraphQLInput`                               |
 | `enum`                                         | `enum`                                                    |
 | `union`                                        | `type X = A \| B`                                         |
@@ -59,7 +59,8 @@ own annotations and can still be referenced.
 ### Interfaces
 
 The fields of an interface become a `part`, named after the interface with a `Fields` suffix.
-The interface itself stays a `type` that spreads the part, so other definitions can still refer to it. A type that
+The interface itself stays a `type` that spreads the part, so other definitions can still refer to it, and is marked
+with `@GraphQLInterface` naming the part. A type that
 implements the interface spreads the part as well, as long as it declares the interface fields exactly as the interface
 does: in the same order and with the same type, description, arguments and directives. Otherwise it keeps its own fields.
 
@@ -79,7 +80,7 @@ part NodeFields {
   id: ID
 }
 
-@GraphQLInterface
+@GraphQLInterface("NodeFields")
 type Node {
   ...NodeFields
 }
@@ -130,7 +131,8 @@ always kept in `@GraphQLDefault`.
 | `@GraphQLDefault("MEDIUM")`                                                   | a default value that cannot be a Wirespec default (see below), in GraphQL syntax            |
 | `@GraphQLField(parent: "Query", name: "user")`                                | the root type (its Wirespec name) and field name an `rpc` came from                        |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`    | the description and directives of an enum value                                            |
-| `@GraphQLInterface`, `@GraphQLInput`                                          | the kind of a `type`                                                                       |
+| `@GraphQLInterface("NodeFields")`                                             | an interface, naming the part that holds its fields (bare when the interface has no fields) |
+| `@GraphQLInput`                                                               | an input object                                                                            |
 | `@GraphQLUnion`, `@GraphQLEnum`                                               | a union or enum without members, which Wirespec cannot write as `union` or `enum`          |
 | `@GraphQLSchema`                                                              | a `schema` definition; its fields map operations to root types                              |
 | `@GraphQLDirectiveDefinition(name: "key", locations: [...], repeatable: "true")` | a directive definition; its fields are the directive arguments                          |

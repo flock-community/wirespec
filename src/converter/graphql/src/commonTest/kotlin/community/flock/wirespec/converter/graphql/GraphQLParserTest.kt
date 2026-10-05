@@ -134,12 +134,12 @@ class GraphQLParserTest {
             |  name: String?
             |}
             |
-            |@GraphQLInterface
+            |@GraphQLInterface("NodeFields")
             |type Node {
             |  ...NodeFields
             |}
             |
-            |@GraphQLInterface
+            |@GraphQLInterface("NamedFields")
             |type Named {
             |  ...NamedFields
             |}
@@ -164,6 +164,15 @@ class GraphQLParserTest {
             |type ID = String
             |
         """.trimMargin()
+    }
+
+    @Test
+    fun namesThePartOfAnInterface() {
+        val definitions = convert("interface Node { id: ID! } interface Marker extend interface Marker @tag")
+        definitions.definition<Type>("Node").annotations.first() shouldBe
+            Annotation("GraphQLInterface", listOf(Annotation.Parameter("default", Annotation.Value.Single("NodeFields"))))
+        definitions.definition<Type>("Marker").annotations.first() shouldBe Annotation("GraphQLInterface", emptyList())
+        definitions.definition<Type>("MarkerExtension").annotations.first() shouldBe Annotation("GraphQLInterface", emptyList())
     }
 
     @Test
