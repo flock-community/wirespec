@@ -55,9 +55,22 @@ GraphQL types are nullable unless marked with `!`; Wirespec references are requi
 | `extend ...`                                   | a definition named `...Extension` with `@GraphQLExtend`   |
 
 The root operation types are taken from the `schema` definition, or default to `Query`, `Mutation` and `Subscription`
-when there is none. Each of their fields becomes an `rpc` named after the root type and the field, whose parameters are
-the field arguments and whose result is the field type. `@GraphQLField` names the root type each `rpc` belongs to, so
-the root type is rebuilt from its rpcs and needs no Wirespec definition of its own. It only gets one, an empty `type`
+when there is none. Each of their fields becomes an `rpc` whose parameters are the field arguments and whose result is
+the field type, marked with `@GraphQLQuery`, `@GraphQLMutation` or `@GraphQLSubscription`:
+
+```wirespec
+@GraphQLMutation
+rpc AddTodo {
+  input: NewTodo
+} -> Todo
+```
+
+- The `rpc` is named after the field (`addTodo` becomes `AddTodo`). When that name is taken, for example by `type Todo`
+  for a field `todo`, it gets the root type as prefix (`QueryTodo`) and `@GraphQLName("todo")` keeps the field name.
+- A root type with another name than the default is named in the annotation: `@GraphQLQuery("QueryRoot")`.
+- The rpcs of an `extend type Query` block are marked `@GraphQLQuery(extend: "1")`, the next block `"2"`, and so on.
+
+The root type is rebuilt from its rpcs and needs no Wirespec definition of its own. It only gets one, an empty `type`
 holding its annotations, when it has a description, directives or interfaces, has no fields, or is referenced as a type.
 
 ### Interfaces
@@ -133,7 +146,8 @@ always kept in `@GraphQLDefault`.
 | `@GraphQLImplements(["Node"])`                                                | the interfaces an object or interface implements                                           |
 | `@GraphQLArgument(name: "first", type: "Int", defaultValue: "10", ...)`       | an argument of a field that is not an `rpc`; also `description` and `directives`            |
 | `@GraphQLDefault("MEDIUM")`                                                   | a default value that cannot be a Wirespec default (see below), in GraphQL syntax            |
-| `@GraphQLField(parent: "Query", name: "user")`                                | the root type and field name an `rpc` came from; `extend: "1"` marks the first `extend type` block of a root type without a Wirespec type of its own, and so on |
+| `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                  | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
+| `@GraphQLName("todo")`                                                        | also the field name of an `rpc` whose name does not read back as that field name             |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`    | the description and directives of an enum value                                            |
 | `@GraphQLInterface("NodeFields")`                                             | an interface, naming the part that holds its fields (bare when the interface has no fields) |
 | `@GraphQLInput`                                                               | an input object                                                                            |
@@ -205,13 +219,14 @@ type NewTodo {
   priority: Priority?
 }
 
-@GraphQLField(parent: "Query", name: "todo")
+@GraphQLQuery
+@GraphQLName("todo")
 rpc QueryTodo {
   id: ID
 } -> Todo?
 
-@GraphQLField(parent: "Mutation", name: "addTodo")
-rpc MutationAddTodo {
+@GraphQLMutation
+rpc AddTodo {
   input: NewTodo
 } -> Todo
 
@@ -236,7 +251,7 @@ came from. Any other Wirespec gets the closest GraphQL:
 | a `type` an rpc both takes and returns  | `type X` and `input XInput`                                               |
 | `enum`, `type U = A \| B`               | `enum`, `union`                                                           |
 | refined `type X = String(...)`          | `scalar X` (the constraint is left out)                                   |
-| `rpc`                                   | a field of `Query`, its parameters as arguments                           |
+| `rpc`                                   | a field of `Query`, or of `Mutation` or `Subscription` when marked `@GraphQLMutation` or `@GraphQLSubscription`, its parameters as arguments |
 | `Integer32` / `Number` / `String` / `Boolean` | `Int` / `Float` / `String` / `Boolean`                              |
 | `Integer`, `Bytes`, `Any` and dictionaries, `Unit` | the custom scalars `Long`, `Bytes`, `JSON`, `Void`, declared in the schema |
 | a comment on a definition               | its description                                                           |

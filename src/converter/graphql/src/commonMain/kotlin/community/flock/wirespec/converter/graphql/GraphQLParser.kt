@@ -32,7 +32,6 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_D
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
@@ -42,6 +41,7 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION_MEMBERS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotation
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotationName
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.parameter
 import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Document
@@ -84,13 +84,12 @@ public object GraphQLParser : Parser {
 
 private class GraphQLConverter(private val document: Document) {
 
-    private val roots: Set<String> = document.definitions.filterIsInstance<SchemaDefinition>().let { schemas ->
-        val declared = schemas.flatMap { it.operationTypes }
-        val defaults = Operation.entries
-            .filter { operation -> schemas.none { !it.extension } && declared.none { it.operation == operation } }
-            .map { it.defaultTypeName }
-        (declared.map { it.type } + defaults).toSet()
+    private val rootTypes: Map<Operation, String> = document.definitions.filterIsInstance<SchemaDefinition>().let { schemas ->
+        val defaults = Operation.entries.takeIf { schemas.none { !it.extension } }.orEmpty().associateWith { it.defaultTypeName }
+        defaults + schemas.flatMap { it.operationTypes }.associate { it.operation to it.type }
     }
+
+    private val roots: Set<String> = rootTypes.values.toSet()
 
     /** The types that a field or union refers to; a root operation type among them needs a type of its own. */
     private val referencedAsType: Set<String> = document.definitions
@@ -183,11 +182,12 @@ private class GraphQLConverter(private val document: Document) {
 
     private fun ObjectTypeDefinition.convert(): List<Definition> = when (name) {
         in roots -> (names[name] ?: name.sanitize()).let { prefix ->
+            val operation = rootTypes.entries.first { it.value == name }.key
             when {
                 needsType() -> identifier().let { identifier ->
-                    listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + fields.map { it.toRpc(prefix, parameter("parent", identifier)) }
+                    listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + fields.map { it.toRpc(prefix, operation, identifier, null) }
                 }
-                else -> fields.map { it.toRpc(prefix, parameter("parent", name), extensionBlock()?.let { block -> parameter("extend", block.toString()) }) }
+                else -> fields.map { it.toRpc(prefix, operation, name, extensionBlock()) }
             }
         }
         else -> fields.map { it.toField() }.let { fields ->
@@ -279,17 +279,33 @@ private class GraphQLConverter(private val document: Document) {
             .indexOfFirst { it === this } + 1
     }
 
-    private fun FieldDefinition.toRpc(prefix: String, vararg location: Annotation.Parameter?): Rpc = Rpc(
-        comment = null,
-        annotations = listOf(annotation(FIELD, *location, parameter("name", name))) +
-            description.toAnnotations() +
-            directives.toAnnotations() +
-            type.toAnnotations(),
-        identifier = DefinitionIdentifier(claim(prefix + name.trimStart('_').replaceFirstChar(Char::uppercase))),
-        shape = Type.Shape(arguments.map { it.toParameter() }),
-        result = type.toReference(),
-        error = null,
-    )
+    /**
+     * An rpc is named after its field, `addTodo` becomes `AddTodo`, and only takes the root type as prefix when that name is
+     * taken. `@GraphQLName` keeps the field name when it cannot be read back from the rpc name. The root type is only
+     * spelled out when it is not the default for the operation.
+     */
+    private fun FieldDefinition.toRpc(prefix: String, operation: Operation, rootType: String, extensionBlock: Int?): Rpc {
+        val identifier = name.trimStart('_').replaceFirstChar(Char::uppercase)
+            .let { claim(if (it.isValidTypeName() && it !in taken) it else prefix + it) }
+        return Rpc(
+            comment = null,
+            annotations = listOf(
+                annotation(
+                    operation.annotationName,
+                    rootType.takeIf { it != operation.defaultTypeName }?.let { parameter(DEFAULT_PARAMETER, it) },
+                    extensionBlock?.let { parameter("extend", it.toString()) },
+                ),
+            ) +
+                listOfNotNull(annotation(NAME, name).takeIf { identifier.replaceFirstChar(Char::lowercase) != name }) +
+                description.toAnnotations() +
+                directives.toAnnotations() +
+                type.toAnnotations(),
+            identifier = DefinitionIdentifier(identifier),
+            shape = Type.Shape(arguments.map { it.toParameter() }),
+            result = type.toReference(),
+            error = null,
+        )
+    }
 
     /** A default becomes a Wirespec default when it reads back as the same GraphQL literal, otherwise it stays in an annotation. */
     private fun InputValueDefinition.toField(): Field = type.toReference().let { reference ->

@@ -77,28 +77,29 @@ class GraphQLParserTest {
             |  priority: Priority?
             |}
             |
-            |@GraphQLField(parent: "Query", name: "todos")
-            |rpc QueryTodos {
+            |@GraphQLQuery
+            |rpc Todos {
             |  done: Boolean?
             |} -> Todo[]
             |
-            |@GraphQLField(parent: "Query", name: "todo")
+            |@GraphQLQuery
+            |@GraphQLName("todo")
             |rpc QueryTodo {
             |  id: ID
             |} -> Todo?
             |
-            |@GraphQLField(parent: "Mutation", name: "addTodo")
-            |rpc MutationAddTodo {
+            |@GraphQLMutation
+            |rpc AddTodo {
             |  input: NewTodo
             |} -> Todo
             |
-            |@GraphQLField(parent: "Mutation", name: "completeTodo")
-            |rpc MutationCompleteTodo {
+            |@GraphQLMutation
+            |rpc CompleteTodo {
             |  id: ID
             |} -> Todo?
             |
-            |@GraphQLField(parent: "Subscription", name: "todoAdded")
-            |rpc SubscriptionTodoAdded {} -> Todo
+            |@GraphQLSubscription
+            |rpc TodoAdded {} -> Todo
             |
             |@GraphQLBuiltIn
             |type ID = String
@@ -139,7 +140,8 @@ class GraphQLParserTest {
             |  email: String?
             |}
             |
-            |@GraphQLField(parent: "Query", name: "node")
+            |@GraphQLQuery
+            |@GraphQLName("node")
             |rpc QueryNode {
             |  id: ID
             |} -> Node?
@@ -209,15 +211,19 @@ class GraphQLParserTest {
 
     @Test
     fun convertsRootFieldsToRpcs() {
-        val rpc = convert("type Query { user(id: ID!, active: Boolean = true): User } type User { id: ID! }").definition<Rpc>("QueryUser")
+        val rpc = convert("type Query { findUser(id: ID!, active: Boolean = true): User } type User { id: ID! }").definition<Rpc>("FindUser")
         rpc.shape.value.map { it.identifier.value } shouldContainExactly listOf("id", "active")
         rpc.result shouldBe Reference.Custom("User", true)
-        rpc.annotations.first() shouldBe Annotation(
-            "GraphQLField",
-            listOf(
-                Annotation.Parameter("parent", Annotation.Value.Single("Query")),
-                Annotation.Parameter("name", Annotation.Value.Single("user")),
-            ),
+        rpc.annotations.first() shouldBe Annotation("GraphQLQuery", emptyList())
+    }
+
+    @Test
+    fun prefixesAnRpcWithItsRootTypeOnlyWhenItsNameIsTaken() {
+        val definitions = convert("type Query { user: User, users: [User] } type Mutation { user: User } type User { id: ID! }")
+        definitions.filterIsInstance<Rpc>().map { rpc -> rpc.identifier.value to rpc.annotations.map { it.name } } shouldContainExactly listOf(
+            "QueryUser" to listOf("GraphQLQuery", "GraphQLName"),
+            "Users" to listOf("GraphQLQuery"),
+            "MutationUser" to listOf("GraphQLMutation", "GraphQLName"),
         )
     }
 
@@ -236,9 +242,9 @@ class GraphQLParserTest {
     fun keepsExtensionsOfRootTypesApart() {
         val source = "type Query { a: Int } extend type Query { b: Int } extend type Query { c: Int }"
         convert(source).filterIsInstance<Rpc>().map { rpc -> rpc.annotations.first().parameters.map { it.name to (it.value as Annotation.Value.Single).value } } shouldContainExactly listOf(
-            listOf("parent" to "Query", "name" to "a"),
-            listOf("parent" to "Query", "extend" to "1", "name" to "b"),
-            listOf("parent" to "Query", "extend" to "2", "name" to "c"),
+            emptyList(),
+            listOf("extend" to "1"),
+            listOf("extend" to "2"),
         )
         source.shouldRoundTrip()
     }
@@ -246,7 +252,8 @@ class GraphQLParserTest {
     @Test
     fun usesTheSchemaDefinitionForRootTypes() {
         val definitions = convert("schema { query: Root } type Root { ping: Boolean } type Query { notRoot: Boolean }")
-        definitions.definition<Rpc>("RootPing")
+        definitions.definition<Rpc>("Ping").annotations.first() shouldBe
+            Annotation("GraphQLQuery", listOf(Annotation.Parameter("default", Annotation.Value.Single("Root"))))
         definitions.definition<Type>("Query").shape.value.map { it.identifier.value } shouldContainExactly listOf("notRoot")
     }
 
@@ -259,8 +266,8 @@ class GraphQLParserTest {
 
     @Test
     fun avoidsNameCollisions() {
-        convert("type QueryUser { a: Int } type Query { user: QueryUser }").map { it.identifier.value } shouldContainExactly
-            listOf("QueryUser", "QueryUser2")
+        convert("type User { a: Int } type QueryUser { b: Int } type Query { user: User }").map { it.identifier.value } shouldContainExactly
+            listOf("User", "QueryUser", "QueryUser2")
     }
 
     @Test
@@ -301,7 +308,7 @@ class GraphQLParserTest {
             null,
         )
         fields.drop(6).map { field -> field.annotations.map { it.name } } shouldContainExactly List(5) { listOf("GraphQLDefault") }
-        convert(source).definition<Rpc>("QueryQ").shape.value.single().run {
+        convert(source).definition<Rpc>("Q").shape.value.single().run {
             defaultValue shouldBe null
             annotations.map { it.name } shouldContainExactly listOf("GraphQLDefault")
         }

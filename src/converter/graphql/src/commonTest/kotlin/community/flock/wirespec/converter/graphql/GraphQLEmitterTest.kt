@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.NoLogger
+import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -124,6 +125,47 @@ class GraphQLEmitterTest {
             "Endpoint GetTodo has no GraphQL counterpart and is left out",
             "Channel Events has no GraphQL counterpart and is left out",
         )
+    }
+
+    @Test
+    fun placesMarkedRpcsUnderMutationAndSubscription() {
+        GraphQLEmitter.emit(
+            """
+                type Todo {
+                  title: String
+                }
+
+                rpc Todos {} -> Todo[]
+
+                @GraphQLMutation
+                rpc AddTodo {
+                  title: String
+                } -> Todo
+
+                @GraphQLSubscription
+                rpc TodoAdded {} -> Todo
+            """.trimIndent().parseWirespec(),
+            noLogger,
+        ).single().result shouldBe """
+            |type Todo {
+            |  title: String!
+            |}
+            |
+            |type Query {
+            |  todos: [Todo!]!
+            |}
+            |
+            |type Mutation {
+            |  addTodo(
+            |    title: String!
+            |  ): Todo!
+            |}
+            |
+            |type Subscription {
+            |  todoAdded: Todo!
+            |}
+            |
+        """.trimMargin()
     }
 
     private fun String.parseWirespec(): AST = object : ParseContext, NoLogger {

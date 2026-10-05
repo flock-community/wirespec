@@ -24,12 +24,14 @@ internal object GraphQLAnnotations {
     const val ARGUMENT = "GraphQLArgument"
     const val DEFAULT = "GraphQLDefault"
     const val ENUM_VALUE = "GraphQLEnumValue"
-    const val FIELD = "GraphQLField"
     const val TYPE = "GraphQLType"
     const val UNION_MEMBERS = "GraphQLUnionMembers"
     const val BUILT_IN = "GraphQLBuiltIn"
 
     const val DEFAULT_PARAMETER = "default"
+
+    /** Marks an rpc as a field of a root operation type: `@GraphQLQuery`, `@GraphQLMutation` or `@GraphQLSubscription`. */
+    val GraphQLModel.Operation.annotationName: String get() = "GraphQL$defaultTypeName"
 
     fun annotation(name: String, vararg parameters: Annotation.Parameter?): Annotation = Annotation(name, parameters.filterNotNull())
 

@@ -22,7 +22,6 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_D
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
@@ -31,6 +30,7 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION_MEMBERS
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotationName
 import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Document
 import community.flock.wirespec.converter.graphql.GraphQLModel.EnumTypeDefinition
@@ -54,8 +54,9 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  *
  * Definitions that came from [GraphQLParser] carry annotations that rebuild the original document exactly. Any other
  * Wirespec gets the closest GraphQL: types become object types, or input types when an rpc takes them, every rpc
- * becomes a field of `Query`, refined types become scalars, and the types GraphQL has no built-in for become custom
- * scalars. Endpoints and channels have no GraphQL counterpart and are left out.
+ * becomes a field of `Query` (or of `Mutation` or `Subscription` when marked so), refined types become scalars, and the
+ * types GraphQL has no built-in for become custom scalars. Endpoints and channels have no GraphQL counterpart and are
+ * left out.
  */
 internal class WirespecToGraphQL(private val definitions: List<Definition>, private val logger: Logger) {
 
@@ -64,8 +65,8 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
         .associate { it.identifier.value to (it.annotations.single(NAME) ?: it.identifier.value) }
 
     /**
-     * The rpcs of each root operation type, by type and extension block. An rpc that did not come from a GraphQL root
-     * field belongs to `Query`.
+     * The rpcs of each root operation type, by type and extension block, as `@GraphQLQuery`, `@GraphQLMutation` or
+     * `@GraphQLSubscription` mark them. An unmarked rpc belongs to `Query`.
      */
     private val rpcs: Map<Pair<String, String?>, List<Rpc>> = definitions.filterIsInstance<Rpc>().groupBy { it.rootType() }
 
@@ -188,8 +189,10 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
         .map { ScalarTypeDefinition(null, it, emptyList(), false) }
 
     /** The root operation type an rpc is a field of, rebuilt at the first of its rpcs unless a Wirespec type holds it. */
-    private fun Rpc.rootType(): Pair<String, String?> = annotations.firstOrNull { it.name == FIELD }
-        .let { (it?.single("parent") ?: QUERY) to it?.single("extend") }
+    private fun Rpc.rootType(): Pair<String, String?> = Operation.entries
+        .firstNotNullOfOrNull { operation -> annotations.firstOrNull { it.name == operation.annotationName }?.let { operation to it } }
+        ?.let { (operation, annotation) -> (annotation.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to annotation.single("extend") }
+        ?: (QUERY to null)
 
     private fun Definition.graphQLName(): String = annotations.single(EXTEND) ?: annotations.single(NAME) ?: identifier.value
 
@@ -213,7 +216,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
 
     private fun Rpc.toFieldDefinition(): FieldDefinition = FieldDefinition(
         description = description(),
-        name = annotations.firstOrNull { it.name == FIELD }?.single("name") ?: identifier.value.replaceFirstChar(Char::lowercase),
+        name = annotations.single(NAME) ?: identifier.value.replaceFirstChar(Char::lowercase),
         arguments = shape.value.map { it.toInputValue() },
         type = annotations.single(TYPE)?.let(::parseType) ?: result.toTypeRef(input = false),
         directives = annotations.directives(),
