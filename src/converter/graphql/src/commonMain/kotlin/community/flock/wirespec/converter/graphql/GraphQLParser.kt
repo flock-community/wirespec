@@ -12,9 +12,12 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
@@ -70,9 +73,12 @@ public object GraphQLParser : Parser {
 
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = GraphQLDocumentParser(moduleContent.content)
         .parseDocument()
-        .let { GraphQLConverter(it).convert() }
-        .toNonEmptyListOrNull()
-        ?.let { AST(nonEmptyListOf(Module(moduleContent.fileUri, it))) }
+        .let(::GraphQLConverter)
+        .let { converter ->
+            converter.convert()
+                .toNonEmptyListOrNull()
+                ?.let { AST(modules = nonEmptyListOf(Module(moduleContent.fileUri, it)), parts = converter.parts) }
+        }
         ?: error("Cannot yield an empty AST from GraphQL document ${moduleContent.fileUri.value}")
 }
 
@@ -102,6 +108,24 @@ private class GraphQLConverter(private val document: Document) {
 
     private val names: Map<String, String> = taken.associateWith { it } +
         (declared + unresolvable).filterNot { it.isValidTypeName() }.associateWith { claim(it.sanitize()) }
+
+    /**
+     * The fields of every interface (and interface extension), as a part. The interface type spreads it, and so does
+     * every type implementing the interface that declares exactly the same fields.
+     */
+    private val interfaceParts: List<Pair<InterfaceTypeDefinition, Part>> = document.definitions
+        .filterIsInstance<InterfaceTypeDefinition>()
+        .filter { it.fields.isNotEmpty() }
+        .map { definition ->
+            definition to Part(
+                comment = null,
+                annotations = emptyList(),
+                identifier = DefinitionIdentifier(claim("${names[definition.name] ?: definition.name.sanitize()}${if (definition.extension) "Extension" else ""}Fields")),
+                shape = Type.Shape(definition.fields.map { it.toField() }),
+            )
+        }
+
+    val parts: List<Part> = interfaceParts.map { it.second }
 
     fun convert(): List<Definition> = document.definitions.flatMap { definition ->
         when (definition) {
@@ -154,14 +178,32 @@ private class GraphQLConverter(private val document: Document) {
             val prefix = names[name] ?: name.sanitize()
             listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + fields.map { it.toRpc(identifier, prefix) }
         }
-        else -> type(identifier(), commonAnnotations(interfaces), fields.map { it.toField() }).let(::listOf)
+        else -> fields.map { it.toField() }.let { fields ->
+            type(identifier(), commonAnnotations(interfaces), fields, fields.spread(interfaces)).let(::listOf)
+        }
     }
 
-    private fun InterfaceTypeDefinition.convert(): Type = type(
-        identifier = identifier(),
-        annotations = listOf(annotation(INTERFACE)) + commonAnnotations(interfaces),
-        fields = fields.map { it.toField() },
-    )
+    private fun InterfaceTypeDefinition.convert(): Type = fields.map { it.toField() }.let { fields ->
+        type(
+            identifier = identifier(),
+            annotations = listOf(annotation(INTERFACE)) + commonAnnotations(interfaces),
+            fields = fields,
+            entries = interfaceParts.find { it.first === this }?.let { (_, part) -> listOf(Spread(part.identifier)) } ?: fields,
+        )
+    }
+
+    /** Spreads the part of every implemented interface whose fields this type declares exactly, in the same order. */
+    private fun List<Field>.spread(interfaces: List<String>): List<ShapeEntry> = interfaceParts
+        .filter { (definition, _) -> definition.name in interfaces }
+        .sortedBy { (definition, _) -> interfaces.indexOf(definition.name) }
+        .fold<Pair<InterfaceTypeDefinition, Part>, List<ShapeEntry>>(this) { entries, (_, part) ->
+            part.shape.value.let { fields ->
+                entries.windowed(fields.size).indexOfFirst { it == fields }
+                    .takeIf { it >= 0 }
+                    ?.let { index -> entries.take(index) + Spread(part.identifier) + entries.drop(index + fields.size) }
+                    ?: entries
+            }
+        }
 
     private fun UnionTypeDefinition.convert(): Definition = when {
         members.isEmpty() -> type(identifier(), listOf(annotation(UNION)) + commonAnnotations(), emptyList())
@@ -314,11 +356,11 @@ private class GraphQLConverter(private val document: Document) {
         reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = false),
     ).takeIf { needsBuiltInId }
 
-    private fun type(identifier: String, annotations: List<Annotation>, fields: List<Field>): Type = Type(
+    private fun type(identifier: String, annotations: List<Annotation>, fields: List<Field>, entries: List<ShapeEntry> = fields): Type = Type(
         comment = null,
         annotations = annotations,
         identifier = DefinitionIdentifier(identifier),
-        shape = Type.Shape(fields),
+        shape = Type.Shape(value = fields, entries = entries),
         extends = emptyList(),
     )
 

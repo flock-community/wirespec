@@ -41,7 +41,7 @@ GraphQL types are nullable unless marked with `!`; Wirespec references are requi
 | GraphQL                                        | Wirespec                                                  |
 |------------------------------------------------|-----------------------------------------------------------|
 | `type`                                         | `type`                                                    |
-| `interface`                                    | `type` with `@GraphQLInterface`                           |
+| `interface`                                    | `part` with the fields, spread into a `type` with `@GraphQLInterface` |
 | `input`                                        | `type` with `@GraphQLInput`                               |
 | `enum`                                         | `enum`                                                    |
 | `union`                                        | `type X = A \| B`                                         |
@@ -55,6 +55,41 @@ The root operation types are taken from the `schema` definition, or default to `
 when there is none. Each of their fields becomes an `rpc` named after the root type and the field, whose parameters are
 the field arguments and whose result is the field type. The root type itself stays as an empty `type`, so it keeps its
 own annotations and can still be referenced.
+
+### Interfaces
+
+The fields of an interface become a `part`, named after the interface with a `Fields` suffix.
+The interface itself stays a `type` that spreads the part, so other definitions can still refer to it. A type that
+implements the interface spreads the part as well, as long as it declares the interface fields exactly as the interface
+does: in the same order and with the same type, description, arguments and directives. Otherwise it keeps its own fields.
+
+```graphql
+interface Node {
+  id: ID!
+}
+
+type User implements Node {
+  id: ID!
+  email: String
+}
+```
+
+```wirespec
+part NodeFields {
+  id: ID
+}
+
+@GraphQLInterface
+type Node {
+  ...NodeFields
+}
+
+@GraphQLImplements(["Node"])
+type User {
+  ...NodeFields,
+  email: String?
+}
+```
 
 ### Default values
 
@@ -186,7 +221,7 @@ type ID = String
 
 - **Formatting**: `#` comments, commas and the optional leading `&` and `|` separators are insignificant in GraphQL and
   are not kept. Descriptions are kept by value, so a block string description comes back as a regular string.
-- **Interfaces**: an interface becomes a `type` holding the interface fields. Wirespec has no inheritance, so the
-  implementations are recorded in `@GraphQLImplements` rather than expressed as subtypes.
+- **Interfaces**: a part shares the interface fields, but Wirespec has no inheritance, so which types implement an
+  interface is recorded in `@GraphQLImplements` rather than expressed as subtypes.
 - **Multiple files**: each file is converted on its own. A schema split over several files references types declared in
   the other files; convert all of them to compile the result.

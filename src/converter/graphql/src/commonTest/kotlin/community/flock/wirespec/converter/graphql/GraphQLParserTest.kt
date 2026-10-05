@@ -10,10 +10,13 @@ import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -113,6 +116,73 @@ class GraphQLParserTest {
             |type ID = String
             |
         """.trimMargin()
+    }
+
+    @Test
+    fun spreadsInterfaceFieldsAsParts() {
+        """
+            interface Node { id: ID! }
+            interface Named { name: String }
+            type User implements Node & Named { id: ID! name: String email: String }
+            type Query { node(id: ID!): Node }
+        """.trimIndent().toWirespec() shouldBe """
+            |part NodeFields {
+            |  id: ID
+            |}
+            |
+            |part NamedFields {
+            |  name: String?
+            |}
+            |
+            |@GraphQLInterface
+            |type Node {
+            |  ...NodeFields
+            |}
+            |
+            |@GraphQLInterface
+            |type Named {
+            |  ...NamedFields
+            |}
+            |
+            |@GraphQLImplements(["Node", "Named"])
+            |type User {
+            |  ...NodeFields,
+            |  ...NamedFields,
+            |  email: String?
+            |}
+            |
+            |type Query {
+            |
+            |}
+            |
+            |@GraphQLField(parent: "Query", name: "node")
+            |rpc QueryNode {
+            |  id: ID
+            |} -> Node?
+            |
+            |@GraphQLBuiltIn
+            |type ID = String
+            |
+        """.trimMargin()
+    }
+
+    @Test
+    fun spreadsInterfaceFieldsOnlyWhenTheyAreDeclaredExactly() {
+        val source = """
+            interface Node { "The id" id: ID! }
+            interface Timestamped { createdAt: String!, updatedAt: String }
+            type User implements Node & Timestamped { id: ID!, updatedAt: String, createdAt: String! }
+            type Post implements Timestamped { title: String, createdAt: String!, updatedAt: String, body: String }
+        """.trimIndent()
+        val definitions = convert(source)
+        definitions.definition<Type>("User").shape.entries.map { (it as? Field)?.identifier?.value ?: it.toString() } shouldContainExactly
+            listOf("id", "updatedAt", "createdAt")
+        definitions.definition<Type>("Post").shape.entries shouldContainExactly listOf(
+            definitions.definition<Type>("Post").shape.value[0],
+            Spread(DefinitionIdentifier("TimestampedFields")),
+            definitions.definition<Type>("Post").shape.value[3],
+        )
+        source.shouldRoundTrip()
     }
 
     @Test
@@ -285,6 +355,7 @@ class GraphQLParserTest {
         val parsed = parseWirespec(wirespec, otherModules).shouldBeRight()
 
         parsed.modules.head.statements.toList() shouldBe converted.modules.head.statements.toList()
+        parsed.parts shouldBe converted.parts
         WirespecToGraphQL(parsed.modules.head.statements.toList()).convert() shouldBe document
         GraphQLDocumentParser(document.print()).parseDocument() shouldBe document
     }
