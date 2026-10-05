@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedE
 import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.hasBackticks
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseDict
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseType
@@ -26,6 +27,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
+import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
@@ -357,10 +359,12 @@ private fun Token.toDefaultValue(): DefaultValue? = when (type) {
     is Integer -> DefaultValue.IntegerValue(value)
     is Number -> DefaultValue.NumberValue(value)
     is WirespecType -> DefaultValue.EnumValue(value)
-    is WirespecIdentifier -> when (value) {
-        "true" -> DefaultValue.BooleanValue(true)
-        "false" -> DefaultValue.BooleanValue(false)
-        "null" -> DefaultValue.NullValue
+    is WirespecIdentifier -> when {
+        value == "true" -> DefaultValue.BooleanValue(true)
+        value == "false" -> DefaultValue.BooleanValue(false)
+        value == "null" -> DefaultValue.NullValue
+        // An enum entry that is not a type identifier, such as `asc`, is written between backticks.
+        value.hasBackticks() -> DefaultValue.EnumValue(value.removeBackticks())
         else -> null
     }
 

@@ -73,8 +73,7 @@ class GraphQLParserTest {
             |@GraphQLInput
             |type NewTodo {
             |  title: String,
-            |  @GraphQLDefault("MEDIUM")
-            |  priority: Priority?
+            |  priority: Priority? = MEDIUM
             |}
             |
             |@GraphQLQuery
@@ -287,6 +286,20 @@ class GraphQLParserTest {
     }
 
     @Test
+    fun usesEnumDefaultsOnlyForEntriesOfADeclaredEnum() {
+        val source = """
+            input I { a: Order = asc, b: Order = DESC, c: Color = RED, d: Remote = X, e: [Order] = [asc] }
+            enum Order { asc }
+            extend enum Order { DESC }
+            scalar Color
+        """.trimIndent()
+        convert(source).definition<Type>("I").shape.value.map { it.defaultValue } shouldContainExactly
+            listOf(DefaultValue.EnumValue("asc"), null, null, null, null)
+        source.toWirespec() shouldContain "a: Order? = `asc`"
+        source.shouldRoundTrip(otherModules = "type Remote {}")
+    }
+
+    @Test
     fun usesWirespecDefaultsWhereTheyFit() {
         val source = """
             input I { a: Int = 1, b: Float = 0.5, c: Boolean = true, d: String = "x", e: String = null, f: Int! = -3, g: Float = 2, h: Float = 1e3, i: Role = ADMIN, j: [Int] = [1], k: ID = "x" }
@@ -303,11 +316,17 @@ class GraphQLParserTest {
             DefaultValue.IntegerValue("-3"),
             null,
             null,
-            null,
+            DefaultValue.EnumValue("ADMIN"),
             null,
             null,
         )
-        fields.drop(6).map { field -> field.annotations.map { it.name } } shouldContainExactly List(5) { listOf("GraphQLDefault") }
+        fields.drop(6).map { field -> field.annotations.map { it.name } } shouldContainExactly listOf(
+            listOf("GraphQLDefault"),
+            listOf("GraphQLDefault"),
+            emptyList(),
+            listOf("GraphQLDefault"),
+            listOf("GraphQLDefault"),
+        )
         convert(source).definition<Rpc>("Q").shape.value.single().run {
             defaultValue shouldBe null
             annotations.map { it.name } shouldContainExactly listOf("GraphQLDefault")

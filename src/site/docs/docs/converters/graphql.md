@@ -112,7 +112,8 @@ type User {
 ### Default values
 
 A default value of an input field or a directive argument becomes a Wirespec [default value](../language/types.mdx)
-when Wirespec can hold it exactly: a string, integer, float, boolean or `null` on a field of the matching type.
+when Wirespec can hold it exactly: a string, integer, float, boolean or `null` on a field of the matching type, or an
+entry of an enum declared in the same document.
 
 ```graphql
 input Filter {
@@ -127,14 +128,14 @@ input Filter {
 type Filter {
   limit: Integer32? = 10,
   query: String? = "*",
-  @GraphQLDefault("ASC")
-  order: Order?
+  order: Order? = ASC
 }
 ```
 
-Every other default is kept in `@GraphQLDefault`, in GraphQL syntax. That covers enum values, lists, input objects,
-defaults on custom scalars and `ID`, and literals that Wirespec would write differently, such as `2` on a `Float` or
-`1e3`. Arguments of root fields become `rpc` parameters, which cannot have a Wirespec default, so their defaults are
+Every other default is kept in `@GraphQLDefault`, in GraphQL syntax. That covers lists, input objects, defaults on
+custom scalars and `ID`, entries of an enum declared in another document or added by `extend enum` (Wirespec checks an
+enum default against the entries of the enum itself), and literals that Wirespec would write differently, such as `2` on
+a `Float` or `1e3`. Arguments of root fields become `rpc` parameters, which cannot have a Wirespec default, so their defaults are
 always kept in `@GraphQLDefault`.
 
 ## Annotations

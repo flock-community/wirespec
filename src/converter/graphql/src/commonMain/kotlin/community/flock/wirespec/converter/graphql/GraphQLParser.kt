@@ -309,8 +309,16 @@ private class GraphQLConverter(private val document: Document) {
 
     /** A default becomes a Wirespec default when it reads back as the same GraphQL literal, otherwise it stays in an annotation. */
     private fun InputValueDefinition.toField(): Field = type.toReference().let { reference ->
-        toField(reference, defaultValue?.toDefaultValue(reference))
+        toField(reference, defaultValue?.toDefaultValue(reference)?.takeIf { it !is DefaultValue.EnumValue || it.isEntryOf(type.leaf()) })
     }
+
+    /**
+     * Wirespec checks an enum default against the enum's own entries, so it only holds one of a GraphQL enum declared in
+     * this document: not of an enum declared elsewhere, nor one that only an `extend enum` adds.
+     */
+    private fun DefaultValue.EnumValue.isEntryOf(enum: String): Boolean = document.definitions
+        .filterIsInstance<EnumTypeDefinition>()
+        .any { !it.extension && it.name == enum && it.values.any { entry -> entry.name == value } }
 
     /** Wirespec only allows defaults on the fields of a type, so an rpc parameter keeps its default in an annotation. */
     private fun InputValueDefinition.toParameter(): Field = toField(type.toReference(), null)
@@ -456,7 +464,8 @@ private class GraphQLConverter(private val document: Document) {
             is GraphQLModel.Value.FloatValue -> DefaultValue.NumberValue(raw).takeIf { NUMBER.matches(raw) }
             is GraphQLModel.Value.BooleanValue -> DefaultValue.BooleanValue(value)
             is GraphQLModel.Value.NullValue -> DefaultValue.NullValue
-            is GraphQLModel.Value.EnumValue, is GraphQLModel.Value.ListValue, is GraphQLModel.Value.ObjectValue -> null
+            is GraphQLModel.Value.EnumValue -> DefaultValue.EnumValue(name)
+            is GraphQLModel.Value.ListValue, is GraphQLModel.Value.ObjectValue -> null
         }?.coerceTo(reference)?.takeIf { it.toGraphQLValue() == this }
 
         fun TypeRef.leaf(): String = when (this) {
@@ -472,5 +481,6 @@ internal fun DefaultValue.toGraphQLValue(): GraphQLModel.Value = when (this) {
     is DefaultValue.IntegerValue -> GraphQLModel.Value.IntValue(value)
     is DefaultValue.NumberValue -> GraphQLModel.Value.FloatValue(value)
     is DefaultValue.BooleanValue -> GraphQLModel.Value.BooleanValue(value)
+    is DefaultValue.EnumValue -> GraphQLModel.Value.EnumValue(value)
     DefaultValue.NullValue -> GraphQLModel.Value.NullValue
 }

@@ -34,8 +34,7 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
         is DefaultValue.IntegerValue -> value
         is DefaultValue.NumberValue -> value
         is DefaultValue.BooleanValue -> value.toString()
-        // Entries are capitalized like the enum emitter does, so `available` becomes `Available`.
-        is DefaultValue.EnumValue -> value.replaceFirstChar { it.uppercase() }
+        is DefaultValue.EnumValue -> value.emitEnumEntry()
         DefaultValue.NullValue -> "null"
     }
 

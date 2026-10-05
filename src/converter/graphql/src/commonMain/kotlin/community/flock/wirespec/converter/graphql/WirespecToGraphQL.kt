@@ -226,7 +226,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>, priv
         description = annotations.description(),
         name = identifier.value.toGraphQLName(),
         type = typeRef(input = true),
-        defaultValue = annotations.single(DEFAULT)?.let(::parseValue) ?: defaultValue?.toGraphQLValue(),
+        defaultValue = annotations.single(DEFAULT)?.let(::parseValue) ?: defaultValue?.toGraphQLValue()?.let { (it as? Value.EnumValue)?.copy(name = it.name.toEnumValueName()) ?: it },
         directives = annotations.directives(),
     )
 
