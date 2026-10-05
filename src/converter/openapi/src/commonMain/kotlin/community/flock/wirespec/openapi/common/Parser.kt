@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Statements
+import community.flock.wirespec.converter.common.withValidEnumDefaults
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.Reference as OpenAPIReference
 
@@ -28,7 +29,7 @@ internal fun parseOpenApi(moduleContent: ModuleContent, openApiParser: (String) 
     modules = nonEmptyListOf(
         Module(
             fileUri = moduleContent.fileUri,
-            statements = openApiParser(moduleContent.content),
+            statements = openApiParser(moduleContent.content).let { statements -> statements.map { it.withValidEnumDefaults(statements) } },
         ),
     ),
 )

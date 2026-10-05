@@ -49,6 +49,8 @@ class AvroDefaultValueTest {
         |    { "name": "verified", "type": "boolean", "default": "false" },
         |    { "name": "tags", "type": { "type": "array", "items": "string" }, "default": [] },
         |    { "name": "status", "type": { "type": "enum", "name": "Status", "symbols": ["ACTIVE", "INACTIVE"] }, "default": "ACTIVE" },
+        |    { "name": "previous", "type": ["Status", "null"], "default": "INACTIVE" },
+        |    { "name": "level", "type": { "type": "enum", "name": "Level", "symbols": ["LOW", "HIGH"] }, "default": "MEDIUM" },
         |    { "name": "comment", "type": ["null", "string"] }
         |  ]
         |}
@@ -65,10 +67,12 @@ class AvroDefaultValueTest {
             "active" to DefaultValue.BooleanValue(true),
             "nickname" to DefaultValue.NullValue,
             "title" to DefaultValue.StringValue("none"),
-            // A string on a boolean field, an array and an enum symbol cannot be Wirespec defaults.
+            // A string on a boolean field, an array and a symbol the enum does not have cannot be Wirespec defaults.
             "verified" to null,
             "tags" to null,
-            "status" to null,
+            "status" to DefaultValue.EnumValue("ACTIVE"),
+            "previous" to DefaultValue.EnumValue("INACTIVE"),
+            "level" to null,
             "comment" to null,
         )
     }
@@ -85,8 +89,10 @@ class AvroDefaultValueTest {
             |  active: Boolean = true,
             |  nickname: String? = null,
             |  title: String? = "none",
+            |  status: Status? = INACTIVE,
             |  comment: String?
             |}
+            |enum Status { ACTIVE, INACTIVE }
             """.trimMargin(),
         )
 
@@ -104,8 +110,14 @@ class AvroDefaultValueTest {
             |      { "name": "active", "type": "boolean", "default": true },
             |      { "name": "nickname", "type": ["null", "string"], "default": null },
             |      { "name": "title", "type": ["string", "null"], "default": "none" },
+            |      { "name": "status", "type": ["Status", "null"], "default": "INACTIVE" },
             |      { "name": "comment", "type": ["null", "string"] }
             |    ]
+            |  },
+            |  {
+            |    "type": "enum",
+            |    "name": "Status",
+            |    "symbols": ["ACTIVE", "INACTIVE"]
             |  }
             |]
             """.trimMargin()
@@ -116,9 +128,10 @@ class AvroDefaultValueTest {
         val ast = AvroJsonParser.parse(ModuleContent(FileUri("test.avsc"), schema), true)
         val record = AvroJsonEmitter.emit(ast.modules.first()).first().let { json.encodeToString(it) }
 
+        // The emitter writes enums as schemas of their own, which this single record does not include.
         AvroJsonParser.parse(ModuleContent(FileUri("test.avsc"), record), true)
             .defaults("Settings")
-            .filterValues { it != null } shouldBe ast.defaults("Settings").filterValues { it != null }
+            .filterValues { it != null } shouldBe ast.defaults("Settings").filterValues { it != null && it !is DefaultValue.EnumValue }
     }
 
     @Test
@@ -133,8 +146,10 @@ class AvroDefaultValueTest {
             |        boolean active = true;
             |        union { null, string } nickname = null;
             |        union { string, null } title = "none";
+            |        Status status = "INACTIVE";
             |        string comment;
             |    }
+            |    enum Status { ACTIVE, INACTIVE }
             |}
             """.trimMargin()
 
@@ -145,6 +160,7 @@ class AvroDefaultValueTest {
             "active" to DefaultValue.BooleanValue(true),
             "nickname" to DefaultValue.NullValue,
             "title" to DefaultValue.StringValue("none"),
+            "status" to DefaultValue.EnumValue("INACTIVE"),
             "comment" to null,
         )
     }
@@ -159,8 +175,10 @@ class AvroDefaultValueTest {
             |  retries: Integer = 3,
             |  active: Boolean = true,
             |  nickname: String? = null,
-            |  title: String? = "none"
+            |  title: String? = "none",
+            |  status: Status = INACTIVE
             |}
+            |enum Status { ACTIVE, INACTIVE }
             """.trimMargin(),
         )
 
@@ -170,6 +188,7 @@ class AvroDefaultValueTest {
             shouldContain("boolean active = true;")
             shouldContain("union { null, string } nickname = null;")
             shouldContain("union { string, null } title = \"none\";")
+            shouldContain("Status status = \"INACTIVE\";")
         }
     }
 }

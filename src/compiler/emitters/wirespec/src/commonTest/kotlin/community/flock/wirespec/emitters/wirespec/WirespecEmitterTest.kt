@@ -305,7 +305,12 @@ class WirespecEmitterTest {
             |  ratio: Number = 2.0,
             |  active: Boolean = false,
             |  nickname: String? = null,
+            |  status: Status = INACTIVE,
             |  tags: String[]
+            |}
+            |
+            |enum Status {
+            |  ACTIVE, INACTIVE
             |}
             |
             """.trimMargin()

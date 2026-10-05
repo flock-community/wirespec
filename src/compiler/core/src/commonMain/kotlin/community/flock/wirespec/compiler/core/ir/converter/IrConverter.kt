@@ -1115,6 +1115,7 @@ private fun DefaultValueWirespec.convert(reference: ReferenceWirespec): Expressi
     is DefaultValueWirespec.BooleanValue -> Literal(value, Type.Boolean)
     is DefaultValueWirespec.IntegerValue -> Literal(value, reference.copy(isNullable = false).convert())
     is DefaultValueWirespec.NumberValue -> Literal(value.takeIf { '.' in it } ?: "$value.0", reference.copy(isNullable = false).convert())
+    is DefaultValueWirespec.EnumValue -> EnumReference(reference.copy(isNullable = false).convert() as Type.Custom, Name(listOf(value)))
     DefaultValueWirespec.NullValue -> NullLiteral
 }
 

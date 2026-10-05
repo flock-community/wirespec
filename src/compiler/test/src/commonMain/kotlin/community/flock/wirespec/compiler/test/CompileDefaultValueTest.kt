@@ -17,8 +17,14 @@ public object CompileDefaultValueTest : Fixture {
         |  active: Boolean = true,
         |  nickname: String? = null,
         |  limit: Integer? = 10,
+        |  status: Status = INACTIVE,
+        |  priority: Priority? = 2,
         |  tags: String[]
         |}
+        |
+        |enum Status { ACTIVE, INACTIVE }
+        |
+        |enum Priority { 1, 2 }
         """.trimMargin()
 
     override val compiler: Compiler = source.let(::compile)

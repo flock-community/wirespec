@@ -336,6 +336,7 @@ private fun Token.toDefaultValue(): DefaultValue? = when (type) {
     is LiteralString -> DefaultValue.StringValue(value.removeSurrounding("\"").unescape())
     is Integer -> DefaultValue.IntegerValue(value)
     is Number -> DefaultValue.NumberValue(value)
+    is WirespecType -> DefaultValue.EnumValue(value)
     is WirespecIdentifier -> when (value) {
         "true" -> DefaultValue.BooleanValue(true)
         "false" -> DefaultValue.BooleanValue(false)

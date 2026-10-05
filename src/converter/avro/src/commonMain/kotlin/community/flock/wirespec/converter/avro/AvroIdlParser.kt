@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.converter.common.withValidEnumDefaults
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -25,6 +26,7 @@ internal object AvroIdlParser : Parser {
         val tokens = AvroIdlTokenizer(moduleContent.content).tokenize()
         val protocol = ProtocolParser(tokens).parseProtocol()
         val definitions: List<Definition> = protocol.types.flatMap { it.flatten() }
+            .let { definitions -> definitions.map { it.withValidEnumDefaults(definitions) } }
         return AST(
             nonEmptyListOf(
                 Module(

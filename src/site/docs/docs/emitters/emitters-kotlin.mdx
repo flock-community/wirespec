@@ -34,7 +34,12 @@ type Settings {
   weight: Number32 = 0.5,
   active: Boolean = true,
   nickname: String? = null,
+  status: Status = INACTIVE,
   tags: String[]
+}
+
+enum Status {
+  ACTIVE, INACTIVE
 }
 ```
 
@@ -47,12 +52,17 @@ data class Settings(
   val weight: Float = 0.5f,
   val active: Boolean = true,
   val nickname: String? = null,
+  val status: Status = Status.INACTIVE,
   val tags: List<String>
 ) : Wirespec.Shape {
   override fun validate(): List<String> =
     emptyList<String>()
 }
 ```
+
+An enum default refers to the entry of the generated `enum class`, using the same name as the entry. Entries that are
+not valid Kotlin names are renamed the same way in both places, so `priority: Priority = 2` becomes
+`val priority: Priority = Priority._2`.
 
 Fields with a default can be left out when the model is constructed, so `Settings(tags = listOf("admin"))` is valid.
 

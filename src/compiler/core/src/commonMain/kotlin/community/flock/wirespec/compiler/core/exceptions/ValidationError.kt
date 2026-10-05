@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.exceptions
 
 import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.tokenize.Token
 
 internal sealed class ValidationError(coordinates: Token.Coordinates, message: String) :
@@ -38,6 +39,12 @@ internal class DuplicateChannelError(typeName: String) :
     ValidationError(
         coordinates = Token.Coordinates(),
         message = "Channel '$typeName' is already defined",
+    )
+
+internal class InvalidEnumDefaultError(fieldName: String, value: String, reference: Reference) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Invalid default value $value for field $fieldName of type ${reference.value}${if (reference.isNullable) "?" else ""}",
     )
 
 internal class DuplicateRpcError(typeName: String) :

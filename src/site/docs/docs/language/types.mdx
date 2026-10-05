@@ -132,13 +132,18 @@ type Settings {
     port: Integer32(0, 65535) = 8080,
     ratio: Number = 1.5,
     active: Boolean = true,
-    nickname: String? = null
+    nickname: String? = null,
+    status: Status = ACTIVE
+}
+
+enum Status {
+    ACTIVE, INACTIVE
 }
 ```
 
 #### Supported values
 
-Defaults can be set on fields of a primitive type, and any nullable field can default to `null`:
+Defaults can be set on fields of a primitive type or an enum, and any nullable field can default to `null`:
 
 | Field type                 | Default value                                | Example                          |
 |----------------------------|----------------------------------------------|----------------------------------|
@@ -146,13 +151,20 @@ Defaults can be set on fields of a primitive type, and any nullable field can de
 | `Integer`, `Integer32`     | An integer literal, which may be negative    | `offset: Integer = -1`           |
 | `Number`, `Number32`       | A number or an integer literal               | `ratio: Number = 1.5`            |
 | `Boolean`                  | `true` or `false`                            | `active: Boolean = true`         |
+| An enum                    | One of the enum's entries, written as is     | `status: Status = ACTIVE`        |
 | Any nullable field         | `null`                                       | `tags: String[]? = null`         |
 | A nullable primitive field | `null` or a value of the field's type        | `limit: Integer? = 10`           |
+| A nullable enum field      | `null` or one of the enum's entries          | `previous: Status? = INACTIVE`   |
 
 String literals support the escapes `\"`, `\\`, `\n`, `\r` and `\t`. An integer literal on a `Number` field is read as a
 number, so `scale: Number = 2` is the same as `scale: Number = 2.0`.
 
-Apart from `null`, defaults are not supported on lists, dictionaries, enums, refined types or references to other types.
+The entry of an enum default is written without quotes, exactly as it appears in the enum, so an enum with integer
+entries such as `enum Priority { 1, 2, 3 }` takes `priority: Priority = 2`. The enum can be declared anywhere, also in
+another file.
+
+Apart from `null`, defaults are not supported on lists, dictionaries, refined types, unions or references to other
+types.
 
 #### Validation
 
@@ -163,6 +175,8 @@ The compiler checks every default against its field. Each of these fields is a c
 - `small: Integer32 = 2147483648`: the value does not fit in 32 bits.
 - `score: Integer(0, 10) = 11`: the value is outside the field's bounds.
 - `nickname: String = null`: only nullable fields can default to `null`.
+- `status: Status = DELETED`: `DELETED` is not an entry of `Status`.
+- `status: Status = "ACTIVE"`: enum entries are written without quotes.
 
 The error points at the value, for example: `Invalid default value 11 for field score of type Integer`. A regular
 expression constraint on a `String` field is not checked against its default.

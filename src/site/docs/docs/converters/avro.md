@@ -41,7 +41,8 @@ emitting a schema writes it back.
     { "name": "name", "type": "string", "default": "anonymous" },
     { "name": "retries", "type": "long", "default": 3 },
     { "name": "nickname", "type": ["null", "string"], "default": null },
-    { "name": "title", "type": ["string", "null"], "default": "none" }
+    { "name": "title", "type": ["string", "null"], "default": "none" },
+    { "name": "status", "type": { "type": "enum", "name": "Status", "symbols": ["ACTIVE", "INACTIVE"] }, "default": "ACTIVE" }
   ]
 }
 ```
@@ -51,16 +52,24 @@ type Settings {
   name: String = "anonymous",
   retries: Integer = 3,
   nickname: String? = null,
-  title: String? = "none"
+  title: String? = "none",
+  status: Status = ACTIVE
+}
+
+enum Status {
+  ACTIVE, INACTIVE
 }
 ```
 
 Avro checks the default of a union against the union's first branch. When a nullable field has a default other than
 `null`, the emitted union puts the field's type first (`["string", "null"]`) instead of `null`.
 
-Wirespec only has defaults for primitive fields and `null` defaults for nullable fields, so the other Avro defaults
-(enum symbols, arrays, maps, records and bytes) are dropped when a schema is read. A default that does not match the
-field's type is dropped as well.
+The default of an enum field is one of its symbols, in both directions. A symbol that the enum does not have is dropped
+when a schema is read.
+
+Wirespec only has defaults for primitive and enum fields and `null` defaults for nullable fields, so the other Avro
+defaults (arrays, maps, records and bytes) are dropped when a schema is read. A default that does not match the field's
+type is dropped as well.
 
 ## Limitations
 

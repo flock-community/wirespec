@@ -65,6 +65,7 @@ class DefaultValueTest {
         |          "nickname": { "type": "string", "default": "none" },
         |          "verified": { "type": "boolean", "default": "false" },
         |          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"], "default": "ACTIVE" },
+        |          "level": { "type": "string", "enum": ["LOW", "HIGH"], "default": "MEDIUM" },
         |          "comment": { "type": "string" }
         |        }
         |      }
@@ -131,9 +132,10 @@ class DefaultValueTest {
             "ratio" to DefaultValue.NumberValue("2.0"),
             "active" to DefaultValue.BooleanValue(true),
             "nickname" to DefaultValue.StringValue("none"),
-            // A string on a boolean property and an enum symbol cannot be Wirespec defaults.
+            // A string on a boolean property and a value the enum does not have cannot be Wirespec defaults.
             "verified" to null,
-            "status" to null,
+            "status" to DefaultValue.EnumValue("ACTIVE"),
+            "level" to null,
             "comment" to null,
         )
     }
@@ -150,6 +152,7 @@ class DefaultValueTest {
             shouldContain("ratio: Number = 2.0")
             shouldContain("active: Boolean = true")
             shouldContain("nickname: String? = \"none\"")
+            shouldContain("status: SettingsStatus? = ACTIVE")
             // Defaults on query parameters are not part of the Wirespec language.
             shouldContain("?{limit: Integer?}")
         }

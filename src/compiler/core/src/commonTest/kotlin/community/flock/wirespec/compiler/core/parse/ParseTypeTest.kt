@@ -325,6 +325,44 @@ class ParseTypeTest {
     }
 
     @Test
+    fun testEnumDefaultValue() {
+        val source =
+            // language=ws
+            """
+            |type Task {
+            |    status: Status = DONE,
+            |    priority: Priority? = 2,
+            |    previous: Status? = null
+            |}
+            |enum Status { TODO, DONE }
+            |enum Priority { 1, 2, 3 }
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .shape.value
+            .map { it.defaultValue } shouldBe listOf(
+            DefaultValue.EnumValue("DONE"),
+            DefaultValue.EnumValue("2"),
+            DefaultValue.NullValue,
+        )
+    }
+
+    @Test
+    fun testInvalidEnumDefaultValues() {
+        listOf(
+            "type Task { status: Status = DOING } enum Status { TODO, DONE }" to "Invalid default value DOING for field status of type Status",
+            "type Task { status: Status = \"DONE\" } enum Status { TODO, DONE }" to "Invalid default value \"DONE\" for field status of type Status",
+            "type Task { owner: User = DONE } type User { name: String }" to "Invalid default value DONE for field owner of type User",
+            "type Task { name: String = DONE }" to "Invalid default value DONE for field name of type String",
+        ).forEach { (source, message) ->
+            parser(source).shouldBeLeft().head.message shouldBe message
+        }
+    }
+
+    @Test
     fun testNullDefaultOnAnyNullableField() {
         val source =
             // language=ws
