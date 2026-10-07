@@ -2,14 +2,12 @@ package community.flock.wirespec.plugin
 
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
-import arrow.core.flatMap
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.ensureDefaultsSupportedBy
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ParseOptions
@@ -58,7 +56,9 @@ public fun convert(arguments: ConverterArguments) {
         .map { moduleContent -> parser.parse(moduleContent, arguments.strict) }
         .map { Validator.validate(options, it) }
         .let { either { it.bindAll() } }
-        .flatMap { list -> either { list.map { it.withOptions(arguments).ensureDefaultsSupportedBy(arguments.emitters).bind() } } }
+        // Unlike compile, convert does not fail on defaults a language cannot generate: the defaults come from the
+        // converted spec, and those languages leave them out.
+        .map { list -> list.map { it.withOptions(arguments) } }
         .map { list ->
             list.flatMap { ast ->
                 arguments.emitters.flatMap {

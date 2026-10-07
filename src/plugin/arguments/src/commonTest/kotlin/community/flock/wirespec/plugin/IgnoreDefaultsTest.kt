@@ -76,4 +76,54 @@ class IgnoreDefaultsTest {
             shouldNotContain("anonymous")
         }
     }
+
+    private val openApi =
+        // language=json
+        """
+        |{
+        |  "openapi": "3.0.0",
+        |  "info": { "title": "Settings", "version": "1.0.0" },
+        |  "paths": {},
+        |  "components": {
+        |    "schemas": {
+        |      "Settings": {
+        |        "type": "object",
+        |        "required": ["name"],
+        |        "properties": { "name": { "type": "string", "default": "anonymous" } }
+        |      }
+        |    }
+        |  }
+        |}
+        """.trimMargin()
+
+    private fun convertTo(emitter: Emitter): String {
+        var output = ""
+        convert(
+            ConverterArguments(
+                format = Format.OpenAPIV3,
+                input = nonEmptySetOf(Source<Source.Type.JSON>(Name("openapi"), openApi)),
+                emitters = nonEmptySetOf(emitter),
+                writer = { emitted -> output = emitted.joinToString("\n") { it.result } },
+                error = { output = it },
+                packageName = PackageName("community.flock.wirespec.generated"),
+                logger = noLogger,
+                shared = false,
+                strict = false,
+            ),
+        )
+        return output
+    }
+
+    @Test
+    fun testConvertToUnsupportedLanguageLeavesDefaultsOut() {
+        convertTo(JavaEmitter()).run {
+            shouldContain("public record Settings")
+            shouldNotContain("anonymous")
+        }
+    }
+
+    @Test
+    fun testConvertToKotlinKeepsDefaults() {
+        convertTo(KotlinEmitter()) shouldContain "val name: String = \"anonymous\""
+    }
 }

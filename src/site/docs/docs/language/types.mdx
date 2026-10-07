@@ -196,7 +196,7 @@ endpoint GetTodos GET /todos ? {limit: Integer = 10} -> {
 | Emitter                                   | Defaults                                                                 |
 |-------------------------------------------|--------------------------------------------------------------------------|
 | Kotlin                                    | Generated as constructor parameter defaults, see the [Kotlin emitter](../emitters/emitters-kotlin.mdx#default-values) |
-| Java, TypeScript, Python, Rust and Scala  | Not supported yet: a compile error, unless defaults are [ignored](#ignoring-defaults) |
+| Java, TypeScript, Python, Rust and Scala  | Not supported yet: a compile error, unless defaults are [ignored](#ignoring-defaults). A conversion leaves them out |
 | Wirespec                                  | Written as `field: Type = value`                                         |
 | OpenAPI v2 and v3                         | Written as the `default` of the property schema, see [OpenAPI](../converters/openapi.md#defaults) |
 | Avro                                      | Written as the `default` of the record field, see [Avro](../converters/avro.md#defaults) |
@@ -205,8 +205,8 @@ The OpenAPI and Avro converters also read defaults, so they survive a conversion
 
 #### Ignoring defaults
 
-Compiling a spec that has defaults to a language that does not support them yet fails, so a default is never dropped
-without notice. The error names the fields that have a default:
+Compiling a Wirespec spec that has defaults to a language that does not support them yet fails, so a default you wrote
+is never dropped without notice. The error names the fields that have a default:
 
 ```
 Java does not support default values, but these fields have one: Settings.name, Settings.retries. Remove the defaults,
@@ -214,9 +214,11 @@ or leave them out of the generated code with the ignore defaults option: --ignor
 ignoreDefaults in the Gradle and Maven plugins.
 ```
 
-To leave all defaults out of the generated code, turn on the ignore defaults option of the plugin. This also applies to
-the defaults that a [conversion](../converters/converters.md) reads from OpenAPI or Avro. Defaults are still checked,
-so an invalid default stays a compile error.
+To leave all defaults out of the generated code, turn on the ignore defaults option of the plugin. Defaults are still
+checked, so an invalid default stays a compile error.
+
+A [conversion](../converters/converters.md) from OpenAPI or Avro does not fail on defaults. When it generates a language
+that does not support them, the defaults that the converter read are left out of the generated code.
 
 CLI:
 
