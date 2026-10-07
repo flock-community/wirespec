@@ -20,7 +20,8 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 - **package name:** The package name for the generated code.
 - **share:** A flag to indicate whether shared code should be emitted.
 - **strict:** A flag to enable strict mode during compilation.
-- **ignore defaults:** A flag to leave field default values out of the emitted code.
+- **ignore defaults:** A flag to leave field default values out of the emitted code. Required to compile a spec with
+  [defaults](../language/types.mdx#default-values) to a language that does not support them yet.
 
 [Playground compile](http://playground.wirespec.io/compile)
 

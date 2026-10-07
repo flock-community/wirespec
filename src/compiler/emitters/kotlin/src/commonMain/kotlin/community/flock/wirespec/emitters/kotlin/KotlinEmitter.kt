@@ -71,6 +71,8 @@ public open class KotlinEmitter(
 
     override val extension: FileExtension = FileExtension.Kotlin
 
+    override val supportsDefaults: Boolean = true
+
     private val wirespecImports = listOf(
         import("$DEFAULT_SHARED_PACKAGE_STRING.kotlin", "Wirespec"),
         import("kotlin.reflect", "typeOf"),

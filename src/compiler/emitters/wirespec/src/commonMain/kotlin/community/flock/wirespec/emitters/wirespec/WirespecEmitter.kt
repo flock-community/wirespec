@@ -24,6 +24,8 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
     override val extension: FileExtension = FileExtension.Wirespec
 
+    override val supportsDefaults: Boolean = true
+
     override val shared: Shared? = null
 
     override val singleLineComment: String = "\n"

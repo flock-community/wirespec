@@ -20,6 +20,8 @@ internal object AvroIdlEmitter : Emitter {
 
     override val extension = FileExtension.AvroIdl
 
+    override val supportsDefaults: Boolean = true
+
     private const val INDENT = "    "
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules

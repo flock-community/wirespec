@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
+import community.flock.wirespec.compiler.test.CompileDefaultValueTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
@@ -23,8 +24,10 @@ import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.Test
 
 class ScalaEmitterTest {
@@ -71,6 +74,13 @@ class ScalaEmitterTest {
 
         val res = emitContext.emitFirst(NodeFixtures.enum)
         res shouldBe expected
+    }
+
+    @Test
+    fun compileDefaultValueTest() {
+        CompileDefaultValueTest.compiler { ScalaEmitter() }
+            .shouldBeLeft()
+            .head.message shouldStartWith "Scala does not support default values, but these fields have one: Settings.name, Settings.greeting"
     }
 
     @Test

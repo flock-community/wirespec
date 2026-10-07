@@ -61,6 +61,8 @@ public object OpenAPIV3Emitter : Emitter {
 
     override val extension: FileExtension = FileExtension.JSON
 
+    override val supportsDefaults: Boolean = true
+
     override fun emit(
         ast: AST,
         logger: Logger,

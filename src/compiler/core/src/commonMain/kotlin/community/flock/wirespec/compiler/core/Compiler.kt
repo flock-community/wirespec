@@ -2,11 +2,13 @@ package community.flock.wirespec.compiler.core
 
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
+import arrow.core.flatMap
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.HasEmitters
+import community.flock.wirespec.compiler.core.emit.ensureDefaultsSupportedBy
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.Parser.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -45,6 +47,7 @@ public fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
 public fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.fileUri, tokenize(it.content)) }).also(PARSED::log)
 
 public fun EmitContext.emit(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
+    .flatMap { it.ensureDefaultsSupportedBy(emitters) }
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 
