@@ -108,6 +108,52 @@ The compile mojo supports the following parameters:
 - **extensionClasses**: List of fully qualified `IrExtension` class names. The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`.
 - **ir**: Whether to emit through the intermediate representation. Required for `extensionClasses` to take effect on the built-in language targets. Default is 'false'.
 
+### Default values
+
+The `compile` goal fails the build when the Wirespec files have [default values](../language/types.mdx#default-values)
+and one of the `languages` does not support them, such as Java. The failure message names the fields that have a
+default. Set `ignoreDefaults` to generate the code without them.
+
+`ignoreDefaults` applies to every language of the execution. Use one execution per language to keep the defaults where
+they are supported:
+
+```xml
+<executions>
+    <execution>
+        <id>wirespec-kotlin</id>
+        <goals>
+            <goal>compile</goal>
+        </goals>
+        <configuration>
+            <input>${project.basedir}/src/main/wirespec</input>
+            <output>${project.build.directory}/generated-sources/wirespec-kotlin</output>
+            <languages>
+                <language>Kotlin</language>
+            </languages>
+        </configuration>
+    </execution>
+    <execution>
+        <id>wirespec-java</id>
+        <goals>
+            <goal>compile</goal>
+        </goals>
+        <configuration>
+            <input>${project.basedir}/src/main/wirespec</input>
+            <output>${project.build.directory}/generated-sources/wirespec-java</output>
+            <languages>
+                <language>Java</language>
+            </languages>
+            <!-- Java does not support defaults yet: leave them out instead of failing the build. -->
+            <ignoreDefaults>true</ignoreDefaults>
+        </configuration>
+    </execution>
+</executions>
+```
+
+The `convert` goal never fails on defaults: languages without default support leave them out. An invalid default in a
+Wirespec file fails the build, also with `ignoreDefaults`. See [Default values](./plugins.md#default-values) for the
+details.
+
 ### Running the Compile Goal
 
 You can run the compile goal directly with:
