@@ -20,6 +20,18 @@ The structure exists of a shared part and a part per emitted output. The shared 
 
 <Drawio content={simpleGraph} />
 
+## Default values
+
+Field [default values](../language/types.mdx#default-values) are generated where the target supports them:
+
+| Emitter                                   | Default values                                                              |
+|-------------------------------------------|-----------------------------------------------------------------------------|
+| Kotlin                                    | Constructor parameter defaults, see the [Kotlin emitter](./emitters-kotlin.mdx#default-values) |
+| Avro                                      | The `default` of the record field, see the [Avro emitter](./emitters-avro.mdx#default-values) |
+| OpenAPI v2 and v3                         | The `default` of the property schema, see the [OpenAPI v3 emitter](./emitters-open-api-v3.mdx#default-values) |
+| Wirespec                                  | `field: Type = value`                                                       |
+| Java, TypeScript, Python, Rust and Scala  | Not supported yet, see the [Java emitter](./emitters-java.mdx#default-values) |
+
 ## Examples
 
 In the specific documentation of the language examples the following Wirespec is used as input:

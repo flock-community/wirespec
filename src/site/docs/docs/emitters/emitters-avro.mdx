@@ -13,3 +13,39 @@ Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), 
   <summary>Avro</summary>
   <WirespecCompile emitter={Emitters.AVRO} />
 </details>
+
+## Default values
+
+Field [default values](../language/types.mdx#default-values) are written as the `default` of the record field:
+
+```wirespec
+type Settings {
+  name: String = "anonymous",
+  retries: Integer = 3,
+  title: String? = "none",
+  nickname: String? = null,
+  status: Status = ACTIVE
+}
+
+enum Status {
+  ACTIVE, INACTIVE
+}
+```
+
+```json
+{
+  "type": "record",
+  "name": "Settings",
+  "fields": [
+    { "name": "name", "type": "string", "default": "anonymous" },
+    { "name": "retries", "type": "long", "default": 3 },
+    { "name": "title", "type": ["string", "null"], "default": "none" },
+    { "name": "nickname", "type": ["null", "string"], "default": null },
+    { "name": "status", "type": "Status", "default": "ACTIVE" }
+  ]
+}
+```
+
+Avro checks the default of a union against the union's first branch. A nullable field with a default other than `null`
+therefore puts its own type first in the union, like `title` above. The [Avro converter](../converters/avro.md#defaults)
+reads these defaults back.

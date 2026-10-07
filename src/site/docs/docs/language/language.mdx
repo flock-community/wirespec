@@ -86,6 +86,28 @@ type CreateUserRequest {
 }
 ```
 
+## Default values
+
+Fields of a [type](language/types#default-values) can declare a default value with `=`. Defaults are supported on
+primitive and enum fields, and any nullable field can default to `null`:
+
+```wirespec
+type Settings {
+    name: String = "anonymous",
+    retries: Integer = 3,
+    active: Boolean = true,
+    status: Status = ACTIVE,
+    nickname: String? = null
+}
+
+enum Status {
+    ACTIVE, INACTIVE
+}
+```
+
+Not every language can generate defaults yet. See [Default values](language/types#default-values) for the rules, the
+languages that support them and how to leave them out.
+
 ## Coding Conventions
 
 Commonly known and easy-to-follow coding conventions are vital for any language. Here we provide guidelines on the code

@@ -141,3 +141,16 @@ Make sure to use the latest version, found here:
 
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 :::
+
+## Default values
+
+Field [default values](../language/types.mdx#default-values) are generated as constructor parameter defaults, which
+kotlinx.serialization picks up for every `@Serializable` model:
+
+- **Decoding**: a property that is missing from the JSON takes its default.
+- **Encoding**: a property that still has its default value is left out of the JSON, because `encodeDefaults` is
+  `false` by default. Configure the `Json` instance with `encodeDefaults = true` to always write every property:
+
+```kotlin
+val json = Json { encodeDefaults = true }
+```

@@ -295,3 +295,12 @@ public record Document(
     Boolean _final
 ) {}
 ```
+
+## Default values
+
+Kotlin models generate field [default values](../language/types.mdx#default-values) as constructor parameter defaults.
+Jackson only applies them to properties that are missing from the JSON when the `ObjectMapper` has the Kotlin module,
+for example one created with `jacksonObjectMapper()`, because plain Jackson does not know about Kotlin default
+arguments. Wirespec's [Spring integration](./integration-spring.mdx) already uses the Kotlin module.
+
+Java does not support defaults yet, see the [Java emitter](../emitters/emitters-java.mdx#default-values).
