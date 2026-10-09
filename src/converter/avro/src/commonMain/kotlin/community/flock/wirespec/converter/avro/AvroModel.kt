@@ -11,21 +11,33 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.buildSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 
 public object AvroModel {
-    @Serializable
+    /**
+     * [default] is [JsonNull] for an explicit `"default": null` and `null` when the field has no default.
+     */
+    @Serializable(with = FieldSerializer::class)
     public data class Field(
         val name: String,
         val type: TypeList,
         val doc: String? = null,
-        val default: String? = null,
+        val default: JsonElement? = null,
     )
 
     @Serializable(with = TypeListSerializer::class)
@@ -86,6 +98,33 @@ public object AvroModel {
         val precision: Int? = null,
         val scale: Int? = null,
     ) : Type
+
+    public object FieldSerializer : KSerializer<Field> {
+
+        override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Field")
+
+        override fun serialize(encoder: Encoder, value: Field) {
+            val output = encoder as? JsonEncoder ?: throw SerializationException("This class can be saved only by Json")
+            buildJsonObject {
+                put("name", value.name)
+                put("type", output.json.encodeToJsonElement(TypeListSerializer, value.type))
+                value.doc?.let { put("doc", it) }
+                value.default?.let { put("default", it) }
+            }.let(output::encodeJsonElement)
+        }
+
+        override fun deserialize(decoder: Decoder): Field {
+            val input = decoder as? JsonDecoder ?: throw SerializationException("This class can be loaded only by Json")
+            return input.decodeJsonElement().jsonObject.let { field ->
+                Field(
+                    name = field.getValue("name").jsonPrimitive.content,
+                    type = input.json.decodeFromJsonElement(TypeListSerializer, field.getValue("type")),
+                    doc = field["doc"]?.jsonPrimitive?.contentOrNull,
+                    default = field["default"],
+                )
+            }
+        }
+    }
 
     public object TypeListSerializer : KSerializer<TypeList> {
 

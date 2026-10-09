@@ -293,4 +293,28 @@ class WirespecEmitterTest {
 
         CompileComplexModelTest.compiler { WirespecEmitter() } shouldBeRight wirespec
     }
+
+    @Test
+    fun compileDefaultValueTest() {
+        val wirespec =
+            // language=ws
+            """
+            |type Settings {
+            |  name: String = "say \"hi\"\n",
+            |  retries: Integer = -1,
+            |  ratio: Number = 2.0,
+            |  active: Boolean = false,
+            |  nickname: String? = null,
+            |  status: Status = INACTIVE,
+            |  tags: String[]
+            |}
+            |
+            |enum Status {
+            |  ACTIVE, INACTIVE
+            |}
+            |
+            """.trimMargin()
+
+        compile(wirespec)({ WirespecEmitter() }) shouldBeRight wirespec
+    }
 }

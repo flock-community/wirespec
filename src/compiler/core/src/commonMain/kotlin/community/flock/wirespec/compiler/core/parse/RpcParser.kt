@@ -26,7 +26,7 @@ internal object RpcParser {
 
     private fun TokenProvider.parseRpcDefinition(comment: Comment?, annotations: List<Annotation>, identifier: DefinitionIdentifier) = parseToken {
         val shape = when (token.type) {
-            is LeftCurly -> parseTypeShape().bind()
+            is LeftCurly -> parseTypeShape(allowFieldDefaults = false).bind()
             else -> raiseWrongToken<LeftCurly>().bind()
         }
 

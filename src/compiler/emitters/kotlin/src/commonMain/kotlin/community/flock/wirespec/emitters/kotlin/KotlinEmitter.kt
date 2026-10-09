@@ -53,6 +53,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.ensureEmptyStructHa
 import community.flock.wirespec.compiler.core.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.compiler.core.ir.transformer.markMembersAsOverride
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
+import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumDefaults
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
@@ -69,6 +70,8 @@ public open class KotlinEmitter(
     override val generator: Generator = KotlinGenerator
 
     override val extension: FileExtension = FileExtension.Kotlin
+
+    override val supportsDefaults: Boolean = true
 
     private val wirespecImports = listOf(
         import("$DEFAULT_SHARED_PACKAGE_STRING.kotlin", "Wirespec"),
@@ -199,6 +202,7 @@ public open class KotlinEmitter(
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .sanitizeNames(modelSanitizationConfig)
+            .sanitizeEnumDefaults { it.sanitizeEnum() }
             .ensureEmptyStructHasConstructor()
 
     override fun emit(enum: Enum, module: Module): File = enum

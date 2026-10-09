@@ -20,3 +20,22 @@ Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), 
   <summary>TypeScript code</summary>
   <WirespecCompile emitter={Emitters.TYPESCRIPT} />
 </details>
+
+## Default values
+
+The TypeScript emitter does not support [default values](../language/types.mdx#default-values) yet. Compiling a spec with
+defaults to TypeScript fails, and the error names the fields that have one:
+
+```
+TypeScript does not support default values, but these fields have one: Settings.name, Settings.retries. Remove the defaults,
+or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI, or
+ignoreDefaults in the Gradle and Maven plugins.
+```
+
+To generate TypeScript anyway, leave the defaults out with the [ignore defaults option](../language/types.mdx#ignoring-defaults):
+
+```shell
+wirespec compile -i ./wirespec -l TypeScript --ignore-defaults
+```
+
+A [conversion](../converters/converters.md) from OpenAPI or Avro to TypeScript does not fail: it leaves the defaults out.

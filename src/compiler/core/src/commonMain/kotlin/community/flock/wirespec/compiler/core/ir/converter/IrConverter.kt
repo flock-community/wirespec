@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.ir.MapExpression
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.NotExpression
 import community.flock.wirespec.compiler.core.ir.NullCheck
+import community.flock.wirespec.compiler.core.ir.NullLiteral
 import community.flock.wirespec.compiler.core.ir.NullableEmpty
 import community.flock.wirespec.compiler.core.ir.NullableMap
 import community.flock.wirespec.compiler.core.ir.NullableOf
@@ -40,6 +41,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.ir.Constraint as LanguageConstraint
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue as DefaultValueWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint as EndpointWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
@@ -369,7 +371,11 @@ public fun TypeWirespec.convert(): File = file(identifier.toName()) {
         implements(Type.Custom("Wirespec.Shape"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
         shape.value.forEach {
-            field(it.identifier.toName(), it.reference.convert())
+            field(
+                name = it.identifier.toName(),
+                type = it.reference.convert(),
+                initializer = it.defaultValue?.convert(it.reference),
+            )
         }
         function("validate", isOverride = true) {
             returnType(Type.Array(Type.String))
@@ -1107,6 +1113,15 @@ public fun ReferenceWirespec.convert(): Type = when (this) {
     is ReferenceWirespec.Unit -> Type.Unit
 }
     .let { if (isNullable) Type.Nullable(it) else it }
+
+private fun DefaultValueWirespec.convert(reference: ReferenceWirespec): Expression = when (this) {
+    is DefaultValueWirespec.StringValue -> Literal(value, Type.String)
+    is DefaultValueWirespec.BooleanValue -> Literal(value, Type.Boolean)
+    is DefaultValueWirespec.IntegerValue -> Literal(value, reference.copy(isNullable = false).convert())
+    is DefaultValueWirespec.NumberValue -> Literal(value.takeIf { '.' in it } ?: "$value.0", reference.copy(isNullable = false).convert())
+    is DefaultValueWirespec.EnumValue -> EnumReference(reference.copy(isNullable = false).convert() as Type.Custom, Name(listOf(value)))
+    is DefaultValueWirespec.NullValue -> NullLiteral
+}
 
 public fun ReferenceWirespec.Primitive.Type.Constraint.convert(value: Expression): LanguageConstraint = when (this) {
     is ReferenceWirespec.Primitive.Type.Constraint.RegExp ->

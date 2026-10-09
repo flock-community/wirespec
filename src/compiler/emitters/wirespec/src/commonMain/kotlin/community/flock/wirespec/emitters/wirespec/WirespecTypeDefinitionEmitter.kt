@@ -2,6 +2,7 @@ package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -17,7 +18,24 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { "$Spacer${it.emit()}" }
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}"
+    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${defaultValue?.let { " = ${it.emit()}" }.orEmpty()}"
+
+    private fun DefaultValue.emit(): String = when (this) {
+        is DefaultValue.StringValue -> "\"${value.escape()}\""
+        is DefaultValue.IntegerValue -> value
+        is DefaultValue.NumberValue -> value
+        is DefaultValue.BooleanValue -> value.toString()
+        // Entries are capitalized like the enum emitter does, so `available` becomes `Available`.
+        is DefaultValue.EnumValue -> value.replaceFirstChar { it.uppercase() }
+        is DefaultValue.NullValue -> "null"
+    }
+
+    private fun String.escape(): String = this
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Dict -> "{ ${reference.emit()} }"

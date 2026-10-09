@@ -11,11 +11,13 @@ import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateRpcError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
+import community.flock.wirespec.compiler.core.exceptions.InvalidEnumDefaultError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -26,6 +28,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.isEntryOf
 
 public object Validator {
 
@@ -35,7 +38,8 @@ public object Validator {
         validateTypes(ast),
         validateChannels(ast),
         validateRpcs(ast),
-    ) { a, _, _, _, _ -> a }
+        validateEnumDefaults(ast),
+    ) { a, _, _, _, _, _ -> a }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
@@ -86,6 +90,22 @@ public object Validator {
                 .map { (name, types) -> types.map { DuplicateTypeError(name) } }
                 .flatten()
                 .toList()
+        }
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
+
+    private fun validateEnumDefaults(ast: AST): EitherNel<WirespecException, AST> = ast.modules
+        .flatMap { it.statements }
+        .let { definitions ->
+            definitions
+                .filterIsInstance<Type>()
+                .flatMap { it.shape.value }
+                .mapNotNull { field ->
+                    (field.defaultValue as? DefaultValue.EnumValue)
+                        ?.takeUnless { it.isEntryOf(field.reference, definitions) }
+                        ?.let { InvalidEnumDefaultError(field.identifier.value, it.value, field.reference) }
+                }
         }
         .toNonEmptyListOrNull()
         ?.left()

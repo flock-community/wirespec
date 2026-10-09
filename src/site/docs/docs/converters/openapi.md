@@ -27,6 +27,46 @@ Wirespec handles OAS composition keywords:
 - **anyOf**: Converts to a Wirespec `Union` type.
 - **oneOf**: Converts to a Wirespec `Union` type.
 
+## Defaults
+
+The `default` of a property schema is converted to a Wirespec [default value](../language/types.mdx#default-values), and
+the OpenAPI emitters write a field's default back to the property schema. This works for OAS v2 and v3.
+
+```json
+{
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string", "default": "anonymous" },
+    "retries": { "type": "integer", "default": 3 },
+    "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"], "default": "ACTIVE" }
+  }
+}
+```
+
+```wirespec
+type Settings {
+  name: String = "anonymous",
+  retries: Integer? = 3,
+  status: SettingsStatus? = ACTIVE
+}
+
+enum SettingsStatus {
+  ACTIVE, INACTIVE
+}
+```
+
+Some defaults are not converted:
+
+- Defaults of arrays, objects and references, because Wirespec only supports defaults on primitive and enum fields. The
+  default of an inline enum property is converted, as long as it is one of the enum's values.
+- Defaults that do not match the property's type, such as `"default": "false"` on a `boolean`.
+- Defaults of query, path and header parameters, because Wirespec only allows defaults on the fields of a `type`.
+- A `null` default. A property that is not `required` already becomes a nullable field, so the emitters leave
+  `default: null` out.
+- The default of an enum field, when writing OpenAPI. Wirespec emits an enum field as a `$ref`, and OpenAPI 3.0
+  ignores anything next to a `$ref`.
+
 ## Unsupported Constructs
 
 The following OpenAPI constructs are currently **not** converted or ignored during the process:

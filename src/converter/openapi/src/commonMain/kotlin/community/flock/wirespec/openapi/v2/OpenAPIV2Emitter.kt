@@ -34,12 +34,15 @@ import community.flock.wirespec.openapi.common.APPLICATION_JSON
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.json
+import community.flock.wirespec.openapi.common.toSchemaDefault
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
 public object OpenAPIV2Emitter : Emitter {
 
     override val extension: FileExtension = FileExtension.JSON
+
+    override val supportsDefaults: Boolean = true
 
     override fun emit(
         ast: AST,
@@ -169,7 +172,7 @@ public object OpenAPIV2Emitter : Emitter {
 
     private fun Field.toProperties(): Pair<String, OpenAPIV20SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
         when (it) {
-            is OpenAPIV20Schema -> it.copy(description = annotations.findDescription())
+            is OpenAPIV20Schema -> it.copy(description = annotations.findDescription(), default = defaultValue.toSchemaDefault())
             is OpenAPIV20Reference -> it
         }
     }

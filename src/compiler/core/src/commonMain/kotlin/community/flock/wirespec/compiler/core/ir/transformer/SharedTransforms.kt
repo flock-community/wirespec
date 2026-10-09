@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.ir.transformer
 
 import community.flock.wirespec.compiler.core.ir.Constructor
 import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.EnumReference
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.Function
@@ -64,6 +65,21 @@ public fun <E : Element> E.sanitizeEnumEntries(
                 it.copy(name = Name.of(sanitizeEntry(it.name.value())))
             },
         )
+    }
+}
+
+/**
+ * Renames the entry of every enum default the way [sanitizeEntry] renames the entries of the enum
+ * itself, so the default refers to the entry as the language spells it.
+ */
+public fun <E : Element> E.sanitizeEnumDefaults(
+    sanitizeEntry: (String) -> String,
+): E = transform {
+    fields { field ->
+        when (val initializer = field.initializer) {
+            is EnumReference -> field.copy(initializer = initializer.copy(entry = Name(listOf(sanitizeEntry(initializer.entry.value())))))
+            else -> field
+        }
     }
 }
 
