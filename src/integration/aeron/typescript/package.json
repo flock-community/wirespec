@@ -1,0 +1,23 @@
+{
+  "name": "@flock/wirespec-aeron",
+  "version": "0.0.0",
+  "description": "Wirespec rpc over Aeron for TypeScript/Node: the frame protocol and a correlating rpc client, bound to the Aeron C client library via FFI",
+  "license": "Apache-2.0",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "test": "tsc && node --test dist/test/*.test.js"
+  },
+  "dependencies": {
+    "koffi": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "typescript": "^5.6.2"
+  }
+}

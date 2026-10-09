@@ -1,0 +1,11 @@
+# Context: server.jar (the Spring Boot fat jar) next to this Dockerfile.
+# BASE_IMAGE is overridable for environments that cannot reach Docker Hub.
+ARG BASE_IMAGE=eclipse-temurin:21-jre
+FROM ${BASE_IMAGE}
+COPY server.jar /app/server.jar
+# Agrona (the Aeron buffer library) reaches into jdk.internal.misc.Unsafe.
+ENTRYPOINT ["java", \
+    "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED", \
+    "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", \
+    "-jar", "/app/server.jar", \
+    "--wirespec.aeron.dir=/dev/shm/aeron"]
