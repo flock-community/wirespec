@@ -18,7 +18,7 @@ public data class Field(
 ) : HasAnnotations,
     ShapeEntry
 
-public data class Spread(val identifier: DefinitionIdentifier) : ShapeEntry
+public data class Spread(val reference: Reference.Custom) : ShapeEntry
 
 public val List<ShapeEntry>.fields: List<Field> get() = filterIsInstance<Field>()
 

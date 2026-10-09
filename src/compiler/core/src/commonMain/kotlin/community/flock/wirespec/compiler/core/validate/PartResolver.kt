@@ -58,8 +58,8 @@ internal object PartResolver {
     private fun AST.spreadNonPartErrors(partNames: Set<String>): List<WirespecException> = shapes()
         .flatMap { shape ->
             shape.entries.filterIsInstance<Spread>()
-                .filterNot { it.identifier.value in partNames }
-                .map { SpreadNonPartError(it.identifier.value, shape.owner) }
+                .filterNot { it.reference.value in partNames }
+                .map { SpreadNonPartError(it.reference.value, shape.owner) }
         }
 
     private fun AST.partAsReferenceErrors(partNames: Set<String>): List<WirespecException> = definitions()
@@ -81,7 +81,7 @@ internal object PartResolver {
     private fun Map<String, Part>.directSpreads(name: String): Set<String> = get(name)
         ?.shape?.value
         ?.filterIsInstance<Spread>()
-        ?.map { it.identifier.value }
+        ?.map { it.reference.value }
         ?.toSet()
         .orEmpty()
 
@@ -98,7 +98,7 @@ internal object PartResolver {
     private fun Map<String, Part>.fieldsOf(entries: List<ShapeEntry>): List<Field> = entries.flatMap { entry ->
         when (entry) {
             is Field -> listOf(entry)
-            is Spread -> fieldsOf(getValue(entry.identifier.value).shape.value)
+            is Spread -> fieldsOf(getValue(entry.reference.value).shape.value)
         }
     }
 
@@ -126,7 +126,7 @@ internal object PartResolver {
 }
 
 internal fun AST.unusedParts(): List<Part> = shapes()
-    .flatMap { shape -> shape.entries.filterIsInstance<Spread>().map { it.identifier.value } }
+    .flatMap { shape -> shape.entries.filterIsInstance<Spread>().map { it.reference.value } }
     .toSet()
     .let { spread -> definitions().filterIsInstance<Part>().filterNot { it.identifier.value in spread } }
 

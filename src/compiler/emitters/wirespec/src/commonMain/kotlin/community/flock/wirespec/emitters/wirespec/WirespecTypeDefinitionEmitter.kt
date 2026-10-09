@@ -41,7 +41,7 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
 
     fun ShapeEntry.emit(): String = when (this) {
         is Field -> emit()
-        is Spread -> "...${emit(identifier)}"
+        is Spread -> "...${reference.emit()}"
     }
 
     override fun Reference.emit(): String = when (this) {
