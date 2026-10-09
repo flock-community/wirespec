@@ -7,8 +7,10 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.exceptions.AnnotatedPartException
 import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
 import community.flock.wirespec.compiler.core.exceptions.CyclicPartError
+import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsException
 import community.flock.wirespec.compiler.core.exceptions.DuplicateFieldError
 import community.flock.wirespec.compiler.core.exceptions.DuplicatePartError
@@ -19,18 +21,18 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Definition
-import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
-import community.flock.wirespec.compiler.core.parse.ast.Spread
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -53,7 +55,7 @@ class ParsePartTest {
         .filterIsInstance<T>()
         .single { it.identifier.value == name }
 
-    private fun List<Field>.names() = map { it.identifier.value }
+    private fun List<ShapeEntry>.names() = map { it.shouldBeInstanceOf<Field>().identifier.value }
 
     @Test
     fun spreadIsTheSameAsWritingTheFieldsOut() {
@@ -86,10 +88,7 @@ class ParsePartTest {
         )
             .shouldBeRight()
             .single<Type>("User").shape
-            .run {
-                value.names() shouldContainExactly listOf("id", "createdAt", "updatedAt", "name")
-                entries.map { (it as? Spread)?.identifier?.value ?: (it as Field).identifier.value } shouldContainExactly listOf("id", "Audit", "name")
-            }
+            .value.names() shouldContainExactly listOf("id", "createdAt", "updatedAt", "name")
     }
 
     @Test
@@ -105,7 +104,7 @@ class ParsePartTest {
             .shouldBeRight()
             .run {
                 single<Type>("User").shape.value.names() shouldContainExactly listOf("id", "createdAt", "name")
-                parts.single { it.identifier.value == "Audit" }.shape.value.names() shouldContainExactly listOf("id", "createdAt")
+                single<Part>("Audit").shape.value.names() shouldContainExactly listOf("id", "createdAt")
             }
     }
 
@@ -119,7 +118,7 @@ class ParsePartTest {
             """.trimMargin(),
         )
             .shouldBeRight()
-            .single<Type>("User").shape.value
+            .single<Type>("User").shape.value.fields
             .single().annotations shouldBe listOf(Annotation("Deprecated", emptyList()))
     }
 
@@ -141,7 +140,6 @@ class ParsePartTest {
                 queries.names() shouldContainExactly listOf("page", "size", "active")
                 headers.names() shouldContainExactly listOf("X-Trace-Id")
                 responses.single().headers.names() shouldContainExactly listOf("X-Trace-Id", "total")
-                queryEntries.first() shouldBe Spread(DefinitionIdentifier("Paging"))
             }
     }
 
@@ -186,15 +184,59 @@ class ParsePartTest {
         )
             .shouldBeRight()
             .run {
-                modules shouldHaveSize 1
-                parts.map { it.identifier.value } shouldContainExactly listOf("Audit")
+                modules shouldHaveSize 2
+                definitions().filterIsInstance<Part>().map { it.identifier.value } shouldContainExactly listOf("Audit")
                 single<Type>("User").shape.value.names() shouldContainExactly listOf("createdAt", "name")
             }
     }
 
     @Test
-    fun onlyPartsIsAnEmptyAst() {
-        parse("part Audit { createdAt: String }").shouldBeLeft()
+    fun specWithOnlyPartsParses() {
+        parse("part Audit { createdAt: String }")
+            .shouldBeRight()
+            .single<Part>("Audit").shape.value.names() shouldContainExactly listOf("createdAt")
+    }
+
+    @Test
+    fun partCannotBeAnnotated() {
+        parse(
+            // language=ws
+            """
+            |@Deprecated
+            |part Audit { createdAt: String }
+            |type User { ...Audit }
+            """.trimMargin(),
+        )
+            .shouldBeLeft()
+            .single().shouldBeInstanceOf<AnnotatedPartException>()
+            .message shouldBe "A part cannot be annotated; annotate its fields instead"
+    }
+
+    @Test
+    fun partKeepsItsComment() {
+        parse(
+            // language=ws
+            """
+            |// shared audit fields
+            |part Audit { createdAt: String }
+            |type User { ...Audit }
+            """.trimMargin(),
+        )
+            .shouldBeRight()
+            .single<Part>("Audit").comment?.value shouldBe "shared audit fields"
+    }
+
+    @Test
+    fun partFieldsCannotHaveDefaults() {
+        parse(
+            // language=ws
+            """
+            |part Paging { size: Integer = 20 }
+            |type Page { ...Paging }
+            """.trimMargin(),
+        )
+            .shouldBeLeft()
+            .single().shouldBeInstanceOf<DefaultValueNotAllowedException>()
     }
 
     @Test
@@ -378,7 +420,6 @@ class ParsePartTest {
         parse("type User { name: String }")
             .shouldBeRight()
             .run {
-                parts.shouldBeEmpty()
                 single<Type>("User").shape shouldBe Type.Shape(single<Type>("User").shape.value)
             }
     }

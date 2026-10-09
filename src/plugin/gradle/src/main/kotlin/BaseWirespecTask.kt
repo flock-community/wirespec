@@ -71,6 +71,11 @@ public abstract class BaseWirespecTask : DefaultTask() {
     @get:Option(option = "strict", description = "strict parsing mode")
     public abstract val strict: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    @get:Option(option = "ignoreDefaults", description = "leave field default values out of the emitted code")
+    public abstract val ignoreDefaults: Property<Boolean>
+
     @Internal
     public val wirespecLogger: Logger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)

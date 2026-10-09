@@ -102,6 +102,7 @@ This task compiles Wirespec definitions to various target languages.
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
+- `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
 
 ### ConvertWirespecTask
 
@@ -117,6 +118,36 @@ This task converts from JSON or Avro to other formats.
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
+- `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
+
+## Default values
+
+A `CompileWirespecTask` fails when the Wirespec files have [default values](../language/types.mdx#default-values) and
+one of its `languages` does not support them, such as Java. The task failure names the fields that have a default.
+Set `ignoreDefaults` to generate the code without them.
+
+`ignoreDefaults` applies to every language of the task. Use one task per language to keep the defaults where they are
+supported:
+
+```kotlin
+tasks.register<CompileWirespecTask>("wirespec-kotlin") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated/kotlin")
+    languages.set(listOf(Language.Kotlin))
+}
+
+tasks.register<CompileWirespecTask>("wirespec-java") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated/java")
+    languages.set(listOf(Language.Java))
+    // Java does not support defaults yet: leave them out instead of failing the task.
+    ignoreDefaults.set(true)
+}
+```
+
+A `ConvertWirespecTask` never fails on defaults: languages without default support leave them out. An invalid default
+in a Wirespec file fails the task, also with `ignoreDefaults`. See [Default values](./plugins.md#default-values) for
+the details.
 
 ## Applying IR extensions
 

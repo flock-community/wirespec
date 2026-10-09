@@ -56,3 +56,12 @@ const src = await fs.readFile("/todo.ws");
 const ast = parse(src);
 const ts = emit(ast.result, Emitters.TYPESCRIPT, "");
 ```
+
+## Default values
+
+The `wirespec` command of the npm package is the [CLI](./plugins-cli.md#default-values), so it handles
+[default values](../language/types.mdx#default-values) the same way: `compile` fails for a language that does not
+support them unless `--ignore-defaults` is set, and `convert` leaves them out.
+
+The programmatic API does not carry defaults yet. `parse` reports invalid defaults as errors, but the AST it returns
+has no defaults, so `emit` generates code without them and never fails on them.

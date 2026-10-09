@@ -10,7 +10,6 @@ import arrow.core.raise.Raise
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.toNonEmptyListOrNull
-import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -19,8 +18,6 @@ import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnota
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Node
-import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
@@ -49,17 +46,11 @@ public object Parser {
         modules
             .map { it.toProvider(modules.allDefinitions(), logger).parseModule() }
             .flattenOrAccumulate().bind()
-            .let { parsed ->
-                AST(
-                    modules = parsed
-                        .mapNotNull { (fileUri, nodes) -> nodes.filterIsInstance<Definition>().toNonEmptyListOrNull()?.let { Module(fileUri, it) } }
-                        .toNonEmptyListOrNull()
-                        .let { ensureNotNull(it) { EmptyModule().nel() } },
-                    parts = parsed.flatMap { (_, nodes) -> nodes.filterIsInstance<Part>() },
-                )
-            }
-            .let { Validator.validate(options, it).bind() }
+            .toNonEmptyListOrNull()
+            .let { ensureNotNull(it) { EmptyModule().nel() } }
+            .let { AST(it) }
             .also { it.unusedParts().forEach { part -> logger.warn("Part '${part.identifier.value}' is never spread") } }
+            .let { Validator.validate(options, it).bind() }
     }
 }
 
@@ -98,10 +89,8 @@ private fun NonEmptyList<TokenizedModule>.allDefinitions() = flatMap { it.tokens
     }
     .toSet()
 
-private data class ParsedModule(val fileUri: FileUri, val nodes: NonEmptyList<Node>)
-
-private fun TokenProvider.parseModule(): EitherNel<WirespecException, ParsedModule> = either {
-    mutableListOf<Either<WirespecException, Node>>()
+private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = either {
+    mutableListOf<Either<WirespecException, Definition>>()
         .apply {
             while (hasNext()) {
                 when (token.type) {
@@ -115,10 +104,10 @@ private fun TokenProvider.parseModule(): EitherNel<WirespecException, ParsedModu
         .mapOrAccumulate { it.bind() }.bind()
         .toNonEmptyListOrNull()
         .let { ensureNotNull(it) { EmptyModule().nel() } }
-        .let { ParsedModule(fileUri, it) }
+        .let { Module(fileUri, it) }
 }
 
-private fun TokenProvider.parseDefinition(): Either<WirespecException, Node> = either {
+private fun TokenProvider.parseDefinition() = either {
     val annotations = parseAnnotations().bind()
     val comment = when (token.type) {
         is Comment -> community.flock.wirespec.compiler.core.parse.ast.Comment(token.value).also { eatToken().bind() }

@@ -18,3 +18,32 @@ Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), 
 [//]: # "TODO This is missing?"
 
 </details>
+
+## Default values
+
+Field [default values](../language/types.mdx#default-values) are written as the `default` of the property schema:
+
+```wirespec
+type Settings {
+  name: String = "anonymous",
+  retries: Integer = 3
+}
+```
+
+```json
+"Settings": {
+  "required": ["name", "retries"],
+  "properties": {
+    "name": { "type": "string", "default": "anonymous" },
+    "retries": { "type": "integer", "default": 3, "format": "int64" }
+  }
+}
+```
+
+Two kinds of default are left out:
+
+- A `null` default. A nullable field is already left out of `required`.
+- An enum default. An enum field is written as a `$ref` to the enum's schema, and OpenAPI 3.0 ignores anything next to
+  a `$ref`.
+
+The [OpenAPI converter](../converters/openapi.md#defaults) reads these defaults back.

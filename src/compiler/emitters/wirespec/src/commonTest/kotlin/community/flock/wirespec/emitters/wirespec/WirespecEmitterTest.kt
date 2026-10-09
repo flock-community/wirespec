@@ -34,7 +34,7 @@ class WirespecEmitterTest {
             |}
             |
             |part Audited {
-            |  ...Identifiable,
+            |  id: String,
             |  createdAt: String,
             |  updatedAt: String?
             |}
@@ -49,17 +49,19 @@ class WirespecEmitterTest {
             |}
             |
             |type Todo {
-            |  ...Audited,
+            |  id: String,
+            |  createdAt: String,
+            |  updatedAt: String?,
             |  name: String,
             |  done: Boolean
             |}
             |
-            |endpoint GetTodos GET /todos ?{...Paging,done: Boolean?} #{...Tracing} -> {
-            |  200 -> Todo[] #{...Tracing,total: Integer}
+            |endpoint GetTodos GET /todos ?{page: Integer,size: Integer,done: Boolean?} #{`X-Trace-Id`: String} -> {
+            |  200 -> Todo[] #{`X-Trace-Id`: String,total: Integer}
             |}
             |
             |rpc FindTodo {
-            |  ...Identifiable
+            |  id: String
             |} -> Todo
             |
         """.trimMargin()
@@ -334,5 +336,29 @@ class WirespecEmitterTest {
         """.trimMargin()
 
         CompileComplexModelTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
+    fun compileDefaultValueTest() {
+        val wirespec =
+            // language=ws
+            """
+            |type Settings {
+            |  name: String = "say \"hi\"\n",
+            |  retries: Integer = -1,
+            |  ratio: Number = 2.0,
+            |  active: Boolean = false,
+            |  nickname: String? = null,
+            |  status: Status = INACTIVE,
+            |  tags: String[]
+            |}
+            |
+            |enum Status {
+            |  ACTIVE, INACTIVE
+            |}
+            |
+            """.trimMargin()
+
+        compile(wirespec)({ WirespecEmitter() }) shouldBeRight wirespec
     }
 }

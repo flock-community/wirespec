@@ -8,6 +8,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.converter.common.withValidEnumDefaults
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 
 internal object AvroIdlParser : Parser {
 
@@ -21,6 +26,7 @@ internal object AvroIdlParser : Parser {
         val tokens = AvroIdlTokenizer(moduleContent.content).tokenize()
         val protocol = ProtocolParser(tokens).parseProtocol()
         val definitions: List<Definition> = protocol.types.flatMap { it.flatten() }
+            .let { definitions -> definitions.map { it.withValidEnumDefaults(definitions) } }
         return AST(
             nonEmptyListOf(
                 Module(
@@ -113,21 +119,27 @@ internal object AvroIdlParser : Parser {
             )
         }
 
-        private fun parseDefaultValue(): String {
+        private fun parseDefaultValue(): JsonElement {
             val token = peekToken() ?: error("Expected default value")
             return when (token) {
-                is AvroIdlToken.StringLiteral, is AvroIdlToken.NumberLiteral, is AvroIdlToken.Identifier -> {
-                    advance()
-                    token.value
-                }
+                is AvroIdlToken.StringLiteral -> JsonPrimitive(token.value).also { advance() }
+                is AvroIdlToken.NumberLiteral -> token.value.toJsonElement().also { advance() }
+                is AvroIdlToken.Identifier -> when (token.value) {
+                    "true" -> JsonPrimitive(true)
+                    "false" -> JsonPrimitive(false)
+                    "null" -> JsonNull
+                    else -> JsonPrimitive(token.value)
+                }.also { advance() }
                 is AvroIdlToken.Symbol -> when (token.value) {
-                    '[' -> readMatchedBlock('[', ']')
-                    '{' -> readMatchedBlock('{', '}')
+                    '[' -> readMatchedBlock('[', ']').toJsonElement()
+                    '{' -> readMatchedBlock('{', '}').toJsonElement()
                     else -> error("Unexpected symbol in default value: ${token.value}")
                 }
                 else -> error("Unexpected token in default value: $token")
             }
         }
+
+        private fun String.toJsonElement(): JsonElement = runCatching { Json.parseToJsonElement(this) }.getOrElse { JsonPrimitive(this) }
 
         private fun readMatchedBlock(open: Char, close: Char): String {
             val parts = mutableListOf<String>()

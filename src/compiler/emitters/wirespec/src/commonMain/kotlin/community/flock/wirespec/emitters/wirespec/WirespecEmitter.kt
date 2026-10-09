@@ -25,6 +25,8 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
     override val extension: FileExtension = FileExtension.Wirespec
 
+    override val supportsDefaults: Boolean = true
+
     override val shared: Shared? = null
 
     override val singleLineComment: String = "\n"
@@ -33,7 +35,7 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
         super<LanguageEmitter>.emit(ast, logger)
-            .let { e -> Emitted("wirespec.${extension.value}", (ast.parts.map { emit(it) } + e.map { it.result }).joinToString("\n")).nel() }
+            .let { e -> Emitted("wirespec.${extension.value}", e.map {it.result }.joinToString("\n")).nel() }
 
     override fun Reference.Primitive.Type.Constraint.emit(): String = when(this){
         is Reference.Primitive.Type.Constraint.RegExp -> "(${value})"

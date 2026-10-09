@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.ir.generator.PythonGenerator
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
+import community.flock.wirespec.compiler.test.CompileDefaultValueTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
@@ -15,8 +16,10 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.Test
 
 class PythonEmitterTest {
@@ -73,6 +76,13 @@ class PythonEmitterTest {
         val python = EmitterFixtures.compileUnionTest
 
         CompileUnionTest.compiler { PythonEmitter() } shouldBeRight python
+    }
+
+    @Test
+    fun compileDefaultValueTest() {
+        CompileDefaultValueTest.compiler { PythonEmitter() }
+            .shouldBeLeft()
+            .head.message shouldStartWith "Python does not support default values, but these fields have one: Settings.name, Settings.greeting"
     }
 
     @Test

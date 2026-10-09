@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.exceptions
 
 import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.name
@@ -40,6 +41,27 @@ internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coo
         fileUri,
         coordinates = coordinates,
         message = "A spread cannot be annotated; annotate the fields of the part instead",
+    )
+
+internal class AnnotatedPartException(fileUri: FileUri, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A part cannot be annotated; annotate its fields instead",
+    )
+
+internal class DefaultValueNotAllowedException(fileUri: FileUri, fieldName: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "Default values are only allowed on fields of a type definition, not on: $fieldName",
+    )
+
+internal class InvalidDefaultValueException(fileUri: FileUri, fieldName: String, value: String, reference: Reference, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "Invalid default value $value for field $fieldName of type ${reference.value}${if (reference.isNullable) "?" else ""}",
     )
 
 internal sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :

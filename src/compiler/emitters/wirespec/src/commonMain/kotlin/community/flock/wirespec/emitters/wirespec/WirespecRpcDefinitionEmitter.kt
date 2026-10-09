@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 
 internal interface WirespecRpcDefinitionEmitter : RpcDefinitionEmitter, WirespecTypeDefinitionEmitter {
     override fun emit(rpc: Rpc): String = when {
-        rpc.shape.entries.isEmpty() -> "rpc ${emit(rpc.identifier)} {} -> ${rpc.emitReturn()}\n"
+        rpc.shape.value.isEmpty() -> "rpc ${emit(rpc.identifier)} {} -> ${rpc.emitReturn()}\n"
         else -> """
             |rpc ${emit(rpc.identifier)} {
             |${rpc.shape.emit()}

@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Iterable
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
@@ -42,7 +43,7 @@ class OpenAPIV2ParserTest {
             .filterIsInstance<Endpoint>()
             .find { it.identifier.value == "QueryGET" }
 
-        val fields = endpoint?.queries?.find { it.identifier.value == "order" }
+        val fields = endpoint?.queries?.fields?.find { it.identifier.value == "order" }
 
         val expected = Iterable(
             reference = Primitive(

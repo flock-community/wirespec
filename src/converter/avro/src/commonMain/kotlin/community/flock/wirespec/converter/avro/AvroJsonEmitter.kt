@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
@@ -13,13 +14,17 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.common.toJsonElement
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 public object AvroJsonEmitter : Emitter {
 
     override val extension: FileExtension = FileExtension.JSON
+
+    override val supportsDefaults: Boolean = true
 
     override fun emit(
         ast: AST,
@@ -94,17 +99,18 @@ public object AvroJsonEmitter : Emitter {
     public fun Type.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
         name = identifier.value,
         type = "record",
-        fields = shape.value.map { field ->
+        fields = shape.value.fields.map { field ->
             AvroModel.Field(
                 name = field.identifier.value,
-                type = if (field.reference.isNullable) {
-                    AvroModel.TypeList(
-                        AvroModel.SimpleType("null"),
-                        field.emit(module, hasEmitted),
-                    )
-                } else {
-                    AvroModel.TypeList(field.emit(module, hasEmitted))
+                type = field.emit(module, hasEmitted).let { type ->
+                    // Avro checks a union's default against its first branch.
+                    when {
+                        !field.reference.isNullable -> AvroModel.TypeList(type)
+                        field.defaultValue.isNonNull() -> AvroModel.TypeList(type, AvroModel.SimpleType("null"))
+                        else -> AvroModel.TypeList(AvroModel.SimpleType("null"), type)
+                    }
                 },
+                default = field.defaultValue?.toJsonElement(),
             )
         },
     )
@@ -121,6 +127,8 @@ public object AvroJsonEmitter : Emitter {
                 }
             }
     }
+
+    private fun DefaultValue?.isNonNull() = this != null && this != DefaultValue.NullValue
 
     private fun Module.findType(name: String): Definition? = statements.toList().find { it.identifier.value == name }
 }

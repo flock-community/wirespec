@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
+import community.flock.wirespec.compiler.test.CompileDefaultValueTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
@@ -14,8 +15,10 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.Test
 
 class TypeScriptEmitterTest {
@@ -72,6 +75,13 @@ class TypeScriptEmitterTest {
         val typescript = EmitterFixtures.compileUnionTest
 
         CompileUnionTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileDefaultValueTest() {
+        CompileDefaultValueTest.compiler { TypeScriptEmitter() }
+            .shouldBeLeft()
+            .head.message shouldStartWith "TypeScript does not support default values, but these fields have one: Settings.name, Settings.greeting"
     }
 
     @Test

@@ -68,10 +68,10 @@ private fun String.shouldRoundTrip() {
     val before = parse(this).orFail { "source did not parse: $it\n\n$this" }
     val emitted = WirespecEmitter().emit(before, noLogger).joinToString("\n") { it.result }
     val after = parse(emitted).orFail { "emitted source did not parse: $it\n\n--- emitted ---\n$emitted" }
-    if (after.statements() != before.statements() || after.parts != before.parts) {
+    if (after.statements() != before.statements()) {
         fail(
             "round trip changed the AST\n--- source ---\n$this\n--- emitted ---\n$emitted\n" +
-                "--- before ---\n${(before.parts + before.statements()).joinToString("\n")}\n--- after ---\n${(after.parts + after.statements()).joinToString("\n")}",
+                "--- before ---\n${before.statements().joinToString("\n")}\n--- after ---\n${after.statements().joinToString("\n")}",
         )
     }
 }

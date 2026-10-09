@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.withoutDefaults
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.validate.Validator
@@ -24,9 +25,8 @@ public fun compile(arguments: CompilerArguments) {
 
     ctx
         .compile(
-            arguments.input.map {
-                ModuleContent(FileUri(it.name.value), it.content)
-            },
+            source = arguments.input.map { ModuleContent(FileUri(it.name.value), it.content) },
+            ignoreDefaults = arguments.ignoreDefaults,
         )
         .fold(arguments)
 }
@@ -45,6 +45,9 @@ public fun convert(arguments: ConverterArguments) {
         .map { moduleContent -> parser.parse(moduleContent, arguments.strict) }
         .map { Validator.validate(options, it) }
         .let { either { it.bindAll() } }
+        // Unlike compile, convert does not fail on defaults a language cannot generate: the defaults come from the
+        // converted spec, and those languages leave them out.
+        .map { list -> list.map { if (arguments.ignoreDefaults) it.withoutDefaults() else it } }
         .map { list ->
             list.flatMap { ast ->
                 arguments.emitters.flatMap {

@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
+import community.flock.wirespec.compiler.test.CompileDefaultValueTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
@@ -161,6 +162,13 @@ class KotlinEmitterTest {
         val kotlin = EmitterFixtures.compileComplexModelTest
 
         CompileComplexModelTest.compiler { KotlinEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun compileDefaultValueTest() {
+        val kotlin = EmitterFixtures.compileDefaultValueTest
+
+        CompileDefaultValueTest.compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test

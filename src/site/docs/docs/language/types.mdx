@@ -120,6 +120,136 @@ type Person {
 }
 ```
 
+### Default values
+
+A field can declare a default value with `=`. The default is used when a value for the field is not provided, for
+example when a client leaves the field out of a request body:
+
+```wirespec
+type Settings {
+    name: String = "anonymous",
+    retries: Integer = 3,
+    port: Integer32(0, 65535) = 8080,
+    ratio: Number = 1.5,
+    active: Boolean = true,
+    nickname: String? = null,
+    status: Status = ACTIVE
+}
+
+enum Status {
+    ACTIVE, INACTIVE
+}
+```
+
+#### Supported values
+
+Defaults can be set on fields of a primitive type or an enum, and any nullable field can default to `null`:
+
+| Field type                 | Default value                                | Example                          |
+|----------------------------|----------------------------------------------|----------------------------------|
+| `String`                   | A string literal                             | `name: String = "anonymous"`     |
+| `Integer`, `Integer32`     | An integer literal, which may be negative    | `offset: Integer = -1`           |
+| `Number`, `Number32`       | A number or an integer literal               | `ratio: Number = 1.5`            |
+| `Boolean`                  | `true` or `false`                            | `active: Boolean = true`         |
+| An enum                    | One of the enum's entries, written as is     | `status: Status = ACTIVE`        |
+| Any nullable field         | `null`                                       | `tags: String[]? = null`         |
+| A nullable primitive field | `null` or a value of the field's type        | `limit: Integer? = 10`           |
+| A nullable enum field      | `null` or one of the enum's entries          | `previous: Status? = INACTIVE`   |
+
+String literals support the escapes `\"`, `\\`, `\n`, `\r` and `\t`. An integer literal on a `Number` field is read as a
+number, so `scale: Number = 2` is the same as `scale: Number = 2.0`.
+
+The entry of an enum default is written without quotes, exactly as it appears in the enum, so an enum with integer
+entries such as `enum Priority { 1, 2, 3 }` takes `priority: Priority = 2`. The enum can be declared anywhere, also in
+another file.
+
+Apart from `null`, defaults are not supported on lists, dictionaries, refined types, unions or references to other
+types.
+
+#### Validation
+
+The compiler checks every default against its field. Each of these fields is a compile error:
+
+- `name: String = 1`: the value does not match the field's type.
+- `count: Integer = 1.5`: an `Integer` needs a whole number.
+- `small: Integer32 = 2147483648`: the value does not fit in 32 bits.
+- `score: Integer(0, 10) = 11`: the value is outside the field's bounds.
+- `nickname: String = null`: only nullable fields can default to `null`.
+- `status: Status = DELETED`: `DELETED` is not an entry of `Status`.
+- `status: Status = "ACTIVE"`: enum entries are written without quotes.
+
+The error points at the value, for example: `Invalid default value 11 for field score of type Integer`. A regular
+expression constraint on a `String` field is not checked against its default.
+
+Defaults are only allowed on the fields of a `type`. Endpoint queries and headers, and rpc parameters, cannot have
+defaults:
+
+```wirespec
+// Error: Default values are only allowed on fields of a type definition, not on: limit
+endpoint GetTodos GET /todos ? {limit: Integer = 10} -> {
+    200 -> Todo[]
+}
+```
+
+#### Generated code
+
+| Emitter                                   | Defaults                                                                 |
+|-------------------------------------------|--------------------------------------------------------------------------|
+| Kotlin                                    | Generated as constructor parameter defaults, see the [Kotlin emitter](../emitters/emitters-kotlin.mdx#default-values) |
+| Java, TypeScript, Python, Rust and Scala  | Not supported yet: a compile error, unless defaults are [ignored](#ignoring-defaults). A conversion leaves them out |
+| Wirespec                                  | Written as `field: Type = value`                                         |
+| OpenAPI v2 and v3                         | Written as the `default` of the property schema, see [OpenAPI](../converters/openapi.md#defaults) |
+| Avro                                      | Written as the `default` of the record field, see [Avro](../converters/avro.md#defaults) |
+
+The OpenAPI and Avro converters also read defaults, so they survive a conversion from OpenAPI or Avro to Wirespec.
+
+#### Ignoring defaults
+
+Compiling a Wirespec spec that has defaults to a language that does not support them yet fails, so a default you wrote
+is never dropped without notice. The error names the fields that have a default:
+
+```
+Java does not support default values, but these fields have one: Settings.name, Settings.retries. Remove the defaults,
+or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI, or
+ignoreDefaults in the Gradle and Maven plugins.
+```
+
+To leave all defaults out of the generated code, turn on the ignore defaults option of the plugin. Defaults are still
+checked, so an invalid default stays a compile error.
+
+A [conversion](../converters/converters.md) from OpenAPI or Avro does not fail on defaults. When it generates a language
+that does not support them, the defaults that the converter read are left out of the generated code.
+
+CLI:
+
+```shell
+wirespec compile -i ./wirespec -l Kotlin --ignore-defaults
+```
+
+Gradle:
+
+```kotlin
+tasks.register<CompileWirespecTask>("wirespec-kotlin") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated")
+    languages.set(listOf(Language.Kotlin))
+    ignoreDefaults.set(true)
+}
+```
+
+Maven:
+
+```xml
+<configuration>
+    <input>${project.basedir}/src/main/wirespec</input>
+    <output>${project.build.directory}/generated-sources/wirespec</output>
+    <languages>
+        <language>Kotlin</language>
+    </languages>
+    <ignoreDefaults>true</ignoreDefaults>
+</configuration>
+```
+
 ## Enum
 
 Enums (enumerations) in Wirespec are used to define a type that can only take on one of a predefined set of named

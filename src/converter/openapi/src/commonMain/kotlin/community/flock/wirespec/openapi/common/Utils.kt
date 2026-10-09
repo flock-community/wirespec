@@ -2,10 +2,16 @@ package community.flock.wirespec.openapi.common
 
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.converter.common.toJsonElement
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+
+// OpenAPI marks an optional property by leaving it out of `required`, so a null default adds nothing.
+internal fun DefaultValue?.toSchemaDefault(): JsonElement? = this?.takeUnless { it == DefaultValue.NullValue }?.toJsonElement()
 
 internal fun className(vararg arg: String): String = arg
     .flatMap { it.split("-", "/") }

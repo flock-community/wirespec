@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.ir.transformer
 
 import community.flock.wirespec.compiler.core.ir.Constructor
 import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.EnumReference
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.Function
@@ -16,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -67,6 +69,21 @@ public fun <E : Element> E.sanitizeEnumEntries(
     }
 }
 
+/**
+ * Renames the entry of every enum default the way [sanitizeEntry] renames the entries of the enum
+ * itself, so the default refers to the entry as the language spells it.
+ */
+public fun <E : Element> E.sanitizeEnumDefaults(
+    sanitizeEntry: (String) -> String,
+): E = transform {
+    fields { field ->
+        when (val initializer = field.initializer) {
+            is EnumReference -> field.copy(initializer = initializer.copy(entry = Name(listOf(sanitizeEntry(initializer.entry.value())))))
+            else -> field
+        }
+    }
+}
+
 public fun <E : Element> E.injectSelfReceiverToValidate(
     fieldNames: Set<String>,
     selfParamName: String = "self",
@@ -98,4 +115,5 @@ public fun Definition.sortKey(): Int = when (this) {
     is Endpoint -> 5
     is Channel -> 6
     is Rpc -> 7
+    is Part -> 8
 }

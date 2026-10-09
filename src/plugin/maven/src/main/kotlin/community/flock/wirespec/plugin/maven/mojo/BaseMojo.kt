@@ -91,6 +91,12 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var strict: Boolean = true
 
     /**
+     * Specifies whether to leave field default values out of the emitted code. Default 'false'.
+     */
+    @Parameter
+    protected var ignoreDefaults: Boolean = false
+
+    /**
      * Source directory. Default 'null'.
      */
     @Parameter

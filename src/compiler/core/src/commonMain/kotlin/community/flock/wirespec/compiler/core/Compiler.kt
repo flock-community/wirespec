@@ -2,11 +2,14 @@ package community.flock.wirespec.compiler.core
 
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
+import arrow.core.flatMap
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.HasEmitters
+import community.flock.wirespec.compiler.core.emit.ensureDefaultsSupportedBy
+import community.flock.wirespec.compiler.core.emit.withoutDefaults
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.Parser.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -44,11 +47,23 @@ public fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
 
 public fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.fileUri, tokenize(it.content)) }).also(PARSED::log)
 
-public fun EmitContext.emit(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
+/**
+ * [ignoreDefaults] leaves field default values out of the emitted code, so a spec with defaults also
+ * compiles for emitters that do not support them.
+ */
+public fun EmitContext.emit(
+    ast: EitherNel<WirespecException, AST>,
+    ignoreDefaults: Boolean = false,
+): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
+    .map { if (ignoreDefaults) it.withoutDefaults() else it }
+    .flatMap { it.ensureDefaultsSupportedBy(emitters) }
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 
-public fun CompilationContext.compile(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(parse(source))
+public fun CompilationContext.compile(
+    source: NonEmptyList<ModuleContent>,
+    ignoreDefaults: Boolean = false,
+): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(parse(source), ignoreDefaults)
 
 private enum class Stage {
     TOKENIZED,

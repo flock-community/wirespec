@@ -77,7 +77,8 @@ private fun Random.module(features: WirespecFeatures): String {
 /** Part fields are named apart from shape fields, and parts never spread each other, so no spread can collide. */
 private fun Random.part(name: String, index: Int, models: List<String>, features: WirespecFeatures): String {
     val fields = List(nextInt(0, 3)) { field -> annotationBlock(features, indent = "  ") + "  common${index}x$field: ${reference(models, features)}" }
-    return metadata(features) + "part $name {\n${fields.joinToString(",\n")}\n}\n"
+    // Parts carry a comment but never annotations.
+    return comment(features) + "part $name {\n${fields.joinToString(",\n")}\n}\n"
 }
 
 private fun Random.spreads(parts: List<String>): List<String> = parts.filter { nextInt(3) == 0 }.map { "...$it" }

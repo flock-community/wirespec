@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.ir.Visibility
 import community.flock.wirespec.compiler.core.ir.file
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.Type as IrType
 
 internal object TypeDslFile {
@@ -67,7 +68,7 @@ internal data class TypeShape(
         ): TypeShape {
             val name = type.identifier.value
             val fields = EndpointShape.extractBodyFields(name, types, refined, visited = emptySet())
-            val directRefs = type.shape.value.map { it.reference }
+            val directRefs = type.shape.value.fields.map { it.reference }
             val modelImports = EndpointShape.modelImportsFor(directRefs, fields, types)
             return TypeShape(name = name, fields = fields, modelImports = modelImports)
         }

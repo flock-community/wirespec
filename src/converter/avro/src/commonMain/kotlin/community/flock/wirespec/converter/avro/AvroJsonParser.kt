@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import community.flock.wirespec.converter.common.Parser
+import community.flock.wirespec.converter.common.withValidEnumDefaults
 import kotlinx.serialization.json.Json
 
 public object AvroJsonParser : Parser {
@@ -38,6 +39,7 @@ public object AvroJsonParser : Parser {
             is AvroModel.MapType -> TODO()
             is AvroModel.UnionType -> TODO()
         }
-        return AST(nonEmptyListOf(Module(moduleContent.fileUri, result.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST"))))
+        val definitions = result.map { it.withValidEnumDefaults(result) }
+        return AST(nonEmptyListOf(Module(moduleContent.fileUri, definitions.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST"))))
     }
 }

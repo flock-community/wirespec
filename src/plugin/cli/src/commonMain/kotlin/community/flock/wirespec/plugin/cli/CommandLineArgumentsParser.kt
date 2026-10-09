@@ -55,6 +55,7 @@ internal enum class Options(vararg val flags: String) {
     LogLevel("--log-level"),
     Shared("--shared"),
     Strict("--strict"),
+    IgnoreDefaults("--ignore-defaults"),
 }
 
 internal class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -74,6 +75,7 @@ private abstract class CommonOptions : CliktCommand() {
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$INFO")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
+    val ignoreDefaults by option(*Options.IgnoreDefaults.flags, help = "Leave field default values out of the emitted code").flag()
 
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG
@@ -131,6 +133,7 @@ private class Compile(
             logger = logger,
             shared = shared,
             strict = strict,
+            ignoreDefaults = ignoreDefaults,
         ).let(compiler)
     }
 }
@@ -171,6 +174,7 @@ private class Convert(
             logger = logger,
             shared = shared,
             strict = strict,
+            ignoreDefaults = ignoreDefaults,
         ).let(converter)
     }
 }

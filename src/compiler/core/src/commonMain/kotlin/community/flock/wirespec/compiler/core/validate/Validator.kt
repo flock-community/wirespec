@@ -11,21 +11,26 @@ import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateRpcError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
+import community.flock.wirespec.compiler.core.exceptions.InvalidEnumDefaultError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
+import community.flock.wirespec.compiler.core.parse.ast.isEntryOf
 
 public object Validator {
 
@@ -37,7 +42,8 @@ public object Validator {
             validateTypes(resolved),
             validateChannels(resolved),
             validateRpcs(resolved),
-        ) { a, _, _, _, _ -> a }.bind()
+            validateEnumDefaults(resolved),
+        ) { a, _, _, _, _, _ -> a }.bind()
     }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
@@ -57,6 +63,7 @@ public object Validator {
                 is Endpoint -> definition
                 is Enum -> definition
                 is Refined -> definition
+                is Part -> definition
                 is Type -> definition.copy(
                     extends = filterIsInstance<Union>()
                         .filter { union ->
@@ -89,6 +96,22 @@ public object Validator {
                 .map { (name, types) -> types.map { DuplicateTypeError(name) } }
                 .flatten()
                 .toList()
+        }
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
+
+    private fun validateEnumDefaults(ast: AST): EitherNel<WirespecException, AST> = ast.modules
+        .flatMap { it.statements }
+        .let { definitions ->
+            definitions
+                .filterIsInstance<Type>()
+                .flatMap { it.shape.value.fields }
+                .mapNotNull { field ->
+                    (field.defaultValue as? DefaultValue.EnumValue)
+                        ?.takeUnless { it.isEntryOf(field.reference, definitions) }
+                        ?.let { InvalidEnumDefaultError(field.identifier.value, it.value, field.reference) }
+                }
         }
         .toNonEmptyListOrNull()
         ?.left()

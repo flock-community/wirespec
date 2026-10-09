@@ -4,6 +4,8 @@ import arrow.core.Either
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
+import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
+import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
@@ -12,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.TypeParser.parseType
 import community.flock.wirespec.compiler.core.parse.TypeParser.parseTypeShape
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Comment
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
@@ -22,6 +25,7 @@ import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.coerceTo
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
@@ -30,6 +34,7 @@ import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision
@@ -63,28 +68,28 @@ internal object TypeParser {
         }
     }
 
-    fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
-        (if (token.type is RightCurly) emptyList() else parseShapeEntries().bind())
+    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean): Either<WirespecException, Type.Shape> = parseToken {
+        (if (token.type is RightCurly) emptyList() else parseShapeEntries(allowFieldDefaults).bind())
             .also {
                 expect<RightCurly>().bind()
             }
-            .let { Type.Shape(value = it.filterIsInstance<Field>(), entries = it) }
+            .let(Type::Shape)
     }
 
-    private fun TokenProvider.parseShapeEntries(): Either<WirespecException, List<ShapeEntry>> = either {
+    private fun TokenProvider.parseShapeEntries(allowFieldDefaults: Boolean): Either<WirespecException, List<ShapeEntry>> = either {
         mutableListOf<ShapeEntry>().apply {
-            add(parseShapeEntry().bind())
+            add(parseShapeEntry(allowFieldDefaults).bind())
             while (token.type is Comma) {
                 eatToken().bind()
-                add(parseShapeEntry().bind())
+                add(parseShapeEntry(allowFieldDefaults).bind())
             }
         }
     }
 
-    private fun TokenProvider.parseShapeEntry(): Either<WirespecException, ShapeEntry> = either {
+    private fun TokenProvider.parseShapeEntry(allowFieldDefaults: Boolean): Either<WirespecException, ShapeEntry> = either {
         val annotations = parseAnnotations().bind()
         when (token.type) {
-            is WirespecIdentifier -> parseField(FieldIdentifier(token.value), annotations).bind()
+            is WirespecIdentifier -> parseField(FieldIdentifier(token.value), annotations, allowFieldDefaults).bind()
             is Ellipsis -> parseSpread(annotations).bind()
             else -> raiseWrongToken<WirespecIdentifier>().bind()
         }
@@ -154,7 +159,7 @@ private fun TokenProvider.parseTypeDefinition(comment: Comment?, annotations: Li
             comment = comment,
             annotations = annotations,
             identifier = typeName,
-            shape = parseTypeShape().bind(),
+            shape = parseTypeShape(allowFieldDefaults = true).bind(),
             extends = emptyList(),
         )
 
@@ -313,23 +318,55 @@ private fun TokenProvider.parseSpread(annotations: List<Annotation>) = parseToke
     }
 }
 
-private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>) = parseToken {
+private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowFieldDefaults: Boolean) = parseToken {
     expect<Colon>().bind()
 
-    when (token.type) {
-        is LeftCurly -> Field(
-            identifier = identifier,
-            reference = parseDict().bind(),
-            annotations = annotations,
-        )
-
-        is WirespecType -> Field(
-            identifier = identifier,
-            reference = parseType().bind(),
-            annotations = annotations,
-        )
-
+    val reference = when (token.type) {
+        is LeftCurly -> parseDict().bind()
+        is WirespecType -> parseType().bind()
         else -> raiseWrongToken<WirespecType>().bind()
+    }
+
+    Field(
+        identifier = identifier,
+        reference = reference,
+        annotations = annotations,
+        defaultValue = when (token.type) {
+            is Equals -> parseDefaultValue(identifier, reference, allowFieldDefaults).bind()
+            else -> null
+        },
+    )
+}
+
+private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowFieldDefaults: Boolean) = parseToken { equals ->
+    if (!allowFieldDefaults) raise(DefaultValueNotAllowedException(fileUri, identifier.value, equals.coordinates))
+    eatToken().bind().let { valueToken ->
+        valueToken.toDefaultValue()?.coerceTo(reference)
+            ?: raise(InvalidDefaultValueException(fileUri, identifier.value, valueToken.value, reference, valueToken.coordinates))
+    }
+}
+
+private fun Token.toDefaultValue(): DefaultValue? = when (type) {
+    is LiteralString -> DefaultValue.StringValue(value.removeSurrounding("\"").unescape())
+    is Integer -> DefaultValue.IntegerValue(value)
+    is Number -> DefaultValue.NumberValue(value)
+    is WirespecType -> DefaultValue.EnumValue(value)
+    is WirespecIdentifier -> when (value) {
+        "true" -> DefaultValue.BooleanValue(true)
+        "false" -> DefaultValue.BooleanValue(false)
+        "null" -> DefaultValue.NullValue
+        else -> null
+    }
+
+    else -> null
+}
+
+private fun String.unescape(): String = Regex("\\\\(.)").replace(this) { match ->
+    when (val escaped = match.groupValues[1]) {
+        "n" -> "\n"
+        "r" -> "\r"
+        "t" -> "\t"
+        else -> escaped
     }
 }
 

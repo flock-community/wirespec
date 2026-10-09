@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -30,8 +31,13 @@ public interface IrEmitter : Emitter {
     /** Extensions applied to the complete IR before code generation. */
     public val extensions: List<IrExtension> get() = emptyList()
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        val moduleFiles = ast.modules.flatMap { m ->
+    /** Parts are already flattened into the shapes that spread them, so they are left out before anything is emitted. */
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.withoutParts()
+        ?.let { emitDefinitions(it, logger) }
+        ?: error("Nothing to emit: every module only contains parts")
+
+    private fun emitDefinitions(ast: AST, logger: Logger): NonEmptyList<Emitted> {
+        val moduleFiles = ast.modules.toList().flatMap { m ->
             logger.info("Emitting Nodes from ${m.fileUri.value} ")
             emit(m, logger)
         }
@@ -39,7 +45,8 @@ public interface IrEmitter : Emitter {
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
         val mainClientFile = allEndpoints.takeIf { it.isNotEmpty() }?.let { emitClient(it, logger) }
 
-        val allFiles: IR = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
+        val allFiles: IR = (moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)).toNonEmptyListOrNull()
+            ?: error("Nothing to emit")
         val transformedFiles = extensions
             .fold(allFiles) { ir, extension -> extension.extend(ir, ast) }
             .filterIsInstance<File>()
@@ -52,8 +59,8 @@ public interface IrEmitter : Emitter {
     /** Hook for emitters that need to inspect the full set of files before per-file generation. */
     public fun beforeGenerate(allFiles: List<File>): Unit = Unit
 
-    public fun emit(module: Module, logger: Logger): NonEmptyList<File> {
-        val definitionFiles = module.statements.map { emit(it, module, logger) }
+    public fun emit(module: Module, logger: Logger): List<File> {
+        val definitionFiles = module.statements.filterNot { it is Part }.map { emit(it, module, logger) }
         val clientFiles = module.statements.toList().filterIsInstance<Endpoint>().map { endpoint ->
             logger.info("Emitting Client for endpoint ${endpoint.identifier.value}")
             emitEndpointClient(endpoint)
@@ -79,6 +86,7 @@ public interface IrEmitter : Emitter {
             is Union -> emit(definition)
             is Channel -> emit(definition)
             is Rpc -> emit(definition)
+            is Part -> error("Part ${definition.identifier.value} is flattened during validation and is never emitted")
         }
     }
 
@@ -102,4 +110,13 @@ public interface IrEmitter : Emitter {
     public fun emit(rpc: Rpc): File
 
     public fun transformTestFile(file: File): File = file
+}
+
+private fun AST.withoutParts(): AST? = when {
+    modules.none { module -> module.statements.any { it is Part } } -> this
+    else ->
+        modules
+            .mapNotNull { module -> module.statements.filterNot { it is Part }.toNonEmptyListOrNull()?.let { module.copy(statements = it) } }
+            .toNonEmptyListOrNull()
+            ?.let { copy(modules = it) }
 }

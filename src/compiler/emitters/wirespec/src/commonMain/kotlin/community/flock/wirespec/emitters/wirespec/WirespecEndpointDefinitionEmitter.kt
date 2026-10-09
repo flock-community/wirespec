@@ -9,8 +9,8 @@ import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 internal interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
-        |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queryEntries.emitQuery()}${endpoint.headerEntries.emitHeader()} -> {
-        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${it.headerEntries.emitHeader()}" }}
+        |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()}${endpoint.headers.emitHeader()} -> {
+        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${it.headers.emitHeader()}" }}
         |}
         |
     """.trimMargin()

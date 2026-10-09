@@ -37,18 +37,21 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.findLinks
 import community.flock.wirespec.openapi.common.json
+import community.flock.wirespec.openapi.common.toSchemaDefault
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -59,6 +62,8 @@ public object OpenAPIV3Emitter : Emitter {
     )
 
     override val extension: FileExtension = FileExtension.JSON
+
+    override val supportsDefaults: Boolean = true
 
     override fun emit(
         ast: AST,
@@ -87,7 +92,7 @@ public object OpenAPIV3Emitter : Emitter {
     )
 
     private fun Statements.emitComponents(logger: Logger) = this
-        .filter { it !is Endpoint && it !is Channel && it !is Rpc }
+        .filter { it !is Endpoint && it !is Channel && it !is Rpc && it !is Part }
         .associate { definition ->
             definition.identifier.value to when (definition) {
                 is Enum -> definition.emit()
@@ -97,6 +102,7 @@ public object OpenAPIV3Emitter : Emitter {
                 is Endpoint -> error("Cannot emit endpoint")
                 is Channel -> error("Cannot emit channel")
                 is Rpc -> error("Cannot emit rpc")
+                is Part -> error("Cannot emit part")
             }
                 .also { logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}") }
         }
@@ -156,8 +162,8 @@ public object OpenAPIV3Emitter : Emitter {
 
     private fun Type.emit(): OpenAPIV30Schema = OpenAPIV30Schema(
         description = annotations.findDescription() ?: comment?.value,
-        properties = shape.value.associate { it.emitSchema() },
-        required = shape.value
+        properties = shape.value.fields.associate { it.emitSchema() },
+        required = shape.value.fields
             .filter { !it.reference.isNullable }
             .map { it.identifier.value }
             .takeIf { it.isNotEmpty() },
@@ -181,7 +187,7 @@ public object OpenAPIV3Emitter : Emitter {
         operationId = identifier.value,
         description = annotations.findDescription() ?: comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
-            .map { it.emitParameter() } + queries.map { it.emitParameter(OpenAPIV30ParameterLocation.QUERY) } + headers.map {
+            .map { it.emitParameter() } + queries.fields.map { it.emitParameter(OpenAPIV30ParameterLocation.QUERY) } + headers.fields.map {
             it.emitParameter(
                 OpenAPIV30ParameterLocation.HEADER,
             )
@@ -199,7 +205,7 @@ public object OpenAPIV3Emitter : Emitter {
             .groupBy { it.status }
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to OpenAPIV30Response(
-                    headers = res.flatMap { it.headers }.associate { it.emitHeader() },
+                    headers = res.flatMap { it.headers.fields }.associate { it.emitHeader() },
                     description = res.first().annotations.findDescription()
                         ?: "${identifier.value} $statusCode response",
                     content = res
@@ -255,7 +261,7 @@ public object OpenAPIV3Emitter : Emitter {
 
     private fun Field.emitSchema(): Pair<String, OpenAPIV30SchemaOrReference> = identifier.value to reference.emitSchema().let {
         when (it) {
-            is OpenAPIV30Schema -> it.copy(description = annotations.findDescription())
+            is OpenAPIV30Schema -> it.copy(description = annotations.findDescription(), default = defaultValue.toSchemaDefault())
             is OpenAPIV30Reference -> it
         }
     }
