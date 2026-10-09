@@ -189,6 +189,82 @@ class LspServerTest {
     }
 
     @Test
+    fun `a part that is never spread gets a warning on its name`() {
+        initialize()
+        openDocument(URI, Fixtures.PARTS)
+
+        val diagnostic = transport.notificationsOf("textDocument/publishDiagnostics").single()["params"]!!
+            .jsonObject["diagnostics"]!!.jsonArray
+            .single().jsonObject
+        assertEquals(2, diagnostic["severity"]!!.jsonPrimitive.int, "expected severity = WARNING (2)")
+        assertEquals("Part 'Unused' is never spread", diagnostic["message"]!!.jsonPrimitive.content)
+        val range = diagnostic["range"]!!.jsonObject
+        assertEquals(4, range["start"]!!.jsonObject["line"]!!.jsonPrimitive.int)
+        assertEquals(5, range["start"]!!.jsonObject["character"]!!.jsonPrimitive.int)
+        assertEquals(11, range["end"]!!.jsonObject["character"]!!.jsonPrimitive.int)
+    }
+
+    @Test
+    fun `go-to-definition on a spread returns the part and the spread`() {
+        initialize()
+        openDocument(URI, Fixtures.PARTS)
+
+        // `  ...Audited,` is on line 9; `Audited` starts at char 5.
+        val response = transport.request("textDocument/definition", positionParams(line = 9, character = 7))
+
+        val lines = response["result"]!!.jsonArray
+            .map { it.jsonObject["range"]!!.jsonObject["start"]!!.jsonObject["line"]!!.jsonPrimitive.int }
+            .toSet()
+        assertEquals(setOf(0, 9), lines, "should jump between line 0 (`part Audited`) and line 9 (the spread)")
+    }
+
+    @Test
+    fun `rename on a part renames its declaration and every spread`() {
+        initialize()
+        openDocument(URI, Fixtures.PARTS)
+
+        val response = transport.request(
+            "textDocument/rename",
+            buildJsonObject {
+                put("textDocument", buildJsonObject { put("uri", URI) })
+                put(
+                    "position",
+                    buildJsonObject {
+                        put("line", 0)
+                        put("character", 7)
+                    },
+                )
+                put("newName", "Audit")
+            },
+        )
+
+        val edits = response["result"]!!.jsonObject["changes"]!!.jsonObject[URI]!!.jsonArray
+        assertEquals(
+            setOf(0 to 5, 9 to 5),
+            edits.map { it.jsonObject["range"]!!.jsonObject["start"]!!.jsonObject.let { start -> start["line"]!!.jsonPrimitive.int to start["character"]!!.jsonPrimitive.int } }.toSet(),
+        )
+        assertTrue(edits.all { it.jsonObject["newText"]!!.jsonPrimitive.content == "Audit" })
+    }
+
+    @Test
+    fun `part is a keyword and a spread is an operator`() {
+        initialize()
+        openDocument(URI, Fixtures.PARTS)
+
+        val response = transport.request(
+            "textDocument/semanticTokens/full",
+            buildJsonObject { put("textDocument", buildJsonObject { put("uri", URI) }) },
+        )
+
+        val tokens = response["result"]!!.jsonObject["data"]!!.jsonArray.map { it.jsonPrimitive.int }.chunked(5)
+        assertEquals(listOf(0, 0, 4, SemanticTokenLegend.TYPE_KEYWORD, 0), tokens.first(), "`part` at line 0, char 0")
+        assertTrue(
+            tokens.any { (_, _, length, type) -> length == 3 && type == SemanticTokenLegend.TYPE_OPERATOR },
+            "expected `...` as an operator token; got $tokens",
+        )
+    }
+
+    @Test
     fun `didChange refreshes diagnostics`() {
         initialize()
         openDocument(URI, Fixtures.TODOS)

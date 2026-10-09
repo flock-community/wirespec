@@ -14,9 +14,10 @@ The server speaks JSON-RPC 2.0 over either:
 
 ## Capabilities
 
-- `textDocument/publishDiagnostics` — surfaces parser errors as squiggles.
-- `textDocument/semanticTokens/full` — colorizes keywords, types, identifiers, and HTTP methods.
-- `textDocument/definition` — for a type identifier, returns every occurrence in the same document.
+- `textDocument/publishDiagnostics` — surfaces parser errors as squiggles, and warns on a `part` that no `...Part` in the document spreads.
+- `textDocument/semanticTokens/full` — colorizes keywords, types, identifiers, HTTP methods, and the `...` spread operator.
+- `textDocument/definition` — for a type or part identifier, returns every occurrence in the same document, spreads included.
+- `textDocument/rename` — renames a type or part identifier and every reference to it, spreads included.
 
 ## Build
 

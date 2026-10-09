@@ -36,6 +36,28 @@ endpoint GetTodos GET /todos -> {
 }
 """
 
+    /**
+     * Parts and a spread. `Unused` is never spread, so it gets a warning.
+     *
+     * Line numbers (0-indexed) referenced by tests:
+     *  - 0 : `part Audited {`
+     *  - 4 : `part Unused {`
+     *  - 9 : `  ...Audited,`
+     */
+    const val PARTS = """part Audited {
+  createdAt: String
+}
+
+part Unused {
+  note: String
+}
+
+type Todo {
+  ...Audited,
+  name: String
+}
+"""
+
     /** A broken document — missing type after `name:`. Used to verify diagnostic reporting. */
     const val BROKEN = """type Person {
   name:
