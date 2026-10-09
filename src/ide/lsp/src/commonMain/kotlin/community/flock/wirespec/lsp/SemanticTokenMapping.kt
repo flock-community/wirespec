@@ -1,6 +1,7 @@
 package community.flock.wirespec.lsp
 
 import community.flock.wirespec.compiler.core.tokenize.DromedaryCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.Ellipsis
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Keyword
 import community.flock.wirespec.compiler.core.tokenize.Method
@@ -17,12 +18,13 @@ internal object SemanticTokenLegend {
     const val TYPE_TYPE = 1
     const val TYPE_VARIABLE = 2
     const val TYPE_METHOD = 3
+    const val TYPE_OPERATOR = 4
 
-    val tokenTypes = listOf("keyword", "type", "variable", "method")
+    val tokenTypes = listOf("keyword", "type", "variable", "method", "operator")
     val tokenModifiers = listOf<String>()
 }
 
-internal enum class TokenKind { KEYWORD, BUILT_IN_TYPE, USER_TYPE, FIELD, METHOD }
+internal enum class TokenKind { KEYWORD, BUILT_IN_TYPE, USER_TYPE, FIELD, METHOD, OPERATOR }
 
 internal fun TokenType.toTokenKind(): TokenKind? = when (this) {
     is Keyword -> TokenKind.KEYWORD
@@ -32,6 +34,7 @@ internal fun TokenType.toTokenKind(): TokenKind? = when (this) {
     // for our purposes treat it as a user-defined type (renameable).
     is TypeIdentifier -> TokenKind.USER_TYPE
     is Method -> TokenKind.METHOD
+    is Ellipsis -> TokenKind.OPERATOR
     is DromedaryCaseIdentifier,
     is KebabCaseIdentifier,
     is ScreamingKebabCaseIdentifier,
@@ -48,4 +51,5 @@ internal fun TokenKind.toSemanticType(): Int = when (this) {
     TokenKind.USER_TYPE -> SemanticTokenLegend.TYPE_TYPE
     TokenKind.FIELD -> SemanticTokenLegend.TYPE_VARIABLE
     TokenKind.METHOD -> SemanticTokenLegend.TYPE_METHOD
+    TokenKind.OPERATOR -> SemanticTokenLegend.TYPE_OPERATOR
 }
