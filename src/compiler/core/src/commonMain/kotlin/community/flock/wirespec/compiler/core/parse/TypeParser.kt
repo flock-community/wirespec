@@ -313,7 +313,7 @@ private fun TokenProvider.parsePrimitiveType(previousToken: Token) = either {
 private fun TokenProvider.parseSpread(annotations: List<Annotation>) = parseToken { ellipsis ->
     ensure(annotations.isEmpty()) { AnnotatedSpreadException(fileUri, ellipsis.coordinates) }
     when (token.type) {
-        is WirespecType -> Spread(DefinitionIdentifier(token.shouldBeDefined().bind().value)).also { eatToken().bind() }
+        is WirespecType -> Spread(Reference.Custom(token.shouldBeDefined().bind().value, isNullable = false)).also { eatToken().bind() }
         else -> raiseWrongToken<WirespecType>().bind()
     }
 }
