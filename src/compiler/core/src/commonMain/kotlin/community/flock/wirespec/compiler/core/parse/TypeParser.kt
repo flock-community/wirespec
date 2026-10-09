@@ -63,26 +63,26 @@ internal object TypeParser {
         }
     }
 
-    fun TokenProvider.parseTypeShape(allowDefaults: Boolean = false): Either<WirespecException, Type.Shape> = parseToken {
-        (if (token.type is RightCurly) emptyList() else parseFields(allowDefaults).bind())
+    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean): Either<WirespecException, Type.Shape> = parseToken {
+        (if (token.type is RightCurly) emptyList() else parseFields(allowFieldDefaults).bind())
             .also {
                 expect<RightCurly>().bind()
             }
             .let(Type::Shape)
     }
 
-    private fun TokenProvider.parseFields(allowDefaults: Boolean): Either<WirespecException, List<Field>> = either {
+    private fun TokenProvider.parseFields(allowFieldDefaults: Boolean): Either<WirespecException, List<Field>> = either {
         mutableListOf<Field>().apply {
             val firstFieldAnnotations = parseAnnotations().bind()
             when (token.type) {
-                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations, allowDefaults).bind())
+                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations, allowFieldDefaults).bind())
                 else -> raiseWrongToken<WirespecIdentifier>().bind()
             }
             while (token.type is Comma) {
                 eatToken().bind()
                 val fieldAnnotations = parseAnnotations().bind()
                 when (token.type) {
-                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations, allowDefaults).bind())
+                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations, allowFieldDefaults).bind())
                     else -> raiseWrongToken<WirespecIdentifier>().bind()
                 }
             }
@@ -153,7 +153,7 @@ private fun TokenProvider.parseTypeDefinition(comment: Comment?, annotations: Li
             comment = comment,
             annotations = annotations,
             identifier = typeName,
-            shape = parseTypeShape(allowDefaults = true).bind(),
+            shape = parseTypeShape(allowFieldDefaults = true).bind(),
             extends = emptyList(),
         )
 
@@ -304,7 +304,7 @@ private fun TokenProvider.parsePrimitiveType(previousToken: Token) = either {
     }
 }
 
-private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowDefaults: Boolean) = parseToken {
+private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowFieldDefaults: Boolean) = parseToken {
     expect<Colon>().bind()
 
     val reference = when (token.type) {
@@ -318,14 +318,14 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
         reference = reference,
         annotations = annotations,
         defaultValue = when (token.type) {
-            is Equals -> parseDefaultValue(identifier, reference, allowDefaults).bind()
+            is Equals -> parseDefaultValue(identifier, reference, allowFieldDefaults).bind()
             else -> null
         },
     )
 }
 
-private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowDefaults: Boolean) = parseToken { equals ->
-    if (!allowDefaults) raise(DefaultValueNotAllowedException(fileUri, identifier.value, equals.coordinates))
+private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowFieldDefaults: Boolean) = parseToken { equals ->
+    if (!allowFieldDefaults) raise(DefaultValueNotAllowedException(fileUri, identifier.value, equals.coordinates))
     eatToken().bind().let { valueToken ->
         valueToken.toDefaultValue()?.coerceTo(reference)
             ?: raise(InvalidDefaultValueException(fileUri, identifier.value, valueToken.value, reference, valueToken.coordinates))

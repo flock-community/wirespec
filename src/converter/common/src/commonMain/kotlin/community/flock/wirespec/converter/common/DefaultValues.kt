@@ -61,5 +61,5 @@ public fun DefaultValue.toJsonElement(): JsonElement = when (this) {
     is DefaultValue.NumberValue -> JsonPrimitive(value.toDouble())
     is DefaultValue.BooleanValue -> JsonPrimitive(value)
     is DefaultValue.EnumValue -> JsonPrimitive(value)
-    DefaultValue.NullValue -> JsonNull
+    is DefaultValue.NullValue -> JsonNull
 }

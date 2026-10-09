@@ -6,19 +6,11 @@ import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.emit
+import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.withoutDefaults
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ParseOptions
-import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.compiler.core.parse.ast.Channel
-import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.Enum
-import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.compiler.core.parse.ast.Rpc
-import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.converter.avro.AvroJsonParser
 import community.flock.wirespec.converter.common.Parser
@@ -32,13 +24,10 @@ public fun compile(arguments: CompilerArguments) {
     }
 
     ctx
-        .parse(
-            arguments.input.map {
-                ModuleContent(FileUri(it.name.value), it.content)
-            },
+        .compile(
+            source = arguments.input.map { ModuleContent(FileUri(it.name.value), it.content) },
+            ignoreDefaults = arguments.ignoreDefaults,
         )
-        .map { it.withOptions(arguments) }
-        .let { ctx.emit(it) }
         .fold(arguments)
 }
 
@@ -58,7 +47,7 @@ public fun convert(arguments: ConverterArguments) {
         .let { either { it.bindAll() } }
         // Unlike compile, convert does not fail on defaults a language cannot generate: the defaults come from the
         // converted spec, and those languages leave them out.
-        .map { list -> list.map { it.withOptions(arguments) } }
+        .map { list -> list.map { if (arguments.ignoreDefaults) it.withoutDefaults() else it } }
         .map { list ->
             list.flatMap { ast ->
                 arguments.emitters.flatMap {
@@ -68,21 +57,6 @@ public fun convert(arguments: ConverterArguments) {
         }
         .fold(arguments)
 }
-
-private fun AST.withOptions(arguments: WirespecArguments) = if (arguments.ignoreDefaults) withoutDefaults() else this
-
-private fun AST.withoutDefaults() = copy(
-    modules = modules.map { module ->
-        module.copy(
-            statements = module.statements.map { definition ->
-                when (definition) {
-                    is Type -> definition.copy(shape = Type.Shape(definition.shape.value.map { it.copy(defaultValue = null) }))
-                    is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined -> definition
-                }
-            },
-        )
-    },
-)
 
 private fun EitherNel<WirespecException, NonEmptyList<Emitted>>.fold(arguments: WirespecArguments) = this
     .mapLeft { it.map(WirespecException::message) }

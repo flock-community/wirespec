@@ -18,7 +18,7 @@ public sealed interface DefaultValue {
  * definition is an enum with this entry needs the other definitions, see [isEntryOf].
  */
 public fun DefaultValue.coerceTo(reference: Reference): DefaultValue? = when (this) {
-    DefaultValue.NullValue -> takeIf { reference.isNullable }
+    is DefaultValue.NullValue -> takeIf { reference.isNullable }
     else -> when (reference) {
         is Reference.Primitive -> coerceTo(reference.type)
         is Reference.Custom -> toEnumValue()
@@ -33,7 +33,7 @@ public fun DefaultValue.EnumValue.isEntryOf(reference: Reference, definitions: I
 private fun DefaultValue.toEnumValue(): DefaultValue.EnumValue? = when (this) {
     is DefaultValue.EnumValue -> this
     is DefaultValue.IntegerValue -> DefaultValue.EnumValue(value)
-    is DefaultValue.StringValue, is DefaultValue.NumberValue, is DefaultValue.BooleanValue, DefaultValue.NullValue -> null
+    is DefaultValue.StringValue, is DefaultValue.NumberValue, is DefaultValue.BooleanValue, is DefaultValue.NullValue -> null
 }
 
 private fun DefaultValue.coerceTo(type: Reference.Primitive.Type): DefaultValue? = when (type) {
@@ -47,7 +47,7 @@ private fun DefaultValue.coerceTo(type: Reference.Primitive.Type): DefaultValue?
     is Reference.Primitive.Type.Number -> when (this) {
         is DefaultValue.IntegerValue -> value
         is DefaultValue.NumberValue -> value
-        is DefaultValue.StringValue, is DefaultValue.BooleanValue, is DefaultValue.EnumValue, DefaultValue.NullValue -> null
+        is DefaultValue.StringValue, is DefaultValue.BooleanValue, is DefaultValue.EnumValue, is DefaultValue.NullValue -> null
     }
         ?.takeIf { value -> value.toDoubleOrNull()?.let(type.constraint::admits) ?: false }
         ?.let { value -> DefaultValue.NumberValue(if ('.' in value) value else "$value.0") }

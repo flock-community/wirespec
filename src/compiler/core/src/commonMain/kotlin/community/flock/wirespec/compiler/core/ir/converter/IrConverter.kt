@@ -371,7 +371,11 @@ public fun TypeWirespec.convert(): File = file(identifier.toName()) {
         implements(Type.Custom("Wirespec.Shape"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
         shape.value.forEach {
-            field(it.identifier.toName(), it.reference.convert(), initializer = it.defaultValue?.convert(it.reference))
+            field(
+                name = it.identifier.toName(),
+                type = it.reference.convert(),
+                initializer = it.defaultValue?.convert(it.reference),
+            )
         }
         function("validate", isOverride = true) {
             returnType(Type.Array(Type.String))
@@ -1116,7 +1120,7 @@ private fun DefaultValueWirespec.convert(reference: ReferenceWirespec): Expressi
     is DefaultValueWirespec.IntegerValue -> Literal(value, reference.copy(isNullable = false).convert())
     is DefaultValueWirespec.NumberValue -> Literal(value.takeIf { '.' in it } ?: "$value.0", reference.copy(isNullable = false).convert())
     is DefaultValueWirespec.EnumValue -> EnumReference(reference.copy(isNullable = false).convert() as Type.Custom, Name(listOf(value)))
-    DefaultValueWirespec.NullValue -> NullLiteral
+    is DefaultValueWirespec.NullValue -> NullLiteral
 }
 
 public fun ReferenceWirespec.Primitive.Type.Constraint.convert(value: Expression): LanguageConstraint = when (this) {
