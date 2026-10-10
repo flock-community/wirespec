@@ -1,0 +1,156 @@
+---
+id: parts
+title: Parts
+slug: /language/parts
+sidebar_position: 5
+---
+
+A part is a named set of fields that you spread into other shapes, so fields that recur across types and endpoints are
+written once. Parts are syntactic sugar: the compiler replaces every spread with the fields of the part, so the
+generated code is exactly what you would get by writing those fields out by hand. A part is never generated on its own.
+
+Parts are defined with the `part` keyword, followed by an identifier and a shape, just like a [type](types). Spread a
+part into a shape with `...` followed by its name:
+
+```wirespec
+part Audited {
+    createdAt: String,
+    updatedAt: String?
+}
+
+type Todo {
+    ...Audited,
+    id: Integer,
+    task: String
+}
+```
+
+`Todo` compiles to the same code as:
+
+```wirespec
+type Todo {
+    createdAt: String,
+    updatedAt: String?,
+    id: Integer,
+    task: String
+}
+```
+
+## Where you can spread
+
+A part can be spread anywhere a list of fields is written:
+
+- the body of a [type](types)
+- the parameters of an [rpc](rpc)
+- the [query parameters](endpoints#query-parameters) of an endpoint
+- the request and response [headers](endpoints#headers) of an endpoint
+
+This makes parts a good fit for parameters that many endpoints share, such as paging or tracing headers:
+
+```wirespec
+part Paging {
+    page: Integer,
+    size: Integer
+}
+
+part Tracing {
+    `X-Request-Id`: String
+}
+
+endpoint GetTodos GET /todos ? {...Paging, done: Boolean?} # {...Tracing} -> {
+    200 -> Todo[] # {...Tracing, total: Integer}
+}
+
+rpc SearchTodos {
+    ...Paging,
+    query: String
+} -> Todo[]
+```
+
+## Field order
+
+The fields of a part are inserted where the spread is written, in the order the part declares them. A shape can
+contain any number of spreads, mixed freely with its own fields:
+
+```wirespec
+type Todo {
+    id: Integer,
+    ...Audited,
+    task: String
+}
+```
+
+Here the fields of `Todo` are `id`, `createdAt`, `updatedAt` and `task`, in that order.
+
+## Composing parts
+
+A part can spread other parts, so larger parts can be built from smaller ones:
+
+```wirespec
+part Identified {
+    id: Integer
+}
+
+part Audited {
+    ...Identified,
+    createdAt: String,
+    updatedAt: String?
+}
+
+type Todo {
+    ...Audited,
+    task: String
+}
+```
+
+A part may not spread itself, directly or through other parts.
+
+## Comments and annotations
+
+A part can have a [comment](language.mdx#comments) like any other definition. Fields inside a part keep their
+[annotations](types#annotations-on-fields), and those annotations travel with the fields into every shape that spreads
+the part:
+
+```wirespec
+// Fields every stored entity carries
+part Audited {
+    @Deprecated
+    createdAt: String,
+    updatedAt: String?
+}
+```
+
+A part itself cannot be annotated, and neither can a spread. Annotate the fields of the part instead.
+
+Fields of a part cannot have [default values](types#default-values), because a part can be spread into query
+parameters and headers, where default values are not allowed.
+
+## Rules
+
+The compiler reports an error when:
+
+- **A field ends up in a shape twice.** This includes a field defined both in a part and in the shape that spreads it,
+  and a part that reaches a shape twice through two other parts. Fields are compared by name exactly as written, so
+  `X-Trace` and `x-trace` are two different fields.
+- **A spread names something that is not a part.** Only parts can be spread, not types.
+- **A part is used as a type.** A part is not a type: it cannot be the type of a field, a request or response body, an
+  rpc result or a member of a union.
+- **A part has the same name as another part or a type.** Parts and types share one namespace.
+- **Parts spread each other in a cycle.**
+
+A part that is never spread is not an error, but the compiler logs a warning, and the
+[language server](../ide/lsp.md) marks the part in your editor.
+
+Parts resolve across files like types do, so a file can hold only parts that other files spread.
+
+## Reserved keyword
+
+`part` is a keyword, just like `type` and `enum`. To use `part` as the name of a field or parameter, put it in
+backticks:
+
+```wirespec
+type Shipment {
+    `part`: String,
+    quantity: Integer
+}
+```

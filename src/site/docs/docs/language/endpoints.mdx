@@ -75,6 +75,20 @@ endpoint GetTodos GET /todos ? {done: Boolean, prio: Boolean} -> {
 }
 ```
 
+Query parameters that many endpoints share, such as paging, can be defined once in a [part](parts) and spread into
+each endpoint:
+
+```wirespec
+part Paging {
+    page: Integer,
+    size: Integer
+}
+
+endpoint GetTodos GET /todos ? {...Paging, done: Boolean} -> {
+    200 -> Todo[]
+}
+```
+
 ## Responses
 
 After defining the request format you can define one or more response types. Responses are defined by a response code
@@ -124,6 +138,19 @@ start with uppercase letters:
 ```wirespec
 endpoint GetTodos GET /todos # {`Authorization`: String, `Content-Type`: String} -> {
     200 -> Todo # {`Location`: String}
+}
+```
+
+Request and response headers can spread a [part](parts) as well, which keeps headers that every endpoint carries in
+one place:
+
+```wirespec
+part Tracing {
+    `X-Request-Id`: String
+}
+
+endpoint GetTodos GET /todos # {...Tracing} -> {
+    200 -> Todo[] # {...Tracing}
 }
 ```
 
