@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContain
@@ -36,23 +37,23 @@ class AvroIdlParserTest {
         val pet = statements.first()
         pet.shouldBeInstanceOf<Type>()
         pet.identifier.value shouldBe "Pet"
-        pet.shape.value.size shouldBe 3
-        pet.shape.value.map { it.identifier.value } shouldContainExactly listOf("name", "age", "vaccinated")
+        pet.shape.value.fields.size shouldBe 3
+        pet.shape.value.fields.map { it.identifier.value } shouldContainExactly listOf("name", "age", "vaccinated")
     }
 
     @Test
     fun parseSimpleProtocolFieldTypes() {
         val ast = parse(loadResource("simple.avdl"))
         val pet = ast.modules.first().statements.first() as Type
-        pet.shape.value[0].reference shouldBe Reference.Primitive(
+        pet.shape.value.fields[0].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.String(null),
             isNullable = false,
         )
-        pet.shape.value[1].reference shouldBe Reference.Primitive(
+        pet.shape.value.fields[1].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
             isNullable = false,
         )
-        pet.shape.value[2].reference shouldBe Reference.Primitive(
+        pet.shape.value.fields[2].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Boolean,
             isNullable = false,
         )
@@ -72,19 +73,19 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val item = ast.modules.first().statements.first() as Type
-        item.shape.value[0].reference shouldBe Reference.Primitive(
+        item.shape.value.fields[0].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null),
             isNullable = false,
         )
-        item.shape.value[1].reference shouldBe Reference.Primitive(
+        item.shape.value.fields[1].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null),
             isNullable = false,
         )
-        item.shape.value[2].reference shouldBe Reference.Primitive(
+        item.shape.value.fields[2].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Bytes,
             isNullable = false,
         )
-        item.shape.value[3].reference shouldBe Reference.Primitive(
+        item.shape.value.fields[3].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32, null),
             isNullable = false,
         )
@@ -94,18 +95,18 @@ class AvroIdlParserTest {
     fun parseNullableUnion() {
         val ast = parse(loadResource("nullable.avdl"))
         val user = ast.modules.first().statements.first() as Type
-        user.shape.value.map { it.identifier.value } shouldContainExactly listOf("id", "nickname", "email", "age")
+        user.shape.value.fields.map { it.identifier.value } shouldContainExactly listOf("id", "nickname", "email", "age")
 
-        user.shape.value[0].reference.isNullable shouldBe false
-        user.shape.value[1].reference.isNullable shouldBe true
-        user.shape.value[2].reference.isNullable shouldBe true
-        user.shape.value[3].reference.isNullable shouldBe true
+        user.shape.value.fields[0].reference.isNullable shouldBe false
+        user.shape.value.fields[1].reference.isNullable shouldBe true
+        user.shape.value.fields[2].reference.isNullable shouldBe true
+        user.shape.value.fields[3].reference.isNullable shouldBe true
 
-        user.shape.value[1].reference shouldBe Reference.Primitive(
+        user.shape.value.fields[1].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.String(null),
             isNullable = true,
         )
-        user.shape.value[3].reference shouldBe Reference.Primitive(
+        user.shape.value.fields[3].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
             isNullable = true,
         )
@@ -123,18 +124,18 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val profile = ast.modules.first().statements.first() as Type
-        profile.shape.value.forEach { it.reference.isNullable shouldBe true }
+        profile.shape.value.fields.forEach { it.reference.isNullable shouldBe true }
     }
 
     @Test
     fun parseArrayAndMap() {
         val ast = parse(loadResource("collections.avdl"))
         val product = ast.modules.first().statements.first() as Type
-        product.shape.value[1].reference shouldBe Reference.Iterable(
+        product.shape.value.fields[1].reference shouldBe Reference.Iterable(
             reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = false),
             isNullable = false,
         )
-        product.shape.value[2].reference shouldBe Reference.Dict(
+        product.shape.value.fields[2].reference shouldBe Reference.Dict(
             reference = Reference.Primitive(
                 type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
                 isNullable = false,
@@ -147,7 +148,7 @@ class AvroIdlParserTest {
     fun parseNestedArrayOfArray() {
         val ast = parse(loadResource("collections.avdl"))
         val product = ast.modules.first().statements.first() as Type
-        product.shape.value[3].reference shouldBe Reference.Iterable(
+        product.shape.value.fields[3].reference shouldBe Reference.Iterable(
             reference = Reference.Iterable(
                 reference = Reference.Primitive(
                     type = Reference.Primitive.Type.String(null),
@@ -163,7 +164,7 @@ class AvroIdlParserTest {
     fun parseMapOfArray() {
         val ast = parse(loadResource("collections.avdl"))
         val product = ast.modules.first().statements.first() as Type
-        product.shape.value[4].reference shouldBe Reference.Dict(
+        product.shape.value.fields[4].reference shouldBe Reference.Dict(
             reference = Reference.Iterable(
                 reference = Reference.Primitive(
                     type = Reference.Primitive.Type.String(null),
@@ -192,8 +193,8 @@ class AvroIdlParserTest {
         val ast = parse(loadResource("enums.avdl"))
         val task = ast.modules.flatMap { it.statements }.toList().filterIsInstance<Type>()
             .find { it.identifier.value == "Task" }!!
-        task.shape.value[1].reference shouldBe Reference.Custom("Color", isNullable = false)
-        task.shape.value[2].reference shouldBe Reference.Custom("Priority", isNullable = false)
+        task.shape.value.fields[1].reference shouldBe Reference.Custom("Color", isNullable = false)
+        task.shape.value.fields[2].reference shouldBe Reference.Custom("Priority", isNullable = false)
     }
 
     @Test
@@ -214,7 +215,7 @@ class AvroIdlParserTest {
         val ast = parse(loadResource("example.avdl"))
         val user = ast.modules.flatMap { it.statements }.toList()
             .filterIsInstance<Type>().find { it.identifier.value == "User" }!!
-        user.shape.value.map { it.identifier.value } shouldContainExactly listOf(
+        user.shape.value.fields.map { it.identifier.value } shouldContainExactly listOf(
             "id",
             "username",
             "passwordHash",
@@ -224,7 +225,7 @@ class AvroIdlParserTest {
             "toDoItems",
         )
 
-        user.shape.value[4].reference shouldBe Reference.Iterable(
+        user.shape.value.fields[4].reference shouldBe Reference.Iterable(
             reference = Reference.Custom("EmailAddress", isNullable = false),
             isNullable = false,
         )
@@ -235,7 +236,7 @@ class AvroIdlParserTest {
         val ast = parse(loadResource("example.avdl"))
         val email = ast.modules.flatMap { it.statements }.toList()
             .filterIsInstance<Type>().find { it.identifier.value == "EmailAddress" }!!
-        val dateBounced = email.shape.value.find { it.identifier.value == "dateBounced" }!!
+        val dateBounced = email.shape.value.fields.find { it.identifier.value == "dateBounced" }!!
         dateBounced.reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null),
             isNullable = true,
@@ -254,7 +255,7 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val node = ast.modules.first().statements.first() as Type
-        node.shape.value[1].reference shouldBe Reference.Iterable(
+        node.shape.value.fields[1].reference shouldBe Reference.Iterable(
             reference = Reference.Custom("Node", isNullable = false),
             isNullable = false,
         )
@@ -274,8 +275,8 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val settings = ast.modules.first().statements.first() as Type
-        settings.shape.value.size shouldBe 4
-        settings.shape.value.map { it.identifier.value } shouldContainExactly listOf(
+        settings.shape.value.fields.size shouldBe 4
+        settings.shape.value.fields.map { it.identifier.value } shouldContainExactly listOf(
             "autosave",
             "retries",
             "name",
@@ -311,7 +312,7 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val a = ast.modules.first().statements.first() as Type
-        a.shape.value.size shouldBe 2
+        a.shape.value.fields.size shouldBe 2
     }
 
     @Test
@@ -340,7 +341,7 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val a = ast.modules.first().statements.first() as Type
-        a.shape.value.size shouldBe 2
+        a.shape.value.fields.size shouldBe 2
     }
 
     @Test
@@ -404,7 +405,7 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val a = ast.modules.first().statements.first() as Type
-        a.shape.value[0].reference shouldBe Reference.Custom("SomeUnknownType", isNullable = false)
+        a.shape.value.fields[0].reference shouldBe Reference.Custom("SomeUnknownType", isNullable = false)
     }
 
     @Test
@@ -443,8 +444,8 @@ class AvroIdlParserTest {
         val ast = parse(loadResource("customer.avdl"))
         val statements = ast.modules.flatMap { it.statements }.toList()
         val customer = statements.filterIsInstance<Type>().find { it.identifier.value == "Customer" }!!
-        customer.shape.value.size shouldBe 7
-        customer.shape.value.last().reference shouldBe Reference.Custom("Address", isNullable = false)
+        customer.shape.value.fields.size shouldBe 7
+        customer.shape.value.fields.last().reference shouldBe Reference.Custom("Address", isNullable = false)
     }
 
     @Test
@@ -572,7 +573,7 @@ class AvroIdlParserTest {
         val source = "protocol T {\r\n  record A {\r\n    string id;\r\n  }\r\n}\r\n"
         val ast = parse(source)
         val a = ast.modules.first().statements.first() as Type
-        a.shape.value.size shouldBe 1
+        a.shape.value.fields.size shouldBe 1
     }
 
     @Test
@@ -645,11 +646,11 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val a = ast.modules.first().statements.first() as Type
-        a.shape.value[0].reference shouldBe Reference.Primitive(
+        a.shape.value.fields[0].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32, null),
             isNullable = false,
         )
-        a.shape.value[1].reference shouldBe Reference.Primitive(
+        a.shape.value.fields[1].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null),
             isNullable = false,
         )
@@ -667,11 +668,11 @@ class AvroIdlParserTest {
         """.trimIndent()
         val ast = parse(source)
         val a = ast.modules.first().statements.first() as Type
-        a.shape.value[0].reference shouldBe Reference.Primitive(
+        a.shape.value.fields[0].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
             isNullable = false,
         )
-        a.shape.value[1].reference shouldBe Reference.Primitive(
+        a.shape.value.fields[1].reference shouldBe Reference.Primitive(
             type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null),
             isNullable = false,
         )
@@ -692,7 +693,7 @@ class AvroIdlParserTest {
         val ast = parse(source)
         val statements = ast.modules.flatMap { it.statements }.toList()
         val outer = statements.filterIsInstance<Type>().find { it.identifier.value == "Outer" }!!
-        outer.shape.value[0].reference shouldBe Reference.Custom("Inner", isNullable = false)
+        outer.shape.value.fields[0].reference shouldBe Reference.Custom("Inner", isNullable = false)
     }
 
     @Test

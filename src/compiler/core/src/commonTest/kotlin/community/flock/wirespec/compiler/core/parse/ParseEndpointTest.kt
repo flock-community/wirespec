@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint.Segment.Literal
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -163,7 +164,7 @@ class ParseEndpointTest {
             .shouldBeRight()
             .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
-            .queries.shouldNotBeEmpty().shouldHaveSize(2).take(2).let {
+            .queries.fields.shouldNotBeEmpty().shouldHaveSize(2).take(2).let {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
@@ -193,7 +194,7 @@ class ParseEndpointTest {
             .shouldBeRight()
             .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
-            .headers.shouldNotBeEmpty().shouldHaveSize(2).take(2).let {
+            .headers.fields.shouldNotBeEmpty().shouldHaveSize(2).take(2).let {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
@@ -226,7 +227,7 @@ class ParseEndpointTest {
             .responses.shouldNotBeEmpty()
             .shouldHaveSize(1)
             .first()
-            .headers.shouldHaveSize(1).first().run {
+            .headers.fields.shouldHaveSize(1).first().run {
                 identifier.value shouldBe "token"
                 reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
             }
@@ -249,8 +250,8 @@ class ParseEndpointTest {
             .shouldBeInstanceOf<Endpoint>().run {
                 responses.shouldNotBeEmpty()
                 responses.first().content?.reference?.let { it is Reference.Dict }?.shouldBeTrue()
-                queries.first().reference.let { it is Reference.Dict }.shouldBeTrue()
-                headers.first().reference.let { it is Reference.Dict }.shouldBeTrue()
+                queries.fields.first().reference.let { it is Reference.Dict }.shouldBeTrue()
+                headers.fields.first().reference.let { it is Reference.Dict }.shouldBeTrue()
             }
     }
 }

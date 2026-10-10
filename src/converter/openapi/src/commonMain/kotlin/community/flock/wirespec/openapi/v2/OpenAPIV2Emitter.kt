@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.common.APPLICATION_JSON
 import community.flock.wirespec.openapi.common.emitFormat
@@ -121,8 +122,8 @@ public object OpenAPIV2Emitter : Emitter {
             .associate { type ->
                 type.identifier.value to OpenAPIV20Schema(
                     description = type.annotations.findDescription() ?: type.comment?.value,
-                    properties = type.shape.value.associate { it.toProperties() },
-                    required = type.shape.value
+                    properties = type.shape.value.fields.associate { it.toProperties() },
+                    required = type.shape.value.fields
                         .filter { !it.reference.isNullable }
                         .map { it.identifier.value }
                         .takeIf { it.isNotEmpty() },
@@ -194,7 +195,7 @@ public object OpenAPIV2Emitter : Emitter {
                     schema = it.reference.toSchemaOrReference(),
                     required = !it.reference.isNullable,
                 )
-            } + queries.map { it.emitParameter(OpenAPIV20ParameterLocation.QUERY) } + headers.map {
+            } + queries.fields.map { it.emitParameter(OpenAPIV20ParameterLocation.QUERY) } + headers.fields.map {
             it.emitParameter(
                 OpenAPIV20ParameterLocation.HEADER,
             )
@@ -204,7 +205,7 @@ public object OpenAPIV2Emitter : Emitter {
                 StatusCode(response.status) to OpenAPIV20Response(
                     description = response.annotations.findDescription()
                         ?: "${identifier.value} ${response.status} response",
-                    headers = response.headers.associate {
+                    headers = response.headers.fields.associate {
                         it.identifier.value to OpenAPIV20Header(
                             description = it.annotations.findDescription(),
                             type = it.reference.emitType(),

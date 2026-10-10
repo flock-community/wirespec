@@ -1,6 +1,7 @@
 package community.flock.wirespec.openapi.common
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -12,7 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 
 object Ast {
 
-    val objectInRequest = nonEmptyListOf(
+    val objectInRequest = nonEmptyListOf<Definition>(
         Endpoint(
             comment = null,
             annotations = emptyList(),
@@ -86,7 +87,7 @@ object Ast {
         ),
     )
 
-    val objectInResponse = nonEmptyListOf(
+    val objectInResponse = nonEmptyListOf<Definition>(
         Endpoint(
             comment = null,
             annotations = emptyList(),
@@ -169,7 +170,7 @@ object Ast {
         ),
     )
 
-    val additionalProperties = nonEmptyListOf(
+    val additionalProperties = nonEmptyListOf<Definition>(
         Endpoint(
             comment = null,
             annotations = emptyList(),
@@ -330,7 +331,7 @@ object Ast {
         ),
     )
 
-    val array = nonEmptyListOf(
+    val array = nonEmptyListOf<Definition>(
         Endpoint(
             comment = null,
             annotations = emptyList(),
@@ -464,7 +465,7 @@ object Ast {
         ),
     )
 
-    val allOf = nonEmptyListOf(
+    val allOf = nonEmptyListOf<Definition>(
         Endpoint(
             comment = null,
             annotations = emptyList(),
@@ -609,7 +610,7 @@ object Ast {
         ),
     )
 
-    val oneOf = nonEmptyListOf(
+    val oneOf = nonEmptyListOf<Definition>(
         Endpoint(
             comment = null,
             annotations = emptyList(),
@@ -747,7 +748,7 @@ object Ast {
         ),
     )
 
-    val enum = nonEmptyListOf(
+    val enum = nonEmptyListOf<Definition>(
         Endpoint(
             comment = null,
             annotations = emptyList(),

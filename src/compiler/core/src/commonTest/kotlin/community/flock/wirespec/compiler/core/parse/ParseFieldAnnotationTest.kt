@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldHaveSize
@@ -38,8 +39,8 @@ class ParseFieldAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(1)
-                shape.value.first().apply {
+                shape.value.fields.shouldHaveSize(1)
+                shape.value.fields.first().apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1)
                     annotations.first().name shouldBe "Deprecated"
@@ -65,14 +66,14 @@ class ParseFieldAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(2)
-                shape.value[0].apply {
+                shape.value.fields.shouldHaveSize(2)
+                shape.value.fields[0].apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(2)
                     annotations[0].name shouldBe "Deprecated"
                     annotations[1].name shouldBe "Internal"
                 }
-                shape.value[1].apply {
+                shape.value.fields[1].apply {
                     identifier.value shouldBe "age"
                     annotations.shouldHaveSize(0)
                 }
@@ -95,8 +96,8 @@ class ParseFieldAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(1)
-                shape.value.first().apply {
+                shape.value.fields.shouldHaveSize(1)
+                shape.value.fields.first().apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1)
                     annotations.first().apply {

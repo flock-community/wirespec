@@ -9,6 +9,7 @@ import community.flock.wirespec.ide.intellij.Types.Companion.CHANNEL_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.ENDPOINT_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.ENUM_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.LEFT_CURLY
+import community.flock.wirespec.ide.intellij.Types.Companion.PART_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.RIGHT_CURLY
 import community.flock.wirespec.ide.intellij.Types.Companion.RPC_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.TYPE_DEF
@@ -61,7 +62,7 @@ private fun PsiBuilder.parse(): Unit = when {
 }
 
 private fun PsiBuilder.def() = when (tokenType) {
-    TYPE_DEF, CHANNEL_DEF, RPC_DEF, ENDPOINT_DEF, ENUM_DEF -> true
+    TYPE_DEF, CHANNEL_DEF, RPC_DEF, ENDPOINT_DEF, ENUM_DEF, PART_DEF -> true
     else -> false
 }
 

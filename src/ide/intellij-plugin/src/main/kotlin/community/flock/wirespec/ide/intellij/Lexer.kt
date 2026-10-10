@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.tokenize.Character
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.Comment
+import community.flock.wirespec.compiler.core.tokenize.Ellipsis
 import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
@@ -24,6 +25,7 @@ import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.Number
+import community.flock.wirespec.compiler.core.tokenize.PartDefinition
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
@@ -107,6 +109,7 @@ public class Lexer : IntellijLexer() {
             Annotation::class to Types.ANNOTATION,
             ForwardSlash::class to Types.FORWARD_SLASH,
             Brackets::class to Types.BRACKETS,
+            Ellipsis::class to Types.ELLIPSIS,
             LeftBracket::class to Types.LEFT_BRACKET,
             RightBracket::class to Types.RIGHT_BRACKET,
             Comment::class to Types.COMMENT,
@@ -117,6 +120,7 @@ public class Lexer : IntellijLexer() {
             EndpointDefinition::class to Types.ENDPOINT_DEF,
             ChannelDefinition::class to Types.CHANNEL_DEF,
             RpcDefinition::class to Types.RPC_DEF,
+            PartDefinition::class to Types.PART_DEF,
             WsString::class to Types.WS_STRING,
             WsInteger::class to Types.WS_INTEGER,
             WsNumber::class to Types.WS_NUMBER,

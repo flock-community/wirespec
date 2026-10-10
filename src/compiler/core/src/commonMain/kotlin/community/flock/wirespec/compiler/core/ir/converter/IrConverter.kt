@@ -39,6 +39,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.Constraint as LanguageConstraint
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue as DefaultValueWirespec
@@ -46,6 +47,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition as Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint as EndpointWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Field as FieldWirespec
+import community.flock.wirespec.compiler.core.parse.ast.Part as PartWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Rpc as RpcWirespec
@@ -60,6 +62,7 @@ public fun DefinitionWirespec.convert(): File = when (this) {
     is ChannelWirespec -> convert()
     is RpcWirespec -> convert()
     is EndpointWirespec -> convert()
+    is PartWirespec -> error("Part ${identifier.value} is flattened during validation and has no IR")
 }
 
 public fun PackageName.convert(): File = file("Wirespec") {
@@ -370,7 +373,7 @@ public fun TypeWirespec.convert(): File = file(identifier.toName()) {
     struct(identifier.toName()) {
         implements(Type.Custom("Wirespec.Shape"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
-        shape.value.forEach {
+        shape.value.fields.forEach {
             field(
                 name = it.identifier.toName(),
                 type = it.reference.convert(),
@@ -490,7 +493,7 @@ private fun FieldValidation.toExpression(): Expression {
 }
 
 public fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation> = buildList {
-    for (field in shape.value) {
+    for (field in shape.value.fields) {
         val fieldName = field.identifier.toName()
         val fieldPath = field.identifier.value
         val ref = field.reference
@@ -632,7 +635,7 @@ public fun RpcWirespec.convert(): File = file(identifier.toName()) {
         }
         `interface`("Service") {
             asyncFunction(identifier.toName()) {
-                shape.value.forEach { arg(it.identifier.toName(), it.reference.convert()) }
+                shape.value.fields.forEach { arg(it.identifier.toName(), it.reference.convert()) }
                 returnType(error?.let { response } ?: result.convert())
             }
         }
@@ -656,13 +659,13 @@ public fun EndpointWirespec.convert(): File {
             // Queries record
             struct("Queries") {
                 implements(type("Wirespec.Queries"))
-                endpoint.queries.forEach { field(it.identifier.toName(), it.reference.convert()) }
+                endpoint.queries.fields.forEach { field(it.identifier.toName(), it.reference.convert()) }
             }
 
             // RequestHeaders record
             struct("RequestHeaders") {
                 implements(type("Wirespec.Request.Headers"))
-                endpoint.headers.forEach { field(it.identifier.toName(), it.reference.convert()) }
+                endpoint.headers.fields.forEach { field(it.identifier.toName(), it.reference.convert()) }
             }
 
             // Request record
@@ -690,7 +693,7 @@ public fun EndpointWirespec.convert(): File {
                     assign(
                         "queries",
                         construct(type("Queries")) {
-                            endpoint.queries.forEach {
+                            endpoint.queries.fields.forEach {
                                 arg(
                                     it.identifier.toName(),
                                     VariableReference(it.identifier.toName()),
@@ -701,7 +704,7 @@ public fun EndpointWirespec.convert(): File {
                     assign(
                         "headers",
                         construct(type("RequestHeaders")) {
-                            endpoint.headers.forEach {
+                            endpoint.headers.fields.forEach {
                                 arg(
                                     it.identifier.toName(),
                                     VariableReference(it.identifier.toName()),
@@ -757,7 +760,7 @@ public fun EndpointWirespec.convert(): File {
                 val headersName = "Response${statusClassName}Headers"
                 struct(headersName) {
                     implements(type("Wirespec.Response.Headers"))
-                    response.headers.forEach { field(it.identifier.toName(), it.reference.convert()) }
+                    response.headers.fields.forEach { field(it.identifier.toName(), it.reference.convert()) }
                 }
                 struct("Response$statusClassName") {
                     implements(type("Response${statusPrefix}XX", bodyType))
@@ -771,7 +774,7 @@ public fun EndpointWirespec.convert(): File {
                         assign(
                             "headers",
                             construct(type(headersName)) {
-                                response.headers.forEach {
+                                response.headers.fields.forEach {
                                     arg(
                                         it.identifier.toName(),
                                         VariableReference(it.identifier.toName()),
@@ -818,7 +821,7 @@ public fun EndpointWirespec.convert(): File {
                         arg(
                             "queries",
                             LiteralMap(
-                                values = endpoint.queries.associate {
+                                values = endpoint.queries.fields.associate {
                                     it.identifier.value to serializeParamExpression(
                                         fieldAccess = FieldCall(
                                             FieldCall(VariableReference(Name.of("request")), Name.of("queries")),
@@ -834,7 +837,7 @@ public fun EndpointWirespec.convert(): File {
                         arg(
                             "headers",
                             LiteralMap(
-                                values = endpoint.headers.associate {
+                                values = endpoint.headers.fields.associate {
                                     it.identifier.value to serializeParamExpression(
                                         fieldAccess = FieldCall(
                                             FieldCall(VariableReference(Name.of("request")), Name.of("headers")),
@@ -892,7 +895,7 @@ public fun EndpointWirespec.convert(): File {
                                 )
                             }
                         }
-                        endpoint.queries.forEach { field ->
+                        endpoint.queries.fields.forEach { field ->
                             arg(
                                 field.identifier.toName(),
                                 deserializeParamExpression(
@@ -902,7 +905,7 @@ public fun EndpointWirespec.convert(): File {
                                 ),
                             )
                         }
-                        endpoint.headers.forEach { field ->
+                        endpoint.headers.fields.forEach { field ->
                             arg(
                                 field.identifier.toName(),
                                 deserializeParamExpression(
@@ -949,7 +952,7 @@ public fun EndpointWirespec.convert(): File {
                                     arg(
                                         "headers",
                                         LiteralMap(
-                                            values = response.headers.associate { header ->
+                                            values = response.headers.fields.associate { header ->
                                                 header.identifier.value to serializeParamExpression(
                                                     fieldAccess = FieldCall(
                                                         FieldCall(VariableReference(Name.of("r")), Name.of("headers")),
@@ -1004,7 +1007,7 @@ public fun EndpointWirespec.convert(): File {
                             case(literal(response.status.toInt())) {
                                 returns(
                                     construct(type("Response$statusClassName")) {
-                                        response.headers.forEach { header ->
+                                        response.headers.fields.forEach { header ->
                                             arg(
                                                 header.identifier.toName(),
                                                 deserializeParamExpression(
@@ -1322,12 +1325,12 @@ internal fun List<EndpointWirespec>.convertClient(): File {
 public fun EndpointWirespec.requestParameters(): List<Pair<Name, Type>> = buildList {
     path.filterIsInstance<EndpointWirespec.Segment.Param>()
         .forEach { add(it.identifier.toName() to it.reference.convert()) }
-    queries.forEach { add(it.identifier.toName() to it.reference.convert()) }
-    headers.forEach { add(it.identifier.toName() to it.reference.convert()) }
+    queries.fields.forEach { add(it.identifier.toName() to it.reference.convert()) }
+    headers.fields.forEach { add(it.identifier.toName() to it.reference.convert()) }
     requests.first().content?.let { add(Name.of("body") to it.reference.convert()) }
 }
 
 private fun EndpointWirespec.Response.responseParameters(): List<Pair<Name, Type>> = buildList {
-    headers.forEach { add(it.identifier.toName() to it.reference.convert()) }
+    headers.fields.forEach { add(it.identifier.toName() to it.reference.convert()) }
     content?.let { add(Name.of("body") to it.reference.convert()) }
 }

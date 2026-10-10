@@ -5,12 +5,14 @@ import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.parse.ast.isEntryOf
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -35,7 +37,7 @@ public fun JsonElement.toDefaultValue(reference: Reference): DefaultValue? = (th
 public fun Definition.withValidEnumDefaults(definitions: Iterable<Definition>): Definition = when (this) {
     is Type -> copy(
         shape = Type.Shape(
-            shape.value.map { field ->
+            shape.value.fields.map { field ->
                 when (val default = field.defaultValue) {
                     is DefaultValue.EnumValue -> field.takeIf { default.isEntryOf(field.reference, definitions) } ?: field.copy(defaultValue = null)
                     else -> field
@@ -44,7 +46,7 @@ public fun Definition.withValidEnumDefaults(definitions: Iterable<Definition>): 
         ),
     )
 
-    is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined -> this
+    is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined, is Part -> this
 }
 
 private fun JsonPrimitive.toDefaultValue(): DefaultValue? = when {

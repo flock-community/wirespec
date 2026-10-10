@@ -7,11 +7,13 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -53,7 +55,7 @@ private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
 }
 
 private fun AST.generateType(def: Type, random: Random): JsonObject = random.nextInt().let { typeSeed ->
-    def.shape.value
+    def.shape.value.fields
         .fold<Field, Map<String, JsonElement>>(emptyMap()) { acc, cur ->
             cur.identifier.value.let { value ->
                 val fieldSeed = typeSeed + value.sumOf { it.code }
@@ -104,4 +106,5 @@ private fun AST.generateObject(def: Definition, random: Random) = when (def) {
     is Endpoint -> throw NotImplementedError("Endpoint cannot be generated")
     is Channel -> throw NotImplementedError("Channel cannot be generated")
     is Rpc -> throw NotImplementedError("Rpc cannot be generated")
+    is Part -> throw NotImplementedError("Part cannot be generated")
 }

@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldHaveSize
@@ -503,7 +504,7 @@ class ParseAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(1).first().apply {
+                shape.value.fields.shouldHaveSize(1).first().apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1).first().name shouldBe "Deprecated"
                 }
@@ -530,7 +531,7 @@ class ParseAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(2).toList().let { (fieldA, fieldB) ->
+                shape.value.fields.shouldHaveSize(2).toList().let { (fieldA, fieldB) ->
                     fieldA.apply {
                         identifier.value shouldBe "name"
                         annotations.shouldHaveSize(2).toList().let { (a, b) ->
@@ -564,7 +565,7 @@ class ParseAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(1)
+                shape.value.fields.shouldHaveSize(1)
                     .first().apply {
                         identifier.value shouldBe "name"
                         annotations.shouldHaveSize(1)

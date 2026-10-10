@@ -15,10 +15,12 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.classifyValidatableFields
 import community.flock.wirespec.compiler.core.ir.converter.convert
@@ -155,6 +157,7 @@ public open class TypeScriptEmitter : IrEmitter {
         .plus(
             ast.modules
                 .flatMap { it.statements }
+                .filterNot { it is Part }
                 .groupBy { def -> def.namespace() }
                 .map { (ns, defs) ->
                     Emitted(
@@ -256,7 +259,7 @@ public open class TypeScriptEmitter : IrEmitter {
             .filter { it != type.identifier.value }
             .map { import("./$it", "validate$it") }
         val allImports = typeImports + validateImports
-        val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
+        val fieldNames = type.shape.value.fields.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
             .sanitizeNames(modelSanitizationConfig)
             .renameValidateAndBindObjReceiver(type.identifier.value, fieldNames)
@@ -406,10 +409,10 @@ public open class TypeScriptEmitter : IrEmitter {
         endpoint.path.filterIsInstance<Endpoint.Segment.Param>().forEach {
             add(EndpointParam(sanitizeParamName(it.identifier), emitTypeScriptReference(it.reference.copy(isNullable = false)), it.reference.isNullable))
         }
-        endpoint.queries.forEach {
+        endpoint.queries.fields.forEach {
             add(EndpointParam(sanitizeParamName(it.identifier), emitTypeScriptReference(it.reference.copy(isNullable = false)), it.reference.isNullable))
         }
-        endpoint.headers.forEach {
+        endpoint.headers.fields.forEach {
             add(EndpointParam(sanitizeParamName(it.identifier), emitTypeScriptReference(it.reference.copy(isNullable = false)), it.reference.isNullable))
         }
         endpoint.requests.first().content?.let {

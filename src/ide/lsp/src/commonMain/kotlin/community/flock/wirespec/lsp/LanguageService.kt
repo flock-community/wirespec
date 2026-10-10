@@ -6,7 +6,10 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.tokenize.Ellipsis
+import community.flock.wirespec.compiler.core.tokenize.PartDefinition
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.lsp.protocol.Diagnostic
@@ -37,7 +40,32 @@ internal object LanguageService {
         .fold(
             ifLeft = { errors -> errors.map { it.toDiagnostic(document) } },
             ifRight = { emptyList() },
-        )
+        ) + unusedPartWarnings(document)
+
+    /**
+     * Warns on every part that no `...Part` in [document] spreads. Works on tokens rather than the
+     * AST, because validation flattens spreads away and the AST carries no positions to point at.
+     */
+    private fun unusedPartWarnings(document: Document): List<Diagnostic> = WirespecSpec
+        .tokenize(document.text)
+        .zipWithNext()
+        .let { pairs ->
+            val spread = pairs
+                .filter { (first, second) -> first.type is Ellipsis && second.type is TypeIdentifier }
+                .map { (_, name) -> name.value }
+                .toSet()
+            pairs
+                .filter { (first, second) -> first.type is PartDefinition && second.type is TypeIdentifier && second.value !in spread }
+                .mapNotNull { (_, name) -> name.toLspToken() }
+        }
+        .map { name ->
+            Diagnostic(
+                range = name.range,
+                severity = DiagnosticSeverity.WARNING,
+                message = "Part '${name.value}' is never spread",
+                source = "wirespec",
+            )
+        }
 
     fun tokenize(document: Document): List<LspToken> = WirespecSpec
         .tokenize(document.text)
@@ -72,7 +100,7 @@ internal object LanguageService {
     /**
      * Returns the range of the identifier at [position] if it can be renamed, or null otherwise.
      * Only user-defined type names (PascalCase identifiers introduced by `type` / `enum` / `endpoint`
-     * / `channel`) are renameable.
+     * / `channel` / `part`) are renameable.
      */
     fun prepareRename(document: Document, position: Position): Range? {
         val hit = tokenAt(document, position) ?: return null

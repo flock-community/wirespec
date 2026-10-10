@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -43,7 +44,7 @@ class ParserReferenceTest {
                 first().apply {
                     shouldBeInstanceOf<Type>()
                     identifier.value shouldBe "Self"
-                    shape.value.first().apply {
+                    shape.value.fields.first().apply {
                         identifier.value shouldBe "self"
                         reference.shouldBeInstanceOf<Reference.Custom>()
                         reference.value shouldBe "Self"

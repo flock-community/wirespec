@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.common.toJsonElement
 import kotlinx.serialization.encodeToString
@@ -98,7 +99,7 @@ public object AvroJsonEmitter : Emitter {
     public fun Type.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
         name = identifier.value,
         type = "record",
-        fields = shape.value.map { field ->
+        fields = shape.value.fields.map { field ->
             AvroModel.Field(
                 name = field.identifier.value,
                 type = field.emit(module, hasEmitted).let { type ->

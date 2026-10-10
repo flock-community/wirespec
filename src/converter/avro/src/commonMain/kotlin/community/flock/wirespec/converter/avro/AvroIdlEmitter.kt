@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.common.toJsonElement
 
@@ -52,7 +53,7 @@ internal object AvroIdlEmitter : Emitter {
 
     private fun renderRecord(type: Type): String {
         val doc = type.comment?.value?.let { renderDoc(it, INDENT) }.orEmpty()
-        val fields = type.shape.value.joinToString("") { field ->
+        val fields = type.shape.value.fields.joinToString("") { field ->
             "$INDENT$INDENT${renderFieldType(field)} ${field.identifier.value}${renderDefault(field.defaultValue)};\n"
         }
         return "$doc${INDENT}record ${type.identifier.value} {\n$fields$INDENT}\n"

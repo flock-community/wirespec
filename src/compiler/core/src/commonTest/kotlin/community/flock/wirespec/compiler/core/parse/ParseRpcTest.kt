@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -43,9 +44,9 @@ class ParseRpcTest {
             .run {
                 comment?.value shouldBe null
                 identifier.value shouldBe "GetTodo"
-                shape.value.shouldHaveSize(2)
-                shape.value[0].identifier.value shouldBe "id"
-                shape.value[1].identifier.value shouldBe "verbose"
+                shape.value.fields.shouldHaveSize(2)
+                shape.value.fields[0].identifier.value shouldBe "id"
+                shape.value.fields[1].identifier.value shouldBe "verbose"
                 result.shouldBeInstanceOf<Reference.Custom>().value shouldBe "Todo"
                 error.shouldBeInstanceOf<Reference.Custom>().value shouldBe "TodoError"
             }
@@ -68,7 +69,7 @@ class ParseRpcTest {
             .shouldBeInstanceOf<Rpc>()
             .run {
                 identifier.value shouldBe "GetTodo"
-                shape.value.shouldHaveSize(1)
+                shape.value.fields.shouldHaveSize(1)
                 result.shouldBeInstanceOf<Reference.Custom>().value shouldBe "Todo"
                 error shouldBe null
             }
@@ -88,7 +89,7 @@ class ParseRpcTest {
             .shouldBeInstanceOf<Rpc>()
             .run {
                 identifier.value shouldBe "Ping"
-                shape.value.shouldHaveSize(0)
+                shape.value.fields.shouldHaveSize(0)
                 result.shouldBeInstanceOf<Reference.Primitive>()
                 error shouldBe null
             }

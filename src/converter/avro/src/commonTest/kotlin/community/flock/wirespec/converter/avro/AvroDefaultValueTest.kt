@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.matchers.shouldBe
@@ -28,7 +29,7 @@ class AvroDefaultValueTest {
     private fun AST.defaults(type: String) = modules.flatMap { it.statements }
         .filterIsInstance<Type>()
         .first { it.identifier.value == type }
-        .shape.value
+        .shape.value.fields
         .associate { it.identifier.value to it.defaultValue }
 
     private val schema =
