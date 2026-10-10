@@ -42,6 +42,20 @@ rpc SearchTodos {
 } -> Todo[]
 ```
 
+Parameters can also spread a [part](parts), so parameters that several RPCs share are written once:
+
+```wirespec
+part Paging {
+    page: Integer,
+    size: Integer
+}
+
+rpc SearchTodos {
+    ...Paging,
+    query: String
+} -> Todo[]
+```
+
 The curly braces are mandatory, also when the RPC takes no parameters at all:
 
 ```wirespec
