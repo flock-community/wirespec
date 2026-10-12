@@ -1,41 +1,795 @@
 ---
 title: Java Emitter
 slug: /emitters/java
-sidebar_position: 2
+sidebar_position: 1
 ---
-
-import { Emitters } from "@flock/wirespec";
-import { WirespecCompile, WirespecShared } from "../../src/components/Wirespec";
 
 # Java Emitter
 
-Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), the following source code is generated:
+The Java emitter generates records, sealed interfaces and enums that only depend on the Java standard library. It
+needs Java 17 or newer. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example):
+
+```shell
+wirespec compile -i todo.ws -o out -l Java -p community.flock.todo --shared
+```
+
+```text
+out
+├── Wirespec.java
+└── community/flock/todo
+    ├── Client.java
+    ├── channel/TodoEvents.java
+    ├── client/UpdateTodoClient.java
+    ├── endpoint/UpdateTodo.java
+    ├── generator/TodoGenerator.java, TodoIdGenerator.java, ...
+    ├── model/Todo.java, TodoId.java, Priority.java, TodoEvent.java, ...
+    └── rpc/CompleteTodo.java
+```
+
+Every file starts with its package and the imports it needs, which are left out of the examples below.
+
+## Type
+
+A type becomes a `record` that implements `Wirespec.Shape`:
+
+```java title="model/Todo.java"
+public record Todo (
+  TodoId id,
+  String title,
+  Boolean done,
+  Priority priority,
+  java.util.List<String> tags,
+  java.util.Optional<String> dueDate
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return (!id().validate() ? java.util.List.of("id") : java.util.List.<String>of());
+  }
+};
+```
+
+The fields map to Java types as follows:
+
+| Wirespec    | Java                       |
+|-------------|----------------------------|
+| `String`    | `String`                   |
+| `Integer`   | `Long`                     |
+| `Integer32` | `Integer`                  |
+| `Number`    | `Double`                   |
+| `Number32`  | `Float`                    |
+| `Boolean`   | `Boolean`                  |
+| `Bytes`     | `byte[]`                   |
+| `T[]`       | `java.util.List<T>`        |
+| `{ T }`     | `java.util.Map<String, T>` |
+| `T?`        | `java.util.Optional<T>`    |
+
+`validate()` returns the names of the fields that do not hold a valid value. Only refined values can be invalid, so
+`Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
+
+```java title="model/TodoCreated.java"
+public record TodoCreated (
+  Todo todo
+) implements Wirespec.Shape, TodoEvent {
+  @Override
+  public java.util.List<String> validate() {
+    return todo().validate().stream().map(e -> "todo." + e).toList();
+  }
+};
+```
+
+## Refined
+
+A refined type becomes a `record` that wraps the value and implements `Wirespec.Refined`. `validate()` checks the
+regular expression, and `toString()` returns the plain value:
+
+```java title="model/TodoId.java"
+public record TodoId (
+  String value
+) implements Wirespec.Refined {
+  @Override
+  public Boolean validate() {
+    return java.util.regex.Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$").matcher(value).find();
+  }
+  @Override
+  public String toString() {
+    return value;
+  }
+  @Override
+  public String value() {
+    return value;
+  }
+};
+```
+
+A refined `Integer` or `Number` checks its bounds instead.
+
+## Enum
+
+An enum becomes an `enum` that implements `Wirespec.Enum`. The `label` holds the value as it is written in Wirespec,
+which is also what `toString()` returns:
+
+```java title="model/Priority.java"
+public enum Priority implements Wirespec.Enum {
+  LOW("LOW"),
+  MEDIUM("MEDIUM"),
+  HIGH("HIGH");
+  public final String label;
+  Priority(String label) {
+    this.label = label;
+  }
+  @Override
+  public String toString() {
+    return label;
+  }
+  public String label() {
+    return label;
+  }
+}
+```
+
+## Union
+
+A union becomes a `sealed interface` that permits its members:
+
+```java title="model/TodoEvent.java"
+public sealed interface TodoEvent permits TodoCreated, TodoDeleted {}
+```
+
+Every member implements it, as `TodoCreated` above does with `implements Wirespec.Shape, TodoEvent`. With pattern
+matching for `switch` (Java 21), a `switch` over a `TodoEvent` therefore needs no default branch:
+
+```java
+var description = switch (event) {
+  case TodoCreated created -> "Created " + created.todo().title();
+  case TodoDeleted deleted -> "Deleted " + deleted.id();
+};
+```
+
+## Endpoint
+
+An endpoint becomes an `interface` that extends `Wirespec.Endpoint`. It holds everything that is needed to send and
+receive the request and its responses.
+
+### Request
+
+The path parameters, query parameters and request headers each get a record. `Request` combines them with the method
+and the body. Its second constructor takes all values as flat parameters:
+
+```java title="endpoint/UpdateTodo.java"
+public interface UpdateTodo extends Wirespec.Endpoint {
+  public static record Path (
+    TodoId id
+  ) implements Wirespec.Path {
+  };
+  public static record Queries (
+    java.util.Optional<Boolean> notify
+  ) implements Wirespec.Queries {
+  };
+  public static record RequestHeaders (
+    String requestId
+  ) implements Wirespec.Request.Headers {
+  };
+  public static record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    TodoInput body
+  ) implements Wirespec.Request<TodoInput> {
+    public Request(TodoId id, java.util.Optional<Boolean> notify, String requestId, TodoInput body) {
+      this(new Path(id), Wirespec.Method.PUT, new Queries(notify), new RequestHeaders(requestId), body);
+    }
+  };
+  // ...
+}
+```
+
+### Responses
+
+Every status code gets a response record, with a record for its headers. The responses are grouped by sealed
+interfaces: `Response` for all of them, `Response2XX` and `Response4XX` per status class, and `ResponseTodo` and
+`ResponseApiError` per body type:
+
+```java title="endpoint/UpdateTodo.java"
+  public sealed interface Response<T> extends Wirespec.Response<T> permits Response2XX, Response4XX, ResponseTodo, ResponseApiError {}
+  public sealed interface Response2XX<T> extends Response<T> permits Response200 {}
+  public sealed interface Response4XX<T> extends Response<T> permits Response404 {}
+  public sealed interface ResponseTodo extends Response<Todo> permits Response200 {}
+  public sealed interface ResponseApiError extends Response<ApiError> permits Response404 {}
+  public static record Response200Headers (
+    Long version
+  ) implements Wirespec.Response.Headers {
+  };
+  public static record Response200 (
+    Integer status,
+    Response200Headers headers,
+    Todo body
+  ) implements Response2XX<Todo>, ResponseTodo {
+    public Response200(Long version, Todo body) {
+      this(200, new Response200Headers(version), body);
+    }
+  };
+  public static record Response404Headers () implements Wirespec.Response.Headers {
+  };
+  public static record Response404 (
+    Integer status,
+    Response404Headers headers,
+    ApiError body
+  ) implements Response4XX<ApiError>, ResponseApiError {
+    public Response404(ApiError body) {
+      this(404, new Response404Headers(), body);
+    }
+  };
+```
+
+### Serialization
+
+Four static methods convert between the typed request and response and the `Wirespec.RawRequest` and
+`Wirespec.RawResponse` that go over the wire. They delegate the serialization of the path, parameters, headers and
+body to a `Wirespec.Serializer` or `Wirespec.Deserializer`, so any JSON library can be plugged in, see
+[Integration](../integration/integration.mdx):
+
+```java title="endpoint/UpdateTodo.java"
+  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+    return new Wirespec.RawRequest(
+      request.method().name(),
+      java.util.List.of("todos", serialization.<TodoId>serializePath(request.path().id(), Wirespec.getType(TodoId.class, null))),
+      java.util.Map.ofEntries(java.util.Map.entry("notify", request.queries().notify().map(it -> serialization.<Boolean>serializeParam(it, Wirespec.getType(Boolean.class, null))).orElse(java.util.List.<String>of()))),
+      java.util.Map.ofEntries(java.util.Map.entry("requestId", serialization.<String>serializeParam(request.headers().requestId(), Wirespec.getType(String.class, null)))),
+      java.util.Optional.of(serialization.<TodoInput>serializeBody(request.body(), Wirespec.getType(TodoInput.class, null)))
+    );
+  }
+```
+
+`fromRawRequest`, `toRawResponse` and `fromRawResponse` work the same way.
+
+### Handler and Call
+
+`Handler` is the interface the server implements, `Call` is the interface the client implements. Both return a
+`CompletableFuture`. `Handler.Handlers`, also available as `api`, describes the endpoint for frameworks: its path
+template, its method, and the conversion functions for the server and the client side:
+
+```java title="endpoint/UpdateTodo.java"
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Response<?>> updateTodo(Request request);
+    public static record Handlers () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+      @Override
+      public String getPathTemplate() {
+        return "/todos/{id}";
+      }
+      @Override
+      public String getMethod() {
+        return "PUT";
+      }
+      @Override
+      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
+        return new Wirespec.ServerEdge<>() {
+        @Override public Request from(Wirespec.RawRequest request) {
+            return fromRawRequest(serialization, request);
+        }
+        @Override public Wirespec.RawResponse to(Response<?> response) {
+            return toRawResponse(serialization, response);
+        }
+        };
+      }
+      @Override
+      public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
+        return new Wirespec.ClientEdge<>() {
+        @Override public Wirespec.RawRequest to(Request request) {
+            return toRawRequest(serialization, request);
+        }
+        @Override public Response<?> from(Wirespec.RawResponse response) {
+            return fromRawResponse(serialization, response);
+        }
+        };
+      }
+    };
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Response<?>> updateTodo(TodoId id, java.util.Optional<Boolean> notify, String requestId, TodoInput body);
+  }
+  Handler.Handlers api = new Handler.Handlers();
+```
 
 <details>
-  <summary>Java shared</summary>
-  <WirespecShared emitter={Emitters.JAVA} />
+  <summary>The complete endpoint/UpdateTodo.java</summary>
+
+```java title="endpoint/UpdateTodo.java"
+package community.flock.todo.endpoint;
+import community.flock.wirespec.java.Wirespec;
+import community.flock.todo.model.TodoId;
+import community.flock.todo.model.TodoInput;
+import community.flock.todo.model.Todo;
+import community.flock.todo.model.ApiError;
+public interface UpdateTodo extends Wirespec.Endpoint {
+  public static record Path (
+    TodoId id
+  ) implements Wirespec.Path {
+  };
+  public static record Queries (
+    java.util.Optional<Boolean> notify
+  ) implements Wirespec.Queries {
+  };
+  public static record RequestHeaders (
+    String requestId
+  ) implements Wirespec.Request.Headers {
+  };
+  public static record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    TodoInput body
+  ) implements Wirespec.Request<TodoInput> {
+    public Request(TodoId id, java.util.Optional<Boolean> notify, String requestId, TodoInput body) {
+      this(new Path(id), Wirespec.Method.PUT, new Queries(notify), new RequestHeaders(requestId), body);
+    }
+  };
+  public sealed interface Response<T> extends Wirespec.Response<T> permits Response2XX, Response4XX, ResponseTodo, ResponseApiError {}
+  public sealed interface Response2XX<T> extends Response<T> permits Response200 {}
+  public sealed interface Response4XX<T> extends Response<T> permits Response404 {}
+  public sealed interface ResponseTodo extends Response<Todo> permits Response200 {}
+  public sealed interface ResponseApiError extends Response<ApiError> permits Response404 {}
+  public static record Response200Headers (
+    Long version
+  ) implements Wirespec.Response.Headers {
+  };
+  public static record Response200 (
+    Integer status,
+    Response200Headers headers,
+    Todo body
+  ) implements Response2XX<Todo>, ResponseTodo {
+    public Response200(Long version, Todo body) {
+      this(200, new Response200Headers(version), body);
+    }
+  };
+  public static record Response404Headers () implements Wirespec.Response.Headers {
+  };
+  public static record Response404 (
+    Integer status,
+    Response404Headers headers,
+    ApiError body
+  ) implements Response4XX<ApiError>, ResponseApiError {
+    public Response404(ApiError body) {
+      this(404, new Response404Headers(), body);
+    }
+  };
+  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+    return new Wirespec.RawRequest(
+      request.method().name(),
+      java.util.List.of("todos", serialization.<TodoId>serializePath(request.path().id(), Wirespec.getType(TodoId.class, null))),
+      java.util.Map.ofEntries(java.util.Map.entry("notify", request.queries().notify().map(it -> serialization.<Boolean>serializeParam(it, Wirespec.getType(Boolean.class, null))).orElse(java.util.List.<String>of()))),
+      java.util.Map.ofEntries(java.util.Map.entry("requestId", serialization.<String>serializeParam(request.headers().requestId(), Wirespec.getType(String.class, null)))),
+      java.util.Optional.of(serialization.<TodoInput>serializeBody(request.body(), Wirespec.getType(TodoInput.class, null)))
+    );
+  }
+  public static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    return new Request(
+      serialization.<TodoId>deserializePath(request.path().get(1), Wirespec.getType(TodoId.class, null)),
+      java.util.Optional.ofNullable(request.queries().get("notify")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, null))),
+      java.util.Optional.ofNullable(request.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("requestId")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, null))).orElseThrow(() -> new IllegalStateException("Param requestId cannot be null")),
+      request.body().map(it -> serialization.<TodoInput>deserializeBody(it, Wirespec.getType(TodoInput.class, null))).orElseThrow(() -> new IllegalStateException("body is null"))
+    );
+  }
+  public static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
+    if (response instanceof Response200 r) {
+      return new Wirespec.RawResponse(
+        r.status(),
+        java.util.Map.ofEntries(java.util.Map.entry("version", serialization.<Long>serializeParam(r.headers().version(), Wirespec.getType(Long.class, null)))),
+        java.util.Optional.of(serialization.serializeBody(r.body(), Wirespec.getType(Todo.class, null)))
+      );
+    } else if (response instanceof Response404 r) {
+      return new Wirespec.RawResponse(
+        r.status(),
+        java.util.Collections.emptyMap(),
+        java.util.Optional.of(serialization.serializeBody(r.body(), Wirespec.getType(ApiError.class, null)))
+      );
+    } else {
+      throw new IllegalStateException(("Cannot match response with status: " + response.status()));
+    }
+  }
+  public static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    switch (response.statusCode()) {
+        case 200 -> {
+          return new Response200(
+            java.util.Optional.ofNullable(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("version")).findFirst().map(java.util.Map.Entry::getValue).orElse(null)).map(it -> serialization.<Long>deserializeParam(it, Wirespec.getType(Long.class, null))).orElseThrow(() -> new IllegalStateException("Param version cannot be null")),
+            response.body().map(it -> serialization.<Todo>deserializeBody(it, Wirespec.getType(Todo.class, null))).orElseThrow(() -> new IllegalStateException("body is null"))
+          );
+        }
+        case 404 -> {
+          return new Response404(response.body().map(it -> serialization.<ApiError>deserializeBody(it, Wirespec.getType(ApiError.class, null))).orElseThrow(() -> new IllegalStateException("body is null")));
+        }
+        default -> {
+          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
+        }
+    }
+  }
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Response<?>> updateTodo(Request request);
+    public static record Handlers () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+      @Override
+      public String getPathTemplate() {
+        return "/todos/{id}";
+      }
+      @Override
+      public String getMethod() {
+        return "PUT";
+      }
+      @Override
+      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
+        return new Wirespec.ServerEdge<>() {
+        @Override public Request from(Wirespec.RawRequest request) {
+            return fromRawRequest(serialization, request);
+        }
+        @Override public Wirespec.RawResponse to(Response<?> response) {
+            return toRawResponse(serialization, response);
+        }
+        };
+      }
+      @Override
+      public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
+        return new Wirespec.ClientEdge<>() {
+        @Override public Wirespec.RawRequest to(Request request) {
+            return toRawRequest(serialization, request);
+        }
+        @Override public Response<?> from(Wirespec.RawResponse response) {
+            return fromRawResponse(serialization, response);
+        }
+        };
+      }
+    };
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Response<?>> updateTodo(TodoId id, java.util.Optional<Boolean> notify, String requestId, TodoInput body);
+  }
+  Handler.Handlers api = new Handler.Handlers();
+}
+```
+
 </details>
 
+## Channel
+
+A channel becomes an `interface` with a `Sender` to publish messages and a `Listener` to receive them:
+
+```java title="channel/TodoEvents.java"
+public interface TodoEvents extends Wirespec.Channel {
+  public interface Sender {
+    public void todoEvents(TodoEvent message);
+  }
+  public interface Listener {
+    public void todoEvents(java.util.function.Function<TodoEvent, Void> handler);
+  }
+}
+```
+
+## RPC
+
+An RPC becomes an `interface` with a `Service` to implement. Because `CompleteTodo` declares an error, the service
+returns a sealed `Response` with a `Result` and an `Error` variant. Without an error, it returns the result type
+directly:
+
+```java title="rpc/CompleteTodo.java"
+public interface CompleteTodo extends Wirespec.Rpc {
+  public sealed interface Response permits Result, Error {}
+  public static record Result (
+    Todo value
+  ) implements Response {
+  };
+  public static record Error (
+    ApiError value
+  ) implements Response {
+  };
+  public interface Service {
+    public java.util.concurrent.CompletableFuture<Response> completeTodo(TodoId id);
+  }
+}
+```
+
+## Client
+
+For every endpoint, a client implements its `Call` interface. It builds the `Request`, converts it with
+`toRawRequest`, sends it with a `Wirespec.Transportation` and converts the answer with `fromRawResponse`:
+
+```java title="client/UpdateTodoClient.java"
+public record UpdateTodoClient (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements UpdateTodo.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<UpdateTodo.Response<?>> updateTodo(TodoId id, java.util.Optional<Boolean> notify, String requestId, TodoInput body) {
+    final var request = new UpdateTodo.Request(
+      id,
+      notify,
+      requestId,
+      body
+    );
+    final var rawRequest = UpdateTodo.toRawRequest(serialization(), request);
+    return transportation().transport(rawRequest).thenApply(rawResponse -> UpdateTodo.fromRawResponse(serialization(), rawResponse));
+  }
+};
+```
+
+`Client` implements the `Call` interface of every endpoint in the specification, so one instance can call the whole
+API:
+
+```java title="Client.java"
+public record Client (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements UpdateTodo.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<UpdateTodo.Response<?>> updateTodo(TodoId id, java.util.Optional<Boolean> notify, String requestId, TodoInput body) {
+    return new UpdateTodoClient(
+      serialization(),
+      transportation()
+    ).updateTodo(id, notify, requestId, body);
+  }
+};
+```
+
+## Generator
+
+For every type, refined type, enum and union, a generator builds an instance with values from a `Wirespec.Generator`.
+It passes the path to the field and a description of the value it needs, such as the regular expression of a refined
+type. This is how you create test data that matches the specification:
+
+```java title="generator/TodoIdGenerator.java"
+public interface TodoIdGenerator {
+  public static TodoId generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new TodoId(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.of("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+```
+
+## Shared
+
+`Wirespec.java` is the same for every specification and lives in the package `community.flock.wirespec.java`. It
+contains:
+
+| Declarations                                                                 | Purpose                                                       |
+|------------------------------------------------------------------------------|---------------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                                          | Implemented by the generated types, enums and refined types   |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`                              | Implemented by the generated endpoints, channels and RPCs     |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers`                | The typed request and response of an endpoint                 |
+| `Serializer`, `Deserializer`, `Serialization` and their parts                | Plug in the serialization of bodies, paths and parameters     |
+| `RawRequest`, `RawResponse`, `Transportation`                                | The untyped request and response, and how to send them        |
+| `Generator`, `GeneratorField` and its subtypes                               | Generate values for the generators                            |
+| `ServerEdge`, `ClientEdge`, `Server`, `Client`                               | Convert between raw and typed messages on either side          |
+| `getType`                                                                    | Builds the `java.lang.reflect.Type` that is passed to the serializers |
+
 <details>
-  <summary>Java code</summary>
-  <WirespecCompile emitter={Emitters.JAVA} />
+  <summary>The complete Wirespec.java</summary>
+
+```java title="Wirespec.java"
+package community.flock.wirespec.java;
+import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
+import java.util.Map;
+public interface Wirespec {
+  public interface Model {
+  }
+  public interface Shape extends Model {
+    public java.util.List<String> validate();
+  }
+  public interface Enum extends Model {
+    String label();
+  }
+  public interface Refined<T> extends Model {
+    T value();
+    public Boolean validate();
+  }
+  public interface Endpoint {
+  }
+  public interface Channel {
+  }
+  public interface Rpc {
+  }
+  public interface Path {
+  }
+  public interface Queries {
+  }
+  public interface Headers {
+  }
+  public interface Handler {
+  }
+  public interface Call {
+  }
+  public enum Method {
+      GET,
+      PUT,
+      POST,
+      DELETE,
+      OPTIONS,
+      HEAD,
+      PATCH,
+      TRACE
+    }  public interface Request<T> {
+    Path path();
+    Method method();
+    Queries queries();
+    Headers headers();
+    T body();
+    public interface Headers {
+    }
+  }
+  public interface Response<T> {
+    Integer status();
+    Headers headers();
+    T body();
+    public interface Headers {
+    }
+  }
+  public interface BodySerializer {
+    public <T> byte[] serializeBody(T t, Type type);
+  }
+  public interface BodyDeserializer {
+    public <T> T deserializeBody(byte[] raw, Type type);
+  }
+  public interface BodySerialization extends BodySerializer, BodyDeserializer {
+  }
+  public interface PathSerializer {
+    public <T> String serializePath(T t, Type type);
+  }
+  public interface PathDeserializer {
+    public <T> T deserializePath(String raw, Type type);
+  }
+  public interface PathSerialization extends PathSerializer, PathDeserializer {
+  }
+  public interface ParamSerializer {
+    public <T> java.util.List<String> serializeParam(T value, Type type);
+  }
+  public interface ParamDeserializer {
+    public <T> T deserializeParam(java.util.List<String> values, Type type);
+  }
+  public interface ParamSerialization extends ParamSerializer, ParamDeserializer {
+  }
+  public interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {
+  }
+  public interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {
+  }
+  public interface Serialization extends Serializer, Deserializer {
+  }
+  public static record RawRequest (
+    String method,
+    java.util.List<String> path,
+    java.util.Map<String, java.util.List<String>> queries,
+    java.util.Map<String, java.util.List<String>> headers,
+    java.util.Optional<byte[]> body
+  ) {
+  };
+  public static record RawResponse (
+    Integer statusCode,
+    java.util.Map<String, java.util.List<String>> headers,
+    java.util.Optional<byte[]> body
+  ) {
+  };
+  public interface Transportation {
+    public java.util.concurrent.CompletableFuture<RawResponse> transport(RawRequest request);
+  }
+  public sealed interface GeneratorField<T> {
+  }
+  public static record GeneratorFieldString (
+    java.util.Optional<String> regex,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<String> {
+  };
+  public static record GeneratorFieldInteger64 (
+    java.util.Optional<Long> min,
+    java.util.Optional<Long> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Long> {
+  };
+  public static record GeneratorFieldInteger32 (
+    java.util.Optional<Integer> min,
+    java.util.Optional<Integer> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Integer> {
+  };
+  public static record GeneratorFieldNumber64 (
+    java.util.Optional<Double> min,
+    java.util.Optional<Double> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Double> {
+  };
+  public static record GeneratorFieldNumber32 (
+    java.util.Optional<Float> min,
+    java.util.Optional<Float> max,
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Float> {
+  };
+  public static record GeneratorFieldBoolean (
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<Boolean> {
+  };
+  public static record GeneratorFieldBytes (
+    java.util.List<java.util.Map<String, Object>> annotations
+  ) implements GeneratorField<byte[]> {
+  };
+  public static record GeneratorFieldEnum (
+    java.util.List<String> values,
+    java.util.List<java.util.Map<String, Object>> annotations,
+    Type type
+  ) implements GeneratorField<String> {
+  };
+  public static record GeneratorFieldUnion (
+    java.util.List<String> variants,
+    java.util.List<java.util.Map<String, Object>> annotations,
+    Type type
+  ) implements GeneratorField<String> {
+  };
+  public static record GeneratorFieldArray<T> (
+    java.util.function.Function<java.util.List<String>, T> generate
+  ) implements GeneratorField<java.util.List<T>> {
+  };
+  public static record GeneratorFieldNullable<T> (
+    java.util.function.Function<java.util.List<String>, T> generate
+  ) implements GeneratorField<java.util.Optional<T>> {
+  };
+  public static record GeneratorFieldShape<T> (
+    java.util.Map<String, java.util.List<java.util.Map<String, Object>>> annotations,
+    java.util.function.Function<java.util.List<String>, T> generate,
+    Type type
+  ) implements GeneratorField<T> {
+  };
+  public static record GeneratorFieldDict<V> (
+    java.util.function.Function<java.util.List<String>, V> generate
+  ) implements GeneratorField<java.util.Map<String, V>> {
+  };
+  public interface Generator {
+    public <T> T generate(java.util.List<String> path, GeneratorField<T> field);
+  }
+  public interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
+    public Req from(RawRequest request);
+    public RawResponse to(Res response);
+  }
+  public interface ClientEdge<Req extends Request<?>, Res extends Response<?>> {
+    public RawRequest to(Req request);
+    public Res from(RawResponse response);
+  }
+  public interface Client<Req extends Request<?>, Res extends Response<?>> {
+    public String getPathTemplate();
+    public String getMethod();
+    public ClientEdge<Req, Res> getClient(Serialization serialization);
+  }
+  public interface Server<Req extends Request<?>, Res extends Response<?>> {
+    public String getPathTemplate();
+    public String getMethod();
+    public ServerEdge<Req, Res> getServer(Serialization serialization);
+  }
+  public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
+    if(rawType != null) {
+      return new ParameterizedType() {
+        public Type getRawType() { return rawType; }
+        public Type[] getActualTypeArguments() { return new Class<?>[]{actualTypeArguments}; }
+        public Type getOwnerType() { return null; }
+      };
+    }
+    else { return actualTypeArguments; }
+  }}
+```
+
 </details>
 
 ## Default values
 
-The Java emitter does not support [default values](../language/types.mdx#default-values) yet. Compiling a spec with
-defaults to Java fails, and the error names the fields that have one:
+The Java emitter does not support [default values](../language/types.mdx#default-values) yet. Compiling the
+[defaults from the example](./emitters.mdx#default-values) to Java fails, and the error names the fields that have one:
 
 ```
-Java does not support default values, but these fields have one: Settings.name, Settings.retries. Remove the defaults,
-or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI, or
+Java does not support default values, but these fields have one: Todo.done, Todo.priority, Todo.dueDate. Remove the
+defaults, or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI, or
 ignoreDefaults in the Gradle and Maven plugins.
 ```
 
 To generate Java anyway, leave the defaults out with the [ignore defaults option](../language/types.mdx#ignoring-defaults):
 
 ```shell
-wirespec compile -i ./wirespec -l Java --ignore-defaults
+wirespec compile -i todo.ws -o out -l Java -p community.flock.todo --ignore-defaults
 ```
 
 A [conversion](../converters/converters.md) from OpenAPI or Avro to Java does not fail: it leaves the defaults out.

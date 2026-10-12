@@ -19,7 +19,6 @@ const config: Config = {
   customFields: {
     version: process.env.WIRESPEC_VERSION || "0.0.0-SNAPSHOT",
   },
-  plugins: [["drawio", {}]],
   presets: [
     [
       "classic",

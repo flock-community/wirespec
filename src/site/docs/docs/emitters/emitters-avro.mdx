@@ -1,51 +1,101 @@
 ---
 title: Avro Emitter
 slug: /emitters/avro
-sidebar_position: 6
+sidebar_position: 9
 ---
 
-import { Emitters } from "@flock/wirespec";
-import { WirespecCompile, WirespecShared } from "../../src/components/Wirespec";
+# Avro Emitter
 
-Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), the following source code is generated:
+The Avro emitter writes the models of the specification as an Avro schema. This page shows the schema it writes for
+the [Todo example](./emitters.mdx#the-example):
 
-<details>
-  <summary>Avro</summary>
-  <WirespecCompile emitter={Emitters.AVRO} />
-</details>
-
-## Default values
-
-Field [default values](../language/types.mdx#default-values) are written as the `default` of the record field:
-
-```wirespec
-type Settings {
-  name: String = "anonymous",
-  retries: Integer = 3,
-  title: String? = "none",
-  nickname: String? = null,
-  status: Status = ACTIVE
-}
-
-enum Status {
-  ACTIVE, INACTIVE
-}
+```shell
+wirespec compile -i todo.ws -o out -l Avro
 ```
+
+The output is a single file, `schema.avsc`, with a JSON array that holds a schema for every type, enum and union. The
+JSON below is formatted for readability.
+
+## Type
+
+A type becomes a `record`:
 
 ```json
 {
   "type": "record",
-  "name": "Settings",
+  "name": "Todo",
   "fields": [
-    { "name": "name", "type": "string", "default": "anonymous" },
-    { "name": "retries", "type": "long", "default": 3 },
-    { "name": "title", "type": ["string", "null"], "default": "none" },
-    { "name": "nickname", "type": ["null", "string"], "default": null },
-    { "name": "status", "type": "Status", "default": "ACTIVE" }
+    { "name": "id", "type": "string" },
+    { "name": "title", "type": "string" },
+    { "name": "done", "type": "boolean" },
+    { "name": "priority", "type": "Priority" },
+    { "name": "tags", "type": { "type": "array", "items": "string" } },
+    { "name": "dueDate", "type": ["null", "string"] }
+  ]
+}
+```
+
+The fields map to Avro types as follows:
+
+| Wirespec    | Avro                                   |
+|-------------|----------------------------------------|
+| `String`    | `string`                               |
+| `Integer`   | `long`                                 |
+| `Integer32` | `int`                                  |
+| `Number`    | `double`                               |
+| `Number32`  | `float`                                |
+| `Boolean`   | `boolean`                              |
+| `Bytes`     | `bytes`                                |
+| `T[]`       | An `array` with `T` as `items`         |
+| `{ T }`     | A `map` with `T` as `values`           |
+| `T?`        | The union `["null", T]`                |
+
+## Refined
+
+Avro has no constrained types, so a refined type becomes its primitive type. The field `id` of `Todo` above is a
+`string`, and `TodoId` gets no schema of its own.
+
+## Enum
+
+An enum becomes an `enum` with its values as `symbols`:
+
+```json
+{ "type": "enum", "name": "Priority", "symbols": ["LOW", "MEDIUM", "HIGH"] }
+```
+
+## Union
+
+A union becomes a named union of its members:
+
+```json
+{ "name": "TodoEvent", "type": ["TodoCreated", "TodoDeleted"] }
+```
+
+## Endpoint, channel and RPC
+
+An Avro schema only describes data, so the emitter leaves `UpdateTodo`, `TodoEvents` and `CompleteTodo` out. The
+types they use, such as `TodoInput` and `ApiError`, are part of the schema.
+
+## Default values
+
+Field [default values](../language/types.mdx#default-values) are written as the `default` of the record field. With
+the [defaults from the example](./emitters.mdx#default-values), `Todo` becomes:
+
+```json
+{
+  "type": "record",
+  "name": "Todo",
+  "fields": [
+    { "name": "id", "type": "string" },
+    { "name": "title", "type": "string" },
+    { "name": "done", "type": "boolean", "default": false },
+    { "name": "priority", "type": "Priority", "default": "MEDIUM" },
+    { "name": "tags", "type": { "type": "array", "items": "string" } },
+    { "name": "dueDate", "type": ["null", "string"], "default": null }
   ]
 }
 ```
 
 Avro checks the default of a union against the union's first branch. A nullable field with a default other than `null`
-therefore puts its own type first in the union, like `title` above. The [Avro converter](../converters/avro.md#defaults)
-reads these defaults back.
+therefore puts its own type first: `dueDate: String? = "someday"` becomes `["string", "null"]`. The
+[Avro converter](../converters/avro.md#defaults) reads these defaults back.

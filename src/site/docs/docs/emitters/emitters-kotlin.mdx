@@ -4,67 +4,673 @@ slug: /emitters/kotlin
 sidebar_position: 2
 ---
 
-import { Emitters } from "@flock/wirespec";
-import { WirespecCompile, WirespecShared } from "../../src/components/Wirespec";
-
 # Kotlin Emitter
 
-Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), the following source code is generated:
+The Kotlin emitter generates data classes, sealed interfaces and enum classes that only depend on the Kotlin standard
+library. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example):
+
+```shell
+wirespec compile -i todo.ws -o out -l Kotlin -p community.flock.todo --shared
+```
+
+```text
+out
+├── Wirespec.kt
+└── community/flock/todo
+    ├── Client.kt
+    ├── channel/TodoEvents.kt
+    ├── client/UpdateTodoClient.kt
+    ├── endpoint/UpdateTodo.kt
+    ├── generator/TodoGenerator.kt, TodoIdGenerator.kt, ...
+    ├── model/Todo.kt, TodoId.kt, Priority.kt, TodoEvent.kt, ...
+    └── rpc/CompleteTodo.kt
+```
+
+Every file starts with its package and the imports it needs, which are left out of the examples below.
+
+## Type
+
+A type becomes a `data class` that implements `Wirespec.Shape`:
+
+```kotlin title="model/Todo.kt"
+data class Todo(
+  val id: TodoId,
+  val title: String,
+  val done: Boolean,
+  val priority: Priority,
+  val tags: List<String>,
+  val dueDate: String?
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    if (!id.validate()) listOf("id") else emptyList<String>()
+}
+```
+
+The fields map to Kotlin types as follows:
+
+| Wirespec    | Kotlin       |
+|-------------|--------------|
+| `String`    | `String`     |
+| `Integer`   | `Long`       |
+| `Integer32` | `Int`        |
+| `Number`    | `Double`     |
+| `Number32`  | `Float`      |
+| `Boolean`   | `Boolean`    |
+| `Bytes`     | `ByteArray`  |
+| `T[]`       | `List<T>`    |
+| `{ T }`     | `Map<String, T>` |
+| `T?`        | `T?`         |
+
+`validate()` returns the names of the fields that do not hold a valid value. Only refined types can be invalid, so
+`Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
+
+```kotlin title="model/TodoCreated.kt"
+data class TodoCreated(
+  val todo: Todo
+) : Wirespec.Shape, TodoEvent {
+  override fun validate(): List<String> =
+    todo.validate().map { e -> "todo.${e}" }
+}
+```
+
+## Refined
+
+A refined type becomes a `data class` that wraps the value and implements `Wirespec.Refined`. `validate()` checks the
+regular expression, and `toString()` returns the plain value:
+
+```kotlin title="model/TodoId.kt"
+data class TodoId(
+  override val value: String
+) : Wirespec.Refined<String> {
+  override fun validate(): Boolean =
+    Regex("""^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$""").matches(value)
+  override fun toString(): String =
+    value
+}
+```
+
+A refined `Integer` or `Number` checks its bounds instead, for example `0 <= value && value <= 100`.
+
+## Enum
+
+An enum becomes an `enum class` that implements `Wirespec.Enum`. The `label` holds the value as it is written in
+Wirespec, which is also what `toString()` returns:
+
+```kotlin title="model/Priority.kt"
+enum class Priority (override val label: String): Wirespec.Enum {
+  LOW("LOW"),
+  MEDIUM("MEDIUM"),
+  HIGH("HIGH");
+  override fun toString(): String {
+    return label
+  }
+}
+```
+
+## Union
+
+A union becomes a `sealed interface`:
+
+```kotlin title="model/TodoEvent.kt"
+sealed interface TodoEvent
+```
+
+Every member of the union implements it, as `TodoCreated` above does with `: Wirespec.Shape, TodoEvent`. A `when` over
+a `TodoEvent` is therefore exhaustive:
+
+```kotlin
+when (event) {
+  is TodoCreated -> println("Created ${event.todo.title}")
+  is TodoDeleted -> println("Deleted ${event.id}")
+}
+```
+
+## Endpoint
+
+An endpoint becomes an `object` that implements `Wirespec.Endpoint`. It holds everything that is needed to send and
+receive the request and its responses.
+
+### Request
+
+The path parameters, query parameters and request headers each get a data class. `Request` combines them with the
+method and the body. Its secondary constructor takes all values as flat parameters:
+
+```kotlin title="endpoint/UpdateTodo.kt"
+object UpdateTodo : Wirespec.Endpoint {
+  data class Path(
+      val id: TodoId
+    ) : Wirespec.Path
+  data class Queries(
+      val notify: Boolean?
+    ) : Wirespec.Queries
+  data class RequestHeaders(
+      val requestId: String
+    ) : Wirespec.Request.Headers
+  data class Request(
+      override val path: Path,
+      override val method: Wirespec.Method,
+      override val queries: Queries,
+      override val headers: RequestHeaders,
+      override val body: TodoInput
+    ) : Wirespec.Request<TodoInput> {
+      constructor(id: TodoId, notify: Boolean?, requestId: String, body: TodoInput) : this(Path(id = id), Wirespec.Method.PUT, Queries(notify = notify), RequestHeaders(requestId = requestId), body)
+    }
+  // ...
+}
+```
+
+### Responses
+
+Every status code gets a response class, with a data class for its headers. The response classes are grouped by sealed
+interfaces: `Response` for all of them, `Response2XX` and `Response4XX` per status class, and `ResponseTodo` and
+`ResponseApiError` per body type:
+
+```kotlin title="endpoint/UpdateTodo.kt"
+  sealed interface Response<T: Any> : Wirespec.Response<T>
+  sealed interface Response2XX<T: Any> : Response<T>
+  sealed interface Response4XX<T: Any> : Response<T>
+  sealed interface ResponseTodo : Response<Todo>
+  sealed interface ResponseApiError : Response<ApiError>
+  data class Response200Headers(
+      val version: Long
+    ) : Wirespec.Response.Headers
+  data class Response200(
+      override val status: Int,
+      override val headers: Response200Headers,
+      override val body: Todo
+    ) : Response2XX<Todo>, ResponseTodo {
+      constructor(version: Long, body: Todo) : this(200, Response200Headers(version = version), body)
+    }
+  object Response404Headers : Wirespec.Response.Headers
+  data class Response404(
+      override val status: Int,
+      override val headers: Response404Headers,
+      override val body: ApiError
+    ) : Response4XX<ApiError>, ResponseApiError {
+      constructor(body: ApiError) : this(404, Response404Headers, body)
+    }
+```
+
+### Serialization
+
+Four functions convert between the typed request and response and the `Wirespec.RawRequest` and
+`Wirespec.RawResponse` that go over the wire. They delegate the serialization of the path, parameters, headers and
+body to a `Wirespec.Serializer` or `Wirespec.Deserializer`, so any JSON library can be plugged in, see
+[Integration](../integration/integration.mdx):
+
+```kotlin title="endpoint/UpdateTodo.kt"
+  fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = request.method.name,
+      path = listOf("todos", serialization.serializePath<TodoId>(request.path.id, typeOf<TodoId>())),
+      queries = mapOf("notify" to (request.queries.notify?.let { serialization.serializeParam<Boolean>(it, typeOf<Boolean>()) } ?: emptyList<String>())),
+      headers = mapOf("requestId" to serialization.serializeParam<String>(request.headers.requestId, typeOf<String>())),
+      body = serialization.serializeBody<TodoInput>(request.body, typeOf<TodoInput>())
+    )
+```
+
+`fromRawRequest`, `toRawResponse` and `fromRawResponse` work the same way.
+
+### Handler and Call
+
+`Handler` is the interface the server implements, `Call` is the interface the client implements. The companion object
+of `Handler`, also available as `api`, describes the endpoint for frameworks: its path template, its method, and the
+conversion functions for the server and the client side:
+
+```kotlin title="endpoint/UpdateTodo.kt"
+  interface Handler : Wirespec.Handler {
+      suspend fun updateTodo(request: Request): Response<*>
+      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        override val pathTemplate = "/todos/{id}"
+        override val method = "PUT"
+        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+          override fun to(response: Response<*>) = toRawResponse(serialization, response)
+        }
+        override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+          override fun to(request: Request) = toRawRequest(serialization, request)
+          override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+        }
+      }
+  }
+  fun interface Call : Wirespec.Call {
+      suspend fun updateTodo(id: TodoId, notify: Boolean?, requestId: String, body: TodoInput): Response<*>
+  }
+  val api = Handler
+```
 
 <details>
-  <summary>Kotlin shared</summary>
-  <WirespecShared emitter={Emitters.KOTLIN} />
+  <summary>The complete endpoint/UpdateTodo.kt</summary>
+
+```kotlin title="endpoint/UpdateTodo.kt"
+package community.flock.todo.endpoint
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.todo.model.TodoId
+import community.flock.todo.model.TodoInput
+import community.flock.todo.model.Todo
+import community.flock.todo.model.ApiError
+object UpdateTodo : Wirespec.Endpoint {
+  data class Path(
+      val id: TodoId
+    ) : Wirespec.Path
+  data class Queries(
+      val notify: Boolean?
+    ) : Wirespec.Queries
+  data class RequestHeaders(
+      val requestId: String
+    ) : Wirespec.Request.Headers
+  data class Request(
+      override val path: Path,
+      override val method: Wirespec.Method,
+      override val queries: Queries,
+      override val headers: RequestHeaders,
+      override val body: TodoInput
+    ) : Wirespec.Request<TodoInput> {
+      constructor(id: TodoId, notify: Boolean?, requestId: String, body: TodoInput) : this(Path(id = id), Wirespec.Method.PUT, Queries(notify = notify), RequestHeaders(requestId = requestId), body)
+    }
+  sealed interface Response<T: Any> : Wirespec.Response<T>
+  sealed interface Response2XX<T: Any> : Response<T>
+  sealed interface Response4XX<T: Any> : Response<T>
+  sealed interface ResponseTodo : Response<Todo>
+  sealed interface ResponseApiError : Response<ApiError>
+  data class Response200Headers(
+      val version: Long
+    ) : Wirespec.Response.Headers
+  data class Response200(
+      override val status: Int,
+      override val headers: Response200Headers,
+      override val body: Todo
+    ) : Response2XX<Todo>, ResponseTodo {
+      constructor(version: Long, body: Todo) : this(200, Response200Headers(version = version), body)
+    }
+  object Response404Headers : Wirespec.Response.Headers
+  data class Response404(
+      override val status: Int,
+      override val headers: Response404Headers,
+      override val body: ApiError
+    ) : Response4XX<ApiError>, ResponseApiError {
+      constructor(body: ApiError) : this(404, Response404Headers, body)
+    }
+  fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = request.method.name,
+      path = listOf("todos", serialization.serializePath<TodoId>(request.path.id, typeOf<TodoId>())),
+      queries = mapOf("notify" to (request.queries.notify?.let { serialization.serializeParam<Boolean>(it, typeOf<Boolean>()) } ?: emptyList<String>())),
+      headers = mapOf("requestId" to serialization.serializeParam<String>(request.headers.requestId, typeOf<String>())),
+      body = serialization.serializeBody<TodoInput>(request.body, typeOf<TodoInput>())
+    )
+  fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    Request(
+      id = serialization.deserializePath<TodoId>(request.path[1], typeOf<TodoId>()),
+      notify = (request.queries["notify"]?.let { serialization.deserializeParam<Boolean>(it, typeOf<Boolean>()) }),
+      requestId = (request.headers.entries.find { it.key.equals("requestId", ignoreCase = true) }?.value?.let { serialization.deserializeParam<String>(it, typeOf<String>()) } ?: error("Param requestId cannot be null")),
+      body = (request.body?.let { serialization.deserializeBody<TodoInput>(it, typeOf<TodoInput>()) } ?: error("body is null"))
+    )
+  fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
+    when(val r = response) {
+        is Response200 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = mapOf("version" to serialization.serializeParam<Long>(r.headers.version, typeOf<Long>())),
+            body = serialization.serializeBody(r.body, typeOf<Todo>())
+          )
+        }
+        is Response404 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = emptyMap<String, List<String>>(),
+            body = serialization.serializeBody(r.body, typeOf<ApiError>())
+          )
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.status))
+        }
+    }
+  }
+  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> {
+    when (response.statusCode) {
+        200 -> {
+          return Response200(
+            version = (response.headers.entries.find { it.key.equals("version", ignoreCase = true) }?.value?.let { serialization.deserializeParam<Long>(it, typeOf<Long>()) } ?: error("Param version cannot be null")),
+            body = (response.body?.let { serialization.deserializeBody<Todo>(it, typeOf<Todo>()) } ?: error("body is null"))
+          )
+        }
+        404 -> {
+          return Response404(body = (response.body?.let { serialization.deserializeBody<ApiError>(it, typeOf<ApiError>()) } ?: error("body is null")))
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.statusCode))
+        }
+    }
+  }
+  interface Handler : Wirespec.Handler {
+      suspend fun updateTodo(request: Request): Response<*>
+      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        override val pathTemplate = "/todos/{id}"
+        override val method = "PUT"
+        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+          override fun to(response: Response<*>) = toRawResponse(serialization, response)
+        }
+        override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+          override fun to(request: Request) = toRawRequest(serialization, request)
+          override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+        }
+      }
+  }
+  fun interface Call : Wirespec.Call {
+      suspend fun updateTodo(id: TodoId, notify: Boolean?, requestId: String, body: TodoInput): Response<*>
+  }
+  val api = Handler
+}
+```
+
 </details>
 
+## Channel
+
+A channel becomes an `object` with a `Sender` to publish messages and a `Listener` to receive them:
+
+```kotlin title="channel/TodoEvents.kt"
+object TodoEvents : Wirespec.Channel {
+  fun interface Sender {
+      fun todoEvents(message: TodoEvent)
+  }
+  fun interface Listener {
+      fun todoEvents(handler: (TodoEvent) -> Unit)
+  }
+}
+```
+
+## RPC
+
+An RPC becomes an `object` with a `Service` interface to implement. Because `CompleteTodo` declares an error, the
+service returns a sealed `Response` with a `Result` and an `Error` variant. Without an error, it returns the result
+type directly:
+
+```kotlin title="rpc/CompleteTodo.kt"
+object CompleteTodo : Wirespec.Rpc {
+  sealed interface Response
+  data class Result(
+      val value: Todo
+    ) : Response
+  data class Error(
+      val value: ApiError
+    ) : Response
+  fun interface Service {
+      suspend fun completeTodo(id: TodoId): Response
+  }
+}
+```
+
+## Client
+
+For every endpoint, a client implements its `Call` interface. It builds the `Request`, converts it with
+`toRawRequest`, sends it with a `Wirespec.Transportation` and converts the answer with `fromRawResponse`:
+
+```kotlin title="client/UpdateTodoClient.kt"
+data class UpdateTodoClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : UpdateTodo.Call {
+  override suspend fun updateTodo(id: TodoId, notify: Boolean?, requestId: String, body: TodoInput): UpdateTodo.Response<*> {
+    val request = UpdateTodo.Request(
+      id = id,
+      notify = notify,
+      requestId = requestId,
+      body = body
+    )
+    val rawRequest = UpdateTodo.toRawRequest(serialization, request)
+    val rawResponse = transportation.transport(rawRequest)
+    return UpdateTodo.fromRawResponse(serialization, rawResponse)
+  }
+}
+```
+
+`Client` implements the `Call` interface of every endpoint in the specification, so one instance can call the whole
+API:
+
+```kotlin title="Client.kt"
+data class Client(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : UpdateTodo.Call {
+  override suspend fun updateTodo(id: TodoId, notify: Boolean?, requestId: String, body: TodoInput): UpdateTodo.Response<*> =
+    UpdateTodoClient(
+      serialization = serialization,
+      transportation = transportation
+    ).updateTodo(id, notify, requestId, body)
+}
+```
+
+## Generator
+
+For every type, refined type, enum and union, a generator builds an instance with values from a `Wirespec.Generator`.
+It passes the path to the field and a description of the value it needs, such as the regular expression of a refined
+type. This is how you create test data that matches the specification:
+
+```kotlin title="generator/TodoIdGenerator.kt"
+object TodoIdGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TodoId =
+    TodoId(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+      regex = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\$",
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+```
+
+## Shared
+
+`Wirespec.kt` is the same for every specification and lives in the package `community.flock.wirespec.kotlin`. It
+contains:
+
+| Declarations                                                                 | Purpose                                                       |
+|------------------------------------------------------------------------------|---------------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                                          | Implemented by the generated types, enums and refined types   |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`                              | Implemented by the generated endpoints, channels and RPCs     |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers`                | The typed request and response of an endpoint                 |
+| `Serializer`, `Deserializer`, `Serialization` and their parts                | Plug in the serialization of bodies, paths and parameters     |
+| `RawRequest`, `RawResponse`, `Transportation`                                | The untyped request and response, and how to send them        |
+| `Generator`, `GeneratorField` and its subtypes                               | Generate values for the generators                            |
+| `ServerEdge`, `ClientEdge`, `Server`, `Client`                               | Convert between raw and typed messages on either side          |
+
 <details>
-  <summary>Kotlin code</summary>
-  <WirespecCompile emitter={Emitters.KOTLIN} />
+  <summary>The complete Wirespec.kt</summary>
+
+```kotlin title="Wirespec.kt"
+package community.flock.wirespec.kotlin
+import kotlin.reflect.KType
+public object Wirespec {
+  public interface Model
+  public fun interface Shape : Model {
+      public fun validate(): List<String>
+  }
+  public interface Enum : Model {
+      public val label: String
+  }
+  public interface Refined<T: Any> : Model {
+      public val value: T
+      public fun validate(): Boolean
+  }
+  public interface Endpoint
+  public interface Channel
+  public interface Rpc
+  public interface Path
+  public interface Queries
+  public interface Headers
+  public interface Handler
+  public interface Call
+  public enum class Method {
+      GET,
+      PUT,
+      POST,
+      DELETE,
+      OPTIONS,
+      HEAD,
+      PATCH,
+      TRACE
+    }  public interface Request<T: Any> {
+      public val path: Path
+      public val method: Method
+      public val queries: Queries
+      public val headers: Headers
+      public val body: T
+      public interface Headers
+  }
+  public interface Response<T: Any> {
+      public val status: Int
+      public val headers: Headers
+      public val body: T
+      public interface Headers
+  }
+  public interface BodySerializer {
+      public fun <T: Any> serializeBody(t: T, type: KType): ByteArray
+  }
+  public interface BodyDeserializer {
+      public fun <T: Any> deserializeBody(raw: ByteArray, type: KType): T
+  }
+  public interface BodySerialization : BodySerializer, BodyDeserializer
+  public interface PathSerializer {
+      public fun <T: Any> serializePath(t: T, type: KType): String
+  }
+  public interface PathDeserializer {
+      public fun <T: Any> deserializePath(raw: String, type: KType): T
+  }
+  public interface PathSerialization : PathSerializer, PathDeserializer
+  public interface ParamSerializer {
+      public fun <T: Any> serializeParam(value: T, type: KType): List<String>
+  }
+  public interface ParamDeserializer {
+      public fun <T: Any> deserializeParam(values: List<String>, type: KType): T
+  }
+  public interface ParamSerialization : ParamSerializer, ParamDeserializer
+  public interface Serializer : BodySerializer, PathSerializer, ParamSerializer
+  public interface Deserializer : BodyDeserializer, PathDeserializer, ParamDeserializer
+  public interface Serialization : Serializer, Deserializer
+  public data class RawRequest(
+      val method: String,
+      val path: List<String>,
+      val queries: Map<String, List<String>>,
+      val headers: Map<String, List<String>>,
+      val body: ByteArray?
+    )
+  public data class RawResponse(
+      val statusCode: Int,
+      val headers: Map<String, List<String>>,
+      val body: ByteArray?
+    )
+  public fun interface Transportation {
+      public suspend fun transport(request: RawRequest): RawResponse
+  }
+  public sealed interface GeneratorField<T: Any?>
+  public data class GeneratorFieldString(
+      val regex: String?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<String>
+  public data class GeneratorFieldInteger64(
+      val min: Long?,
+      val max: Long?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Long>
+  public data class GeneratorFieldInteger32(
+      val min: Int?,
+      val max: Int?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Int>
+  public data class GeneratorFieldNumber64(
+      val min: Double?,
+      val max: Double?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Double>
+  public data class GeneratorFieldNumber32(
+      val min: Float?,
+      val max: Float?,
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Float>
+  public data class GeneratorFieldBoolean(
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<Boolean>
+  public data class GeneratorFieldBytes(
+      val annotations: List<Map<String, Any>>
+    ) : GeneratorField<ByteArray>
+  public data class GeneratorFieldEnum(
+      val values: List<String>,
+      val annotations: List<Map<String, Any>>,
+      val type: KType
+    ) : GeneratorField<String>
+  public data class GeneratorFieldUnion(
+      val variants: List<String>,
+      val annotations: List<Map<String, Any>>,
+      val type: KType
+    ) : GeneratorField<String>
+  public data class GeneratorFieldArray<T: Any>(
+      val generate: (List<String>) -> T
+    ) : GeneratorField<List<T>>
+  public data class GeneratorFieldNullable<T: Any>(
+      val generate: (List<String>) -> T
+    ) : GeneratorField<T?>
+  public data class GeneratorFieldShape<T: Any>(
+      val annotations: Map<String, List<Map<String, Any>>>,
+      val generate: (List<String>) -> T,
+      val type: KType
+    ) : GeneratorField<T>
+  public data class GeneratorFieldDict<V: Any>(
+      val generate: (List<String>) -> V
+    ) : GeneratorField<Map<String, V>>
+  public interface Generator {
+      public fun <T: Any?> generate(path: List<String>, field: GeneratorField<T>): T
+  }
+  public interface ServerEdge<Req: Request<*>, Res: Response<*>> {
+      public fun from(request: RawRequest): Req
+      public fun to(response: Res): RawResponse
+  }
+  public interface ClientEdge<Req: Request<*>, Res: Response<*>> {
+      public fun to(request: Req): RawRequest
+      public fun from(response: RawResponse): Res
+  }
+  public interface Client<Req: Request<*>, Res: Response<*>> {
+      public val pathTemplate: String
+      public val method: String
+      public fun client(serialization: Serialization): ClientEdge<Req, Res>
+  }
+  public interface Server<Req: Request<*>, Res: Response<*>> {
+      public val pathTemplate: String
+      public val method: String
+      public fun server(serialization: Serialization): ServerEdge<Req, Res>
+  }
+}
+```
+
 </details>
 
 ## Default values
 
-Field [default values](../language/types.mdx#default-values) are generated as constructor parameter defaults:
+Field [default values](../language/types.mdx#default-values) are generated as constructor parameter defaults. With the
+[defaults from the example](./emitters.mdx#default-values), `Todo` becomes:
 
-```wirespec
-type Settings {
-  name: String = "anonymous",
-  retries: Integer = 3,
-  port: Integer32 = 8080,
-  ratio: Number = 1.5,
-  weight: Number32 = 0.5,
-  active: Boolean = true,
-  nickname: String? = null,
-  status: Status = INACTIVE,
-  tags: String[]
-}
-
-enum Status {
-  ACTIVE, INACTIVE
-}
-```
-
-```kotlin
-data class Settings(
-  val name: String = "anonymous",
-  val retries: Long = 3L,
-  val port: Int = 8080,
-  val ratio: Double = 1.5,
-  val weight: Float = 0.5f,
-  val active: Boolean = true,
-  val nickname: String? = null,
-  val status: Status = Status.INACTIVE,
-  val tags: List<String>
+```kotlin title="model/Todo.kt"
+data class Todo(
+  val id: TodoId,
+  val title: String,
+  val done: Boolean = false,
+  val priority: Priority = Priority.MEDIUM,
+  val tags: List<String>,
+  val dueDate: String? = null
 ) : Wirespec.Shape {
   override fun validate(): List<String> =
-    emptyList<String>()
+    if (!id.validate()) listOf("id") else emptyList<String>()
 }
 ```
 
-An enum default refers to the entry of the generated `enum class`, using the same name as the entry. Entries that are
-not valid Kotlin names are renamed the same way in both places, so `priority: Priority = 2` becomes
-`val priority: Priority = Priority._2`.
+An enum default refers to the entry of the generated `enum class`. Entries that are not valid Kotlin names are renamed
+the same way in both places, so a default `2` of `enum Level { 1, 2, 3 }` becomes `Level._2`.
 
-Fields with a default can be left out when the model is constructed, so `Settings(tags = listOf("admin"))` is valid.
+Fields with a default can be left out when the model is constructed:
+
+```kotlin
+Todo(id = TodoId("2f1c8e4a-5b6d-4c3e-9f7a-1b2c3d4e5f6a"), title = "Write docs", tags = listOf("docs"))
+```
 
 The default is also used when the field is missing from a JSON payload, as long as the deserializer knows about Kotlin
 default arguments:
