@@ -2,118 +2,77 @@
 title: Scala Emitter
 slug: /emitters/scala
 sidebar_position: 6
+wirespec:
+  source: todo.ws
+  language: Scala
+  package: community.flock.todo
+  shared: true
+  ignoreDefaults: true
 ---
 
 # Scala Emitter
 
 The Scala emitter generates case classes, sealed traits and enums that only depend on the Scala standard library. It
-generates Scala 3. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example):
+generates Scala 3. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example). The
+Scala emitter does not support [default values](#default-values) yet, so the example is compiled with
+`--ignore-defaults`:
 
-```shell
-wirespec compile -i todo.ws -o out -l Scala -p community.flock.todo --shared
+```shell wirespec command
 ```
 
-```text
-out
-└── community/flock
-    ├── wirespec/scala/Wirespec.scala
-    └── todo
-        ├── Client.scala
-        ├── channel/TodoEvents.scala
-        ├── client/UpdateTodoClient.scala
-        ├── endpoint/UpdateTodo.scala
-        ├── generator/TodoGenerator.scala, TodoIdGenerator.scala, ...
-        ├── model/Todo.scala, TodoId.scala, Priority.scala, ...
-        └── rpc/CompleteTodo.scala
+```text wirespec tree
 ```
-
-Every file starts with its package and the imports it needs, which are left out of the examples below.
 
 ## Type
 
 A type becomes a `case class` that extends `Wirespec.Shape`:
 
-```scala title="model/Todo.scala"
-case class Todo(
-  val id: TodoId,
-  val title: String,
-  val done: Boolean,
-  val priority: Priority,
-  val tags: List[String],
-  val dueDate: Option[String]
-) extends Wirespec.Shape {
-  override def validate(): List[String] =
-    if (!id.validate()) List("id") else List.empty[String]
-}
+```scala wirespec file=model/Todo.scala
 ```
 
 The fields map to Scala types as follows:
 
-| Wirespec    | Scala               |
-|-------------|---------------------|
-| `String`    | `String`            |
-| `Integer`   | `Long`              |
-| `Integer32` | `Int`               |
-| `Number`    | `Double`            |
-| `Number32`  | `Float`             |
-| `Boolean`   | `Boolean`           |
-| `Bytes`     | `Array[Byte]`       |
-| `T[]`       | `List[T]`           |
-| `{ T }`     | `Map[String, T]`    |
-| `T?`        | `Option[T]`         |
+| Wirespec    | Scala            |
+|-------------|------------------|
+| `String`    | `String`         |
+| `Integer`   | `Long`           |
+| `Integer32` | `Int`            |
+| `Number`    | `Double`         |
+| `Number32`  | `Float`          |
+| `Boolean`   | `Boolean`        |
+| `Bytes`     | `Array[Byte]`    |
+| `T[]`       | `List[T]`        |
+| `{ T }`     | `Map[String, T]` |
+| `T?`        | `Option[T]`      |
 
 `validate()` returns the names of the fields that do not hold a valid value. Only refined values can be invalid, so
 `Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
 
-```scala title="model/TodoCreated.scala"
-case class TodoCreated(
-  val todo: Todo
-) extends Wirespec.Shape with TodoEvent {
-  override def validate(): List[String] =
-    todo.validate().map(e => s"todo.${e}").toList
-}
+```scala wirespec file=model/TodoCreated.scala
 ```
 
 ## Refined
 
 A refined type becomes a `case class` that wraps the value and extends `Wirespec.Refined`. `validate()` checks the
-regular expression, and `toString()` returns the plain value:
+regular expression, and `toString()` returns the plain value. A refined `Integer` or `Number` checks its bounds
+instead.
 
-```scala title="model/TodoId.scala"
-case class TodoId(
-  override val value: String
-) extends Wirespec.Refined[String] {
-  override def validate(): Boolean =
-    """^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$""".r.findFirstIn(value).isDefined
-  override def toString(): String =
-    value
-}
+```scala wirespec file=model/TodoId.scala
 ```
-
-A refined `Integer` or `Number` checks its bounds instead.
 
 ## Enum
 
 An enum becomes an `enum` that extends `Wirespec.Enum`. The `label` holds the value as it is written in Wirespec,
 which is also what `toString()` returns:
 
-```scala title="model/Priority.scala"
-enum Priority(override val label: String) extends Wirespec.Enum {
-  case LOW extends Priority("LOW"),
-  case MEDIUM extends Priority("MEDIUM"),
-  case HIGH extends Priority("HIGH")
-  override def toString(): String = {
-    label
-  }
-}
+```scala wirespec file=model/Priority.scala
 ```
 
 ## Union
 
 A union becomes a `sealed trait`:
 
-```scala title="model/TodoEvent.scala"
-sealed trait TodoEvent
+```scala wirespec file=model/TodoEvent.scala
 ```
 
 Every member of the union extends it, as `TodoCreated` above does with `extends Wirespec.Shape with TodoEvent`.
@@ -121,268 +80,30 @@ Every member of the union extends it, as `TodoCreated` above does with `extends 
 ## Endpoint
 
 An endpoint becomes an `object` that extends `Wirespec.Endpoint`. It holds everything that is needed to send and
-receive the request and its responses.
+receive the request and its responses:
 
-### Request
+- **Request**: the path parameters, query parameters and request headers each get a case class, `Path`, `Queries` and
+  `RequestHeaders`. `Request` combines them with the method and the body. Its auxiliary constructor takes all values
+  as flat parameters.
+- **Responses**: every status code gets a response class, `Response200` and `Response404`, with a case class or object
+  for its headers. Sealed traits group them: `Response` for all of them, `Response2XX` and `Response4XX` per status
+  class, and `ResponseTodo` and `ResponseApiError` per body type.
+- **Serialization**: `toRawRequest`, `fromRawRequest`, `toRawResponse` and `fromRawResponse` convert between the typed
+  request and response and the `Wirespec.RawRequest` and `Wirespec.RawResponse` that go over the wire. They delegate
+  the serialization of the path, parameters, headers and body to a `Wirespec.Serializer` or `Wirespec.Deserializer`.
+- **Handler and Call**: `Handler` is the trait the server implements, `Call` is the trait the client implements. Both
+  take the effect type `F[_]` the result is wrapped in, such as `Future`. The objects `Client` and `Server` describe
+  the endpoint for frameworks: its path template, its method, its path segments, and the conversion functions for
+  either side.
 
-The path parameters, query parameters and request headers each get a case class. `Request` combines them with the
-method and the body. Its auxiliary constructor takes all values as flat parameters:
-
-```scala title="endpoint/UpdateTodo.scala"
-object UpdateTodo extends Wirespec.Endpoint {
-  case class Path(
-      val id: TodoId
-    ) extends Wirespec.Path
-  case class Queries(
-      val notify: Option[Boolean]
-    ) extends Wirespec.Queries
-  case class RequestHeaders(
-      val requestId: String
-    ) extends Wirespec.Request.Headers
-  case class Request(
-      override val path: Path,
-      override val method: Wirespec.Method,
-      override val queries: Queries,
-      override val headers: RequestHeaders,
-      override val body: TodoInput
-    ) extends Wirespec.Request[TodoInput] {
-      def this(id: TodoId, notify: Option[Boolean], requestId: String, body: TodoInput) = this(Path(id = id), Wirespec.Method.PUT, Queries(notify = notify), RequestHeaders(requestId = requestId), body)
-    }
-  // ...
-}
+```scala wirespec file=endpoint/UpdateTodo.scala
 ```
-
-### Responses
-
-Every status code gets a response class, with a case class or object for its headers. The response classes are grouped
-by sealed traits: `Response` for all of them, `Response2XX` and `Response4XX` per status class, and `ResponseTodo` and
-`ResponseApiError` per body type:
-
-```scala title="endpoint/UpdateTodo.scala"
-  sealed trait Response[T] extends Wirespec.Response[T]
-  sealed trait Response2XX[T] extends Response[T]
-  sealed trait Response4XX[T] extends Response[T]
-  sealed trait ResponseTodo extends Response[Todo]
-  sealed trait ResponseApiError extends Response[ApiError]
-  case class Response200Headers(
-      val version: Long
-    ) extends Wirespec.Response.Headers
-  case class Response200(
-      override val status: Int,
-      override val headers: Response200Headers,
-      override val body: Todo
-    ) extends Response2XX[Todo] with ResponseTodo {
-      def this(version: Long, body: Todo) = this(200, Response200Headers(version = version), body)
-    }
-  object Response404Headers extends Wirespec.Response.Headers
-  case class Response404(
-      override val status: Int,
-      override val headers: Response404Headers.type,
-      override val body: ApiError
-    ) extends Response4XX[ApiError] with ResponseApiError {
-      def this(body: ApiError) = this(404, Response404Headers, body)
-    }
-```
-
-### Serialization
-
-Four methods convert between the typed request and response and the `Wirespec.RawRequest` and `Wirespec.RawResponse`
-that go over the wire. They delegate the serialization of the path, parameters, headers and body to a
-`Wirespec.Serializer` or `Wirespec.Deserializer`:
-
-```scala title="endpoint/UpdateTodo.scala"
-  def toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
-    new Wirespec.RawRequest(
-      method = request.method.toString,
-      path = List("todos", serialization.serializePath[TodoId](request.path.id, scala.reflect.classTag[TodoId])),
-      queries = Map("notify" -> (request.queries.notify.map(it => serialization.serializeParam[Boolean](it, scala.reflect.classTag[Boolean])).getOrElse(List.empty[String]))),
-      headers = Map("requestId" -> serialization.serializeParam[String](request.headers.requestId, scala.reflect.classTag[String])),
-      body = Some(serialization.serializeBody[TodoInput](request.body, scala.reflect.classTag[TodoInput]))
-    )
-```
-
-`fromRawRequest`, `toRawResponse` and `fromRawResponse` work the same way.
-
-### Handler and Call
-
-`Handler` is the trait the server implements, `Call` is the trait the client implements. Both take the effect type
-`F[_]` the result is wrapped in, such as `Future`. The objects `Client` and `Server` describe the endpoint for
-frameworks: its path template, its method, its path segments, and the conversion functions for either side:
-
-```scala title="endpoint/UpdateTodo.scala"
-  trait Handler[F[_]] extends Wirespec.Handler {
-      def updateTodo(request: Request): F[Response[?]]
-  }
-  trait Call[F[_]] extends Wirespec.Call {
-      def updateTodo(id: TodoId, notify: Option[Boolean], requestId: String, body: TodoInput): F[Response[?]]
-  }
-  object Client extends Wirespec.Client[Request, Response[?]] {
-    override val pathTemplate: String = "/todos/{id}"
-    override val method: String = "PUT"
-    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[TodoId]))
-    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request, Response[?]] = new Wirespec.ClientEdge[Request, Response[?]] {
-      override def to(request: Request): Wirespec.RawRequest = toRawRequest(serialization, request)
-      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
-    }
-  }
-  object Server extends Wirespec.Server[Request, Response[?]] {
-    override val pathTemplate: String = "/todos/{id}"
-    override val method: String = "PUT"
-    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[TodoId]))
-    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request, Response[?]] = new Wirespec.ServerEdge[Request, Response[?]] {
-      override def from(request: Wirespec.RawRequest): Request = fromRawRequest(serialization, request)
-      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
-    }
-  }
-```
-
-<details>
-  <summary>The complete endpoint/UpdateTodo.scala</summary>
-
-```scala title="endpoint/UpdateTodo.scala"
-package community.flock.todo.endpoint
-import community.flock.wirespec.scala.Wirespec
-import scala.reflect.ClassTag
-import community.flock.todo.model.TodoId
-import community.flock.todo.model.TodoInput
-import community.flock.todo.model.Todo
-import community.flock.todo.model.ApiError
-object UpdateTodo extends Wirespec.Endpoint {
-  case class Path(
-      val id: TodoId
-    ) extends Wirespec.Path
-  case class Queries(
-      val notify: Option[Boolean]
-    ) extends Wirespec.Queries
-  case class RequestHeaders(
-      val requestId: String
-    ) extends Wirespec.Request.Headers
-  case class Request(
-      override val path: Path,
-      override val method: Wirespec.Method,
-      override val queries: Queries,
-      override val headers: RequestHeaders,
-      override val body: TodoInput
-    ) extends Wirespec.Request[TodoInput] {
-      def this(id: TodoId, notify: Option[Boolean], requestId: String, body: TodoInput) = this(Path(id = id), Wirespec.Method.PUT, Queries(notify = notify), RequestHeaders(requestId = requestId), body)
-    }
-  sealed trait Response[T] extends Wirespec.Response[T]
-  sealed trait Response2XX[T] extends Response[T]
-  sealed trait Response4XX[T] extends Response[T]
-  sealed trait ResponseTodo extends Response[Todo]
-  sealed trait ResponseApiError extends Response[ApiError]
-  case class Response200Headers(
-      val version: Long
-    ) extends Wirespec.Response.Headers
-  case class Response200(
-      override val status: Int,
-      override val headers: Response200Headers,
-      override val body: Todo
-    ) extends Response2XX[Todo] with ResponseTodo {
-      def this(version: Long, body: Todo) = this(200, Response200Headers(version = version), body)
-    }
-  object Response404Headers extends Wirespec.Response.Headers
-  case class Response404(
-      override val status: Int,
-      override val headers: Response404Headers.type,
-      override val body: ApiError
-    ) extends Response4XX[ApiError] with ResponseApiError {
-      def this(body: ApiError) = this(404, Response404Headers, body)
-    }
-  def toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
-    new Wirespec.RawRequest(
-      method = request.method.toString,
-      path = List("todos", serialization.serializePath[TodoId](request.path.id, scala.reflect.classTag[TodoId])),
-      queries = Map("notify" -> (request.queries.notify.map(it => serialization.serializeParam[Boolean](it, scala.reflect.classTag[Boolean])).getOrElse(List.empty[String]))),
-      headers = Map("requestId" -> serialization.serializeParam[String](request.headers.requestId, scala.reflect.classTag[String])),
-      body = Some(serialization.serializeBody[TodoInput](request.body, scala.reflect.classTag[TodoInput]))
-    )
-  def fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
-    new Request(
-      id = serialization.deserializePath[TodoId](request.path(1), scala.reflect.classTag[TodoId]),
-      notify = (request.queries.get("notify").map(it => serialization.deserializeParam[Boolean](it, scala.reflect.classTag[Boolean]))),
-      requestId = (request.headers.find(_._1.equalsIgnoreCase("requestId")).map(_._2).map(it => serialization.deserializeParam[String](it, scala.reflect.classTag[String])).getOrElse(throw new IllegalStateException("Param requestId cannot be null"))),
-      body = (request.body.map(it => serialization.deserializeBody[TodoInput](it, scala.reflect.classTag[TodoInput])).getOrElse(throw new IllegalStateException("body is null")))
-    )
-  def toRawResponse(serialization: Wirespec.Serializer, response: Response[?]): Wirespec.RawResponse = {
-    response match {
-        case r: Response200 => {
-          new Wirespec.RawResponse(
-            statusCode = r.status,
-            headers = Map("version" -> serialization.serializeParam[Long](r.headers.version, scala.reflect.classTag[Long])),
-            body = Some(serialization.serializeBody(r.body, scala.reflect.classTag[Todo]))
-          )
-        }
-        case r: Response404 => {
-          new Wirespec.RawResponse(
-            statusCode = r.status,
-            headers = Map.empty,
-            body = Some(serialization.serializeBody(r.body, scala.reflect.classTag[ApiError]))
-          )
-        }
-        case _ => {
-          throw new IllegalStateException(("Cannot match response with status: " + response.status))
-        }
-    }
-  }
-  def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response[?] = {
-    response.statusCode match {
-        case 200 => {
-          new Response200(
-            version = (response.headers.find(_._1.equalsIgnoreCase("version")).map(_._2).map(it => serialization.deserializeParam[Long](it, scala.reflect.classTag[Long])).getOrElse(throw new IllegalStateException("Param version cannot be null"))),
-            body = (response.body.map(it => serialization.deserializeBody[Todo](it, scala.reflect.classTag[Todo])).getOrElse(throw new IllegalStateException("body is null")))
-          )
-        }
-        case 404 => {
-          new Response404(body = (response.body.map(it => serialization.deserializeBody[ApiError](it, scala.reflect.classTag[ApiError])).getOrElse(throw new IllegalStateException("body is null"))))
-        }
-        case _ => {
-          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode))
-        }
-    }
-  }
-  trait Handler[F[_]] extends Wirespec.Handler {
-      def updateTodo(request: Request): F[Response[?]]
-  }
-  trait Call[F[_]] extends Wirespec.Call {
-      def updateTodo(id: TodoId, notify: Option[Boolean], requestId: String, body: TodoInput): F[Response[?]]
-  }
-  object Client extends Wirespec.Client[Request, Response[?]] {
-    override val pathTemplate: String = "/todos/{id}"
-    override val method: String = "PUT"
-    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[TodoId]))
-    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request, Response[?]] = new Wirespec.ClientEdge[Request, Response[?]] {
-      override def to(request: Request): Wirespec.RawRequest = toRawRequest(serialization, request)
-      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
-    }
-  }
-  object Server extends Wirespec.Server[Request, Response[?]] {
-    override val pathTemplate: String = "/todos/{id}"
-    override val method: String = "PUT"
-    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[TodoId]))
-    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request, Response[?]] = new Wirespec.ServerEdge[Request, Response[?]] {
-      override def from(request: Wirespec.RawRequest): Request = fromRawRequest(serialization, request)
-      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
-    }
-  }
-}
-```
-
-</details>
 
 ## Channel
 
 A channel becomes an `object` with a `Sender` to publish messages and a `Listener` to receive them:
 
-```scala title="channel/TodoEvents.scala"
-object TodoEvents extends Wirespec.Channel {
-  trait Sender {
-      def todoEvents(message: TodoEvent): Unit
-  }
-  trait Listener {
-      def todoEvents(handler: (TodoEvent) => Unit): Unit
-  }
-}
+```scala wirespec file=channel/TodoEvents.scala
 ```
 
 ## RPC
@@ -391,19 +112,7 @@ An RPC becomes an `object` with a `Service` trait to implement. Because `Complet
 returns a sealed `Response` with a `Result` and an `Error` variant. Without an error, it returns the result type
 directly:
 
-```scala title="rpc/CompleteTodo.scala"
-object CompleteTodo extends Wirespec.Rpc {
-  sealed trait Response
-  case class Result(
-      val value: Todo
-    ) extends Response
-  case class Error(
-      val value: ApiError
-    ) extends Response
-  trait Service {
-      def completeTodo(id: TodoId): Response
-  }
-}
+```scala wirespec file=rpc/CompleteTodo.scala
 ```
 
 ## Client
@@ -412,38 +121,12 @@ For every endpoint, a client implements its `Call` trait with the identity effec
 response directly. It builds the `Request`, converts it with `toRawRequest`, sends it with a `Wirespec.Transportation`
 and converts the answer with `fromRawResponse`:
 
-```scala title="client/UpdateTodoClient.scala"
-case class UpdateTodoClient(
-  val serialization: Wirespec.Serialization,
-  val transportation: Wirespec.Transportation
-) extends UpdateTodo.Call[[A] =>> A] {
-  override def updateTodo(id: TodoId, notify: Option[Boolean], requestId: String, body: TodoInput): UpdateTodo.Response[?] = {
-    val request = new UpdateTodo.Request(
-      id = id,
-      notify = notify,
-      requestId = requestId,
-      body = body
-    )
-    val rawRequest = UpdateTodo.toRawRequest(serialization, request)
-    val rawResponse = transportation.transport(rawRequest)
-    UpdateTodo.fromRawResponse(serialization, rawResponse)
-  }
-}
+```scala wirespec file=client/UpdateTodoClient.scala
 ```
 
 `Client` implements the `Call` trait of every endpoint in the specification, so one instance can call the whole API:
 
-```scala title="Client.scala"
-case class Client(
-  val serialization: Wirespec.Serialization,
-  val transportation: Wirespec.Transportation
-) extends UpdateTodo.Call[[A] =>> A] {
-  override def updateTodo(id: TodoId, notify: Option[Boolean], requestId: String, body: TodoInput): UpdateTodo.Response[?] =
-    new UpdateTodoClient(
-      serialization = serialization,
-      transportation = transportation
-    ).updateTodo(id, notify, requestId, body)
-}
+```scala wirespec file=todo/Client.scala
 ```
 
 ## Generator
@@ -452,14 +135,7 @@ For every type, refined type, enum and union, a generator builds an instance wit
 It passes the path to the field and a description of the value it needs, such as the regular expression of a refined
 type. This is how you create test data that matches the specification:
 
-```scala title="generator/TodoIdGenerator.scala"
-object TodoIdGenerator {
-  def generate(generator: Wirespec.Generator, path: List[String]): TodoId =
-    new TodoId(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldString(
-      regex = Some("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
-      annotations = List.empty[Map[String, Any]]
-    )))
-}
+```scala wirespec file=generator/TodoIdGenerator.scala
 ```
 
 ## Shared
@@ -467,215 +143,33 @@ object TodoIdGenerator {
 `Wirespec.scala` is the same for every specification and lives in the package `community.flock.wirespec.scala`. It
 contains:
 
-| Declarations                                                                 | Purpose                                                       |
-|------------------------------------------------------------------------------|---------------------------------------------------------------|
-| `Model`, `Shape`, `Enum`, `Refined`                                          | Extended by the generated types, enums and refined types      |
-| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`                              | Extended by the generated endpoints, channels and RPCs        |
-| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers`                | The typed request and response of an endpoint                 |
-| `Serializer`, `Deserializer`, `Serialization` and their parts                | Plug in the serialization of bodies, paths and parameters     |
-| `RawRequest`, `RawResponse`, `Transportation`                                | The untyped request and response, and how to send them        |
-| `Generator`, `GeneratorField` and its subclasses                             | Generate values for the generators                            |
-| `PathSegment`, `Literal`, `Param`                                            | The segments of an endpoint path                              |
-| `ServerEdge`, `ClientEdge`, `Server`, `Client`                               | Convert between raw and typed messages on either side          |
+| Declarations                                                  | Purpose                                                   |
+|---------------------------------------------------------------|-----------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | Extended by the generated types, enums and refined types  |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Extended by the generated endpoints, channels and RPCs    |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint             |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them    |
+| `Generator`, `GeneratorField` and its subclasses              | Generate values for the generators                        |
+| `PathSegment`, `Literal`, `Param`                             | The segments of an endpoint path                          |
+| `ServerEdge`, `ClientEdge`, `Server`, `Client`                | Convert between raw and typed messages on either side     |
 
 <details>
   <summary>The complete Wirespec.scala</summary>
 
-```scala title="Wirespec.scala"
-package community.flock.wirespec.scala
-object Wirespec {
-  trait Model
-  trait Shape extends Model {
-      def validate(): List[String]
-  }
-  trait Enum extends Model {
-      def label: String
-  }
-  trait Refined[T] extends Model {
-      def value: T
-      def validate(): Boolean
-  }
-  trait Endpoint
-  trait Channel
-  trait Rpc
-  trait Path
-  trait Queries
-  trait Headers
-  trait Handler
-  trait Call
-  enum Method {
-      case GET
-      case PUT
-      case POST
-      case DELETE
-      case OPTIONS
-      case HEAD
-      case PATCH
-      case TRACE
-    }
-  object Request {
-      trait Headers
-  }
-  trait Request[T] {
-      def path: Path
-      def method: Method
-      def queries: Queries
-      def headers: Request.Headers
-      def body: T
-  }
-  object Response {
-      trait Headers
-  }
-  trait Response[T] {
-      def status: Int
-      def headers: Response.Headers
-      def body: T
-  }
-  trait BodySerializer {
-      def serializeBody[T](t: T, `type`: scala.reflect.ClassTag[?]): Array[Byte]
-  }
-  trait BodyDeserializer {
-      def deserializeBody[T](raw: Array[Byte], `type`: scala.reflect.ClassTag[?]): T
-  }
-  trait BodySerialization extends BodySerializer with BodyDeserializer
-  trait PathSerializer {
-      def serializePath[T](t: T, `type`: scala.reflect.ClassTag[?]): String
-  }
-  trait PathDeserializer {
-      def deserializePath[T](raw: String, `type`: scala.reflect.ClassTag[?]): T
-  }
-  trait PathSerialization extends PathSerializer with PathDeserializer
-  trait ParamSerializer {
-      def serializeParam[T](value: T, `type`: scala.reflect.ClassTag[?]): List[String]
-  }
-  trait ParamDeserializer {
-      def deserializeParam[T](values: List[String], `type`: scala.reflect.ClassTag[?]): T
-  }
-  trait ParamSerialization extends ParamSerializer with ParamDeserializer
-  trait Serializer extends BodySerializer with PathSerializer with ParamSerializer
-  trait Deserializer extends BodyDeserializer with PathDeserializer with ParamDeserializer
-  trait Serialization extends Serializer with Deserializer
-  case class RawRequest(
-      val method: String,
-      val path: List[String],
-      val queries: Map[String, List[String]],
-      val headers: Map[String, List[String]],
-      val body: Option[Array[Byte]]
-    )
-  case class RawResponse(
-      val statusCode: Int,
-      val headers: Map[String, List[String]],
-      val body: Option[Array[Byte]]
-    )
-  trait Transportation {
-      def transport(request: RawRequest): RawResponse
-  }
-  sealed trait GeneratorField[T]
-  case class GeneratorFieldString(
-      val regex: Option[String],
-      val annotations: List[Map[String, Any]]
-    ) extends GeneratorField[String]
-  case class GeneratorFieldInteger64(
-      val min: Option[Long],
-      val max: Option[Long],
-      val annotations: List[Map[String, Any]]
-    ) extends GeneratorField[Long]
-  case class GeneratorFieldInteger32(
-      val min: Option[Int],
-      val max: Option[Int],
-      val annotations: List[Map[String, Any]]
-    ) extends GeneratorField[Int]
-  case class GeneratorFieldNumber64(
-      val min: Option[Double],
-      val max: Option[Double],
-      val annotations: List[Map[String, Any]]
-    ) extends GeneratorField[Double]
-  case class GeneratorFieldNumber32(
-      val min: Option[Float],
-      val max: Option[Float],
-      val annotations: List[Map[String, Any]]
-    ) extends GeneratorField[Float]
-  case class GeneratorFieldBoolean(
-      val annotations: List[Map[String, Any]]
-    ) extends GeneratorField[Boolean]
-  case class GeneratorFieldBytes(
-      val annotations: List[Map[String, Any]]
-    ) extends GeneratorField[Array[Byte]]
-  case class GeneratorFieldEnum(
-      val values: List[String],
-      val annotations: List[Map[String, Any]],
-      val `type`: scala.reflect.ClassTag[?]
-    ) extends GeneratorField[String]
-  case class GeneratorFieldUnion(
-      val variants: List[String],
-      val annotations: List[Map[String, Any]],
-      val `type`: scala.reflect.ClassTag[?]
-    ) extends GeneratorField[String]
-  case class GeneratorFieldArray[T](
-      val generate: (List[String]) => T
-    ) extends GeneratorField[List[T]]
-  case class GeneratorFieldNullable[T](
-      val generate: (List[String]) => T
-    ) extends GeneratorField[Option[T]]
-  case class GeneratorFieldShape[T](
-      val annotations: Map[String, List[Map[String, Any]]],
-      val generate: (List[String]) => T,
-      val `type`: scala.reflect.ClassTag[?]
-    ) extends GeneratorField[T]
-  case class GeneratorFieldDict[V](
-      val generate: (List[String]) => V
-    ) extends GeneratorField[Map[String, V]]
-  trait Generator {
-      def generate[T](path: List[String], field: GeneratorField[T]): T
-  }
-  sealed trait PathSegment
-  case class Literal(
-      val value: String
-    ) extends PathSegment
-  case class Param(
-      val name: String,
-      val `type`: scala.reflect.ClassTag[?]
-    ) extends PathSegment
-  trait ServerEdge[Req <: Request[?], Res <: Response[?]] {
-      def from(request: RawRequest): Req
-      def to(response: Res): RawResponse
-  }
-  trait ClientEdge[Req <: Request[?], Res <: Response[?]] {
-      def to(request: Req): RawRequest
-      def from(response: RawResponse): Res
-  }
-  trait Client[Req <: Request[?], Res <: Response[?]] {
-      def pathTemplate: String
-      def method: String
-      def pathSegments: List[PathSegment]
-      def client(serialization: Serialization): ClientEdge[Req, Res]
-  }
-  trait Server[Req <: Request[?], Res <: Response[?]] {
-      def pathTemplate: String
-      def method: String
-      def pathSegments: List[PathSegment]
-      def server(serialization: Serialization): ServerEdge[Req, Res]
-  }
-}
+```scala wirespec file=Wirespec.scala
 ```
 
 </details>
 
 ## Default values
 
-The Scala emitter does not support [default values](../language/types.mdx#default-values) yet. Compiling the
-[defaults from the example](./emitters.mdx#default-values) to Scala fails, and the error names the fields that have one:
+The Scala emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to Scala fails, and the error names the fields that have a default:
 
-```
-Scala does not support default values, but these fields have one: Todo.done, Todo.priority, Todo.dueDate. Remove the
-defaults, or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI, or
-ignoreDefaults in the Gradle and Maven plugins.
+```text wirespec error ignoreDefaults=false
 ```
 
-To generate Scala anyway, leave the defaults out with the [ignore defaults option](../language/types.mdx#ignoring-defaults):
-
-```shell
-wirespec compile -i todo.ws -o out -l Scala -p community.flock.todo --ignore-defaults
-```
-
-A [conversion](../converters/converters.md) from OpenAPI or Avro to Scala does not fail: it leaves the defaults out.
+To generate Scala anyway, leave the defaults out with the
+[ignore defaults option](../language/types.mdx#ignoring-defaults), as this page does. A
+[conversion](../converters/converters.md) from OpenAPI or Avro to Scala does not fail: it leaves the defaults out.

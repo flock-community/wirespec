@@ -2,14 +2,19 @@
 title: Emitters
 slug: /emitters
 sidebar_position: 4
+wirespec:
+  source: todo.ws
+  package: community.flock.todo
+  shared: true
 ---
 
 # Emitters
 
 An emitter turns a Wirespec specification into code or into a specification in another format. The language emitters
 generate typesafe, dependency-free code: apart from the `regex` crate for Rust, the output only needs the standard
-library of the target language. Pick one or more emitters with the `--language` option of the [CLI](../plugins/plugins-cli.md), or the `languages` setting of
-the [Gradle](../plugins/plugins-gradle.md) and [Maven](../plugins/plugins-maven.md) plugins.
+library of the target language. Pick one or more emitters with the `--language` option of the
+[CLI](../plugins/plugins-cli.md), or the `languages` setting of the [Gradle](../plugins/plugins-gradle.md) and
+[Maven](../plugins/plugins-maven.md) plugins.
 
 | Emitter                                  | Language     | Generates                                                     |
 |------------------------------------------|--------------|---------------------------------------------------------------|
@@ -29,97 +34,23 @@ the [Gradle](../plugins/plugins-gradle.md) and [Maven](../plugins/plugins-maven.
 Every page in this section uses the same Wirespec file, `todo.ws`, as input. It describes a small todo API with one
 definition of every kind:
 
-```wirespec title="todo.ws"
-/*
-  Identifier of a todo, a UUID
-*/
-type TodoId = String(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/g)
-
-/*
-  How urgent a todo is
-*/
-enum Priority {
-  LOW, MEDIUM, HIGH
-}
-
-/*
-  A todo item
-*/
-type Todo {
-  id: TodoId,
-  title: String,
-  done: Boolean,
-  priority: Priority,
-  tags: String[],
-  dueDate: String?
-}
-
-/*
-  The fields of a todo a client can change
-*/
-type TodoInput {
-  title: String,
-  priority: Priority
-}
-
-/*
-  Returned when a call fails
-*/
-type ApiError {
-  code: Integer,
-  message: String
-}
-
-type TodoCreated {
-  todo: Todo
-}
-
-type TodoDeleted {
-  id: TodoId
-}
-
-/*
-  Something that happened to a todo
-*/
-type TodoEvent = TodoCreated | TodoDeleted
-
-/*
-  Update the title and priority of a todo
-*/
-endpoint UpdateTodo PUT TodoInput /todos/{id: TodoId}
-  ? {notify: Boolean?}
-  # {requestId: String} -> {
-  200 -> Todo # {version: Integer}
-  404 -> ApiError
-}
-
-/*
-  Stream of todo events
-*/
-channel TodoEvents -> TodoEvent
-
-/*
-  Mark a todo as done
-*/
-rpc CompleteTodo {
-  id: TodoId
-} -> Todo ! ApiError
+```wirespec wirespec source
 ```
 
-| Definition                                                  | Kind                                     | What it shows                                                        |
-|-------------------------------------------------------------|------------------------------------------|----------------------------------------------------------------------|
-| `TodoId`                                                    | [Refined](../language/types.mdx#refined) | A `String` constrained by a regular expression                       |
-| `Priority`                                                  | [Enum](../language/types.mdx#enum)       | A fixed set of values                                                |
-| `Todo`, `TodoInput`, `ApiError`, `TodoCreated`, `TodoDeleted` | [Type](../language/types.mdx#composite)  | Fields of a refined type, an enum, a list and a nullable `String`    |
-| `TodoEvent`                                                 | [Union](../language/types.mdx#union)     | Either a `TodoCreated` or a `TodoDeleted`                            |
-| `UpdateTodo`                                                | [Endpoint](../language/endpoints.mdx)    | A path parameter, a query parameter, a request header, a request body, two responses and a response header |
-| `TodoEvents`                                                | [Channel](../language/channels.mdx)      | A channel that carries the `TodoEvent` union                         |
-| `CompleteTodo`                                              | [RPC](../language/rpc.mdx)               | A call with a parameter, a result and an error                       |
+| Definition                                                    | Kind                                     | What it shows                                                        |
+|---------------------------------------------------------------|------------------------------------------|----------------------------------------------------------------------|
+| `TodoId`                                                      | [Refined](../language/types.mdx#refined) | A `String` constrained by a regular expression                       |
+| `Priority`                                                    | [Enum](../language/types.mdx#enum)       | A fixed set of values                                                |
+| `Todo`, `TodoInput`, `ApiError`, `TodoCreated`, `TodoDeleted` | [Type](../language/types.mdx#composite)  | Fields of a refined type, an enum, a list and a nullable `String`, and [default values](#default-values) |
+| `TodoEvent`                                                   | [Union](../language/types.mdx#union)     | Either a `TodoCreated` or a `TodoDeleted`                            |
+| `UpdateTodo`                                                  | [Endpoint](../language/endpoints.mdx)    | A path parameter, a query parameter, a request header, a request body, two responses and a response header |
+| `TodoEvents`                                                  | [Channel](../language/channels.mdx)      | A channel that carries the `TodoEvent` union                         |
+| `CompleteTodo`                                                | [RPC](../language/rpc.mdx)               | A call with a parameter, a result and an error                       |
 
-The code on the emitter pages is generated with the CLI, for example for Kotlin:
+The code on the emitter pages is not written by hand: when the documentation is built, `todo.ws` is compiled with the
+Wirespec CLI, so the pages always show what the current version of Wirespec generates. For Kotlin, for example:
 
-```shell
-wirespec compile -i todo.ws -o out -l Kotlin -p community.flock.todo --shared
+```shell wirespec command language=Kotlin
 ```
 
 ## What is generated
@@ -138,9 +69,9 @@ with `-p`. TypeScript has no packages, so there they sit at the root of the outp
 | `generator` | A generator per model, `TodoGenerator`, that builds instances with values from a `Wirespec.Generator`  |
 
 Next to it, the emitters write one **shared** file, such as `Wirespec.kt` or `wirespec.py`. It holds the interfaces
-that all generated code builds on, such as `Wirespec.Shape`, `Wirespec.Request` and `Wirespec.Serialization`, and it is the same for every
-specification. It is written when shared output is turned on: `--shared` for the CLI, or the `shared` setting of the
-Gradle and Maven plugins, which is on by default.
+that all generated code builds on, such as `Wirespec.Shape`, `Wirespec.Request` and `Wirespec.Serialization`, and it
+is the same for every specification. It is written when shared output is turned on: `--shared` for the CLI, or the
+`shared` setting of the Gradle and Maven plugins, which is on by default.
 
 Each Wirespec definition becomes the following construct:
 
@@ -161,19 +92,8 @@ cannot describe, such as channels and RPCs.
 
 ## Default values
 
-Field [default values](../language/types.mdx#default-values) are generated where the target supports them. Every
-emitter page shows what happens when `Todo` gives three of its fields a default:
-
-```wirespec
-type Todo {
-  id: TodoId,
-  title: String,
-  done: Boolean = false,
-  priority: Priority = MEDIUM,
-  tags: String[],
-  dueDate: String? = null
-}
-```
+`Todo` gives three of its fields a [default value](../language/types.mdx#default-values): `done`, `priority` and
+`dueDate`. Defaults are generated where the target supports them:
 
 | Emitter                                   | Default values                                                                                                  |
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
@@ -182,3 +102,6 @@ type Todo {
 | OpenAPI v2 and v3                         | The `default` of the property schema, see the [OpenAPI v3 emitter](./emitters-open-api-v3.mdx#default-values)    |
 | Wirespec                                  | `field: Type = value`                                                                                           |
 | Java, TypeScript, Python, Rust and Scala  | Not supported yet, see the [Java emitter](./emitters-java.mdx#default-values)                                    |
+
+The emitters that do not support defaults yet refuse to compile a specification that has them, so their pages compile
+`todo.ws` with the [ignore defaults option](../language/types.mdx#ignoring-defaults), which leaves the defaults out.

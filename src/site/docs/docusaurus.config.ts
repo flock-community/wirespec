@@ -1,6 +1,7 @@
 import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import wirespec from "./src/remark/wirespec";
 
 const config: Config = {
   title: "Wirespec",
@@ -25,6 +26,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
+          remarkPlugins: [wirespec],
           editUrl:
             "https://github.com/flock-community/wirespec/tree/master/src/site/docs/",
         },

@@ -2,6 +2,9 @@
 title: OpenAPI v3 Emitter
 slug: /emitters/open_api_v3
 sidebar_position: 8
+wirespec:
+  source: todo.ws
+  language: OpenAPIV3
 ---
 
 # OpenAPI v3 Emitter
@@ -9,8 +12,7 @@ sidebar_position: 8
 The OpenAPI v3 emitter writes the specification as an OpenAPI 3.0 document. This page shows the document it writes for
 the [Todo example](./emitters.mdx#the-example):
 
-```shell
-wirespec compile -i todo.ws -o out -l OpenAPIV3
+```shell wirespec command
 ```
 
 The output is a single file, `OpenAPI.json`. Types, refined types, enums and unions become schemas in
@@ -22,76 +24,43 @@ its `description`. The JSON below is formatted for readability.
 A type becomes an object schema. Every field that is not nullable is `required`, and a field that refers to another
 definition becomes a `$ref`:
 
-```json
-"Todo": {
-  "description": "A todo item",
-  "required": ["id", "title", "done", "priority", "tags"],
-  "properties": {
-    "id": { "$ref": "#/components/schemas/TodoId" },
-    "title": { "type": "string" },
-    "done": { "type": "boolean" },
-    "priority": { "$ref": "#/components/schemas/Priority" },
-    "tags": {
-      "nullable": false,
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "dueDate": { "type": "string" }
-  }
-}
+```json wirespec select=components.schemas.Todo
 ```
 
 The fields map to schemas as follows:
 
-| Wirespec    | Schema                                       |
-|-------------|----------------------------------------------|
-| `String`    | `type: string`                               |
-| `Integer`   | `type: integer`, `format: int64`             |
-| `Integer32` | `type: integer`, `format: int32`             |
-| `Number`    | `type: number`, `format: double`             |
-| `Number32`  | `type: number`, `format: float`              |
-| `Boolean`   | `type: boolean`                              |
-| `Bytes`     | `type: string`, `format: binary`             |
-| `T[]`       | `type: array` with the schema of `T` as `items` |
+| Wirespec    | Schema                                                          |
+|-------------|-----------------------------------------------------------------|
+| `String`    | `type: string`                                                  |
+| `Integer`   | `type: integer`, `format: int64`                                |
+| `Integer32` | `type: integer`, `format: int32`                                |
+| `Number`    | `type: number`, `format: double`                                |
+| `Number32`  | `type: number`, `format: float`                                 |
+| `Boolean`   | `type: boolean`                                                 |
+| `Bytes`     | `type: string`, `format: binary`                                |
+| `T[]`       | `type: array` with the schema of `T` as `items`                 |
 | `{ T }`     | `type: object` with the schema of `T` as `additionalProperties` |
-| `T?`        | The schema of `T`, left out of `required`    |
+| `T?`        | The schema of `T`, left out of `required`                       |
 
 ## Refined
 
 A refined type becomes a schema of its primitive type. A regular expression becomes its `pattern`:
 
-```json
-"TodoId": {
-  "type": "string",
-  "pattern": "/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/g"
-}
+```json wirespec select=components.schemas.TodoId
 ```
 
 ## Enum
 
 An enum becomes a string schema with its values as `enum`:
 
-```json
-"Priority": {
-  "type": "string",
-  "description": "How urgent a todo is",
-  "enum": ["LOW", "MEDIUM", "HIGH"]
-}
+```json wirespec select=components.schemas.Priority
 ```
 
 ## Union
 
 A union becomes a schema with a `oneOf` that refers to its members:
 
-```json
-"TodoEvent": {
-  "oneOf": [
-    { "$ref": "#/components/schemas/TodoCreated" },
-    { "$ref": "#/components/schemas/TodoDeleted" }
-  ],
-  "type": "string",
-  "description": "Something that happened to a todo"
-}
+```json wirespec select=components.schemas.TodoEvent
 ```
 
 ## Endpoint
@@ -103,71 +72,7 @@ An endpoint becomes an operation on its path, with the name of the endpoint as `
 - The request body becomes the `requestBody`, as `application/json`.
 - Every status code becomes a response with its body as `application/json` and its `headers`.
 
-```json
-"/todos/{id}": {
-  "parameters": [
-    {
-      "required": true,
-      "in": "path",
-      "schema": { "$ref": "#/components/schemas/TodoId" },
-      "name": "id"
-    }
-  ],
-  "put": {
-    "parameters": [
-      {
-        "required": true,
-        "in": "path",
-        "schema": { "$ref": "#/components/schemas/TodoId" },
-        "name": "id"
-      },
-      {
-        "required": false,
-        "in": "query",
-        "schema": { "type": "boolean" },
-        "name": "notify"
-      },
-      {
-        "required": true,
-        "in": "header",
-        "schema": { "type": "string" },
-        "name": "requestId"
-      }
-    ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": { "$ref": "#/components/schemas/TodoInput" }
-        }
-      },
-      "required": true
-    },
-    "responses": {
-      "200": {
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/Todo" }
-          }
-        },
-        "description": "UpdateTodo 200 response",
-        "headers": {
-          "version": { "schema": { "type": "integer", "format": "int64" } }
-        }
-      },
-      "404": {
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ApiError" }
-          }
-        },
-        "description": "UpdateTodo 404 response",
-        "headers": {}
-      }
-    },
-    "description": "Update the title and priority of a todo",
-    "operationId": "UpdateTodo"
-  }
-}
+```json wirespec select=paths./todos/{id}
 ```
 
 ## Channel and RPC
@@ -178,165 +83,15 @@ OpenAPI describes HTTP APIs, so channels and RPCs have no counterpart. The emitt
 <details>
   <summary>The complete OpenAPI.json</summary>
 
-```json title="OpenAPI.json"
-{
-  "openapi": "3.0.0",
-  "components": {
-    "schemas": {
-      "TodoId": {
-        "type": "string",
-        "pattern": "/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/g"
-      },
-      "Priority": {
-        "type": "string",
-        "description": "How urgent a todo is",
-        "enum": ["LOW", "MEDIUM", "HIGH"]
-      },
-      "Todo": {
-        "description": "A todo item",
-        "required": ["id", "title", "done", "priority", "tags"],
-        "properties": {
-          "id": { "$ref": "#/components/schemas/TodoId" },
-          "title": { "type": "string" },
-          "done": { "type": "boolean" },
-          "priority": { "$ref": "#/components/schemas/Priority" },
-          "tags": {
-            "nullable": false,
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "dueDate": { "type": "string" }
-        }
-      },
-      "TodoInput": {
-        "description": "The fields of a todo a client can change",
-        "required": ["title", "priority"],
-        "properties": {
-          "title": { "type": "string" },
-          "priority": { "$ref": "#/components/schemas/Priority" }
-        }
-      },
-      "ApiError": {
-        "description": "Returned when a call fails",
-        "required": ["code", "message"],
-        "properties": {
-          "code": { "type": "integer", "format": "int64" },
-          "message": { "type": "string" }
-        }
-      },
-      "TodoCreated": {
-        "required": ["todo"],
-        "properties": { "todo": { "$ref": "#/components/schemas/Todo" } }
-      },
-      "TodoDeleted": {
-        "required": ["id"],
-        "properties": { "id": { "$ref": "#/components/schemas/TodoId" } }
-      },
-      "TodoEvent": {
-        "oneOf": [
-          { "$ref": "#/components/schemas/TodoCreated" },
-          { "$ref": "#/components/schemas/TodoDeleted" }
-        ],
-        "type": "string",
-        "description": "Something that happened to a todo"
-      }
-    }
-  },
-  "info": { "title": "Wirespec", "version": "0.0.0" },
-  "paths": {
-    "/todos/{id}": {
-      "parameters": [
-        {
-          "required": true,
-          "in": "path",
-          "schema": { "$ref": "#/components/schemas/TodoId" },
-          "name": "id"
-        }
-      ],
-      "put": {
-        "parameters": [
-          {
-            "required": true,
-            "in": "path",
-            "schema": { "$ref": "#/components/schemas/TodoId" },
-            "name": "id"
-          },
-          {
-            "required": false,
-            "in": "query",
-            "schema": { "type": "boolean" },
-            "name": "notify"
-          },
-          {
-            "required": true,
-            "in": "header",
-            "schema": { "type": "string" },
-            "name": "requestId"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/TodoInput" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Todo" }
-              }
-            },
-            "description": "UpdateTodo 200 response",
-            "headers": {
-              "version": {
-                "schema": { "type": "integer", "format": "int64" }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ApiError" }
-              }
-            },
-            "description": "UpdateTodo 404 response",
-            "headers": {}
-          }
-        },
-        "description": "Update the title and priority of a todo",
-        "operationId": "UpdateTodo"
-      }
-    }
-  }
-}
+```json wirespec file=OpenAPI.json
 ```
 
 </details>
 
 ## Default values
 
-Field [default values](../language/types.mdx#default-values) are written as the `default` of the property schema. With
-the [defaults from the example](./emitters.mdx#default-values), `Todo` becomes:
-
-```json
-"Todo": {
-  "description": "A todo item",
-  "required": ["id", "title", "done", "priority", "tags"],
-  "properties": {
-    "id": { "$ref": "#/components/schemas/TodoId" },
-    "title": { "type": "string" },
-    "done": { "type": "boolean", "default": false },
-    "priority": { "$ref": "#/components/schemas/Priority" },
-    "tags": { "nullable": false, "type": "array", "items": { "type": "string" } },
-    "dueDate": { "type": "string" }
-  }
-}
-```
-
-Two kinds of default are left out:
+Field [default values](../language/types.mdx#default-values) are written as the `default` of the property schema, as
+the `done` field of [`Todo`](#type) shows. Two kinds of default are left out:
 
 - A `null` default, like the one of `dueDate`. A nullable field is already left out of `required`.
 - An enum default, like the one of `priority`. An enum field is written as a `$ref` to the enum's schema, and OpenAPI

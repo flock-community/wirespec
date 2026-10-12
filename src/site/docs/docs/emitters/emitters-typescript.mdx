@@ -2,365 +2,103 @@
 title: TypeScript Emitter
 slug: /emitters/typescript
 sidebar_position: 3
+wirespec:
+  source: todo.ws
+  language: TypeScript
+  shared: true
+  ignoreDefaults: true
 ---
 
 # TypeScript Emitter
 
 The TypeScript emitter generates types, namespaces and functions without any dependencies. This page shows the code it
-generates for the [Todo example](./emitters.mdx#the-example):
+generates for the [Todo example](./emitters.mdx#the-example). The TypeScript emitter does not support
+[default values](#default-values) yet, so the example is compiled with `--ignore-defaults`:
 
-```shell
-wirespec compile -i todo.ws -o out -l TypeScript --shared
+```shell wirespec command
 ```
 
-```text
-out
-├── Wirespec.ts
-├── Client.ts
-├── channel/TodoEvents.ts, index.ts
-├── client/UpdateTodoClient.ts
-├── endpoint/UpdateTodo.ts, index.ts
-├── generator/TodoGenerator.ts, TodoIdGenerator.ts, ...
-├── model/Todo.ts, TodoId.ts, Priority.ts, TodoEvent.ts, ..., index.ts
-└── rpc/CompleteTodo.ts, index.ts
+```text wirespec tree
 ```
 
 TypeScript has no packages, so the output is not nested in the directories of a package name. The `index.ts` files
-of `model`, `endpoint`, `channel` and `rpc` export everything in their directory. Every file starts with the imports it needs, which are left out of the examples
-below.
+of `model`, `endpoint`, `channel` and `rpc` export everything in their directory.
 
 ## Type
 
 A type becomes an object type, together with a function that validates it:
 
-```typescript title="model/Todo.ts"
-export type Todo = {
-  "id": TodoId,
-  "title": string,
-  "done": boolean,
-  "priority": Priority,
-  "tags": string[],
-  "dueDate": string | undefined,
-}
-export function validateTodo(obj: Todo): string[] {
-  return (!validateTodoId(obj.id) ? ['id'] : [] as string[]);
-}
+```typescript wirespec file=model/Todo.ts
 ```
 
 The fields map to TypeScript types as follows:
 
-| Wirespec                                | TypeScript              |
-|-----------------------------------------|-------------------------|
-| `String`                                | `string`                |
-| `Integer`, `Integer32`, `Number`, `Number32` | `number`           |
-| `Boolean`                               | `boolean`               |
-| `Bytes`                                 | `Uint8Array`            |
-| `T[]`                                   | `T[]`                   |
-| `{ T }`                                 | `Record<string, T>`     |
-| `T?`                                    | `T \| undefined`        |
+| Wirespec                                     | TypeScript          |
+|----------------------------------------------|---------------------|
+| `String`                                     | `string`            |
+| `Integer`, `Integer32`, `Number`, `Number32` | `number`            |
+| `Boolean`                                    | `boolean`           |
+| `Bytes`                                      | `Uint8Array`        |
+| `T[]`                                        | `T[]`               |
+| `{ T }`                                      | `Record<string, T>` |
+| `T?`                                         | `T \| undefined`    |
 
 The validate function returns the names of the fields that do not hold a valid value. Only refined values can be
 invalid, so `validateTodo` checks `id`. A type that contains another type passes on its errors with the field name as
 a prefix:
 
-```typescript title="model/TodoCreated.ts"
-export type TodoCreated = {
-  "todo": Todo,
-}
-export function validateTodoCreated(obj: TodoCreated): string[] {
-  return validateTodo(obj.todo).map(e => `todo.${e}`);
-}
+```typescript wirespec file=model/TodoCreated.ts
 ```
 
 ## Refined
 
 A refined type becomes a type alias of the underlying primitive, together with a function that checks the regular
-expression:
+expression. A refined `Integer` or `Number` checks its bounds instead.
 
-```typescript title="model/TodoId.ts"
-export type TodoId = string;
-export const validateTodoId = (value: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/g.test(value);
+```typescript wirespec file=model/TodoId.ts
 ```
-
-A refined `Integer` or `Number` checks its bounds instead.
 
 ## Enum
 
 An enum becomes a union of string literals:
 
-```typescript title="model/Priority.ts"
-export type Priority = "LOW" | "MEDIUM" | "HIGH"
+```typescript wirespec file=model/Priority.ts
 ```
 
 ## Union
 
 A union becomes a union type of its members:
 
-```typescript title="model/TodoEvent.ts"
-export type TodoEvent = TodoCreated | TodoDeleted
+```typescript wirespec file=model/TodoEvent.ts
 ```
 
 ## Endpoint
 
 An endpoint becomes a `namespace` that holds everything that is needed to send and receive the request and its
-responses.
+responses:
 
-### Request
+- **Request**: the path parameters, query parameters and request headers each get a type, `Path`, `Queries` and
+  `RequestHeaders`. `Request` combines them with the method and the body. The `request` function builds a `Request`
+  from flat `RequestParams`.
+- **Responses**: every status code gets a response type, `Response200` and `Response404`, with a literal `status`, so
+  a `switch` on the status narrows the type of the body. Union types group them: `Response` for all of them,
+  `Response2XX` and `Response4XX` per status class, and `ResponseTodo` and `ResponseApiError` per body type. A function
+  per status code, such as `response200`, builds the response.
+- **Serialization**: `toRawRequest`, `fromRawRequest`, `toRawResponse` and `fromRawResponse` convert between the typed
+  request and response and the `Wirespec.RawRequest` and `Wirespec.RawResponse` that go over the wire. They delegate
+  the serialization of the path, parameters, headers and body to a `Wirespec.Serializer` or `Wirespec.Deserializer`.
+- **Handler and Call**: `Handler` is the interface the server implements, `Call` is the interface the client
+  implements. `client` and `server` bind the conversion functions to a `Wirespec.Serialization`, and `api` describes
+  the endpoint for frameworks.
 
-The path parameters, query parameters and request headers each get a type. `Request` combines them with the method and
-the body. The `request` function builds a `Request` from flat `RequestParams`:
-
-```typescript title="endpoint/UpdateTodo.ts"
-export namespace UpdateTodo {
-  export type Path = {
-    "id": TodoId,
-  }
-  export type Queries = {
-    "notify": boolean | undefined,
-  }
-  export type RequestHeaders = {
-    "requestId": string,
-  }
-  export type Request = {
-    "path": Path,
-    "method": Wirespec.Method,
-    "queries": Queries,
-    "headers": RequestHeaders,
-    "body": TodoInput,
-  }
-  export type RequestParams = {"id": TodoId, "notify"?: boolean, "requestId": string, "body": TodoInput}
-  export const request = (params: RequestParams): Request => ({
-    path: {"id": params["id"]},
-    method: "PUT",
-    queries: {"notify": params["notify"]},
-    headers: {"requestId": params["requestId"]},
-    body: params.body,
-  })
-  // ...
-}
+```typescript wirespec file=endpoint/UpdateTodo.ts
 ```
-
-### Responses
-
-Every status code gets a response type with a literal `status`, so a `switch` on the status narrows the type of the
-body. The responses are grouped by union types: `Response` for all of them, `Response2XX` and `Response4XX` per status
-class, and `ResponseTodo` and `ResponseApiError` per body type. A function per status code builds the response:
-
-```typescript title="endpoint/UpdateTodo.ts"
-  export type Response<T = unknown> = Response2XX | Response4XX | ResponseTodo | ResponseApiError
-  export type Response2XX<T = unknown> = Response200
-  export type Response4XX<T = unknown> = Response404
-  export type ResponseTodo = Response200
-  export type ResponseApiError = Response404
-  export type Response200Headers = {
-    "version": number,
-  }
-  export type Response200 = {
-    "status": 200,
-    "headers": Response200Headers,
-    "body": Todo,
-  }
-  export type Response200Params = {"version": number, "body": Todo}
-  export const response200 = (params: Response200Params): Response200 => ({
-    status: 200,
-    headers: {"version": params["version"]},
-    body: params.body,
-  })
-  export type Response404Headers = {}
-  export type Response404 = {
-    "status": 404,
-    "headers": Response404Headers,
-    "body": ApiError,
-  }
-  export type Response404Params = {"body": ApiError}
-  export const response404 = (params: Response404Params): Response404 => ({
-    status: 404,
-    headers: {},
-    body: params.body,
-  })
-```
-
-### Serialization
-
-Four functions convert between the typed request and response and the `Wirespec.RawRequest` and
-`Wirespec.RawResponse` that go over the wire. They delegate the serialization of the path, parameters, headers and
-body to a `Wirespec.Serializer` or `Wirespec.Deserializer`:
-
-```typescript title="endpoint/UpdateTodo.ts"
-  export function toRawRequest(serialization: Wirespec.Serializer, _request: Request): Wirespec.RawRequest {
-    return { method: _request.method, path: ['todos', serialization.serializePath(_request.path.id, "TodoId")], queries: { 'notify': _request.queries.notify != null ? serialization.serializeParam(_request.queries.notify, "boolean") : [] as string[] }, headers: { 'requestId': serialization.serializeParam(_request.headers.requestId, "string") }, body: serialization.serializeBody(_request.body, "TodoInput") };
-  }
-```
-
-`fromRawRequest`, `toRawResponse` and `fromRawResponse` work the same way.
-
-### Handler and Call
-
-`Handler` is the interface the server implements, `Call` is the interface the client implements. `client` and `server`
-bind the conversion functions to a `Wirespec.Serialization`, and `api` describes the endpoint for frameworks:
-
-```typescript title="endpoint/UpdateTodo.ts"
-  export interface Handler extends Wirespec.Handler {
-    updateTodo(_request: Request): Promise<Response<unknown>>;
-  }
-  export interface Call extends Wirespec.Call {
-    updateTodo(params: RequestParams): Promise<Response<unknown>>;
-  }
-  export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
-    from: (it) => fromRawResponse(serialization, it),
-    to: (it) => toRawRequest(serialization, it)
-  })
-  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
-    from: (it) => fromRawRequest(serialization, it),
-    to: (it) => toRawResponse(serialization, it)
-  })
-  export const api = {
-    name: "updateTodo",
-    method: "PUT",
-    path: "todos/{id}",
-    server,
-    client
-  } as const
-```
-
-<details>
-  <summary>The complete endpoint/UpdateTodo.ts</summary>
-
-```typescript title="endpoint/UpdateTodo.ts"
-import {Wirespec} from '../Wirespec'
-import {type TodoId} from '../model'
-import {type TodoInput} from '../model'
-import {type Todo} from '../model'
-import {type ApiError} from '../model'
-export namespace UpdateTodo {
-  export type Path = {
-    "id": TodoId,
-  }
-  export type Queries = {
-    "notify": boolean | undefined,
-  }
-  export type RequestHeaders = {
-    "requestId": string,
-  }
-  export type Request = {
-    "path": Path,
-    "method": Wirespec.Method,
-    "queries": Queries,
-    "headers": RequestHeaders,
-    "body": TodoInput,
-  }
-  export type RequestParams = {"id": TodoId, "notify"?: boolean, "requestId": string, "body": TodoInput}
-  export const request = (params: RequestParams): Request => ({
-    path: {"id": params["id"]},
-    method: "PUT",
-    queries: {"notify": params["notify"]},
-    headers: {"requestId": params["requestId"]},
-    body: params.body,
-  })
-  export type Response<T = unknown> = Response2XX | Response4XX | ResponseTodo | ResponseApiError
-  export type Response2XX<T = unknown> = Response200
-  export type Response4XX<T = unknown> = Response404
-  export type ResponseTodo = Response200
-  export type ResponseApiError = Response404
-  export type Response200Headers = {
-    "version": number,
-  }
-  export type Response200 = {
-    "status": 200,
-    "headers": Response200Headers,
-    "body": Todo,
-  }
-  export type Response200Params = {"version": number, "body": Todo}
-  export const response200 = (params: Response200Params): Response200 => ({
-    status: 200,
-    headers: {"version": params["version"]},
-    body: params.body,
-  })
-  export type Response404Headers = {}
-  export type Response404 = {
-    "status": 404,
-    "headers": Response404Headers,
-    "body": ApiError,
-  }
-  export type Response404Params = {"body": ApiError}
-  export const response404 = (params: Response404Params): Response404 => ({
-    status: 404,
-    headers: {},
-    body: params.body,
-  })
-  export function toRawRequest(serialization: Wirespec.Serializer, _request: Request): Wirespec.RawRequest {
-    return { method: _request.method, path: ['todos', serialization.serializePath(_request.path.id, "TodoId")], queries: { 'notify': _request.queries.notify != null ? serialization.serializeParam(_request.queries.notify, "boolean") : [] as string[] }, headers: { 'requestId': serialization.serializeParam(_request.headers.requestId, "string") }, body: serialization.serializeBody(_request.body, "TodoInput") };
-  }
-  export function fromRawRequest(serialization: Wirespec.Deserializer, _request: Wirespec.RawRequest): Request {
-    return request({"id": serialization.deserializePath(_request.path[1], "TodoId"), "notify": _request.queries['notify'] != null ? serialization.deserializeParam(_request.queries['notify'], "boolean") : undefined, "requestId": Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'requestId'.toLowerCase())?.[1] != null ? serialization.deserializeParam(Object.entries(_request.headers).find(([k]) => k.toLowerCase() === 'requestId'.toLowerCase())?.[1]!, "string") : (() => { throw new Error('Param requestId cannot be null') })(), "body": _request.body != null ? serialization.deserializeBody(_request.body, "TodoInput") : (() => { throw new Error('body is null') })()});
-  }
-  export function toRawResponse(serialization: Wirespec.Serializer, response: Response<unknown>): Wirespec.RawResponse {
-    switch (response.status) {
-      case 200: {
-        const r = response as Response200;
-        return { statusCode: r.status, headers: { 'version': serialization.serializeParam(r.headers.version, "number") }, body: serialization.serializeBody(r.body, "Todo") };
-      }
-      case 404: {
-        const r = response as Response404;
-        return { statusCode: r.status, headers: {}, body: serialization.serializeBody(r.body, "ApiError") };
-      }
-      default: {
-        throw new Error('Cannot match response with status:');
-      }
-    }
-  }
-  export function fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<unknown> {
-    switch (response.statusCode) {
-      case 200:
-        return response200({"version": Object.entries(response.headers).find(([k]) => k.toLowerCase() === 'version'.toLowerCase())?.[1] != null ? serialization.deserializeParam(Object.entries(response.headers).find(([k]) => k.toLowerCase() === 'version'.toLowerCase())?.[1]!, "number") : (() => { throw new Error('Param version cannot be null') })(), "body": response.body != null ? serialization.deserializeBody(response.body, "Todo") : (() => { throw new Error('body is null') })()});
-        break;
-      case 404:
-        return response404({"body": response.body != null ? serialization.deserializeBody(response.body, "ApiError") : (() => { throw new Error('body is null') })()});
-        break;
-      default:
-        throw new Error('Cannot match response with status:');
-    }
-  }
-  export interface Handler extends Wirespec.Handler {
-    updateTodo(_request: Request): Promise<Response<unknown>>;
-  }
-  export interface Call extends Wirespec.Call {
-    updateTodo(params: RequestParams): Promise<Response<unknown>>;
-  }
-  export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
-    from: (it) => fromRawResponse(serialization, it),
-    to: (it) => toRawRequest(serialization, it)
-  })
-  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
-    from: (it) => fromRawRequest(serialization, it),
-    to: (it) => toRawResponse(serialization, it)
-  })
-  export const api = {
-    name: "updateTodo",
-    method: "PUT",
-    path: "todos/{id}",
-    server,
-    client
-  } as const
-}
-```
-
-</details>
 
 ## Channel
 
 A channel becomes a `namespace` with a `Sender` to publish messages and a `Listener` to receive them:
 
-```typescript title="channel/TodoEvents.ts"
-export namespace TodoEvents {
-  export interface Sender {
-    todoEvents(message: TodoEvent): void;
-  }
-  export interface Listener {
-    todoEvents(handler: (p0: TodoEvent) => void): void;
-  }
-}
+```typescript wirespec file=channel/TodoEvents.ts
 ```
 
 ## RPC
@@ -369,19 +107,7 @@ An RPC becomes a `namespace` with a `Service` interface to implement. Because `C
 service returns a `Response` that is either a `Result` or an `Error`. Without an error, it returns the result type
 directly:
 
-```typescript title="rpc/CompleteTodo.ts"
-export namespace CompleteTodo {
-  export type Response = Result | Error
-  export type Result = {
-    "value": Todo,
-  }
-  export type Error = {
-    "value": ApiError,
-  }
-  export interface Service {
-    completeTodo(id: TodoId): Promise<Response>;
-  }
-}
+```typescript wirespec file=rpc/CompleteTodo.ts
 ```
 
 ## Client
@@ -390,23 +116,12 @@ For every endpoint, a client function returns an implementation of its `Call` in
 converts it with `toRawRequest`, sends it with a `Wirespec.Transportation` and converts the answer with
 `fromRawResponse`:
 
-```typescript title="client/UpdateTodoClient.ts"
-export const updateTodoClient = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
-  updateTodo: async (params: UpdateTodo.RequestParams): Promise<UpdateTodo.Response<unknown>> => {
-    const request: UpdateTodo.Request = UpdateTodo.request(params);
-    const rawRequest = UpdateTodo.toRawRequest(serialization, request);
-    const rawResponse = await transportation.transport(rawRequest);
-    return UpdateTodo.fromRawResponse(serialization, rawResponse);
-  }
-})
+```typescript wirespec file=client/UpdateTodoClient.ts
 ```
 
 `client` combines the clients of every endpoint in the specification, so one object can call the whole API:
 
-```typescript title="Client.ts"
-export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
-  ...updateTodoClient(serialization, transportation),
-})
+```typescript wirespec file=Client.ts
 ```
 
 ## Generator
@@ -415,213 +130,40 @@ For every type, refined type, enum and union, a generator builds a value with a 
 path to the field and a description of the value it needs, such as the regular expression of a refined type. This is
 how you create test data that matches the specification:
 
-```typescript title="generator/TodoIdGenerator.ts"
-export namespace TodoIdGenerator {
-  export function generate(generator: Wirespec.Generator, path: string[]): TodoId {
-    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', annotations: [] as Record<string, any>[] });
-  }
-}
+```typescript wirespec file=generator/TodoIdGenerator.ts
 ```
 
 ## Shared
 
 `Wirespec.ts` is the same for every specification. Its `Wirespec` namespace contains:
 
-| Declarations                                                                 | Purpose                                                       |
-|------------------------------------------------------------------------------|---------------------------------------------------------------|
-| `Model`, `Shape`, `Enum`, `Refined`                                          | The kinds of model                                            |
-| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`                              | Extended by the generated endpoints, channels and RPCs        |
-| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers`                | The typed request and response of an endpoint                 |
-| `Serializer`, `Deserializer`, `Serialization` and their parts                | Plug in the serialization of bodies, paths and parameters     |
-| `RawRequest`, `RawResponse`, `Transportation`                                | The untyped request and response, and how to send them        |
-| `Generator`, `GeneratorField` and its variants                               | Generate values for the generators                            |
-| `Client`, `Server`, `Api`                                                    | Convert between raw and typed messages on either side          |
+| Declarations                                                  | Purpose                                                   |
+|---------------------------------------------------------------|-----------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | The kinds of model                                        |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Extended by the generated endpoints, channels and RPCs    |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint             |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them    |
+| `Generator`, `GeneratorField` and its variants                | Generate values for the generators                        |
+| `Client`, `Server`, `Api`                                     | Convert between raw and typed messages on either side     |
 
 <details>
   <summary>The complete Wirespec.ts</summary>
 
-```typescript title="Wirespec.ts"
-export namespace Wirespec {
-  export type Type = string
-  export interface Model {}
-  export interface Shape extends Model {
-    validate(): string[];
-  }
-  export interface Enum extends Model {
-    label: string;
-  }
-  export interface Refined<T> extends Model {
-    value: T;
-    validate(): boolean;
-  }
-  export interface Endpoint {}
-  export interface Channel {}
-  export interface Rpc {}
-  export interface Path {}
-  export interface Queries {}
-  export interface Headers {}
-  export interface Handler {}
-  export interface Call {}
-  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-  export interface Request<T> {
-    path: Path;
-    method: Method;
-    queries: Queries;
-    headers: {};
-    body: T;
-  }
-  export interface Response<T> {
-    status: number;
-    headers: {};
-    body: T;
-  }
-  export interface BodySerializer {
-    serializeBody<T>(t: T, type: Type): Uint8Array;
-  }
-  export interface BodyDeserializer {
-    deserializeBody<T>(raw: Uint8Array, type: Type): T;
-  }
-  export interface BodySerialization extends BodySerializer, BodyDeserializer {}
-  export interface PathSerializer {
-    serializePath<T>(t: T, type: Type): string;
-  }
-  export interface PathDeserializer {
-    deserializePath<T>(raw: string, type: Type): T;
-  }
-  export interface PathSerialization extends PathSerializer, PathDeserializer {}
-  export interface ParamSerializer {
-    serializeParam<T>(value: T, type: Type): string[];
-  }
-  export interface ParamDeserializer {
-    deserializeParam<T>(values: string[], type: Type): T;
-  }
-  export interface ParamSerialization extends ParamSerializer, ParamDeserializer {}
-  export interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {}
-  export interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {}
-  export interface Serialization extends Serializer, Deserializer {}
-  export type RawRequest = {
-    "method": string,
-    "path": string[],
-    "queries": Record<string, string[]>,
-    "headers": Record<string, string[]>,
-    "body": Uint8Array | undefined,
-  }
-  export type RawResponse = {
-    "statusCode": number,
-    "headers": Record<string, string[]>,
-    "body": Uint8Array | undefined,
-  }
-  export interface Transportation {
-    transport(request: RawRequest): Promise<RawResponse>;
-  }
-  export interface GeneratorField<T extends any | undefined> {}
-  export type GeneratorFieldString = {
-    "kind": "string",
-    "regex": string | undefined,
-    "annotations": Record<string, any>[],
-  }
-  export type GeneratorFieldInteger64 = {
-    "kind": "integer64",
-    "min": number | undefined,
-    "max": number | undefined,
-    "annotations": Record<string, any>[],
-  }
-  export type GeneratorFieldInteger32 = {
-    "kind": "integer32",
-    "min": number | undefined,
-    "max": number | undefined,
-    "annotations": Record<string, any>[],
-  }
-  export type GeneratorFieldNumber64 = {
-    "kind": "number64",
-    "min": number | undefined,
-    "max": number | undefined,
-    "annotations": Record<string, any>[],
-  }
-  export type GeneratorFieldNumber32 = {
-    "kind": "number32",
-    "min": number | undefined,
-    "max": number | undefined,
-    "annotations": Record<string, any>[],
-  }
-  export type GeneratorFieldBoolean = {
-    "kind": "boolean",
-    "annotations": Record<string, any>[],
-  }
-  export type GeneratorFieldBytes = {
-    "kind": "bytes",
-    "annotations": Record<string, any>[],
-  }
-  export type GeneratorFieldEnum = {
-    "kind": "enum",
-    "values": string[],
-    "annotations": Record<string, any>[],
-    "type": Type,
-  }
-  export type GeneratorFieldUnion = {
-    "kind": "union",
-    "variants": string[],
-    "annotations": Record<string, any>[],
-    "type": Type,
-  }
-  export type GeneratorFieldArray<T> = {
-    "kind": "array",
-    "generate": (p0: string[]) => T,
-  }
-  export type GeneratorFieldNullable<T> = {
-    "kind": "nullable",
-    "generate": (p0: string[]) => T,
-  }
-  export type GeneratorFieldShape<T> = {
-    "kind": "shape",
-    "annotations": Record<string, Record<string, any>[]>,
-    "generate": (p0: string[]) => T,
-    "type": Type,
-  }
-  export type GeneratorFieldDict<V> = {
-    "kind": "dict",
-    "generate": (p0: string[]) => V,
-  }
-  export interface Generator {
-    generate<T extends any | undefined>(path: string[], field: GeneratorField<T>): T;
-  }
-  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
-    to: (request: REQ) => RawRequest;
-    from: (response: RawResponse) => RES
-  }
-  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => {
-    from: (request: RawRequest) => REQ;
-    to: (response: RES) => RawResponse
-  }
-  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = {
-    name: string;
-    method: Method,
-    path: string,
-    client: Client<REQ, RES>;
-    server: Server<REQ, RES>
-  }
-}
+```typescript wirespec file=Wirespec.ts
 ```
 
 </details>
 
 ## Default values
 
-The TypeScript emitter does not support [default values](../language/types.mdx#default-values) yet. Compiling the
-[defaults from the example](./emitters.mdx#default-values) to TypeScript fails, and the error names the fields that
-have one:
+The TypeScript emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to TypeScript fails, and the error names the fields that have a default:
 
-```
-TypeScript does not support default values, but these fields have one: Todo.done, Todo.priority, Todo.dueDate. Remove
-the defaults, or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI,
-or ignoreDefaults in the Gradle and Maven plugins.
+```text wirespec error ignoreDefaults=false
 ```
 
-To generate TypeScript anyway, leave the defaults out with the [ignore defaults option](../language/types.mdx#ignoring-defaults):
-
-```shell
-wirespec compile -i todo.ws -o out -l TypeScript --ignore-defaults
-```
-
-A [conversion](../converters/converters.md) from OpenAPI or Avro to TypeScript does not fail: it leaves the defaults
+To generate TypeScript anyway, leave the defaults out with the
+[ignore defaults option](../language/types.mdx#ignoring-defaults), as this page does. A
+[conversion](../converters/converters.md) from OpenAPI or Avro to TypeScript does not fail: it leaves the defaults
 out.
