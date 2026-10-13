@@ -18,3 +18,11 @@ internal class DefaultsNotSupportedException(fileUri: FileUri, language: String,
             "--ignore-defaults for the CLI, or ignoreDefaults in the Gradle and Maven plugins.",
         Token.Coordinates(),
     )
+
+internal class NothingToEmitException(language: String) :
+    WirespecException(
+        FileUri(""),
+        "Nothing to emit for $language: the spec only contains parts, " +
+            "and a part is only generated through the types, endpoints and rpcs that spread it.",
+        Token.Coordinates(),
+    )

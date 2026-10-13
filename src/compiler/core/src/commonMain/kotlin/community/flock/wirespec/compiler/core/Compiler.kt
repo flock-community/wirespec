@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.emit.HasEmitters
 import community.flock.wirespec.compiler.core.emit.ensureDefaultsSupportedBy
 import community.flock.wirespec.compiler.core.emit.withoutDefaults
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.ir.emit.ensureEmittableBy
 import community.flock.wirespec.compiler.core.parse.Parser.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.tokenize.Token
@@ -57,6 +58,7 @@ public fun EmitContext.emit(
 ): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
     .map { if (ignoreDefaults) it.withoutDefaults() else it }
     .flatMap { it.ensureDefaultsSupportedBy(emitters) }
+    .flatMap { it.ensureEmittableBy(emitters) }
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 

@@ -318,6 +318,32 @@ class ParsePartTest {
     }
 
     @Test
+    fun collisionInsideAPartWithoutSpreadsIsReportedOnThePart() {
+        parse(
+            // language=ws
+            """
+            |part Twice { id: String, id: String }
+            |type Doc { ...Twice }
+            """.trimMargin(),
+        )
+            .shouldBeLeft()
+            .single().message shouldBe "Field 'id' is defined more than once in part Twice"
+    }
+
+    @Test
+    fun collisionInsideAnUnusedPartIsReported() {
+        parse(
+            // language=ws
+            """
+            |part Twice { id: String, id: String }
+            |type Doc { name: String }
+            """.trimMargin(),
+        )
+            .shouldBeLeft()
+            .single().message shouldBe "Field 'id' is defined more than once in part Twice"
+    }
+
+    @Test
     fun headerCollisionsAreCaseSensitive() {
         parse(
             // language=ws

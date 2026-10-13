@@ -1,5 +1,6 @@
 package community.flock.wirespec.emitters.rust
 
+import arrow.core.NonEmptyList
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -304,7 +305,7 @@ public open class RustEmitter(
         }
     }
 
-    override fun emit(module: Module, logger: Logger): List<File> {
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
         val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let { files ->
             fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
