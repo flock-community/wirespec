@@ -259,7 +259,7 @@ public open class TypeScriptEmitter : IrEmitter {
             .filter { it != type.identifier.value }
             .map { import("./$it", "validate$it") }
         val allImports = typeImports + validateImports
-        val fieldNames = type.shape.value.fields.map { it.identifier.value }.toSet()
+        val fieldNames = type.shape.fields.map { it.identifier.value }.toSet()
         val file = type.convertWithValidation(module)
             .sanitizeNames(modelSanitizationConfig)
             .renameValidateAndBindObjReceiver(type.identifier.value, fieldNames)

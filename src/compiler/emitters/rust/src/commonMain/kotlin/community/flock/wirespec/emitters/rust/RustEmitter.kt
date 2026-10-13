@@ -390,7 +390,7 @@ public open class RustEmitter(
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .injectSelfReceiverToValidate(
-                fieldNames = type.shape.value.fields.map { it.identifier.value }.toSet(),
+                fieldNames = type.shape.fields.map { it.identifier.value }.toSet(),
                 selfParamName = "&self",
             )
             .sanitizeNames(sanitizationConfig)

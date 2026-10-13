@@ -504,7 +504,7 @@ class ParseAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.fields.shouldHaveSize(1).first().apply {
+                shape.fields.shouldHaveSize(1).first().apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1).first().name shouldBe "Deprecated"
                 }
@@ -531,7 +531,7 @@ class ParseAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.fields.shouldHaveSize(2).toList().let { (fieldA, fieldB) ->
+                shape.fields.shouldHaveSize(2).toList().let { (fieldA, fieldB) ->
                     fieldA.apply {
                         identifier.value shouldBe "name"
                         annotations.shouldHaveSize(2).toList().let { (a, b) ->
@@ -565,7 +565,7 @@ class ParseAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.fields.shouldHaveSize(1)
+                shape.fields.shouldHaveSize(1)
                     .first().apply {
                         identifier.value shouldBe "name"
                         annotations.shouldHaveSize(1)

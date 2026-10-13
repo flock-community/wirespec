@@ -44,9 +44,9 @@ class ParseRpcTest {
             .run {
                 comment?.value shouldBe null
                 identifier.value shouldBe "GetTodo"
-                shape.value.fields.shouldHaveSize(2)
-                shape.value.fields[0].identifier.value shouldBe "id"
-                shape.value.fields[1].identifier.value shouldBe "verbose"
+                shape.fields.shouldHaveSize(2)
+                shape.fields[0].identifier.value shouldBe "id"
+                shape.fields[1].identifier.value shouldBe "verbose"
                 result.shouldBeInstanceOf<Reference.Custom>().value shouldBe "Todo"
                 error.shouldBeInstanceOf<Reference.Custom>().value shouldBe "TodoError"
             }
@@ -69,7 +69,7 @@ class ParseRpcTest {
             .shouldBeInstanceOf<Rpc>()
             .run {
                 identifier.value shouldBe "GetTodo"
-                shape.value.fields.shouldHaveSize(1)
+                shape.fields.shouldHaveSize(1)
                 result.shouldBeInstanceOf<Reference.Custom>().value shouldBe "Todo"
                 error shouldBe null
             }
@@ -89,7 +89,7 @@ class ParseRpcTest {
             .shouldBeInstanceOf<Rpc>()
             .run {
                 identifier.value shouldBe "Ping"
-                shape.value.fields.shouldHaveSize(0)
+                shape.fields.shouldHaveSize(0)
                 result.shouldBeInstanceOf<Reference.Primitive>()
                 error shouldBe null
             }

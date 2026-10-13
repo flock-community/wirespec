@@ -20,7 +20,15 @@ public data class Field(
 
 public data class Spread(val reference: Reference.Custom) : ShapeEntry
 
-public val List<ShapeEntry>.fields: List<Field> get() = filterIsInstance<Field>()
+/** Only valid on a validated AST, where every [Spread] is replaced by the fields of its part. */
+public val List<ShapeEntry>.fields: List<Field> get() = map { entry ->
+    when (entry) {
+        is Field -> entry
+        is Spread -> error("Spread ...${entry.reference.value} is unresolved: read fields only from a validated AST")
+    }
+}
+
+public val Type.Shape.fields: List<Field> get() = value.fields
 
 /**
  * A reusable set of fields that is only ever spread into shapes, never emitted on its own.

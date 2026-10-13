@@ -164,7 +164,7 @@ class ParseTest {
             .shouldBeRight()
             .shouldHaveSize(1).first().shouldBeInstanceOf<Type>().apply {
                 identifier.value shouldBe "Bla"
-                shape.value.fields.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                shape.fields.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
                     type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                     isNullable.shouldBeFalse()
                     type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
@@ -188,7 +188,7 @@ class ParseTest {
             .shouldHaveSize(1).first()
             .shouldBeInstanceOf<Type>().apply {
                 identifier.value shouldBe "Bla"
-                shape.value.fields.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                shape.fields.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
                     type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                     isNullable.shouldBeTrue()
                     type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
@@ -211,7 +211,7 @@ class ParseTest {
             .shouldBeRight { it.head.message }
             .shouldHaveSize(1).first().shouldBeInstanceOf<Type>().apply {
                 identifier.value shouldBe "Bla"
-                shape.value.fields.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Iterable>().apply {
+                shape.fields.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Iterable>().apply {
                     isNullable.shouldBeTrue()
                     reference.shouldBeInstanceOf<Reference.Primitive>().apply {
                         type.shouldBeInstanceOf<Reference.Primitive.Type.String>()

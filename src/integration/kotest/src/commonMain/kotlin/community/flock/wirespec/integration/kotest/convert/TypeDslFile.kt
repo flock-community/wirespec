@@ -68,7 +68,7 @@ internal data class TypeShape(
         ): TypeShape {
             val name = type.identifier.value
             val fields = EndpointShape.extractBodyFields(name, types, refined, visited = emptySet())
-            val directRefs = type.shape.value.fields.map { it.reference }
+            val directRefs = type.shape.fields.map { it.reference }
             val modelImports = EndpointShape.modelImportsFor(directRefs, fields, types)
             return TypeShape(name = name, fields = fields, modelImports = modelImports)
         }

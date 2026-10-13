@@ -194,7 +194,7 @@ private fun targetFieldAnnotationsMap(
     if (module == null) return emptyMap()
     val target = module.statements.firstOrNull { it.identifier.value == targetName } ?: return emptyMap()
     return when (target) {
-        is TypeWirespec -> target.shape.value.fields.associate { it.identifier.value to it.annotations }
+        is TypeWirespec -> target.shape.fields.associate { it.identifier.value to it.annotations }
         is RefinedWirespec, is EnumWirespec ->
             if (fieldAnnotations.isEmpty()) emptyMap() else mapOf("value" to fieldAnnotations)
         else -> emptyMap()
@@ -214,7 +214,7 @@ public fun TypeWirespec.convertToGenerator(module: Module? = null): File {
                 returns(
                     ConstructorStatement(
                         type = Type.Custom(typeName),
-                        namedArguments = shape.value.fields.associate { field ->
+                        namedArguments = shape.fields.associate { field ->
                             val fieldName = field.identifier.toFieldName()
                             fieldName to field.reference.toGeneratorExpression(
                                 typeName,

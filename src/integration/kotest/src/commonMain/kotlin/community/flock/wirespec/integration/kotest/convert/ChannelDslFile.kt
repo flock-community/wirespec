@@ -114,7 +114,7 @@ internal data class ChannelShape(
 
             val directRefs = payloadCustom
                 ?.let { types[it.value] }
-                ?.shape?.value?.fields
+                ?.shape?.fields
                 ?.map { it.reference }
                 ?: emptyList()
             val modelImports = EndpointShape.modelImportsFor(listOf(payloadRef) + directRefs, payloadFieldShapes, types)

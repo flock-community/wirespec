@@ -1525,7 +1525,7 @@ class OpenAPIV3ParserTest {
             listOf(Annotation.Parameter("default", Annotation.Value.Single("Todo object"))),
         )
 
-        val idField = todo.shape.value.fields.find { it.identifier.value == "id" }!!
+        val idField = todo.shape.fields.find { it.identifier.value == "id" }!!
         idField.annotations shouldContain Annotation(
             "Description",
             listOf(Annotation.Parameter("default", Annotation.Value.Single("id field"))),

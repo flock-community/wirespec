@@ -122,8 +122,8 @@ public object OpenAPIV2Emitter : Emitter {
             .associate { type ->
                 type.identifier.value to OpenAPIV20Schema(
                     description = type.annotations.findDescription() ?: type.comment?.value,
-                    properties = type.shape.value.fields.associate { it.toProperties() },
-                    required = type.shape.value.fields
+                    properties = type.shape.fields.associate { it.toProperties() },
+                    required = type.shape.fields
                         .filter { !it.reference.isNullable }
                         .map { it.identifier.value }
                         .takeIf { it.isNotEmpty() },

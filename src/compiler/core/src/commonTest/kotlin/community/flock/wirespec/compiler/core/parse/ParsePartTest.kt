@@ -25,14 +25,17 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Part
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -118,7 +121,7 @@ class ParsePartTest {
             """.trimMargin(),
         )
             .shouldBeRight()
-            .single<Type>("User").shape.value.fields
+            .single<Type>("User").shape.fields
             .single().annotations shouldBe listOf(Annotation("Deprecated", emptyList()))
     }
 
@@ -328,6 +331,12 @@ class ParsePartTest {
         )
             .shouldBeLeft()
             .single().message shouldBe "Field 'id' is defined more than once in part Twice"
+    }
+
+    @Test
+    fun fieldsRefuseAnUnresolvedSpread() {
+        shouldThrow<IllegalStateException> { listOf(Spread(Reference.Custom("Audited", isNullable = false))).fields }
+            .message shouldBe "Spread ...Audited is unresolved: read fields only from a validated AST"
     }
 
     @Test

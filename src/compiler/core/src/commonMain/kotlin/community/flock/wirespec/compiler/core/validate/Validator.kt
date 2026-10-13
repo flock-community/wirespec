@@ -106,7 +106,7 @@ public object Validator {
         .let { definitions ->
             definitions
                 .filterIsInstance<Type>()
-                .flatMap { it.shape.value.fields }
+                .flatMap { it.shape.fields }
                 .mapNotNull { field ->
                     (field.defaultValue as? DefaultValue.EnumValue)
                         ?.takeUnless { it.isEntryOf(field.reference, definitions) }

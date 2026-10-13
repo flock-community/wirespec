@@ -55,7 +55,7 @@ private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
 }
 
 private fun AST.generateType(def: Type, random: Random): JsonObject = random.nextInt().let { typeSeed ->
-    def.shape.value.fields
+    def.shape.fields
         .fold<Field, Map<String, JsonElement>>(emptyMap()) { acc, cur ->
             cur.identifier.value.let { value ->
                 val fieldSeed = typeSeed + value.sumOf { it.code }

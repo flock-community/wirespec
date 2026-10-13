@@ -39,8 +39,8 @@ class ParseFieldAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.fields.shouldHaveSize(1)
-                shape.value.fields.first().apply {
+                shape.fields.shouldHaveSize(1)
+                shape.fields.first().apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1)
                     annotations.first().name shouldBe "Deprecated"
@@ -66,14 +66,14 @@ class ParseFieldAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.fields.shouldHaveSize(2)
-                shape.value.fields[0].apply {
+                shape.fields.shouldHaveSize(2)
+                shape.fields[0].apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(2)
                     annotations[0].name shouldBe "Deprecated"
                     annotations[1].name shouldBe "Internal"
                 }
-                shape.value.fields[1].apply {
+                shape.fields[1].apply {
                     identifier.value shouldBe "age"
                     annotations.shouldHaveSize(0)
                 }
@@ -96,8 +96,8 @@ class ParseFieldAnnotationTest {
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.fields.shouldHaveSize(1)
-                shape.value.fields.first().apply {
+                shape.fields.shouldHaveSize(1)
+                shape.fields.first().apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1)
                     annotations.first().apply {
