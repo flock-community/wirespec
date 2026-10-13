@@ -162,8 +162,8 @@ public object OpenAPIV3Emitter : Emitter {
 
     private fun Type.emit(): OpenAPIV30Schema = OpenAPIV30Schema(
         description = annotations.findDescription() ?: comment?.value,
-        properties = shape.value.fields.associate { it.emitSchema() },
-        required = shape.value.fields
+        properties = shape.fields.associate { it.emitSchema() },
+        required = shape.fields
             .filter { !it.reference.isNullable }
             .map { it.identifier.value }
             .takeIf { it.isNotEmpty() },

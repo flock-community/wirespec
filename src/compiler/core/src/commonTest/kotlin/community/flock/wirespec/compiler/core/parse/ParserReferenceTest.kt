@@ -44,7 +44,7 @@ class ParserReferenceTest {
                 first().apply {
                     shouldBeInstanceOf<Type>()
                     identifier.value shouldBe "Self"
-                    shape.value.fields.first().apply {
+                    shape.fields.first().apply {
                         identifier.value shouldBe "self"
                         reference.shouldBeInstanceOf<Reference.Custom>()
                         reference.value shouldBe "Self"

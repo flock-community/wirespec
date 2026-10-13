@@ -471,7 +471,7 @@ internal data class EndpointShape(
             }
             val bodyFieldRefs = bodyElementType
                 ?.let { types[it] }
-                ?.shape?.value?.fields
+                ?.shape?.fields
                 ?.map { it.reference }
                 ?: emptyList()
             val modelImports = modelImportsFor(refs + bodyFieldRefs, bodyFieldShapes, types)
@@ -540,7 +540,7 @@ internal data class EndpointShape(
             types: Map<String, Type>,
         ): List<String> = fields.flatMap { f ->
             val nestedFieldRefs = f.nestedTypeName
-                ?.let { types[it]?.shape?.value?.fields?.flatMap { field -> collectCustomNames(field.reference) } }
+                ?.let { types[it]?.shape?.fields?.flatMap { field -> collectCustomNames(field.reference) } }
                 ?: emptyList()
             nestedFieldRefs + collectFieldTypeNames(f.childFields, types)
         }
@@ -554,7 +554,7 @@ internal data class EndpointShape(
             if (typeName in visited) return emptyList()
             val type = types[typeName] ?: return emptyList()
             val nextVisited = visited + typeName
-            return type.shape.value.fields.map { field ->
+            return type.shape.fields.map { field ->
                 val name = field.identifier.value
                 when (val ref = field.reference) {
                     is Reference.Custom -> if (ref.value in types) {

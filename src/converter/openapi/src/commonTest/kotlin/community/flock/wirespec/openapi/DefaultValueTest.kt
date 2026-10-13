@@ -117,7 +117,7 @@ class DefaultValueTest {
     private fun AST.defaults(type: String) = modules.flatMap { it.statements }
         .filterIsInstance<Type>()
         .first { it.identifier.value == type }
-        .shape.value.fields
+        .shape.fields
         .associate { it.identifier.value to it.defaultValue }
 
     private fun JsonElement.property(path: String, name: String) = path.split(".")

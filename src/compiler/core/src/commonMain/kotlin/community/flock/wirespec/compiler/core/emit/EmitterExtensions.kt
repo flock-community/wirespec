@@ -22,18 +22,18 @@ public fun Definition.importReferences(): List<Reference.Custom> = when (this) {
     ).flatten().mapNotNull { it?.flatten() }.filterIsInstance<Reference.Custom>().distinct().toList()
 
     is Type ->
-        shape.value.fields
+        shape.fields
             .filter { identifier.value != it.reference.root().value }
             .map { it.reference.flatten() }
             .filterIsInstance<Reference.Custom>()
             .distinct()
     is Union -> entries.filterIsInstance<Reference.Custom>()
     is Channel -> if (reference is Reference.Custom) listOf(reference) else emptyList()
-    is Rpc -> (shape.value.fields.map { it.reference } + result + listOfNotNull(error))
+    is Rpc -> (shape.fields.map { it.reference } + result + listOfNotNull(error))
         .map { it.flatten() }
         .filterIsInstance<Reference.Custom>()
         .distinct()
-    is Part -> shape.value.fields.map { it.reference.flatten() }.filterIsInstance<Reference.Custom>().distinct()
+    is Part -> shape.fields.map { it.reference.flatten() }.filterIsInstance<Reference.Custom>().distinct()
     is Enum -> emptyList()
     is Refined -> emptyList()
 }

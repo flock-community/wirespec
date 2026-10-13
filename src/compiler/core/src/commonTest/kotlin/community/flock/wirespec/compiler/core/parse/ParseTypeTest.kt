@@ -48,7 +48,7 @@ class ParseTypeTest {
             .first()
             .shouldBeInstanceOf<Type>()
             .also { it.identifier.value shouldBe "Foo" }
-            .shape.value.fields
+            .shape.fields
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Field>()
@@ -82,7 +82,7 @@ class ParseTypeTest {
             .first()
             .shouldBeInstanceOf<Type>()
             .also { it.identifier.value shouldBe "Foo" }
-            .shape.value.fields
+            .shape.fields
             .shouldHaveSize(3)
             .run {
                 get(0).reference.shouldBeInstanceOf<Reference.Any>().isNullable.shouldBeFalse()
@@ -311,7 +311,7 @@ class ParseTypeTest {
             .shouldBeRight { it.head.message }
             .first()
             .shouldBeInstanceOf<Type>()
-            .shape.value.fields
+            .shape.fields
             .map { it.identifier.value to it.defaultValue } shouldBe listOf(
             "name" to DefaultValue.StringValue("Hello \"world\""),
             "count" to DefaultValue.IntegerValue("-1"),
@@ -343,7 +343,7 @@ class ParseTypeTest {
             .shouldBeRight { it.head.message }
             .first()
             .shouldBeInstanceOf<Type>()
-            .shape.value.fields
+            .shape.fields
             .map { it.defaultValue } shouldBe listOf(
             DefaultValue.EnumValue("DONE"),
             DefaultValue.EnumValue("2"),
@@ -380,7 +380,7 @@ class ParseTypeTest {
             .shouldBeRight { it.head.message }
             .last()
             .shouldBeInstanceOf<Type>()
-            .shape.value.fields
+            .shape.fields
             .map { it.defaultValue } shouldBe listOf(DefaultValue.NullValue, DefaultValue.NullValue, DefaultValue.NullValue)
     }
 

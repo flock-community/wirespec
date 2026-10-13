@@ -37,7 +37,7 @@ public fun JsonElement.toDefaultValue(reference: Reference): DefaultValue? = (th
 public fun Definition.withValidEnumDefaults(definitions: Iterable<Definition>): Definition = when (this) {
     is Type -> copy(
         shape = Type.Shape(
-            shape.value.fields.map { field ->
+            shape.fields.map { field ->
                 when (val default = field.defaultValue) {
                     is DefaultValue.EnumValue -> field.takeIf { default.isEntryOf(field.reference, definitions) } ?: field.copy(defaultValue = null)
                     else -> field

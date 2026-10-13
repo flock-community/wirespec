@@ -40,7 +40,7 @@ public fun AST.withoutDefaults(): AST = copy(
         module.copy(
             statements = module.statements.map { definition ->
                 when (definition) {
-                    is Type -> definition.copy(shape = Type.Shape(definition.shape.value.fields.map { it.copy(defaultValue = null) }))
+                    is Type -> definition.copy(shape = Type.Shape(definition.shape.fields.map { it.copy(defaultValue = null) }))
                     is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined, is Part -> definition
                 }
             },
@@ -50,4 +50,4 @@ public fun AST.withoutDefaults(): AST = copy(
 
 private fun Module.fieldsWithDefaults(): List<String> = statements
     .filterIsInstance<Type>()
-    .flatMap { type -> type.shape.value.fields.filter { it.defaultValue != null }.map { "${type.identifier.value}.${it.identifier.value}" } }
+    .flatMap { type -> type.shape.fields.filter { it.defaultValue != null }.map { "${type.identifier.value}.${it.identifier.value}" } }

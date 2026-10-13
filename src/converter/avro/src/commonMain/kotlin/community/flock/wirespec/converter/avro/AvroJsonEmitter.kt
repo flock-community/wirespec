@@ -99,7 +99,7 @@ public object AvroJsonEmitter : Emitter {
     public fun Type.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
         name = identifier.value,
         type = "record",
-        fields = shape.value.fields.map { field ->
+        fields = shape.fields.map { field ->
             AvroModel.Field(
                 name = field.identifier.value,
                 type = field.emit(module, hasEmitted).let { type ->

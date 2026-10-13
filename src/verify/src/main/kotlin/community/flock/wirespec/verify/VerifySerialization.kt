@@ -124,7 +124,7 @@ internal fun serializationCode(lang: Language, fixture: Fixture? = null): String
 
 private fun rustSerializationCode(fixture: Fixture?): String {
     val types = fixture?.definitions()?.filterIsInstance<AstType>()?.associate {
-        it.identifier.value to it.shape.value.fields.map { f -> f.identifier.value to f.reference }
+        it.identifier.value to it.shape.fields.map { f -> f.identifier.value to f.reference }
     } ?: emptyMap()
 
     fun serializeBranch(typeName: String, fields: List<Pair<String, *>>): String {

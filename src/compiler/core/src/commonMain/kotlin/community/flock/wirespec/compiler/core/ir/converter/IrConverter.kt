@@ -373,7 +373,7 @@ public fun TypeWirespec.convert(): File = file(identifier.toName()) {
     struct(identifier.toName()) {
         implements(Type.Custom("Wirespec.Shape"))
         extends.map { it.convert() }.filterIsInstance<Type.Custom>().forEach { implements(it) }
-        shape.value.fields.forEach {
+        shape.fields.forEach {
             field(
                 name = it.identifier.toName(),
                 type = it.reference.convert(),
@@ -493,7 +493,7 @@ private fun FieldValidation.toExpression(): Expression {
 }
 
 public fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation> = buildList {
-    for (field in shape.value.fields) {
+    for (field in shape.fields) {
         val fieldName = field.identifier.toName()
         val fieldPath = field.identifier.value
         val ref = field.reference
@@ -635,7 +635,7 @@ public fun RpcWirespec.convert(): File = file(identifier.toName()) {
         }
         `interface`("Service") {
             asyncFunction(identifier.toName()) {
-                shape.value.fields.forEach { arg(it.identifier.toName(), it.reference.convert()) }
+                shape.fields.forEach { arg(it.identifier.toName(), it.reference.convert()) }
                 returnType(error?.let { response } ?: result.convert())
             }
         }
