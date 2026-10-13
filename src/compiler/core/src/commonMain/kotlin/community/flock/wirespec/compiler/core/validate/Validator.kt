@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.validate
 
 import arrow.core.Either.Companion.zipOrAccumulate
 import arrow.core.EitherNel
+import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.nel
 import arrow.core.raise.either
@@ -34,17 +35,17 @@ import community.flock.wirespec.compiler.core.parse.ast.isEntryOf
 
 public object Validator {
 
-    public fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = either {
-        val resolved = PartResolver.resolve(ast).bind()
-        zipOrAccumulate(
-            validateWithOptions(resolved, options),
-            validateEndpoints(resolved),
-            validateTypes(resolved),
-            validateChannels(resolved),
-            validateRpcs(resolved),
-            validateEnumDefaults(resolved),
-        ) { a, _, _, _, _, _ -> a }.bind()
-    }
+    public fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = PartResolver.resolve(ast)
+        .flatMap { resolved ->
+            zipOrAccumulate(
+                validateWithOptions(resolved, options),
+                validateEndpoints(resolved),
+                validateTypes(resolved),
+                validateChannels(resolved),
+                validateRpcs(resolved),
+                validateEnumDefaults(resolved),
+            ) { a, _, _, _, _, _ -> a }
+        }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }

@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.validate.Validator
+import community.flock.wirespec.compiler.core.validate.unusedPartWarning
 import community.flock.wirespec.compiler.core.validate.unusedParts
 import community.flock.wirespec.compiler.utils.HasLogger
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
@@ -49,7 +50,7 @@ public object Parser {
             .toNonEmptyListOrNull()
             .let { ensureNotNull(it) { EmptyModule().nel() } }
             .let { AST(it) }
-            .also { it.unusedParts().forEach { part -> logger.warn("Part '${part.identifier.value}' is never spread") } }
+            .also { it.unusedParts().forEach { part -> logger.warn(unusedPartWarning(part.identifier.value)) } }
             .let { Validator.validate(options, it).bind() }
     }
 }

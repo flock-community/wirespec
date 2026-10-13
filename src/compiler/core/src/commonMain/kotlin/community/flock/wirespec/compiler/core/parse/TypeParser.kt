@@ -77,7 +77,7 @@ internal object TypeParser {
     }
 
     private fun TokenProvider.parseShapeEntries(allowFieldDefaults: Boolean): Either<WirespecException, List<ShapeEntry>> = either {
-        mutableListOf<ShapeEntry>().apply {
+        buildList {
             add(parseShapeEntry(allowFieldDefaults).bind())
             while (token.type is Comma) {
                 eatToken().bind()

@@ -9,8 +9,10 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.Ellipsis
 import community.flock.wirespec.compiler.core.tokenize.PartDefinition
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.core.validate.unusedPartWarning
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.lsp.protocol.Diagnostic
 import community.flock.wirespec.lsp.protocol.DiagnosticSeverity
@@ -49,23 +51,24 @@ internal object LanguageService {
     private fun unusedPartWarnings(document: Document): List<Diagnostic> = WirespecSpec
         .tokenize(document.text)
         .zipWithNext()
-        .let { pairs ->
-            val spread = pairs
-                .filter { (first, second) -> first.type is Ellipsis && second.type is TypeIdentifier }
-                .map { (_, name) -> name.value }
-                .toSet()
-            pairs
-                .filter { (first, second) -> first.type is PartDefinition && second.type is TypeIdentifier && second.value !in spread }
-                .mapNotNull { (_, name) -> name.toLspToken() }
+        .run {
+            namesAfter<Ellipsis>().map { it.value }.toSet().let { spread ->
+                namesAfter<PartDefinition>().filterNot { it.value in spread }
+            }
         }
+        .mapNotNull { it.toLspToken() }
         .map { name ->
             Diagnostic(
                 range = name.range,
                 severity = DiagnosticSeverity.WARNING,
-                message = "Part '${name.value}' is never spread",
+                message = unusedPartWarning(name.value),
                 source = "wirespec",
             )
         }
+
+    private inline fun <reified T : TokenType> List<Pair<Token, Token>>.namesAfter(): List<Token> = this
+        .filter { (first, second) -> first.type is T && second.type is TypeIdentifier }
+        .map { (_, name) -> name }
 
     fun tokenize(document: Document): List<LspToken> = WirespecSpec
         .tokenize(document.text)

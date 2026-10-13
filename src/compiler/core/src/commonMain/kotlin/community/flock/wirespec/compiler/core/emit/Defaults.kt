@@ -16,8 +16,7 @@ public fun Definition.namespace(): String = when (this) {
     is Endpoint -> "endpoint"
     is Channel -> "channel"
     is Rpc -> "rpc"
-    is Model -> "model"
-    is Part -> "model"
+    is Model, is Part -> "model"
 }
 
 internal fun Reference.root(): Reference = when (this) {
