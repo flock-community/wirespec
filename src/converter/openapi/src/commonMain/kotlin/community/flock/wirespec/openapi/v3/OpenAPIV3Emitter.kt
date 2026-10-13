@@ -33,14 +33,12 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
-import community.flock.wirespec.compiler.core.parse.ast.Part
+import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -91,18 +89,13 @@ public object OpenAPIV3Emitter : Emitter {
         components = statements.emitComponents(logger),
     )
 
-    private fun Statements.emitComponents(logger: Logger) = this
-        .filter { it !is Endpoint && it !is Channel && it !is Rpc && it !is Part }
+    private fun Statements.emitComponents(logger: Logger) = filterIsInstance<Model>()
         .associate { definition ->
             definition.identifier.value to when (definition) {
                 is Enum -> definition.emit()
                 is Refined -> definition.emit()
                 is Type -> definition.emit()
                 is Union -> definition.emit()
-                is Endpoint -> error("Cannot emit endpoint")
-                is Channel -> error("Cannot emit channel")
-                is Rpc -> error("Cannot emit rpc")
-                is Part -> error("Cannot emit part")
             }
                 .also { logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}") }
         }

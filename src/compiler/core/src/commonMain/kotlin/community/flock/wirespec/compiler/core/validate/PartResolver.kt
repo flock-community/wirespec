@@ -45,7 +45,7 @@ internal object PartResolver {
     }
 
     private fun Raise<NonEmptyList<WirespecException>>.raiseAll(errors: List<WirespecException>) {
-        errors.toNonEmptyListOrNull()?.let { raise(it) }
+        errors.toNonEmptyListOrNull()?.let(::raise)
     }
 
     private fun AST.duplicatePartErrors(): List<WirespecException> = definitions()
@@ -73,19 +73,18 @@ internal object PartResolver {
 
     private fun Map<String, Part>.cycleError(): WirespecException? = keys
         .filter { name -> name in spreadsReachableFrom(name) }
-        .takeIf { it.isNotEmpty() }
+        .toNonEmptyListOrNull()
         ?.let(::CyclicPartError)
 
+    // Transitive closure: keep adding the spreads of what is reached until nothing new turns up.
     private fun Map<String, Part>.spreadsReachableFrom(name: String): Set<String> = generateSequence(directSpreads(name)) { reached ->
         (reached + reached.flatMap { directSpreads(it) }).takeIf { it.size > reached.size }
     }.last()
 
-    private fun Map<String, Part>.directSpreads(name: String): Set<String> = get(name)
-        ?.shape?.value
-        ?.filterIsInstance<Spread>()
-        ?.map { it.reference.value }
-        ?.toSet()
-        .orEmpty()
+    private fun Map<String, Part>.directSpreads(name: String): Set<String> = get(name)?.shape?.value.orEmpty()
+        .filterIsInstance<Spread>()
+        .map { it.reference.value }
+        .toSet()
 
     private fun Map<String, Part>.duplicateFieldErrors(shapes: List<OwnedShape>): List<WirespecException> = shapes
         .flatMap { shape ->
@@ -105,6 +104,8 @@ internal object PartResolver {
 
     private fun Map<String, Part>.flatten(ast: AST): AST = ast.mapShapes { fieldsOf(it) }
 }
+
+public fun unusedPartWarning(partName: String): String = "Part '$partName' is never spread"
 
 internal fun AST.unusedParts(): List<Part> = shapes()
     .flatMap { shape -> shape.entries.filterIsInstance<Spread>().map { it.reference.value } }
