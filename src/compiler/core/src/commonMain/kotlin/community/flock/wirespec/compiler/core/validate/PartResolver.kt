@@ -40,7 +40,7 @@ internal object PartResolver {
         raiseAll(listOfNotNull(parts.cycleError()))
         val (partShapes, otherShapes) = ast.shapes().partition { it.definition is Part }
         raiseAll(parts.duplicateFieldErrors(partShapes))
-        raiseAll(parts.duplicateFieldErrors(otherShapes))
+        raiseAll(parts.duplicateFieldErrors(otherShapes.filter { shape -> shape.entries.any { it is Spread } }))
         parts.flatten(ast)
     }
 
@@ -86,7 +86,6 @@ internal object PartResolver {
         .orEmpty()
 
     private fun Map<String, Part>.duplicateFieldErrors(shapes: List<OwnedShape>): List<WirespecException> = shapes
-        .filter { shape -> shape.entries.any { it is Spread } }
         .flatMap { shape ->
             fieldsOf(shape.entries)
                 .groupBy { it.identifier.value }
