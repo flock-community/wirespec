@@ -66,4 +66,6 @@ public object CompilePartTest : Fixture {
     override val compiler: Compiler = source.let(::compile)
 
     public val expandedCompiler: Compiler = expanded.let(::compile)
+
+    public val partsOnlyCompiler: Compiler = "part Audited { createdAt: String }".let(::compile)
 }
