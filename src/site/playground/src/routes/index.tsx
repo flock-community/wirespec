@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { WsError, WsEmitted } from "@flock/wirespec";
+import { WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
 import { Box, Button, Tab, Tabs } from "@mui/material";
 import { PlayGround } from "../components/PlayGround";
@@ -53,7 +53,7 @@ type Search = {
 
 export type CompilationResult = {
   result: WsEmitted[];
-  errors: WsError[];
+  errors: MonacoError[];
   language: Language;
 };
 

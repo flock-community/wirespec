@@ -1,6 +1,18 @@
 import { Monaco } from "@monaco-editor/react";
 
-const KEYWORDS = ["Boolean", "String", "Integer"];
+const DEFINITIONS = ["type", "enum", "endpoint", "channel", "rpc", "part"];
+
+const KEYWORDS = [
+  "Any",
+  "Boolean",
+  "Bytes",
+  "Integer",
+  "Integer32",
+  "Number",
+  "Number32",
+  "String",
+  "Unit",
+];
 
 export function initializeMonaco(monaco: Monaco) {
   const model = monaco.editor.getModels();
@@ -20,29 +32,36 @@ export function initializeMonaco(monaco: Monaco) {
       { token: "keyword", foreground: "#FFC300", fontStyle: "bold" },
       { token: "variable", foreground: "#55f1ba" },
       { token: "customKeyword", foreground: "#B151CBFF", fontStyle: "bold" },
+      { token: "operator", foreground: "#B151CBFF", fontStyle: "bold" },
       { token: "regExp", foreground: "#D54E96FF" },
     ],
   });
 
   monaco.languages.setMonarchTokensProvider("wirespec", {
+    definitions: DEFINITIONS,
     keywords: KEYWORDS,
     tokenizer: {
       root: [
+        [/\/\/.*$/, "comment"],
+        [/\/\*/, "comment", "@comment"],
         [/\/.*?\/g/, "regExp"],
+        [/\.\.\./, "operator"],
         [
           /@?[a-zA-Z][\w$]*/,
           {
             cases: {
-              refined: "customKeyword",
-              enum: "customKeyword",
-              type: "customKeyword",
-              endpoint: "customKeyword",
+              "@definitions": "customKeyword",
               "@keywords": "keyword",
               "@default": "variable",
             },
           },
         ],
         [/".*?"/, "string"],
+      ],
+      comment: [
+        [/[^/*]+/, "comment"],
+        [/\*\//, "comment", "@pop"],
+        [/[/*]/, "comment"],
       ],
     },
   });

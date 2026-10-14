@@ -1,5 +1,6 @@
-import { emit, Emitters, parse, WsEmitted, WsError } from "@flock/wirespec";
+import { emit, Emitters, parse, WsEmitted } from "@flock/wirespec";
 import { CompilationResult, Emitter, Language } from "../routes";
+import { MonacoError } from "../utils/SetMonacoErrors";
 
 const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
   switch (emitter) {
@@ -44,14 +45,27 @@ export const wirespecToTarget: (
   const internalEmitter = getEmitterFor(emitter);
   const parseResult = parse(wirespec);
   let result = [] as WsEmitted[];
-  let errors = [] as WsError[];
+  let errors = [] as MonacoError[];
   if (parseResult.result) {
-    result = emit(
-      parseResult.result,
-      internalEmitter,
-      "community.flock.wirespec.generated",
-      false,
-    );
+    try {
+      result = emit(
+        parseResult.result,
+        internalEmitter,
+        "community.flock.wirespec.generated",
+        false,
+      );
+    } catch (error) {
+      // Emitting throws instead of returning errors, e.g. for a spec that
+      // only contains parts: a code emitter has nothing to generate then.
+      errors = [
+        {
+          value: error instanceof Error ? error.message : String(error),
+          line: 1,
+          position: 1,
+          length: 1,
+        },
+      ];
+    }
     if (
       internalEmitter === Emitters.OPENAPI_V3 ||
       internalEmitter === Emitters.OPENAPI_V2 ||
