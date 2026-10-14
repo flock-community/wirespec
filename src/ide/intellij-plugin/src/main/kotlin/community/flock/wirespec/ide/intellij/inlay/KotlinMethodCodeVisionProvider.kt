@@ -28,11 +28,11 @@ public class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider()
                         .mapNotNull { it.containingClass }
                         .firstNotNullOfOrNull { isWirespecHandler(it) }
                         ?.let { handlerInterface ->
-                            val companion = handlerInterface.innerClasses.find { it.name == "Companion" }
-                            val companionSource = companion?.navigationElement as? KtObjectDeclaration
+                            val api = handlerInterface.containingClass?.innerClasses?.find { it.name == "api" }
+                            val apiSource = api?.navigationElement as? KtObjectDeclaration
 
-                            val pathTemplate = companionSource?.getPropertyValue("pathTemplate")
-                            val methodText = companionSource?.getPropertyValue("method")
+                            val pathTemplate = apiSource?.getPropertyValue("pathTemplate")
+                            val methodText = apiSource?.getPropertyValue("method")
 
                             if (pathTemplate != null || methodText != null) {
                                 val text = listOfNotNull(methodText, pathTemplate).joinToString(" ")

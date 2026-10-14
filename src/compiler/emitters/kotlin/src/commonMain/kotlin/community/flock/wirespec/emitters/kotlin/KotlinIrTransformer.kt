@@ -3,7 +3,6 @@ package community.flock.wirespec.emitters.kotlin
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.ir.Import
-import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.RawElement
@@ -17,19 +16,13 @@ internal fun Definition.buildModelImports(packageName: PackageName): List<Import
     .distinctBy { it.value }
     .map { import("${packageName.value}.model", Name.of(it.value).pascalCase()) }
 
-internal fun Namespace.injectCompanionObject(endpoint: Endpoint): Namespace = transform {
-    injectAfter { iface: Interface ->
-        if (iface.name == Name.of("Handler")) listOf(buildCompanionObject(endpoint)) else emptyList()
-    }
-}
-
-internal fun Namespace.injectApiAlias(): Namespace = transform {
+internal fun Namespace.injectApiObject(endpoint: Endpoint): Namespace = transform {
     injectAfter { _: Namespace ->
-        listOf(raw("val api = Handler"))
+        listOf(buildApiObject(endpoint))
     }
 }
 
-private fun buildCompanionObject(endpoint: Endpoint): RawElement {
+private fun buildApiObject(endpoint: Endpoint): RawElement {
     val pathTemplate = "/" + endpoint.path.joinToString("/") {
         when (it) {
             is Endpoint.Segment.Literal -> it.value
@@ -37,7 +30,7 @@ private fun buildCompanionObject(endpoint: Endpoint): RawElement {
         }
     }
     return """
-        |companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        |object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
         |  override val pathTemplate = "$pathTemplate"
         |  override val method = "${endpoint.method}"
         |  override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {

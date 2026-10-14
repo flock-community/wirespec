@@ -784,6 +784,24 @@ public fun EndpointWirespec.convert(): File {
                 }
             }
 
+            // Handler interface
+            `interface`("Handler") {
+                extends(type("Wirespec.Handler"))
+                asyncFunction(endpoint.identifier.toName()) {
+                    arg("request", type("Request"))
+                    returnType(type("Response", wildcard))
+                }
+            }
+
+            // Call interface
+            `interface`("Call") {
+                extends(type("Wirespec.Call"))
+                asyncFunction(endpoint.identifier.toName()) {
+                    endpoint.requestParameters().forEach { (name, type) -> arg(name, type) }
+                    returnType(type("Response", wildcard))
+                }
+            }
+
             // Conversion functions at Endpoint interface level
             function(Name("to", "Raw", "Request"), isStatic = true) {
                 returnType(type("Wirespec.RawRequest"))
@@ -1046,24 +1064,6 @@ public fun EndpointWirespec.convert(): File {
                             ),
                         )
                     }
-                }
-            }
-
-            // Handler interface
-            `interface`("Handler") {
-                extends(type("Wirespec.Handler"))
-                asyncFunction(endpoint.identifier.toName()) {
-                    arg("request", type("Request"))
-                    returnType(type("Response", wildcard))
-                }
-            }
-
-            // Call interface
-            `interface`("Call") {
-                extends(type("Wirespec.Call"))
-                asyncFunction(endpoint.identifier.toName()) {
-                    endpoint.requestParameters().forEach { (name, type) -> arg(name, type) }
-                    returnType(type("Response", wildcard))
                 }
             }
         }

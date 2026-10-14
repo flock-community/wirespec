@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Demonstrates the wiremock integration. The {@code wirespec(...)} factory mirrors WireMock's own
- * {@code get(urlEqualTo(...))} pattern: it takes the generated endpoint's {@code Handler.Handlers} and returns a stub
+ * {@code get(urlEqualTo(...))} pattern: it takes the generated endpoint's {@code api} and returns a stub
  * builder driven by the endpoint's path template and HTTP method. {@code willReturn(response)} then turns a typed
  * Wirespec response into the stub's body, status, and headers — using a Jackson-backed serializer by default. Only
  * responses that belong to that endpoint type-check, so a mismatch is caught at compile time.
@@ -47,7 +47,7 @@ class TodoStubTest {
     void stubsTheListEndpoint() throws Exception {
         var todos = List.of(new Todo("1", "Buy milk", false));
 
-        server.stubFor(wirespec(new GetTodos.Handler.Handlers()).willReturn(new GetTodos.Response200(todos)));
+        server.stubFor(wirespec(GetTodos.api).willReturn(new GetTodos.Response200(todos)));
 
         var response = get("/api/todos");
 
@@ -59,7 +59,7 @@ class TodoStubTest {
     void stubsAPathParamEndpoint() throws Exception {
         var todo = new Todo("abc", "Walk dog", true);
 
-        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response200(todo)));
+        server.stubFor(wirespec(GetTodoById.api).willReturn(new GetTodoById.Response200(todo)));
 
         var response = get("/api/todos/abc");
 
@@ -71,7 +71,7 @@ class TodoStubTest {
     void stubsAnErrorResponse() throws Exception {
         var error = new Error(404L, "not found");
 
-        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response404(error)));
+        server.stubFor(wirespec(GetTodoById.api).willReturn(new GetTodoById.Response404(error)));
 
         var response = get("/api/todos/missing");
 

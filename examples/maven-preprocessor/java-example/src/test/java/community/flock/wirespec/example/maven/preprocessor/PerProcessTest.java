@@ -8,7 +8,7 @@ class PerProcessTest {
 
     @Test
     void test() {
-        var handlers = new AddPetProcessed.Handler.Handlers();
-        Assertions.assertEquals("/pet", handlers.getPathTemplate());
+        var api = AddPetProcessed.api;
+        Assertions.assertEquals("/pet", api.getPathTemplate());
     }
 }

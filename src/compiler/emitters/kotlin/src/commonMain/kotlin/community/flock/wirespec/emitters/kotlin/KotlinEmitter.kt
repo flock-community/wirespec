@@ -223,7 +223,7 @@ public open class KotlinEmitter(
     override fun emit(endpoint: Endpoint): File {
         val imports = endpoint.buildModelImports(packageName)
         val endpointNamespace = endpoint.convert().findElement<Namespace>()!!
-        val body = endpointNamespace.injectCompanionObject(endpoint).injectApiAlias()
+        val body = endpointNamespace.injectApiObject(endpoint)
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
             .prependImports(imports.takeIf { it.isNotEmpty() })

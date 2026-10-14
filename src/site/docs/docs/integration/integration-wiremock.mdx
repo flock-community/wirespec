@@ -85,7 +85,7 @@ Stubbing those endpoints in a JUnit test:
     void stubsTheListEndpoint() throws Exception {
         var todos = List.of(new Todo("1", "Buy milk", false));
 
-        server.stubFor(wirespec(new GetTodos.Handler.Handlers()).willReturn(new GetTodos.Response200(todos)));
+        server.stubFor(wirespec(GetTodos.api).willReturn(new GetTodos.Response200(todos)));
 
         var response = http.send(
             HttpRequest.newBuilder().uri(URI.create(server.baseUrl() + "/api/todos")).GET().build(),
@@ -104,7 +104,7 @@ Stubbing those endpoints in a JUnit test:
     fun `stubs the list endpoint`() {
         val todos = listOf(Todo(id = "1", name = "Buy milk", done = false))
 
-        server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
+        server.stubFor(wirespec(GetTodos.api).willReturn(GetTodos.Response200(todos)))
 
         val response = client.send(
             HttpRequest.newBuilder().uri(URI.create("${server.baseUrl()}/api/todos")).GET().build(),
@@ -131,12 +131,12 @@ Pass the generated `Server` instance for your endpoint:
 <Tabs groupId="language">
   <TabItem value="java" label="Java">
     ```java
-    wirespec(new GetTodos.Handler.Handlers())
+    wirespec(GetTodos.api)
     ```
   </TabItem>
   <TabItem value="kotlin" label="Kotlin">
     ```kotlin
-    wirespec(GetTodos.Handler)
+    wirespec(GetTodos.api)
     ```
   </TabItem>
 </Tabs>
@@ -151,11 +151,11 @@ won't accidentally match across slashes.
 Pass any typed `Response` from the same endpoint:
 
 ```kotlin
-wirespec(GetTodoById.Handler).willReturn(GetTodoById.Response200(todo))
-wirespec(GetTodoById.Handler).willReturn(GetTodoById.Response404(Error(404, "not found")))
+wirespec(GetTodoById.api).willReturn(GetTodoById.Response200(todo))
+wirespec(GetTodoById.api).willReturn(GetTodoById.Response404(Error(404, "not found")))
 ```
 
-Passing a response from a different endpoint, e.g. `wirespec(GetTodoById.Handler).willReturn(GetTodos.Response200(...))`,
+Passing a response from a different endpoint, e.g. `wirespec(GetTodoById.api).willReturn(GetTodos.Response200(...))`,
 fails to compile.
 
 The integration:
@@ -168,7 +168,7 @@ The integration:
 
 ```kotlin
 server.stubFor(
-    wirespec(GetTodos.Handler)
+    wirespec(GetTodos.api)
         .willReturn(GetTodos.Response200(todos))
         .atPriority(1)
         .inScenario("happy path")
@@ -185,7 +185,7 @@ customize the mapper (for example, to register additional modules or change nami
     ```java
     var serialization = new WirespecSerialization(new ObjectMapper().registerModule(new JavaTimeModule()));
 
-    server.stubFor(wirespec(new GetTodoById.Handler.Handlers())
+    server.stubFor(wirespec(GetTodoById.api)
         .willReturn(new GetTodoById.Response200(todo), serialization));
     ```
   </TabItem>
@@ -193,7 +193,7 @@ customize the mapper (for example, to register additional modules or change nami
     ```kotlin
     val serialization = WirespecSerialization(ObjectMapper().registerModule(JavaTimeModule()))
 
-    server.stubFor(wirespec(GetTodoById.Handler)
+    server.stubFor(wirespec(GetTodoById.api)
         .willReturn(GetTodoById.Response200(todo), serialization))
     ```
   </TabItem>

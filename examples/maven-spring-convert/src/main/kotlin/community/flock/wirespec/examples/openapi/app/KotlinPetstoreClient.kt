@@ -22,12 +22,12 @@ class LiveKotlinPetstoreClient(
     private val client: RestTemplate,
 ) : KotlinPetstoreClient {
     override suspend fun addPet(request: AddPet.Request) =
-        with(AddPet.Handler.client(serialization)) {
+        with(AddPet.api.client(serialization)) {
             to(request).let(::handle).let(::from)
         }
 
     override suspend fun findPetsByStatus(request: FindPetsByStatus.Request) =
-        with(FindPetsByStatus.Handler.client(serialization)) {
+        with(FindPetsByStatus.api.client(serialization)) {
             to(request).let(::handle).let(::from)
         }
 

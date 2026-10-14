@@ -27,7 +27,7 @@ class KotestDslExtensionTest {
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
 
         output shouldContain "public class GetTodosScope internal constructor()"
-        output shouldContain "endpointCall(GetTodos.Handler, GetTodos)"
+        output shouldContain "endpointCall(GetTodos.api, GetTodos)"
         output shouldContain "public class GetTodosGenerate internal constructor()"
         output shouldContain "public val GetTodos.generate: GetTodosGenerate"
 
@@ -36,7 +36,7 @@ class KotestDslExtensionTest {
         output shouldContain "return inner.buildRequestGen()"
 
         output shouldContain "public suspend fun Gen<GetTodos.Request>.call(): GetTodos.Response<*> ="
-        output shouldContain "requestCall(GetTodos.Handler, GetTodos, this)"
+        output shouldContain "requestCall(GetTodos.api, GetTodos, this)"
         output shouldNotContain "call(block: suspend GetTodosScope"
         output shouldNotContain "expectingClass"
 
@@ -46,7 +46,7 @@ class KotestDslExtensionTest {
         output shouldContain "public fun response200(block: GetTodosResponse200Scope.() -> Unit = {}): Arb<GetTodos.Response200>"
 
         output shouldContain "public suspend fun Gen<GetTodos.Response<*>>.mock(predicate: (GetTodos.Request) -> Boolean): Unit ="
-        output shouldContain "responseMock(GetTodos.Handler, this, predicate)"
+        output shouldContain "responseMock(GetTodos.api, this, predicate)"
     }
 
     @Test

@@ -42,7 +42,7 @@ public class StubForTest {
     public void stubsStaticPathEndpoint() throws Exception {
         List<TodoDto> todos = List.of(new TodoDto("1", "Buy milk", false));
 
-        server.stubFor(wirespec(new GetTodos.Handler.Handlers()).willReturn(new GetTodos.Response200(todos)));
+        server.stubFor(wirespec(GetTodos.api).willReturn(new GetTodos.Response200(todos)));
 
         HttpResponse<String> response = get("/api/todos");
 
@@ -55,7 +55,7 @@ public class StubForTest {
         TodoDto todo = new TodoDto("abc", "Walk dog", true);
         var serialization = new WirespecSerialization(new ObjectMapper());
 
-        server.stubFor(wirespec(new GetTodoById.Handler.Handlers())
+        server.stubFor(wirespec(GetTodoById.api)
                 .willReturn(new GetTodoById.Response200(todo), serialization));
 
         HttpResponse<String> response = get("/api/todos/abc");
@@ -68,7 +68,7 @@ public class StubForTest {
     public void stubsNon2xxResponse() throws Exception {
         Error err = new Error(404L, "not found");
 
-        server.stubFor(wirespec(new GetTodoById.Handler.Handlers()).willReturn(new GetTodoById.Response404(err)));
+        server.stubFor(wirespec(GetTodoById.api).willReturn(new GetTodoById.Response404(err)));
 
         HttpResponse<String> response = get("/api/todos/anything");
 

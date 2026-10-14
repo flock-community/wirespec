@@ -11,7 +11,7 @@ class InventoryClient(
     serialization: Wirespec.Serialization,
     @Value("\${inventory.base-url}") baseUrl: String,
 ) {
-    private val edge = GetStock.Handler.client(serialization)
+    private val edge = GetStock.api.client(serialization)
     private val transportation = HttpTransportation(baseUrl)
 
     suspend fun getStock(sku: String): GetStock.Response<*> = edge.from(transportation.transport(edge.to(GetStock.Request(sku))))

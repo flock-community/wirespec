@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 class PreProcessTest {
     @Test
     fun test() {
-        val handlers = AddPetProcessed.Handler.Handlers()
-        Assertions.assertEquals("/pet", handlers.getPathTemplate())
+        val api = AddPetProcessed.api
+        Assertions.assertEquals("/pet", api.getPathTemplate())
     }
 }

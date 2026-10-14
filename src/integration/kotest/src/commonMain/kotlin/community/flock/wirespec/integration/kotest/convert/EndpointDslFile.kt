@@ -131,7 +131,7 @@ internal object EndpointDslFile {
             visibility(Visibility.PUBLIC)
             receiver(genOf("${shape.name}.Request"))
             returnType(IrType.Custom("${shape.name}.Response<*>"))
-            returns(rawExpr("requestCall(${shape.name}.Handler, ${shape.name}, this)"))
+            returns(rawExpr("requestCall(${shape.name}.api, ${shape.name}, this)"))
         }
     }
 
@@ -141,7 +141,7 @@ internal object EndpointDslFile {
             receiver(genOf("${shape.name}.Response<*>"))
             arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
             returnType(IrType.Unit)
-            returns(rawExpr("responseMock(${shape.name}.Handler, this, predicate)"))
+            returns(rawExpr("responseMock(${shape.name}.api, this, predicate)"))
         }
     }
 
@@ -185,7 +185,7 @@ internal object EndpointDslFile {
             annotation("@WirespecScenarioDsl")
             visibility(Visibility.PUBLIC)
             constructorVisibility(Visibility.INTERNAL)
-            raw("private val inner = endpointCall(${shape.name}.Handler, ${shape.name})")
+            raw("private val inner = endpointCall(${shape.name}.api, ${shape.name})")
             present.forEach { slot ->
                 val builderClass = slotBuilderName(shape, slot)
                 property(slot.name, IrType.Nullable(blockType(builderClass)), isMutable = true, visibility = Visibility.PRIVATE, initializer = rawExpr("null"))

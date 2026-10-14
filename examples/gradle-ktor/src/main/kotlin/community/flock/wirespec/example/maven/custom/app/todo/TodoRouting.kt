@@ -22,7 +22,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
     val handler = TodoHandler(todoRepository)
 
     routing {
-        with(GetTodos.Handler) {
+        with(GetTodos.api) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
@@ -34,7 +34,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             }
         }
 
-        with(GetTodoById.Handler) {
+        with(GetTodoById.api) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
@@ -46,7 +46,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             }
         }
 
-        with(PostTodo.Handler) {
+        with(PostTodo.api) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
@@ -58,7 +58,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             }
         }
 
-        with(DeleteTodoById.Handler) {
+        with(DeleteTodoById.api) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
