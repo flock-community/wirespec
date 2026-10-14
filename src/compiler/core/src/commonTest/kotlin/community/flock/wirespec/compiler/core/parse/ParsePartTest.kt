@@ -1,8 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
-import arrow.core.EitherNel
 import arrow.core.nonEmptyListOf
-import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
@@ -16,7 +14,6 @@ import community.flock.wirespec.compiler.core.exceptions.DuplicateFieldError
 import community.flock.wirespec.compiler.core.exceptions.DuplicatePartError
 import community.flock.wirespec.compiler.core.exceptions.PartAsReferenceError
 import community.flock.wirespec.compiler.core.exceptions.SpreadNonPartError
-import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
@@ -31,8 +28,8 @@ import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
+import community.flock.wirespec.compiler.test.parse
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.throwables.shouldThrow
@@ -43,14 +40,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
 class ParsePartTest {
-
-    private fun parse(vararg sources: String): EitherNel<WirespecException, AST> = object : ParseContext, NoLogger {
-        override val spec = WirespecSpec
-    }.parse(
-        sources
-            .mapIndexed { index, source -> ModuleContent(FileUri("test$index.ws"), source) }
-            .toNonEmptyListOrNull()!!,
-    )
 
     private fun AST.definitions(): List<Definition> = modules.flatMap(Module::statements)
 
