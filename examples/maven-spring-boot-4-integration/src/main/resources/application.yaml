@@ -1,0 +1,20 @@
+spring:
+  http:
+    client:
+      # Spring Framework 7 / Boot 4 "HTTP Service Client" configuration.
+      # Settings under spring.http.client.service.* are applied per HTTP service
+      # group. Here the "todo" group's RestClient is pointed at the locally
+      # running Todo server. The same group is configured programmatically in
+      # WirespecClientConfig#todoGroupConfigurer.
+      service:
+        group:
+          todo:
+            base-url: http://localhost:8080
+
+# The Spring integration's legacy reactive WebClient autoconfiguration is still
+# enabled by @EnableWirespec; give it a base url so the context starts even
+# though this example drives requests through the new RestClient-based client.
+wirespec:
+  spring:
+    webclient:
+      base-url: http://localhost:8080
