@@ -3,6 +3,7 @@ import { Box, Tab, Tabs } from "@mui/material";
 import { WsEmitted } from "@flock/wirespec";
 import { PlayGround } from "./PlayGround";
 import { Language } from "../routes";
+import { foldRawConversions } from "../utils/FoldRawConversions";
 
 interface OutputViewProps {
   files: WsEmitted[];
@@ -63,7 +64,11 @@ export function OutputView({ files, language }: OutputViewProps) {
           ))}
         </Tabs>
       )}
-      <PlayGround code={activeFile?.result ?? ""} language={language} />
+      <PlayGround
+        code={activeFile?.result ?? ""}
+        language={language}
+        onCodeShown={foldRawConversions}
+      />
     </Box>
   );
 }
