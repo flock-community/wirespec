@@ -14,7 +14,7 @@ import java.net.URLDecoder
 /**
  *
  * ```
- * server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
+ * server.stubFor(wirespec(GetTodos.api).willReturn(GetTodos.Response200(todos)))
  * ```
  */
 public fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> wirespec(

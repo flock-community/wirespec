@@ -134,23 +134,22 @@ object PutTodo : Wirespec.Endpoint {
   }
   interface Handler : Wirespec.Handler {
       suspend fun putTodo(request: Request): Response<*>
-      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-        override val pathTemplate = "/todos/{id}"
-        override val method = "PUT"
-        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
-          override fun to(response: Response<*>) = toRawResponse(serialization, response)
-        }
-        override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-          override fun to(request: Request) = toRawRequest(serialization, request)
-          override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
-        }
-      }
   }
   fun interface Call : Wirespec.Call {
       suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): Response<*>
   }
-  val api = Handler
+  object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+    override val pathTemplate = "/todos/{id}"
+    override val method = "PUT"
+    override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+      override fun to(response: Response<*>) = toRawResponse(serialization, response)
+    }
+    override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun to(request: Request) = toRawRequest(serialization, request)
+      override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+    }
+  }
 }
 
 package community.flock.wirespec.generated.model

@@ -16,19 +16,19 @@ interface UserClient :
 class LiveUserClient(
     private val wirespec: WirespecClient,
 ) : UserClient {
-    override suspend fun getUsers(request: GetUsers.Request) = with(GetUsers.Handler.client(Serialization)) {
+    override suspend fun getUsers(request: GetUsers.Request) = with(GetUsers.api.client(Serialization)) {
         to(request).let(wirespec::handle).let(::from)
     }
 
-    override suspend fun getUserByName(request: GetUserByName.Request) = with(GetUserByName.Handler.client(Serialization)) {
+    override suspend fun getUserByName(request: GetUserByName.Request) = with(GetUserByName.api.client(Serialization)) {
         to(request).let(wirespec::handle).let(::from)
     }
 
-    override suspend fun postUser(request: PostUser.Request) = with(PostUser.Handler.client(Serialization)) {
+    override suspend fun postUser(request: PostUser.Request) = with(PostUser.api.client(Serialization)) {
         to(request).let(wirespec::handle).let(::from)
     }
 
-    override suspend fun deleteUserByName(request: DeleteUserByName.Request) = with(DeleteUserByName.Handler.client(Serialization)) {
+    override suspend fun deleteUserByName(request: DeleteUserByName.Request) = with(DeleteUserByName.api.client(Serialization)) {
         to(request).let(wirespec::handle).let(::from)
     }
 }

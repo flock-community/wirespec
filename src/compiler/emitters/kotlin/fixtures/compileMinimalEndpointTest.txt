@@ -59,23 +59,22 @@ object GetTodos : Wirespec.Endpoint {
   }
   interface Handler : Wirespec.Handler {
       suspend fun getTodos(request: Request): Response<*>
-      companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-        override val pathTemplate = "/todos"
-        override val method = "GET"
-        override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-          override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
-          override fun to(response: Response<*>) = toRawResponse(serialization, response)
-        }
-        override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-          override fun to(request: Request) = toRawRequest(serialization, request)
-          override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
-        }
-      }
   }
   fun interface Call : Wirespec.Call {
       suspend fun getTodos(): Response<*>
   }
-  val api = Handler
+  object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+    override val pathTemplate = "/todos"
+    override val method = "GET"
+    override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+      override fun to(response: Response<*>) = toRawResponse(serialization, response)
+    }
+    override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun to(request: Request) = toRawRequest(serialization, request)
+      override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+    }
+  }
 }
 
 package community.flock.wirespec.generated.model

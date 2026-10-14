@@ -38,7 +38,7 @@ class StubForTest {
     fun `stubs a static-path endpoint`() {
         val todos = listOf(TodoDto(id = "1", name = "Buy milk", done = false))
 
-        server.stubFor(wirespec(GetTodos.Handler).willReturn(GetTodos.Response200(todos)))
+        server.stubFor(wirespec(GetTodos.api).willReturn(GetTodos.Response200(todos)))
 
         val response = get("/api/todos")
 
@@ -51,7 +51,7 @@ class StubForTest {
         val todo = TodoDto(id = "abc", name = "Walk dog", done = true)
         val customSerialization = WirespecSerialization(ObjectMapper())
 
-        server.stubFor(wirespec(GetTodoById.Handler).willReturn(GetTodoById.Response200(todo), customSerialization))
+        server.stubFor(wirespec(GetTodoById.api).willReturn(GetTodoById.Response200(todo), customSerialization))
 
         val response = get("/api/todos/abc")
 
@@ -63,7 +63,7 @@ class StubForTest {
     fun `stubs a non-2xx typed response with the correct status code`() {
         val err = Error(code = 404, description = "not found")
 
-        server.stubFor(wirespec(GetTodoById.Handler).willReturn(GetTodoById.Response404(err)))
+        server.stubFor(wirespec(GetTodoById.api).willReturn(GetTodoById.Response404(err)))
 
         val response = get("/api/todos/anything")
 
