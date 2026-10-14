@@ -57,11 +57,14 @@ endpoint DeleteTodo DELETE /todos/{id: TodoIdentifier} -> {
     404 -> TodoError
 }
 
+// A channel describes one-way messages, for example on a message broker
+channel TodoUpdates -> Todo
+
 // An rpc is a request/response call that does not prescribe a transport
 rpc SearchTodos {
   ...Paging,
   query: String
-} -> Todo[]
+} -> Todo[] ! TodoError
 
 rpc CompleteTodo {
   id: TodoIdentifier
