@@ -172,6 +172,12 @@ impl Response500 {
 }
 pub mod PutTodo {
     use super::*;
+    pub trait Handler {
+        async fn put_todo(&self, request: Request) -> Response;
+    }
+    pub trait Call {
+        async fn put_todo(&self, id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> Response;
+    }
     pub fn to_raw_request(serialization: &impl Serializer, request: Request) -> RawRequest {
         return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("todos"), serialization.serialize_path(&request.path.id, std::any::TypeId::of::<String>())], queries: std::collections::HashMap::from([(String::from("done"), serialization.serialize_param(&request.queries.done, std::any::TypeId::of::<bool>())), (String::from("name"), request.queries.name.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<String>())).unwrap_or(Vec::<String>::new()))]), headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&request.headers.token, std::any::TypeId::of::<Token>())), (String::from("Refresh-Token"), request.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&request.body, std::any::TypeId::of::<PotentialTodoDto>())) };
     }
@@ -206,12 +212,6 @@ pub mod PutTodo {
                 panic!("Cannot match response with status: {}", response.status_code);
             }
         }
-    }
-    pub trait Handler {
-        async fn put_todo(&self, request: Request) -> Response;
-    }
-    pub trait Call {
-        async fn put_todo(&self, id: String, done: bool, name: Option<String>, token: Token, refresh_token: Option<Token>, body: PotentialTodoDto) -> Response;
     }
     impl<C: Client> Handler for C {
         async fn put_todo(&self, request: Request) -> Response {

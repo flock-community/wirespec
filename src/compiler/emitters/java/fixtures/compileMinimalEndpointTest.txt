@@ -33,6 +33,12 @@ public interface GetTodos extends Wirespec.Endpoint {
       this(200, new Response200Headers(), body);
     }
   };
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Response<?>> getTodos();
+  }
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
     return new Wirespec.RawRequest(
       request.method().name(),
@@ -65,12 +71,6 @@ public interface GetTodos extends Wirespec.Endpoint {
           throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
         }
     }
-  }
-  public interface Handler extends Wirespec.Handler {
-    public java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
-  }
-  public interface Call extends Wirespec.Call {
-    public java.util.concurrent.CompletableFuture<Response<?>> getTodos();
   }
   public static record Api () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
     @Override

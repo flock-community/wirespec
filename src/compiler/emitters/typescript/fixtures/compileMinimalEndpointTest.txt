@@ -34,6 +34,12 @@ export namespace GetTodos {
     headers: {},
     body: params.body,
   })
+  export interface Handler extends Wirespec.Handler {
+    getTodos(_request: Request): Promise<Response<unknown>>;
+  }
+  export interface Call extends Wirespec.Call {
+    getTodos(): Promise<Response<unknown>>;
+  }
   export function toRawRequest(serialization: Wirespec.Serializer, _request: Request): Wirespec.RawRequest {
     return { method: _request.method, path: ['todos'], queries: {}, headers: {}, body: undefined };
   }
@@ -59,12 +65,6 @@ export namespace GetTodos {
       default:
         throw new Error('Cannot match response with status:');
     }
-  }
-  export interface Handler extends Wirespec.Handler {
-    getTodos(_request: Request): Promise<Response<unknown>>;
-  }
-  export interface Call extends Wirespec.Call {
-    getTodos(): Promise<Response<unknown>>;
   }
   export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
     from: (it) => fromRawResponse(serialization, it),

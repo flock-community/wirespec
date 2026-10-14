@@ -81,6 +81,12 @@ public interface PutTodo extends Wirespec.Endpoint {
       this(500, new Response500Headers(), body);
     }
   };
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body);
+  }
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
     return new Wirespec.RawRequest(
       request.method().name(),
@@ -142,12 +148,6 @@ public interface PutTodo extends Wirespec.Endpoint {
           throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
         }
     }
-  }
-  public interface Handler extends Wirespec.Handler {
-    public java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);
-  }
-  public interface Call extends Wirespec.Call {
-    public java.util.concurrent.CompletableFuture<Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body);
   }
   public static record Api () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
     @Override

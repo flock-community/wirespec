@@ -67,6 +67,12 @@ object PutTodo extends Wirespec.Endpoint {
     ) extends Response5XX[Error] with ResponseError {
       def this(body: Error) = this(500, Response500Headers, body)
     }
+  trait Handler[F[_]] extends Wirespec.Handler {
+      def putTodo(request: Request): F[Response[?]]
+  }
+  trait Call[F[_]] extends Wirespec.Call {
+      def putTodo(id: String, done: Boolean, name: Option[String], token: Token, refreshToken: Option[Token], body: PotentialTodoDto): F[Response[?]]
+  }
   def toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     new Wirespec.RawRequest(
       method = request.method.toString,
@@ -131,12 +137,6 @@ object PutTodo extends Wirespec.Endpoint {
           throw new IllegalStateException(("Cannot match response with status: " + response.statusCode))
         }
     }
-  }
-  trait Handler[F[_]] extends Wirespec.Handler {
-      def putTodo(request: Request): F[Response[?]]
-  }
-  trait Call[F[_]] extends Wirespec.Call {
-      def putTodo(id: String, done: Boolean, name: Option[String], token: Token, refreshToken: Option[Token], body: PotentialTodoDto): F[Response[?]]
   }
   object Client extends Wirespec.Client[Request, Response[?]] {
     override val pathTemplate: String = "/todos/{id}"

@@ -63,6 +63,14 @@ class Response200(Response2XX[list[TodoDto]], ResponseListTodoDto):
         self.headers = Response200Headers()
         self.body = body
 class GetTodos(Wirespec.Endpoint):
+    class Handler(Wirespec.Handler, ABC):
+        @abstractmethod
+        async def get_todos(self, request: Request) -> Response[Any]:
+            ...
+    class Call(Wirespec.Call, ABC):
+        @abstractmethod
+        async def get_todos(self) -> Response[Any]:
+            ...
     @staticmethod
     def toRawRequest(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
         return Wirespec.RawRequest(method=request.method.value, path=['todos'], queries={}, headers={}, body=None)
@@ -83,14 +91,6 @@ class GetTodos(Wirespec.Endpoint):
                 return Response200(body=(serialization.deserializeBody(response.body, list[TodoDto]) if response.body is not None else _raise('body is null')))
             case _:
                 raise Exception(('Cannot match response with status: ' + str(response.statusCode)))
-    class Handler(Wirespec.Handler, ABC):
-        @abstractmethod
-        async def get_todos(self, request: Request) -> Response[Any]:
-            ...
-    class Call(Wirespec.Call, ABC):
-        @abstractmethod
-        async def get_todos(self) -> Response[Any]:
-            ...
 
 from __future__ import annotations
 import re

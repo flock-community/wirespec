@@ -74,6 +74,12 @@ export namespace PutTodo {
     headers: {},
     body: params.body,
   })
+  export interface Handler extends Wirespec.Handler {
+    putTodo(_request: Request): Promise<Response<unknown>>;
+  }
+  export interface Call extends Wirespec.Call {
+    putTodo(params: RequestParams): Promise<Response<unknown>>;
+  }
   export function toRawRequest(serialization: Wirespec.Serializer, _request: Request): Wirespec.RawRequest {
     return { method: _request.method, path: ['todos', serialization.serializePath(_request.path.id, "string")], queries: { 'done': serialization.serializeParam(_request.queries.done, "boolean"), 'name': _request.queries.name != null ? serialization.serializeParam(_request.queries.name, "string") : [] as string[] }, headers: { 'token': serialization.serializeParam(_request.headers.token, "Token"), 'Refresh-Token': _request.headers.refreshToken != null ? serialization.serializeParam(_request.headers.refreshToken, "Token") : [] as string[] }, body: serialization.serializeBody(_request.body, "PotentialTodoDto") };
   }
@@ -113,12 +119,6 @@ export namespace PutTodo {
       default:
         throw new Error('Cannot match response with status:');
     }
-  }
-  export interface Handler extends Wirespec.Handler {
-    putTodo(_request: Request): Promise<Response<unknown>>;
-  }
-  export interface Call extends Wirespec.Call {
-    putTodo(params: RequestParams): Promise<Response<unknown>>;
   }
   export const client:Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
     from: (it) => fromRawResponse(serialization, it),

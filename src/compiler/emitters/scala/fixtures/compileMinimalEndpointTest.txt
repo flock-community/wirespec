@@ -23,6 +23,12 @@ object GetTodos extends Wirespec.Endpoint {
     ) extends Response2XX[List[TodoDto]] with ResponseListTodoDto {
       def this(body: List[TodoDto]) = this(200, Response200Headers, body)
     }
+  trait Handler[F[_]] extends Wirespec.Handler {
+      def getTodos(request: Request.type): F[Response[?]]
+  }
+  trait Call[F[_]] extends Wirespec.Call {
+      def getTodos(): F[Response[?]]
+  }
   def toRawRequest(serialization: Wirespec.Serializer, request: Request.type): Wirespec.RawRequest =
     new Wirespec.RawRequest(
       method = request.method.toString,
@@ -56,12 +62,6 @@ object GetTodos extends Wirespec.Endpoint {
           throw new IllegalStateException(("Cannot match response with status: " + response.statusCode))
         }
     }
-  }
-  trait Handler[F[_]] extends Wirespec.Handler {
-      def getTodos(request: Request.type): F[Response[?]]
-  }
-  trait Call[F[_]] extends Wirespec.Call {
-      def getTodos(): F[Response[?]]
   }
   object Client extends Wirespec.Client[Request.type, Response[?]] {
     override val pathTemplate: String = "/todos"

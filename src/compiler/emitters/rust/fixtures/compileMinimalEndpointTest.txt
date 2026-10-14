@@ -70,6 +70,12 @@ impl Response200 {
 }
 pub mod GetTodos {
     use super::*;
+    pub trait Handler {
+        async fn get_todos(&self, request: Request) -> Response;
+    }
+    pub trait Call {
+        async fn get_todos(&self) -> Response;
+    }
     pub fn to_raw_request(serialization: &impl Serializer, request: Request) -> RawRequest {
         return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("todos")], queries: std::collections::HashMap::new(), headers: std::collections::HashMap::new(), body: None };
     }
@@ -92,12 +98,6 @@ pub mod GetTodos {
                 panic!("Cannot match response with status: {}", response.status_code);
             }
         }
-    }
-    pub trait Handler {
-        async fn get_todos(&self, request: Request) -> Response;
-    }
-    pub trait Call {
-        async fn get_todos(&self) -> Response;
     }
     impl<C: Client> Handler for C {
         async fn get_todos(&self, request: Request) -> Response {

@@ -67,6 +67,12 @@ object PutTodo : Wirespec.Endpoint {
     ) : Response5XX<Error>, ResponseError {
       constructor(body: Error) : this(500, Response500Headers, body)
     }
+  fun interface Handler : Wirespec.Handler {
+      suspend fun putTodo(request: Request): Response<*>
+  }
+  fun interface Call : Wirespec.Call {
+      suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): Response<*>
+  }
   fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       method = request.method.name,
@@ -131,12 +137,6 @@ object PutTodo : Wirespec.Endpoint {
           error(("Cannot match response with status: " + response.statusCode))
         }
     }
-  }
-  interface Handler : Wirespec.Handler {
-      suspend fun putTodo(request: Request): Response<*>
-  }
-  fun interface Call : Wirespec.Call {
-      suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): Response<*>
   }
   object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
     override val pathTemplate = "/todos/{id}"

@@ -156,6 +156,14 @@ class Response500(Response5XX[Error], ResponseError):
         self.headers = Response500Headers()
         self.body = body
 class PutTodo(Wirespec.Endpoint):
+    class Handler(Wirespec.Handler, ABC):
+        @abstractmethod
+        async def put_todo(self, request: Request) -> Response[Any]:
+            ...
+    class Call(Wirespec.Call, ABC):
+        @abstractmethod
+        async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
+            ...
     @staticmethod
     def toRawRequest(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
         return Wirespec.RawRequest(method=request.method.value, path=['todos', serialization.serializePath(request.path.id, str)], queries={'done': serialization.serializeParam(request.queries.done, bool), 'name': (serialization.serializeParam(request.queries.name, str) if request.queries.name is not None else [])}, headers={'token': serialization.serializeParam(request.headers.token, Token), 'Refresh-Token': (serialization.serializeParam(request.headers.refreshToken, Token) if request.headers.refreshToken is not None else [])}, body=serialization.serializeBody(request.body, PotentialTodoDto))
@@ -184,14 +192,6 @@ class PutTodo(Wirespec.Endpoint):
                 return Response500(body=(serialization.deserializeBody(response.body, Error) if response.body is not None else _raise('body is null')))
             case _:
                 raise Exception(('Cannot match response with status: ' + str(response.statusCode)))
-    class Handler(Wirespec.Handler, ABC):
-        @abstractmethod
-        async def put_todo(self, request: Request) -> Response[Any]:
-            ...
-    class Call(Wirespec.Call, ABC):
-        @abstractmethod
-        async def put_todo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto) -> Response[Any]:
-            ...
 
 from __future__ import annotations
 import re

@@ -224,13 +224,13 @@ File("GetTodos") {
             Field("headers", Headers)
             Field("body", Array(Todo))
         }
+        Interface("Handler") {
+            Function("getTodos")(request: Request) → Response<*>
+        }
         Function("toRawRequest")(serialization, request) → Wirespec.RawRequest
         Function("fromRawRequest")(serialization, request) → Request
         Function("toRawResponse")(serialization, response) → Wirespec.RawResponse
         Function("fromRawResponse")(serialization, response) → Response
-        Interface("Handler") {
-            Function("getTodos")(request: Request) → Response<*>
-        }
     }
 }
 ```
@@ -240,8 +240,8 @@ The key parts of an endpoint IR model are:
 - **Path, Queries, RequestHeaders** — structs for the typed request components, implementing the corresponding shared interfaces
 - **Request** — a struct implementing `Wirespec.Request<T>` with a constructor that assembles path, method, queries, headers, and body
 - **Response union hierarchy** — a `Response` union with intermediate unions grouped by status prefix (`Response2XX`) and content type (`ResponseTodo`), with concrete response structs for each status code
-- **Conversion functions** — `toRawRequest`, `fromRawRequest`, `toRawResponse`, and `fromRawResponse` that bridge between the typed request/response structs and `Wirespec.RawRequest` / `Wirespec.RawResponse` using the serialization interfaces
 - **Handler** — an interface with a function matching the endpoint name, representing the server-side handler contract
+- **Conversion functions** — `toRawRequest`, `fromRawRequest`, `toRawResponse`, and `fromRawResponse` that bridge between the typed request/response structs and `Wirespec.RawRequest` / `Wirespec.RawResponse` using the serialization interfaces
 
 ## Transform
 
