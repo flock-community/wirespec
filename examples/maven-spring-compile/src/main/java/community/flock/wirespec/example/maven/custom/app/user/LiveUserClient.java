@@ -23,11 +23,11 @@ public class LiveUserClient implements UserClient {
 
     public LiveUserClient(final WirespecTransporter transporter, final WirespecSerializer serializer) {
         this.transporter = transporter;
-        this.getUsers = new GetUsers.Handler.Handlers().getClient(serializer);
-        this.getUserByName = new GetUserByName.Handler.Handlers().getClient(serializer);
-        this.postUser = new PostUser.Handler.Handlers().getClient(serializer);
-        this.deleteUserByName = new DeleteUserByName.Handler.Handlers().getClient(serializer);
-        this.uploadImage = new UploadImage.Handler.Handlers().getClient(serializer);
+        this.getUsers = GetUsers.api.getClient(serializer);
+        this.getUserByName = GetUserByName.api.getClient(serializer);
+        this.postUser = PostUser.api.getClient(serializer);
+        this.deleteUserByName = DeleteUserByName.api.getClient(serializer);
+        this.uploadImage = UploadImage.api.getClient(serializer);
     }
 
     @Override

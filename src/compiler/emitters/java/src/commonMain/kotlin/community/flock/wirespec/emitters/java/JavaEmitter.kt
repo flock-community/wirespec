@@ -196,8 +196,7 @@ public open class JavaEmitter(
 
     override fun emit(endpoint: Endpoint): File = endpoint
         .convert()
-        .injectHandleFunction(endpoint)
-        .injectApiField()
+        .injectApi(endpoint)
         .transformTypeDescriptors()
         .sanitizeNames(sanitizationConfig)
         .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })

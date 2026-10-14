@@ -24,10 +24,10 @@ public class JavaMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
                     .mapNotNull { it.containingClass }
                     .firstNotNullOfOrNull { isWirespecHandler(it) }
                     ?.let { handlerInterface ->
-                        val handlers = handlerInterface.innerClasses.find { it.name == "Handlers" }
+                        val api = handlerInterface.containingClass?.innerClasses?.find { it.name == "Api" }
 
-                        val pathTemplate = handlers?.getLiteralValue("getPathTemplate")
-                        val methodText = handlers?.getLiteralValue("getMethod")
+                        val pathTemplate = api?.getLiteralValue("getPathTemplate")
+                        val methodText = api?.getLiteralValue("getMethod")
 
                         val text = listOfNotNull(methodText, pathTemplate).joinToString(" ")
 

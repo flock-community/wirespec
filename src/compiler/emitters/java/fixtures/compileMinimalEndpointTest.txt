@@ -68,43 +68,43 @@ public interface GetTodos extends Wirespec.Endpoint {
   }
   public interface Handler extends Wirespec.Handler {
     public java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
-    public static record Handlers () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
-      @Override
-      public String getPathTemplate() {
-        return "/todos";
-      }
-      @Override
-      public String getMethod() {
-        return "GET";
-      }
-      @Override
-      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
-        return new Wirespec.ServerEdge<>() {
-        @Override public Request from(Wirespec.RawRequest request) {
-            return fromRawRequest(serialization, request);
-        }
-        @Override public Wirespec.RawResponse to(Response<?> response) {
-            return toRawResponse(serialization, response);
-        }
-        };
-      }
-      @Override
-      public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
-        return new Wirespec.ClientEdge<>() {
-        @Override public Wirespec.RawRequest to(Request request) {
-            return toRawRequest(serialization, request);
-        }
-        @Override public Response<?> from(Wirespec.RawResponse response) {
-            return fromRawResponse(serialization, response);
-        }
-        };
-      }
-    };
   }
   public interface Call extends Wirespec.Call {
     public java.util.concurrent.CompletableFuture<Response<?>> getTodos();
   }
-  Handler.Handlers api = new Handler.Handlers();
+  public static record Api () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+    @Override
+    public String getPathTemplate() {
+      return "/todos";
+    }
+    @Override
+    public String getMethod() {
+      return "GET";
+    }
+    @Override
+    public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
+      return new Wirespec.ServerEdge<>() {
+      @Override public Request from(Wirespec.RawRequest request) {
+          return fromRawRequest(serialization, request);
+      }
+      @Override public Wirespec.RawResponse to(Response<?> response) {
+          return toRawResponse(serialization, response);
+      }
+      };
+    }
+    @Override
+    public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
+      return new Wirespec.ClientEdge<>() {
+      @Override public Wirespec.RawRequest to(Request request) {
+          return toRawRequest(serialization, request);
+      }
+      @Override public Response<?> from(Wirespec.RawResponse response) {
+          return fromRawResponse(serialization, response);
+      }
+      };
+    }
+  };
+  Api api = new Api();
 }
 
 package community.flock.wirespec.generated.model;

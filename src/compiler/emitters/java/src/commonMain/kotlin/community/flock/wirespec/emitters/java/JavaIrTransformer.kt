@@ -56,22 +56,9 @@ internal fun File.qualifyChannelReferences(fullyQualifiedPrefix: String): File =
     matchingElements { it: Interface -> it.withFullyQualifiedPrefix(fullyQualifiedPrefix) }
 }
 
-internal fun <T : Element> T.injectHandleFunction(endpoint: Endpoint): T {
-    val handlersStruct = endpoint.buildHandlersStruct()
-    return transform {
-        matchingElements { iface: Interface ->
-            if (iface.name == Name.of("Handler")) {
-                iface.transform { injectAfter { _: Interface -> listOf(handlersStruct) } }
-            } else {
-                iface
-            }
-        }
-    }
-}
-
-internal fun <T : Element> T.injectApiField(): T = transform {
+internal fun <T : Element> T.injectApi(endpoint: Endpoint): T = transform {
     injectAfter { _: Namespace ->
-        listOf(RawElement("Handler.Handlers api = new Handler.Handlers();\n"))
+        listOf(endpoint.buildApiStruct(), RawElement("Api api = new Api();\n"))
     }
 }
 
@@ -97,7 +84,7 @@ internal fun <T : Element> T.wrapAsyncReturnInThenApply(endpointName: String): T
     }
 }
 
-internal fun Endpoint.buildHandlersStruct(): Struct {
+internal fun Endpoint.buildApiStruct(): Struct {
     val pathTemplate = "/" + path.joinToString("/") {
         when (it) {
             is Endpoint.Segment.Literal -> it.value
@@ -105,7 +92,7 @@ internal fun Endpoint.buildHandlersStruct(): Struct {
         }
     }
 
-    return struct(name = "Handlers") {
+    return struct(name = "Api") {
         implements(
             type("Wirespec.Server", type("Request"), type("Response", Type.Wildcard)),
         )

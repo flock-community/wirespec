@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * <pre>
  *     import static community.flock.wirespec.integration.wiremock.java.WirespecWireMock.wirespec;
  *
- *     server.stubFor(wirespec(new GetTodos.Handler.Handlers())
+ *     server.stubFor(wirespec(GetTodos.api)
  *             .willReturn(new GetTodos.Response200(todos)));
  * </pre>
  *
