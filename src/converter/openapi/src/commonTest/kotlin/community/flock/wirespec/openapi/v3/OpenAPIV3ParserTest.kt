@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
@@ -1524,7 +1525,7 @@ class OpenAPIV3ParserTest {
             listOf(Annotation.Parameter("default", Annotation.Value.Single("Todo object"))),
         )
 
-        val idField = todo.shape.value.find { it.identifier.value == "id" }!!
+        val idField = todo.shape.value.fields.find { it.identifier.value == "id" }!!
         idField.annotations shouldContain Annotation(
             "Description",
             listOf(Annotation.Parameter("default", Annotation.Value.Single("id field"))),

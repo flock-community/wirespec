@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -40,6 +41,7 @@ public abstract class LanguageEmitter :
             is Union -> Emitted(emit(definition.identifier), emit(definition))
             is Channel -> Emitted(emit(definition.identifier), emit(definition))
             is Rpc -> Emitted(emit(definition.identifier), emit(definition))
+            is Part -> Emitted(emit(definition.identifier), emit(definition))
         }
     }
 

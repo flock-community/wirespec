@@ -1,6 +1,5 @@
 package community.flock.wirespec.emitters.rust
 
-import arrow.core.NonEmptyList
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -22,6 +21,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
@@ -304,7 +304,7 @@ public open class RustEmitter(
         }
     }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
+    override fun emit(module: Module, logger: Logger): List<File> {
         val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
         return super.emit(module.copy(statements = statements), logger).let { files ->
             fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
@@ -389,7 +389,7 @@ public open class RustEmitter(
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .injectSelfReceiverToValidate(
-                fieldNames = type.shape.value.map { it.identifier.value }.toSet(),
+                fieldNames = type.shape.value.fields.map { it.identifier.value }.toSet(),
                 selfParamName = "&self",
             )
             .sanitizeNames(sanitizationConfig)

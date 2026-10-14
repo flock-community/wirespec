@@ -14,6 +14,7 @@ public data object QuestionMark : TokenType
 public data object ExclamationMark : TokenType
 public data object Hash : TokenType
 public data object Brackets : TokenType
+public data object Ellipsis : TokenType
 public data object Comment : TokenType
 public data object Number : TokenType
 public data object Integer : TokenType
@@ -61,6 +62,7 @@ public data object EnumTypeDefinition : WirespecDefinition
 public data object ChannelDefinition : WirespecDefinition
 public data object EndpointDefinition : WirespecDefinition
 public data object RpcDefinition : WirespecDefinition
+public data object PartDefinition : WirespecDefinition
 
 private sealed interface ChannelTokenType : TokenType
 public data object Method : ChannelTokenType

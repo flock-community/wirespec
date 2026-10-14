@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.Type as IrType
 
 internal object EndpointDslFile {
@@ -424,9 +425,9 @@ internal data class EndpointShape(
             val pathFields = endpoint.path
                 .filterIsInstance<Endpoint.Segment.Param>()
                 .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
-            val queryFields = endpoint.queries
+            val queryFields = endpoint.queries.fields
                 .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
-            val headerFields = endpoint.headers
+            val headerFields = endpoint.headers.fields
                 .map { NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable) }
             val bodyRef = endpoint.requests.firstOrNull()?.content?.reference
             val (bodyKind, bodyElementType) = classifyBody(bodyRef)
@@ -451,7 +452,7 @@ internal data class EndpointShape(
                         bodyKind = respBodyKind,
                         bodyType = respBodyType,
                         bodyElementType = respElementName,
-                        headerFields = response.headers.map {
+                        headerFields = response.headers.fields.map {
                             NamedTypedField(it.identifier.value, it.reference.convert(), it.reference.isNullable)
                         },
                     )
@@ -460,17 +461,17 @@ internal data class EndpointShape(
 
             val refs = buildList {
                 endpoint.path.filterIsInstance<Endpoint.Segment.Param>().forEach { add(it.reference) }
-                endpoint.queries.forEach { add(it.reference) }
-                endpoint.headers.forEach { add(it.reference) }
+                endpoint.queries.fields.forEach { add(it.reference) }
+                endpoint.headers.fields.forEach { add(it.reference) }
                 if (bodyRef != null) add(bodyRef)
                 endpoint.responses.forEach { response ->
                     response.content?.reference?.let { add(it) }
-                    response.headers.forEach { add(it.reference) }
+                    response.headers.fields.forEach { add(it.reference) }
                 }
             }
             val bodyFieldRefs = bodyElementType
                 ?.let { types[it] }
-                ?.shape?.value
+                ?.shape?.value?.fields
                 ?.map { it.reference }
                 ?: emptyList()
             val modelImports = modelImportsFor(refs + bodyFieldRefs, bodyFieldShapes, types)
@@ -539,7 +540,7 @@ internal data class EndpointShape(
             types: Map<String, Type>,
         ): List<String> = fields.flatMap { f ->
             val nestedFieldRefs = f.nestedTypeName
-                ?.let { types[it]?.shape?.value?.flatMap { field -> collectCustomNames(field.reference) } }
+                ?.let { types[it]?.shape?.value?.fields?.flatMap { field -> collectCustomNames(field.reference) } }
                 ?: emptyList()
             nestedFieldRefs + collectFieldTypeNames(f.childFields, types)
         }
@@ -553,7 +554,7 @@ internal data class EndpointShape(
             if (typeName in visited) return emptyList()
             val type = types[typeName] ?: return emptyList()
             val nextVisited = visited + typeName
-            return type.shape.value.map { field ->
+            return type.shape.value.fields.map { field ->
                 val name = field.identifier.value
                 when (val ref = field.reference) {
                     is Reference.Custom -> if (ref.value in types) {

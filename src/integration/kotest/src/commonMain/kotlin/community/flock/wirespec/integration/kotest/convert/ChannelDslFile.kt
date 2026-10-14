@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.Type as IrType
 
 internal object ChannelDslFile {
@@ -113,7 +114,7 @@ internal data class ChannelShape(
 
             val directRefs = payloadCustom
                 ?.let { types[it.value] }
-                ?.shape?.value
+                ?.shape?.value?.fields
                 ?.map { it.reference }
                 ?: emptyList()
             val modelImports = EndpointShape.modelImportsFor(listOf(payloadRef) + directRefs, payloadFieldShapes, types)

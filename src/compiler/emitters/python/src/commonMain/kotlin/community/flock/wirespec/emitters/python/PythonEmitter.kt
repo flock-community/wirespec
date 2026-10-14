@@ -1,6 +1,5 @@
 package community.flock.wirespec.emitters.python
 
-import arrow.core.NonEmptyList
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -22,6 +21,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
@@ -112,7 +112,7 @@ public open class PythonEmitter(
         }
     }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
+    override fun emit(module: Module, logger: Logger): List<File> {
         val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
         val emitted = super.emit(module.copy(statements = statements), logger)
 
@@ -198,7 +198,7 @@ public open class PythonEmitter(
     override fun emit(type: Type, module: Module): File {
         val typeImports = type.importReferences().distinctBy { it.value }
             .map { import(".${it.value}", it.value) }
-        val fieldNames = type.shape.value.map { it.identifier.value }.toSet()
+        val fieldNames = type.shape.value.fields.map { it.identifier.value }.toSet()
         return type.convertWithValidation(module)
             .injectSelfReceiverToValidate(fieldNames)
             .sanitizeNames(sanitizationConfig)

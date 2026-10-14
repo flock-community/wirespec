@@ -11,10 +11,12 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 
 /**
  * Fails for every emitter that does not support default values when the spec has any, naming the
@@ -38,8 +40,8 @@ public fun AST.withoutDefaults(): AST = copy(
         module.copy(
             statements = module.statements.map { definition ->
                 when (definition) {
-                    is Type -> definition.copy(shape = Type.Shape(definition.shape.value.map { it.copy(defaultValue = null) }))
-                    is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined -> definition
+                    is Type -> definition.copy(shape = Type.Shape(definition.shape.value.fields.map { it.copy(defaultValue = null) }))
+                    is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined, is Part -> definition
                 }
             },
         )
@@ -48,4 +50,4 @@ public fun AST.withoutDefaults(): AST = copy(
 
 private fun Module.fieldsWithDefaults(): List<String> = statements
     .filterIsInstance<Type>()
-    .flatMap { type -> type.shape.value.filter { it.defaultValue != null }.map { "${type.identifier.value}.${it.identifier.value}" } }
+    .flatMap { type -> type.shape.value.fields.filter { it.defaultValue != null }.map { "${type.identifier.value}.${it.identifier.value}" } }

@@ -28,6 +28,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroModel
 import kotlinx.serialization.encodeToString
@@ -154,8 +155,8 @@ private class JavaAvroSource(private val packageName: PackageName) : AvroSource 
                 typeName = emit(definition.identifier),
                 schemaField = schemaField(definition, module),
                 recordConstructor = "new $RECORD(SCHEMA)",
-                fromArgs = definition.shape.value.mapIndexed { index, field -> emit(field.identifier) to fromValue(module)(index, field) },
-                toPuts = definition.shape.value.mapIndexed { index, field -> "record.put($index, ${toValue(field)})" },
+                fromArgs = definition.shape.value.fields.mapIndexed { index, field -> emit(field.identifier) to fromValue(module)(index, field) },
+                toPuts = definition.shape.value.fields.mapIndexed { index, field -> "record.put($index, ${toValue(field)})" },
             ),
         )
         is Enum -> listOf(
@@ -265,8 +266,8 @@ private class KotlinAvroSource(private val packageName: PackageName) : AvroSourc
                 typeName = emit(definition.identifier),
                 schemaField = schemaField(definition, module, explicitType = false),
                 recordConstructor = "$RECORD(SCHEMA)",
-                fromArgs = definition.shape.value.mapIndexed { index, field -> emit(field.identifier) to fromValue(module)(index, field) },
-                toPuts = definition.shape.value.mapIndexed { index, field -> "record.put($index, ${toValue(field)})" },
+                fromArgs = definition.shape.value.fields.mapIndexed { index, field -> emit(field.identifier) to fromValue(module)(index, field) },
+                toPuts = definition.shape.value.fields.mapIndexed { index, field -> "record.put($index, ${toValue(field)})" },
             ),
         )
         is Enum -> listOf(
