@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -40,7 +41,7 @@ public fun AST.withoutDefaults(): AST = copy(
         module.copy(
             statements = module.statements.map { definition ->
                 when (definition) {
-                    is Type -> definition.copy(shape = Type.Shape(definition.shape.fields.map { it.copy(defaultValue = null) }))
+                    is Type -> definition.copy(shape = Shape(definition.shape.fields.map { it.copy(defaultValue = null) }))
                     is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined, is Part -> definition
                 }
             },

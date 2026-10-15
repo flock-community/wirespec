@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
@@ -66,7 +67,7 @@ class AvroJsonParserTest {
                 annotations = emptyList(),
                 identifier = DefinitionIdentifier("User"),
                 extends = emptyList(),
-                shape = Type.Shape(
+                shape = Shape(
                     listOf(
                         Field(
                             identifier = FieldIdentifier("id"),

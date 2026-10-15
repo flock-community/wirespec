@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 
 public object NodeFixtures {
@@ -37,7 +38,7 @@ public object NodeFixtures {
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("Todo"),
-        shape = Type.Shape(
+        shape = Shape(
             value = listOf(
                 Field(
                     identifier = FieldIdentifier("name"),
@@ -83,7 +84,7 @@ public object NodeFixtures {
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("TodoWithoutProperties"),
-        shape = Type.Shape(
+        shape = Shape(
             value = emptyList(),
         ),
         extends = emptyList(),

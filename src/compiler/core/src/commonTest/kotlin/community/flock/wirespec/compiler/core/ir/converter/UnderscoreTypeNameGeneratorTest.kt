@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -44,7 +45,7 @@ class UnderscoreTypeNameGeneratorTest {
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier(name),
-        shape = TypeWirespec.Shape(shape),
+        shape = Shape(shape),
         extends = emptyList(),
     )
 

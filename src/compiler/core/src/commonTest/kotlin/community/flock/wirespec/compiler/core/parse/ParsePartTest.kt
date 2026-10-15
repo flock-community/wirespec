@@ -24,7 +24,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
-import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -47,7 +47,7 @@ class ParsePartTest {
         .filterIsInstance<T>()
         .single { it.identifier.value == name }
 
-    private fun List<ShapeEntry>.names() = map { it.shouldBeInstanceOf<Field>().identifier.value }
+    private fun Shape.names() = value.map { it.shouldBeInstanceOf<Field>().identifier.value }
 
     @Test
     fun spreadIsTheSameAsWritingTheFieldsOut() {
@@ -79,8 +79,7 @@ class ParsePartTest {
             """.trimMargin(),
         )
             .shouldBeRight()
-            .single<Type>("User").shape
-            .value.names() shouldContainExactly listOf("id", "createdAt", "updatedAt", "name")
+            .single<Type>("User").shape.names() shouldContainExactly listOf("id", "createdAt", "updatedAt", "name")
     }
 
     @Test
@@ -95,8 +94,8 @@ class ParsePartTest {
         )
             .shouldBeRight()
             .run {
-                single<Type>("User").shape.value.names() shouldContainExactly listOf("id", "createdAt", "name")
-                single<Part>("Audit").shape.value.names() shouldContainExactly listOf("id", "createdAt")
+                single<Type>("User").shape.names() shouldContainExactly listOf("id", "createdAt", "name")
+                single<Part>("Audit").shape.names() shouldContainExactly listOf("id", "createdAt")
             }
     }
 
@@ -145,7 +144,7 @@ class ParsePartTest {
             """.trimMargin(),
         )
             .shouldBeRight()
-            .single<Rpc>("FindUser").shape.value.names() shouldContainExactly listOf("id")
+            .single<Rpc>("FindUser").shape.names() shouldContainExactly listOf("id")
     }
 
     @Test
@@ -159,7 +158,7 @@ class ParsePartTest {
             """.trimMargin(),
         )
             .shouldBeRight()
-            .single<Type>("User").shape.value.names() shouldContainExactly listOf("id")
+            .single<Type>("User").shape.names() shouldContainExactly listOf("id")
     }
 
     @Test
@@ -178,7 +177,7 @@ class ParsePartTest {
             .run {
                 modules shouldHaveSize 2
                 definitions().filterIsInstance<Part>().map { it.identifier.value } shouldContainExactly listOf("Audit")
-                single<Type>("User").shape.value.names() shouldContainExactly listOf("createdAt", "name")
+                single<Type>("User").shape.names() shouldContainExactly listOf("createdAt", "name")
             }
     }
 
@@ -186,7 +185,7 @@ class ParsePartTest {
     fun specWithOnlyPartsParses() {
         parse("part Audit { createdAt: String }")
             .shouldBeRight()
-            .single<Part>("Audit").shape.value.names() shouldContainExactly listOf("createdAt")
+            .single<Part>("Audit").shape.names() shouldContainExactly listOf("createdAt")
     }
 
     @Test
@@ -444,7 +443,7 @@ class ParsePartTest {
         parse("type User { name: String }")
             .shouldBeRight()
             .run {
-                single<Type>("User").shape shouldBe Type.Shape(single<Type>("User").shape.value)
+                single<Type>("User").shape shouldBe Shape(single<Type>("User").shape.value)
             }
     }
 }

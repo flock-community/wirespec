@@ -28,6 +28,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.utils.NoLogger
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -187,7 +188,7 @@ class IrConverterTest {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Contact"),
-            shape = AstType.Shape(
+            shape = Shape(
                 listOf(
                     Field(
                         identifier = FieldIdentifier("_embedded"),
@@ -202,7 +203,7 @@ class IrConverterTest {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier(rawName),
-            shape = AstType.Shape(emptyList()),
+            shape = Shape(emptyList()),
             extends = emptyList(),
         )
 
