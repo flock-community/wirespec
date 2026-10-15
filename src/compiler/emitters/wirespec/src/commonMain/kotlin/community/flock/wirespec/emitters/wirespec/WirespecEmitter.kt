@@ -18,7 +18,8 @@ private interface WirespecEmitters:
     WirespecRpcDefinitionEmitter,
     WirespecEnumDefinitionEmitter,
     WirespecUnionDefinitionEmitter,
-    WirespecRefinedTypeDefinitionEmitter
+    WirespecRefinedTypeDefinitionEmitter,
+    WirespecPartDefinitionEmitter
 
 public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 

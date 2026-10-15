@@ -33,16 +33,16 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
-import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.emitFormat
@@ -89,17 +89,13 @@ public object OpenAPIV3Emitter : Emitter {
         components = statements.emitComponents(logger),
     )
 
-    private fun Statements.emitComponents(logger: Logger) = this
-        .filter { it !is Endpoint && it !is Channel && it !is Rpc }
+    private fun Statements.emitComponents(logger: Logger) = filterIsInstance<Model>()
         .associate { definition ->
             definition.identifier.value to when (definition) {
                 is Enum -> definition.emit()
                 is Refined -> definition.emit()
                 is Type -> definition.emit()
                 is Union -> definition.emit()
-                is Endpoint -> error("Cannot emit endpoint")
-                is Channel -> error("Cannot emit channel")
-                is Rpc -> error("Cannot emit rpc")
             }
                 .also { logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}") }
         }
@@ -159,8 +155,8 @@ public object OpenAPIV3Emitter : Emitter {
 
     private fun Type.emit(): OpenAPIV30Schema = OpenAPIV30Schema(
         description = annotations.findDescription() ?: comment?.value,
-        properties = shape.value.associate { it.emitSchema() },
-        required = shape.value
+        properties = shape.fields.associate { it.emitSchema() },
+        required = shape.fields
             .filter { !it.reference.isNullable }
             .map { it.identifier.value }
             .takeIf { it.isNotEmpty() },
@@ -184,7 +180,7 @@ public object OpenAPIV3Emitter : Emitter {
         operationId = identifier.value,
         description = annotations.findDescription() ?: comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
-            .map { it.emitParameter() } + queries.map { it.emitParameter(OpenAPIV30ParameterLocation.QUERY) } + headers.map {
+            .map { it.emitParameter() } + queries.fields.map { it.emitParameter(OpenAPIV30ParameterLocation.QUERY) } + headers.fields.map {
             it.emitParameter(
                 OpenAPIV30ParameterLocation.HEADER,
             )
@@ -202,7 +198,7 @@ public object OpenAPIV3Emitter : Emitter {
             .groupBy { it.status }
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to OpenAPIV30Response(
-                    headers = res.flatMap { it.headers }.associate { it.emitHeader() },
+                    headers = res.flatMap { it.headers.fields }.associate { it.emitHeader() },
                     description = res.first().annotations.findDescription()
                         ?: "${identifier.value} $statusCode response",
                     content = res

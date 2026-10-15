@@ -36,6 +36,20 @@ endpoint GetTodos GET /todos -> {
 }
 """
 
+    const val PARTS = """part Audited {
+  createdAt: String
+}
+
+part Unused {
+  note: String
+}
+
+type Todo {
+  ...Audited,
+  name: String
+}
+"""
+
     /** A broken document — missing type after `name:`. Used to verify diagnostic reporting. */
     const val BROKEN = """type Person {
   name:

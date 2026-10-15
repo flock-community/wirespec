@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
@@ -21,6 +22,7 @@ internal interface Emitters :
     IdentifierEmitter,
     ChannelDefinitionEmitter,
     RpcDefinitionEmitter,
+    PartDefinitionEmitter,
     NotYetImplemented
 
 public interface TypeDefinitionEmitter {
@@ -62,6 +64,10 @@ public interface ChannelDefinitionEmitter {
 
 public fun interface RpcDefinitionEmitter {
     public fun emit(rpc: Rpc): String
+}
+
+public fun interface PartDefinitionEmitter {
+    public fun emit(part: Part): String
 }
 
 public interface IdentifierEmitter {

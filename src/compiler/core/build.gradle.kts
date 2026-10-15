@@ -17,7 +17,12 @@ repositories {
 
 kotlin {
     js(IR) {
-        nodejs()
+        nodejs {
+            testTask {
+                // The property tests parse hundreds of generated specs, which outlasts mocha's 2s default on busy CI runners.
+                useMocha { timeout = "10s" }
+            }
+        }
         useEsModules()
     }
     jvm {

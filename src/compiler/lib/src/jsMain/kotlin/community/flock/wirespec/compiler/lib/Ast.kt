@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Constraint
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P32
@@ -22,6 +23,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 
 public fun WsAST.consume(): AST = AST(
     modules = modules.map { it.consume() }.toNonEmptyListOrNull()!!,
@@ -40,6 +42,7 @@ public fun WsDefinition.consume(): Definition = when (this) {
     is WsUnion -> consume()
     is WsChannel -> consume()
     is WsRpc -> consume()
+    is WsPart -> consume()
 }
 
 public fun WsEndpoint.consume(): Endpoint = Endpoint(
@@ -118,6 +121,12 @@ private fun WsRpc.consume() = Rpc(
     shape = Type.Shape(shape.value.map { it.consume() }),
     result = result.consume(),
     error = error?.consume(),
+)
+
+private fun WsPart.consume() = Part(
+    comment = comment?.let { Comment(it) },
+    identifier = DefinitionIdentifier(identifier),
+    shape = Type.Shape(shape.value.map { it.consume() }),
 )
 
 private fun WsField.consume() = Field(
@@ -202,8 +211,8 @@ public fun Definition.produce(): WsDefinition = when (this) {
         comment = comment?.value,
         method = method.produce(),
         path = path.produce(),
-        queries = queries.produce(),
-        headers = headers.produce(),
+        queries = queries.fields.produce(),
+        headers = headers.fields.produce(),
         requests = requests.produce(),
         responses = responses.produce(),
     )
@@ -241,10 +250,16 @@ public fun Definition.produce(): WsDefinition = when (this) {
         result = result.produce(),
         error = error?.produce(),
     )
+
+    is Part -> WsPart(
+        identifier = identifier.value,
+        comment = comment?.value,
+        shape = shape.produce(),
+    )
 }
 
 private fun Type.Shape.produce() = WsShape(
-    value.map { it.produce() }.toTypedArray(),
+    value.fields.map { it.produce() }.toTypedArray(),
 )
 
 private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
@@ -315,7 +330,7 @@ private fun List<Endpoint.Request>.produce() = map { it.produce() }.toTypedArray
 
 private fun Endpoint.Response.produce() = WsResponse(
     status = status,
-    headers = headers.map { it.produce() }.toTypedArray(),
+    headers = headers.fields.map { it.produce() }.toTypedArray(),
     content = content?.produce(),
 )
 
@@ -342,6 +357,13 @@ public sealed interface WsDefinition : WsNode {
 
 @JsExport
 public class WsType(
+    override val identifier: String,
+    override val comment: String?,
+    public val shape: WsShape,
+) : WsDefinition
+
+@JsExport
+public class WsPart(
     override val identifier: String,
     override val comment: String?,
     public val shape: WsShape,

@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
+import community.flock.wirespec.compiler.test.CompilePartTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
@@ -24,6 +25,49 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
 class WirespecEmitterTest {
+
+    @Test
+    fun compilePartTest() {
+        val wirespec = """
+            |part Identifiable {
+            |  id: String
+            |}
+            |
+            |part Audited {
+            |  id: String,
+            |  createdAt: String,
+            |  updatedAt: String?
+            |}
+            |
+            |part Paging {
+            |  page: Integer,
+            |  size: Integer
+            |}
+            |
+            |part Tracing {
+            |  `X-Trace-Id`: String
+            |}
+            |
+            |type Todo {
+            |  id: String,
+            |  createdAt: String,
+            |  updatedAt: String?,
+            |  name: String,
+            |  done: Boolean
+            |}
+            |
+            |endpoint GetTodos GET /todos ?{page: Integer,size: Integer,done: Boolean?} #{`X-Trace-Id`: String} -> {
+            |  200 -> Todo[] #{`X-Trace-Id`: String,total: Integer}
+            |}
+            |
+            |rpc FindTodo {
+            |  id: String
+            |} -> Todo
+            |
+        """.trimMargin()
+
+        CompilePartTest.compiler { WirespecEmitter() } shouldBeRight wirespec
+    }
 
     @Test
     fun compileFullEndpointTest() {

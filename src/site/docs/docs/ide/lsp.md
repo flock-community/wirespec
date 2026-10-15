@@ -14,10 +14,10 @@ The server advertises the following capabilities in its `initialize` response:
 | Capability | LSP request | What it does |
 |---|---|---|
 | `textDocumentSync` (full) | `textDocument/didOpen`, `didChange`, `didClose` | Tracks an in-memory copy of every opened document. |
-| `publishDiagnostics` | server-pushed | Surfaces tokenizer and parser errors as squiggles after every open/change. |
-| `semanticTokensProvider` | `textDocument/semanticTokens/full` | Classifies tokens as `keyword`, `type`, `variable`, or `method` for editor theming. |
-| `definitionProvider` | `textDocument/definition` | For any user-defined type identifier, returns the declaration and every reference in the current document. |
-| `renameProvider` (with `prepareProvider`) | `textDocument/prepareRename`, `textDocument/rename` | Renames every occurrence of a user-defined type identifier (those introduced by `type`, `enum`, `endpoint`, `channel`, `rpc`). Refuses keywords, built-in types, and field names. |
+| `publishDiagnostics` | server-pushed | Surfaces tokenizer and parser errors as squiggles after every open/change, and warns on a [part](../language/parts.mdx) that no `...` spread in the document uses. |
+| `semanticTokensProvider` | `textDocument/semanticTokens/full` | Classifies tokens as `keyword`, `type`, `variable`, `method`, or `operator` (the `...` spread) for editor theming. |
+| `definitionProvider` | `textDocument/definition` | For any user-defined type or part identifier, returns the declaration and every reference in the current document, spreads included. |
+| `renameProvider` (with `prepareProvider`) | `textDocument/prepareRename`, `textDocument/rename` | Renames every occurrence of a user-defined type identifier (those introduced by `type`, `enum`, `endpoint`, `channel`, `rpc`, `part`), spreads included. Refuses keywords, built-in types, and field names. |
 
 Workspace-wide rename and cross-file go-to-definition are not yet supported — the server tracks documents individually.
 

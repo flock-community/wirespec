@@ -1,9 +1,14 @@
 package community.flock.wirespec.compiler.core.ir.emit
 
+import arrow.core.EitherNel
 import arrow.core.NonEmptyList
+import arrow.core.left
+import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.exceptions.NothingToEmitException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.ir.File
 import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.converter.convertClient
@@ -17,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -30,7 +36,12 @@ public interface IrEmitter : Emitter {
     /** Extensions applied to the complete IR before code generation. */
     public val extensions: List<IrExtension> get() = emptyList()
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
+    /** Parts are already flattened into the shapes that spread them, so they are left out before anything is emitted. */
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.withoutParts()
+        ?.let { emitDefinitions(it, logger) }
+        ?: error("Nothing to emit: every module only contains parts")
+
+    private fun emitDefinitions(ast: AST, logger: Logger): NonEmptyList<Emitted> {
         val moduleFiles = ast.modules.flatMap { m ->
             logger.info("Emitting Nodes from ${m.fileUri.value} ")
             emit(m, logger)
@@ -79,6 +90,7 @@ public interface IrEmitter : Emitter {
             is Union -> emit(definition)
             is Channel -> emit(definition)
             is Rpc -> emit(definition)
+            is Part -> error("Part ${definition.identifier.value} is flattened during validation and is never emitted")
         }
     }
 
@@ -103,3 +115,16 @@ public interface IrEmitter : Emitter {
 
     public fun transformTestFile(file: File): File = file
 }
+
+internal fun AST.ensureEmittableBy(emitters: Iterable<Emitter>): EitherNel<WirespecException, AST> = emitters
+    .filterIsInstance<IrEmitter>()
+    .takeIf { withoutParts() == null }
+    ?.map { NothingToEmitException(it.extension.name) }
+    ?.toNonEmptyListOrNull()
+    ?.left()
+    ?: right()
+
+private fun AST.withoutParts(): AST? = modules
+    .mapNotNull { module -> module.statements.filterNot { it is Part }.toNonEmptyListOrNull()?.let { module.copy(statements = it) } }
+    .toNonEmptyListOrNull()
+    ?.let { copy(modules = it) }

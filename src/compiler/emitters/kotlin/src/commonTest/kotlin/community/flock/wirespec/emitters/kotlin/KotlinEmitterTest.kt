@@ -18,17 +18,32 @@ import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
+import community.flock.wirespec.compiler.test.CompilePartTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class KotlinEmitterTest {
+
+    @Test
+    fun compilePartTest() {
+        CompilePartTest.compiler { KotlinEmitter() }.shouldBeRight() shouldBe CompilePartTest.expandedCompiler { KotlinEmitter() }.shouldBeRight()
+    }
+
+    @Test
+    fun aSpecWithOnlyPartsHasNothingToEmit() {
+        CompilePartTest.partsOnlyCompiler { KotlinEmitter() }
+            .shouldBeLeft()
+            .single().message shouldBe "Nothing to emit for Kotlin: the spec only contains parts, " +
+            "and a part is only generated through the types, endpoints and rpcs that spread it."
+    }
 
     private val emitContext = object : EmitContext, NoLogger {
         override val emitters = nonEmptySetOf(KotlinEmitter())

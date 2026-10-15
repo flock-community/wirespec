@@ -18,7 +18,7 @@ internal interface WirespecIdentifierEmitter: IdentifierEmitter {
 
     companion object : Keywords {
         override val reservedKeywords = setOf(
-            "type", "enum", "endpoint"
+            "type", "enum", "endpoint", "part"
         )
     }
 }

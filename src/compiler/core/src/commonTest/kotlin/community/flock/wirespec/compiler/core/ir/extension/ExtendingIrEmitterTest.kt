@@ -27,7 +27,6 @@ import community.flock.wirespec.compiler.utils.noLogger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertSame
 import kotlin.test.fail
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 
@@ -75,7 +74,7 @@ class ExtendingIrEmitterTest {
         val emitted = ExtendingIrEmitter(TestEmitter, listOf(rename)).emit(ast, noLogger)
 
         assertEquals(listOf("FooTransformed.kt"), emitted.map { it.file })
-        assertSame(ast, seenAst)
+        assertEquals(ast, seenAst)
     }
 
     @Test

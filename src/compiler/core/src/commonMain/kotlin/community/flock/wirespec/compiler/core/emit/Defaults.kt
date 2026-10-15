@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Model
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 
@@ -15,7 +16,7 @@ public fun Definition.namespace(): String = when (this) {
     is Endpoint -> "endpoint"
     is Channel -> "channel"
     is Rpc -> "rpc"
-    is Model -> "model"
+    is Model, is Part -> "model"
 }
 
 internal fun Reference.root(): Reference = when (this) {

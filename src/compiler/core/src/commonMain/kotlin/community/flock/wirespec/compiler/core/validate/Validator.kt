@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.validate
 
 import arrow.core.Either.Companion.zipOrAccumulate
 import arrow.core.EitherNel
+import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.nel
 import arrow.core.raise.either
@@ -22,29 +23,34 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.parse.ast.isEntryOf
 
 public object Validator {
 
-    public fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = zipOrAccumulate(
-        validateWithOptions(ast, options),
-        validateEndpoints(ast),
-        validateTypes(ast),
-        validateChannels(ast),
-        validateRpcs(ast),
-        validateEnumDefaults(ast),
-    ) { a, _, _, _, _, _ -> a }
+    public fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = PartResolver.resolve(ast)
+        .flatMap { resolved ->
+            zipOrAccumulate(
+                validateWithOptions(resolved, options),
+                validateEndpoints(resolved),
+                validateTypes(resolved),
+                validateChannels(resolved),
+                validateRpcs(resolved),
+                validateEnumDefaults(resolved),
+            ) { a, _, _, _, _, _ -> a }
+        }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
         .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
         .let { either { it.bindAll() } }
-        .map { AST(it) }
+        .map { ast.copy(modules = it) }
 
     private fun runValidateOptions(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { it.runOption(options.allowUnions) { fillExtendsClause() } }
 
@@ -58,6 +64,7 @@ public object Validator {
                 is Endpoint -> definition
                 is Enum -> definition
                 is Refined -> definition
+                is Part -> definition
                 is Type -> definition.copy(
                     extends = filterIsInstance<Union>()
                         .filter { union ->
@@ -100,7 +107,7 @@ public object Validator {
         .let { definitions ->
             definitions
                 .filterIsInstance<Type>()
-                .flatMap { it.shape.value }
+                .flatMap { it.shape.fields }
                 .mapNotNull { field ->
                     (field.defaultValue as? DefaultValue.EnumValue)
                         ?.takeUnless { it.isEntryOf(field.reference, definitions) }

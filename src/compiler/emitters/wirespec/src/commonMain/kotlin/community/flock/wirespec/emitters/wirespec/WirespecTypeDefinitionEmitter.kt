@@ -6,6 +6,8 @@ import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 
 internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, WirespecIdentifierEmitter {
@@ -36,6 +38,11 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
         .replace("\n", "\\n")
         .replace("\r", "\\r")
         .replace("\t", "\\t")
+
+    fun ShapeEntry.emit(): String = when (this) {
+        is Field -> emit()
+        is Spread -> "...${reference.emit()}"
+    }
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Dict -> "{ ${reference.emit()} }"

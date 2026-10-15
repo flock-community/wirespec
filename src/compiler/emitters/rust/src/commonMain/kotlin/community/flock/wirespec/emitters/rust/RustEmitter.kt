@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
@@ -389,7 +390,7 @@ public open class RustEmitter(
     override fun emit(type: Type, module: Module): File =
         type.convertWithValidation(module)
             .injectSelfReceiverToValidate(
-                fieldNames = type.shape.value.map { it.identifier.value }.toSet(),
+                fieldNames = type.shape.fields.map { it.identifier.value }.toSet(),
                 selfParamName = "&self",
             )
             .sanitizeNames(sanitizationConfig)
