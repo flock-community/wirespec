@@ -194,6 +194,8 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
+      - name: Test IntelliJ plugin
+        run: ./gradlew :src:ide:intellij-plugin:test
       - name: Build IntelliJ plugin
         run: ./gradlew :src:ide:intellij-plugin:buildPlugin
 
