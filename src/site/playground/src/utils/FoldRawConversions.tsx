@@ -4,7 +4,7 @@ export type CodeEditor = Parameters<OnMount>[0];
 
 // Matches the declaration of an endpoint's raw conversion functions in every
 // emitted language, but not their call sites: a declaration line ends with
-// `{` (Java, TypeScript, Kotlin), `=` (Kotlin) or `:` (Python).
+// `{` (Java, Scala, TypeScript, Kotlin), `=` (Kotlin, Scala) or `:` (Python).
 const RAW_CONVERSION_DECLARATION =
   /\b(toRawRequest|fromRawRequest|toRawResponse|fromRawResponse)\(.*[{=:]\s*$/;
 
