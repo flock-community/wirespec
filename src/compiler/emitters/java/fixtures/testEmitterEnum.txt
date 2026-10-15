@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public enum TodoStatus implements Wirespec.Enum {
   OPEN("OPEN"),
   IN_PROGRESS("IN_PROGRESS"),

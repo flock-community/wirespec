@@ -1,6 +1,8 @@
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class DutchPostalCode(
   override val value: String
 ) : Wirespec.Refined<String> {
@@ -11,8 +13,10 @@ data class DutchPostalCode(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class Address(
   val street: String,
   val houseNumber: Long,
@@ -23,8 +27,10 @@ data class Address(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class Person(
   val name: String,
   val address: Address,
@@ -35,9 +41,11 @@ data class Person(
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.DutchPostalCode
+
 object DutchPostalCodeGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): DutchPostalCode =
     DutchPostalCode(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
@@ -47,10 +55,12 @@ object DutchPostalCodeGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Address
 import community.flock.wirespec.generated.model.DutchPostalCode
+
 object AddressGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Address =
     Address(
@@ -72,10 +82,12 @@ object AddressGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Person
 import community.flock.wirespec.generated.model.Address
+
 object PersonGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Person =
     Person(

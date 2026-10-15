@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
 import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
 import community.flock.wirespec.compiler.core.ir.generator.PythonGenerator
+import community.flock.wirespec.compiler.core.ir.generator.ScalaGenerator
 import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
@@ -35,6 +36,7 @@ import community.flock.wirespec.converter.graphql.GraphQLParser
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.scala.ScalaEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.generator.generate
@@ -51,6 +53,7 @@ import kotlinx.serialization.json.Json
 public enum class Shared(public val source: String) {
     KOTLIN(KotlinEmitter(emitShared = EmitShared(true)).emitShared()!!.let(KotlinGenerator::generate)),
     JAVA(JavaEmitter(emitShared = EmitShared(true)).emitShared()!!.let(JavaGenerator::generate)),
+    SCALA(ScalaEmitter(emitShared = EmitShared(true)).emitShared()!!.let(ScalaGenerator::generate)),
     TYPESCRIPT(TypeScriptEmitter().emitShared()!!.let(TypeScriptGenerator::generate)),
     PYTHON(PythonEmitter(emitShared = EmitShared(true)).emitShared()!!.let(PythonGenerator::generate)),
 }
@@ -61,6 +64,7 @@ public enum class Emitters {
     TYPESCRIPT,
     JAVA,
     KOTLIN,
+    SCALA,
     PYTHON,
     OPENAPI_V2,
     OPENAPI_V3,
@@ -114,6 +118,7 @@ public fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared
         Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(ast, noLogger)
         Emitters.JAVA -> JavaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
         Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
+        Emitters.SCALA -> ScalaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
         Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
         Emitters.OPENAPI_V2 ->
             OpenAPIV2Emitter

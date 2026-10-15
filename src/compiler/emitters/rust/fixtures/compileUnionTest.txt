@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UserAccountPassword {
     pub username: String,
@@ -13,6 +14,7 @@ impl UserAccountPassword {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UserAccountToken {
     pub token: String,
@@ -26,6 +28,7 @@ impl UserAccountToken {
 use super::super::wirespec::*;
 use regex;
 use super::user_account::UserAccount;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct User {
     pub username: String,
@@ -39,6 +42,7 @@ impl User {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum UserAccount {
     UserAccountPassword(UserAccountPassword),
@@ -48,6 +52,7 @@ pub enum UserAccount {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::user_account_password::UserAccountPassword;
+
 pub struct UserAccountPasswordGenerator;
 impl UserAccountPasswordGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccountPassword {
@@ -58,6 +63,7 @@ impl UserAccountPasswordGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::user_account_token::UserAccountToken;
+
 pub struct UserAccountTokenGenerator;
 impl UserAccountTokenGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccountToken {
@@ -70,6 +76,7 @@ use regex;
 use super::super::model::user::User;
 use super::super::model::user_account::UserAccount;
 use super::user_account_generator::UserAccountGenerator;
+
 pub struct UserGenerator;
 impl UserGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> User {
@@ -82,6 +89,7 @@ use regex;
 use super::super::model::user_account::UserAccount;
 use super::user_account_password_generator::UserAccountPasswordGenerator;
 use super::user_account_token_generator::UserAccountTokenGenerator;
+
 pub struct UserAccountGenerator;
 impl UserAccountGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccount {

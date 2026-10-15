@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record DutchPostalCode (
   String value
 ) implements Wirespec.Refined {
@@ -18,7 +20,9 @@ public record DutchPostalCode (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Address (
   String street,
   Long houseNumber,
@@ -31,7 +35,9 @@ public record Address (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Person (
   String name,
   Address address,
@@ -44,8 +50,10 @@ public record Person (
 };
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.DutchPostalCode;
+
 public interface DutchPostalCodeGenerator {
   public static DutchPostalCode generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new DutchPostalCode(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
@@ -56,9 +64,11 @@ public interface DutchPostalCodeGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Address;
 import community.flock.wirespec.generated.model.DutchPostalCode;
+
 public interface AddressGenerator {
   public static Address generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Address(
@@ -81,9 +91,11 @@ public interface AddressGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Person;
 import community.flock.wirespec.generated.model.Address;
+
 public interface PersonGenerator {
   public static Person generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Person(

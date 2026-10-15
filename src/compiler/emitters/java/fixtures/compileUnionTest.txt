@@ -1,9 +1,13 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record UserAccountPassword (
   String username,
   String password
@@ -15,7 +19,9 @@ public record UserAccountPassword (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record UserAccountToken (
   String token
 ) implements Wirespec.Shape, UserAccount {
@@ -26,7 +32,9 @@ public record UserAccountToken (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record User (
   String username,
   UserAccount account
@@ -38,8 +46,10 @@ public record User (
 };
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.UserAccount;
+
 public interface UserAccountGenerator {
   public static UserAccount generate(Wirespec.Generator generator, java.util.List<String> path) {
     final var variant = generator.generate(java.util.stream.Stream.of(path, java.util.List.of("variant")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldUnion(
@@ -60,8 +70,10 @@ public interface UserAccountGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.UserAccountPassword;
+
 public interface UserAccountPasswordGenerator {
   public static UserAccountPassword generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new UserAccountPassword(
@@ -78,8 +90,10 @@ public interface UserAccountPasswordGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.UserAccountToken;
+
 public interface UserAccountTokenGenerator {
   public static UserAccountToken generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new UserAccountToken(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("token")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
@@ -90,9 +104,11 @@ public interface UserAccountTokenGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.User;
 import community.flock.wirespec.generated.model.UserAccount;
+
 public interface UserGenerator {
   public static User generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new User(

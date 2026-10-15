@@ -76,7 +76,9 @@ public object PythonGenerator :
 
     private fun String.indentCode(level: Int): String = " ".repeat(level * 4) + this
 
-    private fun File.emit(indent: Int): String = groupImports(elements).joinToString("") { it.emit(indent) }.compact()
+    private fun File.emit(indent: Int): String = elements.splitAfterLastImport().let { (header, body) ->
+        compactSections(groupImports(header).joinToString("") { it.emit(indent) }, body.joinToString("") { it.emit(indent) })
+    }
 
     private fun groupImports(elements: List<Element>): List<Element> = buildList {
         var i = 0

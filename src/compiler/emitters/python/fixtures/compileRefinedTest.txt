@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TodoId(Wirespec.Refined[str]):
     value: str
@@ -20,6 +21,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TodoNoRegex(Wirespec.Refined[str]):
     value: str
@@ -35,6 +37,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestInt(Wirespec.Refined[int]):
     value: int
@@ -50,6 +53,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestInt0(Wirespec.Refined[int]):
     value: int
@@ -65,6 +69,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestInt1(Wirespec.Refined[int]):
     value: int
@@ -80,6 +85,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestInt2(Wirespec.Refined[int]):
     value: int
@@ -95,6 +101,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestNum(Wirespec.Refined[float]):
     value: float
@@ -110,6 +117,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestNum0(Wirespec.Refined[float]):
     value: float
@@ -125,6 +133,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestNum1(Wirespec.Refined[float]):
     value: float
@@ -140,6 +149,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TestNum2(Wirespec.Refined[float]):
     value: float
@@ -156,6 +166,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TodoId import TodoId
+
 class TodoIdGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TodoId:
@@ -169,6 +180,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TodoNoRegex import TodoNoRegex
+
 class TodoNoRegexGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TodoNoRegex:
@@ -182,6 +194,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestInt import TestInt
+
 class TestIntGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt:
@@ -195,6 +208,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestInt0 import TestInt0
+
 class TestInt0Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt0:
@@ -208,6 +222,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestInt1 import TestInt1
+
 class TestInt1Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt1:
@@ -221,6 +236,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestInt2 import TestInt2
+
 class TestInt2Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestInt2:
@@ -234,6 +250,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestNum import TestNum
+
 class TestNumGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum:
@@ -247,6 +264,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestNum0 import TestNum0
+
 class TestNum0Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum0:
@@ -260,6 +278,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestNum1 import TestNum1
+
 class TestNum1Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum1:
@@ -273,6 +292,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TestNum2 import TestNum2
+
 class TestNum2Generator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TestNum2:

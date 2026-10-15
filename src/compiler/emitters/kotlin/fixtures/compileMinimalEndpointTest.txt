@@ -1,7 +1,9 @@
 package community.flock.wirespec.generated.endpoint
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoDto
+
 object GetTodos : Wirespec.Endpoint {
   object Path : Wirespec.Path
   object Queries : Wirespec.Queries
@@ -78,8 +80,10 @@ object GetTodos : Wirespec.Endpoint {
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TodoDto(
   val description: String
 ) : Wirespec.Shape {
@@ -88,10 +92,12 @@ data class TodoDto(
 }
 
 package community.flock.wirespec.generated.client
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoDto
 import community.flock.wirespec.generated.endpoint.GetTodos
+
 data class GetTodosClient(
   val serialization: Wirespec.Serialization,
   val transportation: Wirespec.Transportation
@@ -105,9 +111,11 @@ data class GetTodosClient(
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoDto
+
 object TodoDtoGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TodoDto =
     TodoDto(description = generator.generate(path + listOf("description"), Wirespec.GeneratorFieldString(
@@ -117,11 +125,13 @@ object TodoDtoGenerator {
 }
 
 package community.flock.wirespec.generated
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoDto
 import community.flock.wirespec.generated.endpoint.GetTodos
 import community.flock.wirespec.generated.client.GetTodosClient
+
 data class Client(
   val serialization: Wirespec.Serialization,
   val transportation: Wirespec.Transportation

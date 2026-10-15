@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum MyAwesomeEnum {
     ONE,
@@ -50,6 +51,7 @@ impl std::fmt::Display for MyAwesomeEnum {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::my_awesome_enum::MyAwesomeEnum;
+
 pub struct MyAwesomeEnumGenerator;
 impl MyAwesomeEnumGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> MyAwesomeEnum {

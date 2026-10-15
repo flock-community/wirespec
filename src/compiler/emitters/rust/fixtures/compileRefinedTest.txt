@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TodoId {
     pub value: String,
@@ -15,6 +16,7 @@ impl TodoId {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TodoNoRegex {
     pub value: String,
@@ -30,6 +32,7 @@ impl TodoNoRegex {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestInt {
     pub value: i64,
@@ -45,6 +48,7 @@ impl TestInt {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestInt0 {
     pub value: i64,
@@ -60,6 +64,7 @@ impl TestInt0 {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestInt1 {
     pub value: i64,
@@ -75,6 +80,7 @@ impl TestInt1 {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestInt2 {
     pub value: i64,
@@ -90,6 +96,7 @@ impl TestInt2 {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestNum {
     pub value: f64,
@@ -105,6 +112,7 @@ impl TestNum {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestNum0 {
     pub value: f64,
@@ -120,6 +128,7 @@ impl TestNum0 {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestNum1 {
     pub value: f64,
@@ -135,6 +144,7 @@ impl TestNum1 {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TestNum2 {
     pub value: f64,
@@ -151,6 +161,7 @@ impl TestNum2 {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::todo_id::TodoId;
+
 pub struct TodoIdGenerator;
 impl TodoIdGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoId {
@@ -161,6 +172,7 @@ impl TodoIdGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::todo_no_regex::TodoNoRegex;
+
 pub struct TodoNoRegexGenerator;
 impl TodoNoRegexGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoNoRegex {
@@ -171,6 +183,7 @@ impl TodoNoRegexGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_int::TestInt;
+
 pub struct TestIntGenerator;
 impl TestIntGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt {
@@ -181,6 +194,7 @@ impl TestIntGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_int0::TestInt0;
+
 pub struct TestInt0Generator;
 impl TestInt0Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt0 {
@@ -191,6 +205,7 @@ impl TestInt0Generator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_int1::TestInt1;
+
 pub struct TestInt1Generator;
 impl TestInt1Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt1 {
@@ -201,6 +216,7 @@ impl TestInt1Generator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_int2::TestInt2;
+
 pub struct TestInt2Generator;
 impl TestInt2Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestInt2 {
@@ -211,6 +227,7 @@ impl TestInt2Generator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_num::TestNum;
+
 pub struct TestNumGenerator;
 impl TestNumGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum {
@@ -221,6 +238,7 @@ impl TestNumGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_num0::TestNum0;
+
 pub struct TestNum0Generator;
 impl TestNum0Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum0 {
@@ -231,6 +249,7 @@ impl TestNum0Generator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_num1::TestNum1;
+
 pub struct TestNum1Generator;
 impl TestNum1Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum1 {
@@ -241,6 +260,7 @@ impl TestNum1Generator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::test_num2::TestNum2;
+
 pub struct TestNum2Generator;
 impl TestNum2Generator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TestNum2 {

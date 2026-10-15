@@ -1,10 +1,12 @@
 package community.flock.wirespec.generated.endpoint
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Token
 import community.flock.wirespec.generated.model.PotentialTodoDto
 import community.flock.wirespec.generated.model.TodoDto
 import community.flock.wirespec.generated.model.Error
+
 object PutTodo : Wirespec.Endpoint {
   data class Path(
       val id: String
@@ -153,8 +155,10 @@ object PutTodo : Wirespec.Endpoint {
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class PotentialTodoDto(
   val name: String,
   val done: Boolean
@@ -164,8 +168,10 @@ data class PotentialTodoDto(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class Token(
   val iss: String
 ) : Wirespec.Shape {
@@ -174,8 +180,10 @@ data class Token(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TodoDto(
   val id: String,
   val name: String,
@@ -186,8 +194,10 @@ data class TodoDto(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class Error(
   val code: Long,
   val description: String
@@ -197,6 +207,7 @@ data class Error(
 }
 
 package community.flock.wirespec.generated.client
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Token
@@ -204,6 +215,7 @@ import community.flock.wirespec.generated.model.PotentialTodoDto
 import community.flock.wirespec.generated.model.TodoDto
 import community.flock.wirespec.generated.model.Error
 import community.flock.wirespec.generated.endpoint.PutTodo
+
 data class PutTodoClient(
   val serialization: Wirespec.Serialization,
   val transportation: Wirespec.Transportation
@@ -224,9 +236,11 @@ data class PutTodoClient(
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.PotentialTodoDto
+
 object PotentialTodoDtoGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): PotentialTodoDto =
     PotentialTodoDto(
@@ -239,9 +253,11 @@ object PotentialTodoDtoGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Token
+
 object TokenGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Token =
     Token(iss = generator.generate(path + listOf("iss"), Wirespec.GeneratorFieldString(
@@ -251,9 +267,11 @@ object TokenGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoDto
+
 object TodoDtoGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TodoDto =
     TodoDto(
@@ -270,9 +288,11 @@ object TodoDtoGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Error
+
 object ErrorGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Error =
     Error(
@@ -289,6 +309,7 @@ object ErrorGenerator {
 }
 
 package community.flock.wirespec.generated
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Token
@@ -297,6 +318,7 @@ import community.flock.wirespec.generated.model.TodoDto
 import community.flock.wirespec.generated.model.Error
 import community.flock.wirespec.generated.endpoint.PutTodo
 import community.flock.wirespec.generated.client.PutTodoClient
+
 data class Client(
   val serialization: Wirespec.Serialization,
   val transportation: Wirespec.Transportation

@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.channel;
+
 import community.flock.wirespec.java.Wirespec;
+
 public interface Queue extends Wirespec.Channel {
   public interface Sender {
     public void queue(String message);

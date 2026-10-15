@@ -13,6 +13,8 @@ const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
       return Emitters.PYTHON;
     case "java":
       return Emitters.JAVA;
+    case "scala":
+      return Emitters.SCALA;
     case "open_api_v2":
       return Emitters.OPENAPI_V2;
     case "open_api_v3":
@@ -32,6 +34,7 @@ const getLanguageFor: (emitter: Emitter) => Language = (emitter: Emitter) => {
     case "kotlin":
     case "python":
     case "java":
+    case "scala":
     case "wirespec":
     case "graphql":
       return emitter;

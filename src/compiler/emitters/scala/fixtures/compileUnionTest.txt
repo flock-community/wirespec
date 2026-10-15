@@ -1,11 +1,15 @@
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 sealed trait UserAccount
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 case class UserAccountPassword(
   val username: String,
   val password: String
@@ -15,8 +19,10 @@ case class UserAccountPassword(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 case class UserAccountToken(
   val token: String
 ) extends Wirespec.Shape with UserAccount {
@@ -25,8 +31,10 @@ case class UserAccountToken(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 case class User(
   val username: String,
   val account: UserAccount
@@ -36,9 +44,11 @@ case class User(
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.UserAccount
+
 object UserAccountGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): UserAccount = {
     val variant = generator.generate(path ++ List("variant"), new Wirespec.GeneratorFieldUnion(
@@ -59,9 +69,11 @@ object UserAccountGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.UserAccountPassword
+
 object UserAccountPasswordGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): UserAccountPassword =
     new UserAccountPassword(
@@ -77,9 +89,11 @@ object UserAccountPasswordGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.UserAccountToken
+
 object UserAccountTokenGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): UserAccountToken =
     new UserAccountToken(token = generator.generate(path ++ List("token"), new Wirespec.GeneratorFieldString(
@@ -89,10 +103,12 @@ object UserAccountTokenGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.User
 import community.flock.wirespec.generated.model.UserAccount
+
 object UserGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): User =
     new User(

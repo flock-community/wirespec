@@ -1,4 +1,5 @@
 import {Wirespec} from '../Wirespec'
+
 export namespace Queue {
   export interface Sender {
     queue(message: string): void;

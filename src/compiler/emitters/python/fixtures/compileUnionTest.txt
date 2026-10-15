@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class UserAccountPassword(Wirespec.Shape, UserAccount):
     username: str
@@ -19,6 +20,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class UserAccountToken(Wirespec.Shape, UserAccount):
     token: str
@@ -33,6 +35,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from .UserAccount import UserAccount
+
 @dataclass
 class User(Wirespec.Shape):
     username: str
@@ -47,6 +50,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 class UserAccount:
     pass
 
@@ -58,6 +62,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.UserAccountPassword import UserAccountPassword
+
 class UserAccountPasswordGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccountPassword:
@@ -71,6 +76,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.UserAccountToken import UserAccountToken
+
 class UserAccountTokenGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccountToken:
@@ -86,6 +92,7 @@ from ..wirespec import T, Wirespec, _raise
 from ..model.User import User
 from ..model.UserAccount import UserAccount
 from .UserAccountGenerator import UserAccountGenerator
+
 class UserGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> User:
@@ -101,6 +108,7 @@ from ..wirespec import T, Wirespec, _raise
 from ..model.UserAccount import UserAccount
 from .UserAccountPasswordGenerator import UserAccountPasswordGenerator
 from .UserAccountTokenGenerator import UserAccountTokenGenerator
+
 class UserAccountGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> UserAccount:

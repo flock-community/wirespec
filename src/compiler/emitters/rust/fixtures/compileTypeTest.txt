@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Request {
     pub r#type: String,
@@ -18,6 +19,7 @@ impl Request {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::request::Request;
+
 pub struct RequestGenerator;
 impl RequestGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Request {

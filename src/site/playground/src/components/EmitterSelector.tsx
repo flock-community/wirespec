@@ -16,10 +16,11 @@ const toMenuItem = ({ value, label }: Option<Emitter>) => (
 
 export function EmitterSelector() {
   const emitterOptions: Option<CompilerEmitter>[] = [
-    { value: "typescript", label: "TypeScript" },
     { value: "kotlin", label: "Kotlin" },
-    { value: "python", label: "Python" },
     { value: "java", label: "Java" },
+    { value: "scala", label: "Scala" },
+    { value: "typescript", label: "TypeScript" },
+    { value: "python", label: "Python" },
   ];
   const converterOptions: Option<CompilerEmitter>[] = [
     { value: "open_api_v2", label: "OpenAPI v2" },
