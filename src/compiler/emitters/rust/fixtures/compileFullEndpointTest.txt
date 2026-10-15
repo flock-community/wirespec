@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PotentialTodoDto {
     pub name: String,
@@ -13,6 +14,7 @@ impl PotentialTodoDto {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Token {
     pub iss: String,
@@ -25,6 +27,7 @@ impl Token {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TodoDto {
     pub id: String,
@@ -39,6 +42,7 @@ impl TodoDto {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Error {
     pub code: i64,
@@ -56,6 +60,7 @@ use super::super::model::token::Token;
 use super::super::model::potential_todo_dto::PotentialTodoDto;
 use super::super::model::todo_dto::TodoDto;
 use super::super::model::error::Error;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Path {
     pub id: String,
@@ -235,6 +240,7 @@ use super::super::model::token::Token;
 use super::super::model::potential_todo_dto::PotentialTodoDto;
 use super::super::model::todo_dto::TodoDto;
 use super::super::model::error::Error;
+
 pub struct PutTodoClient<'a, S: Serialization, T: Transportation> {
     pub serialization: &'a S,
     pub transportation: &'a T,
@@ -251,6 +257,7 @@ impl<'a, S: Serialization, T: Transportation> put_todo::PutTodo::Call for PutTod
 use super::super::wirespec::*;
 use regex;
 use super::super::model::potential_todo_dto::PotentialTodoDto;
+
 pub struct PotentialTodoDtoGenerator;
 impl PotentialTodoDtoGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PotentialTodoDto {
@@ -261,6 +268,7 @@ impl PotentialTodoDtoGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::token::Token;
+
 pub struct TokenGenerator;
 impl TokenGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Token {
@@ -271,6 +279,7 @@ impl TokenGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::todo_dto::TodoDto;
+
 pub struct TodoDtoGenerator;
 impl TodoDtoGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoDto {
@@ -281,6 +290,7 @@ impl TodoDtoGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::error::Error;
+
 pub struct ErrorGenerator;
 impl ErrorGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Error {
@@ -302,6 +312,7 @@ use super::model::todo_dto::TodoDto;
 use super::model::error::Error;
 use super::endpoint::put_todo;
 use put_todo_client::PutTodoClient;
+
 pub struct Client<S: Serialization, T: Transportation> {
     pub serialization: S,
     pub transportation: T,

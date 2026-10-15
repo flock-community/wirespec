@@ -1,6 +1,8 @@
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 case class User(
   val name: String
 ) extends Wirespec.Shape {
@@ -9,9 +11,11 @@ case class User(
 }
 
 package community.flock.wirespec.generated.rpc
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.User
+
 object GetUser extends Wirespec.Rpc {
   sealed trait Response
   case class Result(
@@ -26,8 +30,10 @@ object GetUser extends Wirespec.Rpc {
 }
 
 package community.flock.wirespec.generated.rpc
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 object Ping extends Wirespec.Rpc {
   trait Service {
       def ping(): String
@@ -35,9 +41,11 @@ object Ping extends Wirespec.Rpc {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.User
+
 object UserGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): User =
     new User(name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(

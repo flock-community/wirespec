@@ -82,7 +82,9 @@ public object RustGenerator :
 
     private fun String.indentCode(level: Int): String = indentLines(level, width = 4)
 
-    private fun File.emit(indent: Int): String = elements.joinToString("") { it.emit(indent) }.compact()
+    private fun File.emit(indent: Int): String = elements.splitAfterLastImport().let { (header, body) ->
+        compactSections(header.joinToString("") { it.emit(indent) }, body.joinToString("") { it.emit(indent) })
+    }
 
     private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), isStaticScope: Boolean = false): String = when (this) {
         is Package -> emit(indent)

@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Email (
   String value
 ) implements Wirespec.Refined {
@@ -18,7 +20,9 @@ public record Email (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record PhoneNumber (
   String value
 ) implements Wirespec.Refined {
@@ -37,7 +41,9 @@ public record PhoneNumber (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Tag (
   String value
 ) implements Wirespec.Refined {
@@ -56,7 +62,9 @@ public record Tag (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record EmployeeAge (
   Long value
 ) implements Wirespec.Refined {
@@ -75,7 +83,9 @@ public record EmployeeAge (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record ContactInfo (
   Email email,
   java.util.Optional<PhoneNumber> phone
@@ -87,7 +97,9 @@ public record ContactInfo (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Employee (
   String name,
   EmployeeAge age,
@@ -101,7 +113,9 @@ public record Employee (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Department (
   String name,
   java.util.List<Employee> employees
@@ -113,7 +127,9 @@ public record Department (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Company (
   String name,
   java.util.List<Department> departments
@@ -125,8 +141,10 @@ public record Company (
 };
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Email;
+
 public interface EmailGenerator {
   public static Email generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Email(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
@@ -137,8 +155,10 @@ public interface EmailGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.PhoneNumber;
+
 public interface PhoneNumberGenerator {
   public static PhoneNumber generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new PhoneNumber(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
@@ -149,8 +169,10 @@ public interface PhoneNumberGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Tag;
+
 public interface TagGenerator {
   public static Tag generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Tag(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
@@ -161,8 +183,10 @@ public interface TagGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.EmployeeAge;
+
 public interface EmployeeAgeGenerator {
   public static EmployeeAge generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new EmployeeAge(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
@@ -174,10 +198,12 @@ public interface EmployeeAgeGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.ContactInfo;
 import community.flock.wirespec.generated.model.Email;
 import community.flock.wirespec.generated.model.PhoneNumber;
+
 public interface ContactInfoGenerator {
   public static ContactInfo generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new ContactInfo(
@@ -196,11 +222,13 @@ public interface ContactInfoGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Employee;
 import community.flock.wirespec.generated.model.EmployeeAge;
 import community.flock.wirespec.generated.model.ContactInfo;
 import community.flock.wirespec.generated.model.Tag;
+
 public interface EmployeeGenerator {
   public static Employee generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Employee(
@@ -228,9 +256,11 @@ public interface EmployeeGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Department;
 import community.flock.wirespec.generated.model.Employee;
+
 public interface DepartmentGenerator {
   public static Department generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Department(
@@ -248,9 +278,11 @@ public interface DepartmentGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Company;
 import community.flock.wirespec.generated.model.Department;
+
 public interface CompanyGenerator {
   public static Company generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Company(

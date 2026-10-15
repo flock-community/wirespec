@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record User (
   String name
 ) implements Wirespec.Shape {
@@ -10,8 +12,10 @@ public record User (
 };
 
 package community.flock.wirespec.generated.rpc;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.User;
+
 public interface GetUser extends Wirespec.Rpc {
   public sealed interface Response permits Result, Error {}
   public static record Result (
@@ -28,7 +32,9 @@ public interface GetUser extends Wirespec.Rpc {
 }
 
 package community.flock.wirespec.generated.rpc;
+
 import community.flock.wirespec.java.Wirespec;
+
 public interface Ping extends Wirespec.Rpc {
   public interface Service {
     public java.util.concurrent.CompletableFuture<String> ping();
@@ -36,8 +42,10 @@ public interface Ping extends Wirespec.Rpc {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.User;
+
 public interface UserGenerator {
   public static User generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new User(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(

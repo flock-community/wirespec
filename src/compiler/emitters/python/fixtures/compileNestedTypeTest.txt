@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class DutchPostalCode(Wirespec.Refined[str]):
     value: str
@@ -21,6 +22,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from .DutchPostalCode import DutchPostalCode
+
 @dataclass
 class Address(Wirespec.Shape):
     street: str
@@ -37,6 +39,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from .Address import Address
+
 @dataclass
 class Person(Wirespec.Shape):
     name: str
@@ -53,6 +56,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.DutchPostalCode import DutchPostalCode
+
 class DutchPostalCodeGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> DutchPostalCode:
@@ -68,6 +72,7 @@ from ..wirespec import T, Wirespec, _raise
 from ..model.Address import Address
 from ..model.DutchPostalCode import DutchPostalCode
 from .DutchPostalCodeGenerator import DutchPostalCodeGenerator
+
 class AddressGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Address:
@@ -83,6 +88,7 @@ from ..wirespec import T, Wirespec, _raise
 from ..model.Person import Person
 from ..model.Address import Address
 from .AddressGenerator import AddressGenerator
+
 class PersonGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Person:

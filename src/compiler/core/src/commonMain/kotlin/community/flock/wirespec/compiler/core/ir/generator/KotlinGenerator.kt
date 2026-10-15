@@ -81,17 +81,11 @@ public object KotlinGenerator :
 
     public fun generateType(type: Type): String = type.emitGenerics()
 
-    private fun emitFile(file: File): String {
-        val (packages, rest) = file.elements.partition { it is Package }
-        val (imports, others) = rest.partition { it is Import }
-        return buildString {
-            packages.forEach { append((it as Package).emit(0)) }
-            append('\n')
-            imports.forEach { append((it as Import).emit(0)) }
-            append('\n')
-            others.forEach { append(it.emit(0, parents = emptyList())) }
-        }.compact()
-    }
+    private fun emitFile(file: File): String = compactSections(
+        file.elements.filterIsInstance<Package>().joinToString("") { it.emit(0) },
+        file.elements.filterIsInstance<Import>().joinToString("") { it.emit(0) },
+        file.elements.filterNot { it is Package || it is Import }.joinToString("") { it.emit(0, parents = emptyList()) },
+    )
 
     private fun String.indentCode(level: Int): String = indentLines(level)
 

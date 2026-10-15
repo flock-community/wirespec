@@ -101,7 +101,9 @@ public object TypeScriptGenerator :
             .toSet()
     }
 
-    private fun emitFile(file: File): String = file.elements.joinToString("") { it.emit(0) }.compact()
+    private fun emitFile(file: File): String = file.elements.splitAfterLastImport().let { (header, body) ->
+        compactSections(header.joinToString("") { it.emit(0) }, body.joinToString("") { it.emit(0) })
+    }
 
     private fun String.indentCode(level: Int): String = " ".repeat(level * 2) + this
 

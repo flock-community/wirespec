@@ -1,5 +1,6 @@
 import {Wirespec} from '../Wirespec'
 import {type TodoDto} from '../model'
+
 export namespace GetTodos {
   export type Path = {}
   export type Queries = {}
@@ -84,6 +85,7 @@ export namespace GetTodos {
 }
 
 import {Wirespec} from '../Wirespec'
+
 export type TodoDto = {
   "description": string,
 }
@@ -94,6 +96,7 @@ export function validateTodoDto(obj: TodoDto): string[] {
 import {Wirespec} from '../Wirespec'
 import {GetTodos} from '../endpoint/GetTodos'
 import {type TodoDto} from '../model'
+
 export const getTodosClient = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
   getTodos: async (): Promise<GetTodos.Response<unknown>> => {
     const request: GetTodos.Request = GetTodos.request();
@@ -105,6 +108,7 @@ export const getTodosClient = (serialization: Wirespec.Serialization, transporta
 
 import {Wirespec} from '../Wirespec'
 import {TodoDto} from '../model/TodoDto'
+
 export namespace TodoDtoGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TodoDto {
     return { description: generator.generate([...path, ...['description']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
@@ -113,6 +117,7 @@ export namespace TodoDtoGenerator {
 
 import {Wirespec} from './Wirespec'
 import {getTodosClient} from './client/GetTodosClient'
+
 export const client = (serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) => ({
   ...getTodosClient(serialization, transportation),
 })

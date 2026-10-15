@@ -82,15 +82,11 @@ public object JavaGenerator :
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
 
-    private fun emitFile(file: File): String {
-        val (packages, rest) = file.elements.partition { it is Package }
-        val (imports, others) = rest.partition { it is Import }
-        return buildString {
-            packages.forEach { append((it as Package).emit(0)) }
-            imports.forEach { append((it as Import).emit(0)) }
-            others.forEach { append(it.emit(0, parents = listOf(file))) }
-        }.compact()
-    }
+    private fun emitFile(file: File): String = compactSections(
+        file.elements.filterIsInstance<Package>().joinToString("") { it.emit(0) },
+        file.elements.filterIsInstance<Import>().joinToString("") { it.emit(0) },
+        file.elements.filterNot { it is Package || it is Import }.joinToString("") { it.emit(0, parents = listOf(file)) },
+    )
 
     private fun String.indentCode(level: Int): String = indentLines(level)
 

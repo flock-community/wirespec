@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class FieldNames(Wirespec.Shape):
     street: str
@@ -27,6 +28,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.FieldNames import FieldNames
+
 class FieldNamesGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> FieldNames:

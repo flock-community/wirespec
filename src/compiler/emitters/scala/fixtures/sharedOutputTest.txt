@@ -1,4 +1,5 @@
 package community.flock.wirespec.scala
+
 object Wirespec {
   trait Model
   trait Shape extends Model {

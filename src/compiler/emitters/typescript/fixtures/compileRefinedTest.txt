@@ -1,55 +1,66 @@
 import {Wirespec} from '../Wirespec'
+
 export type TodoId = string;
 export const validateTodoId = (value: string) =>
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g.test(value);
 
 import {Wirespec} from '../Wirespec'
+
 export type TodoNoRegex = string;
 export const validateTodoNoRegex = (value: string) =>
   true;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestInt = number;
 export const validateTestInt = (value: number) =>
   true;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestInt0 = number;
 export const validateTestInt0 = (value: number) =>
   true;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestInt1 = number;
 export const validateTestInt1 = (value: number) =>
   0 <= value;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestInt2 = number;
 export const validateTestInt2 = (value: number) =>
   1 <= value && value <= 3;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestNum = number;
 export const validateTestNum = (value: number) =>
   true;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestNum0 = number;
 export const validateTestNum0 = (value: number) =>
   true;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestNum1 = number;
 export const validateTestNum1 = (value: number) =>
   value <= 0.5;
 
 import {Wirespec} from '../Wirespec'
+
 export type TestNum2 = number;
 export const validateTestNum2 = (value: number) =>
   -0.2 <= value && value <= 0.5;
 
 import {Wirespec} from '../Wirespec'
 import {TodoId} from '../model/TodoId'
+
 export namespace TodoIdGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TodoId {
     return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$', annotations: [] as Record<string, any>[] });
@@ -58,6 +69,7 @@ export namespace TodoIdGenerator {
 
 import {Wirespec} from '../Wirespec'
 import {TodoNoRegex} from '../model/TodoNoRegex'
+
 export namespace TodoNoRegexGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TodoNoRegex {
     return generator.generate([...path, ...['value']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] });
@@ -66,6 +78,7 @@ export namespace TodoNoRegexGenerator {
 
 import {Wirespec} from '../Wirespec'
 import {TestInt} from '../model/TestInt'
+
 export namespace TestIntGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt {
     return generator.generate([...path, ...['value']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
@@ -74,6 +87,7 @@ export namespace TestIntGenerator {
 
 import {Wirespec} from '../Wirespec'
 import {TestInt0} from '../model/TestInt0'
+
 export namespace TestInt0Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt0 {
     return generator.generate([...path, ...['value']], { kind: 'integer64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
@@ -82,6 +96,7 @@ export namespace TestInt0Generator {
 
 import {Wirespec} from '../Wirespec'
 import {TestInt1} from '../model/TestInt1'
+
 export namespace TestInt1Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt1 {
     return generator.generate([...path, ...['value']], { kind: 'integer64', min: 0, max: undefined, annotations: [] as Record<string, any>[] });
@@ -90,6 +105,7 @@ export namespace TestInt1Generator {
 
 import {Wirespec} from '../Wirespec'
 import {TestInt2} from '../model/TestInt2'
+
 export namespace TestInt2Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestInt2 {
     return generator.generate([...path, ...['value']], { kind: 'integer64', min: 1, max: 3, annotations: [] as Record<string, any>[] });
@@ -98,6 +114,7 @@ export namespace TestInt2Generator {
 
 import {Wirespec} from '../Wirespec'
 import {TestNum} from '../model/TestNum'
+
 export namespace TestNumGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum {
     return generator.generate([...path, ...['value']], { kind: 'number64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
@@ -106,6 +123,7 @@ export namespace TestNumGenerator {
 
 import {Wirespec} from '../Wirespec'
 import {TestNum0} from '../model/TestNum0'
+
 export namespace TestNum0Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum0 {
     return generator.generate([...path, ...['value']], { kind: 'number64', min: undefined, max: undefined, annotations: [] as Record<string, any>[] });
@@ -114,6 +132,7 @@ export namespace TestNum0Generator {
 
 import {Wirespec} from '../Wirespec'
 import {TestNum1} from '../model/TestNum1'
+
 export namespace TestNum1Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum1 {
     return generator.generate([...path, ...['value']], { kind: 'number64', min: undefined, max: 0.5, annotations: [] as Record<string, any>[] });
@@ -122,6 +141,7 @@ export namespace TestNum1Generator {
 
 import {Wirespec} from '../Wirespec'
 import {TestNum2} from '../model/TestNum2'
+
 export namespace TestNum2Generator {
   export function generate(generator: Wirespec.Generator, path: string[]): TestNum2 {
     return generator.generate([...path, ...['value']], { kind: 'number64', min: -0.2, max: 0.5, annotations: [] as Record<string, any>[] });

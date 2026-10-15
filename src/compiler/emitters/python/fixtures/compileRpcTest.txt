@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class User(Wirespec.Shape):
     name: str
@@ -19,6 +20,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.User import User
+
 class GetUser(Wirespec.Rpc):
     class Response:
         pass
@@ -40,6 +42,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 class Ping(Wirespec.Rpc):
     class Service(ABC):
         @abstractmethod
@@ -54,6 +57,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.User import User
+
 class UserGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> User:

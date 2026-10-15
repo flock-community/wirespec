@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TodoId (
   String value
 ) implements Wirespec.Refined {
@@ -18,7 +20,9 @@ public record TodoId (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TodoNoRegex (
   String value
 ) implements Wirespec.Refined {
@@ -37,7 +41,9 @@ public record TodoNoRegex (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestInt (
   Long value
 ) implements Wirespec.Refined {
@@ -56,7 +62,9 @@ public record TestInt (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestInt0 (
   Long value
 ) implements Wirespec.Refined {
@@ -75,7 +83,9 @@ public record TestInt0 (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestInt1 (
   Long value
 ) implements Wirespec.Refined {
@@ -94,7 +104,9 @@ public record TestInt1 (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestInt2 (
   Long value
 ) implements Wirespec.Refined {
@@ -113,7 +125,9 @@ public record TestInt2 (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestNum (
   Double value
 ) implements Wirespec.Refined {
@@ -132,7 +146,9 @@ public record TestNum (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestNum0 (
   Double value
 ) implements Wirespec.Refined {
@@ -151,7 +167,9 @@ public record TestNum0 (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestNum1 (
   Double value
 ) implements Wirespec.Refined {
@@ -170,7 +188,9 @@ public record TestNum1 (
 };
 
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record TestNum2 (
   Double value
 ) implements Wirespec.Refined {
@@ -189,8 +209,10 @@ public record TestNum2 (
 };
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TodoId;
+
 public interface TodoIdGenerator {
   public static TodoId generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TodoId(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
@@ -201,8 +223,10 @@ public interface TodoIdGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TodoNoRegex;
+
 public interface TodoNoRegexGenerator {
   public static TodoNoRegex generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TodoNoRegex(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
@@ -213,8 +237,10 @@ public interface TodoNoRegexGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestInt;
+
 public interface TestIntGenerator {
   public static TestInt generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestInt(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
@@ -226,8 +252,10 @@ public interface TestIntGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestInt0;
+
 public interface TestInt0Generator {
   public static TestInt0 generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestInt0(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
@@ -239,8 +267,10 @@ public interface TestInt0Generator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestInt1;
+
 public interface TestInt1Generator {
   public static TestInt1 generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestInt1(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
@@ -252,8 +282,10 @@ public interface TestInt1Generator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestInt2;
+
 public interface TestInt2Generator {
   public static TestInt2 generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestInt2(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
@@ -265,8 +297,10 @@ public interface TestInt2Generator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestNum;
+
 public interface TestNumGenerator {
   public static TestNum generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestNum(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber64(
@@ -278,8 +312,10 @@ public interface TestNumGenerator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestNum0;
+
 public interface TestNum0Generator {
   public static TestNum0 generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestNum0(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber64(
@@ -291,8 +327,10 @@ public interface TestNum0Generator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestNum1;
+
 public interface TestNum1Generator {
   public static TestNum1 generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestNum1(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber64(
@@ -304,8 +342,10 @@ public interface TestNum1Generator {
 }
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.TestNum2;
+
 public interface TestNum2Generator {
   public static TestNum2 generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TestNum2(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNumber64(

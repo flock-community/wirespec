@@ -30,10 +30,11 @@ type ConvertSpecification = "open_api_v2" | "open_api_v3" | "avro" | "graphql";
 export type Specification = CompileSpecification | ConvertSpecification;
 
 export type CompilerEmitter =
-  | "typescript"
   | "kotlin"
-  | "python"
   | "java"
+  | "scala"
+  | "typescript"
+  | "python"
   | "open_api_v2"
   | "open_api_v3"
   | "avro"
@@ -46,6 +47,7 @@ export type Language =
   | "wirespec"
   | "kotlin"
   | "java"
+  | "scala"
   | "typescript"
   | "python"
   | "json"

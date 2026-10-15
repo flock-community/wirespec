@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Email {
     pub value: String,
@@ -15,6 +16,7 @@ impl Email {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PhoneNumber {
     pub value: String,
@@ -30,6 +32,7 @@ impl PhoneNumber {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Tag {
     pub value: String,
@@ -45,6 +48,7 @@ impl Tag {
 
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EmployeeAge {
     pub value: i64,
@@ -62,6 +66,7 @@ use super::super::wirespec::*;
 use regex;
 use super::email::Email;
 use super::phone_number::PhoneNumber;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ContactInfo {
     pub email: Email,
@@ -78,6 +83,7 @@ use regex;
 use super::employee_age::EmployeeAge;
 use super::contact_info::ContactInfo;
 use super::tag::Tag;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Employee {
     pub name: String,
@@ -94,6 +100,7 @@ impl Employee {
 use super::super::wirespec::*;
 use regex;
 use super::employee::Employee;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Department {
     pub name: String,
@@ -108,6 +115,7 @@ impl Department {
 use super::super::wirespec::*;
 use regex;
 use super::department::Department;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Company {
     pub name: String,
@@ -122,6 +130,7 @@ impl Company {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::email::Email;
+
 pub struct EmailGenerator;
 impl EmailGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Email {
@@ -132,6 +141,7 @@ impl EmailGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::phone_number::PhoneNumber;
+
 pub struct PhoneNumberGenerator;
 impl PhoneNumberGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PhoneNumber {
@@ -142,6 +152,7 @@ impl PhoneNumberGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::tag::Tag;
+
 pub struct TagGenerator;
 impl TagGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Tag {
@@ -152,6 +163,7 @@ impl TagGenerator {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::employee_age::EmployeeAge;
+
 pub struct EmployeeAgeGenerator;
 impl EmployeeAgeGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> EmployeeAge {
@@ -166,6 +178,7 @@ use super::super::model::email::Email;
 use super::super::model::phone_number::PhoneNumber;
 use super::email_generator::EmailGenerator;
 use super::phone_number_generator::PhoneNumberGenerator;
+
 pub struct ContactInfoGenerator;
 impl ContactInfoGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> ContactInfo {
@@ -182,6 +195,7 @@ use super::super::model::tag::Tag;
 use super::employee_age_generator::EmployeeAgeGenerator;
 use super::contact_info_generator::ContactInfoGenerator;
 use super::tag_generator::TagGenerator;
+
 pub struct EmployeeGenerator;
 impl EmployeeGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Employee {
@@ -194,6 +208,7 @@ use regex;
 use super::super::model::department::Department;
 use super::super::model::employee::Employee;
 use super::employee_generator::EmployeeGenerator;
+
 pub struct DepartmentGenerator;
 impl DepartmentGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Department {
@@ -206,6 +221,7 @@ use regex;
 use super::super::model::company::Company;
 use super::super::model::department::Department;
 use super::department_generator::DepartmentGenerator;
+
 pub struct CompanyGenerator;
 impl CompanyGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Company {

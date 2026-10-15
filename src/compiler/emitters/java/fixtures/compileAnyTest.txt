@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Message (
   Object payload,
   java.util.Optional<Object> metadata,
@@ -13,8 +15,10 @@ public record Message (
 };
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Message;
+
 public interface MessageGenerator {
   public static Message generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Message(

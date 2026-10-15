@@ -1,6 +1,8 @@
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TodoId(
   override val value: String
 ) : Wirespec.Refined<String> {
@@ -11,8 +13,10 @@ data class TodoId(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TodoNoRegex(
   override val value: String
 ) : Wirespec.Refined<String> {
@@ -23,8 +27,10 @@ data class TodoNoRegex(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestInt(
   override val value: Long
 ) : Wirespec.Refined<Long> {
@@ -35,8 +41,10 @@ data class TestInt(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestInt0(
   override val value: Long
 ) : Wirespec.Refined<Long> {
@@ -47,8 +55,10 @@ data class TestInt0(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestInt1(
   override val value: Long
 ) : Wirespec.Refined<Long> {
@@ -59,8 +69,10 @@ data class TestInt1(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestInt2(
   override val value: Long
 ) : Wirespec.Refined<Long> {
@@ -71,8 +83,10 @@ data class TestInt2(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestNum(
   override val value: Double
 ) : Wirespec.Refined<Double> {
@@ -83,8 +97,10 @@ data class TestNum(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestNum0(
   override val value: Double
 ) : Wirespec.Refined<Double> {
@@ -95,8 +111,10 @@ data class TestNum0(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestNum1(
   override val value: Double
 ) : Wirespec.Refined<Double> {
@@ -107,8 +125,10 @@ data class TestNum1(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class TestNum2(
   override val value: Double
 ) : Wirespec.Refined<Double> {
@@ -119,9 +139,11 @@ data class TestNum2(
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoId
+
 object TodoIdGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TodoId =
     TodoId(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
@@ -131,9 +153,11 @@ object TodoIdGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoNoRegex
+
 object TodoNoRegexGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TodoNoRegex =
     TodoNoRegex(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
@@ -143,9 +167,11 @@ object TodoNoRegexGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestInt
+
 object TestIntGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestInt =
     TestInt(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger64(
@@ -156,9 +182,11 @@ object TestIntGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestInt0
+
 object TestInt0Generator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestInt0 =
     TestInt0(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger64(
@@ -169,9 +197,11 @@ object TestInt0Generator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestInt1
+
 object TestInt1Generator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestInt1 =
     TestInt1(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger64(
@@ -182,9 +212,11 @@ object TestInt1Generator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestInt2
+
 object TestInt2Generator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestInt2 =
     TestInt2(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger64(
@@ -195,9 +227,11 @@ object TestInt2Generator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestNum
+
 object TestNumGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestNum =
     TestNum(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber64(
@@ -208,9 +242,11 @@ object TestNumGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestNum0
+
 object TestNum0Generator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestNum0 =
     TestNum0(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber64(
@@ -221,9 +257,11 @@ object TestNum0Generator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestNum1
+
 object TestNum1Generator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestNum1 =
     TestNum1(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber64(
@@ -234,9 +272,11 @@ object TestNum1Generator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TestNum2
+
 object TestNum2Generator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TestNum2 =
     TestNum2(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldNumber64(
