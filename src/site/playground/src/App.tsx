@@ -12,9 +12,12 @@ const darkTheme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={darkTheme}>
+      {/* clip rather than hidden: the content is taller than the viewport,
+          and a hidden overflow can still be scrolled by focus changes, which
+          would push the header out of view. */}
       <Box
         height={{ sm: "100vh" }}
-        overflow="hidden"
+        overflow="clip"
         display="flex"
         flexDirection="column"
         rowGap={1}

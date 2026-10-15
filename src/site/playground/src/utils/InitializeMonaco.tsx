@@ -21,6 +21,7 @@ export function initializeMonaco(monaco: Monaco) {
       { token: "variable", foreground: "#55f1ba" },
       { token: "customKeyword", foreground: "#B151CBFF", fontStyle: "bold" },
       { token: "regExp", foreground: "#D54E96FF" },
+      { token: "operator", foreground: "#B151CBFF", fontStyle: "bold" },
     ],
   });
 
@@ -28,7 +29,10 @@ export function initializeMonaco(monaco: Monaco) {
     keywords: KEYWORDS,
     tokenizer: {
       root: [
+        [/\/\/.*$/, "comment"],
+        [/\/\*/, "comment", "@comment"],
         [/\/.*?\/g/, "regExp"],
+        [/\.\.\./, "operator"],
         [
           /@?[a-zA-Z][\w$]*/,
           {
@@ -37,12 +41,20 @@ export function initializeMonaco(monaco: Monaco) {
               enum: "customKeyword",
               type: "customKeyword",
               endpoint: "customKeyword",
+              channel: "customKeyword",
+              rpc: "customKeyword",
+              part: "customKeyword",
               "@keywords": "keyword",
               "@default": "variable",
             },
           },
         ],
         [/".*?"/, "string"],
+      ],
+      comment: [
+        [/[^/*]+/, "comment"],
+        [/\*\//, "comment", "@pop"],
+        [/[/*]/, "comment"],
       ],
     },
   });

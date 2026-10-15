@@ -37,6 +37,8 @@ const getLanguageFor: (emitter: Emitter) => Language = (emitter: Emitter) => {
   }
 };
 
+export const PACKAGE_NAME = "community.flock.wirespec.generated";
+
 export const wirespecToTarget: (
   wirespec: string,
   emitter: Emitter,
@@ -46,12 +48,7 @@ export const wirespecToTarget: (
   let result = [] as WsEmitted[];
   let errors = [] as WsError[];
   if (parseResult.result) {
-    result = emit(
-      parseResult.result,
-      internalEmitter,
-      "community.flock.wirespec.generated",
-      false,
-    );
+    result = emit(parseResult.result, internalEmitter, PACKAGE_NAME, false);
     if (
       internalEmitter === Emitters.OPENAPI_V3 ||
       internalEmitter === Emitters.OPENAPI_V2 ||
