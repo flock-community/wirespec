@@ -6,6 +6,11 @@ import com.intellij.navigation.ChooseByNameContributor as PlatformChooseByNameCo
 
 class ChooseByNameContributorTest : BasePlatformTestCase() {
 
+    private val contributor: ChooseByNameContributor
+        get() = PlatformChooseByNameContributor.SYMBOL_EP_NAME.extensionList
+            .filterIsInstance<ChooseByNameContributor>()
+            .single()
+
     fun testOffersTypeDefinitionsAsSymbols() {
         myFixture.addFileToProject(
             "todo.ws",
@@ -13,12 +18,14 @@ class ChooseByNameContributorTest : BasePlatformTestCase() {
         )
         myFixture.addFileToProject("user.ws", "type User {\n    name: String\n}")
 
-        val contributor = PlatformChooseByNameContributor.SYMBOL_EP_NAME.extensionList
-            .filterIsInstance<ChooseByNameContributor>()
-            .single()
-
         assertSameElements(contributor.getNames(project, false).toList(), "TodoDto", "User")
         val user = contributor.getItemsByName("User", "User", project, false).single() as PsiElement
         assertEquals("user.ws", user.containingFile.name)
+    }
+
+    fun testReturnsNoItemsForANameThatIsNoLongerDefined() {
+        myFixture.addFileToProject("user.ws", "type User {\n    name: String\n}")
+
+        assertEmpty(contributor.getItemsByName("Missing", "Missing", project, false))
     }
 }
