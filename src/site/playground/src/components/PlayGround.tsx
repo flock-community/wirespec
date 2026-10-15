@@ -10,6 +10,8 @@ interface PlayGroundProps {
   language: Language;
   // Called once the editor shows `code`: after mounting and after every change.
   onCodeShown?: (editor: CodeEditor) => void;
+  // Fill the parent instead of taking half the viewport.
+  fill?: boolean;
 }
 
 export function PlayGround({
@@ -17,6 +19,7 @@ export function PlayGround({
   setCode,
   language,
   onCodeShown,
+  fill,
 }: PlayGroundProps) {
   const [editor, setEditor] = useState<CodeEditor>();
 
@@ -29,10 +32,12 @@ export function PlayGround({
   return (
     <Box
       sx={{
-        width: {
-          xs: "100vw",
-          sm: "50vw",
-        },
+        width: fill
+          ? "100%"
+          : {
+              xs: "100vw",
+              sm: "50vw",
+            },
       }}
     >
       <Editor
