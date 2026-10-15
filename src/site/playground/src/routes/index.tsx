@@ -12,7 +12,7 @@ import { FileBar } from "../components/FileBar";
 import { initializeMonaco } from "../utils/InitializeMonaco";
 import { MonacoError, setMonacoErrors } from "../utils/SetMonacoErrors";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
-import { wsExample } from "../examples/wirespec";
+import { wsExample, wsGraphQLExample } from "../examples/wirespec";
 import { swaggerExample } from "../examples/swagger";
 import {
   openApiV2ToWirespec,
@@ -159,6 +159,17 @@ function RouteComponent() {
         return setCode(graphqlExample);
     }
   }, [specification]);
+
+  // Only an unedited example follows the output, so switching outputs never loses changes.
+  useEffect(() => {
+    setCode((current) =>
+      current === wsExample || current === wsGraphQLExample
+        ? emitter === "graphql"
+          ? wsGraphQLExample
+          : wsExample
+        : current,
+    );
+  }, [emitter]);
 
   useEffect(() => {
     if (wirespecOutput?.errors) {
