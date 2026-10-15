@@ -9,6 +9,7 @@ intellij = "2.11.0"
 jackson2 = "2.20.1"
 jackson3 = "3.1.4"
 java = "17"
+junit4 = "4.13.2"
 junit_launcher = "1.11.3"
 kafka_avro = "7.7.1"
 kotest = "6.1.4"
@@ -41,6 +42,7 @@ maven_plugin = "1.0.3"
 maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
+opentest4j = "1.3.0"
 vanniktech-maven-publish = "0.30.0"
 spotless = "7.2.1"
 spring_boot = "3.3.4"
@@ -57,6 +59,7 @@ jackson2_jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8
 jackson2_kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson2" }
 jackson3_databind = { module = "tools.jackson.core:jackson-databind", version.ref = "jackson3" }
 jackson3_kotlin = { module = "tools.jackson.module:jackson-module-kotlin", version.ref = "jackson3" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
 junit_launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit_launcher" }
 kotest_runner_junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kafka_avro = { module = "io.confluent:kafka-avro-serializer", version.ref ="kafka_avro"}
@@ -86,6 +89,7 @@ kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
+opentest4j = { module = "org.opentest4j:opentest4j", version.ref = "opentest4j" }
 vanniktech_maven_publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktech-maven-publish" }
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
 spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }

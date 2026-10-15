@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     id("module.spotless")
     alias(libs.plugins.kotlin.jvm)
@@ -26,8 +28,14 @@ dependencies {
         bundledPlugin("org.jetbrains.kotlin")
         pluginVerifier()
         zipSigner()
+        testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Plugin.Java)
     }
     implementation(project(":src:compiler:core"))
+    testImplementation(project(":src:compiler:emitters:java"))
+    testImplementation(project(":src:compiler:emitters:kotlin"))
+    testImplementation(libs.junit4)
+    testImplementation(libs.opentest4j)
 }
 
 intellijPlatform {
@@ -45,6 +53,10 @@ intellijPlatform {
 tasks {
     buildSearchableOptions {
         enabled = false
+    }
+    test {
+        // Run the bundled Kotlin plugin in K2 mode, as the IDE does by default
+        systemProperty("idea.kotlin.plugin.use.k2", "true")
     }
 }
 
