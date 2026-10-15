@@ -1,0 +1,34 @@
+"A task to do"
+type Todo {
+  id: ID!
+  "What needs doing"
+  title: String!
+  done: Boolean!
+  priority: Priority
+  tags: [String!]
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+input NewTodo {
+  title: String!
+  priority: Priority = MEDIUM
+}
+
+type Query {
+  todos(done: Boolean): [Todo!]!
+  todo(id: ID!): Todo
+}
+
+type Mutation {
+  addTodo(input: NewTodo!): Todo!
+  completeTodo(id: ID!): Todo
+}
+
+type Subscription {
+  todoAdded: Todo!
+}

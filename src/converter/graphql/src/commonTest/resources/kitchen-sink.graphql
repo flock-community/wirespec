@@ -1,0 +1,209 @@
+# Covers every type system definition and extension of the GraphQL specification.
+
+"""
+The schema of the kitchen sink.
+
+  Indented lines keep their relative indentation.
+"""
+schema @link(url: "https://example.com/spec", import: ["@key", "@shareable"]) {
+  query: QueryRoot
+  mutation: MutationRoot
+  subscription: SubscriptionRoot
+}
+
+extend schema @audit(level: HIGH)
+
+"A point in time, serialized as an ISO-8601 string"
+scalar DateTime @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")
+
+scalar JSON
+
+scalar _FieldSet
+
+extend scalar DateTime @audit(level: LOW)
+
+"""
+Anything that can be fetched by its id
+"""
+interface Node {
+  "The globally unique id"
+  id: ID!
+}
+
+interface Entity implements Node & Timestamped @key(fields: "id") {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+interface Timestamped {
+  createdAt: DateTime!
+}
+
+extend interface Timestamped @audit(level: LOW) {
+  deletedAt: DateTime
+}
+
+type User implements & Entity & Node & Timestamped @key(fields: "id") @key(fields: "email") {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime
+  "The \"display\" name\nof the user"
+  name: String @deprecated(reason: "Use `fullName`.")
+  fullName: String!
+  email: String!
+  age: Int
+  score: Float
+  active: Boolean!
+  roles: [Role!]!
+  tags: [String]
+  matrix: [[Int!]!]
+  cube: [[[Float]]]!
+  friends(
+    "How many friends to return"
+    first: Int = 10
+    after: String
+    orderBy: UserOrder = {field: NAME, direction: ASC}
+    filter: UserFilter = {roles: [ADMIN, EDITOR], name: null, minScore: -1.5e3}
+    legacy: Boolean = false @deprecated
+  ): FriendConnection!
+  avatar(size: Int! = 64, format: ImageFormat = PNG): String
+  metadata: JSON
+  _internal: String
+  type: String
+  Uppercase: Int
+}
+
+type FriendConnection {
+  edges: [User!]!
+  totalCount: Int!
+}
+
+type Post implements Node {
+  id: ID!
+  title: String!
+  body: String
+  author: User!
+}
+
+type Empty
+
+extend type User @audit(level: MEDIUM) {
+  posts: [Post!]!
+}
+
+extend type User implements Node
+
+union SearchResult @cacheControl(maxAge: 60) = User | Post
+
+union LegacyResult =
+  | User
+  | Post
+
+union Pending
+
+extend union SearchResult = FriendConnection
+
+extend union Pending @audit(level: LOW)
+
+"""The role of a user"""
+enum Role {
+  "Can do everything"
+  ADMIN
+  EDITOR @deprecated(reason: "Use WRITER")
+  WRITER
+  GET
+  asc
+  _hidden
+}
+
+enum UserOrderField {
+  NAME
+  CREATED_AT
+}
+
+enum Direction {
+  ASC
+  DESC
+}
+
+enum ImageFormat {
+  PNG
+  JPEG
+}
+
+enum Unused
+
+extend enum Role {
+  GUEST
+}
+
+extend enum Direction @audit(level: LOW)
+
+input UserOrder {
+  field: UserOrderField!
+  direction: Direction = ASC
+}
+
+"Filters users"
+input UserFilter @oneOf {
+  "Any of these roles"
+  roles: [Role!] = []
+  name: String = "John \"Johnny\" Doe\\é\n"
+  minScore: Float = 0.5
+  nested: UserFilter
+  options: JSON = {a: {b: [1, 2, {c: true}]}, empty: {}}
+}
+
+input NoFields
+
+extend input UserFilter @audit(level: HIGH) {
+  maxScore: Float
+}
+
+type QueryRoot {
+  "Fetches a node"
+  node(id: ID!): Node
+  user(id: ID!, includeDeleted: Boolean = false @deprecated(reason: "always false")): User @cacheControl(maxAge: 30)
+  users(filter: UserFilter, order: [UserOrder!] = [{field: NAME}]): [User!]!
+  search(term: String!): [SearchResult!]!
+  me: User
+  _service: String!
+  now: DateTime!
+  ping: Boolean
+}
+
+extend type QueryRoot {
+  posts(first: Int): [Post!]!
+}
+
+type MutationRoot {
+  createUser(name: String!, roles: [Role!]! = [WRITER]): User!
+  deleteUser(id: ID!): Boolean @deprecated
+}
+
+type SubscriptionRoot {
+  userCreated: User!
+}
+
+"Marks a type as an entity"
+directive @key(fields: _FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
+
+directive @audit(
+  "How much to audit"
+  level: AuditLevel! = LOW
+) on | SCHEMA | SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | INTERFACE | UNION | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+
+directive @link(url: String!, import: [String]) repeatable on SCHEMA
+
+directive @cacheControl(maxAge: Int) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION
+
+directive @shareable on OBJECT | FIELD_DEFINITION
+
+directive @trace on QUERY | MUTATION | SUBSCRIPTION | FIELD | FRAGMENT_DEFINITION | FRAGMENT_SPREAD | INLINE_FRAGMENT | VARIABLE_DEFINITION
+
+enum AuditLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
