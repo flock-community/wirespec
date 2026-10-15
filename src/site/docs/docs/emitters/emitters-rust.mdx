@@ -88,13 +88,14 @@ request and its responses:
 - **Responses**: every status code gets a response struct, `Response200` and `Response404`, with a struct for its
   headers. The enum `Response` has a variant for every response, and `Response2XX`, `Response4XX`, `ResponseTodo` and
   `ResponseApiError` group them per status class and per body type.
+- **Handler and Call**: `Handler` is the trait the server implements, `Call` is the trait the client implements.
 - **Serialization**: the inner module `UpdateTodo` has the functions `to_raw_request`, `from_raw_request`,
   `to_raw_response` and `from_raw_response`. They convert between the typed request and response and the
   `RawRequest` and `RawResponse` that go over the wire, and delegate the serialization of the path, parameters,
   headers and body to a `Serializer` or `Deserializer`.
-- **Handler and Call**: `Handler` is the trait the server implements, `Call` is the trait the client implements. Every
-  type that implements the shared `Client` trait, by providing a `Transportation` and a `Serialization`, gets a
-  `Handler` that sends the request. `Api` describes the endpoint for frameworks with its path template and method.
+- **Client and Api**: every type that implements the shared `Client` trait, by providing a `Transportation` and a
+  `Serialization`, gets a `Handler` that sends the request. `Api` describes the endpoint for frameworks with its path
+  template and method.
 
 ```rust wirespec file=endpoint/update_todo.rs
 ```
