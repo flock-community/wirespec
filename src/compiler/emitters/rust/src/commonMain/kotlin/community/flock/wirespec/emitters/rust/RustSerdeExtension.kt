@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 
@@ -31,7 +32,7 @@ public class RustSerdeExtension : IrExtension {
         val fieldNamesByRecord = ast.modules.toList()
             .flatMap { it.statements }
             .filterIsInstance<TypeDefinition>()
-            .associate { type -> Name.of(type.identifier.value).pascalCase() to type.shape.value.map { it.identifier.value } }
+            .associate { type -> Name.of(type.identifier.value).pascalCase() to type.shape.fields.map { it.identifier.value } }
         return ir.map { element ->
             if (element is LanguageFile) element.annotate(fieldNamesByRecord) else element
         }
