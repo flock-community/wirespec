@@ -77,10 +77,16 @@ class AvroJsonEmitterTest {
             |        ]
             |    },
             |    {
+            |        "type": "record",
             |        "name": "Either",
-            |        "type": [
-            |            "Left",
-            |            "Right"
+            |        "fields": [
+            |            {
+            |                "name": "value",
+            |                "type": [
+            |                    "Left",
+            |                    "Right"
+            |                ]
+            |            }
             |        ]
             |    },
             |    {
@@ -591,33 +597,37 @@ class AvroJsonEmitterTest {
             """
             |[
             |  {
+            |    "type": "record",
             |    "name": "UserAccount",
-            |    "type": [
-            |      "UserAccountPassword",
-            |      "UserAccountToken"
-            |    ]
-            |  },
-            |  {
-            |    "type": "record",
-            |    "name": "UserAccountPassword",
             |    "fields": [
             |      {
-            |        "name": "username",
-            |        "type": "string"
-            |      },
-            |      {
-            |        "name": "password",
-            |        "type": "string"
-            |      }
-            |    ]
-            |  },
-            |  {
-            |    "type": "record",
-            |    "name": "UserAccountToken",
-            |    "fields": [
-            |      {
-            |        "name": "token",
-            |        "type": "string"
+            |        "name": "value",
+            |        "type": [
+            |          {
+            |            "type": "record",
+            |            "name": "UserAccountPassword",
+            |            "fields": [
+            |              {
+            |                "name": "username",
+            |                "type": "string"
+            |              },
+            |              {
+            |                "name": "password",
+            |                "type": "string"
+            |              }
+            |            ]
+            |          },
+            |          {
+            |            "type": "record",
+            |            "name": "UserAccountToken",
+            |            "fields": [
+            |              {
+            |                "name": "token",
+            |                "type": "string"
+            |              }
+            |            ]
+            |          }
+            |        ]
             |      }
             |    ]
             |  },

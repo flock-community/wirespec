@@ -43,9 +43,16 @@ public object AvroJsonEmitter : Emitter {
         symbols = entries.toList(),
     )
 
-    public fun Union.emit(): AvroModel.UnionType = AvroModel.UnionType(
+    // Avro unions cannot be named, so a Wirespec union becomes a record wrapping the union in a `value` field.
+    public fun Union.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
         name = identifier.value,
-        type = AvroModel.TypeList(entries.map { AvroModel.SimpleType(it.value) }),
+        type = "record",
+        fields = listOf(
+            AvroModel.Field(
+                name = "value",
+                type = AvroModel.TypeList(entries.map { it.emit(module, hasEmitted) }),
+            ),
+        ),
     )
 
     public fun Reference.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
@@ -72,6 +79,12 @@ public object AvroJsonEmitter : Emitter {
         is Reference.Custom -> {
             when (val def = module.findType(value)) {
                 is Type -> if (hasEmitted.contains(def.identifier.value)) {
+                    def.identifier.value.let(AvroModel::SimpleType)
+                } else {
+                    def.also { hasEmitted.add(def.identifier.value) }.emit(module, hasEmitted)
+                }
+
+                is Union -> if (hasEmitted.contains(def.identifier.value)) {
                     def.identifier.value.let(AvroModel::SimpleType)
                 } else {
                     def.also { hasEmitted.add(def.identifier.value) }.emit(module, hasEmitted)
@@ -117,15 +130,18 @@ public object AvroJsonEmitter : Emitter {
 
     public fun emit(module: Module): List<AvroModel.Type> {
         val hasEmitted = mutableListOf<String>()
-        return module.statements.toList()
+        // A record or union already written out inline must not be defined again at the top level.
+        return module.statements.asSequence()
+            .filterNot { hasEmitted.contains(it.identifier.value) }
             .mapNotNull {
                 when (it) {
-                    is Type -> it.emit(module, hasEmitted)
+                    is Type -> it.also { hasEmitted.add(it.identifier.value) }.emit(module, hasEmitted)
                     is Enum -> it.emit()
-                    is Union -> it.emit()
+                    is Union -> it.also { hasEmitted.add(it.identifier.value) }.emit(module, hasEmitted)
                     else -> null
                 }
             }
+            .toList()
     }
 
     private fun DefaultValue?.isNonNull() = this != null && this != DefaultValue.NullValue
