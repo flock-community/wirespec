@@ -9,8 +9,9 @@ class JavaMethodCodeVisionProviderTest : LightJavaCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_21
 
-    fun testShowsMethodAndPathAboveImplementedHandlerMethod() {
-        myFixture.addGeneratedSources(JavaEmitter(emitShared = EmitShared(true)))
+    override fun setUp() {
+        super.setUp()
+        myFixture.addTodoEndpoint(JavaEmitter(emitShared = EmitShared(true)))
         myFixture.configureByText(
             "TodoController.java",
             """
@@ -27,7 +28,15 @@ class JavaMethodCodeVisionProviderTest : LightJavaCodeInsightFixtureTestCase() {
             }
             """.trimIndent(),
         )
+    }
 
-        assertEquals(listOf("GET /todos/{id}"), JavaMethodCodeVisionProvider().texts(myFixture))
+    fun testShowsMethodAndPathAboveImplementedHandlerMethod() {
+        assertEquals(listOf("GET /todos/{id}"), JavaMethodCodeVisionProvider().entries(myFixture).map { it.text })
+    }
+
+    fun testClickingTheHintOpensTheEndpointDefinition() {
+        JavaMethodCodeVisionProvider().entries(myFixture).single().onClick(null, myFixture.editor)
+
+        myFixture.assertNavigatedToTodoEndpoint()
     }
 }

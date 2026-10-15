@@ -16,8 +16,9 @@ class KotlinMethodCodeVisionProviderTest : LightJavaCodeInsightFixtureTestCase()
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinStdlibProjectDescriptor
 
-    fun testShowsMethodAndPathAboveImplementedHandlerFunction() {
-        myFixture.addGeneratedSources(KotlinEmitter(emitShared = EmitShared(true)))
+    override fun setUp() {
+        super.setUp()
+        myFixture.addTodoEndpoint(KotlinEmitter(emitShared = EmitShared(true)))
         myFixture.configureByText(
             "TodoController.kt",
             """
@@ -30,8 +31,16 @@ class KotlinMethodCodeVisionProviderTest : LightJavaCodeInsightFixtureTestCase()
             }
             """.trimIndent(),
         )
+    }
 
-        assertEquals(listOf("GET /todos/{id}"), KotlinMethodCodeVisionProvider().texts(myFixture))
+    fun testShowsMethodAndPathAboveImplementedHandlerFunction() {
+        assertEquals(listOf("GET /todos/{id}"), KotlinMethodCodeVisionProvider().entries(myFixture).map { it.text })
+    }
+
+    fun testClickingTheHintOpensTheEndpointDefinition() {
+        KotlinMethodCodeVisionProvider().entries(myFixture).single().onClick(null, myFixture.editor)
+
+        myFixture.assertNavigatedToTodoEndpoint()
     }
 
     private object KotlinStdlibProjectDescriptor : DefaultLightProjectDescriptor() {
