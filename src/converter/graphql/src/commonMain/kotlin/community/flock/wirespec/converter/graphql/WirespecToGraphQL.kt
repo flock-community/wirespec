@@ -1,10 +1,13 @@
 package community.flock.wirespec.converter.graphql
 
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.HasAnnotations
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
@@ -49,8 +52,8 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Value
 import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as GraphQLDirective
 
 /**
- * The inverse of [GraphQLParser]: rebuilds the GraphQL document from the Wirespec definitions and their annotations.
- * Tests use it to show the conversion is lossless.
+ * The inverse of [GraphQLParser]: rebuilds the GraphQL document from the Wirespec definitions and their annotations,
+ * which makes the round trip lossless. Wirespec that does not come from GraphQL gets the closest GraphQL counterpart.
  */
 internal class WirespecToGraphQL(private val definitions: List<Definition>) {
 
@@ -63,7 +66,46 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
 
     private val types: Set<String> = definitions.filterIsInstance<Type>().map { it.identifier.value }.toSet()
 
-    fun convert(): Document = Document(definitions.mapNotNull { it.convert() })
+    /** The types that no annotation gives a GraphQL kind, which become an object type, an input object or both. */
+    private val plainTypes: Map<String, Type> = definitions.filterIsInstance<Type>()
+        .filter { type -> KINDS.none { type.annotations.has(it) } }
+        .associateBy { it.identifier.value }
+
+    /** GraphQL only takes input objects as arguments, so a type that an rpc takes, directly or through its fields, is one. */
+    private val inputs: Set<String> = definitions.filterIsInstance<Rpc>()
+        .flatMap { rpc -> rpc.shape.fields.map { it.reference } }
+        .reachablePlainTypes()
+
+    private val outputs: Set<String> = definitions
+        .flatMap { definition ->
+            when (definition) {
+                is Rpc -> listOf(definition.result)
+                is Union -> definition.entries.toList()
+                is Type -> definition.shape.fields.map { it.reference }.takeUnless { definition.identifier.value in inputs }.orEmpty()
+                is Endpoint, is Channel, is Part, is Enum, is Refined -> emptyList()
+            }
+        }
+        .reachablePlainTypes()
+
+    /** A type that is both taken and returned is written twice, as an object type and as an input object named after it. */
+    private val inputNames: Map<String, String> = (inputs intersect outputs).associateWith { type ->
+        "${plainTypes.getValue(type).graphQLName()}Input".let { name ->
+            (sequenceOf(name) + generateSequence(2) { it + 1 }.map { "$name$it" }).first { it !in names.values }
+        }
+    }
+
+    private val usesJson: Boolean = definitions.any { definition ->
+        when (definition) {
+            is Type -> definition.shape.fields.map { it.reference }
+            is Rpc -> definition.shape.fields.map { it.reference } + definition.result
+            is Endpoint, is Channel, is Part, is Enum, is Union, is Refined -> emptyList()
+        }.any { it.isJson() }
+    }
+
+    fun convert(): Document = Document(
+        definitions.flatMap { listOfNotNull(it.convert(), (it as? Type)?.toInputCopy()) } +
+            listOfNotNull(ScalarTypeDefinition(null, JSON, emptyList(), false).takeIf { usesJson && JSON !in names.values }),
+    )
 
     private fun Definition.convert(): GraphQLModel.Definition? = when (this) {
         // A root operation type without a Wirespec type of its own is rebuilt at its first rpc.
@@ -74,10 +116,10 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
         }
         is Refined -> when {
             annotations.has(BUILT_IN) -> null
-            else -> ScalarTypeDefinition(annotations.description(), graphQLName(), annotations.directives(), annotations.has(EXTEND))
+            else -> ScalarTypeDefinition(description(), graphQLName(), annotations.directives(), annotations.has(EXTEND))
         }
         is Enum -> EnumTypeDefinition(
-            description = annotations.description(),
+            description = description(),
             name = graphQLName(),
             directives = annotations.directives(),
             values = entries.map { entry ->
@@ -88,7 +130,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
             extension = annotations.has(EXTEND),
         )
         is Union -> UnionTypeDefinition(
-            description = annotations.description(),
+            description = description(),
             name = graphQLName(),
             directives = annotations.directives(),
             members = annotations.firstOrNull { it.name == UNION_MEMBERS }?.array(DEFAULT_PARAMETER)
@@ -96,11 +138,12 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
             extension = annotations.has(EXTEND),
         )
         is Type -> convert()
-        else -> error("${this::class.simpleName} ${identifier.value} does not come from GraphQL")
+        // GraphQL has nothing like an HTTP endpoint or a channel, and a part is already spread into the types that use it.
+        is Endpoint, is Channel, is Part -> null
     }
 
     private fun Type.convert(): GraphQLModel.Definition {
-        val description = annotations.description()
+        val description = description()
         val directives = annotations.directives()
         val extension = annotations.has(EXTEND)
         val interfaces = annotations.firstOrNull { it.name == IMPLEMENTS }?.array(DEFAULT_PARAMETER).orEmpty()
@@ -123,7 +166,8 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
                     locations = it.array("locations"),
                 )
             }
-            annotations.has(INPUT) -> InputObjectTypeDefinition(description, graphQLName(), directives, fields.map { it.toInputValue() }, extension)
+            annotations.has(INPUT) || identifier.value in inputs - outputs ->
+                InputObjectTypeDefinition(description, graphQLName(), directives, fields.map { it.toInputValue() }, extension)
             annotations.has(INTERFACE) -> InterfaceTypeDefinition(description, graphQLName(), interfaces, directives, fields.map { it.toFieldDefinition() }, extension)
             annotations.has(UNION) -> UnionTypeDefinition(description, graphQLName(), directives, emptyList(), extension)
             annotations.has(ENUM) -> EnumTypeDefinition(description, graphQLName(), directives, emptyList(), extension)
@@ -138,11 +182,27 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
         }
     }
 
+    private fun Type.toInputCopy(): InputObjectTypeDefinition? = inputNames[identifier.value]?.let { name ->
+        InputObjectTypeDefinition(description(), name, emptyList(), shape.fields.map { it.toInputValue() }, false)
+    }
+
+    /** An rpc without an operation annotation does not come from GraphQL, and is a query. */
     private fun Rpc.rootType(): Pair<String, String?> = Operation.entries
-        .firstNotNullOf { operation -> annotations.firstOrNull { it.name == operation.annotationName }?.let { operation to it } }
-        .let { (operation, annotation) -> (annotation.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to annotation.single("extend") }
+        .firstNotNullOfOrNull { operation -> annotations.firstOrNull { it.name == operation.annotationName }?.let { operation to it } }
+        ?.let { (operation, annotation) -> (annotation.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to annotation.single("extend") }
+        ?: (Operation.QUERY.defaultTypeName to null)
 
     private fun Definition.graphQLName(): String = annotations.single(EXTEND) ?: annotations.single(NAME) ?: identifier.value
+
+    private fun Definition.description(): String? = annotations.description() ?: comment?.value
+
+    /** The plain types these references name, and the plain types that the fields of those name, and so on. */
+    private fun List<Reference>.reachablePlainTypes(): Set<String> = generateSequence(plainTypeNames()) { found ->
+        (found + found.flatMap { plainTypes.getValue(it).shape.fields.map { field -> field.reference }.plainTypeNames() })
+            .takeIf { it.size > found.size }
+    }.last()
+
+    private fun List<Reference>.plainTypeNames(): Set<String> = mapNotNull { it.customName() }.filter { it in plainTypes }.toSet()
 
     private fun Field.toFieldDefinition(): FieldDefinition = FieldDefinition(
         description = annotations.description(),
@@ -156,41 +216,43 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
                 directives = it.array("directives").map(::parseDirective),
             )
         },
-        type = typeRef(),
+        type = typeRef(input = false),
         directives = annotations.directives(),
     )
 
     private fun Rpc.toFieldDefinition(): FieldDefinition = FieldDefinition(
-        description = annotations.description(),
+        description = description(),
         name = annotations.single(NAME) ?: identifier.value.replaceFirstChar(Char::lowercase),
         arguments = shape.fields.map { it.toInputValue() },
-        type = annotations.single(TYPE)?.let(::parseType) ?: result.toTypeRef(),
+        type = annotations.single(TYPE)?.let(::parseType) ?: result.toTypeRef(input = false),
         directives = annotations.directives(),
     )
 
     private fun Field.toInputValue(): InputValueDefinition = InputValueDefinition(
         description = annotations.description(),
         name = identifier.value,
-        type = typeRef(),
+        type = typeRef(input = true),
         defaultValue = annotations.single(DEFAULT)?.let(::parseValue) ?: defaultValue?.toGraphQLValue(),
         directives = annotations.directives(),
     )
 
-    private fun Field.typeRef(): TypeRef = annotations.single(TYPE)?.let(::parseType) ?: reference.toTypeRef()
+    private fun Field.typeRef(input: Boolean): TypeRef = annotations.single(TYPE)?.let(::parseType) ?: reference.toTypeRef(input)
 
-    private fun Reference.toTypeRef(): TypeRef = when (this) {
-        is Reference.Iterable -> TypeRef.ListOf(reference.toTypeRef())
-        is Reference.Custom -> TypeRef.Named(names[value] ?: value)
+    private fun Reference.toTypeRef(input: Boolean): TypeRef = when (this) {
+        is Reference.Iterable -> TypeRef.ListOf(reference.toTypeRef(input))
+        is Reference.Custom -> TypeRef.Named(inputNames[value]?.takeIf { input } ?: names[value] ?: value)
         is Reference.Primitive -> TypeRef.Named(
             when (type) {
                 is Reference.Primitive.Type.Integer -> "Int"
                 is Reference.Primitive.Type.Number -> "Float"
-                is Reference.Primitive.Type.String -> "String"
+                // GraphQL has no binary type, so bytes go as a (base64) string.
+                is Reference.Primitive.Type.String, is Reference.Primitive.Type.Bytes -> "String"
                 is Reference.Primitive.Type.Boolean -> "Boolean"
-                is Reference.Primitive.Type.Bytes -> error("Bytes does not come from GraphQL")
             },
         )
-        is Reference.Any, is Reference.Unit, is Reference.Dict -> error("$value does not come from GraphQL")
+        // GraphQL has no void, a field without a result conventionally returns a Boolean.
+        is Reference.Unit -> TypeRef.Named("Boolean")
+        is Reference.Any, is Reference.Dict -> TypeRef.Named(JSON)
     }.let { if (isNullable) it else TypeRef.NonNull(it) }
 
     private fun List<Annotation>.description(): String? = single(DESCRIPTION)
@@ -198,7 +260,24 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
     private fun List<Annotation>.directives(): List<GraphQLDirective> = named(DIRECTIVE).map { parseDirective(it.single(DEFAULT_PARAMETER)!!) }
 
     private companion object {
+        /** GraphQL has no type for any value or for a map, so they become a `JSON` scalar. */
+        const val JSON = "JSON"
+
+        val KINDS = listOf(INPUT, INTERFACE, UNION, ENUM, SCHEMA, DIRECTIVE_DEFINITION)
+
         val Definition.annotations: List<Annotation> get() = (this as? HasAnnotations)?.annotations.orEmpty()
+
+        fun Reference.customName(): String? = when (this) {
+            is Reference.Iterable -> reference.customName()
+            is Reference.Custom -> value
+            is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> null
+        }
+
+        fun Reference.isJson(): Boolean = when (this) {
+            is Reference.Iterable -> reference.isJson()
+            is Reference.Any, is Reference.Dict -> true
+            is Reference.Unit, is Reference.Custom, is Reference.Primitive -> false
+        }
 
         fun List<Annotation>.named(name: String): List<Annotation> = filter { it.name == name }
 
