@@ -91,7 +91,7 @@ public object AvroJsonEmitter : Emitter {
                 }
 
                 is Enum -> AvroModel.SimpleType(def.identifier.value)
-                is Refined -> AvroModel.SimpleType("string")
+                is Refined -> def.reference.emit(module, hasEmitted)
                 else -> AvroModel.SimpleType(value)
             }
         }
@@ -130,18 +130,21 @@ public object AvroJsonEmitter : Emitter {
 
     public fun emit(module: Module): List<AvroModel.Type> {
         val hasEmitted = mutableListOf<String>()
-        // A record or union already written out inline must not be defined again at the top level.
-        return module.statements.asSequence()
-            .filterNot { hasEmitted.contains(it.identifier.value) }
+        return module.inDependencyOrder()
             .mapNotNull {
                 when (it) {
-                    is Type -> it.also { hasEmitted.add(it.identifier.value) }.emit(module, hasEmitted)
+                    is Type -> it.takeUnless { type -> type.identifier.value in hasEmitted }
+                        ?.also { type -> hasEmitted.add(type.identifier.value) }
+                        ?.emit(module, hasEmitted)
+
                     is Enum -> it.emit()
-                    is Union -> it.also { hasEmitted.add(it.identifier.value) }.emit(module, hasEmitted)
+                    is Union -> it.takeUnless { union -> union.identifier.value in hasEmitted }
+                        ?.also { union -> hasEmitted.add(union.identifier.value) }
+                        ?.emit(module, hasEmitted)
+
                     else -> null
                 }
             }
-            .toList()
     }
 
     private fun DefaultValue?.isNonNull() = this != null && this != DefaultValue.NullValue

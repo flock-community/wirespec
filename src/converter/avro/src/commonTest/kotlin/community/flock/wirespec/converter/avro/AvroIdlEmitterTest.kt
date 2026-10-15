@@ -143,6 +143,72 @@ class AvroIdlEmitterTest {
     }
 
     @Test
+    fun nestedRecordUsedByTwoTypesIsDefinedOnceBeforeUse() {
+        val ast = parse(
+            """
+            |type Person { address: Address, status: Status }
+            |type Company { address: Address }
+            |type Address { street: String }
+            |enum Status { ACTIVE, INACTIVE }
+            """.trimMargin(),
+        )
+        AvroIdlEmitter.emit(ast.modules.first(), "Test") shouldBe
+            """
+            |protocol Test {
+            |    record Address {
+            |        string street;
+            |    }
+            |
+            |    enum Status {
+            |        ACTIVE, INACTIVE
+            |    }
+            |
+            |    record Person {
+            |        Address address;
+            |        Status status;
+            |    }
+            |
+            |    record Company {
+            |        Address address;
+            |    }
+            |}
+            |
+            """.trimMargin()
+    }
+
+    @Test
+    fun refinedFieldIsWrittenAsItsPrimitive() {
+        val ast = parse(
+            """
+            |type Name = String(/^[a-z]+$/g)
+            |type Age = Integer(0, 150)
+            |type Weight = Number
+            |type Person { name: Name, age: Age, weight: Weight?, aliases: Name[] }
+            """.trimMargin(),
+        )
+        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        output shouldContain "string name;"
+        output shouldContain "long age;"
+        output shouldContain "union { null, double } weight;"
+        output shouldContain "array<string> aliases;"
+        output shouldNotContain "Name name;"
+    }
+
+    @Test
+    fun emitFallsBackToWirespecProtocolForUnknownFile() {
+        val ast = parse("type Pet { name: String }")
+        val module = community.flock.wirespec.compiler.core.parse.ast.Module(
+            fileUri = FileUri("unknown"),
+            statements = ast.modules.first().statements,
+        )
+        val output = AvroIdlEmitter.emit(
+            community.flock.wirespec.compiler.core.parse.ast.Root(nonEmptyListOf(module)),
+            noLogger,
+        )
+        output.first().result shouldStartWith "protocol WirespecProtocol {"
+    }
+
+    @Test
     fun emitTodoWs() {
         val source = """
             enum Status {
