@@ -75,3 +75,19 @@ rpc CompleteTodo {
   id: TodoIdentifier
 } -> Todo ! TodoError
 `;
+
+// The example with the annotations that steer the GraphQL output. Annotations come before a comment.
+export const wsGraphQLExample = wsExample
+  .replace(
+    "// A field can have a default value\n",
+    '@Description("A task to do")\n// A field can have a default value\n',
+  )
+  .replace(
+    "  done: Boolean,\n",
+    '  @Description("Whether the todo is finished")\n  done: Boolean,\n',
+  )
+  .replace(
+    "// An rpc is",
+    '@GraphQLQuery\n@Description("Finds the todos that match the query")\n// An rpc is',
+  )
+  .replace("rpc CompleteTodo", "@GraphQLMutation\nrpc CompleteTodo");

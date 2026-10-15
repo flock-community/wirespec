@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
@@ -28,7 +29,7 @@ internal interface Emitters :
 public interface TypeDefinitionEmitter {
     public fun emit(type: Type, module: Module): String
 
-    public fun Type.Shape.emit(): String
+    public fun Shape.emit(): String
 
     public fun Field.emit(): String
 

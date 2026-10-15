@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -236,7 +237,7 @@ class ParseTypeTest {
                     annotations = emptyList(),
                     identifier = DefinitionIdentifier("Bar"),
                     extends = emptyList(),
-                    shape = Type.Shape(
+                    shape = Shape(
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("int32"),
@@ -265,7 +266,7 @@ class ParseTypeTest {
                     annotations = emptyList(),
                     identifier = DefinitionIdentifier("Foo"),
                     extends = emptyList(),
-                    shape = Type.Shape(
+                    shape = Shape(
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("num32"),

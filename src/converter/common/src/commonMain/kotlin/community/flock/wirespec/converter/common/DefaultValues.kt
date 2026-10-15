@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
@@ -36,7 +37,7 @@ public fun JsonElement.toDefaultValue(reference: Reference): DefaultValue? = (th
  */
 public fun Definition.withValidEnumDefaults(definitions: Iterable<Definition>): Definition = when (this) {
     is Type -> copy(
-        shape = Type.Shape(
+        shape = Shape(
             shape.fields.map { field ->
                 when (val default = field.defaultValue) {
                     is DefaultValue.EnumValue -> field.takeIf { default.isEntryOf(field.reference, definitions) } ?: field.copy(defaultValue = null)

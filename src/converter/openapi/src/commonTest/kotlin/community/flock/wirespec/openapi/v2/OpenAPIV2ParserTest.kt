@@ -13,8 +13,8 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Iterable
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
@@ -345,13 +345,13 @@ class OpenAPIV2ParserTest {
                 identifier = DefinitionIdentifier("AlisaGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "alisa")),
-                queries = emptyList(),
-                headers = emptyList(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(value = "Foo", isNullable = false),
@@ -463,15 +463,15 @@ class OpenAPIV2ParserTest {
                 path = listOf(
                     Endpoint.Segment.Literal(value = "empty"),
                 ),
-                queries = emptyList(),
-                headers = emptyList(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(
                     Endpoint.Request(content = null),
                 ),
                 responses = listOf(
                     Endpoint.Response(
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = null,
                         annotations = "Ok".toDescriptionAnnotationList(),
                     ),

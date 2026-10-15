@@ -224,6 +224,21 @@ rpc AddTodo {
 type ID = String
 ```
 
+## Wirespec to GraphQL
+
+Wirespec also converts back into a single GraphQL schema. Wirespec converted from GraphQL gives back the schema it came
+from. Any other Wirespec gets the closest GraphQL counterpart:
+
+- A `type` becomes an object type, and a refined type a custom `scalar`. A comment becomes the description.
+- An `rpc` becomes a field of `Query`, unless it is marked `@GraphQLMutation` or `@GraphQLSubscription`. Its error type is
+  not written, because GraphQL returns errors next to the data.
+- GraphQL only takes input objects as arguments. A type that an `rpc` takes, directly or through its fields, becomes an
+  `input`. When the type is also returned, it is written twice: once as an object type and once as an input object
+  named `...Input`.
+- `Integer` and `Number` become `Int` and `Float`, whatever their precision, and `Bytes` becomes `String`. `Any` and
+  dictionaries become a `JSON` scalar, and `Unit` becomes `Boolean`.
+- Endpoints and channels are left out, because GraphQL has nothing like them.
+
 ## Limitations
 
 - **Formatting**: `#` comments, commas and the optional leading `&` and `|` separators are insignificant in GraphQL and
@@ -235,4 +250,5 @@ type ID = String
 
 ## Playground
 
-You can try the conversion online: [Playground convert GraphQL](https://playground.wirespec.io/?specification=graphql&emitter=wirespec)
+You can try the conversion online: [Playground convert GraphQL](https://playground.wirespec.io/?specification=graphql&emitter=wirespec),
+and the other way around: [Playground convert to GraphQL](https://playground.wirespec.io/?specification=wirespec&emitter=graphql)

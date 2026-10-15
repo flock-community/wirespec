@@ -13,8 +13,8 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.openapi.common.Ast
@@ -435,14 +435,14 @@ class OpenAPIV3ParserTest {
             identifier = DefinitionIdentifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
-            queries = emptyList(),
-            headers = emptyList(),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
             requests = listOf(Endpoint.Request(content = null)),
             responses = listOf(
                 Endpoint.Response(
                     annotations = "successful operation".toDescriptionAnnotationList(),
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Dict(
@@ -481,8 +481,8 @@ class OpenAPIV3ParserTest {
                     ),
                     Endpoint.Segment.Literal("ingredients"),
                 ),
-                queries = listOf(),
-                headers = listOf(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(
                     Endpoint.Request(null),
                 ),
@@ -490,7 +490,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "Ok".toDescriptionAnnotationList(),
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             "application/json",
                             Reference.Iterable(
@@ -505,7 +505,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "NotFound".toDescriptionAnnotationList(),
                         status = "404",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = null,
                     ),
                 ),
@@ -557,18 +557,22 @@ class OpenAPIV3ParserTest {
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
                 ),
-                queries = listOf(
-                    Field(
-                        identifier = FieldIdentifier("completed"),
-                        annotations = emptyList(),
-                        reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
+                queries = Shape(
+                    listOf(
+                        Field(
+                            identifier = FieldIdentifier("completed"),
+                            annotations = emptyList(),
+                            reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
+                        ),
                     ),
                 ),
-                headers = listOf(
-                    Field(
-                        identifier = FieldIdentifier("x-user"),
-                        annotations = emptyList(),
-                        reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
+                headers = Shape(
+                    listOf(
+                        Field(
+                            identifier = FieldIdentifier("x-user"),
+                            annotations = emptyList(),
+                            reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
+                        ),
                     ),
                 ),
                 requests = listOf(
@@ -578,7 +582,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "OK".toDescriptionAnnotationList(),
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Reference.Iterable(
@@ -594,7 +598,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "Error".toDescriptionAnnotationList(),
                         status = "500",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -613,12 +617,14 @@ class OpenAPIV3ParserTest {
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
                 ),
-                queries = listOf(),
-                headers = listOf(
-                    Field(
-                        identifier = FieldIdentifier("x-user"),
-                        annotations = emptyList(),
-                        reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
+                queries = Shape(emptyList()),
+                headers = Shape(
+                    listOf(
+                        Field(
+                            identifier = FieldIdentifier("x-user"),
+                            annotations = emptyList(),
+                            reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
+                        ),
                     ),
                 ),
                 requests = listOf(
@@ -645,13 +651,13 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "OkNotContent".toDescriptionAnnotationList(),
                         status = "201",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = null,
                     ),
                     Endpoint.Response(
                         annotations = "Error".toDescriptionAnnotationList(),
                         status = "500",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -674,8 +680,8 @@ class OpenAPIV3ParserTest {
                         reference = Primitive(Primitive.Type.String(null), false),
                     ),
                 ),
-                queries = listOf(),
-                headers = listOf(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(
                     Endpoint.Request(null),
                 ),
@@ -683,7 +689,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "OK".toDescriptionAnnotationList(),
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -695,7 +701,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "Error".toDescriptionAnnotationList(),
                         status = "500",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -941,8 +947,8 @@ class OpenAPIV3ParserTest {
                 identifier = DefinitionIdentifier(name = "ResponserefGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "responseref")),
-                queries = emptyList(),
-                headers = emptyList(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(
                     Endpoint.Request(content = null),
                 ),
@@ -950,7 +956,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "An Address".toDescriptionAnnotationList(),
                         status = "201",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -962,7 +968,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "An Address".toDescriptionAnnotationList(),
                         status = "202",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -1050,37 +1056,39 @@ class OpenAPIV3ParserTest {
                 identifier = DefinitionIdentifier(name = "ResponserefGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "responseref")),
-                queries = listOf(
-                    Field(
-                        identifier = FieldIdentifier(name = "embed"),
-                        annotations = emptyList(),
-                        reference = Reference.Iterable(
-                            reference = Custom(
-                                value = "ResponserefGETParameterEmbedArray",
-                                isNullable = false,
+                queries = Shape(
+                    listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "embed"),
+                            annotations = emptyList(),
+                            reference = Reference.Iterable(
+                                reference = Custom(
+                                    value = "ResponserefGETParameterEmbedArray",
+                                    isNullable = false,
+                                ),
+                                isNullable = true,
                             ),
-                            isNullable = true,
                         ),
-                    ),
-                    Field(
-                        identifier = FieldIdentifier(name = "embedRef"),
-                        annotations = emptyList(),
-                        reference = Reference.Iterable(
-                            reference = Custom(
-                                value = "EmbedParamsArray",
-                                isNullable = false,
+                        Field(
+                            identifier = FieldIdentifier(name = "embedRef"),
+                            annotations = emptyList(),
+                            reference = Reference.Iterable(
+                                reference = Custom(
+                                    value = "EmbedParamsArray",
+                                    isNullable = false,
+                                ),
+                                isNullable = true,
                             ),
-                            isNullable = true,
                         ),
                     ),
                 ),
-                headers = emptyList(),
+                headers = Shape(emptyList()),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
                         annotations = "Success".toDescriptionAnnotationList(),
                         status = "201",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -1142,14 +1150,14 @@ class OpenAPIV3ParserTest {
                 identifier = DefinitionIdentifier(name = "RefarrayGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "refarray")),
-                queries = emptyList(),
-                headers = emptyList(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
                         annotations = "Proposals".toDescriptionAnnotationList(),
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(
@@ -1262,14 +1270,14 @@ class OpenAPIV3ParserTest {
                 identifier = DefinitionIdentifier(name = "RefprimaryGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "refprimary")),
-                queries = emptyList(),
-                headers = emptyList(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
                         annotations = "Proposals".toDescriptionAnnotationList(),
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Primitive(
@@ -1375,8 +1383,8 @@ class OpenAPIV3ParserTest {
                 path = listOf(
                     Endpoint.Segment.Literal(value = "oneof"),
                 ),
-                queries = emptyList(),
-                headers = emptyList(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(
                     Endpoint.Request(content = null),
                 ),
@@ -1384,7 +1392,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "Created contact".toDescriptionAnnotationList(),
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(value = "OneofGET200ResponseBody", isNullable = false),
@@ -1458,8 +1466,8 @@ class OpenAPIV3ParserTest {
                 path = listOf(
                     Endpoint.Segment.Literal(value = "empty"),
                 ),
-                queries = emptyList(),
-                headers = emptyList(),
+                queries = Shape(emptyList()),
+                headers = Shape(emptyList()),
                 requests = listOf(
                     Endpoint.Request(content = null),
                 ),
@@ -1467,7 +1475,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         annotations = "Ok".toDescriptionAnnotationList(),
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = null,
                     ),
                 ),
