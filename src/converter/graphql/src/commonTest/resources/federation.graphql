@@ -1,0 +1,34 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key", "@shareable", "@external", "@requires"])
+
+type Product @key(fields: "upc") {
+  upc: String!
+  name: String @shareable
+  price: Int
+  weight: Int
+  shippingEstimate: Int @requires(fields: "price weight")
+  reviews: [Review!]! @external
+}
+
+type Review {
+  body: String!
+  product: Product
+}
+
+union _Entity = Product | Review
+
+scalar _FieldSet
+
+type Query {
+  _entities(representations: [_Any!]!): [_Entity]!
+  _service: _Service!
+  topProducts(first: Int = 5): [Product]
+}
+
+directive @key(fields: _FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
+
+directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
+
+directive @external on OBJECT | FIELD_DEFINITION
+
+directive @shareable repeatable on OBJECT | FIELD_DEFINITION

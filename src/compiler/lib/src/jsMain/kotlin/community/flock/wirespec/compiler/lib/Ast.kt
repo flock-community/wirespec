@@ -5,8 +5,10 @@ package community.flock.wirespec.compiler.lib
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Comment
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -47,7 +49,7 @@ public fun WsDefinition.consume(): Definition = when (this) {
 
 public fun WsEndpoint.consume(): Endpoint = Endpoint(
     comment = comment?.let { Comment(it) },
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     method = method.consume(),
     path = path.map { it.consume() },
@@ -80,21 +82,21 @@ private fun WsFieldIdentifier.consume() = FieldIdentifier(value)
 
 private fun WsEnum.consume() = Enum(
     comment = comment?.let { Comment(it) },
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     entries = entries.toSet(),
 )
 
 private fun WsRefined.consume() = Refined(
     comment = comment?.let { Comment(it) },
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     reference = reference.consume() as? Reference.Primitive ?: error("Cannot refine non-primitive type"),
 )
 
 private fun WsType.consume() = Type(
     comment = comment?.let { Comment(it) },
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     shape = Type.Shape(shape.value.map { it.consume() }),
     extends = emptyList(),
@@ -102,21 +104,21 @@ private fun WsType.consume() = Type(
 
 private fun WsUnion.consume() = Union(
     comment = comment?.let { Comment(it) },
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     entries = entries.map { it.consume() }.toSet(),
 )
 
 private fun WsChannel.consume() = Channel(
     comment = comment?.let { Comment(it) },
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     reference = reference.consume(),
 )
 
 private fun WsRpc.consume() = Rpc(
     comment = comment?.let { Comment(it) },
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     shape = Type.Shape(shape.value.map { it.consume() }),
     result = result.consume(),
@@ -131,9 +133,31 @@ private fun WsPart.consume() = Part(
 
 private fun WsField.consume() = Field(
     identifier = identifier.consume(),
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
     reference = reference.consume(),
+    defaultValue = defaultValue?.consume(),
 )
+
+private fun WsAnnotation.consume(): Annotation = Annotation(name, parameters.map { it.consume() })
+
+private fun WsAnnotationParameter.consume(): Annotation.Parameter = Annotation.Parameter(name, value.consume())
+
+private fun WsAnnotationValue.consume(): Annotation.Value = when (this) {
+    is WsAnnotationSingle -> consume()
+    is WsAnnotationArray -> Annotation.Value.Array(value.map { it.consume() })
+    is WsAnnotationDict -> Annotation.Value.Dict(value.map { it.consume() })
+}
+
+private fun WsAnnotationSingle.consume(): Annotation.Value.Single = Annotation.Value.Single(value)
+
+private fun WsDefaultValue.consume(): DefaultValue = when (this) {
+    is WsStringDefault -> DefaultValue.StringValue(value)
+    is WsIntegerDefault -> DefaultValue.IntegerValue(value)
+    is WsNumberDefault -> DefaultValue.NumberValue(value)
+    is WsBooleanDefault -> DefaultValue.BooleanValue(value)
+    is WsEnumDefault -> DefaultValue.EnumValue(value)
+    is WsNullDefault -> DefaultValue.NullValue
+}
 
 private fun WsRequest.consume() = Endpoint.Request(
     content = content?.consume(),
@@ -143,7 +167,7 @@ private fun WsResponse.consume() = Endpoint.Response(
     status = status,
     headers = headers.map { it.consume() },
     content = content?.consume(),
-    annotations = emptyList(),
+    annotations = annotations.map { it.consume() },
 )
 
 private fun WsContent.consume() = Endpoint.Content(
@@ -203,12 +227,14 @@ public fun Definition.produce(): WsDefinition = when (this) {
     is Type -> WsType(
         identifier = identifier.value,
         comment = comment?.value,
+        annotations = annotations.produce(),
         shape = shape.produce(),
     )
 
     is Endpoint -> WsEndpoint(
         identifier = identifier.value,
         comment = comment?.value,
+        annotations = annotations.produce(),
         method = method.produce(),
         path = path.produce(),
         queries = queries.fields.produce(),
@@ -220,18 +246,21 @@ public fun Definition.produce(): WsDefinition = when (this) {
     is Enum -> WsEnum(
         identifier = identifier.value,
         comment = comment?.value,
+        annotations = annotations.produce(),
         entries = entries.toTypedArray(),
     )
 
     is Refined -> WsRefined(
         identifier = identifier.value,
         comment = comment?.value,
+        annotations = annotations.produce(),
         reference = reference.produce(),
     )
 
     is Union -> WsUnion(
         identifier = identifier.value,
         comment = comment?.value,
+        annotations = annotations.produce(),
         entries = entries
             .map { it.produce() }
             .toTypedArray(),
@@ -240,12 +269,14 @@ public fun Definition.produce(): WsDefinition = when (this) {
     is Channel -> WsChannel(
         identifier = identifier.value,
         comment = comment?.value,
+        annotations = annotations.produce(),
         reference = reference.produce(),
     )
 
     is Rpc -> WsRpc(
         identifier = identifier.value,
         comment = comment?.value,
+        annotations = annotations.produce(),
         shape = shape.produce(),
         result = result.produce(),
         error = error?.produce(),
@@ -272,7 +303,30 @@ private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
 private fun Field.produce() = WsField(
     identifier = identifier.produce(),
     reference = reference.produce(),
+    annotations = annotations.produce(),
+    defaultValue = defaultValue?.produce(),
 )
+
+private fun List<Annotation>.produce(): Array<WsAnnotation> = map { it.produce() }.toTypedArray()
+
+private fun Annotation.produce(): WsAnnotation = WsAnnotation(name, parameters.map { it.produce() }.toTypedArray())
+
+private fun Annotation.Parameter.produce(): WsAnnotationParameter = WsAnnotationParameter(name, value.produce())
+
+private fun Annotation.Value.produce(): WsAnnotationValue = when (this) {
+    is Annotation.Value.Single -> WsAnnotationSingle(value)
+    is Annotation.Value.Array -> WsAnnotationArray(value.map { WsAnnotationSingle(it.value) }.toTypedArray())
+    is Annotation.Value.Dict -> WsAnnotationDict(value.map { it.produce() }.toTypedArray())
+}
+
+private fun DefaultValue.produce(): WsDefaultValue = when (this) {
+    is DefaultValue.StringValue -> WsStringDefault(value)
+    is DefaultValue.IntegerValue -> WsIntegerDefault(value)
+    is DefaultValue.NumberValue -> WsNumberDefault(value)
+    is DefaultValue.BooleanValue -> WsBooleanDefault(value)
+    is DefaultValue.EnumValue -> WsEnumDefault(value)
+    is DefaultValue.NullValue -> WsNullDefault
+}
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
@@ -332,6 +386,7 @@ private fun Endpoint.Response.produce() = WsResponse(
     status = status,
     headers = headers.fields.map { it.produce() }.toTypedArray(),
     content = content?.produce(),
+    annotations = annotations.produce(),
 )
 
 private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArray()
@@ -359,6 +414,7 @@ public sealed interface WsDefinition : WsNode {
 public class WsType(
     override val identifier: String,
     override val comment: String?,
+    public val annotations: Array<WsAnnotation>,
     public val shape: WsShape,
 ) : WsDefinition
 
@@ -378,6 +434,7 @@ public class WsShape(
 public class WsEndpoint(
     override val identifier: String,
     override val comment: String?,
+    public val annotations: Array<WsAnnotation>,
     public val method: WsMethod,
     public val path: Array<WsSegment>,
     public val queries: Array<WsField>,
@@ -390,6 +447,7 @@ public class WsEndpoint(
 public class WsEnum(
     override val identifier: String,
     override val comment: String?,
+    public val annotations: Array<WsAnnotation>,
     public val entries: Array<String>,
 ) : WsDefinition
 
@@ -397,6 +455,7 @@ public class WsEnum(
 public class WsUnion(
     override val identifier: String,
     override val comment: String?,
+    public val annotations: Array<WsAnnotation>,
     public val entries: Array<WsReference>,
 ) : WsDefinition
 
@@ -404,6 +463,7 @@ public class WsUnion(
 public class WsChannel(
     override val identifier: String,
     override val comment: String?,
+    public val annotations: Array<WsAnnotation>,
     public val reference: WsReference,
 ) : WsDefinition
 
@@ -411,6 +471,7 @@ public class WsChannel(
 public class WsRpc(
     override val identifier: String,
     override val comment: String?,
+    public val annotations: Array<WsAnnotation>,
     public val shape: WsShape,
     public val result: WsReference,
     public val error: WsReference?,
@@ -420,6 +481,7 @@ public class WsRpc(
 public class WsRefined(
     override val identifier: String,
     override val comment: String?,
+    public val annotations: Array<WsAnnotation>,
     public val reference: WsReference,
 ) : WsDefinition
 
@@ -442,7 +504,12 @@ public class WsParam(
 public class Shape(public val value: Array<WsField>)
 
 @JsExport
-public class WsField(public val identifier: WsFieldIdentifier, public val reference: WsReference)
+public class WsField(
+    public val identifier: WsFieldIdentifier,
+    public val reference: WsReference,
+    public val annotations: Array<WsAnnotation>,
+    public val defaultValue: WsDefaultValue?,
+)
 
 @JsExport
 public sealed interface WsIdentifier
@@ -499,7 +566,51 @@ public class WsBoundConstraint(public val min: String?, public val max: String?)
 public class WsRequest(public val content: WsContent?)
 
 @JsExport
-public class WsResponse(public val status: String, public val headers: Array<WsField>, public val content: WsContent?)
+public class WsResponse(
+    public val status: String,
+    public val headers: Array<WsField>,
+    public val content: WsContent?,
+    public val annotations: Array<WsAnnotation>,
+)
 
 @JsExport
 public class WsContent(public val type: String, public val reference: WsReference, public val isNullable: Boolean = false)
+
+@JsExport
+public class WsAnnotation(public val name: String, public val parameters: Array<WsAnnotationParameter>)
+
+@JsExport
+public class WsAnnotationParameter(public val name: String, public val value: WsAnnotationValue)
+
+@JsExport
+public sealed interface WsAnnotationValue
+
+@JsExport
+public class WsAnnotationSingle(public val value: String) : WsAnnotationValue
+
+@JsExport
+public class WsAnnotationArray(public val value: Array<WsAnnotationSingle>) : WsAnnotationValue
+
+@JsExport
+public class WsAnnotationDict(public val value: Array<WsAnnotationParameter>) : WsAnnotationValue
+
+@JsExport
+public sealed interface WsDefaultValue
+
+@JsExport
+public class WsStringDefault(public val value: String) : WsDefaultValue
+
+@JsExport
+public class WsIntegerDefault(public val value: String) : WsDefaultValue
+
+@JsExport
+public class WsNumberDefault(public val value: String) : WsDefaultValue
+
+@JsExport
+public class WsBooleanDefault(public val value: Boolean) : WsDefaultValue
+
+@JsExport
+public class WsEnumDefault(public val value: String) : WsDefaultValue
+
+@JsExport
+public object WsNullDefault : WsDefaultValue
