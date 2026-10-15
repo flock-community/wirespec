@@ -8,8 +8,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
@@ -61,36 +61,40 @@ abstract class OpenAPIV3VersionParserTest(private val resourceDir: String) {
                         reference = Primitive(Primitive.Type.Integer(Primitive.Type.Precision.P64, null), false),
                     ),
                 ),
-                queries = listOf(
-                    Field(
-                        identifier = FieldIdentifier("limit"),
-                        annotations = emptyList(),
-                        reference = Primitive(Primitive.Type.Integer(Primitive.Type.Precision.P32, null), true),
-                    ),
-                    Field(
-                        identifier = FieldIdentifier("status"),
-                        annotations = emptyList(),
-                        reference = Custom("GetPetParameterStatus", true),
+                queries = Shape(
+                    listOf(
+                        Field(
+                            identifier = FieldIdentifier("limit"),
+                            annotations = emptyList(),
+                            reference = Primitive(Primitive.Type.Integer(Primitive.Type.Precision.P32, null), true),
+                        ),
+                        Field(
+                            identifier = FieldIdentifier("status"),
+                            annotations = emptyList(),
+                            reference = Custom("GetPetParameterStatus", true),
+                        ),
                     ),
                 ),
-                headers = listOf(
-                    Field(
-                        identifier = FieldIdentifier("X-Request-Id"),
-                        annotations = emptyList(),
-                        reference = Primitive(Primitive.Type.String(null), false),
+                headers = Shape(
+                    listOf(
+                        Field(
+                            identifier = FieldIdentifier("X-Request-Id"),
+                            annotations = emptyList(),
+                            reference = Primitive(Primitive.Type.String(null), false),
+                        ),
                     ),
                 ),
                 requests = listOf(Endpoint.Request(null)),
                 responses = listOf(
                     Endpoint.Response(
                         status = "200",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = Endpoint.Content("application/json", Custom("Pet", true)),
                         annotations = "OK".toDescriptionAnnotationList(),
                     ),
                     Endpoint.Response(
                         status = "404",
-                        headers = emptyList(),
+                        headers = Shape(emptyList()),
                         content = null,
                         annotations = "Not found".toDescriptionAnnotationList(),
                     ),

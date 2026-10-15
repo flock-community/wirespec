@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.java.JavaEmitter
@@ -41,7 +42,7 @@ class AvroExtensionTest {
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("Identifier"),
-        shape = Type.Shape(
+        shape = Shape(
             listOf(
                 Field(
                     identifier = FieldIdentifier(name = "name"),
@@ -75,7 +76,7 @@ class AvroExtensionTest {
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("Nested"),
-        shape = Type.Shape(listOf(field("name", string()))),
+        shape = Shape(listOf(field("name", string()))),
         extends = emptyList(),
     )
 
@@ -84,7 +85,7 @@ class AvroExtensionTest {
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("Collections"),
-        shape = Type.Shape(
+        shape = Shape(
             listOf(
                 field("externalIds", Reference.Dict(reference = string(), isNullable = false)),
                 field("text", Reference.Dict(reference = Reference.Custom("Nested", false), isNullable = false)),
@@ -126,7 +127,7 @@ class AvroExtensionTest {
         comment = null,
         annotations = emptyList(),
         identifier = DefinitionIdentifier("Node"),
-        shape = Type.Shape(
+        shape = Shape(
             listOf(
                 field("name", string()),
                 field("parents", Reference.Iterable(reference = Reference.Custom("Node", false), isNullable = false)),

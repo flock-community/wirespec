@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.common.toDefaultValue
@@ -56,7 +57,7 @@ internal object AvroConverter {
         annotations = emptyList(),
         identifier = DefinitionIdentifier(name),
         extends = emptyList(),
-        shape = Type.Shape(
+        shape = Shape(
             fields.map {
                 it.type.toReference().let { reference ->
                     Field(

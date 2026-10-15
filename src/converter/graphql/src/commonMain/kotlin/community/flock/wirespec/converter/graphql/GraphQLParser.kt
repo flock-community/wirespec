@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
@@ -257,7 +258,7 @@ private class GraphQLConverter(private val document: Document) {
                 directives.toAnnotations() +
                 type.toAnnotations(),
             identifier = DefinitionIdentifier(identifier),
-            shape = Type.Shape(arguments.map { it.toParameter() }),
+            shape = Shape(arguments.map { it.toParameter() }),
             result = type.toReference(),
             error = null,
         )
@@ -372,7 +373,7 @@ private class GraphQLConverter(private val document: Document) {
         comment = null,
         annotations = annotations,
         identifier = DefinitionIdentifier(identifier),
-        shape = Type.Shape(fields),
+        shape = Shape(fields),
         extends = emptyList(),
     )
 

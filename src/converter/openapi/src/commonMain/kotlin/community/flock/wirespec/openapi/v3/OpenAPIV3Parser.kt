@@ -57,6 +57,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.common.Parser
@@ -112,9 +113,11 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                 val query = parameters
                     .filter { it.location == OpenAPIV30ParameterLocation.QUERY }
                     .map { toField(it, className(name, "Parameter", it.name)) }
+                    .let(::Shape)
                 val headers = parameters
                     .filter { it.location == OpenAPIV30ParameterLocation.HEADER }
                     .map { toField(it, className(name, "Parameter", it.name)) }
+                    .let(::Shape)
                 val requests = operation.requestBody?.let { resolve(it) }
                     ?.let { requestBody ->
                         val isNullable = false
@@ -147,7 +150,7 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                                     status = status.value,
                                     headers = response.headers?.map { entry ->
                                         toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
-                                    }.orEmpty(),
+                                    }.orEmpty().let(::Shape),
                                     content = null,
                                 ),
                             )
@@ -160,7 +163,7 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                                     status = status.value,
                                     headers = response.headers?.map { entry ->
                                         toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
-                                    }.orEmpty(),
+                                    }.orEmpty().let(::Shape),
                                     content = Endpoint.Content(
                                         type = contentType.value,
                                         reference = when (val schema = media.schema) {
@@ -455,7 +458,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: Schema, name: String): List<Def
                 comment = null,
                 annotations = schemaObject.description.toDescriptionAnnotationList(),
                 identifier = DefinitionIdentifier(name.sanitize()),
-                shape = Type.Shape(
+                shape = Shape(
                     schemaObject.allOf.orEmpty().flatMap { toField(resolve(it), name) }
                         .distinctBy { it.identifier },
                 ),
@@ -500,7 +503,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: Schema, name: String): List<Def
                         comment = null,
                         annotations = schemaObject.description.toDescriptionAnnotationList(),
                         identifier = DefinitionIdentifier(name),
-                        shape = Type.Shape(toField(schemaObject, name)),
+                        shape = Shape(toField(schemaObject, name)),
                         extends = emptyList(),
                     ),
                 )

@@ -20,15 +20,15 @@ public data class Field(
 
 public data class Spread(val reference: Reference.Custom) : ShapeEntry
 
+public data class Shape(override val value: List<ShapeEntry>) : Value<List<ShapeEntry>>
+
 /** Only valid on a validated AST, where every [Spread] is replaced by the fields of its part. */
-public val List<ShapeEntry>.fields: List<Field> get() = map { entry ->
+public val Shape.fields: List<Field> get() = value.map { entry ->
     when (entry) {
         is Field -> entry
         is Spread -> error("Spread ...${entry.reference.value} is unresolved: read fields only from a validated AST")
     }
 }
-
-public val Type.Shape.fields: List<Field> get() = value.fields
 
 /**
  * A reusable set of fields that is only ever spread into shapes, never emitted on its own.
@@ -38,7 +38,7 @@ public val Type.Shape.fields: List<Field> get() = value.fields
 public data class Part(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
-    val shape: Type.Shape,
+    val shape: Shape,
 ) : Definition
 
 public data class Endpoint(
@@ -47,8 +47,8 @@ public data class Endpoint(
     override val identifier: DefinitionIdentifier,
     val method: Method,
     val path: List<Segment>,
-    val queries: List<ShapeEntry>,
-    val headers: List<ShapeEntry>,
+    val queries: Shape,
+    val headers: Shape,
     val requests: List<Request>,
     val responses: List<Response>,
 ) : Definition,
@@ -65,7 +65,7 @@ public data class Endpoint(
     }
 
     public data class Request(val content: Content?)
-    public data class Response(val status: String, val headers: List<ShapeEntry>, val content: Content?, val annotations: List<Annotation>)
+    public data class Response(val status: String, val headers: Shape, val content: Content?, val annotations: List<Annotation>)
     public data class Content(val type: String, val reference: Reference)
 }
 
@@ -81,7 +81,7 @@ public data class Rpc(
     override val comment: Comment?,
     override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
-    val shape: Type.Shape,
+    val shape: Shape,
     val result: Reference,
     val error: Reference?,
 ) : Definition,
@@ -97,9 +97,7 @@ public data class Type(
     override val identifier: DefinitionIdentifier,
     val shape: Shape,
     val extends: List<Reference>,
-) : Model {
-    public data class Shape(override val value: List<ShapeEntry>) : Value<List<ShapeEntry>>
-}
+) : Model
 
 public data class Enum(
     override val comment: Comment?,

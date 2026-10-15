@@ -26,6 +26,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
+import community.flock.wirespec.compiler.core.parse.ast.Shape as AstShape
 
 public fun WsAST.consume(): AST = AST(
     modules = modules.map { it.consume() }.toNonEmptyListOrNull()!!,
@@ -53,8 +54,8 @@ public fun WsEndpoint.consume(): Endpoint = Endpoint(
     identifier = DefinitionIdentifier(identifier),
     method = method.consume(),
     path = path.map { it.consume() },
-    queries = queries.map { it.consume() },
-    headers = headers.map { it.consume() },
+    queries = AstShape(queries.map { it.consume() }),
+    headers = AstShape(headers.map { it.consume() }),
     requests = requests.map { it.consume() },
     responses = responses.map { it.consume() },
 )
@@ -98,7 +99,7 @@ private fun WsType.consume() = Type(
     comment = comment?.let { Comment(it) },
     annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
-    shape = Type.Shape(shape.value.map { it.consume() }),
+    shape = AstShape(shape.value.map { it.consume() }),
     extends = emptyList(),
 )
 
@@ -120,7 +121,7 @@ private fun WsRpc.consume() = Rpc(
     comment = comment?.let { Comment(it) },
     annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
-    shape = Type.Shape(shape.value.map { it.consume() }),
+    shape = AstShape(shape.value.map { it.consume() }),
     result = result.consume(),
     error = error?.consume(),
 )
@@ -128,7 +129,7 @@ private fun WsRpc.consume() = Rpc(
 private fun WsPart.consume() = Part(
     comment = comment?.let { Comment(it) },
     identifier = DefinitionIdentifier(identifier),
-    shape = Type.Shape(shape.value.map { it.consume() }),
+    shape = AstShape(shape.value.map { it.consume() }),
 )
 
 private fun WsField.consume() = Field(
@@ -165,7 +166,7 @@ private fun WsRequest.consume() = Endpoint.Request(
 
 private fun WsResponse.consume() = Endpoint.Response(
     status = status,
-    headers = headers.map { it.consume() },
+    headers = AstShape(headers.map { it.consume() }),
     content = content?.consume(),
     annotations = annotations.map { it.consume() },
 )
@@ -289,8 +290,8 @@ public fun Definition.produce(): WsDefinition = when (this) {
     )
 }
 
-private fun Type.Shape.produce() = WsShape(
-    value.fields.map { it.produce() }.toTypedArray(),
+private fun AstShape.produce() = WsShape(
+    fields.map { it.produce() }.toTypedArray(),
 )
 
 private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {

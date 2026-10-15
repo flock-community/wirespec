@@ -20,6 +20,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -69,7 +70,7 @@ class GeneratorConverterTest {
             comment = null,
             annotations = emptyList(),
             identifier = definitionId("Address"),
-            shape = TypeWirespec.Shape(
+            shape = Shape(
                 listOf(
                     Field(
                         emptyList(),
@@ -105,7 +106,7 @@ class GeneratorConverterTest {
             comment = null,
             annotations = emptyList(),
             identifier = definitionId("Address"),
-            shape = TypeWirespec.Shape(
+            shape = Shape(
                 listOf(
                     Field(
                         emptyList(),
@@ -193,7 +194,7 @@ class GeneratorConverterTest {
             comment = null,
             annotations = emptyList(),
             identifier = definitionId("Message"),
-            shape = TypeWirespec.Shape(
+            shape = Shape(
                 listOf(
                     Field(emptyList(), fieldId("payload"), Reference.Any(isNullable = false)),
                     Field(emptyList(), fieldId("metadata"), Reference.Any(isNullable = true)),
@@ -352,7 +353,7 @@ class GeneratorConverterTest {
             comment = null,
             annotations = emptyList(),
             identifier = definitionId("Person"),
-            shape = TypeWirespec.Shape(
+            shape = Shape(
                 listOf(
                     Field(
                         annotations = listOf(

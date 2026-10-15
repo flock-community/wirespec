@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
@@ -20,8 +21,8 @@ object Ast {
             identifier = DefinitionIdentifier("TestWithDashGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
-            queries = emptyList(),
-            headers = emptyList(),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
             requests = listOf(
                 Endpoint.Request(
                     content = Endpoint.Content(
@@ -33,7 +34,7 @@ object Ast {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Primitive(
@@ -49,7 +50,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("TestWithDashGETRequestBody"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
@@ -69,7 +70,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("TestWithDashGETRequestBodyNest"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
@@ -94,8 +95,8 @@ object Ast {
             identifier = DefinitionIdentifier("Test"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test")),
-            queries = emptyList(),
-            headers = emptyList(),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
             requests = listOf(
                 Endpoint.Request(
                     content = null,
@@ -104,7 +105,7 @@ object Ast {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -120,7 +121,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Test200ResponseBody"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
@@ -146,7 +147,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Test200ResponseBodyNest"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
@@ -180,8 +181,8 @@ object Ast {
                 Endpoint.Segment.Literal(value = "additional"),
                 Endpoint.Segment.Literal(value = "properties"),
             ),
-            queries = emptyList(),
-            headers = emptyList(),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
             requests = listOf(
                 Endpoint.Request(
                     content = Endpoint.Content(
@@ -199,7 +200,7 @@ object Ast {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Dict(
@@ -214,7 +215,7 @@ object Ast {
                 ),
                 Endpoint.Response(
                     status = "404",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Dict(
@@ -229,7 +230,7 @@ object Ast {
                 ),
                 Endpoint.Response(
                     status = "500",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Dict(
@@ -247,7 +248,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("AdditionalProperties404ResponseBody"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
@@ -273,7 +274,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Message"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
@@ -299,7 +300,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("User"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("username"),
@@ -338,8 +339,8 @@ object Ast {
             identifier = DefinitionIdentifier("ArrayGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "array")),
-            queries = emptyList(),
-            headers = emptyList(),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
             requests = listOf(
                 Endpoint.Request(
                     content = Endpoint.Content(
@@ -360,7 +361,7 @@ object Ast {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
@@ -376,7 +377,7 @@ object Ast {
                 ),
                 Endpoint.Response(
                     status = "201",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
@@ -395,7 +396,7 @@ object Ast {
                 ),
                 Endpoint.Response(
                     status = "202",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
@@ -415,7 +416,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("ArrayGET200ResponseBody"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
@@ -441,7 +442,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("MessageArray"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
@@ -472,8 +473,8 @@ object Ast {
             identifier = DefinitionIdentifier("AllofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "allof")),
-            queries = emptyList(),
-            headers = emptyList(),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
             requests = listOf(
                 Endpoint.Request(
                     content = null,
@@ -482,7 +483,7 @@ object Ast {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -498,7 +499,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("AllofGET200ResponseBody"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
@@ -540,7 +541,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("AllofGET200ResponseBodyD"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("e"),
@@ -558,7 +559,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Foo"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
@@ -576,7 +577,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Bar"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("b"),
@@ -594,7 +595,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Baz"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("b"),
@@ -617,8 +618,8 @@ object Ast {
             identifier = DefinitionIdentifier("OneofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "oneof")),
-            queries = emptyList(),
-            headers = emptyList(),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
             requests = listOf(
                 Endpoint.Request(
                     content = null,
@@ -628,7 +629,7 @@ object Ast {
                 Endpoint.Response(
                     annotations = "Ok".toDescriptionAnnotationList(),
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -660,7 +661,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET200ResponseBody2"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("c"),
@@ -678,7 +679,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET200ResponseBody3"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("d"),
@@ -696,7 +697,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET200ResponseBody3D"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("e"),
@@ -714,7 +715,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Foo"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
@@ -732,7 +733,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Bar"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("b"),
@@ -755,17 +756,19 @@ object Ast {
             identifier = DefinitionIdentifier("EnumGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
-            queries = listOf(
-                Field(
-                    identifier = FieldIdentifier("order"),
-                    annotations = emptyList(),
-                    reference = Reference.Custom(
-                        value = "EnumGETParameterOrder",
-                        isNullable = true,
+            queries = Shape(
+                listOf(
+                    Field(
+                        identifier = FieldIdentifier("order"),
+                        annotations = emptyList(),
+                        reference = Reference.Custom(
+                            value = "EnumGETParameterOrder",
+                            isNullable = true,
+                        ),
                     ),
                 ),
             ),
-            headers = emptyList(),
+            headers = Shape(emptyList()),
             requests = listOf(
                 Endpoint.Request(
                     content = null,
@@ -774,7 +777,7 @@ object Ast {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -786,7 +789,7 @@ object Ast {
                 ),
                 Endpoint.Response(
                     status = "201",
-                    headers = emptyList(),
+                    headers = Shape(emptyList()),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -808,7 +811,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("EnumGET201ResponseBody"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
@@ -840,7 +843,7 @@ object Ast {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Message"),
-            shape = Type.Shape(
+            shape = Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),

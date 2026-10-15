@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -70,12 +71,12 @@ internal object TypeParser {
         }
     }
 
-    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean): Either<WirespecException, Type.Shape> = parseToken {
+    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean): Either<WirespecException, Shape> = parseToken {
         (if (token.type is RightCurly) emptyList() else parseShapeEntries(allowFieldDefaults).bind())
             .also {
                 expect<RightCurly>().bind()
             }
-            .let(Type::Shape)
+            .let(::Shape)
     }
 
     private fun TokenProvider.parseShapeEntries(allowFieldDefaults: Boolean): Either<WirespecException, List<ShapeEntry>> = either {

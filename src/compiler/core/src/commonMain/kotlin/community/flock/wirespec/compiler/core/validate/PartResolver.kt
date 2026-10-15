@@ -22,7 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
-import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -40,7 +40,7 @@ internal object PartResolver {
         raiseAll(listOfNotNull(parts.cycleError()))
         val (partShapes, otherShapes) = ast.shapes().partition { it.definition is Part }
         raiseAll(parts.duplicateFieldErrors(partShapes))
-        raiseAll(parts.duplicateFieldErrors(otherShapes.filter { shape -> shape.entries.any { it is Spread } }))
+        raiseAll(parts.duplicateFieldErrors(otherShapes.filter { owned -> owned.shape.value.any { it is Spread } }))
         parts.flatten(ast)
     }
 
@@ -56,14 +56,14 @@ internal object PartResolver {
         .map(::DuplicatePartError)
 
     private fun AST.spreadNonPartErrors(partNames: Set<String>): List<WirespecException> = shapes()
-        .flatMap { shape ->
-            shape.entries.filterIsInstance<Spread>()
+        .flatMap { owned ->
+            owned.shape.value.filterIsInstance<Spread>()
                 .filterNot { it.reference.value in partNames }
-                .map { SpreadNonPartError(it.reference.value, shape.owner) }
+                .map { SpreadNonPartError(it.reference.value, owned.owner) }
         }
 
     // A spread names its part on purpose, so only the references of fields count here.
-    private fun AST.partAsReferenceErrors(partNames: Set<String>): List<WirespecException> = mapShapes { it.filterIsInstance<Field>() }
+    private fun AST.partAsReferenceErrors(partNames: Set<String>): List<WirespecException> = mapShapes { Shape(it.value.filterIsInstance<Field>()) }
         .definitions()
         .flatMap { it.importReferences() }
         .map { it.value }
@@ -87,39 +87,39 @@ internal object PartResolver {
         .toSet()
 
     private fun Map<String, Part>.duplicateFieldErrors(shapes: List<OwnedShape>): List<WirespecException> = shapes
-        .flatMap { shape ->
-            fieldsOf(shape.entries)
+        .flatMap { owned ->
+            fieldsOf(owned.shape)
                 .groupBy { it.identifier.value }
                 .filterValues { it.size > 1 }
                 .keys
-                .map { DuplicateFieldError(it, shape.owner) }
+                .map { DuplicateFieldError(it, owned.owner) }
         }
 
-    private fun Map<String, Part>.fieldsOf(entries: List<ShapeEntry>): List<Field> = entries.flatMap { entry ->
+    private fun Map<String, Part>.fieldsOf(shape: Shape): List<Field> = shape.value.flatMap { entry ->
         when (entry) {
             is Field -> listOf(entry)
-            is Spread -> fieldsOf(getValue(entry.reference.value).shape.value)
+            is Spread -> fieldsOf(getValue(entry.reference.value).shape)
         }
     }
 
-    private fun Map<String, Part>.flatten(ast: AST): AST = ast.mapShapes { fieldsOf(it) }
+    private fun Map<String, Part>.flatten(ast: AST): AST = ast.mapShapes { Shape(fieldsOf(it)) }
 }
 
 public fun unusedPartWarning(partName: String): String = "Part '$partName' is never spread"
 
 internal fun AST.unusedParts(): List<Part> = shapes()
-    .flatMap { shape -> shape.entries.filterIsInstance<Spread>().map { it.reference.value } }
+    .flatMap { owned -> owned.shape.value.filterIsInstance<Spread>().map { it.reference.value } }
     .toSet()
     .let { spread -> definitions().filterIsInstance<Part>().filterNot { it.identifier.value in spread } }
 
-private fun AST.mapShapes(transform: (List<ShapeEntry>) -> List<ShapeEntry>): AST = copy(
+private fun AST.mapShapes(transform: (Shape) -> Shape): AST = copy(
     modules = modules.map { module -> module.copy(statements = module.statements.map { it.mapShapes(transform) }) },
 )
 
-private fun Definition.mapShapes(transform: (List<ShapeEntry>) -> List<ShapeEntry>): Definition = when (this) {
-    is Type -> copy(shape = Type.Shape(transform(shape.value)))
-    is Rpc -> copy(shape = Type.Shape(transform(shape.value)))
-    is Part -> copy(shape = Type.Shape(transform(shape.value)))
+private fun Definition.mapShapes(transform: (Shape) -> Shape): Definition = when (this) {
+    is Type -> copy(shape = transform(shape))
+    is Rpc -> copy(shape = transform(shape))
+    is Part -> copy(shape = transform(shape))
     is Endpoint -> copy(
         queries = transform(queries),
         headers = transform(headers),
@@ -128,7 +128,7 @@ private fun Definition.mapShapes(transform: (List<ShapeEntry>) -> List<ShapeEntr
     is Channel, is Enum, is Refined, is Union -> this
 }
 
-private data class OwnedShape(val definition: Definition, val owner: String, val entries: List<ShapeEntry>)
+private data class OwnedShape(val definition: Definition, val owner: String, val shape: Shape)
 
 private fun AST.definitions(): List<Definition> = modules.toList().flatMap { it.statements }
 
@@ -136,13 +136,13 @@ private fun AST.shapes(): List<OwnedShape> = definitions()
     .flatMap { definition ->
         val name = definition.identifier.value
         when (definition) {
-            is Part -> listOf("part $name" to definition.shape.value)
-            is Type -> listOf("type $name" to definition.shape.value)
-            is Rpc -> listOf("rpc $name" to definition.shape.value)
+            is Part -> listOf("part $name" to definition.shape)
+            is Type -> listOf("type $name" to definition.shape)
+            is Rpc -> listOf("rpc $name" to definition.shape)
             is Endpoint -> listOf(
                 "query of endpoint $name" to definition.queries,
                 "headers of endpoint $name" to definition.headers,
             ) + definition.responses.map { "headers of response ${it.status} of endpoint $name" to it.headers }
             is Channel, is Enum, is Refined, is Union -> emptyList()
-        }.map { (owner, entries) -> OwnedShape(definition, owner, entries) }
+        }.map { (owner, shape) -> OwnedShape(definition, owner, shape) }
     }
