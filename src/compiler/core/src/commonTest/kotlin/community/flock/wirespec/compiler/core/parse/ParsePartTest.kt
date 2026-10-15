@@ -323,7 +323,7 @@ class ParsePartTest {
 
     @Test
     fun fieldsRefuseAnUnresolvedSpread() {
-        shouldThrow<IllegalStateException> { listOf(Spread(Reference.Custom("Audited", isNullable = false))).fields }
+        shouldThrow<IllegalStateException> { Shape(listOf(Spread(Reference.Custom("Audited", isNullable = false)))).fields }
             .message shouldBe "Spread ...Audited is unresolved: read fields only from a validated AST"
     }
 
