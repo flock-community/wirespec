@@ -17,9 +17,9 @@ import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.common.toJsonElement
 
-internal object AvroIdlEmitter : Emitter {
+public object AvroIdlEmitter : Emitter {
 
-    override val extension = FileExtension.AvroIdl
+    override val extension: FileExtension = FileExtension.AvroIdl
 
     override val supportsDefaults: Boolean = true
 
@@ -38,7 +38,7 @@ internal object AvroIdlEmitter : Emitter {
         ?.let { it.replaceFirstChar { c -> c.uppercaseChar() } + "Protocol" }
         ?: "WirespecProtocol"
 
-    fun emit(module: Module, protocolName: String = "WirespecProtocol"): String {
+    internal fun emit(module: Module, protocolName: String = "WirespecProtocol"): String {
         val body = module.statements.toList().mapNotNull { definition ->
             when (definition) {
                 is Type -> renderRecord(definition)

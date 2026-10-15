@@ -2,6 +2,29 @@ import { Monaco } from "@monaco-editor/react";
 
 const KEYWORDS = ["Boolean", "String", "Integer"];
 
+const AVDL_DECLARATIONS = [
+  "protocol",
+  "record",
+  "error",
+  "enum",
+  "fixed",
+  "union",
+  "array",
+  "map",
+];
+const AVDL_KEYWORDS = [
+  "boolean",
+  "int",
+  "long",
+  "float",
+  "double",
+  "bytes",
+  "string",
+  "null",
+  "true",
+  "false",
+];
+
 export function initializeMonaco(monaco: Monaco) {
   const model = monaco.editor.getModels();
   if (!model) {
@@ -9,6 +32,7 @@ export function initializeMonaco(monaco: Monaco) {
   }
 
   monaco.languages.register({ id: "wirespec" });
+  monaco.languages.register({ id: "avdl" });
 
   monaco.editor.defineTheme("vs-dark", {
     colors: {
@@ -50,6 +74,34 @@ export function initializeMonaco(monaco: Monaco) {
           },
         ],
         [/".*?"/, "string"],
+      ],
+      comment: [
+        [/[^/*]+/, "comment"],
+        [/\*\//, "comment", "@pop"],
+        [/[/*]/, "comment"],
+      ],
+    },
+  });
+
+  monaco.languages.setMonarchTokensProvider("avdl", {
+    declarations: AVDL_DECLARATIONS,
+    keywords: AVDL_KEYWORDS,
+    tokenizer: {
+      root: [
+        [/\/\/.*$/, "comment"],
+        [/\/\*/, "comment", "@comment"],
+        [/".*?"/, "string"],
+        [/-?\d+(\.\d+)?/, "number"],
+        [
+          /[a-zA-Z_]\w*/,
+          {
+            cases: {
+              "@declarations": "customKeyword",
+              "@keywords": "keyword",
+              "@default": "variable",
+            },
+          },
+        ],
       ],
       comment: [
         [/[^/*]+/, "comment"],
