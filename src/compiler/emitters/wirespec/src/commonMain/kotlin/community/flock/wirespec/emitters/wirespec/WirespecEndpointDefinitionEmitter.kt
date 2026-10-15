@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.fixStatus
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 
 internal interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
@@ -25,12 +25,12 @@ internal interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter
     private fun List<Endpoint.Request>.emitRequest() =
         firstOrNull()?.content?.reference?.emit()?.let { " $it" }.orEmpty()
 
-    private fun List<ShapeEntry>.emitQuery() = takeIf { it.isNotEmpty() }
+    private fun Shape.emitQuery() = value.takeIf { it.isNotEmpty() }
         ?.joinToString(",", "{", "}") { it.emit() }
         ?.let { " ?$it" }
         .orEmpty()
 
-    private fun List<ShapeEntry>.emitHeader() = takeIf { it.isNotEmpty() }
+    private fun Shape.emitHeader() = value.takeIf { it.isNotEmpty() }
         ?.joinToString(",", "{", "}") { it.emit() }
         ?.let { " #$it" }
         .orEmpty()

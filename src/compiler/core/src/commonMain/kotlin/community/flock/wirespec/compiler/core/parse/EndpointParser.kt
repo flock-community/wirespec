@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
@@ -67,12 +68,12 @@ internal object EndpointParser {
             is QuestionMark -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false).bind() }.value
+                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false).bind() }
                     else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }
 
-            else -> emptyList()
+            else -> Shape(emptyList())
         }
 
         val headers = parseHeaders().bind()
@@ -174,12 +175,12 @@ internal object EndpointParser {
             is Hash -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false).bind() }.value
+                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false).bind() }
                     else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }
 
-            else -> emptyList()
+            else -> Shape(emptyList())
         }
     }
 }

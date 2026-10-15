@@ -32,6 +32,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.converter.common.toDefaultValue
@@ -81,9 +82,11 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                 val query = parameters
                     .filter { it.location == OpenAPIV20ParameterLocation.QUERY }
                     .map { toField(it, name) }
+                    .let(::Shape)
                 val headers = parameters
                     .filter { it.location == OpenAPIV20ParameterLocation.HEADER }
                     .map { toField(it, name) }
+                    .let(::Shape)
                 val operationConsumes = (operation as? OpenAPIV20Operation)?.consumes
                 val operationProduces = (operation as? OpenAPIV20Operation)?.produces
                 val requests = parameters
@@ -123,7 +126,8 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                                     status = status.value,
                                     headers = res.headers
                                         ?.map { (identifier, header) -> toField(header.resolveHeader(), identifier) }
-                                        .orEmpty(),
+                                        .orEmpty()
+                                        .let(::Shape),
                                     content = (res as? OpenAPIV20Response)?.schema?.let { schema ->
                                         Endpoint.Content(
                                             type = type,
@@ -304,7 +308,7 @@ private fun OpenAPIV2Model.flatten(schemaObject: Schema, name: String): List<Def
             comment = null,
             annotations = schemaObject.description.toDescriptionAnnotationList(),
             identifier = DefinitionIdentifier(name.sanitize()),
-            shape = Type.Shape(
+            shape = Shape(
                 schemaObject.allOf
                     .orEmpty()
                     .flatMap {
@@ -356,7 +360,7 @@ private fun OpenAPIV2Model.flatten(schemaObject: Schema, name: String): List<Def
                     comment = null,
                     annotations = schemaObject.description.toDescriptionAnnotationList(),
                     identifier = DefinitionIdentifier(name.sanitize()),
-                    shape = Type.Shape(toField(schemaObject, name)),
+                    shape = Shape(toField(schemaObject, name)),
                     extends = emptyList(),
                 ),
             )

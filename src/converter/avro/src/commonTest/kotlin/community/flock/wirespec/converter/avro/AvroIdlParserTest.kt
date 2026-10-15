@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import io.kotest.assertions.throwables.shouldNotThrow
@@ -530,7 +531,7 @@ class AvroIdlParserTest {
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Pet"),
             extends = emptyList(),
-            shape = Type.Shape(
+            shape = Shape(
                 listOf(
                     Field(
                         identifier = FieldIdentifier("name"),

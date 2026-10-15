@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -18,7 +19,7 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
         |}
         |""".trimMargin()
 
-    override fun Type.Shape.emit() = value.joinToString(",\n") { entry ->
+    override fun Shape.emit() = value.joinToString(",\n") { entry ->
         when (entry) {
             is Field -> entry.annotations.joinToString("") { "$Spacer${it.emit()}\n" } + "$Spacer${entry.emitDeclaration()}"
             is Spread -> "$Spacer${entry.emit()}"

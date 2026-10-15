@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
@@ -105,7 +106,7 @@ class SpringKotlinExtensionTest {
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier("Contact_embedded"),
-            shape = Type.Shape(
+            shape = Shape(
                 listOf(
                     Field(
                         identifier = FieldIdentifier("value"),
