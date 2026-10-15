@@ -1,0 +1,169 @@
+---
+title: Python Emitter
+slug: /emitters/python
+sidebar_position: 4
+wirespec:
+  source: todo.ws
+  language: Python
+  package: community.flock.todo
+  shared: true
+  ignoreDefaults: true
+---
+
+# Python Emitter
+
+The Python emitter generates dataclasses, enums and abstract base classes that only depend on the Python standard
+library. It needs Python 3.10 or newer. This page shows the code it generates for the
+[Todo example](./emitters.mdx#the-example). The Python emitter does not support [default values](#default-values) yet,
+so the example is compiled with `--ignore-defaults`:
+
+```shell wirespec command
+```
+
+```text wirespec tree
+```
+
+The `__init__.py` files turn the directories into packages, and `model/__init__.py` imports every model, so they can
+be imported from `community.flock.todo.model`.
+
+## Type
+
+A type becomes a `@dataclass` that extends `Wirespec.Shape`:
+
+```python wirespec file=model/Todo.py
+```
+
+The fields map to Python types as follows:
+
+| Wirespec               | Python         |
+|------------------------|----------------|
+| `String`               | `str`          |
+| `Integer`, `Integer32` | `int`          |
+| `Number`, `Number32`   | `float`        |
+| `Boolean`              | `bool`         |
+| `Bytes`                | `bytes`        |
+| `T[]`                  | `list[T]`      |
+| `{ T }`                | `dict[str, T]` |
+| `T?`                   | `Optional[T]`  |
+
+`validate()` returns the names of the fields that do not hold a valid value. Only refined values can be invalid, so
+`Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
+
+```python wirespec file=model/TodoCreated.py
+```
+
+## Refined
+
+A refined type becomes a `@dataclass` that wraps the value and extends `Wirespec.Refined`. `validate()` checks the
+regular expression, and `str()` returns the plain value. A refined `Integer` or `Number` checks its bounds instead.
+
+```python wirespec file=model/TodoId.py
+```
+
+## Enum
+
+An enum becomes an `enum.Enum` that also extends `Wirespec.Enum`. The value of every member is the value as it is
+written in Wirespec:
+
+```python wirespec file=model/Priority.py
+```
+
+## Union
+
+A union becomes a base class:
+
+```python wirespec file=model/TodoEvent.py
+```
+
+Every member of the union extends it, as `TodoCreated` above does with `(Wirespec.Shape, TodoEvent)`, so
+`isinstance(event, TodoEvent)` holds for both members.
+
+## Endpoint
+
+An endpoint becomes a module that holds everything that is needed to send and receive the request and its responses:
+
+- **Request**: the path parameters, query parameters and request headers each get a dataclass, `Path`, `Queries` and
+  `RequestHeaders`. `Request` combines them with the method and the body. Its constructor takes all values as flat
+  parameters.
+- **Responses**: every status code gets a response class, `Response200` and `Response404`, with a dataclass for its
+  headers. Base classes group them: `Response` for all of them, `Response2XX` and `Response4XX` per status class, and
+  `ResponseTodo` and `ResponseApiError` per body type.
+- **Handler and Call**: `UpdateTodo.Handler` is the abstract class the server implements, `UpdateTodo.Call` is the
+  abstract class the client implements.
+- **Serialization**: the class `UpdateTodo` has the static methods `toRawRequest`, `fromRawRequest`, `toRawResponse`
+  and `fromRawResponse`. They convert between the typed request and response and the `Wirespec.RawRequest` and
+  `Wirespec.RawResponse` that go over the wire, and delegate the serialization of the path, parameters, headers and
+  body to a `Wirespec.Serializer` or `Wirespec.Deserializer`.
+
+```python wirespec file=endpoint/UpdateTodo.py
+```
+
+## Channel
+
+A channel becomes a class with a `Sender` to publish messages and a `Listener` to receive them:
+
+```python wirespec file=channel/TodoEvents.py
+```
+
+## RPC
+
+An RPC becomes a class with a `Service` to implement. Because `CompleteTodo` declares an error, the service returns a
+`Response` that is either a `Result` or an `Error`. Without an error, it returns the result type directly:
+
+```python wirespec file=rpc/CompleteTodo.py
+```
+
+## Client
+
+For every endpoint, a client implements its `Call` class. It builds the `Request`, converts it with `toRawRequest`,
+sends it with a `Wirespec.Transportation` and converts the answer with `fromRawResponse`:
+
+```python wirespec file=client/UpdateTodoClient.py
+```
+
+`Client` implements the `Call` class of every endpoint in the specification, so one instance can call the whole API:
+
+```python wirespec file=Client.py
+```
+
+## Generator
+
+For every type, refined type, enum and union, a generator builds an instance with values from a `Wirespec.Generator`.
+It passes the path to the field and a description of the value it needs, such as the regular expression of a refined
+type. This is how you create test data that matches the specification:
+
+```python wirespec file=generator/TodoIdGenerator.py
+```
+
+## Shared
+
+`wirespec.py` is the same for every specification. Its `Wirespec` class contains:
+
+| Declarations                                                  | Purpose                                                   |
+|---------------------------------------------------------------|-----------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | Extended by the generated types, enums and refined types  |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Extended by the generated endpoints, channels and RPCs    |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint             |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them    |
+| `Generator`, `GeneratorField` and its subclasses              | Generate values for the generators                        |
+
+<details>
+  <summary>The complete wirespec.py</summary>
+
+```python wirespec file=wirespec.py
+```
+
+</details>
+
+## Default values
+
+The Python emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to Python fails, and the error names the fields that have a default:
+
+```text wirespec error ignoreDefaults=false
+```
+
+To generate Python anyway, leave the defaults out with the
+[ignore defaults option](../language/types.mdx#ignoring-defaults), as this page does. A
+[conversion](../converters/converters.md) from OpenAPI or Avro to Python does not fail: it leaves the defaults out.

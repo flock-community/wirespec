@@ -1,0 +1,174 @@
+---
+title: Rust Emitter
+slug: /emitters/rust
+sidebar_position: 5
+wirespec:
+  source: todo.ws
+  language: Rust
+  package: community.flock.todo
+  shared: true
+  ignoreDefaults: true
+---
+
+# Rust Emitter
+
+The Rust emitter generates structs, enums, modules and traits. Besides the standard library, it uses the
+[`regex`](https://crates.io/crates/regex) crate to validate refined types. The traits declare `async fn`, which needs
+Rust 1.75 or newer. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example). The Rust
+emitter does not support [default values](#default-values) yet, so the example is compiled with `--ignore-defaults`:
+
+```shell wirespec command
+```
+
+```text wirespec tree
+```
+
+File and field names are converted to snake case, so `dueDate` becomes `due_date` and `requestId` becomes
+`request_id`.
+
+## Type
+
+A type becomes a `struct` with a `validate` method:
+
+```rust wirespec file=model/todo.rs
+```
+
+The fields map to Rust types as follows:
+
+| Wirespec    | Rust                                   |
+|-------------|----------------------------------------|
+| `String`    | `String`                               |
+| `Integer`   | `i64`                                  |
+| `Integer32` | `i32`                                  |
+| `Number`    | `f64`                                  |
+| `Number32`  | `f32`                                  |
+| `Boolean`   | `bool`                                 |
+| `Bytes`     | `Vec<u8>`                              |
+| `T[]`       | `Vec<T>`                               |
+| `{ T }`     | `std::collections::HashMap<String, T>` |
+| `T?`        | `Option<T>`                            |
+
+`validate` returns the names of the fields that do not hold a valid value. Only refined values can be invalid, so
+`Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
+
+```rust wirespec file=model/todo_created.rs
+```
+
+## Refined
+
+A refined type becomes a `struct` that wraps the value. `validate` checks the regular expression, and `to_string`
+returns the plain value. A refined `Integer` or `Number` checks its bounds instead.
+
+```rust wirespec file=model/todo_id.rs
+```
+
+## Enum
+
+An enum becomes an `enum` that implements the `Enum` trait, which converts between a variant and its label, the value
+as it is written in Wirespec. `Display` prints the label:
+
+```rust wirespec file=model/priority.rs
+```
+
+## Union
+
+A union becomes an `enum` with a variant for every member, so a `match` over a `TodoEvent` is exhaustive:
+
+```rust wirespec file=model/todo_event.rs
+```
+
+## Endpoint
+
+An endpoint becomes a module, `endpoint/update_todo.rs`, that holds everything that is needed to send and receive the
+request and its responses:
+
+- **Request**: the path parameters, query parameters and request headers each get a struct, `Path`, `Queries` and
+  `RequestHeaders`. `Request` combines them with the method and the body, and `Request::new` takes all values as flat
+  parameters.
+- **Responses**: every status code gets a response struct, `Response200` and `Response404`, with a struct for its
+  headers. The enum `Response` has a variant for every response, and `Response2XX`, `Response4XX`, `ResponseTodo` and
+  `ResponseApiError` group them per status class and per body type.
+- **Handler and Call**: `Handler` is the trait the server implements, `Call` is the trait the client implements.
+- **Serialization**: the inner module `UpdateTodo` has the functions `to_raw_request`, `from_raw_request`,
+  `to_raw_response` and `from_raw_response`. They convert between the typed request and response and the
+  `RawRequest` and `RawResponse` that go over the wire, and delegate the serialization of the path, parameters,
+  headers and body to a `Serializer` or `Deserializer`.
+- **Client and Api**: every type that implements the shared `Client` trait, by providing a `Transportation` and a
+  `Serialization`, gets a `Handler` that sends the request. `Api` describes the endpoint for frameworks with its path
+  template and method.
+
+```rust wirespec file=endpoint/update_todo.rs
+```
+
+## Channel
+
+A channel becomes a module with a `Sender` trait to publish messages and a `Listener` trait to receive them:
+
+```rust wirespec file=channel/todo_events.rs
+```
+
+## RPC
+
+An RPC becomes a module with a `Service` trait to implement. Because `CompleteTodo` declares an error, the service
+returns a `Response` enum with a `Result` and an `Error` variant. Without an error, it returns the result type
+directly:
+
+```rust wirespec file=rpc/complete_todo.rs
+```
+
+## Client
+
+For every endpoint, a client implements its `Call` trait. It builds the `Request`, converts it with `to_raw_request`,
+sends it with a `Transportation` and converts the answer with `from_raw_response`:
+
+```rust wirespec file=client/update_todo_client.rs
+```
+
+`Client` in `client.rs` implements the `Call` trait of every endpoint in the specification, so one instance can call
+the whole API:
+
+```rust wirespec file=todo/client.rs
+```
+
+## Generator
+
+For every type, refined type, enum and union, the emitter also writes a generator that builds an instance with values
+from a `Generator`. It passes the path to the field and a description of the value it needs, such as the regular
+expression of a refined type:
+
+```rust wirespec file=generator/todo_id_generator.rs
+```
+
+## Shared
+
+`wirespec.rs` is the same for every specification. It contains:
+
+| Declarations                                                  | Purpose                                                           |
+|---------------------------------------------------------------|-------------------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | The kinds of model; generated enums implement `Enum`              |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Marker traits for endpoints, channels and RPCs                    |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint                     |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters         |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them            |
+| `Generator`, `GeneratorField` and its structs                 | Generate values for the generators                                |
+| `Client`, `Server`                                            | Provide the transport and serialization, and describe an endpoint |
+
+<details>
+  <summary>The complete wirespec.rs</summary>
+
+```rust wirespec file=wirespec.rs
+```
+
+</details>
+
+## Default values
+
+The Rust emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to Rust fails, and the error names the fields that have a default:
+
+```text wirespec error ignoreDefaults=false
+```
+
+To generate Rust anyway, leave the defaults out with the
+[ignore defaults option](../language/types.mdx#ignoring-defaults), as this page does. A
+[conversion](../converters/converters.md) from OpenAPI or Avro to Rust does not fail: it leaves the defaults out.

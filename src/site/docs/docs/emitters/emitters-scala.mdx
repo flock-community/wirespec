@@ -1,0 +1,175 @@
+---
+title: Scala Emitter
+slug: /emitters/scala
+sidebar_position: 6
+wirespec:
+  source: todo.ws
+  language: Scala
+  package: community.flock.todo
+  shared: true
+  ignoreDefaults: true
+---
+
+# Scala Emitter
+
+The Scala emitter generates case classes, sealed traits and enums that only depend on the Scala standard library. It
+generates Scala 3. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example). The
+Scala emitter does not support [default values](#default-values) yet, so the example is compiled with
+`--ignore-defaults`:
+
+```shell wirespec command
+```
+
+```text wirespec tree
+```
+
+## Type
+
+A type becomes a `case class` that extends `Wirespec.Shape`:
+
+```scala wirespec file=model/Todo.scala
+```
+
+The fields map to Scala types as follows:
+
+| Wirespec    | Scala            |
+|-------------|------------------|
+| `String`    | `String`         |
+| `Integer`   | `Long`           |
+| `Integer32` | `Int`            |
+| `Number`    | `Double`         |
+| `Number32`  | `Float`          |
+| `Boolean`   | `Boolean`        |
+| `Bytes`     | `Array[Byte]`    |
+| `T[]`       | `List[T]`        |
+| `{ T }`     | `Map[String, T]` |
+| `T?`        | `Option[T]`      |
+
+`validate()` returns the names of the fields that do not hold a valid value. Only refined values can be invalid, so
+`Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
+
+```scala wirespec file=model/TodoCreated.scala
+```
+
+## Refined
+
+A refined type becomes a `case class` that wraps the value and extends `Wirespec.Refined`. `validate()` checks the
+regular expression, and `toString()` returns the plain value. A refined `Integer` or `Number` checks its bounds
+instead.
+
+```scala wirespec file=model/TodoId.scala
+```
+
+## Enum
+
+An enum becomes an `enum` that extends `Wirespec.Enum`. The `label` holds the value as it is written in Wirespec,
+which is also what `toString()` returns:
+
+```scala wirespec file=model/Priority.scala
+```
+
+## Union
+
+A union becomes a `sealed trait`:
+
+```scala wirespec file=model/TodoEvent.scala
+```
+
+Every member of the union extends it, as `TodoCreated` above does with `extends Wirespec.Shape with TodoEvent`.
+
+## Endpoint
+
+An endpoint becomes an `object` that extends `Wirespec.Endpoint`. It holds everything that is needed to send and
+receive the request and its responses:
+
+- **Request**: the path parameters, query parameters and request headers each get a case class, `Path`, `Queries` and
+  `RequestHeaders`. `Request` combines them with the method and the body. Its auxiliary constructor takes all values
+  as flat parameters.
+- **Responses**: every status code gets a response class, `Response200` and `Response404`, with a case class or object
+  for its headers. Sealed traits group them: `Response` for all of them, `Response2XX` and `Response4XX` per status
+  class, and `ResponseTodo` and `ResponseApiError` per body type.
+- **Handler and Call**: `Handler` is the trait the server implements, `Call` is the trait the client implements. Both
+  take the effect type `F[_]` the result is wrapped in, such as `Future`.
+- **Serialization**: `toRawRequest`, `fromRawRequest`, `toRawResponse` and `fromRawResponse` convert between the typed
+  request and response and the `Wirespec.RawRequest` and `Wirespec.RawResponse` that go over the wire. They delegate
+  the serialization of the path, parameters, headers and body to a `Wirespec.Serializer` or `Wirespec.Deserializer`.
+- **Client and Server**: the objects `Client` and `Server` describe the endpoint for frameworks: its path template,
+  its method, its path segments, and the conversion functions for either side.
+
+```scala wirespec file=endpoint/UpdateTodo.scala
+```
+
+## Channel
+
+A channel becomes an `object` with a `Sender` to publish messages and a `Listener` to receive them:
+
+```scala wirespec file=channel/TodoEvents.scala
+```
+
+## RPC
+
+An RPC becomes an `object` with a `Service` trait to implement. Because `CompleteTodo` declares an error, the service
+returns a sealed `Response` with a `Result` and an `Error` variant. Without an error, it returns the result type
+directly:
+
+```scala wirespec file=rpc/CompleteTodo.scala
+```
+
+## Client
+
+For every endpoint, a client implements its `Call` trait with the identity effect `[A] =>> A`, so it returns the
+response directly. It builds the `Request`, converts it with `toRawRequest`, sends it with a `Wirespec.Transportation`
+and converts the answer with `fromRawResponse`:
+
+```scala wirespec file=client/UpdateTodoClient.scala
+```
+
+`Client` implements the `Call` trait of every endpoint in the specification, so one instance can call the whole API:
+
+```scala wirespec file=todo/Client.scala
+```
+
+## Generator
+
+For every type, refined type, enum and union, a generator builds an instance with values from a `Wirespec.Generator`.
+It passes the path to the field and a description of the value it needs, such as the regular expression of a refined
+type. This is how you create test data that matches the specification:
+
+```scala wirespec file=generator/TodoIdGenerator.scala
+```
+
+## Shared
+
+`Wirespec.scala` is the same for every specification and lives in the package `community.flock.wirespec.scala`. It
+contains:
+
+| Declarations                                                  | Purpose                                                   |
+|---------------------------------------------------------------|-----------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | Extended by the generated types, enums and refined types  |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Extended by the generated endpoints, channels and RPCs    |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint             |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them    |
+| `Generator`, `GeneratorField` and its subclasses              | Generate values for the generators                        |
+| `PathSegment`, `Literal`, `Param`                             | The segments of an endpoint path                          |
+| `ServerEdge`, `ClientEdge`, `Server`, `Client`                | Convert between raw and typed messages on either side     |
+
+<details>
+  <summary>The complete Wirespec.scala</summary>
+
+```scala wirespec file=Wirespec.scala
+```
+
+</details>
+
+## Default values
+
+The Scala emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to Scala fails, and the error names the fields that have a default:
+
+```text wirespec error ignoreDefaults=false
+```
+
+To generate Scala anyway, leave the defaults out with the
+[ignore defaults option](../language/types.mdx#ignoring-defaults), as this page does. A
+[conversion](../converters/converters.md) from OpenAPI or Avro to Scala does not fail: it leaves the defaults out.

@@ -1,46 +1,99 @@
 ---
-title: Open API v2 Emitter
+title: OpenAPI v2 Emitter
 slug: /emitters/open_api_v2
-sidebar_position: 4
+sidebar_position: 7
+wirespec:
+  source: todo.ws
+  language: OpenAPIV2
 ---
 
-import { Emitters } from "@flock/wirespec";
-import { WirespecCompile, WirespecShared } from "../../src/components/Wirespec";
+# OpenAPI v2 Emitter
 
-# Java Emitter
+The OpenAPI v2 emitter writes the specification as a Swagger 2.0 document. This page shows the document it writes for
+the [Todo example](./emitters.mdx#the-example):
 
-Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), the following source code is generated:
+```shell wirespec command
+```
+
+The output is a single file, `OpenAPI.json`. Types, refined types and enums become schemas in `definitions`, and
+endpoints become `paths`. The comment above a type or an endpoint becomes its `description`. The JSON below is
+formatted for readability.
+
+## Type
+
+A type becomes an object schema. Every field that is not nullable is `required`, and a field that refers to another
+definition becomes a `$ref`:
+
+```json wirespec select=definitions.Todo
+```
+
+The fields map to schemas as follows:
+
+| Wirespec    | Schema                                          |
+|-------------|-------------------------------------------------|
+| `String`    | `type: string`                                  |
+| `Integer`   | `type: integer`, `format: int64`                |
+| `Integer32` | `type: integer`, `format: int32`                |
+| `Number`    | `type: number`, `format: double`                |
+| `Number32`  | `type: number`, `format: float`                 |
+| `Boolean`   | `type: boolean`                                 |
+| `Bytes`     | `type: string`, `format: binary`                |
+| `T[]`       | `type: array` with the schema of `T` as `items` |
+| `{ T }`     | `type: object`                                  |
+| `T?`        | The schema of `T`, left out of `required`       |
+
+## Refined
+
+A refined type becomes a schema of its primitive type. A regular expression becomes its `pattern`:
+
+```json wirespec select=definitions.TodoId
+```
+
+## Enum
+
+An enum becomes a string schema with its values as `enum`:
+
+```json wirespec select=definitions.Priority
+```
+
+## Union
+
+Swagger 2.0 has no way to say that a value is one of several schemas, so the emitter leaves unions such as `TodoEvent`
+out of the document. Use the [OpenAPI v3 emitter](./emitters-open-api-v3.mdx#union) to describe them as a `oneOf`.
+
+## Endpoint
+
+An endpoint becomes an operation on its path, with the name of the endpoint as `operationId`:
+
+- Path parameters become `parameters` of the path, with `in` set to `path`.
+- The request body becomes a parameter of the operation, with `in` set to `body`.
+- Query parameters and request headers become parameters of the operation, with `in` set to `query` and `header`. A
+  nullable parameter is not `required`.
+- Every status code becomes a response with its body as `schema` and its `headers`.
+
+```json wirespec select=paths./todos/{id}
+```
+
+## Channel and RPC
+
+OpenAPI describes HTTP APIs, so channels and RPCs have no counterpart. The emitter leaves `TodoEvents` and
+`CompleteTodo` out of the document.
 
 <details>
-  <summary>Open api v2</summary>
-  <WirespecCompile emitter={Emitters.OPENAPI_V2} />
+  <summary>The complete OpenAPI.json</summary>
+
+```json wirespec file=OpenAPI.json
+```
+
 </details>
 
 ## Default values
 
-Field [default values](../language/types.mdx#default-values) are written as the `default` of the property schema:
+Field [default values](../language/types.mdx#default-values) are written as the `default` of the property schema, as
+the `done` field of [`Todo`](#type) shows. Two kinds of default are left out:
 
-```wirespec
-type Settings {
-  name: String = "anonymous",
-  retries: Integer = 3
-}
-```
-
-```json
-"Settings": {
-  "required": ["name", "retries"],
-  "properties": {
-    "name": { "type": "string", "default": "anonymous" },
-    "retries": { "type": "integer", "default": 3, "format": "int64" }
-  }
-}
-```
-
-Two kinds of default are left out:
-
-- A `null` default. A nullable field is already left out of `required`.
-- An enum default. An enum field is written as a `$ref` to the enum's schema, and OpenAPI 3.0 ignores anything next to
-  a `$ref`.
+- A `null` default, like the one of `dueDate`. A nullable field is already left out of `required`.
+- An enum default, like the one of `priority`. An enum field is written as a `$ref` to the enum's schema, and OpenAPI
+  ignores anything next to a `$ref`.
 
 The [OpenAPI converter](../converters/openapi.md#defaults) reads these defaults back.

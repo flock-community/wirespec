@@ -2,44 +2,106 @@
 title: Emitters
 slug: /emitters
 sidebar_position: 4
+wirespec:
+  source: todo.ws
+  package: community.flock.todo
+  shared: true
 ---
-
-import Drawio from "@theme/Drawio";
-import simpleGraph from "!!raw-loader!./model.drawio";
-import { WirespecExample } from "../../src/components/Wirespec";
 
 # Emitters
 
-Wirespec generates functional and dependency-free code. The generated output consists of structs and functions.
+An emitter turns a Wirespec specification into code or into a specification in another format. The language emitters
+generate typesafe, dependency-free code: apart from the `regex` crate for Rust, the output only needs the standard
+library of the target language. Pick one or more emitters with the `--language` option of the
+[CLI](../plugins/plugins-cli.md), or the `languages` setting of the [Gradle](../plugins/plugins-gradle.md) and
+[Maven](../plugins/plugins-maven.md) plugins.
 
-## Structure
+| Emitter                                  | Language     | Generates                                                     |
+|------------------------------------------|--------------|---------------------------------------------------------------|
+| [Java](./emitters-java.mdx)              | `Java`       | Records, sealed interfaces and enums                          |
+| [Kotlin](./emitters-kotlin.mdx)          | `Kotlin`     | Data classes, sealed interfaces and enum classes              |
+| [TypeScript](./emitters-typescript.mdx)  | `TypeScript` | Types, namespaces and functions                               |
+| [Python](./emitters-python.mdx)          | `Python`     | Dataclasses, enums and abstract base classes                  |
+| [Rust](./emitters-rust.mdx)              | `Rust`       | Structs, enums, modules and traits                            |
+| [Scala](./emitters-scala.mdx)            | `Scala`      | Case classes, sealed traits and enums                         |
+| [OpenAPI v2](./emitters-open-api-v2.mdx) | `OpenAPIV2`  | A Swagger 2.0 document                                        |
+| [OpenAPI v3](./emitters-open-api-v3.mdx) | `OpenAPIV3`  | An OpenAPI 3.0 document                                       |
+| [Avro](./emitters-avro.mdx)              | `Avro`       | An Avro schema                                                |
+| Wirespec                                 | `Wirespec`   | Wirespec, mostly used to [convert](../converters/converters.md) OpenAPI or Avro |
 
-This diagram provides an overview of the generic structure of the code emitted by Wirespec. The same structure is consistently applied across all supported languages, with minor exceptions to leverage language-specific features when beneficial.
+## The example
 
-The structure exists of a shared part and a part per emitted output. The shared part holds interfaces of the Wirespec functional model. The specific part has models of all types, endpoints, channels and rpcs.
+Every page in this section uses the same Wirespec file, `todo.ws`, as input. It describes a small todo API with one
+definition of every kind:
 
-<Drawio content={simpleGraph} />
+```wirespec wirespec source
+```
+
+| Definition                                                    | Kind                                     | What it shows                                                        |
+|---------------------------------------------------------------|------------------------------------------|----------------------------------------------------------------------|
+| `TodoId`                                                      | [Refined](../language/types.mdx#refined) | A `String` constrained by a regular expression                       |
+| `Priority`                                                    | [Enum](../language/types.mdx#enum)       | A fixed set of values                                                |
+| `Todo`, `TodoInput`, `ApiError`, `TodoCreated`, `TodoDeleted` | [Type](../language/types.mdx#composite)  | Fields of a refined type, an enum, a list and a nullable `String`, and [default values](#default-values) |
+| `TodoEvent`                                                   | [Union](../language/types.mdx#union)     | Either a `TodoCreated` or a `TodoDeleted`                            |
+| `UpdateTodo`                                                  | [Endpoint](../language/endpoints.mdx)    | A path parameter, a query parameter, a request header, a request body, two responses and a response header |
+| `TodoEvents`                                                  | [Channel](../language/channels.mdx)      | A channel that carries the `TodoEvent` union                         |
+| `CompleteTodo`                                                | [RPC](../language/rpc.mdx)               | A call with a parameter, a result and an error                       |
+
+The code on the emitter pages is not written by hand: when the documentation is built, `todo.ws` is compiled with the
+Wirespec CLI, so the pages always show what the current version of Wirespec generates. For Kotlin, for example:
+
+```shell wirespec command language=Kotlin
+```
+
+## What is generated
+
+The language emitters (Java, Kotlin, TypeScript, Python, Rust and Scala) all generate the same structure, written in
+the idiom of the target language. The output is split over a few packages, or directories, inside the package given
+with `-p`. TypeScript has no packages, so there they sit at the root of the output:
+
+| Package     | Contents                                                                                               |
+|-------------|--------------------------------------------------------------------------------------------------------|
+| `model`     | One file per type, refined type, enum and union: `Todo`, `TodoId`, `Priority`, `TodoEvent`, ...        |
+| `endpoint`  | One file per endpoint: `UpdateTodo`                                                                    |
+| `channel`   | One file per channel: `TodoEvents`                                                                     |
+| `rpc`       | One file per RPC: `CompleteTodo`                                                                       |
+| `client`    | A client per endpoint, `UpdateTodoClient`, and one `Client` that combines them                         |
+| `generator` | A generator per model, `TodoGenerator`, that builds instances with values from a `Wirespec.Generator`  |
+
+Next to it, the emitters write one **shared** file, such as `Wirespec.kt` or `wirespec.py`. It holds the interfaces
+that all generated code builds on, such as `Wirespec.Shape`, `Wirespec.Request` and `Wirespec.Serialization`, and it
+is the same for every specification. It is written when shared output is turned on: `--shared` for the CLI, or the
+`shared` setting of the Gradle and Maven plugins, which is on by default.
+
+Each Wirespec definition becomes the following construct:
+
+| Wirespec | Java                    | Kotlin                       | TypeScript                       | Python                    | Rust                        | Scala               |
+|----------|-------------------------|------------------------------|----------------------------------|---------------------------|-----------------------------|---------------------|
+| Type     | `record`                | `data class`                 | Object type and a validate function | `@dataclass`           | `struct`                    | `case class`        |
+| Refined  | `record` with a `value` | `data class` with a `value`  | Type alias and a validate function | `@dataclass` with a `value` | `struct` with a `value` | `case class` with a `value` |
+| Enum     | `enum`                  | `enum class`                 | Union of string literals         | `enum.Enum`               | `enum`                      | `enum`              |
+| Union    | `sealed interface`      | `sealed interface`           | Union type                       | Base class                | `enum` with a variant per type | `sealed trait`   |
+| Endpoint | `interface`             | `object`                     | `namespace`                      | Module with classes       | Module with structs and a `mod` | `object`        |
+| Channel  | `interface`             | `object`                     | `namespace`                      | Class                     | `mod` with traits           | `object`            |
+| RPC      | `interface`             | `object`                     | `namespace`                      | Class                     | `mod` with an enum and a trait | `object`         |
+
+The specification emitters work differently: [OpenAPI v2](./emitters-open-api-v2.mdx) and
+[OpenAPI v3](./emitters-open-api-v3.mdx) write one document with the schemas and paths of the API, and
+[Avro](./emitters-avro.mdx) writes one schema with the records, enums and unions. Both leave out the definitions they
+cannot describe, such as channels and RPCs.
 
 ## Default values
 
-Field [default values](../language/types.mdx#default-values) are generated where the target supports them:
+`Todo` gives three of its fields a [default value](../language/types.mdx#default-values): `done`, `priority` and
+`dueDate`. Defaults are generated where the target supports them:
 
-| Emitter                                   | Default values                                                              |
-|-------------------------------------------|-----------------------------------------------------------------------------|
-| Kotlin                                    | Constructor parameter defaults, see the [Kotlin emitter](./emitters-kotlin.mdx#default-values) |
-| Avro                                      | The `default` of the record field, see the [Avro emitter](./emitters-avro.mdx#default-values) |
-| OpenAPI v2 and v3                         | The `default` of the property schema, see the [OpenAPI v3 emitter](./emitters-open-api-v3.mdx#default-values) |
-| Wirespec                                  | `field: Type = value`                                                       |
-| Java, TypeScript, Python, Rust and Scala  | Not supported yet, see the [Java emitter](./emitters-java.mdx#default-values) |
+| Emitter                                   | Default values                                                                                                  |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| Kotlin                                    | Constructor parameter defaults, see the [Kotlin emitter](./emitters-kotlin.mdx#default-values)                   |
+| Avro                                      | The `default` of the record field, see the [Avro emitter](./emitters-avro.mdx#default-values)                    |
+| OpenAPI v2 and v3                         | The `default` of the property schema, see the [OpenAPI v3 emitter](./emitters-open-api-v3.mdx#default-values)    |
+| Wirespec                                  | `field: Type = value`                                                                                           |
+| Java, TypeScript, Python, Rust and Scala  | Not supported yet, see the [Java emitter](./emitters-java.mdx#default-values)                                    |
 
-## Examples
-
-In the specific documentation of the language examples the following Wirespec is used as input:
-
-<WirespecExample />
-
-These links provide additional details about the emitted code structure and implementation specifics for each supported programming language.
-
-- [Java Emitter Documentation](./emitters-java.mdx)
-- [Kotlin Emitter Documentation](./emitters-kotlin.mdx)
-- [TypeScript Emitter Documentation](./emitters-typescript.mdx)
+The emitters that do not support defaults yet refuse to compile a specification that has them, so their pages compile
+`todo.ws` with the [ignore defaults option](../language/types.mdx#ignoring-defaults), which leaves the defaults out.

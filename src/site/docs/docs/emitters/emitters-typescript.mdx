@@ -1,41 +1,170 @@
 ---
-title: Typescript Emitter
+title: TypeScript Emitter
 slug: /emitters/typescript
 sidebar_position: 3
+wirespec:
+  source: todo.ws
+  language: TypeScript
+  shared: true
+  ignoreDefaults: true
 ---
-
-import { Emitters } from "@flock/wirespec";
-import { WirespecCompile, WirespecShared } from "../../src/components/Wirespec";
 
 # TypeScript Emitter
 
-Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), the following source code is generated:
+The TypeScript emitter generates types, namespaces and functions without any dependencies. This page shows the code it
+generates for the [Todo example](./emitters.mdx#the-example). The TypeScript emitter does not support
+[default values](#default-values) yet, so the example is compiled with `--ignore-defaults`:
+
+```shell wirespec command
+```
+
+```text wirespec tree
+```
+
+TypeScript has no packages, so the output is not nested in the directories of a package name. The `index.ts` files
+of `model`, `endpoint`, `channel` and `rpc` export everything in their directory.
+
+## Type
+
+A type becomes an object type, together with a function that validates it:
+
+```typescript wirespec file=model/Todo.ts
+```
+
+The fields map to TypeScript types as follows:
+
+| Wirespec                                     | TypeScript          |
+|----------------------------------------------|---------------------|
+| `String`                                     | `string`            |
+| `Integer`, `Integer32`, `Number`, `Number32` | `number`            |
+| `Boolean`                                    | `boolean`           |
+| `Bytes`                                      | `Uint8Array`        |
+| `T[]`                                        | `T[]`               |
+| `{ T }`                                      | `Record<string, T>` |
+| `T?`                                         | `T \| undefined`    |
+
+The validate function returns the names of the fields that do not hold a valid value. Only refined values can be
+invalid, so `validateTodo` checks `id`. A type that contains another type passes on its errors with the field name as
+a prefix:
+
+```typescript wirespec file=model/TodoCreated.ts
+```
+
+## Refined
+
+A refined type becomes a type alias of the underlying primitive, together with a function that checks the regular
+expression. A refined `Integer` or `Number` checks its bounds instead.
+
+```typescript wirespec file=model/TodoId.ts
+```
+
+## Enum
+
+An enum becomes a union of string literals:
+
+```typescript wirespec file=model/Priority.ts
+```
+
+## Union
+
+A union becomes a union type of its members:
+
+```typescript wirespec file=model/TodoEvent.ts
+```
+
+## Endpoint
+
+An endpoint becomes a `namespace` that holds everything that is needed to send and receive the request and its
+responses:
+
+- **Request**: the path parameters, query parameters and request headers each get a type, `Path`, `Queries` and
+  `RequestHeaders`. `Request` combines them with the method and the body. The `request` function builds a `Request`
+  from flat `RequestParams`.
+- **Responses**: every status code gets a response type, `Response200` and `Response404`, with a literal `status`, so
+  a `switch` on the status narrows the type of the body. Union types group them: `Response` for all of them,
+  `Response2XX` and `Response4XX` per status class, and `ResponseTodo` and `ResponseApiError` per body type. A function
+  per status code, such as `response200`, builds the response.
+- **Handler and Call**: `Handler` is the interface the server implements, `Call` is the interface the client
+  implements.
+- **Serialization**: `toRawRequest`, `fromRawRequest`, `toRawResponse` and `fromRawResponse` convert between the typed
+  request and response and the `Wirespec.RawRequest` and `Wirespec.RawResponse` that go over the wire. They delegate
+  the serialization of the path, parameters, headers and body to a `Wirespec.Serializer` or `Wirespec.Deserializer`.
+- **client, server and api**: `client` and `server` bind the conversion functions to a `Wirespec.Serialization`,
+  and `api` describes the endpoint for frameworks.
+
+```typescript wirespec file=endpoint/UpdateTodo.ts
+```
+
+## Channel
+
+A channel becomes a `namespace` with a `Sender` to publish messages and a `Listener` to receive them:
+
+```typescript wirespec file=channel/TodoEvents.ts
+```
+
+## RPC
+
+An RPC becomes a `namespace` with a `Service` interface to implement. Because `CompleteTodo` declares an error, the
+service returns a `Response` that is either a `Result` or an `Error`. Without an error, it returns the result type
+directly:
+
+```typescript wirespec file=rpc/CompleteTodo.ts
+```
+
+## Client
+
+For every endpoint, a client function returns an implementation of its `Call` interface. It builds the `Request`,
+converts it with `toRawRequest`, sends it with a `Wirespec.Transportation` and converts the answer with
+`fromRawResponse`:
+
+```typescript wirespec file=client/UpdateTodoClient.ts
+```
+
+`client` combines the clients of every endpoint in the specification, so one object can call the whole API:
+
+```typescript wirespec file=Client.ts
+```
+
+## Generator
+
+For every type, refined type, enum and union, a generator builds a value with a `Wirespec.Generator`. It passes the
+path to the field and a description of the value it needs, such as the regular expression of a refined type. This is
+how you create test data that matches the specification:
+
+```typescript wirespec file=generator/TodoIdGenerator.ts
+```
+
+## Shared
+
+`Wirespec.ts` is the same for every specification. Its `Wirespec` namespace contains:
+
+| Declarations                                                  | Purpose                                                   |
+|---------------------------------------------------------------|-----------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | The kinds of model                                        |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Extended by the generated endpoints, channels and RPCs    |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint             |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them    |
+| `Generator`, `GeneratorField` and its variants                | Generate values for the generators                        |
+| `Client`, `Server`, `Api`                                     | Convert between raw and typed messages on either side     |
 
 <details>
-  <summary>TypeScript shared</summary>
-  <WirespecShared emitter={Emitters.TYPESCRIPT} />
-</details>
+  <summary>The complete Wirespec.ts</summary>
 
-<details>
-  <summary>TypeScript code</summary>
-  <WirespecCompile emitter={Emitters.TYPESCRIPT} />
+```typescript wirespec file=Wirespec.ts
+```
+
 </details>
 
 ## Default values
 
-The TypeScript emitter does not support [default values](../language/types.mdx#default-values) yet. Compiling a spec with
-defaults to TypeScript fails, and the error names the fields that have one:
+The TypeScript emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to TypeScript fails, and the error names the fields that have a default:
 
-```
-TypeScript does not support default values, but these fields have one: Settings.name, Settings.retries. Remove the defaults,
-or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI, or
-ignoreDefaults in the Gradle and Maven plugins.
+```text wirespec error ignoreDefaults=false
 ```
 
-To generate TypeScript anyway, leave the defaults out with the [ignore defaults option](../language/types.mdx#ignoring-defaults):
-
-```shell
-wirespec compile -i ./wirespec -l TypeScript --ignore-defaults
-```
-
-A [conversion](../converters/converters.md) from OpenAPI or Avro to TypeScript does not fail: it leaves the defaults out.
+To generate TypeScript anyway, leave the defaults out with the
+[ignore defaults option](../language/types.mdx#ignoring-defaults), as this page does. A
+[conversion](../converters/converters.md) from OpenAPI or Avro to TypeScript does not fail: it leaves the defaults
+out.

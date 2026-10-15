@@ -1,41 +1,184 @@
 ---
 title: Java Emitter
 slug: /emitters/java
-sidebar_position: 2
+sidebar_position: 1
+wirespec:
+  source: todo.ws
+  language: Java
+  package: community.flock.todo
+  shared: true
+  ignoreDefaults: true
 ---
-
-import { Emitters } from "@flock/wirespec";
-import { WirespecCompile, WirespecShared } from "../../src/components/Wirespec";
 
 # Java Emitter
 
-Based on the [Wirespec file as specified in Emitters](./emitters.mdx#examples), the following source code is generated:
+The Java emitter generates records, sealed interfaces and enums that only depend on the Java standard library. It
+needs Java 17 or newer. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example). The
+Java emitter does not support [default values](#default-values) yet, so the example is compiled with
+`--ignore-defaults`:
+
+```shell wirespec command
+```
+
+```text wirespec tree
+```
+
+## Type
+
+A type becomes a `record` that implements `Wirespec.Shape`:
+
+```java wirespec file=model/Todo.java
+```
+
+The fields map to Java types as follows:
+
+| Wirespec    | Java                       |
+|-------------|----------------------------|
+| `String`    | `String`                   |
+| `Integer`   | `Long`                     |
+| `Integer32` | `Integer`                  |
+| `Number`    | `Double`                   |
+| `Number32`  | `Float`                    |
+| `Boolean`   | `Boolean`                  |
+| `Bytes`     | `byte[]`                   |
+| `T[]`       | `java.util.List<T>`        |
+| `{ T }`     | `java.util.Map<String, T>` |
+| `T?`        | `java.util.Optional<T>`    |
+
+`validate()` returns the names of the fields that do not hold a valid value. Only refined values can be invalid, so
+`Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
+
+```java wirespec file=model/TodoCreated.java
+```
+
+## Refined
+
+A refined type becomes a `record` that wraps the value and implements `Wirespec.Refined`. `validate()` checks the
+regular expression, and `toString()` returns the plain value. A refined `Integer` or `Number` checks its bounds
+instead.
+
+```java wirespec file=model/TodoId.java
+```
+
+## Enum
+
+An enum becomes an `enum` that implements `Wirespec.Enum`. The `label` holds the value as it is written in Wirespec,
+which is also what `toString()` returns:
+
+```java wirespec file=model/Priority.java
+```
+
+## Union
+
+A union becomes a `sealed interface` that permits its members:
+
+```java wirespec file=model/TodoEvent.java
+```
+
+Every member implements it, as `TodoCreated` above does with `implements Wirespec.Shape, TodoEvent`. With pattern
+matching for `switch` (Java 21), a `switch` over a `TodoEvent` therefore needs no default branch:
+
+```java
+var description = switch (event) {
+  case TodoCreated created -> "Created " + created.todo().title();
+  case TodoDeleted deleted -> "Deleted " + deleted.id();
+};
+```
+
+## Endpoint
+
+An endpoint becomes an `interface` that extends `Wirespec.Endpoint`. It holds everything that is needed to send and
+receive the request and its responses:
+
+- **Request**: the path parameters, query parameters and request headers each get a record, `Path`, `Queries` and
+  `RequestHeaders`. `Request` combines them with the method and the body. Its second constructor takes all values as
+  flat parameters.
+- **Responses**: every status code gets a response record, `Response200` and `Response404`, with a record for its
+  headers. Sealed interfaces group them: `Response` for all of them, `Response2XX` and `Response4XX` per status class,
+  and `ResponseTodo` and `ResponseApiError` per body type.
+- **Handler and Call**: `Handler` is the interface the server implements, `Call` is the interface the client
+  implements. Both return a `CompletableFuture`.
+- **Serialization**: the static methods `toRawRequest`, `fromRawRequest`, `toRawResponse` and `fromRawResponse`
+  convert between the typed request and response and the `Wirespec.RawRequest` and `Wirespec.RawResponse` that go
+  over the wire. They delegate the serialization of the path, parameters, headers and body to a `Wirespec.Serializer`
+  or `Wirespec.Deserializer`, so any JSON library can be plugged in, see [Integration](../integration/integration.mdx).
+- **Api**: the record `Api`, available as `api`, describes the endpoint for frameworks: its path template, its
+  method, and the conversion functions for the server and the client side.
+
+```java wirespec file=endpoint/UpdateTodo.java
+```
+
+## Channel
+
+A channel becomes an `interface` with a `Sender` to publish messages and a `Listener` to receive them:
+
+```java wirespec file=channel/TodoEvents.java
+```
+
+## RPC
+
+An RPC becomes an `interface` with a `Service` to implement. Because `CompleteTodo` declares an error, the service
+returns a sealed `Response` with a `Result` and an `Error` variant. Without an error, it returns the result type
+directly:
+
+```java wirespec file=rpc/CompleteTodo.java
+```
+
+## Client
+
+For every endpoint, a client implements its `Call` interface. It builds the `Request`, converts it with
+`toRawRequest`, sends it with a `Wirespec.Transportation` and converts the answer with `fromRawResponse`:
+
+```java wirespec file=client/UpdateTodoClient.java
+```
+
+`Client` implements the `Call` interface of every endpoint in the specification, so one instance can call the whole
+API:
+
+```java wirespec file=Client.java
+```
+
+## Generator
+
+For every type, refined type, enum and union, a generator builds an instance with values from a `Wirespec.Generator`.
+It passes the path to the field and a description of the value it needs, such as the regular expression of a refined
+type. This is how you create test data that matches the specification:
+
+```java wirespec file=generator/TodoIdGenerator.java
+```
+
+## Shared
+
+`Wirespec.java` is the same for every specification and lives in the package `community.flock.wirespec.java`. It
+contains:
+
+| Declarations                                                  | Purpose                                                               |
+|---------------------------------------------------------------|-----------------------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | Implemented by the generated types, enums and refined types           |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Implemented by the generated endpoints, channels and RPCs             |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint                         |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters             |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them                |
+| `Generator`, `GeneratorField` and its subtypes                | Generate values for the generators                                    |
+| `ServerEdge`, `ClientEdge`, `Server`, `Client`                | Convert between raw and typed messages on either side                 |
+| `getType`                                                     | Builds the `java.lang.reflect.Type` that is passed to the serializers |
 
 <details>
-  <summary>Java shared</summary>
-  <WirespecShared emitter={Emitters.JAVA} />
-</details>
+  <summary>The complete Wirespec.java</summary>
 
-<details>
-  <summary>Java code</summary>
-  <WirespecCompile emitter={Emitters.JAVA} />
+```java wirespec file=Wirespec.java
+```
+
 </details>
 
 ## Default values
 
-The Java emitter does not support [default values](../language/types.mdx#default-values) yet. Compiling a spec with
-defaults to Java fails, and the error names the fields that have one:
+The Java emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to Java fails, and the error names the fields that have a default:
 
-```
-Java does not support default values, but these fields have one: Settings.name, Settings.retries. Remove the defaults,
-or leave them out of the generated code with the ignore defaults option: --ignore-defaults for the CLI, or
-ignoreDefaults in the Gradle and Maven plugins.
+```text wirespec error ignoreDefaults=false
 ```
 
-To generate Java anyway, leave the defaults out with the [ignore defaults option](../language/types.mdx#ignoring-defaults):
-
-```shell
-wirespec compile -i ./wirespec -l Java --ignore-defaults
-```
-
-A [conversion](../converters/converters.md) from OpenAPI or Avro to Java does not fail: it leaves the defaults out.
+To generate Java anyway, leave the defaults out with the [ignore defaults option](../language/types.mdx#ignoring-defaults),
+as this page does. A [conversion](../converters/converters.md) from OpenAPI or Avro to Java does not fail: it leaves
+the defaults out.
