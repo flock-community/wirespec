@@ -102,6 +102,11 @@ class AvroDefaultValueTest {
             """
             |[
             |  {
+            |    "type": "enum",
+            |    "name": "Status",
+            |    "symbols": ["ACTIVE", "INACTIVE"]
+            |  },
+            |  {
             |    "type": "record",
             |    "name": "Settings",
             |    "fields": [
@@ -114,11 +119,6 @@ class AvroDefaultValueTest {
             |      { "name": "status", "type": ["Status", "null"], "default": "INACTIVE" },
             |      { "name": "comment", "type": ["null", "string"] }
             |    ]
-            |  },
-            |  {
-            |    "type": "enum",
-            |    "name": "Status",
-            |    "symbols": ["ACTIVE", "INACTIVE"]
             |  }
             |]
             """.trimMargin()
@@ -127,7 +127,7 @@ class AvroDefaultValueTest {
     @Test
     fun testJsonRoundTrip() {
         val ast = AvroJsonParser.parse(ModuleContent(FileUri("test.avsc"), schema), true)
-        val record = AvroJsonEmitter.emit(ast.modules.first()).first().let { json.encodeToString(it) }
+        val record = AvroJsonEmitter.emit(ast.modules.first()).filterIsInstance<AvroModel.RecordType>().first().let { json.encodeToString(it) }
 
         // The emitter writes enums as schemas of their own, which this single record does not include.
         AvroJsonParser.parse(ModuleContent(FileUri("test.avsc"), record), true)

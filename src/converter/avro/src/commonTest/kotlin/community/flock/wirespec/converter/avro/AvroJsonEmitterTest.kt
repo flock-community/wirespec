@@ -126,6 +126,81 @@ class AvroJsonEmitterTest {
     }
 
     @Test
+    fun nestedRecordUsedByTwoTypesIsDefinedOnce() {
+        val ast = parse(
+            """
+            |type Person { address: Address, status: Status }
+            |type Company { address: Address }
+            |type Address { street: String }
+            |enum Status { ACTIVE, INACTIVE }
+            """.trimMargin(),
+        )
+
+        AvroJsonEmitter.emit(ast.modules.first()).let { json.encodeToString(it) } shouldEqualJson
+            // language=json
+            """
+            |[
+            |  { "type": "record", "name": "Address", "fields": [{ "name": "street", "type": "string" }] },
+            |  { "type": "enum", "name": "Status", "symbols": ["ACTIVE", "INACTIVE"] },
+            |  {
+            |    "type": "record",
+            |    "name": "Person",
+            |    "fields": [
+            |      { "name": "address", "type": "Address" },
+            |      { "name": "status", "type": "Status" }
+            |    ]
+            |  },
+            |  { "type": "record", "name": "Company", "fields": [{ "name": "address", "type": "Address" }] }
+            |]
+            """.trimMargin()
+    }
+
+    @Test
+    fun recursiveRecordIsReferencedByName() {
+        val ast = parse("type Node { children: Node[] }")
+
+        AvroJsonEmitter.emit(ast.modules.first()).let { json.encodeToString(it) } shouldEqualJson
+            // language=json
+            """
+            |[
+            |  {
+            |    "type": "record",
+            |    "name": "Node",
+            |    "fields": [{ "name": "children", "type": { "type": "array", "items": "Node" } }]
+            |  }
+            |]
+            """.trimMargin()
+    }
+
+    @Test
+    fun refinedFieldUsesItsPrimitive() {
+        val ast = parse(
+            """
+            |type Name = String(/^[a-z]+$/g)
+            |type Age = Integer(0, 150)
+            |type Weight = Number
+            |type Person { name: Name, age: Age, weight: Weight? }
+            """.trimMargin(),
+        )
+
+        AvroJsonEmitter.emit(ast.modules.first()).let { json.encodeToString(it) } shouldEqualJson
+            // language=json
+            """
+            |[
+            |  {
+            |    "type": "record",
+            |    "name": "Person",
+            |    "fields": [
+            |      { "name": "name", "type": "string" },
+            |      { "name": "age", "type": "long" },
+            |      { "name": "weight", "type": ["null", "double"] }
+            |    ]
+            |  }
+            |]
+            """.trimMargin()
+    }
+
+    @Test
     @Ignore
     fun testSimple() {
         val path = Path("src/commonTest/resources/example.avsc")
@@ -591,13 +666,6 @@ class AvroJsonEmitterTest {
             """
             |[
             |  {
-            |    "name": "UserAccount",
-            |    "type": [
-            |      "UserAccountPassword",
-            |      "UserAccountToken"
-            |    ]
-            |  },
-            |  {
             |    "type": "record",
             |    "name": "UserAccountPassword",
             |    "fields": [
@@ -619,6 +687,13 @@ class AvroJsonEmitterTest {
             |        "name": "token",
             |        "type": "string"
             |      }
+            |    ]
+            |  },
+            |  {
+            |    "name": "UserAccount",
+            |    "type": [
+            |      "UserAccountPassword",
+            |      "UserAccountToken"
             |    ]
             |  },
             |  {

@@ -25,6 +25,9 @@ public object AvroIdlEmitter : Emitter {
 
     private const val INDENT = "    "
 
+    // The playground compiles source that has no file of its own under this name.
+    private const val UNKNOWN_FILE = "unknown"
+
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules
         .map {
             logger.info("Emitting Avro IDL from ${it.fileUri.value}")
@@ -34,16 +37,16 @@ public object AvroIdlEmitter : Emitter {
     private fun deriveProtocolName(module: Module): String = module.fileUri.value
         .substringAfterLast('/')
         .substringBeforeLast('.')
-        .takeIf { it.isNotBlank() }
+        .takeIf { it.isNotBlank() && it != UNKNOWN_FILE }
         ?.let { it.replaceFirstChar { c -> c.uppercaseChar() } + "Protocol" }
         ?: "WirespecProtocol"
 
     internal fun emit(module: Module, protocolName: String = "WirespecProtocol"): String {
-        val body = module.statements.toList().mapNotNull { definition ->
+        val body = module.inDependencyOrder().mapNotNull { definition ->
             when (definition) {
-                is Type -> renderRecord(definition)
+                is Type -> module.renderRecord(definition)
                 is Enum -> renderEnum(definition)
-                is Union -> renderUnion(definition)
+                is Union -> module.renderUnion(definition)
                 is Refined -> renderRefined(definition)
                 else -> null
             }
@@ -51,7 +54,7 @@ public object AvroIdlEmitter : Emitter {
         return "protocol $protocolName {\n$body}\n"
     }
 
-    private fun renderRecord(type: Type): String {
+    private fun Module.renderRecord(type: Type): String {
         val doc = type.comment?.value?.let { renderDoc(it, INDENT) }.orEmpty()
         val fields = type.shape.fields.joinToString("") { field ->
             "$INDENT$INDENT${renderFieldType(field)} ${field.identifier.value}${renderDefault(field.defaultValue)};\n"
@@ -60,7 +63,7 @@ public object AvroIdlEmitter : Emitter {
     }
 
     // Avro checks a union's default against its first branch.
-    private fun renderFieldType(field: Field): String = when {
+    private fun Module.renderFieldType(field: Field): String = when {
         field.reference.isNullable && field.defaultValue.isNonNull() ->
             "union { ${renderReference(field.reference.copy(isNullable = false))}, null }"
 
@@ -77,7 +80,7 @@ public object AvroIdlEmitter : Emitter {
         return "$doc${INDENT}enum ${enum.identifier.value} {\n$INDENT$INDENT$symbols\n$INDENT}\n"
     }
 
-    private fun renderUnion(union: Union): String {
+    private fun Module.renderUnion(union: Union): String {
         val doc = union.comment?.value?.let { renderDoc(it, INDENT) }.orEmpty()
         val members = union.entries.joinToString(", ") { renderReference(it) }
         return "$doc${INDENT}record ${union.identifier.value} {\n$INDENT${INDENT}union { $members } value;\n$INDENT}\n"
@@ -88,9 +91,13 @@ public object AvroIdlEmitter : Emitter {
         return "$doc$INDENT// refined ${refined.identifier.value} = ${renderPrimitive(refined.reference.type)}\n"
     }
 
-    private fun renderReference(reference: Reference): String = when (reference) {
+    // IDL has no aliases, so a refined type is written as the primitive it refines.
+    private fun Module.renderReference(reference: Reference): String = when (reference) {
         is Reference.Primitive -> wrapNullable(renderPrimitive(reference.type), reference.isNullable)
-        is Reference.Custom -> wrapNullable(reference.value, reference.isNullable)
+        is Reference.Custom -> wrapNullable(
+            findRefined(reference.value)?.reference?.type?.let(::renderPrimitive) ?: reference.value,
+            reference.isNullable,
+        )
         is Reference.Iterable -> wrapNullable("array<${renderReference(reference.reference.copy(isNullable = false))}>", reference.isNullable)
         is Reference.Dict -> wrapNullable("map<${renderReference(reference.reference.copy(isNullable = false))}>", reference.isNullable)
         is Reference.Any -> wrapNullable("bytes", reference.isNullable)
