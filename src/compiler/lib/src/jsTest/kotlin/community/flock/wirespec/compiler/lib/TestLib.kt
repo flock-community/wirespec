@@ -13,6 +13,7 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class TestLib {
 
@@ -27,5 +28,32 @@ class TestLib {
             val input = output.consume()
             assertEquals(input, ast)
         }
+    }
+
+    @Test
+    fun testProduceConsumeKeepsAnnotationsAndDefaults() {
+        val source = """
+            |@Description("A task")
+            |type Todo {
+            |  @Description("What needs doing") @Tag(["a", "b"]) @Config({ level: "high" })
+            |  title: String = "nothing",
+            |  done: Boolean = false,
+            |  count: Integer = 3,
+            |  ratio: Number = 0.5,
+            |  status: Status = OPEN,
+            |  note: String? = null
+            |}
+            |
+            |enum Status { OPEN, CLOSED }
+            |
+            |@Internal
+            |endpoint GetTodo GET /todos -> {
+            |  @Description("Found") 200 -> Todo
+            |}
+        """.trimMargin()
+        val ast = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).fold({ fail(it.toString()) }, { it })
+        assertEquals(ast.modules.head.statements, ast.produce().consume().modules.head.statements)
     }
 }
