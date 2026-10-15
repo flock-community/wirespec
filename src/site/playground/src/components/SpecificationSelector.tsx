@@ -10,6 +10,7 @@ export function SpecificationSelector() {
     { value: "open_api_v2", label: "Open API v2" },
     { value: "open_api_v3", label: "Open API v3" },
     { value: "avro", label: "Avro" },
+    { value: "graphql", label: "GraphQL" },
   ];
 
   const navigate = useNavigate({ from: "/" });

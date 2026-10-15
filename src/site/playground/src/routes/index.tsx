@@ -18,12 +18,14 @@ import {
   openApiV2ToWirespec,
   openApiV3ToWirespec,
   avroToWirespec,
+  graphqlToWirespec,
 } from "../transformations/OpenAPIToWirespec";
 import { openapiExample } from "../examples/openapi";
 import { avroExample } from "../examples/avro";
+import { graphqlExample } from "../examples/graphql";
 
 type CompileSpecification = "wirespec";
-type ConvertSpecification = "open_api_v2" | "open_api_v3" | "avro";
+type ConvertSpecification = "open_api_v2" | "open_api_v3" | "avro" | "graphql";
 
 export type Specification = CompileSpecification | ConvertSpecification;
 
@@ -44,7 +46,8 @@ export type Language =
   | "java"
   | "typescript"
   | "python"
-  | "json";
+  | "json"
+  | "graphql";
 
 type Search = {
   specification: Specification;
@@ -86,6 +89,12 @@ function RouteComponent() {
     }
 
     try {
+      // GraphQL is not JSON, so it is converted before the JSON specifications are told apart.
+      if (specification === "graphql") {
+        setWirespecOutput(graphqlToWirespec(code));
+        return setWirespecErrors([]);
+      }
+
       const json = JSON.parse(code);
 
       if (specification === "avro") {
@@ -107,8 +116,16 @@ function RouteComponent() {
       setWirespecErrors([]);
     } catch (error) {
       if (error instanceof Error) {
+        // The GraphQL converter reports where it failed: "... at line 3, column 7".
+        const [, line, column] =
+          /at line (\d+), column (\d+)/.exec(error.message) ?? [];
         setWirespecErrors([
-          { value: error.message, line: 1, position: 1, length: 1 },
+          {
+            value: error.message,
+            line: Number(line ?? 1),
+            position: Number(column ?? 1),
+            length: 1,
+          },
         ]);
       }
     }
@@ -135,6 +152,8 @@ function RouteComponent() {
         return setCode(openapiExample);
       case "avro":
         return setCode(avroExample);
+      case "graphql":
+        return setCode(graphqlExample);
     }
   }, [specification]);
 
@@ -172,13 +191,21 @@ function RouteComponent() {
         <Box marginTop={1} borderTop="1px solid var(--border-primary)">
           <FileBar>
             <Box component="span" px={0.75}>
-              {specification === "wirespec" ? "todo.ws" : "todo.json"}
+              {specification === "wirespec"
+                ? "todo.ws"
+                : specification === "graphql"
+                  ? "todo.graphql"
+                  : "todo.json"}
             </Box>
           </FileBar>
           <PlayGround
             code={code}
             setCode={setCode}
-            language={specification === "wirespec" ? "wirespec" : "json"}
+            language={
+              specification === "wirespec" || specification === "graphql"
+                ? specification
+                : "json"
+            }
           />
         </Box>
       </Box>

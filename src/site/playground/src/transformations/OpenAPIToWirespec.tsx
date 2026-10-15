@@ -33,3 +33,14 @@ export const avroToWirespec: (avro: string) => CompilationResult = (
     language: "wirespec",
   };
 };
+
+export const graphqlToWirespec: (graphql: string) => CompilationResult = (
+  x: string,
+) => {
+  const ast = convert(x, Converters.GRAPHQL);
+  return {
+    result: emit(ast, Emitters.WIRESPEC, "", false),
+    errors: [],
+    language: "wirespec",
+  };
+};

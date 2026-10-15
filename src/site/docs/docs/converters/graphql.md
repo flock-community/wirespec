@@ -206,8 +206,7 @@ enum Priority {
 @GraphQLInput
 type NewTodo {
   title: String,
-  @GraphQLDefault("MEDIUM")
-  priority: Priority?
+  priority: Priority? = MEDIUM
 }
 
 @GraphQLQuery
