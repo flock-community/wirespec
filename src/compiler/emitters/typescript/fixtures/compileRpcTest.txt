@@ -1,4 +1,5 @@
 import {Wirespec} from '../Wirespec'
+
 export type User = {
   "name": string,
 }
@@ -8,6 +9,7 @@ export function validateUser(obj: User): string[] {
 
 import {Wirespec} from '../Wirespec'
 import {type User} from '../model'
+
 export namespace GetUser {
   export type Response = Result | Error
   export type Result = {
@@ -22,6 +24,7 @@ export namespace GetUser {
 }
 
 import {Wirespec} from '../Wirespec'
+
 export namespace Ping {
   export interface Service {
     ping(): Promise<string>;
@@ -30,6 +33,7 @@ export namespace Ping {
 
 import {Wirespec} from '../Wirespec'
 import {User} from '../model/User'
+
 export namespace UserGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): User {
     return { name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };

@@ -1,8 +1,10 @@
 package community.flock.wirespec.java;
+
 import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.Map;
+
 public interface Wirespec {
   public interface Model {
   }

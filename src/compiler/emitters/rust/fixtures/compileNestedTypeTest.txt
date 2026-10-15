@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DutchPostalCode {
     pub value: String,
@@ -16,6 +17,7 @@ impl DutchPostalCode {
 use super::super::wirespec::*;
 use regex;
 use super::dutch_postal_code::DutchPostalCode;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Address {
     pub street: String,
@@ -31,6 +33,7 @@ impl Address {
 use super::super::wirespec::*;
 use regex;
 use super::address::Address;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Person {
     pub name: String,
@@ -46,6 +49,7 @@ impl Person {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::dutch_postal_code::DutchPostalCode;
+
 pub struct DutchPostalCodeGenerator;
 impl DutchPostalCodeGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> DutchPostalCode {
@@ -58,6 +62,7 @@ use regex;
 use super::super::model::address::Address;
 use super::super::model::dutch_postal_code::DutchPostalCode;
 use super::dutch_postal_code_generator::DutchPostalCodeGenerator;
+
 pub struct AddressGenerator;
 impl AddressGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Address {
@@ -70,6 +75,7 @@ use regex;
 use super::super::model::person::Person;
 use super::super::model::address::Address;
 use super::address_generator::AddressGenerator;
+
 pub struct PersonGenerator;
 impl PersonGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Person {

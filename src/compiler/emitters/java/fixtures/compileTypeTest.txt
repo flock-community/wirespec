@@ -1,5 +1,7 @@
 package community.flock.wirespec.generated.model;
+
 import community.flock.wirespec.java.Wirespec;
+
 public record Request (
   String type,
   String url,
@@ -15,8 +17,10 @@ public record Request (
 };
 
 package community.flock.wirespec.generated.generator;
+
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.generated.model.Request;
+
 public interface RequestGenerator {
   public static Request generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Request(

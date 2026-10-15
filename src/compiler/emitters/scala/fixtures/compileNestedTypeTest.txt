@@ -1,6 +1,8 @@
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 case class DutchPostalCode(
   override val value: String
 ) extends Wirespec.Refined[String] {
@@ -11,8 +13,10 @@ case class DutchPostalCode(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 case class Address(
   val street: String,
   val houseNumber: Long,
@@ -23,8 +27,10 @@ case class Address(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 case class Person(
   val name: String,
   val address: Address,
@@ -35,9 +41,11 @@ case class Person(
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.DutchPostalCode
+
 object DutchPostalCodeGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): DutchPostalCode =
     new DutchPostalCode(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldString(
@@ -47,10 +55,12 @@ object DutchPostalCodeGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.Address
 import community.flock.wirespec.generated.model.DutchPostalCode
+
 object AddressGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): Address =
     new Address(
@@ -72,10 +82,12 @@ object AddressGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.Person
 import community.flock.wirespec.generated.model.Address
+
 object PersonGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): Person =
     new Person(

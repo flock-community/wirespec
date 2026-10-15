@@ -1,6 +1,8 @@
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
+
 enum MyAwesomeEnum(override val label: String) extends Wirespec.Enum {
   case ONE extends MyAwesomeEnum("ONE"),
   case Two extends MyAwesomeEnum("Two"),
@@ -17,9 +19,11 @@ enum MyAwesomeEnum(override val label: String) extends Wirespec.Enum {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 import community.flock.wirespec.generated.model.MyAwesomeEnum
+
 object MyAwesomeEnumGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): MyAwesomeEnum =
     MyAwesomeEnum.valueOf(generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldEnum(

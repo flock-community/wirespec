@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Message {
     pub payload: Box<dyn std::any::Any>,
@@ -16,6 +17,7 @@ impl Message {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::message::Message;
+
 pub struct MessageGenerator;
 impl MessageGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Message {

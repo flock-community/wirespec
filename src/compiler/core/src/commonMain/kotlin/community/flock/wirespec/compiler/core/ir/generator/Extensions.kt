@@ -1,5 +1,8 @@
 package community.flock.wirespec.compiler.core.ir.generator
 
+import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.Import
+
 /** Joins to string only if non-empty; returns empty string otherwise. */
 internal fun <T> Iterable<T>.joinNonEmpty(
     separator: CharSequence = ", ",
@@ -22,4 +25,13 @@ internal fun String.indentLines(level: Int, width: Int = 2): String {
 }
 
 /** Removes empty lines and ensures the result ends with a newline. */
-internal fun String.compact(): String = lines().filter { it.isNotEmpty() }.joinToString("\n", postfix = "\n")
+private fun String.compact(): String = lines().filter { it.isNotEmpty() }.joinToString("\n", postfix = "\n")
+
+/** Compacts each section and separates the non-blank ones with a single blank line. */
+internal fun compactSections(vararg sections: String): String = sections
+    .filter { it.isNotBlank() }
+    .joinToString("\n") { it.compact() }
+    .ifEmpty { "\n" }
+
+/** Splits the elements right after the last import, keeping their order. */
+internal fun List<Element>.splitAfterLastImport(): Pair<List<Element>, List<Element>> = (indexOfLast { it is Import } + 1).let { take(it) to drop(it) }

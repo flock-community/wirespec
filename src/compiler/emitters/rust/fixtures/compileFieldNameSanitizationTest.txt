@@ -1,5 +1,6 @@
 use super::super::wirespec::*;
 use regex;
+
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FieldNames {
     pub street: String,
@@ -21,6 +22,7 @@ impl FieldNames {
 use super::super::wirespec::*;
 use regex;
 use super::super::model::field_names::FieldNames;
+
 pub struct FieldNamesGenerator;
 impl FieldNamesGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> FieldNames {

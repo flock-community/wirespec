@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class TodoDto(Wirespec.Shape):
     description: str
@@ -19,6 +20,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TodoDto import TodoDto
+
 @dataclass
 class Path(Wirespec.Path):
     pass
@@ -101,6 +103,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TodoDto import TodoDto
 from ..endpoint.GetTodos import *
+
 @dataclass
 class GetTodosClient(GetTodos.Call):
     serialization: Wirespec.Serialization
@@ -119,6 +122,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.TodoDto import TodoDto
+
 class TodoDtoGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> TodoDto:
@@ -145,6 +149,7 @@ from .wirespec import T, Wirespec, _raise
 from .model.TodoDto import TodoDto
 from .endpoint.GetTodos import *
 from .client.GetTodosClient import GetTodosClient
+
 @dataclass
 class Client(GetTodos.Call):
     serialization: Wirespec.Serialization

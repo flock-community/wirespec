@@ -1,6 +1,8 @@
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 data class Settings(
   val name: String = "anonymous",
   val greeting: String = "Hello \"\$name\"",
@@ -22,8 +24,10 @@ data class Settings(
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 enum class Status (override val label: String): Wirespec.Enum {
   ACTIVE("ACTIVE"),
   INACTIVE("INACTIVE");
@@ -33,8 +37,10 @@ enum class Status (override val label: String): Wirespec.Enum {
 }
 
 package community.flock.wirespec.generated.model
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
 enum class Priority (override val label: String): Wirespec.Enum {
   _1("1"),
   _2("2");
@@ -44,11 +50,13 @@ enum class Priority (override val label: String): Wirespec.Enum {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Settings
 import community.flock.wirespec.generated.model.Status
 import community.flock.wirespec.generated.model.Priority
+
 object SettingsGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Settings =
     Settings(
@@ -118,9 +126,11 @@ object SettingsGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Status
+
 object StatusGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Status =
     Status.valueOf(generator.generate(path + listOf("value"), Wirespec.GeneratorFieldEnum(
@@ -131,9 +141,11 @@ object StatusGenerator {
 }
 
 package community.flock.wirespec.generated.generator
+
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Priority
+
 object PriorityGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Priority =
     Priority.valueOf(generator.generate(path + listOf("value"), Wirespec.GeneratorFieldEnum(

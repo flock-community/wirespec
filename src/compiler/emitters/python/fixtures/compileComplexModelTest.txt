@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class Email(Wirespec.Refined[str]):
     value: str
@@ -20,6 +21,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class PhoneNumber(Wirespec.Refined[str]):
     value: str
@@ -35,6 +37,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class Tag(Wirespec.Refined[str]):
     value: str
@@ -50,6 +53,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
+
 @dataclass
 class EmployeeAge(Wirespec.Refined[int]):
     value: int
@@ -67,6 +71,7 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 from .Email import Email
 from .PhoneNumber import PhoneNumber
+
 @dataclass
 class ContactInfo(Wirespec.Shape):
     email: Email
@@ -84,6 +89,7 @@ from ..wirespec import T, Wirespec, _raise
 from .EmployeeAge import EmployeeAge
 from .ContactInfo import ContactInfo
 from .Tag import Tag
+
 @dataclass
 class Employee(Wirespec.Shape):
     name: str
@@ -101,6 +107,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from .Employee import Employee
+
 @dataclass
 class Department(Wirespec.Shape):
     name: str
@@ -116,6 +123,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from .Department import Department
+
 @dataclass
 class Company(Wirespec.Shape):
     name: str
@@ -131,6 +139,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.Email import Email
+
 class EmailGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Email:
@@ -144,6 +153,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.PhoneNumber import PhoneNumber
+
 class PhoneNumberGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> PhoneNumber:
@@ -157,6 +167,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.Tag import Tag
+
 class TagGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Tag:
@@ -170,6 +181,7 @@ from typing import Any, Generic, List, Optional
 import enum
 from ..wirespec import T, Wirespec, _raise
 from ..model.EmployeeAge import EmployeeAge
+
 class EmployeeAgeGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> EmployeeAge:
@@ -187,6 +199,7 @@ from ..model.Email import Email
 from ..model.PhoneNumber import PhoneNumber
 from .EmailGenerator import EmailGenerator
 from .PhoneNumberGenerator import PhoneNumberGenerator
+
 class ContactInfoGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> ContactInfo:
@@ -206,6 +219,7 @@ from ..model.Tag import Tag
 from .EmployeeAgeGenerator import EmployeeAgeGenerator
 from .ContactInfoGenerator import ContactInfoGenerator
 from .TagGenerator import TagGenerator
+
 class EmployeeGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Employee:
@@ -221,6 +235,7 @@ from ..wirespec import T, Wirespec, _raise
 from ..model.Department import Department
 from ..model.Employee import Employee
 from .EmployeeGenerator import EmployeeGenerator
+
 class DepartmentGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Department:
@@ -236,6 +251,7 @@ from ..wirespec import T, Wirespec, _raise
 from ..model.Company import Company
 from ..model.Department import Department
 from .DepartmentGenerator import DepartmentGenerator
+
 class CompanyGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Company:
