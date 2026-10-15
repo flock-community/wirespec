@@ -168,7 +168,9 @@ class AvroExtensionTest {
         val expected =
             """
             |package packageName.avro;
+            |
             |import packageName.model.Identifier;
+            |
             |public interface IdentifierAvro {
             |  public static final org.apache.avro.Schema SCHEMA =
             |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
@@ -192,7 +194,9 @@ class AvroExtensionTest {
         val expected =
             """
             |package packageName.avro;
+            |
             |import packageName.model.Identifier;
+            |
             |public interface IdentifierAvro {
             |  public static final org.apache.avro.Schema SCHEMA =
             |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
@@ -214,7 +218,9 @@ class AvroExtensionTest {
         val expected =
             """
             |package packageName.avro
+            |
             |import packageName.model.Identifier
+            |
             |object IdentifierAvro {
             |  val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}")
             |  fun from(record: org.apache.avro.generic.GenericData.Record): Identifier =
@@ -236,7 +242,9 @@ class AvroExtensionTest {
         val expected =
             """
             |package packageName.avro
+            |
             |import packageName.model.Identifier
+            |
             |object IdentifierAvro {
             |  val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}")
             |  fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): Identifier =
