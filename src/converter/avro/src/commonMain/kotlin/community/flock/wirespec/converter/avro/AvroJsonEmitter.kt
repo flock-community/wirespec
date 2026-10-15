@@ -78,7 +78,7 @@ public object AvroJsonEmitter : Emitter {
                 }
 
                 is Enum -> AvroModel.SimpleType(def.identifier.value)
-                is Refined -> AvroModel.SimpleType("string")
+                is Refined -> def.reference.emit(module, hasEmitted)
                 else -> AvroModel.SimpleType(value)
             }
         }
@@ -117,10 +117,13 @@ public object AvroJsonEmitter : Emitter {
 
     public fun emit(module: Module): List<AvroModel.Type> {
         val hasEmitted = mutableListOf<String>()
-        return module.statements.toList()
+        return module.inDependencyOrder()
             .mapNotNull {
                 when (it) {
-                    is Type -> it.emit(module, hasEmitted)
+                    is Type -> it.takeUnless { type -> type.identifier.value in hasEmitted }
+                        ?.also { type -> hasEmitted.add(type.identifier.value) }
+                        ?.emit(module, hasEmitted)
+
                     is Enum -> it.emit()
                     is Union -> it.emit()
                     else -> null
