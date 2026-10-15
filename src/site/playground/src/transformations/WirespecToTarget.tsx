@@ -21,6 +21,8 @@ const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
       return Emitters.AVRO;
     case "avro_idl":
       return Emitters.AVRO_IDL;
+    case "graphql":
+      return Emitters.GRAPHQL;
   }
 };
 
@@ -31,6 +33,7 @@ const getLanguageFor: (emitter: Emitter) => Language = (emitter: Emitter) => {
     case "python":
     case "java":
     case "wirespec":
+    case "graphql":
       return emitter;
     case "open_api_v2":
     case "open_api_v3":

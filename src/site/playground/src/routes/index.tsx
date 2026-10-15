@@ -37,7 +37,8 @@ export type CompilerEmitter =
   | "open_api_v2"
   | "open_api_v3"
   | "avro"
-  | "avro_idl";
+  | "avro_idl"
+  | "graphql";
 export type ConverterEmitter = "wirespec";
 export type Emitter = CompilerEmitter | ConverterEmitter;
 
