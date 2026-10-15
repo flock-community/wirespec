@@ -19,6 +19,8 @@ const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
       return Emitters.OPENAPI_V3;
     case "avro":
       return Emitters.AVRO;
+    case "avro_idl":
+      return Emitters.AVRO_IDL;
   }
 };
 
@@ -34,6 +36,8 @@ const getLanguageFor: (emitter: Emitter) => Language = (emitter: Emitter) => {
     case "open_api_v3":
     case "avro":
       return "json";
+    case "avro_idl":
+      return "avdl";
   }
 };
 

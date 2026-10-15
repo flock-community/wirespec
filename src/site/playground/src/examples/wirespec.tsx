@@ -27,11 +27,16 @@ type Person {
   address: Address
 }
 
+enum Prio {
+  LOW, MEDIUM, HIGH
+}
+
+// A field can have a default value
 type Todo {
   id: TodoIdentifier,
   person: Person,
   done: Boolean,
-  prio: Integer,
+  prio: Prio = MEDIUM,
   ...Audited
 }
 

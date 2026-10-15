@@ -14,7 +14,8 @@ export function EmitterSelector() {
     { value: "java", label: "Java" },
     { value: "open_api_v2", label: "OpenAPI v2" },
     { value: "open_api_v3", label: "OpenAPI v3" },
-    { value: "avro", label: "Avro" },
+    { value: "avro", label: "Avro JSON" },
+    { value: "avro_idl", label: "Avro IDL" },
   ];
   const converterOption: { value: ConverterEmitter; label: string } = {
     value: "wirespec",

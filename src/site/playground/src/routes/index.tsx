@@ -36,7 +36,8 @@ export type CompilerEmitter =
   | "java"
   | "open_api_v2"
   | "open_api_v3"
-  | "avro";
+  | "avro"
+  | "avro_idl";
 export type ConverterEmitter = "wirespec";
 export type Emitter = CompilerEmitter | ConverterEmitter;
 
@@ -47,7 +48,8 @@ export type Language =
   | "typescript"
   | "python"
   | "json"
-  | "graphql";
+  | "graphql"
+  | "avdl";
 
 type Search = {
   specification: Specification;
