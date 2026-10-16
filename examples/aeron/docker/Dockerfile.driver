@@ -1,0 +1,19 @@
+# Context: driver-libs/ (aeron-driver + aeron-client + agrona jars, copied by
+# the integration-test module) next to this Dockerfile. A standalone Aeron
+# media driver: the process a client attaches to over /dev/shm, doing the
+# UDP network I/O on its behalf.
+# BASE_IMAGE is overridable for environments that cannot reach Docker Hub.
+ARG BASE_IMAGE=eclipse-temurin:21-jre
+FROM ${BASE_IMAGE}
+COPY driver-libs /app/libs
+# Agrona (the Aeron buffer library) reaches into jdk.internal.misc.Unsafe.
+ENTRYPOINT ["/bin/sh", "-c", "echo 'wirespec aeron driver starting' && exec java \
+    --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+    --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+    -cp '/app/libs/*' \
+    -Daeron.dir=/dev/shm/aeron \
+    -Daeron.dir.delete.on.start=true \
+    -Daeron.threading.mode=SHARED \
+    -Daeron.term.buffer.length=4194304 \
+    -Daeron.ipc.term.buffer.length=4194304 \
+    io.aeron.driver.MediaDriver"]

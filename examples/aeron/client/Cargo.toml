@@ -1,0 +1,14 @@
+[package]
+name = "wirespec-aeron-client"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "client"
+path = "src/bin/client.rs"
+
+[dependencies]
+wirespec-aeron = { path = "../../../src/integration/aeron/rust" }
+serde = { version = "1", features = ["derive"] }
+ciborium = "0.2"
+regex = "1"
