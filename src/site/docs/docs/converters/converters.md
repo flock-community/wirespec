@@ -16,5 +16,6 @@ OpenAPI Specification (OAS), Avro, GraphQL and AsyncAPI.
 ## Annotations
 
 Where Wirespec has no syntax for something in a document, the converter keeps it in an annotation, so it can be written
-back when Wirespec is converted into that format. [Annotations](../language/annotations.mdx) lists the annotations of
-all converters.
+back when Wirespec is converted into that format. Each converter lists its annotations:
+[OpenAPI](openapi.md#annotations), [GraphQL](graphql.md#annotations) and [AsyncAPI](asyncapi.md#annotations). The Avro
+converter has none.

@@ -152,7 +152,6 @@ kept in `@AsyncAPIComponents`. A schema that refers to it carries the Wirespec t
 | `@AsyncAPIInline`                                                   | definitions                   | a schema that is declared where it is used, instead of in `components.schemas` |
 
 _Definitions_ are types, enums, unions and refined types, and _fields_ are the fields of a type.
-[Annotations](../language/annotations.mdx) lists the annotations of all converters.
 
 The document as a whole has no Wirespec counterpart, so its annotations are on an empty type called `AsyncAPI`.
 

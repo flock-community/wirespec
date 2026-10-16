@@ -152,7 +152,7 @@ always kept in `@GraphQLDefault`.
 | `@GraphQLBuiltIn`                                                                | `type ID`           | the `ID` type the converter added                                                         |
 
 _Definitions_ are types, enums, unions, refined types and rpcs, and _fields_ are the fields of a type and the
-parameters of an rpc. [Annotations](../language/annotations.mdx) lists the annotations of all converters.
+parameters of an rpc.
 
 Wirespec type names start with an uppercase letter and may not clash with its primitives, so a GraphQL type such as
 `_Service` or `String` is renamed (`Service`, `GraphQLString`) and keeps its name in `@GraphQLName`. Field names and enum

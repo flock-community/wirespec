@@ -83,7 +83,8 @@ The following OpenAPI constructs are currently **not** converted or ignored duri
 | `@Description("...")`                       | endpoints, responses, definitions, fields | the description of an operation, response, schema, property, parameter or header |
 | `@Link("GetUser", operationId: "...", ...)` | responses                                 | a response link of OpenAPI 3, one annotation per link (see [Links](#links))      |
 
-[Annotations](../language/annotations.mdx) lists the annotations of all converters.
+_Definitions_ are types, enums and unions, and _fields_ are the fields of a type, the parameters and headers of an
+endpoint and the headers of a response.
 
 ## Descriptions
 
