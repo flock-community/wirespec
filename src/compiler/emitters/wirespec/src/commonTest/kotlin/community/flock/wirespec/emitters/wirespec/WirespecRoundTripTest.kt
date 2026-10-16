@@ -62,6 +62,16 @@ class WirespecRoundTripTest {
             CompileUnionTest,
         ).forEach { it.source.shouldRoundTrip() }
     }
+
+    @Test
+    fun annotationKeysThatAreNoIdentifierSurviveARoundTrip() {
+        """
+            |@Schema("x-order.id": "1", "${'$'}ref": "#/components/schemas/Todo", parameters: { default: "10", "x-y.z": [ ], "type-x": { } })
+            |type Todo {
+            |  id: String
+            |}
+        """.trimMargin().shouldRoundTrip()
+    }
 }
 
 private fun String.shouldRoundTrip() {

@@ -76,6 +76,16 @@ type Score {
 }
 ```
 
+A value can also be an array of strings or a dictionary. A name that is not an identifier, such as `$ref` or
+`x-trace.id`, is written between quotes:
+
+```wirespec
+@Kafka(topics: ["todos", "audit"], headers: { "x-trace.id": "uuid", retries: "3" })
+type Todo {
+    id: String
+}
+```
+
 Multiple annotations can be applied to the same definition:
 
 ```wirespec

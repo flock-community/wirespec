@@ -110,7 +110,10 @@ private fun TokenProvider.parseDict(): Either<WirespecException, List<Annotation
     expect<LeftCurly>().bind()
     val params = mutableListOf<Annotation.Parameter>()
     while (token.type !is RightCurly) {
-        val key = token.value
+        val key = when (token.type) {
+            LiteralString -> token.value.removeSurrounding("\"")
+            else -> token.value
+        }
         eatToken().bind()
         expect<Colon>().bind()
         val value = parseAnnotationValue().bind()

@@ -86,5 +86,5 @@ export const wsGraphQLExample = wsExample
 // The example with the annotations that steer the AsyncAPI output. Annotations come before a comment.
 export const wsAsyncAPIExample = wsExample.replace(
   "// A channel describes",
-  '@AsyncAPIAddress("todos/updates")\n@AsyncAPISend("publishTodoUpdate")\n// A channel describes',
+  '@AsyncAPIChannel(address: "todos/updates")\n@AsyncAPISend("publishTodoUpdate")\n// A channel describes',
 );

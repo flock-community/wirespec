@@ -6,44 +6,43 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Channel
-import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
-import community.flock.wirespec.compiler.core.parse.ast.Enum
-import community.flock.wirespec.compiler.core.parse.ast.Field
-import community.flock.wirespec.compiler.core.parse.ast.HasMetaData
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
-import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.compiler.core.parse.ast.Union
-import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.ADDRESS
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.Action
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.CHANNEL
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.COMPONENTS
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.DESCRIPTION
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.DOCUMENT
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.INLINE
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.MESSAGE
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.NAME
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.fields
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.find
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.has
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.named
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.single
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.value
-import community.flock.wirespec.converter.common.toJsonElement
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type as PrimitiveType
 
 /**
- * Emits a single AsyncAPI 3.0 document for all modules. Every channel becomes a channel with one message, which
- * carries the channel's type as payload, and the operations named in `@AsyncAPISend` and `@AsyncAPIReceive`, or a
- * `send` operation when there are none. Types, enums, unions and refined types become schemas. Endpoints and rpcs have
- * no AsyncAPI counterpart and are left out.
+ * Emits a single AsyncAPI document for all modules.
+ *
+ * Wirespec converted from AsyncAPI gives back the document it came from: its `@AsyncAPIDocument` holds the version
+ * and everything else that belongs to the document as a whole, and the other annotations hold what the definitions
+ * cannot. Any other Wirespec gets an AsyncAPI 3.0 document in which every channel has one message, carrying the type
+ * of the channel, and a `send` operation, unless annotations say otherwise. Types, enums, unions and refined types
+ * become schemas. Endpoints and rpcs have no AsyncAPI counterpart and are left out.
  */
 public object AsyncAPIEmitter : Emitter {
-
-    private const val ASYNCAPI_VERSION = "3.0.0"
-    private const val APPLICATION_JSON = "application/json"
-    private const val REF = "\$ref"
-    private val NULL_SCHEMA = JsonObject(mapOf("type" to JsonPrimitive("null")))
 
     override val extension: FileExtension = FileExtension.JSON
 
@@ -54,138 +53,146 @@ public object AsyncAPIEmitter : Emitter {
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules
         .onEach { logger.info("Emitting AsyncAPI from ${it.fileUri.value}") }
         .flatMap { it.statements }
-        .toAsyncAPI()
+        .let { WirespecToAsyncAPI(it).document() }
         .let { nonEmptyListOf(Emitted("asyncapi.${extension.value}", json.encodeToString(JsonObject.serializer(), it))) }
+}
 
-    private fun List<Definition>.toAsyncAPI(): JsonObject {
-        val channels = filterIsInstance<Channel>()
-        return jsonObjectOf(
-            "asyncapi" to JsonPrimitive(ASYNCAPI_VERSION),
-            "info" to jsonObjectOf("title" to JsonPrimitive("Wirespec"), "version" to JsonPrimitive("0.0.0")),
-            "defaultContentType" to JsonPrimitive(APPLICATION_JSON),
-            "channels" to channels.associate { it.identifier.value to it.toChannel() }.toJsonObjectOrNull(),
-            "operations" to channels.flatMap { it.toOperations() }.toMap().toJsonObjectOrNull(),
-            "components" to jsonObjectOf(
-                "schemas" to filterIsInstance<Model>().associate { it.identifier.value to it.toSchema() }.toJsonObjectOrNull(),
-                "messages" to channels.associate { it.messageName() to it.toMessage() }.toJsonObjectOrNull(),
-            ).takeIf { it.isNotEmpty() },
-        )
-    }
+private class WirespecToAsyncAPI(definitions: List<Definition>) {
 
-    private fun Channel.toChannel(): JsonObject = jsonObjectOf(
-        "address" to JsonPrimitive(annotations.single(ADDRESS) ?: identifier.value),
-        "description" to description()?.let(::JsonPrimitive),
-        "messages" to jsonObjectOf(messageName() to ref("#/components/messages/${messageName()}")),
+    private val holder: Type? = definitions.filterIsInstance<Type>().find { it.annotations.has(DOCUMENT) }
+
+    /** Wirespec converted from AsyncAPI says everything in annotations, so nothing is added by default. */
+    private val fromAsyncAPI = holder != null
+
+    private val models = definitions.filterIsInstance<Model>().filterNot { it == holder }
+
+    private val inlineDefinitions = models.filter { it.annotations.has(INLINE) }.associateBy { it.identifier.value }
+
+    private val componentModels = models.filterNot { it.annotations.has(INLINE) }
+
+    private val componentKeys = componentModels.associate { it.identifier.value to (it.annotations.single(NAME) ?: it.identifier.value) }
+
+    private val writer = JsonSchemaWriter(inlineDefinitions::get) { componentKeys[it] ?: it }
+
+    private val channels = definitions.filterIsInstance<Channel>()
+
+    private val root: JsonObject = holder?.annotations?.find(DOCUMENT)?.fields() ?: DEFAULT_DOCUMENT
+
+    private val majorVersion = if ((root["asyncapi"] as? JsonPrimitive)?.content?.startsWith("2.") == true) 2 else 3
+
+    fun document(): JsonObject = JsonObject(
+        root + jsonObjectOf(
+            "channels" to channels.associate { it.key() to it.toChannel() }.toJsonObjectOrNull(),
+            "operations" to operations().takeIf { majorVersion == 3 }?.toJsonObjectOrNull(),
+            "components" to components(),
+        ),
     )
 
-    private fun Channel.toOperations(): List<Pair<String, JsonObject>> = annotations
-        .mapNotNull { annotation -> Action.entries.find { it.annotationName == annotation.name }?.let { it to annotation.value() } }
-        .ifEmpty { listOf(Action.SEND to null) }
-        .map { (action, id) ->
-            (id ?: action.defaultOperationId(identifier.value)) to jsonObjectOf(
-                "action" to JsonPrimitive(action.keyword),
-                "channel" to ref("#/channels/${identifier.value}"),
-                "messages" to JsonArray(listOf(ref("#/channels/${identifier.value}/messages/${messageName()}"))),
+    private fun Channel.toChannel(): JsonObject {
+        val fields = annotations.find(CHANNEL)?.fields().orEmpty()
+        return when {
+            REF in fields -> fields
+            majorVersion == 2 -> JsonObject(
+                fields + jsonObjectOf("description" to description()) +
+                    annotations.operations().associate { (annotation, action) -> action.v2Keyword to annotation.toOperationV2(messages()) },
+            )
+            else -> JsonObject(
+                mapOf("address" to JsonPrimitive(key())).takeUnless { fromAsyncAPI }.orEmpty() +
+                    fields +
+                    jsonObjectOf("description" to description(), "messages" to messages().toJsonObjectOrNull()),
             )
         }
-
-    private fun Channel.toMessage(): JsonObject = jsonObjectOf(
-        "name" to JsonPrimitive(messageName()),
-        "payload" to reference.toSchema(),
-    )
-
-    private fun Channel.messageName(): String = (reference as? Reference.Custom)?.value ?: "${identifier.value}Message"
-
-    private fun Model.toSchema(): JsonObject = when (this) {
-        is Type -> jsonObjectOf(
-            "type" to JsonPrimitive("object"),
-            "description" to description()?.let(::JsonPrimitive),
-            "properties" to shape.fields.associate { it.identifier.value to it.toSchema() }.toJsonObjectOrNull(),
-            "required" to shape.fields
-                .filterNot { it.reference.isNullable }
-                .map { JsonPrimitive(it.identifier.value) }
-                .takeIf { it.isNotEmpty() }
-                ?.let(::JsonArray),
-        )
-        is Enum -> jsonObjectOf(
-            "type" to JsonPrimitive("string"),
-            "description" to description()?.let(::JsonPrimitive),
-            "enum" to JsonArray(entries.map(::JsonPrimitive)),
-        )
-        is Union -> jsonObjectOf(
-            "description" to description()?.let(::JsonPrimitive),
-            "oneOf" to JsonArray(entries.map { it.toSchema() }),
-        )
-        is Refined -> reference.type.toSchema().withEntries("description" to description()?.let(::JsonPrimitive))
     }
 
-    /**
-     * A field that may be left out is not `required`, so its own schema does not admit `null`. JSON Schema ignores what
-     * sits next to a `$ref`, so a reference with a description or default is wrapped in an `allOf`.
-     */
-    private fun Field.toSchema(): JsonObject {
-        val schema = reference.copy(isNullable = false).toSchema()
-        val details = jsonObjectOf(
-            "description" to annotations.single(DESCRIPTION)?.let(::JsonPrimitive),
-            "default" to defaultValue?.takeUnless { it == DefaultValue.NullValue }?.toJsonElement(),
-        )
+    private fun Channel.key(): String = annotations.single(NAME) ?: identifier.value.replaceFirstChar(Char::lowercase)
+
+    private fun Channel.description(): JsonPrimitive? = (annotations.single(DESCRIPTION) ?: comment?.value)?.let(::JsonPrimitive)
+
+    /** The messages of the channel by their key, or one message that carries the type of the channel. */
+    private fun Channel.messages(): Map<String, JsonElement> = annotations.named(MESSAGE)
+        .mapNotNull { message -> message.value()?.let { it to message.toMessage() } }
+        .toMap()
+        .ifEmpty { if (fromAsyncAPI) emptyMap() else mapOf(defaultMessageKey() to ref("#/components/messages/${defaultMessageKey().escapePointer()}")) }
+
+    private fun Channel.defaultMessageKey(): String = (reference as? Reference.Custom)?.value ?: "${identifier.value}Message"
+
+    private fun Annotation.toMessage(): JsonObject = JsonObject(fields().mapValues { (field, value) -> if (field in SCHEMA_FIELDS) value.toSchema() else value })
+
+    /** A schema in a message: a string names the Wirespec type it is, anything else is the schema itself. */
+    private fun JsonElement.toSchema(): JsonElement = (this as? JsonPrimitive)?.takeIf { it.isString }?.let { with(writer) { it.content.toReference().schema() } } ?: this
+
+    private fun operations(): Map<String, JsonElement> = channels.flatMap { channel ->
+        channel.annotations.operations()
+            .ifEmpty { if (fromAsyncAPI) emptyList() else listOf(AsyncAPIAnnotations.annotation(Action.SEND.annotationName) to Action.SEND) }
+            .map { (annotation, action) ->
+                (annotation.value() ?: action.defaultOperationId(channel.identifier.value)) to
+                    annotation.toOperation(action, "#/channels/${channel.key().escapePointer()}", channel.messages().keys)
+            }
+    }.toMap() + holder?.annotations.orEmpty().operations().map { (annotation, action) -> annotation.value().orEmpty() to annotation.toOperation(action, channelPointer = null, messageKeys = emptySet()) }
+
+    private fun List<Annotation>.operations(): List<Pair<Annotation, Action>> = mapNotNull { annotation ->
+        Action.entries.find { it.annotationName == annotation.name }?.let { annotation to it }
+    }
+
+    /** An operation on the channel at [channelPointer], which it refers to unless it says otherwise. */
+    private fun Annotation.toOperation(action: Action, channelPointer: String?, messageKeys: Set<String>): JsonObject {
+        val fields = fields()
         return when {
-            details.isEmpty() -> schema
-            REF in schema -> JsonObject(mapOf("allOf" to JsonArray(listOf(schema))) + details)
-            else -> JsonObject(schema + details)
+            REF in fields -> fields
+            else -> JsonObject(
+                mapOf("action" to JsonPrimitive(action.keyword)) +
+                    channelPointer?.let { mapOf("channel" to ref(it)) }.orEmpty() +
+                    channelPointer?.takeUnless { fromAsyncAPI }?.let { mapOf("messages" to messageKeys.toMessageRefs(it)) }.orEmpty() +
+                    fields.mapValues { (field, value) -> if (field == "messages" && channelPointer != null) value.toMessageRefs(channelPointer) else value },
+            )
         }
     }
 
-    private fun Reference.toSchema(): JsonObject = when (this) {
-        is Reference.Custom -> ref("#/components/schemas/$value")
-        is Reference.Primitive -> type.toSchema()
-        is Reference.Iterable -> jsonObjectOf("type" to JsonPrimitive("array"), "items" to reference.toSchema())
-        is Reference.Dict -> jsonObjectOf("type" to JsonPrimitive("object"), "additionalProperties" to reference.toSchema())
-        is Reference.Any -> JsonObject(emptyMap())
-        is Reference.Unit -> NULL_SCHEMA
-    }.let { if (isNullable) it.nullable() else it }
+    /** Messages named by their key in the channel, as references to those messages. */
+    private fun JsonElement.toMessageRefs(channelPointer: String): JsonElement = (this as? JsonArray)
+        ?.takeIf { messages -> messages.all { it is JsonPrimitive && it.isString } }
+        ?.let { keys -> keys.map { (it as JsonPrimitive).content }.toSet().toMessageRefs(channelPointer) }
+        ?: this
 
-    private fun PrimitiveType.toSchema(): JsonObject = when (this) {
-        is PrimitiveType.String -> jsonObjectOf(
-            "type" to JsonPrimitive("string"),
-            "pattern" to constraint?.value?.toPattern()?.let(::JsonPrimitive),
-        )
-        is PrimitiveType.Integer -> jsonObjectOf(
-            "type" to JsonPrimitive("integer"),
-            "format" to JsonPrimitive(if (precision == PrimitiveType.Precision.P32) "int32" else "int64"),
-            "minimum" to constraint?.min?.toJsonNumber(),
-            "maximum" to constraint?.max?.toJsonNumber(),
-        )
-        is PrimitiveType.Number -> jsonObjectOf(
-            "type" to JsonPrimitive("number"),
-            "format" to JsonPrimitive(if (precision == PrimitiveType.Precision.P32) "float" else "double"),
-            "minimum" to constraint?.min?.toJsonNumber(),
-            "maximum" to constraint?.max?.toJsonNumber(),
-        )
-        is PrimitiveType.Boolean -> jsonObjectOf("type" to JsonPrimitive("boolean"))
-        is PrimitiveType.Bytes -> jsonObjectOf("type" to JsonPrimitive("string"), "format" to JsonPrimitive("binary"))
+    private fun Set<String>.toMessageRefs(channelPointer: String): JsonArray = JsonArray(map { ref("$channelPointer/messages/${it.escapePointer()}") })
+
+    /** An AsyncAPI 2 operation, which holds its message itself, or the messages it may be in a `oneOf`. */
+    private fun Annotation.toOperationV2(messages: Map<String, JsonElement>): JsonObject = JsonObject(
+        value()?.let { mapOf("operationId" to JsonPrimitive(it)) }.orEmpty() +
+            fields().mapValues { (field, value) -> if (field == "message") value.toMessage(messages) else value },
+    )
+
+    private fun JsonElement.toMessage(messages: Map<String, JsonElement>): JsonElement = when {
+        this is JsonPrimitive && isString -> messages[content] ?: this
+        this is JsonArray && all { it is JsonPrimitive && it.isString } -> jsonObjectOf("oneOf" to JsonArray(map { messages[(it as JsonPrimitive).content] ?: it }))
+        else -> this
     }
 
-    /** A nullable schema also admits `null`: next to its type when it has one, or as an alternative. */
-    private fun JsonObject.nullable(): JsonObject = when (val type = get("type")) {
-        is JsonPrimitive -> if (type == NULL_SCHEMA.getValue("type")) this else withEntries("type" to JsonArray(listOf(type, JsonPrimitive("null"))))
-        else -> if (isEmpty()) this else jsonObjectOf("oneOf" to JsonArray(listOf(this, NULL_SCHEMA)))
+    private fun components(): JsonObject? {
+        val fields = holder?.annotations?.find(COMPONENTS)?.fields()
+        val schemas = componentModels.associate { componentKeys.getValue(it.identifier.value) to with(writer) { it.schema() } }
+        val messages = holder?.annotations.orEmpty().named(MESSAGE).mapNotNull { message -> message.value()?.let { it to message.toMessage() } }.toMap() +
+            channels.takeUnless { fromAsyncAPI }.orEmpty().filterNot { it.annotations.has(MESSAGE) }.associate { channel ->
+                channel.defaultMessageKey() to jsonObjectOf("name" to JsonPrimitive(channel.defaultMessageKey()), "payload" to with(writer) { channel.reference.schema() })
+            }
+        return when {
+            fields == null && schemas.isEmpty() && messages.isEmpty() -> null
+            else -> JsonObject(
+                fields.orEmpty() + jsonObjectOf(
+                    "schemas" to schemas.takeIf { it.isNotEmpty() }?.let { JsonObject(((fields?.get("schemas") as? JsonObject).orEmpty()) + it) },
+                    "messages" to messages.toJsonObjectOrNull(),
+                ),
+            )
+        }
     }
 
-    private fun HasMetaData.description(): String? = annotations.single(DESCRIPTION) ?: comment?.value
-
-    /** The pattern of a Wirespec regex `/pattern/flags`, where a `/` in the pattern is escaped. */
-    private fun String.toPattern(): String = substringAfter('/')
-        .substringBeforeLast('/')
-        .let { pattern -> Regex("\\\\.").replace(pattern) { if (it.value == "\\/") "/" else it.value } }
-
-    private fun String.toJsonNumber(): JsonPrimitive? = toLongOrNull()?.let(::JsonPrimitive) ?: toDoubleOrNull()?.let(::JsonPrimitive)
-
-    private fun ref(pointer: String): JsonObject = jsonObjectOf(REF to JsonPrimitive(pointer))
-
-    private fun jsonObjectOf(vararg entries: Pair<String, JsonElement?>): JsonObject = JsonObject(entries.mapNotNull { (key, value) -> value?.let { key to it } }.toMap())
-
-    private fun JsonObject.withEntries(vararg entries: Pair<String, JsonElement?>): JsonObject = JsonObject(this + jsonObjectOf(*entries))
-
-    private fun Map<String, JsonElement>.toJsonObjectOrNull(): JsonObject? = takeIf { it.isNotEmpty() }?.let(::JsonObject)
+    private companion object {
+        const val REF = "\$ref"
+        val SCHEMA_FIELDS = setOf("payload", "headers")
+        val DEFAULT_DOCUMENT = jsonObjectOf(
+            "asyncapi" to JsonPrimitive("3.0.0"),
+            "info" to jsonObjectOf("title" to JsonPrimitive("Wirespec"), "version" to JsonPrimitive("0.0.0")),
+            "defaultContentType" to JsonPrimitive("application/json"),
+        )
+    }
 }

@@ -2,11 +2,15 @@ package community.flock.wirespec.converter.asyncapi
 
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.parse.ParseOptions
+import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.compiler.test.compile
+import community.flock.wirespec.compiler.test.parse
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotlinx.io.buffered
@@ -18,19 +22,53 @@ import kotlin.test.Test
 class AsyncAPIParserTest {
 
     @Test
-    fun convertsAnAsyncAPI3Document() {
+    fun kitchenSinkV3SurvivesTheRoundTrip() {
+        loadResource("kitchen-sink-v3.json").shouldRoundTrip()
+    }
+
+    @Test
+    fun kitchenSinkV2SurvivesTheRoundTrip() {
+        loadResource("kitchen-sink-v2.json").shouldRoundTrip()
+    }
+
+    @Test
+    fun todoSurvivesTheRoundTrip() {
+        loadResource("todo.json").shouldRoundTrip()
+    }
+
+    @Test
+    fun streetlightsSurvivesTheRoundTrip() {
+        loadResource("streetlights.json").shouldRoundTrip()
+    }
+
+    @Test
+    fun convertsTodoToWirespec() {
         loadResource("todo.json").toWirespec() shouldBe """
+            |@AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" }, defaultContentType: "application/json")
+            |@AsyncAPIComponents
+            |@AsyncAPIMessage("TodoUpdated", name: "TodoUpdated", payload: "Todo")
+            |@AsyncAPIMessage("TodoCreated", payload: "Todo")
+            |@AsyncAPIMessage("TodoDeleted", payload: "TodoDeleted")
+            |type AsyncAPI {
+            |
+            |}
+            |
             |@Description("Every change to a todo")
-            |@AsyncAPIAddress("todos/{todoId}/updates")
-            |@AsyncAPISend("publishTodoUpdate")
+            |@AsyncAPIChannel(address: "todos/{todoId}/updates", parameters: { todoId: { description: "The id of the todo" } })
+            |@AsyncAPIMessage("todoUpdated", "$REF": "#/components/messages/TodoUpdated")
+            |@AsyncAPISend("publishTodoUpdate", messages: ["todoUpdated"])
             |channel TodoUpdates -> Todo
             |
-            |@AsyncAPIAddress("todos.events")
+            |@AsyncAPIChannel(address: "todos.events")
+            |@AsyncAPIMessage("todoCreated", "$REF": "#/components/messages/TodoCreated")
+            |@AsyncAPIMessage("todoDeleted", "$REF": "#/components/messages/TodoDeleted")
             |@AsyncAPIReceive("onTodoEvent")
             |channel TodoEvents -> TodoEventsMessage
             |
+            |@AsyncAPIInline
             |type TodoEventsMessage = Todo | TodoDeleted
             |
+            |@AsyncAPIInline
             |type TodoDeleted {
             |  id: TodoId,
             |  reason: String?
@@ -54,8 +92,10 @@ class AsyncAPIParserTest {
             |  estimate: Integer32? = 1
             |}
             |
+            |@AsyncAPIInline
             |type TodoAssignee {
             |  name: String,
+            |  @AsyncAPISchema(type: ["string", "\"null\""])
             |  email: String?
             |}
             |
@@ -63,96 +103,7 @@ class AsyncAPIParserTest {
     }
 
     @Test
-    fun convertsAnAsyncAPI2Document() {
-        loadResource("streetlights.json").toWirespec() shouldBe """
-            |@Description("The topic on which measured values may be produced and consumed.")
-            |@AsyncAPIAddress("streetlights/{streetlightId}/lighting/measured")
-            |@AsyncAPISend("receiveLightMeasurement")
-            |channel StreetlightsStreetlightIdLightingMeasured -> LightMeasuredPayload
-            |
-            |@AsyncAPIAddress("streetlights/{streetlightId}/turn")
-            |@AsyncAPIReceive("turnOnOff")
-            |channel StreetlightsStreetlightIdTurn -> StreetlightsStreetlightIdTurnMessage
-            |
-            |type StreetlightsStreetlightIdTurnMessage = TurnOnOffPayload | TurnOffPayload
-            |
-            |@AsyncAPIAddress("streetlights/{streetlightId}/dim")
-            |@AsyncAPIReceive
-            |channel StreetlightsStreetlightIdDim -> DimLight
-            |
-            |type DimLight {
-            |  percentage: Integer?,
-            |  sentAt: SentAt?
-            |}
-            |
-            |type LightMeasuredPayload {
-            |  @Description("Light intensity measured in lumens.")
-            |  lumens: Integer?,
-            |  sentAt: SentAt?
-            |}
-            |
-            |type TurnOnOffPayload {
-            |  @Description("Whether to turn on or off the light.")
-            |  command: TurnOnOffPayloadCommand?,
-            |  sentAt: SentAt?
-            |}
-            |
-            |enum TurnOnOffPayloadCommand {
-            |  `on`, `off`
-            |}
-            |
-            |type TurnOffPayload {
-            |  @Description("Whether to turn on or off the light.")
-            |  command: TurnOnOffPayloadCommand?,
-            |  sentAt: SentAt?,
-            |  fadeOut: Boolean?
-            |}
-            |
-            |@Description("Date and time when the message was sent.")
-            |type SentAt = String
-            |
-        """.trimMargin()
-    }
-
-    @Test
-    fun convertedDocumentsCompile() {
-        listOf("todo.json", "streetlights.json").forEach { resource ->
-            compile(loadResource(resource).toWirespec())(::KotlinEmitter).shouldBeRight()
-        }
-    }
-
-    @Test
-    fun leavesOutTheAddressAndOperationThatAreWrittenByDefault() {
-        """
-            {
-              "asyncapi": "3.0.0",
-              "info": { "title": "Orders", "version": "1.0.0" },
-              "channels": {
-                "Orders": {
-                  "address": "Orders",
-                  "messages": {
-                    "order": {
-                      "payload": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } }
-                    }
-                  }
-                }
-              },
-              "operations": {
-                "sendOrders": { "action": "send", "channel": { "$REF": "#/channels/Orders" } }
-              }
-            }
-        """.toWirespec() shouldBe """
-            |channel Orders -> Order
-            |
-            |type Order {
-            |  id: String
-            |}
-            |
-        """.trimMargin()
-    }
-
-    @Test
-    fun convertsJsonSchema() {
+    fun keepsWhatWirespecDoesNotWriteItselfInAsyncAPISchema() {
         """
             {
               "asyncapi": "3.0.0",
@@ -160,30 +111,35 @@ class AsyncAPIParserTest {
               "components": {
                 "schemas": {
                   "Shape": { "oneOf": [{ "$REF": "#/components/schemas/Circle" }, { "$REF": "#/components/schemas/Square" }] },
-                  "Circle": { "type": "object", "required": ["radius"], "properties": { "radius": { "type": "number" } } },
+                  "Circle": { "type": "object", "required": ["radius"], "properties": { "radius": { "type": "number", "minimum": 0 } } },
                   "Square": { "type": "object", "required": ["side"], "properties": { "side": { "type": "number", "format": "float" } } },
                   "Percentage": { "type": "integer", "minimum": 0, "maximum": 100 },
-                  "Ratio": { "type": "number", "minimum": 0, "maximum": 1.5 },
                   "Node": {
                     "type": "object",
                     "properties": {
                       "parent": { "oneOf": [{ "$REF": "#/components/schemas/Node" }, { "type": "null" }] },
                       "children": { "type": "array", "items": { "$REF": "#/components/schemas/Node" } },
                       "labels": { "type": "object", "additionalProperties": { "type": "string" } },
-                      "scores": { "type": "array", "items": { "type": ["integer", "null"] } },
-                      "data": {},
-                      "blob": { "type": "string", "format": "binary" },
-                      "shape": { "allOf": [{ "$REF": "#/components/schemas/Shape" }], "description": "The shape of the node" },
-                      "kind": { "anyOf": [{ "type": "string" }, { "type": "integer" }] }
+                      "createdAt": { "type": "string", "format": "date-time" },
+                      "x-trace.id": { "type": "string" },
+                      "external": { "$REF": "other.json#/Thing" },
+                      "tags": { "type": "array", "items": { "type": "string" }, "default": [] }
                     }
                   }
                 }
               }
             }
         """.toWirespec() shouldBe """
+            |@AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Shapes", version: "1.0.0" })
+            |@AsyncAPIComponents
+            |type AsyncAPI {
+            |
+            |}
+            |
             |type Shape = Circle | Square
             |
             |type Circle {
+            |  @AsyncAPISchema(minimum: "0")
             |  radius: Number
             |}
             |
@@ -193,63 +149,56 @@ class AsyncAPIParserTest {
             |
             |type Percentage = Integer(0, 100)
             |
-            |type Ratio = Number(0.0, 1.5)
-            |
             |type Node {
+            |  @AsyncAPISchema(oneOf: "[{\"$REF\":\"#/components/schemas/Node\"},{\"type\":\"null\"}]", omit: ["$REF"])
             |  parent: Node?,
             |  children: Node[]?,
             |  labels: { String }?,
-            |  scores: Integer?[]?,
-            |  data: Any?,
-            |  blob: Bytes?,
-            |  @Description("The shape of the node")
-            |  shape: Shape?,
-            |  kind: Any?
+            |  @AsyncAPISchema(format: "date-time")
+            |  createdAt: String?,
+            |  @AsyncAPIName("x-trace.id")
+            |  x-trace_id: String?,
+            |  @AsyncAPISchema("$REF": "other.json#/Thing")
+            |  external: Any?,
+            |  @AsyncAPISchema({ default: [ ] })
+            |  tags: String[]?
             |}
             |
         """.trimMargin()
     }
 
     @Test
-    fun convertsAPayloadInAnotherSchemaFormatToAny() {
-        """
-            {
-              "asyncapi": "3.0.0",
-              "info": { "title": "Sensors", "version": "1.0.0" },
-              "channels": {
-                "readings": {
-                  "address": "sensors/readings",
-                  "messages": {
-                    "reading": {
-                      "payload": {
-                        "schemaFormat": "application/vnd.apache.avro;version=1.9.0",
-                        "schema": { "type": "record", "name": "Reading", "fields": [{ "name": "value", "type": "double" }] }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-        """.toWirespec() shouldBe """
-            |@AsyncAPIAddress("sensors/readings")
-            |channel Readings -> Any
-            |
-        """.trimMargin()
+    fun convertedDocumentsCompile() {
+        listOf("todo.json", "streetlights.json", "kitchen-sink-v3.json", "kitchen-sink-v2.json").forEach { resource ->
+            compile(loadResource(resource).toWirespec())(::KotlinEmitter).shouldBeRight()
+        }
     }
 
     @Test
-    fun rejectsWhatItCannotConvert() {
+    fun rejectsWhatIsNoAsyncAPIDocument() {
+        shouldThrow<IllegalStateException> { "[]".toWirespec() }.message shouldBe "Invalid AsyncAPI document; expected a JSON object"
         shouldThrow<IllegalStateException> { "{}".toWirespec() }.message shouldBe "Invalid AsyncAPI document; missing 'asyncapi' property"
         shouldThrow<IllegalStateException> { """{ "asyncapi": "1.2.0" }""".toWirespec() }.message shouldBe "Unsupported AsyncAPI version 1.2.0; only 2.x and 3.x can be converted"
-        shouldThrow<IllegalStateException> {
-            """{ "asyncapi": "3.0.0", "components": { "schemas": { "Todo": { "$REF": "todo.json#/Todo" } } } }""".toWirespec()
-        }.message shouldBe "Cannot resolve reference todo.json#/Todo; only references within the document are supported"
     }
 
     private fun loadResource(name: String): String = SystemFileSystem.source(Path("src/commonTest/resources/$name")).buffered().readString()
 
     private fun String.toWirespec(): String = AsyncAPIParser.parse(ModuleContent(FileUri("asyncapi.json"), this), strict = true)
         .let { WirespecEmitter().emit(it, noLogger).single().result }
+
+    /**
+     * AsyncAPI -> Wirespec AST -> Wirespec source -> Wirespec AST -> AsyncAPI has to give back the document it started
+     * from, and the Wirespec parser has to read back the AST the converter produced.
+     */
+    private fun String.shouldRoundTrip() {
+        val converted = AsyncAPIParser.parse(ModuleContent(FileUri("asyncapi.json"), this), strict = true)
+            .let { Validator.validate(ParseOptions(), it) }
+            .shouldBeRight()
+        val parsed = parse(WirespecEmitter().emit(converted, noLogger).single().result).shouldBeRight()
+
+        parsed.modules.head.statements.toList() shouldBe converted.modules.head.statements.toList()
+        AsyncAPIEmitter.emit(parsed, noLogger).single().result shouldEqualJson this
+    }
 
     private companion object {
         const val REF = "\$ref"
