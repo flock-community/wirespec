@@ -107,6 +107,7 @@ class WirespecEmitterTest {
     fun compileChannelTest() {
         val wirespec = """
             |channel Queue -> String
+            |
         """.trimMargin()
 
         CompileChannelTest.compiler { WirespecEmitter() } shouldBeRight wirespec

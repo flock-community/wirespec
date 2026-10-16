@@ -76,6 +76,7 @@ kotlin {
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:graphql"))
+                implementation(project(":src:converter:asyncapi"))
                 implementation(project(":src:tools:generator"))
                 implementation(libs.kotlinx.openapi.bindings)
                 implementation(libs.kotlinx.serialization)

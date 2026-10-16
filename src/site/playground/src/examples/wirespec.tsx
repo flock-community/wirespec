@@ -82,3 +82,9 @@ export const wsGraphQLExample = wsExample
     '@GraphQLQuery\n@Description("Finds the todos that match the query")\n// An rpc is',
   )
   .replace("rpc CompleteTodo", "@GraphQLMutation\nrpc CompleteTodo");
+
+// The example with the annotations that steer the AsyncAPI output. Annotations come before a comment.
+export const wsAsyncAPIExample = wsExample.replace(
+  "// A channel describes",
+  '@AsyncAPIAddress("todos/updates")\n@AsyncAPISend("publishTodoUpdate")\n// A channel describes',
+);

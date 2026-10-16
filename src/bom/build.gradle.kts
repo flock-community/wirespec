@@ -10,6 +10,7 @@ dependencies {
     constraints {
         api("$group.compiler:core-jvm:$version")
         api("$group.compiler:lib-jvm:$version")
+        api("$group.converter:asyncapi-jvm:$version")
         api("$group.converter:avro-jvm:$version")
         api("$group.converter:graphql-jvm:$version")
         api("$group.converter:openapi-jvm:$version")

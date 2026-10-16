@@ -12,20 +12,31 @@ import { FileBar } from "../components/FileBar";
 import { initializeMonaco } from "../utils/InitializeMonaco";
 import { MonacoError, setMonacoErrors } from "../utils/SetMonacoErrors";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
-import { wsExample, wsGraphQLExample } from "../examples/wirespec";
+import {
+  wsExample,
+  wsGraphQLExample,
+  wsAsyncAPIExample,
+} from "../examples/wirespec";
 import { swaggerExample } from "../examples/swagger";
 import {
   openApiV2ToWirespec,
   openApiV3ToWirespec,
   avroToWirespec,
   graphqlToWirespec,
+  asyncapiToWirespec,
 } from "../transformations/OpenAPIToWirespec";
 import { openapiExample } from "../examples/openapi";
 import { avroExample } from "../examples/avro";
 import { graphqlExample } from "../examples/graphql";
+import { asyncapiExample } from "../examples/asyncapi";
 
 type CompileSpecification = "wirespec";
-type ConvertSpecification = "open_api_v2" | "open_api_v3" | "avro" | "graphql";
+type ConvertSpecification =
+  | "open_api_v2"
+  | "open_api_v3"
+  | "avro"
+  | "graphql"
+  | "asyncapi";
 
 export type Specification = CompileSpecification | ConvertSpecification;
 
@@ -39,7 +50,8 @@ export type CompilerEmitter =
   | "open_api_v3"
   | "avro"
   | "avro_idl"
-  | "graphql";
+  | "graphql"
+  | "asyncapi";
 export type ConverterEmitter = "wirespec";
 export type Emitter = CompilerEmitter | ConverterEmitter;
 
@@ -104,6 +116,8 @@ function RouteComponent() {
 
       if (specification === "avro") {
         setWirespecOutput(avroToWirespec(code));
+      } else if (specification === "asyncapi") {
+        setWirespecOutput(asyncapiToWirespec(code));
       } else if (json.swagger) {
         setWirespecOutput(openApiV2ToWirespec(code));
       } else if (json.openapi) {
@@ -159,16 +173,20 @@ function RouteComponent() {
         return setCode(avroExample);
       case "graphql":
         return setCode(graphqlExample);
+      case "asyncapi":
+        return setCode(asyncapiExample);
     }
   }, [specification]);
 
   // Only an unedited example follows the output, so switching outputs never loses changes.
   useEffect(() => {
     setCode((current) =>
-      current === wsExample || current === wsGraphQLExample
+      [wsExample, wsGraphQLExample, wsAsyncAPIExample].includes(current)
         ? emitter === "graphql"
           ? wsGraphQLExample
-          : wsExample
+          : emitter === "asyncapi"
+            ? wsAsyncAPIExample
+            : wsExample
         : current,
     );
   }, [emitter]);
