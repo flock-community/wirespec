@@ -501,18 +501,20 @@ class ParseAnnotationTest {
             .shouldBeRightOrReport()
             .first()
             .shouldBeInstanceOf<Type>()
-            .annotations.single().parameters shouldBe listOf(
-                Annotation.Parameter("${'$'}ref", Annotation.Value.Single("#/components/schemas/Todo")),
-                Annotation.Parameter(
-                    "dict",
-                    Annotation.Value.Dict(
-                        listOf(
-                            Annotation.Parameter("x-a.b", Annotation.Value.Single("c")),
-                            Annotation.Parameter("default", Annotation.Value.Single("d")),
+            .apply {
+                annotations.single().parameters shouldBe listOf(
+                    Annotation.Parameter("${'$'}ref", Annotation.Value.Single("#/components/schemas/Todo")),
+                    Annotation.Parameter(
+                        "dict",
+                        Annotation.Value.Dict(
+                            listOf(
+                                Annotation.Parameter("x-a.b", Annotation.Value.Single("c")),
+                                Annotation.Parameter("default", Annotation.Value.Single("d")),
+                            ),
                         ),
                     ),
-                ),
-            )
+                )
+            }
     }
 
     @Test
