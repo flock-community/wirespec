@@ -11,6 +11,7 @@ export function SpecificationSelector() {
     { value: "open_api_v3", label: "Open API v3" },
     { value: "avro", label: "Avro" },
     { value: "graphql", label: "GraphQL" },
+    { value: "asyncapi", label: "AsyncAPI" },
   ];
 
   const navigate = useNavigate({ from: "/" });

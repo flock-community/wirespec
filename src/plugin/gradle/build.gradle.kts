@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
     implementation(project(":src:compiler:core"))
+    implementation(project(":src:converter:asyncapi"))
     implementation(project(":src:converter:avro"))
     implementation(project(":src:converter:graphql"))
     implementation(project(":src:converter:openapi"))

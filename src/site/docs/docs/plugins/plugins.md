@@ -32,7 +32,7 @@ The `Convert` operation facilitates integration with other API specification lan
 
 - **input:** Path to the input file in the original specification language.
 - **output:** Path to the output directory where the converted Wirespec file will be placed.
-- **format:** The format of the input file (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`, `GraphQL`).
+- **format:** The format of the input file (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`, `GraphQL`, `AsyncAPI`).
 - **ignore defaults:** A flag to leave the default values that the converter reads out of the emitted code. A
   conversion never fails on defaults, see [Default values](#default-values).
 

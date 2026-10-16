@@ -1,0 +1,133 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Streetlights API",
+    "version": "1.0.0"
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "streetlights/{streetlightId}/lighting/measured": {
+      "description": "The topic on which measured values may be produced and consumed.",
+      "parameters": {
+        "streetlightId": {
+          "description": "The ID of the streetlight.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "subscribe": {
+        "operationId": "receiveLightMeasurement",
+        "message": {
+          "$ref": "#/components/messages/lightMeasured"
+        }
+      }
+    },
+    "streetlights/{streetlightId}/turn": {
+      "publish": {
+        "operationId": "turnOnOff",
+        "message": {
+          "oneOf": [
+            {
+              "$ref": "#/components/messages/turnOn"
+            },
+            {
+              "$ref": "#/components/messages/turnOff"
+            }
+          ]
+        }
+      }
+    },
+    "streetlights/{streetlightId}/dim": {
+      "publish": {
+        "message": {
+          "name": "dimLight",
+          "payload": {
+            "type": "object",
+            "properties": {
+              "percentage": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "sentAt": {
+                "$ref": "#/components/schemas/sentAt"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "lightMeasured": {
+        "name": "lightMeasured",
+        "title": "Light measured",
+        "payload": {
+          "$ref": "#/components/schemas/lightMeasuredPayload"
+        }
+      },
+      "turnOn": {
+        "name": "turnOn",
+        "payload": {
+          "$ref": "#/components/schemas/turnOnOffPayload"
+        }
+      },
+      "turnOff": {
+        "name": "turnOff",
+        "payload": {
+          "$ref": "#/components/schemas/turnOffPayload"
+        }
+      }
+    },
+    "schemas": {
+      "lightMeasuredPayload": {
+        "type": "object",
+        "properties": {
+          "lumens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Light intensity measured in lumens."
+          },
+          "sentAt": {
+            "$ref": "#/components/schemas/sentAt"
+          }
+        }
+      },
+      "turnOnOffPayload": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": ["on", "off"],
+            "description": "Whether to turn on or off the light."
+          },
+          "sentAt": {
+            "$ref": "#/components/schemas/sentAt"
+          }
+        }
+      },
+      "turnOffPayload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/turnOnOffPayload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "fadeOut": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "sentAt": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Date and time when the message was sent."
+      }
+    }
+  }
+}

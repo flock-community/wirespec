@@ -28,6 +28,7 @@ export function EmitterSelector() {
     { value: "avro", label: "Avro JSON" },
     { value: "avro_idl", label: "Avro IDL" },
     { value: "graphql", label: "GraphQL" },
+    { value: "asyncapi", label: "AsyncAPI" },
   ];
   const wirespecOption: Option<ConverterEmitter> = {
     value: "wirespec",

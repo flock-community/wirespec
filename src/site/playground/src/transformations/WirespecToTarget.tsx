@@ -25,6 +25,8 @@ const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
       return Emitters.AVRO_IDL;
     case "graphql":
       return Emitters.GRAPHQL;
+    case "asyncapi":
+      return Emitters.ASYNCAPI;
   }
 };
 
@@ -41,6 +43,7 @@ const getLanguageFor: (emitter: Emitter) => Language = (emitter: Emitter) => {
     case "open_api_v2":
     case "open_api_v3":
     case "avro":
+    case "asyncapi":
       return "json";
     case "avro_idl":
       return "avdl";
@@ -62,7 +65,8 @@ export const wirespecToTarget: (
     if (
       internalEmitter === Emitters.OPENAPI_V3 ||
       internalEmitter === Emitters.OPENAPI_V2 ||
-      internalEmitter === Emitters.AVRO
+      internalEmitter === Emitters.AVRO ||
+      internalEmitter === Emitters.ASYNCAPI
     ) {
       result = result.map((it) => ({
         file: it.file,

@@ -1,13 +1,21 @@
 # Converters
 
 Wirespec offers the capability to convert from existing specification formats. Currently, it supports conversion from
-OpenAPI Specification (OAS), Avro and GraphQL.
+OpenAPI Specification (OAS), Avro, GraphQL and AsyncAPI.
 
 > **Warning**
-> Be aware that converting to Wirespec is a destructive operation.
+> Converting OpenAPI and Avro to Wirespec can lose information. GraphQL and AsyncAPI convert without loss.
 
 ## Supported Formats
 
 - [OpenAPI (OAS)](openapi.md) - Support for OAS v2 and v3.
 - [Avro](avro.md) - Support for Avro schemas.
 - [GraphQL](graphql.md) - Support for GraphQL schemas (SDL), without loss.
+- [AsyncAPI](asyncapi.md) - Support for AsyncAPI v2 and v3 documents, without loss.
+
+## Annotations
+
+Where Wirespec has no syntax for something in a document, the converter keeps it in an annotation, so it can be written
+back when Wirespec is converted into that format. Each converter lists its annotations:
+[OpenAPI](openapi.md#annotations), [GraphQL](graphql.md#annotations) and [AsyncAPI](asyncapi.md#annotations). The Avro
+converter has none.

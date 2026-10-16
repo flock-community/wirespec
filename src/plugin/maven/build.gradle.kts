@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
     implementation(project(":src:compiler:core"))
+    implementation(project(":src:converter:asyncapi"))
     implementation(project(":src:converter:avro"))
     implementation(project(":src:converter:graphql"))
     implementation(project(":src:converter:openapi"))
@@ -58,6 +59,7 @@ tasks.publishToMavenLocal {
     dependsOn(":src:compiler:core:publishToMavenLocal")
     dependsOn(":src:converter:openapi:publishToMavenLocal")
     dependsOn(":src:converter:graphql:publishToMavenLocal")
+    dependsOn(":src:converter:asyncapi:publishToMavenLocal")
     dependsOn(":src:plugin:arguments:publishToMavenLocal")
 }
 

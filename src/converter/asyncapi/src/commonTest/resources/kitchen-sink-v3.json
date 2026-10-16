@@ -1,0 +1,216 @@
+{
+  "asyncapi": "3.0.0",
+  "id": "urn:example:todo",
+  "info": {
+    "title": "Todo events",
+    "version": "1.0.0",
+    "description": "Everything that happens to todos",
+    "contact": { "name": "Todo team", "email": "todo@example.com" },
+    "license": { "name": "Apache 2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0" },
+    "tags": [{ "name": "todo" }],
+    "externalDocs": { "url": "https://example.com/docs" },
+    "x-audience": "internal"
+  },
+  "servers": {
+    "production": {
+      "host": "broker.example.com:9092",
+      "protocol": "kafka",
+      "protocolVersion": "3.5",
+      "description": "The production broker",
+      "security": [{ "$ref": "#/components/securitySchemes/saslScram" }],
+      "bindings": { "kafka": { "schemaRegistryUrl": "https://registry.example.com", "bindingVersion": "0.5.0" } }
+    }
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "todoUpdates": {
+      "address": "todos.{todoId}.updates",
+      "title": "Todo updates",
+      "summary": "Changes to a todo",
+      "description": "Every change to a todo",
+      "parameters": { "todoId": { "$ref": "#/components/parameters/todoId" } },
+      "messages": {
+        "todoUpdated": { "$ref": "#/components/messages/TodoUpdated" },
+        "todoDeleted": { "$ref": "#/components/messages/TodoDeleted" }
+      },
+      "servers": [{ "$ref": "#/servers/production" }],
+      "bindings": { "kafka": { "topic": "todo-updates", "partitions": 3, "replicas": 2, "bindingVersion": "0.5.0" } },
+      "tags": [{ "name": "updates" }],
+      "x-retention": "7d"
+    },
+    "todoCommands": {
+      "address": null,
+      "messages": {
+        "completeTodo": {
+          "name": "CompleteTodo",
+          "title": "Complete a todo",
+          "contentType": "application/json",
+          "headers": {
+            "type": "object",
+            "required": ["correlationId"],
+            "properties": {
+              "correlationId": { "type": "string", "format": "uuid" },
+              "retries": { "type": "integer", "minimum": 0, "default": 0 }
+            }
+          },
+          "payload": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "$ref": "#/components/schemas/TodoId" },
+              "completedAt": { "type": "string", "format": "date-time" }
+            }
+          },
+          "correlationId": { "location": "$message.header#/correlationId" },
+          "examples": [{ "name": "simple", "payload": { "id": "0f3a9b1c" } }],
+          "traits": [{ "$ref": "#/components/messageTraits/commonHeaders" }]
+        }
+      }
+    },
+    "sensorReadings": {
+      "address": "sensors/readings",
+      "messages": {
+        "reading": {
+          "payload": {
+            "schemaFormat": "application/vnd.apache.avro;version=1.9.0",
+            "schema": { "type": "record", "name": "Reading", "fields": [{ "name": "value", "type": "double" }] }
+          }
+        }
+      }
+    },
+    "auditLog": { "$ref": "#/components/channels/auditLog" },
+    "heartbeats": { "address": "heartbeats" },
+    "TodoEvents": {
+      "address": "todo-events",
+      "messages": {
+        "created": { "$ref": "#/components/messages/TodoUpdated" },
+        "removed": { "payload": { "type": "array", "items": { "$ref": "#/components/schemas/TodoId" } } }
+      }
+    }
+  },
+  "operations": {
+    "publishTodoUpdate": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/todoUpdates" },
+      "summary": "Tell everyone about a change",
+      "messages": [{ "$ref": "#/channels/todoUpdates/messages/todoUpdated" }],
+      "bindings": { "kafka": { "groupId": { "type": "string", "enum": ["todo-service"] }, "bindingVersion": "0.5.0" } }
+    },
+    "onTodoUpdate": { "action": "receive", "channel": { "$ref": "#/channels/todoUpdates" } },
+    "completeTodo": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/todoCommands" },
+      "reply": {
+        "channel": { "$ref": "#/channels/todoUpdates" },
+        "messages": [{ "$ref": "#/channels/todoUpdates/messages/todoUpdated" }]
+      }
+    },
+    "readAudit": { "$ref": "#/components/operations/readAudit" }
+  },
+  "components": {
+    "schemas": {
+      "TodoId": { "type": "string", "pattern": "^[0-9a-f]{8}$", "description": "The id of a todo", "examples": ["0f3a9b1c"] },
+      "Priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"], "default": "MEDIUM" },
+      "Status": { "type": "string", "enum": ["to do", "in-progress", "done"] },
+      "Code": { "type": "integer", "enum": [200, 404] },
+      "Todo": {
+        "type": "object",
+        "title": "A todo",
+        "description": "A task to do",
+        "required": ["id", "title", "done"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/components/schemas/TodoId" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 100, "description": "What needs doing" },
+          "done": { "type": "boolean", "default": false },
+          "priority": { "$ref": "#/components/schemas/Priority", "default": "MEDIUM" },
+          "status": { "$ref": "#/components/schemas/Status" },
+          "tags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "labels": { "type": "object", "additionalProperties": { "type": "string" } },
+          "assignee": { "oneOf": [{ "$ref": "#/components/schemas/Person" }, { "type": "null" }] },
+          "estimate": { "type": "number", "format": "double", "minimum": 0 },
+          "attempts": { "type": "integer", "format": "int64" },
+          "due": { "type": ["string", "null"], "format": "date" },
+          "subtasks": { "type": "array", "items": { "$ref": "#/components/schemas/Todo" } },
+          "meta.version": { "type": "integer", "format": "int32" },
+          "attachment": { "type": "string", "format": "binary" },
+          "anything": {},
+          "list": { "type": "array" },
+          "kind": { "const": "todo" },
+          "nested": { "type": "array", "items": { "type": "array", "items": { "type": "integer" } } },
+          "point": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+          },
+          "shape": { "$ref": "#/components/schemas/Shape" },
+          "default": { "type": "string", "default": "x" },
+          "external": { "$ref": "https://example.com/schemas/external.json" },
+          "rating": { "type": "number", "default": 2 },
+          "tagList": { "$ref": "#/components/schemas/Tags" },
+          "flag": { "$ref": "#/components/schemas/Flag" },
+          "code": { "$ref": "#/components/schemas/Code", "default": 404 }
+        }
+      },
+      "Person": {
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "Shape": {
+        "anyOf": [{ "$ref": "#/components/schemas/Circle" }, { "$ref": "#/components/schemas/Square" }],
+        "discriminator": "kind"
+      },
+      "Circle": { "type": "object", "properties": { "kind": { "type": "string" }, "radius": { "type": "number" } } },
+      "Square": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Circle" },
+          { "type": "object", "properties": { "side": { "type": "number" } } }
+        ]
+      },
+      "Tags": { "type": "array", "items": { "type": "string" } },
+      "NullableTodo": { "oneOf": [{ "$ref": "#/components/schemas/Todo" }, { "type": "null" }] },
+      "Percentage": { "type": "integer", "minimum": 0, "maximum": 100 },
+      "Ratio": { "type": "number", "minimum": 0.0, "maximum": 1.5 },
+      "Flag": true,
+      "Empty": { "type": "object" },
+      "String": { "type": "string" },
+      "Tree": {
+        "type": "object",
+        "properties": {
+          "children": { "type": "array", "items": { "$ref": "#/components/schemas/Tree" } }
+        }
+      }
+    },
+    "messages": {
+      "TodoUpdated": {
+        "name": "TodoUpdated",
+        "summary": "A todo changed",
+        "payload": { "$ref": "#/components/schemas/Todo" },
+        "bindings": { "kafka": { "key": { "$ref": "#/components/schemas/TodoId" }, "bindingVersion": "0.5.0" } }
+      },
+      "TodoDeleted": {
+        "payload": {
+          "type": "object",
+          "required": ["id"],
+          "properties": {
+            "id": { "$ref": "#/components/schemas/TodoId" },
+            "reason": { "type": "string" }
+          }
+        }
+      },
+      "Unused": { "payload": { "type": "string", "format": "uuid" } }
+    },
+    "parameters": { "todoId": { "description": "The id of the todo", "examples": ["0f3a9b1c"] } },
+    "securitySchemes": { "saslScram": { "type": "scramSha256", "description": "SASL/SCRAM" } },
+    "messageTraits": { "commonHeaders": { "headers": { "type": "object", "properties": { "traceId": { "type": "string" } } } } },
+    "channels": {
+      "auditLog": {
+        "address": "audit",
+        "messages": { "entry": { "payload": { "type": "object", "properties": { "who": { "type": "string" } } } } }
+      }
+    },
+    "operations": { "readAudit": { "action": "receive", "channel": { "$ref": "#/channels/auditLog" } } }
+  }
+}

@@ -44,3 +44,14 @@ export const graphqlToWirespec: (graphql: string) => CompilationResult = (
     language: "wirespec",
   };
 };
+
+export const asyncapiToWirespec: (asyncapi: string) => CompilationResult = (
+  x: string,
+) => {
+  const ast = convert(x, Converters.ASYNCAPI);
+  return {
+    result: emit(ast, Emitters.WIRESPEC, "", false),
+    errors: [],
+    language: "wirespec",
+  };
+};
