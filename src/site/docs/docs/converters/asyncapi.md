@@ -139,19 +139,38 @@ kept in `@AsyncAPIComponents`. A schema that refers to it carries the Wirespec t
 
 ## Annotations
 
-| Annotation                                                        | On                     | Carries                                                                                         |
-|-------------------------------------------------------------------|------------------------|-------------------------------------------------------------------------------------------------|
-| `@Description("...")`                                             | channels, types, fields | the description of a channel, schema or property                                               |
-| `@AsyncAPIDocument(asyncapi: "3.0.0", info: {...}, servers: {...})` | `type AsyncAPI`      | the fields of the document besides its channels, operations and components                     |
-| `@AsyncAPIComponents(securitySchemes: {...}, ...)`                | `type AsyncAPI`        | the components besides the schemas and messages Wirespec holds itself                          |
-| `@AsyncAPIChannel(address: "...", bindings: {...})`               | channels               | the fields of the channel besides its description and messages                                 |
-| `@AsyncAPIMessage("key", name: "...", payload: "Todo")`           | channels, `type AsyncAPI` | a message of the channel, or of `components.messages`                                       |
-| `@AsyncAPISend("id", ...)`, `@AsyncAPIReceive("id", ...)`         | channels, `type AsyncAPI` | an operation: `send` or `subscribe`, `receive` or `publish`                                 |
-| `@AsyncAPIName("key")`                                            | channels, types, fields | the key of a channel, schema or property that is not the Wirespec name                       |
-| `@AsyncAPISchema(format: "uuid", omit: ["type"])`                 | types, fields          | the JSON Schema keywords to add to, and to leave out of, what Wirespec writes                   |
-| `@AsyncAPIInline`                                                 | types                  | a schema that is declared where it is used, instead of in `components.schemas`                 |
+| Annotation                                                          | On                            | Carries                                                                        |
+|---------------------------------------------------------------------|-------------------------------|--------------------------------------------------------------------------------|
+| `@Description("...")`                                               | channels, definitions, fields | the description of a channel, schema or property                               |
+| `@AsyncAPIDocument(asyncapi: "3.0.0", info: {...}, servers: {...})` | `type AsyncAPI`               | the fields of the document besides its channels, operations and components     |
+| `@AsyncAPIComponents(securitySchemes: {...}, ...)`                  | `type AsyncAPI`               | the components besides the schemas and messages Wirespec holds itself          |
+| `@AsyncAPIChannel(address: "...", bindings: {...})`                 | channels                      | the fields of the channel besides its description and messages                 |
+| `@AsyncAPIMessage("key", name: "...", payload: "Todo")`             | channels, `type AsyncAPI`     | a message of the channel, or of `components.messages`                          |
+| `@AsyncAPISend("id", ...)`, `@AsyncAPIReceive("id", ...)`           | channels, `type AsyncAPI`     | an operation: `send` or `subscribe`, `receive` or `publish`                    |
+| `@AsyncAPIName("key")`                                              | channels, definitions, fields | the key of a channel, schema or property that is not the Wirespec name         |
+| `@AsyncAPISchema(format: "uuid", omit: ["type"])`                   | definitions, fields           | the JSON Schema keywords to add to, and to leave out of, what Wirespec writes  |
+| `@AsyncAPIInline`                                                   | definitions                   | a schema that is declared where it is used, instead of in `components.schemas` |
+
+_Definitions_ are types, enums, unions and refined types, and _fields_ are the fields of a type.
+[Annotations](../language/annotations.mdx) lists the annotations of all converters.
 
 The document as a whole has no Wirespec counterpart, so its annotations are on an empty type called `AsyncAPI`.
+
+### Parameters
+
+The named parameters of an annotation are the fields of the AsyncAPI object it holds:
+
+- `@AsyncAPIDocument`, `@AsyncAPIComponents` and `@AsyncAPIChannel` take the fields of the document, its components
+  and the channel.
+- `@AsyncAPIMessage` takes the key of the message first, then the fields of the message. Its `payload` and `headers`
+  name a Wirespec type, such as `payload: "Todo"` or `payload: "Todo[]"`, or hold the schema itself.
+- `@AsyncAPISend` and `@AsyncAPIReceive` take the key of the operation first, or its `operationId` in AsyncAPI 2, then
+  the fields of the operation. On a channel, its `channel` is left out, and `messages` names the messages by their key
+  in the channel. An operation whose `action` is no `send` or `receive` is an `@AsyncAPISend` that keeps its `action`.
+- `@AsyncAPIName` takes the key.
+- `@AsyncAPISchema` takes the JSON Schema keywords to set. Its first parameter is a dictionary of the keywords called
+  `default` or `omit`, or the whole schema when it is no object, such as `true`. `omit` lists the keywords to leave out.
+- `@Description` takes the description, and `@AsyncAPIInline` takes nothing.
 
 ### JSON in annotations
 
@@ -174,7 +193,8 @@ Wirespec gets an AsyncAPI 3.0 document:
   `todoUpdates`, which is its address too.
 - Every channel gets a `send` operation, `sendTodoUpdates`, unless it has an `@AsyncAPISend` or `@AsyncAPIReceive`.
 - `@AsyncAPIChannel`, `@AsyncAPIMessage` and the operation annotations add to, or take the place of, what is written
-  by default, so a channel can be given its address:
+  by default, so a channel can be given its address. `@AsyncAPIName`, `@AsyncAPISchema` and `@AsyncAPIInline` work as
+  they do on Wirespec converted from AsyncAPI:
 
 ```wirespec
 @AsyncAPIChannel(address: "todos/updates")

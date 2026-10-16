@@ -1,0 +1,123 @@
+---
+id: annotations
+title: Annotations
+slug: /language/annotations
+sidebar_position: 6
+---
+
+Any [annotation](language.mdx#annotations) can be written in Wirespec, and it is kept for
+[IR extensions](../plugins/plugins.md#ir-extensions) to act on. A few annotations also mean something to Wirespec
+itself. The converters write them to keep what Wirespec has no syntax for, and read them back when they convert
+Wirespec into their format, so a document survives the conversion. This page lists all of them; the pages of the
+converters describe their parameters.
+
+None of these annotations changes the models, endpoints or clients that the language emitters generate.
+
+In the tables below, _definitions_ are types, enums, unions, refined types, endpoints, channels and rpcs, and _fields_
+are the fields of a type, the parameters and headers of an endpoint, and the parameters of an rpc.
+
+## Conventions
+
+- The annotations of the GraphQL and AsyncAPI converters start with the name of their format: `@GraphQL...` and
+  `@AsyncAPI...`. `@Description` is shared by all converters, and OpenAPI also has `@Link`.
+- A value that an annotation is about, such as the description in `@Description("A task to do")`, is its first, unnamed
+  parameter. The other parameters are named.
+- The converters write every value as a string, an array of strings or a dictionary, so a number or boolean is a
+  string, such as `repeatable: "true"`. A name that is not an identifier, such as `$ref` or `x-trace.id`, is written
+  between quotes.
+
+## Descriptions
+
+| Annotation            | On                             | Used by                    | Carries                                     |
+|-----------------------|--------------------------------|----------------------------|---------------------------------------------|
+| `@Description("...")` | definitions, fields, responses | OpenAPI, GraphQL, AsyncAPI | the description from the converted document |
+
+The converters write a description from the document as `@Description`, and write it back as the description when
+they convert Wirespec into their format. When a definition has no `@Description`, they use its comment instead
+(OpenAPI 2 only does this for types and endpoints):
+
+```wirespec
+// A task to do
+type Todo {
+    @Description("What needs doing")
+    title: String
+}
+```
+
+## OpenAPI
+
+See [OpenAPI](../converters/openapi.md#annotations) for the parameters.
+
+| Annotation            | On                                        | Carries                                                                          |
+|-----------------------|-------------------------------------------|----------------------------------------------------------------------------------|
+| `@Description("...")` | endpoints, responses, definitions, fields | the description of an operation, response, schema, property, parameter or header |
+| `@Link("GetUser")`    | responses                                 | a response link of OpenAPI 3; one annotation per link                            |
+
+## GraphQL
+
+See [GraphQL](../converters/graphql.md#annotations) for the parameters.
+
+| Annotation                                                  | On                  | Carries                                                                   |
+|-------------------------------------------------------------|---------------------|---------------------------------------------------------------------------|
+| `@Description("...")`                                       | definitions, fields | the description of a definition, field or argument                        |
+| `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription` | rpcs                | an rpc that is a field of a root operation type                           |
+| `@GraphQLInterface`                                         | types               | an interface                                                              |
+| `@GraphQLInput`                                             | types               | an input object                                                           |
+| `@GraphQLImplements`                                        | types               | the interfaces an object or interface implements                          |
+| `@GraphQLUnion`, `@GraphQLEnum`                             | types               | a union or enum without members                                           |
+| `@GraphQLEnumValue`                                         | enums               | the description and directives of an enum value                           |
+| `@GraphQLUnionMembers`                                      | unions              | members whose name Wirespec cannot spell                                  |
+| `@GraphQLBuiltIn`                                           | `type ID`           | the `ID` type the converter added                                         |
+| `@GraphQLSchema`                                            | `type Schema`       | a `schema` definition                                                     |
+| `@GraphQLDirectiveDefinition`                               | `type ...Directive` | a directive definition                                                    |
+| `@GraphQLExtend`                                            | definitions         | an extension of a type or of the schema                                   |
+| `@GraphQLName`                                              | definitions         | the GraphQL name of a definition that Wirespec names differently          |
+| `@GraphQLDirective`                                         | definitions, fields | an applied directive, in GraphQL syntax                                   |
+| `@GraphQLArgument`                                          | fields              | an argument of a field that is not an rpc                                 |
+| `@GraphQLDefault`                                           | fields              | a default value that cannot be a Wirespec default, in GraphQL syntax      |
+| `@GraphQLType`                                              | rpcs, fields        | the exact type of a reference to an undeclared type Wirespec cannot spell |
+
+## AsyncAPI
+
+See [AsyncAPI](../converters/asyncapi.md#annotations) for the parameters.
+
+| Annotation                          | On                            | Carries                                                                        |
+|-------------------------------------|-------------------------------|--------------------------------------------------------------------------------|
+| `@Description("...")`               | channels, definitions, fields | the description of a channel, schema or property                               |
+| `@AsyncAPIDocument`                 | `type AsyncAPI`               | the fields of the document besides its channels, operations and components     |
+| `@AsyncAPIComponents`               | `type AsyncAPI`               | the components besides the schemas and messages Wirespec holds itself          |
+| `@AsyncAPIChannel`                  | channels                      | the fields of the channel, such as its address                                 |
+| `@AsyncAPIMessage`                  | channels, `type AsyncAPI`     | a message of the channel, or of `components.messages`                          |
+| `@AsyncAPISend`, `@AsyncAPIReceive` | channels, `type AsyncAPI`     | an operation                                                                   |
+| `@AsyncAPIName`                     | channels, definitions, fields | the key of a channel, schema or property that is not the Wirespec name         |
+| `@AsyncAPISchema`                   | definitions, fields           | the JSON Schema keywords that Wirespec does not write itself                   |
+| `@AsyncAPIInline`                   | definitions                   | a schema that is declared where it is used, instead of in `components.schemas` |
+
+## Avro
+
+The [Avro](../converters/avro.md) converter neither writes nor reads annotations.
+
+## Test data
+
+The generators that the [emitters](../emitters/emitters.mdx) write pass the annotations of every field to the
+`Wirespec.Generator` that builds the values, so a generator can act on them.
+
+| Annotation | On     | Used by                                                                                                 | Carries                            |
+|------------|--------|---------------------------------------------------------------------------------------------------------|------------------------------------|
+| `@Seed`    | fields | the [Kotest integration](https://github.com/flock-community/wirespec/tree/master/src/integration/kotest) | the field that identifies the type |
+
+The Kotest generator takes the value of a field marked `@Seed` from the path it generates the type at, so the same
+record comes back from just its id. `@Seed` takes precedence over the values registered for that path.
+
+```wirespec
+type Project {
+    @Seed
+    id: String,
+    name: String
+}
+```
+
+```kotlin
+val project = ProjectGenerator.generate(kotestWirespecKotlinGenerator(seed = 1L), listOf("proj-42"))
+// project.id is "proj-42"
+```

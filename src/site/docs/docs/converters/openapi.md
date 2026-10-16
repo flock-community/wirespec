@@ -76,9 +76,20 @@ The following OpenAPI constructs are currently **not** converted or ignored duri
 - **XML**
 - **Security** definitions
 
+## Annotations
+
+| Annotation                                  | On                                        | Carries                                                                          |
+|---------------------------------------------|-------------------------------------------|----------------------------------------------------------------------------------|
+| `@Description("...")`                       | endpoints, responses, definitions, fields | the description of an operation, response, schema, property, parameter or header |
+| `@Link("GetUser", operationId: "...", ...)` | responses                                 | a response link of OpenAPI 3, one annotation per link (see [Links](#links))      |
+
+[Annotations](../language/annotations.mdx) lists the annotations of all converters.
+
 ## Descriptions
 
-When generating OpenAPI from Wirespec, you can add descriptions to your types and fields using the `@Description` annotation.
+The description of an operation, response, schema, property, parameter or header becomes a `@Description`, and the
+OpenAPI emitters write it back to the `description` field. A type or endpoint without `@Description` gets its comment
+as description, and in OpenAPI 3 so does an enum or union.
 
 ```wirespec
 @Description("This is a user")
@@ -87,8 +98,6 @@ type User {
   name: String
 }
 ```
-
-This will be converted to the `description` field in the generated OpenAPI specification.
 
 ## Links
 
