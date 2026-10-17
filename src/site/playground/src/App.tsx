@@ -20,7 +20,6 @@ function App() {
         overflow="clip"
         display="flex"
         flexDirection="column"
-        rowGap={1}
       >
         <Box
           component="header"

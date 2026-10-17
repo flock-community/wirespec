@@ -207,41 +207,36 @@ function RouteComponent() {
         }}
       >
         <Box
-          marginInline={{ xs: 1, sm: 2 }}
-          display="flex"
-          justifyContent="space-between"
+          display={{ xs: "flex", sm: "none" }}
+          justifyContent="flex-end"
+          paddingInline={1}
+          borderBottom="1px solid var(--border-primary)"
         >
-          <SpecificationSelector />
-
-          <Box display={{ sm: "none" }}>
-            <Button
-              sx={{ color: "var(--color-primary)" }}
-              onClick={() => setMobileDisplay("output")}
-            >
-              show output
-            </Button>
+          <Button
+            sx={{ color: "var(--color-primary)" }}
+            onClick={() => setMobileDisplay("output")}
+          >
+            show output
+          </Button>
+        </Box>
+        <FileBar controls={<SpecificationSelector />}>
+          <Box component="span" px={0.75}>
+            {specification === "wirespec"
+              ? "todo.ws"
+              : specification === "graphql"
+                ? "todo.graphql"
+                : "todo.json"}
           </Box>
-        </Box>
-        <Box marginTop={1} borderTop="1px solid var(--border-primary)">
-          <FileBar>
-            <Box component="span" px={0.75}>
-              {specification === "wirespec"
-                ? "todo.ws"
-                : specification === "graphql"
-                  ? "todo.graphql"
-                  : "todo.json"}
-            </Box>
-          </FileBar>
-          <PlayGround
-            code={code}
-            setCode={setCode}
-            language={
-              specification === "wirespec" || specification === "graphql"
-                ? specification
-                : "json"
-            }
-          />
-        </Box>
+        </FileBar>
+        <PlayGround
+          code={code}
+          setCode={setCode}
+          language={
+            specification === "wirespec" || specification === "graphql"
+              ? specification
+              : "json"
+          }
+        />
       </Box>
       <Box
         flex={1}
@@ -251,29 +246,24 @@ function RouteComponent() {
         }}
       >
         <Box
-          marginInline={{ xs: 1, sm: 2 }}
-          display="flex"
-          justifyContent="space-between"
+          display={{ xs: "flex", sm: "none" }}
+          justifyContent="flex-end"
+          paddingInline={1}
+          borderBottom="1px solid var(--border-primary)"
         >
-          <EmitterSelector />
-          <Box display={{ sm: "none" }}>
-            <Button
-              sx={{ color: "var(--color-primary)" }}
-              onClick={() => setMobileDisplay("input")}
-            >
-              show input
-            </Button>
-          </Box>
+          <Button
+            sx={{ color: "var(--color-primary)" }}
+            onClick={() => setMobileDisplay("input")}
+          >
+            show input
+          </Button>
         </Box>
 
-        <Box
-          marginTop={1}
-          borderTop="1px solid var(--border-primary)"
-          borderLeft={{ sm: "1px solid var(--border-primary)" }}
-        >
+        <Box borderLeft={{ sm: "1px solid var(--border-primary)" }}>
           <OutputView
             files={wirespecOutput?.result ?? []}
             language={wirespecOutput?.language || "wirespec"}
+            controls={<EmitterSelector />}
           />
         </Box>
       </Box>
