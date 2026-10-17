@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import { WsEmitted } from "@flock/wirespec";
 import { PlayGround } from "./PlayGround";
@@ -11,9 +11,10 @@ import { groupFiles } from "../utils/FileGroups";
 interface OutputViewProps {
   files: WsEmitted[];
   language: Language;
+  controls?: ReactNode;
 }
 
-export function OutputView({ files, language }: OutputViewProps) {
+export function OutputView({ files, language, controls }: OutputViewProps) {
   const [selected, setSelected] = useState<string>();
   const [treeOpen, setTreeOpen] = useState(false);
 
@@ -37,6 +38,7 @@ export function OutputView({ files, language }: OutputViewProps) {
         onSelect={setSelected}
         treeOpen={treeOpen}
         onToggleTree={() => setTreeOpen((open) => !open)}
+        controls={controls}
       />
       <Box display="flex">
         {treeOpen && (
