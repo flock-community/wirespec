@@ -35,7 +35,6 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION_MEMBERS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotationName
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.interfaceName
 import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Document
 import community.flock.wirespec.converter.graphql.GraphQLModel.EnumTypeDefinition
@@ -57,8 +56,8 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
 /**
  * The inverse of [GraphQLParser]: rebuilds the GraphQL document from the Wirespec definitions and their annotations,
  * which gives back the schema it was converted from, but for the fields an implementation declares differently from
- * its interface. A type that spreads an interface part implements that interface. Wirespec that does not come from
- * GraphQL gets the closest GraphQL counterpart.
+ * its interface. A type that spreads the part of an interface implements that interface. Wirespec that does not come
+ * from GraphQL gets the closest GraphQL counterpart.
  */
 internal class WirespecToGraphQL(private val definitions: List<Definition>) {
 
@@ -68,17 +67,10 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
 
     private val parts: Map<String, Part> = definitions.filterIsInstance<Part>().associateBy { it.identifier.value }
 
-    /**
-     * A field cannot return a part, so a union or a type named like an interface part — the types implementing it —
-     * stands in for the interface there. GraphQL has the interface only.
-     */
-    private val standIns: Set<String> = parts.values
-        .filter { it.isInterface() && !it.annotations.has(EXTEND) }
-        .map { it.graphQLName() }
-        .toSet()
-        .let { interfaces -> definitions.filter { (it is Union || it is Type) && !it.annotations.has(EXTEND) && it.graphQLName() in interfaces } }
-        .map { it.identifier.value }
-        .toSet()
+    /** The interfaces that keep their fields in a part, by the name of that part. */
+    private val interfaceParts: Map<String, Definition> = definitions
+        .mapNotNull { definition -> definition.annotations.single(INTERFACE)?.let { it to definition } }
+        .toMap()
 
     /** The rpcs of each root operation type, by type and extension block. */
     private val rpcs: Map<Pair<String, String?>, List<Rpc>> = definitions.filterIsInstance<Rpc>().groupBy { it.rootType() }
@@ -87,7 +79,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
 
     /** The types that no annotation gives a GraphQL kind, which become an object type, an input object or both. */
     private val plainTypes: Map<String, Type> = definitions.filterIsInstance<Type>()
-        .filter { type -> KINDS.none { type.annotations.has(it) } && type.identifier.value !in standIns }
+        .filter { type -> KINDS.none { type.annotations.has(it) } }
         .associateBy { it.identifier.value }
 
     /** GraphQL only takes input objects as arguments, so a type that an rpc takes, directly or through its fields, is one. */
@@ -101,7 +93,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
                 is Rpc -> listOf(definition.result)
                 is Union -> definition.entries.toList()
                 is Type -> definition.shape.fields.map { it.reference }.takeUnless { definition.identifier.value in inputs }.orEmpty()
-                is Part -> definition.shape.fields.map { it.reference }.takeIf { definition.isInterface() }.orEmpty()
+                is Part -> definition.shape.fields.map { it.reference }.takeIf { definition.identifier.value in interfaceParts }.orEmpty()
                 is Endpoint, is Channel, is Enum, is Refined -> emptyList()
             }
         }
@@ -124,7 +116,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
     }
 
     fun convert(): Document = Document(
-        definitions.filterNot { it.identifier.value in standIns }.flatMap { listOfNotNull(it.convert(), (it as? Type)?.toInputCopy()) } +
+        definitions.flatMap { listOfNotNull(it.convert(), (it as? Type)?.toInputCopy()) } +
             listOfNotNull(ScalarTypeDefinition(null, JSON, emptyList(), false).takeIf { usesJson && JSON !in names.values }),
     )
 
@@ -150,7 +142,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
             },
             extension = annotations.has(EXTEND),
         )
-        is Union -> UnionTypeDefinition(
+        is Union -> takeIf { annotations.has(INTERFACE) }?.toInterface() ?: UnionTypeDefinition(
             description = description(),
             name = graphQLName(),
             directives = annotations.directives(),
@@ -159,12 +151,15 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
             extension = annotations.has(EXTEND),
         )
         is Type -> convert()
-        // A part that is no interface is only spread into the types that use it.
-        is Part -> takeIf { it.isInterface() }?.let {
-            InterfaceTypeDefinition(description(), graphQLName(), interfaces(shape), annotations.directives(), shape.fields.map { it.toFieldDefinition() }, annotations.has(EXTEND))
-        }
+        // A part is spread into the types that use it, and holds the fields of an interface that names it.
+        is Part -> null
         // GraphQL has nothing like an HTTP endpoint or a channel.
         is Endpoint, is Channel -> null
+    }
+
+    /** `@GraphQLInterface` names the part with the fields of the interface, or marks a type holding them itself. */
+    private fun Definition.toInterface(): InterfaceTypeDefinition = (annotations.single(INTERFACE)?.let { parts[it]?.shape } ?: (this as? Type)?.shape ?: Shape(emptyList())).let { shape ->
+        InterfaceTypeDefinition(description(), graphQLName(), interfaces(shape), annotations.directives(), shape.fields.map { it.toFieldDefinition() }, annotations.has(EXTEND))
     }
 
     private fun Type.convert(): GraphQLModel.Definition {
@@ -190,6 +185,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
                     locations = it.array("locations"),
                 )
             }
+            annotations.has(INTERFACE) -> toInterface()
             annotations.has(INPUT) || identifier.value in inputs - outputs ->
                 InputObjectTypeDefinition(description, graphQLName(), directives, fields.map { it.toInputValue() }, extension)
             annotations.has(UNION) -> UnionTypeDefinition(description, graphQLName(), directives, emptyList(), extension)
@@ -215,10 +211,7 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
         ?.let { (operation, annotation) -> (annotation.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to annotation.single("extend") }
         ?: (Operation.QUERY.defaultTypeName to null)
 
-    private fun Definition.graphQLName(): String = annotations.single(EXTEND) ?: annotations.single(NAME) ?: when {
-        isInterface() -> interfaceName(identifier.value)
-        else -> identifier.value
-    }
+    private fun Definition.graphQLName(): String = annotations.single(EXTEND) ?: annotations.single(NAME) ?: identifier.value
 
     /** What a shape implements: the interfaces of the parts it spreads, and those listed in `@GraphQLImplements`. */
     private fun Definition.interfaces(shape: Shape): List<String> = (
@@ -226,9 +219,9 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
             annotations.firstOrNull { it.name == IMPLEMENTS }?.array(DEFAULT_PARAMETER).orEmpty()
         ).distinct()
 
-    /** Spreading an interface implements it, and everything it implements in turn. */
+    /** Spreading the part of an interface implements it, and everything it implements in turn. */
     private fun Spread.interfaces(): List<String> = parts[reference.value]
-        ?.let { part -> listOfNotNull(part.graphQLName().takeIf { part.isInterface() }) + part.interfaces(part.shape) }
+        ?.let { part -> interfaceParts[part.identifier.value]?.let { listOf(it.graphQLName()) + it.interfaces(part.shape) } ?: part.interfaces(part.shape) }
         .orEmpty()
 
     private fun Definition.description(): String? = annotations.description() ?: comment?.value
@@ -300,11 +293,9 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
         /** GraphQL has no type for any value or for a map, so they become a `JSON` scalar. */
         const val JSON = "JSON"
 
-        val KINDS = listOf(INPUT, UNION, ENUM, SCHEMA, DIRECTIVE_DEFINITION)
+        val KINDS = listOf(INPUT, INTERFACE, UNION, ENUM, SCHEMA, DIRECTIVE_DEFINITION)
 
         val Definition.annotations: List<Annotation> get() = (this as? HasAnnotations)?.annotations.orEmpty()
-
-        fun Definition.isInterface(): Boolean = this is Part && annotations.has(INTERFACE)
 
         fun Reference.customName(): String? = when (this) {
             is Reference.Iterable -> reference.customName()

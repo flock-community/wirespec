@@ -107,21 +107,36 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun convertsInterfacesToPartsThatTheirImplementationsSpread() {
+    fun convertsAnInterfaceToTheUnionOfItsImplementationsWhichSpreadItsFields() {
         val source = """
             interface Node { id: ID! }
             type User implements Node { id: ID! email: String }
+            type Post implements Node { id: ID! title: String! }
+            type Query { node(id: ID!): Node }
         """.trimIndent()
         source.toWirespec() shouldBe """
-            |@GraphQLInterface
             |part NodeInterface {
             |  id: ID
             |}
+            |
+            |@GraphQLInterface("NodeInterface")
+            |type Node = User | Post
             |
             |type User {
             |  ...NodeInterface,
             |  email: String?
             |}
+            |
+            |type Post {
+            |  ...NodeInterface,
+            |  title: String
+            |}
+            |
+            |@GraphQLQuery
+            |@GraphQLName("node")
+            |rpc QueryNode {
+            |  id: ID
+            |} -> Node?
             |
             |@GraphQLBuiltIn
             |type ID = String
@@ -151,52 +166,20 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun aReturnedInterfaceIsTheUnionOfItsImplementations() {
-        val source = """
-            interface Node { id: ID! }
-            type User implements Node { id: ID! email: String }
-            type Post implements Node { id: ID! title: String! }
-            type Query { node(id: ID!): Node }
-        """.trimIndent()
-        source.toWirespec() shouldBe """
-            |@GraphQLInterface
-            |part NodeInterface {
-            |  id: ID
-            |}
-            |
-            |type Node = User | Post
-            |
-            |type User {
-            |  ...NodeInterface,
-            |  email: String?
-            |}
-            |
-            |type Post {
-            |  ...NodeInterface,
-            |  title: String
-            |}
-            |
-            |@GraphQLQuery
-            |@GraphQLName("node")
-            |rpc QueryNode {
-            |  id: ID
-            |} -> Node?
-            |
-            |@GraphQLBuiltIn
-            |type ID = String
-            |
-        """.trimMargin()
-        source.shouldRoundTrip()
-    }
-
-    @Test
-    fun aReturnedInterfaceThatNothingImplementsIsAnEmptyType() {
+    fun anInterfaceThatNothingImplementsIsATypeWithItsFields() {
         val source = """
             interface Searchable { title: String! }
             type Query { search: [Searchable!]! }
         """.trimIndent()
-        convert(source).definition<Type>("Searchable").shape.value shouldBe emptyList()
-        convert(source).definition<Rpc>("Search").result shouldBe Reference.Iterable(Reference.Custom("Searchable", false), false)
+        source.toWirespec() shouldContain "@GraphQLInterface\ntype Searchable {\n  title: String\n}"
+        convert(source).filterIsInstance<Part>() shouldBe emptyList()
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun anInterfaceThatOnlyInterfacesImplementIsAnEmptyType() {
+        val source = "interface Node { id: ID! } interface Resource implements Node { id: ID! url: String! }"
+        source.toWirespec() shouldContain "@GraphQLInterface(\"NodeInterface\")\ntype Node {\n\n}"
         source.shouldRoundTrip()
     }
 
@@ -232,7 +215,7 @@ class GraphQLParserTest {
     @Test
     fun anExtensionLeavesTheInterfacesItCannotSpreadToItsType() {
         convert("interface Node { id: ID! } type User { id: ID! email: String } extend type User implements Node")
-            .map { it.identifier.value } shouldContainExactly listOf("NodeInterface", "User", "ID")
+            .map { it.identifier.value } shouldContainExactly listOf("NodeInterface", "Node", "User", "ID")
         "interface Node { id: ID! } type User { id: ID! email: String } extend type User implements Node".convertedBack() shouldBe
             GraphQLDocumentParser("interface Node { id: ID! } type User implements Node { id: ID! email: String }").parseDocument()
         "interface Node { id: ID! } type User implements Node { id: ID! } extend type User implements Node @key".convertedBack() shouldBe

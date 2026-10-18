@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.exceptions.AnnotatedPartException
 import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
 import community.flock.wirespec.compiler.core.exceptions.CyclicPartError
 import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
@@ -210,18 +211,18 @@ class ParsePartTest {
     }
 
     @Test
-    fun partKeepsItsAnnotations() {
+    fun partCannotBeAnnotated() {
         parse(
             // language=ws
             """
             |@Deprecated
-            |@Since("2.0")
             |part Audit { createdAt: String }
             |type User { ...Audit }
             """.trimMargin(),
         )
-            .shouldBeRight()
-            .single<Part>("Audit").annotations.map { it.name } shouldContainExactly listOf("Deprecated", "Since")
+            .shouldBeLeft()
+            .single().shouldBeInstanceOf<AnnotatedPartException>()
+            .message shouldBe "A part cannot be annotated; annotate its fields instead"
     }
 
     @Test

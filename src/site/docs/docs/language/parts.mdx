@@ -107,7 +107,7 @@ A part may not spread itself, directly or through other parts.
 
 ## Comments and annotations
 
-A part can have a [comment](language.mdx#comments) and annotations like any other definition. Fields inside a part keep their
+A part can have a [comment](language.mdx#comments) like any other definition. Fields inside a part keep their
 [annotations](types#annotations-on-fields), and those annotations travel with the fields into every shape that spreads
 the part:
 
@@ -120,9 +120,7 @@ part Audited {
 }
 ```
 
-The annotations of the part itself stay on the part, so a spread does not copy them. They are for converters to read:
-the [GraphQL converter](../converters/graphql.md#interfaces), for example, writes a part marked `@GraphQLInterface` as an
-interface, implemented by every type that spreads it. A spread cannot be annotated.
+A part itself cannot be annotated, and neither can a spread. Annotate the fields of the part instead.
 
 Fields of a part cannot have [default values](types#default-values), because a part can be spread into query
 parameters and headers, where default values are not allowed.

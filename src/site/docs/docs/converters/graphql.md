@@ -42,7 +42,7 @@ GraphQL types are nullable unless marked with `!`; Wirespec references are requi
 | GraphQL                                        | Wirespec                                                  |
 |------------------------------------------------|-----------------------------------------------------------|
 | `type`                                         | `type`                                                    |
-| `interface X`                                  | `part XInterface` with `@GraphQLInterface`                |
+| `interface X`                                  | `type X = A \| B` with `@GraphQLInterface("XInterface")`  |
 | `input`                                        | `type` with `@GraphQLInput`                               |
 | `enum`                                         | `enum`                                                    |
 | `union`                                        | `type X = A \| B`                                         |
@@ -73,8 +73,9 @@ holding its annotations, when it has a description, directives or interfaces, ha
 
 ### Interfaces
 
-An interface becomes a [part](../language/parts.mdx) holding the interface fields, marked with `@GraphQLInterface` and
-named after the interface with `Interface` appended. A type implements an interface by spreading its part.
+An interface becomes the union of the types implementing it, marked with `@GraphQLInterface`. The annotation names the
+[part](../language/parts.mdx) that holds the interface fields, called after the interface with `Interface` appended, and
+the implementing types spread that part. A field that returns the interface references the union.
 
 ```graphql
 interface Node {
@@ -85,26 +86,48 @@ type User implements Node {
   id: ID!
   email: String
 }
+
+type Post implements Node {
+  id: ID!
+  title: String!
+}
+
+type Query {
+  node(id: ID!): Node
+}
 ```
 
 ```wirespec
-@GraphQLInterface
 part NodeInterface {
   id: ID
 }
+
+@GraphQLInterface("NodeInterface")
+type Node = User | Post
 
 type User {
   ...NodeInterface,
   email: String?
 }
+
+type Post {
+  ...NodeInterface,
+  title: String
+}
+
+@GraphQLQuery
+@GraphQLName("node")
+rpc QueryNode {
+  id: ID
+} -> Node?
 ```
 
 The spread takes the place of the first interface field in the type. The fields of the interface replace the fields of
 the same name in the type, so where GraphQL lets an implementation narrow a field, change its description or add
 directives or arguments, the field comes back as the interface declares it.
 
-An interface that implements other interfaces spreads their parts in turn, and a type that spreads it implements all of
-them:
+An interface that implements other interfaces spreads their parts in its own part, and a type that spreads it
+implements all of them:
 
 ```graphql
 interface Resource implements Node {
@@ -120,11 +143,13 @@ type Image implements Resource & Node {
 ```
 
 ```wirespec
-@GraphQLInterface
 part ResourceInterface {
   ...NodeInterface,
   url: String
 }
+
+@GraphQLInterface("ResourceInterface")
+type Resource = Image
 
 type Image {
   ...ResourceInterface,
@@ -132,25 +157,9 @@ type Image {
 }
 ```
 
-A part cannot be the type of a field, so when a field returns an interface, the interface is also written as the union
-of the types implementing it, under the name of the interface. A union needs a member, so for an interface that nothing
-implements it is an empty `type`.
-
-```graphql
-type Query {
-  node(id: ID!): Node
-}
-```
-
-```wirespec
-type Node = User | Post
-
-@GraphQLQuery
-@GraphQLName("node")
-rpc QueryNode {
-  id: ID
-} -> Node?
-```
+An interface that nothing implements needs no part: it is a `type` with the interface fields, marked with
+`@GraphQLInterface` alone, and so is an `extend interface`. A union needs a member, so an interface that only other
+interfaces implement is an empty `type` that names its part.
 
 An interface is listed in `@GraphQLImplements` on the type only when it cannot be spread: it is declared in another
 document, the type does not declare all of its fields, another spread already brings one of its fields (two unrelated
@@ -193,13 +202,13 @@ always kept in `@GraphQLDefault`.
 |----------------------------------------------------------------------------------|---------------------|-------------------------------------------------------------------------------------------|
 | `@Description("...")`                                                            | definitions, fields | the description of a definition, field or argument                                        |
 | `@GraphQLDirective("@key(fields: \"id\")")`                                      | definitions, fields | an applied directive, in GraphQL syntax; repeated for every directive                     |
-| `@GraphQLImplements(["Node"])`                                                   | types, parts        | the interfaces an object or interface implements without spreading them (see above)       |
+| `@GraphQLImplements(["Node"])`                                                   | types, unions       | the interfaces an object or interface implements without spreading them (see above)       |
 | `@GraphQLArgument(name: "first", type: "Int", defaultValue: "10", ...)`          | fields              | an argument of a field that is not an `rpc`; also `description` and `directives`          |
 | `@GraphQLDefault("MEDIUM")`                                                      | fields              | a default value that cannot be a Wirespec default (see above), in GraphQL syntax          |
 | `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                     | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
 | `@GraphQLName("todo")`                                                           | rpcs                | the field name of an `rpc` whose name does not read back as that field name              |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`       | enums               | the description and directives of an enum value; one for every such value                 |
-| `@GraphQLInterface`                                                              | parts               | an interface, implemented by every type that spreads the part                             |
+| `@GraphQLInterface("NodeInterface")`                                             | unions, types       | an interface, with the fields of the named part, implemented by the types that spread it; without a part, the fields of the type itself |
 | `@GraphQLInput`                                                                  | types               | an input object                                                                           |
 | `@GraphQLUnion`, `@GraphQLEnum`                                                  | types               | a union or enum without members, which Wirespec cannot write as `union` or `enum`         |
 | `@GraphQLSchema(query: "Root")`                                                  | `type Schema`       | a `schema` definition, mapping each operation to its root type                            |
@@ -292,10 +301,9 @@ Wirespec also converts back into a single GraphQL schema. Wirespec converted fro
 from. Any other Wirespec gets the closest GraphQL counterpart:
 
 - A `type` becomes an object type, and a refined type a custom `scalar`. A comment becomes the description.
-- A part marked `@GraphQLInterface` becomes an interface, named after the part without `Interface`, and a type that
-  spreads it implements it, as do the types that spread a part that spreads it. Any other part only adds its fields.
-  A union or a type with the name of an interface stands in for the interface where a field returns it, and is not
-  written itself.
+- A union or type marked `@GraphQLInterface("NodeInterface")` becomes an interface with the fields of that part. A type
+  that spreads the part implements the interface, as do the types that spread a part that spreads it. Any other part
+  only adds its fields.
 - An `rpc` becomes a field of `Query`, unless it is marked `@GraphQLMutation` or `@GraphQLSubscription`. Its error type is
   not written, because GraphQL returns errors next to the data.
 - GraphQL only takes input objects as arguments. A type that an `rpc` takes, directly or through its fields, becomes an

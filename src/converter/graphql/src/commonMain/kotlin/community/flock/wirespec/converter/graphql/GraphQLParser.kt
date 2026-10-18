@@ -43,9 +43,7 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION_MEMBERS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotation
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotationName
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.interfaceName
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.parameter
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.partName
 import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Document
 import community.flock.wirespec.converter.graphql.GraphQLModel.EnumTypeDefinition
@@ -69,7 +67,8 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  *
  * Objects and input objects become types, scalars become refined types, enums and unions map onto their Wirespec
  * counterparts and every field of a root operation type (`Query`, `Mutation`, `Subscription`) becomes an `rpc`.
- * An interface becomes a part, which the types implementing it spread. Whatever Wirespec cannot express natively —
+ * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
+ * Wirespec cannot express natively —
  * descriptions, directives, field arguments, default values, extensions — is kept in annotations, so the schema can
  * be rebuilt from the Wirespec definitions.
  */
@@ -127,16 +126,16 @@ private class GraphQLConverter(private val document: Document) {
         .distinctBy { it.name }
         .associateBy { it.name }
 
-    /** An interface becomes a part, so its own name is left to the union of the types implementing it, should a field return it. */
-    private val interfaceParts: Map<String, String> = interfaceDefinitions.keys.associateWith { claim(partName(names.getValue(it))) }
-
-    private val returnedInterfaces: Set<String> = document.typeReferences().toSet() intersect interfaceDefinitions.keys
-
     /** The interfaces each object and interface declares, its extensions included. */
     private val declaredInterfaces: Map<String, List<String>> = document.definitions
         .filterIsInstance<ImplementingTypeDefinition>()
         .groupBy({ it.name }, { it.interfaces })
         .mapValues { (_, interfaces) -> interfaces.flatten() }
+
+    /** An interface that anything implements keeps its fields in a part, for the implementations to spread. */
+    private val interfaceParts: Map<String, String> = interfaceDefinitions.keys
+        .filter { name -> declaredInterfaces.values.any { name in it } }
+        .associateWith { claim("${names.getValue(it)}Interface") }
 
     /** A root operation type becomes rpcs, which leave nothing to spread an interface into. */
     private val implementations: Map<ImplementingTypeDefinition, Lazy<Implementation>> = document.definitions
@@ -201,30 +200,28 @@ private class GraphQLConverter(private val document: Document) {
             .let(::listOfNotNull)
     }
 
+    /**
+     * An interface that anything implements is the union of the types implementing it, `@GraphQLInterface` naming the
+     * part with its fields; any other interface, an extension too, is a type with fields of its own.
+     */
     private fun InterfaceTypeDefinition.convert(): List<Definition> = implementation().takeUnless { bringsNothing(it) }
         ?.let { implementation ->
-            listOfNotNull(
-                Part(
-                    comment = null,
-                    annotations = listOf(annotation(INTERFACE)) + commonAnnotations(implementation.listed),
-                    identifier = DefinitionIdentifier(identifier()),
-                    shape = Shape(implementation.entries),
-                ),
-                standIn(),
-            )
+            interfaceParts[name]?.takeIf { interfaceDefinitions[name] === this }
+                ?.let { part ->
+                    listOf(
+                        Part(comment = null, identifier = DefinitionIdentifier(part), shape = Shape(implementation.entries)),
+                        implementedBy(listOf(annotation(INTERFACE, part)) + commonAnnotations(implementation.listed)),
+                    )
+                }
+                ?: listOf(type(identifier(), listOf(annotation(INTERFACE)) + commonAnnotations(implementation.listed), implementation.entries))
         }
         .orEmpty()
 
-    /** A field that returns an interface returns one of the types implementing it, so the interface is also the union of those. */
-    private fun InterfaceTypeDefinition.standIn(): Definition? = takeIf { interfaceDefinitions[name] === this && name in returnedInterfaces }?.let {
-        val identifier = names.getValue(name)
-        val annotations = listOfNotNull(annotation(NAME, name).takeIf { identifier != name })
-        implementors(name)
-            .takeIf { it.isNotEmpty() }
-            ?.let { implementors -> Union(null, annotations, DefinitionIdentifier(identifier), implementors.map { Reference.Custom(it, isNullable = false) }.toSet()) }
-            // A union needs a member, so an interface that nothing implements is an empty type.
-            ?: type(identifier, annotations, emptyList())
-    }
+    /** A union needs a member, so an interface that only interfaces implement is an empty type. */
+    private fun InterfaceTypeDefinition.implementedBy(annotations: List<Annotation>): Definition = implementors(name)
+        .takeIf { it.isNotEmpty() }
+        ?.let { implementors -> Union(null, annotations, DefinitionIdentifier(identifier()), implementors.map { Reference.Custom(it, isNullable = false) }.toSet()) }
+        ?: type(identifier(), annotations, emptyList())
 
     /** The object types with a Wirespec type of their own that implement the interface, directly or through another one. */
     private fun implementors(interfaceName: String): List<String> = document.definitions
@@ -421,27 +418,13 @@ private class GraphQLConverter(private val document: Document) {
     )
 
     private fun TypeDefinition.identifier(): String = when {
-        extension -> claim("${wirespecName()}Extension")
-        else -> wirespecName()
-    }
-
-    /** Only an extension of a type declared elsewhere has no name yet. */
-    private fun TypeDefinition.wirespecName(): String = (names[name] ?: name.sanitize()).let { named ->
-        when (this) {
-            is InterfaceTypeDefinition -> interfaceParts[name] ?: partName(named)
-            is ScalarTypeDefinition, is ObjectTypeDefinition, is UnionTypeDefinition, is EnumTypeDefinition, is InputObjectTypeDefinition -> named
-        }
-    }
-
-    /** The name the Wirespec name reads back as, which an interface part spells with a suffix. */
-    private fun TypeDefinition.readBack(): String? = when (this) {
-        is InterfaceTypeDefinition -> interfaceParts[name]?.let(::interfaceName)
-        is ScalarTypeDefinition, is ObjectTypeDefinition, is UnionTypeDefinition, is EnumTypeDefinition, is InputObjectTypeDefinition -> names[name]
+        extension -> claim("${names[name] ?: name.sanitize()}Extension")
+        else -> names.getValue(name)
     }
 
     private fun TypeDefinition.commonAnnotations(interfaces: List<String> = emptyList()): List<Annotation> = listOfNotNull(
         annotation(EXTEND, name).takeIf { extension },
-        annotation(NAME, name).takeIf { !extension && readBack() != name },
+        annotation(NAME, name).takeIf { !extension && names[name] != name },
         annotation(IMPLEMENTS, parameter(DEFAULT_PARAMETER, interfaces)).takeIf { interfaces.isNotEmpty() },
     ) + description().toAnnotations() + directives().toAnnotations()
 

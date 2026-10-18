@@ -38,11 +38,9 @@ public val Shape.fields: List<Field> get() = value.flatMap { entry ->
  */
 public data class Part(
     override val comment: Comment?,
-    override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
     val shape: Shape,
-) : Definition,
-    HasMetaData
+) : Definition
 
 public data class Endpoint(
     override val comment: Comment?,

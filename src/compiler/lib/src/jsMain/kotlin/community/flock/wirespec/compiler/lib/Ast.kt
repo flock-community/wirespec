@@ -130,7 +130,6 @@ private fun WsRpc.consume() = Rpc(
 
 private fun WsPart.consume() = Part(
     comment = comment?.let { Comment(it) },
-    annotations = annotations.map { it.consume() },
     identifier = DefinitionIdentifier(identifier),
     shape = AstShape(shape.value.map { it.consume() }),
 )
@@ -294,7 +293,6 @@ public fun Definition.produce(): WsDefinition = when (this) {
     is Part -> WsPart(
         identifier = identifier.value,
         comment = comment?.value,
-        annotations = annotations.produce(),
         shape = shape.produce(),
     )
 }
@@ -437,7 +435,6 @@ public class WsType(
 public class WsPart(
     override val identifier: String,
     override val comment: String?,
-    public val annotations: Array<WsAnnotation>,
     public val shape: WsShape,
 ) : WsDefinition
 

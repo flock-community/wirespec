@@ -108,19 +108,21 @@ class GraphQLEmitterTest {
     }
 
     @Test
-    fun aTypeImplementsTheInterfacePartsItSpreads() {
+    fun aTypeImplementsTheInterfaceWhosePartItSpreads() {
         """
             |part Audited {
             |  createdAt: String
             |}
             |
-            |@GraphQLInterface
-            |part NodeInterface {
+            |part NodeFields {
             |  id: String
             |}
             |
+            |@GraphQLInterface("NodeFields")
+            |type Node = Todo | Note
+            |
             |part Entity {
-            |  ...NodeInterface,
+            |  ...NodeFields,
             |  ...Audited
             |}
             |
@@ -130,11 +132,9 @@ class GraphQLEmitterTest {
             |}
             |
             |type Note {
-            |  ...NodeInterface,
+            |  ...NodeFields,
             |  text: String
             |}
-            |
-            |type Node = Todo | Note
             |
             |rpc GetNode {
             |  id: String
