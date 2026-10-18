@@ -165,6 +165,61 @@ class GraphQLEmitterTest {
     }
 
     @Test
+    fun anInterfaceWithoutAPartHasTheFieldsItsMembersShare() {
+        """
+            |type User {
+            |  @Description("The id")
+            |  id: String,
+            |  @Description("Who to address")
+            |  name: String,
+            |  active: Boolean,
+            |  email: String?
+            |}
+            |
+            |type Bot {
+            |  @Description("The id")
+            |  id: String,
+            |  name: String,
+            |  active: Boolean?,
+            |  owner: User
+            |}
+            |
+            |@GraphQLInterface
+            |type Account = User | Bot
+            |
+            |rpc Me {} -> Account
+        """.trimMargin().toGraphQL() shouldBe """
+            |type User implements Account {
+            |  "The id"
+            |  id: String!
+            |  "Who to address"
+            |  name: String!
+            |  active: Boolean!
+            |  email: String
+            |}
+            |
+            |type Bot implements Account {
+            |  "The id"
+            |  id: String!
+            |  name: String!
+            |  active: Boolean
+            |  owner: User!
+            |}
+            |
+            |interface Account {
+            |  "The id"
+            |  id: String!
+            |  name: String!
+            |}
+            |
+            |type Query {
+            |  me: Account!
+            |}
+            |
+        """.trimMargin()
+    }
+
+    @Test
     fun writesTheTypesAnRpcTakesAsInputObjects() {
         """
             |type Person {
