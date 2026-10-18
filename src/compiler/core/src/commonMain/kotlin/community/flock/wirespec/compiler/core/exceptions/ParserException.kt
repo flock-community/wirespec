@@ -43,13 +43,6 @@ internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coo
         message = "A spread cannot be annotated; annotate the fields of the part instead",
     )
 
-internal class AnnotatedPartException(fileUri: FileUri, coordinates: Token.Coordinates) :
-    ParserException(
-        fileUri,
-        coordinates = coordinates,
-        message = "A part cannot be annotated; annotate its fields instead",
-    )
-
 internal class DefaultValueNotAllowedException(fileUri: FileUri, fieldName: String, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,

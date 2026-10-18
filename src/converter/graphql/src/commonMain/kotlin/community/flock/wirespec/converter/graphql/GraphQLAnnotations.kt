@@ -30,6 +30,13 @@ internal object GraphQLAnnotations {
 
     const val DEFAULT_PARAMETER = "default"
 
+    /** An interface is a part named after it with this suffix, which leaves its name to the union of the types implementing it. */
+    private const val INTERFACE_SUFFIX = "Interface"
+
+    fun partName(interfaceName: String): String = "$interfaceName$INTERFACE_SUFFIX"
+
+    fun interfaceName(partName: String): String = partName.removeSuffix(INTERFACE_SUFFIX).ifEmpty { partName }
+
     /** Marks an rpc as a field of a root operation type: `@GraphQLQuery`, `@GraphQLMutation` or `@GraphQLSubscription`. */
     val GraphQLModel.Operation.annotationName: String get() = "GraphQL$defaultTypeName"
 

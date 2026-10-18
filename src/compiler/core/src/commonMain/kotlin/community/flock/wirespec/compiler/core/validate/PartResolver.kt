@@ -28,9 +28,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
 /**
- * Replaces every [Spread] with the fields of the part it names, so that everything downstream
- * of the parser only ever reads plain fields. Each stage assumes the previous one passed:
- * flattening is only safe once every spread names an existing part and no part reaches itself.
+ * Resolves every [Spread] to the fields of the part it names, so that everything downstream
+ * of the parser reads plain fields while a shape still tells which parts it spreads. Each stage
+ * assumes the previous one passed: resolving is only safe once every spread names an existing
+ * part and no part reaches itself.
  */
 internal object PartResolver {
 
@@ -41,7 +42,7 @@ internal object PartResolver {
         val (partShapes, otherShapes) = ast.shapes().partition { it.definition is Part }
         raiseAll(parts.duplicateFieldErrors(partShapes))
         raiseAll(parts.duplicateFieldErrors(otherShapes.filter { owned -> owned.shape.value.any { it is Spread } }))
-        parts.flatten(ast)
+        parts.resolveSpreads(ast)
     }
 
     private fun Raise<NonEmptyList<WirespecException>>.raiseAll(errors: List<WirespecException>) {
@@ -102,7 +103,16 @@ internal object PartResolver {
         }
     }
 
-    private fun Map<String, Part>.flatten(ast: AST): AST = ast.mapShapes { Shape(fieldsOf(it)) }
+    private fun Map<String, Part>.resolveSpreads(ast: AST): AST = ast.mapShapes { shape ->
+        Shape(
+            shape.value.map { entry ->
+                when (entry) {
+                    is Field -> entry
+                    is Spread -> entry.copy(fields = fieldsOf(getValue(entry.reference.value).shape))
+                }
+            },
+        )
+    }
 }
 
 public fun unusedPartWarning(partName: String): String = "Part '$partName' is never spread"

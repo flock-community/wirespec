@@ -31,6 +31,7 @@ interface Node {
 }
 
 interface Entity implements Node & Timestamped @key(fields: "id") {
+  "The globally unique id"
   id: ID!
   createdAt: DateTime!
   updatedAt: DateTime
@@ -44,7 +45,12 @@ extend interface Timestamped @audit(level: LOW) {
   deletedAt: DateTime
 }
 
+interface Publisher {
+  posts: [Post!]!
+}
+
 type User implements & Entity & Node & Timestamped @key(fields: "id") @key(fields: "email") {
+  "The globally unique id"
   id: ID!
   createdAt: DateTime!
   updatedAt: DateTime
@@ -80,6 +86,7 @@ type FriendConnection {
 }
 
 type Post implements Node {
+  "The globally unique id"
   id: ID!
   title: String!
   body: String
@@ -88,11 +95,9 @@ type Post implements Node {
 
 type Empty
 
-extend type User @audit(level: MEDIUM) {
+extend type User implements Publisher @audit(level: MEDIUM) {
   posts: [Post!]!
 }
-
-extend type User implements Node
 
 union SearchResult @cacheControl(maxAge: 60) = User | Post
 

@@ -5,7 +5,6 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.exceptions.AnnotatedPartException
 import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
 import community.flock.wirespec.compiler.core.exceptions.CyclicPartError
 import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
@@ -20,6 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
@@ -47,7 +47,7 @@ class ParsePartTest {
         .filterIsInstance<T>()
         .single { it.identifier.value == name }
 
-    private fun Shape.names() = value.map { it.shouldBeInstanceOf<Field>().identifier.value }
+    private fun Shape.names() = fields.map { it.identifier.value }
 
     @Test
     fun spreadIsTheSameAsWritingTheFieldsOut() {
@@ -66,7 +66,28 @@ class ParsePartTest {
             """.trimMargin(),
         ).shouldBeRight()
 
-        spread.single<Type>("User").shape.value shouldBe handWritten.single<Type>("User").shape.value
+        spread.single<Type>("User").shape.fields shouldBe handWritten.single<Type>("User").shape.fields
+    }
+
+    @Test
+    fun spreadStaysInTheShapeResolvedToTheFieldsOfItsPart() {
+        val string = Reference.Primitive(Reference.Primitive.Type.String(null), isNullable = false)
+        parse(
+            // language=ws
+            """
+            |part Id { id: String }
+            |part Audit { ...Id, createdAt: String }
+            |type User { ...Audit, name: String }
+            """.trimMargin(),
+        )
+            .shouldBeRight()
+            .single<Type>("User").shape.value shouldContainExactly listOf(
+            Spread(
+                reference = Reference.Custom("Audit", isNullable = false),
+                fields = listOf(Field(emptyList(), FieldIdentifier("id"), string), Field(emptyList(), FieldIdentifier("createdAt"), string)),
+            ),
+            Field(emptyList(), FieldIdentifier("name"), string),
+        )
     }
 
     @Test
@@ -189,18 +210,18 @@ class ParsePartTest {
     }
 
     @Test
-    fun partCannotBeAnnotated() {
+    fun partKeepsItsAnnotations() {
         parse(
             // language=ws
             """
             |@Deprecated
+            |@Since("2.0")
             |part Audit { createdAt: String }
             |type User { ...Audit }
             """.trimMargin(),
         )
-            .shouldBeLeft()
-            .single().shouldBeInstanceOf<AnnotatedPartException>()
-            .message shouldBe "A part cannot be annotated; annotate its fields instead"
+            .shouldBeRight()
+            .single<Part>("Audit").annotations.map { it.name } shouldContainExactly listOf("Deprecated", "Since")
     }
 
     @Test

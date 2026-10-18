@@ -34,7 +34,7 @@ class WirespecEmitterTest {
             |}
             |
             |part Audited {
-            |  id: String,
+            |  ...Identifiable,
             |  createdAt: String,
             |  updatedAt: String?
             |}
@@ -49,19 +49,17 @@ class WirespecEmitterTest {
             |}
             |
             |type Todo {
-            |  id: String,
-            |  createdAt: String,
-            |  updatedAt: String?,
+            |  ...Audited,
             |  name: String,
             |  done: Boolean
             |}
             |
-            |endpoint GetTodos GET /todos ?{page: Integer,size: Integer,done: Boolean?} #{`X-Trace-Id`: String} -> {
-            |  200 -> Todo[] #{`X-Trace-Id`: String,total: Integer}
+            |endpoint GetTodos GET /todos ?{...Paging,done: Boolean?} #{...Tracing} -> {
+            |  200 -> Todo[] #{...Tracing,total: Integer}
             |}
             |
             |rpc FindTodo {
-            |  id: String
+            |  ...Identifiable
             |} -> Todo
             |
         """.trimMargin()

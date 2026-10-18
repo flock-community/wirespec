@@ -108,6 +108,63 @@ class GraphQLEmitterTest {
     }
 
     @Test
+    fun aTypeImplementsTheInterfacePartsItSpreads() {
+        """
+            |part Audited {
+            |  createdAt: String
+            |}
+            |
+            |@GraphQLInterface
+            |part NodeInterface {
+            |  id: String
+            |}
+            |
+            |part Entity {
+            |  ...NodeInterface,
+            |  ...Audited
+            |}
+            |
+            |type Todo {
+            |  ...Entity,
+            |  title: String
+            |}
+            |
+            |type Note {
+            |  ...NodeInterface,
+            |  text: String
+            |}
+            |
+            |type Node = Todo | Note
+            |
+            |rpc GetNode {
+            |  id: String
+            |} -> Node
+        """.trimMargin().toGraphQL() shouldBe """
+            |interface Node {
+            |  id: String!
+            |}
+            |
+            |type Todo implements Node {
+            |  id: String!
+            |  createdAt: String!
+            |  title: String!
+            |}
+            |
+            |type Note implements Node {
+            |  id: String!
+            |  text: String!
+            |}
+            |
+            |type Query {
+            |  getNode(
+            |    id: String!
+            |  ): Node!
+            |}
+            |
+        """.trimMargin()
+    }
+
+    @Test
     fun writesTheTypesAnRpcTakesAsInputObjects() {
         """
             |type Person {

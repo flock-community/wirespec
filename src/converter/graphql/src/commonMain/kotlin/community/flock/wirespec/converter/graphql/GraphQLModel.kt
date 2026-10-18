@@ -18,6 +18,13 @@ internal object GraphQLModel {
         val extension: Boolean
     }
 
+    /** An object or an interface: both declare fields and implement interfaces. */
+    sealed interface ImplementingTypeDefinition : TypeDefinition {
+        val interfaces: List<String>
+        val directives: List<Directive>
+        val fields: List<FieldDefinition>
+    }
+
     data class SchemaDefinition(
         val description: String?,
         val directives: List<Directive>,
@@ -46,20 +53,20 @@ internal object GraphQLModel {
     data class ObjectTypeDefinition(
         val description: String?,
         override val name: String,
-        val interfaces: List<String>,
-        val directives: List<Directive>,
-        val fields: List<FieldDefinition>,
+        override val interfaces: List<String>,
+        override val directives: List<Directive>,
+        override val fields: List<FieldDefinition>,
         override val extension: Boolean,
-    ) : TypeDefinition
+    ) : ImplementingTypeDefinition
 
     data class InterfaceTypeDefinition(
         val description: String?,
         override val name: String,
-        val interfaces: List<String>,
-        val directives: List<Directive>,
-        val fields: List<FieldDefinition>,
+        override val interfaces: List<String>,
+        override val directives: List<Directive>,
+        override val fields: List<FieldDefinition>,
         override val extension: Boolean,
-    ) : TypeDefinition
+    ) : ImplementingTypeDefinition
 
     data class UnionTypeDefinition(
         val description: String?,
