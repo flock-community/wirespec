@@ -18,22 +18,23 @@ public data class Field(
 ) : HasAnnotations,
     ShapeEntry
 
-public data class Spread(val reference: Reference.Custom) : ShapeEntry
+/** Validation resolves a spread to the [fields] of its part, so a validated shape still tells which parts it spreads. */
+public data class Spread(val reference: Reference.Custom, val fields: List<Field>? = null) : ShapeEntry
 
 public data class Shape(override val value: List<ShapeEntry>) : Value<List<ShapeEntry>>
 
-/** Only valid on a validated AST, where every [Spread] is replaced by the fields of its part. */
-public val Shape.fields: List<Field> get() = value.map { entry ->
+/** The fields with every [Spread] written out; only valid on a validated AST, where every spread is resolved. */
+public val Shape.fields: List<Field> get() = value.flatMap { entry ->
     when (entry) {
-        is Field -> entry
-        is Spread -> error("Spread ...${entry.reference.value} is unresolved: read fields only from a validated AST")
+        is Field -> listOf(entry)
+        is Spread -> entry.fields ?: error("Spread ...${entry.reference.value} is unresolved: read fields only from a validated AST")
     }
 }
 
 /**
  * A reusable set of fields that is only ever spread into shapes, never emitted on its own.
- * Validation replaces every [Spread] with the fields of its part, so after parsing every
- * shape holds plain [Field]s only.
+ * Validation resolves every [Spread] to the fields of its part, so after parsing [fields]
+ * reads every shape as plain [Field]s.
  */
 public data class Part(
     override val comment: Comment?,

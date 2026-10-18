@@ -12,10 +12,13 @@ import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
@@ -45,6 +48,7 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefiniti
 import community.flock.wirespec.converter.graphql.GraphQLModel.Document
 import community.flock.wirespec.converter.graphql.GraphQLModel.EnumTypeDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.FieldDefinition
+import community.flock.wirespec.converter.graphql.GraphQLModel.ImplementingTypeDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.InputObjectTypeDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.InputValueDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.InterfaceTypeDefinition
@@ -61,11 +65,12 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
 /**
  * Converts a GraphQL schema (SDL) into Wirespec.
  *
- * Objects, interfaces and input objects become types, scalars become refined types, enums and unions map onto
- * their Wirespec counterparts and every field of a root operation type (`Query`, `Mutation`, `Subscription`)
- * becomes an `rpc`. Whatever Wirespec cannot express natively — descriptions, directives, field arguments,
- * default values, extensions, interface implementations — is kept in annotations, so the schema can be rebuilt
- * from the Wirespec definitions without loss.
+ * Objects and input objects become types, scalars become refined types, enums and unions map onto their Wirespec
+ * counterparts and every field of a root operation type (`Query`, `Mutation`, `Subscription`) becomes an `rpc`.
+ * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
+ * Wirespec cannot express natively —
+ * descriptions, directives, field arguments, default values, extensions — is kept in annotations, so the schema can
+ * be rebuilt from the Wirespec definitions.
  */
 public object GraphQLParser : Parser {
 
@@ -115,13 +120,36 @@ private class GraphQLConverter(private val document: Document) {
     private val names: Map<String, String> = taken.associateWith { it } +
         (declared + unresolvable).filterNot { it.isValidTypeName() }.associateWith { claim(it.sanitize()) }
 
+    private val interfaceDefinitions: Map<String, InterfaceTypeDefinition> = document.definitions
+        .filterIsInstance<InterfaceTypeDefinition>()
+        .filterNot { it.extension }
+        .distinctBy { it.name }
+        .associateBy { it.name }
+
+    /** The interfaces each object and interface declares, its extensions included. */
+    private val declaredInterfaces: Map<String, List<String>> = document.definitions
+        .filterIsInstance<ImplementingTypeDefinition>()
+        .groupBy({ it.name }, { it.interfaces })
+        .mapValues { (_, interfaces) -> interfaces.flatten() }
+
+    /** An interface that anything implements keeps its fields in a part, for the implementations to spread. */
+    private val interfaceParts: Map<String, String> = interfaceDefinitions.keys
+        .filter { name -> declaredInterfaces.values.any { name in it } }
+        .associateWith { claim("${names.getValue(it)}Interface") }
+
+    /** A root operation type becomes rpcs, which leave nothing to spread an interface into. */
+    private val implementations: Map<ImplementingTypeDefinition, Lazy<Implementation>> = document.definitions
+        .filterIsInstance<ImplementingTypeDefinition>()
+        .filterNot { it is ObjectTypeDefinition && it.name in roots }
+        .associateWith { lazy { it.implement() } }
+
     fun convert(): List<Definition> = document.definitions.flatMap { definition ->
         when (definition) {
             is SchemaDefinition -> definition.convert().let(::listOf)
             is DirectiveDefinition -> definition.convert().let(::listOf)
             is ScalarTypeDefinition -> definition.convert().let(::listOf)
             is ObjectTypeDefinition -> definition.convert()
-            is InterfaceTypeDefinition -> definition.convert().let(::listOf)
+            is InterfaceTypeDefinition -> definition.convert()
             is UnionTypeDefinition -> definition.convert().let(::listOf)
             is EnumTypeDefinition -> definition.convert().let(::listOf)
             is InputObjectTypeDefinition -> definition.convert().let(::listOf)
@@ -134,7 +162,7 @@ private class GraphQLConverter(private val document: Document) {
             listOfNotNull(annotation(EXTEND).takeIf { extension }) +
             description.toAnnotations() +
             directives.toAnnotations(),
-        fields = emptyList(),
+        entries = emptyList(),
     )
 
     private fun DirectiveDefinition.convert(): Type = type(
@@ -147,7 +175,7 @@ private class GraphQLConverter(private val document: Document) {
                 parameter("repeatable", "true").takeIf { repeatable },
             ),
         ) + description.toAnnotations(),
-        fields = arguments.map { it.toField() },
+        entries = arguments.map { it.toField() },
     )
 
     private fun ScalarTypeDefinition.convert(): Refined = Refined(
@@ -167,14 +195,104 @@ private class GraphQLConverter(private val document: Document) {
                 else -> fields.map { it.toRpc(prefix, operation, name, extensionBlock()) }
             }
         }
-        else -> type(identifier(), commonAnnotations(interfaces), fields.map { it.toField() }).let(::listOf)
+        else -> implementation().takeUnless { bringsNothing(it) }
+            ?.let { type(identifier(), commonAnnotations(it.listed), it.entries) }
+            .let(::listOfNotNull)
     }
 
-    private fun InterfaceTypeDefinition.convert(): Type = type(
-        identifier = identifier(),
-        annotations = listOf(annotation(INTERFACE)) + commonAnnotations(interfaces),
-        fields = fields.map { it.toField() },
+    /**
+     * An interface that anything implements is the union of the types implementing it, `@GraphQLInterface` naming the
+     * part with its fields; any other interface, an extension too, is a type with fields of its own.
+     */
+    private fun InterfaceTypeDefinition.convert(): List<Definition> = implementation().takeUnless { bringsNothing(it) }
+        ?.let { implementation ->
+            interfaceParts[name]?.takeIf { interfaceDefinitions[name] === this }
+                ?.let { part ->
+                    listOf(
+                        Part(comment = null, identifier = DefinitionIdentifier(part), shape = Shape(implementation.entries)),
+                        implementedBy(listOf(annotation(INTERFACE, part)) + commonAnnotations(implementation.listed)),
+                    )
+                }
+                ?: listOf(type(identifier(), listOf(annotation(INTERFACE)) + commonAnnotations(implementation.listed), implementation.entries))
+        }
+        .orEmpty()
+
+    /** A union needs a member, so an interface that only interfaces implement is an empty type. */
+    private fun InterfaceTypeDefinition.implementedBy(annotations: List<Annotation>): Definition = implementors(name)
+        .takeIf { it.isNotEmpty() }
+        ?.let { implementors -> Union(null, annotations, DefinitionIdentifier(identifier()), implementors.map { Reference.Custom(it, isNullable = false) }.toSet()) }
+        ?: type(identifier(), annotations, emptyList())
+
+    /** The object types with a Wirespec type of their own that implement the interface, directly or through another one. */
+    private fun implementors(interfaceName: String): List<String> = document.definitions
+        .filterIsInstance<ObjectTypeDefinition>()
+        .filter { definition ->
+            implementations[definition]?.value?.let { interfaceName in it.covered || interfaceName in it.listed } ?: (interfaceName in definition.interfaces)
+        }
+        .map { it.name }
+        .distinct()
+        .filter { name -> document.definitions.any { it is ObjectTypeDefinition && !it.extension && it.name == name && (name !in roots || it.needsType()) } }
+        .map { names.getValue(it) }
+
+    /**
+     * Implementing an interface is spreading its part: the fields of the interface take the place of the fields of the
+     * same name, where the first of those was, so a field that GraphQL lets an implementation narrow takes the
+     * interface's type, description and directives. The interfaces of the interface come along with it. An interface
+     * that cannot be spread — declared elsewhere, missing fields, or with a field that another spread already brings —
+     * is listed in `@GraphQLImplements`, which an extension leaves to its type.
+     */
+    private data class Implementation(
+        val entries: List<ShapeEntry>,
+        val fields: List<Field>,
+        val covered: Set<String> = emptySet(),
+        val listed: List<String> = emptyList(),
     )
+
+    private fun ImplementingTypeDefinition.implementation(): Implementation = implementations.getValue(this).value
+
+    private fun ImplementingTypeDefinition.implement(): Implementation = when {
+        extension -> implement(interfaces).let { if (hasBase()) it.copy(listed = emptyList()) else it }
+        else -> implement(interfaces + extensions().flatMap { it.implement(it.interfaces).listed })
+    }
+
+    // An interface that another of them implements comes after that one, which brings it along when spread.
+    private fun ImplementingTypeDefinition.implement(interfaces: List<String>): Implementation = interfaces.distinct()
+        .sortedBy { candidate -> interfaces.count { candidate in reachable(it) } }
+        .fold(fields.map { it.toField() }.let { Implementation(it, it) }) { implementation, candidate ->
+            when (candidate) {
+                in implementation.covered -> implementation
+                else -> spread(implementation, candidate) ?: implementation.copy(listed = implementation.listed + candidate)
+            }
+        }
+
+    private fun ImplementingTypeDefinition.spread(implementation: Implementation, candidate: String): Implementation? = interfaceParts[candidate]
+        // An interface that implements this one, however indirectly, is never spread into it, which would be a cycle.
+        ?.takeIf { name !in reachable(candidate) }
+        ?.let { part ->
+            interfaceDefinitions.getValue(candidate).implementation().let { spread ->
+                spread.fields.map { it.identifier.value }.toSet()
+                    .takeIf { fieldNames -> implementation.entries.filterIsInstance<Field>().map { it.identifier.value }.containsAll(fieldNames) }
+                    ?.let { fieldNames ->
+                        Implementation(
+                            entries = implementation.entries.replace(listOf(Spread(Reference.Custom(part, isNullable = false)))) { it is Field && it.identifier.value in fieldNames },
+                            fields = implementation.fields.replace(spread.fields) { it.identifier.value in fieldNames },
+                            covered = implementation.covered + candidate + spread.covered + spread.listed,
+                            listed = implementation.listed,
+                        )
+                    }
+            }
+        }
+
+    private fun ImplementingTypeDefinition.hasBase(): Boolean = implementations.keys.any { !it.extension && it.name == name && it::class == this::class }
+
+    private fun ImplementingTypeDefinition.extensions(): List<ImplementingTypeDefinition> = implementations.keys.filter { it.extension && it.name == name && it::class == this::class }
+
+    /** An extension that brings nothing but interfaces its type now implements is left out. */
+    private fun ImplementingTypeDefinition.bringsNothing(implementation: Implementation): Boolean = extension && directives.isEmpty() && implementation.entries.isEmpty() && implementation.listed.isEmpty()
+
+    private fun reachable(name: String): Set<String> = generateSequence(declaredInterfaces[name].orEmpty().toSet()) { found ->
+        (found + found.flatMap { declaredInterfaces[it].orEmpty() }).takeIf { it.size > found.size }
+    }.last()
 
     private fun UnionTypeDefinition.convert(): Definition = when {
         members.isEmpty() -> type(identifier(), listOf(annotation(UNION)) + commonAnnotations(), emptyList())
@@ -209,7 +327,7 @@ private class GraphQLConverter(private val document: Document) {
     private fun InputObjectTypeDefinition.convert(): Type = type(
         identifier = identifier(),
         annotations = listOf(annotation(INPUT)) + commonAnnotations(),
-        fields = fields.map { it.toField() },
+        entries = fields.map { it.toField() },
     )
 
     private fun FieldDefinition.toField(): Field = Field(
@@ -369,13 +487,16 @@ private class GraphQLConverter(private val document: Document) {
         reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = false),
     ).takeIf { needsBuiltInId }
 
-    private fun type(identifier: String, annotations: List<Annotation>, fields: List<Field>): Type = Type(
+    private fun type(identifier: String, annotations: List<Annotation>, entries: List<ShapeEntry>): Type = Type(
         comment = null,
         annotations = annotations,
         identifier = DefinitionIdentifier(identifier),
-        shape = Shape(fields),
+        shape = Shape(entries),
         extends = emptyList(),
     )
+
+    private fun <T> List<T>.replace(replacement: List<T>, replaced: (T) -> Boolean): List<T> = indexOfFirst(replaced).coerceAtLeast(0)
+        .let { at -> take(at) + replacement + drop(at).filterNot(replaced) }
 
     private fun claim(candidate: String): String = generateSequence(2) { it + 1 }
         .map { "$candidate$it" }

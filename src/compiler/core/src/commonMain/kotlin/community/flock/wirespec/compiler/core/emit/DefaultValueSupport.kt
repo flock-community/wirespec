@@ -10,11 +10,13 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -41,7 +43,17 @@ public fun AST.withoutDefaults(): AST = copy(
         module.copy(
             statements = module.statements.map { definition ->
                 when (definition) {
-                    is Type -> definition.copy(shape = Shape(definition.shape.fields.map { it.copy(defaultValue = null) }))
+                    // A part cannot hold defaults, so only the fields of the type itself have one to drop.
+                    is Type -> definition.copy(
+                        shape = Shape(
+                            definition.shape.value.map { entry ->
+                                when (entry) {
+                                    is Field -> entry.copy(defaultValue = null)
+                                    is Spread -> entry
+                                }
+                            },
+                        ),
+                    )
                     is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined, is Part -> definition
                 }
             },

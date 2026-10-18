@@ -23,6 +23,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -131,6 +133,11 @@ private fun WsPart.consume() = Part(
     identifier = DefinitionIdentifier(identifier),
     shape = AstShape(shape.value.map { it.consume() }),
 )
+
+private fun WsShapeEntry.consume(): ShapeEntry = when (this) {
+    is WsField -> consume()
+    is WsSpread -> Spread(Reference.Custom(reference, isNullable = false), fields?.map { it.consume() })
+}
 
 private fun WsField.consume() = Field(
     identifier = identifier.consume(),
@@ -291,8 +298,13 @@ public fun Definition.produce(): WsDefinition = when (this) {
 }
 
 private fun AstShape.produce() = WsShape(
-    fields.map { it.produce() }.toTypedArray(),
+    value.map { it.produce() }.toTypedArray(),
 )
+
+private fun ShapeEntry.produce(): WsShapeEntry = when (this) {
+    is Field -> produce()
+    is Spread -> WsSpread(reference.value, fields?.produce())
+}
 
 private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
     when (it) {
@@ -428,8 +440,18 @@ public class WsPart(
 
 @JsExport
 public class WsShape(
-    public val value: Array<WsField>,
+    public val value: Array<WsShapeEntry>,
 )
+
+@JsExport
+public sealed interface WsShapeEntry
+
+/** A spread of the part named [reference], with the fields of that part once validation resolved it. */
+@JsExport
+public class WsSpread(
+    public val reference: String,
+    public val fields: Array<WsField>?,
+) : WsShapeEntry
 
 @JsExport
 public class WsEndpoint(
@@ -510,7 +532,7 @@ public class WsField(
     public val reference: WsReference,
     public val annotations: Array<WsAnnotation>,
     public val defaultValue: WsDefaultValue?,
-)
+) : WsShapeEntry
 
 @JsExport
 public sealed interface WsIdentifier

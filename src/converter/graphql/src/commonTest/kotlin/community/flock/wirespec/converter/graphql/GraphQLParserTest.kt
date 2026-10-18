@@ -11,9 +11,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.validate.Validator
@@ -105,26 +107,133 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun convertsInterfacesToTypes() {
-        """
+    fun convertsAnInterfaceToTheUnionOfItsImplementationsWhichSpreadItsFields() {
+        val source = """
             interface Node { id: ID! }
             type User implements Node { id: ID! email: String }
-        """.trimIndent().toWirespec() shouldBe """
-            |@GraphQLInterface
-            |type Node {
+            type Post implements Node { id: ID! title: String! }
+            type Query { node(id: ID!): Node }
+        """.trimIndent()
+        source.toWirespec() shouldBe """
+            |part NodeInterface {
             |  id: ID
             |}
             |
-            |@GraphQLImplements(["Node"])
+            |@GraphQLInterface("NodeInterface")
+            |type Node = User | Post
+            |
             |type User {
-            |  id: ID,
+            |  ...NodeInterface,
             |  email: String?
             |}
+            |
+            |type Post {
+            |  ...NodeInterface,
+            |  title: String
+            |}
+            |
+            |@GraphQLQuery
+            |@GraphQLName("node")
+            |rpc QueryNode {
+            |  id: ID
+            |} -> Node?
             |
             |@GraphQLBuiltIn
             |type ID = String
             |
         """.trimMargin()
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun anImplementationTakesTheFieldsOfItsInterface() {
+        val source = """
+            interface Node { "The globally unique id" id: ID! }
+            type Post implements Node { title: String! id: ID! @deprecated }
+        """.trimIndent()
+        source.toWirespec() shouldContain """
+            |type Post {
+            |  title: String,
+            |  ...NodeInterface
+            |}
+        """.trimMargin()
+        source.convertedBack() shouldBe GraphQLDocumentParser(
+            """
+            interface Node { "The globally unique id" id: ID! }
+            type Post implements Node { title: String! "The globally unique id" id: ID! }
+            """.trimIndent(),
+        ).parseDocument()
+    }
+
+    @Test
+    fun anInterfaceThatNothingImplementsIsATypeWithItsFields() {
+        val source = """
+            interface Searchable { title: String! }
+            type Query { search: [Searchable!]! }
+        """.trimIndent()
+        source.toWirespec() shouldContain "@GraphQLInterface\ntype Searchable {\n  title: String\n}"
+        convert(source).filterIsInstance<Part>() shouldBe emptyList()
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun anInterfaceThatOnlyInterfacesImplementIsAnEmptyType() {
+        val source = "interface Node { id: ID! } interface Resource implements Node { id: ID! url: String! }"
+        source.toWirespec() shouldContain "@GraphQLInterface(\"NodeInterface\")\ntype Node {\n\n}"
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun anInterfaceSpreadsTheInterfacesItImplements() {
+        val source = """
+            interface Node { id: ID! }
+            interface Resource implements Node { id: ID! url: String! }
+            type Image implements Resource & Node { id: ID! url: String! width: Int }
+        """.trimIndent()
+        source.toWirespec() shouldContain "part ResourceInterface {\n  ...NodeInterface,\n  url: String\n}"
+        source.toWirespec() shouldContain "type Image {\n  ...ResourceInterface,\n  width: Integer32?\n}"
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun listsTheInterfacesThatCannotBeSpread() {
+        // Named brings an id that Node already spreads, and Remote is declared elsewhere.
+        val source = """
+            interface Node { id: ID! }
+            interface Named { id: ID! name: String! }
+            type User implements Node & Named & Remote { id: ID! name: String! }
+        """.trimIndent()
+        convert(source).definition<Type>("User").run {
+            annotations shouldContainExactly listOf(
+                Annotation("GraphQLImplements", listOf(Annotation.Parameter("default", Annotation.Value.Array(listOf(Annotation.Value.Single("Named"), Annotation.Value.Single("Remote")))))),
+            )
+            shape.value.first() shouldBe Spread(Reference.Custom("NodeInterface", false))
+        }
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun anExtensionLeavesTheInterfacesItCannotSpreadToItsType() {
+        convert("interface Node { id: ID! } type User { id: ID! email: String } extend type User implements Node")
+            .map { it.identifier.value } shouldContainExactly listOf("NodeInterface", "Node", "User", "ID")
+        "interface Node { id: ID! } type User { id: ID! email: String } extend type User implements Node".convertedBack() shouldBe
+            GraphQLDocumentParser("interface Node { id: ID! } type User implements Node { id: ID! email: String }").parseDocument()
+        "interface Node { id: ID! } type User implements Node { id: ID! } extend type User implements Node @key".convertedBack() shouldBe
+            GraphQLDocumentParser("interface Node { id: ID! } type User implements Node { id: ID! } extend type User @key").parseDocument()
+    }
+
+    @Test
+    fun aRootOperationTypeListsItsInterfaces() {
+        val source = "interface Node { id: ID! } type Query implements Node { id: ID! }"
+        convert(source).definition<Type>("Query").annotations.map { it.name } shouldContainExactly listOf("GraphQLImplements")
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun interfacesThatImplementEachOtherAreNotSpreadIntoEachOther() {
+        val source = "interface A implements B { a: Int } interface B implements A { a: Int }"
+        convert(source).filterIsInstance<Part>().flatMap { it.shape.value }.filterIsInstance<Spread>() shouldBe emptyList()
+        source.shouldRoundTrip()
     }
 
     @Test
@@ -347,6 +456,14 @@ class GraphQLParserTest {
         WirespecToGraphQL(parsed.modules.head.statements.toList()).convert() shouldBe document
         GraphQLDocumentParser(document.print()).parseDocument() shouldBe document
     }
+
+    /** GraphQL -> Wirespec source -> GraphQL, for a schema that does not come back as it was written. */
+    private fun String.convertedBack(): GraphQLModel.Document = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
+        .let { Validator.validate(ParseOptions(), it) }
+        .shouldBeRight()
+        .let { WirespecEmitter().emit(it, noLogger).single().result }
+        .let { parseWirespec(it, null).shouldBeRight() }
+        .let { WirespecToGraphQL(it.modules.head.statements.toList()).convert() }
 
     private fun parseWirespec(source: String, otherModules: String?) = object : ParseContext, NoLogger {
         override val spec = WirespecSpec

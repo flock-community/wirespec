@@ -108,6 +108,118 @@ class GraphQLEmitterTest {
     }
 
     @Test
+    fun aTypeImplementsTheInterfaceWhosePartItSpreads() {
+        """
+            |part Audited {
+            |  createdAt: String
+            |}
+            |
+            |part NodeFields {
+            |  id: String
+            |}
+            |
+            |@GraphQLInterface("NodeFields")
+            |type Node = Todo | Note
+            |
+            |part Entity {
+            |  ...NodeFields,
+            |  ...Audited
+            |}
+            |
+            |type Todo {
+            |  ...Entity,
+            |  title: String
+            |}
+            |
+            |type Note {
+            |  ...NodeFields,
+            |  text: String
+            |}
+            |
+            |rpc GetNode {
+            |  id: String
+            |} -> Node
+        """.trimMargin().toGraphQL() shouldBe """
+            |interface Node {
+            |  id: String!
+            |}
+            |
+            |type Todo implements Node {
+            |  id: String!
+            |  createdAt: String!
+            |  title: String!
+            |}
+            |
+            |type Note implements Node {
+            |  id: String!
+            |  text: String!
+            |}
+            |
+            |type Query {
+            |  getNode(
+            |    id: String!
+            |  ): Node!
+            |}
+            |
+        """.trimMargin()
+    }
+
+    @Test
+    fun anInterfaceWithoutAPartHasTheFieldsItsMembersShare() {
+        """
+            |type User {
+            |  @Description("The id")
+            |  id: String,
+            |  @Description("Who to address")
+            |  name: String,
+            |  active: Boolean,
+            |  email: String?
+            |}
+            |
+            |type Bot {
+            |  @Description("The id")
+            |  id: String,
+            |  name: String,
+            |  active: Boolean?,
+            |  owner: User
+            |}
+            |
+            |@GraphQLInterface
+            |type Account = User | Bot
+            |
+            |rpc Me {} -> Account
+        """.trimMargin().toGraphQL() shouldBe """
+            |type User implements Account {
+            |  "The id"
+            |  id: String!
+            |  "Who to address"
+            |  name: String!
+            |  active: Boolean!
+            |  email: String
+            |}
+            |
+            |type Bot implements Account {
+            |  "The id"
+            |  id: String!
+            |  name: String!
+            |  active: Boolean
+            |  owner: User!
+            |}
+            |
+            |interface Account {
+            |  "The id"
+            |  id: String!
+            |  name: String!
+            |}
+            |
+            |type Query {
+            |  me: Account!
+            |}
+            |
+        """.trimMargin()
+    }
+
+    @Test
     fun writesTheTypesAnRpcTakesAsInputObjects() {
         """
             |type Person {
