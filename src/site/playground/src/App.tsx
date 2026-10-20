@@ -7,6 +7,10 @@ const darkTheme = createTheme({
   palette: {
     mode: "dark",
   },
+  // The page font rather than Roboto, so selects and menus match the rest.
+  typography: {
+    fontFamily: "inherit",
+  },
 });
 
 function App() {
@@ -20,7 +24,6 @@ function App() {
         overflow="clip"
         display="flex"
         flexDirection="column"
-        rowGap={1}
       >
         <Box
           component="header"

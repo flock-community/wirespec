@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import { WsEmitted } from "@flock/wirespec";
 import { PlayGround } from "./PlayGround";
@@ -11,9 +11,10 @@ import { groupFiles } from "../utils/FileGroups";
 interface OutputViewProps {
   files: WsEmitted[];
   language: Language;
+  controls?: ReactNode;
 }
 
-export function OutputView({ files, language }: OutputViewProps) {
+export function OutputView({ files, language, controls }: OutputViewProps) {
   const [selected, setSelected] = useState<string>();
   const [treeOpen, setTreeOpen] = useState(false);
 
@@ -28,8 +29,13 @@ export function OutputView({ files, language }: OutputViewProps) {
 
   return (
     // The width the editor has on its own, so the breadcrumb shrinks with it
-    // and the tree and the editor share it.
-    <Box width={{ xs: "100vw", sm: "50vw" }}>
+    // and the tree and the editor share it. The divider counts towards it, or
+    // the page would be a pixel wider than the viewport.
+    <Box
+      width={{ xs: "100vw", sm: "50vw" }}
+      boxSizing="border-box"
+      borderLeft={{ sm: "1px solid var(--border-primary)" }}
+    >
       <Breadcrumb
         prefix={prefix}
         groups={groups}
@@ -37,6 +43,7 @@ export function OutputView({ files, language }: OutputViewProps) {
         onSelect={setSelected}
         treeOpen={treeOpen}
         onToggleTree={() => setTreeOpen((open) => !open)}
+        controls={controls}
       />
       <Box display="flex">
         {treeOpen && (
