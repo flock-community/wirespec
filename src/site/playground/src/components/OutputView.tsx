@@ -29,8 +29,13 @@ export function OutputView({ files, language, controls }: OutputViewProps) {
 
   return (
     // The width the editor has on its own, so the breadcrumb shrinks with it
-    // and the tree and the editor share it.
-    <Box width={{ xs: "100vw", sm: "50vw" }}>
+    // and the tree and the editor share it. The divider counts towards it, or
+    // the page would be a pixel wider than the viewport.
+    <Box
+      width={{ xs: "100vw", sm: "50vw" }}
+      boxSizing="border-box"
+      borderLeft={{ sm: "1px solid var(--border-primary)" }}
+    >
       <Breadcrumb
         prefix={prefix}
         groups={groups}

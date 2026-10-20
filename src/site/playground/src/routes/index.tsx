@@ -209,7 +209,7 @@ function RouteComponent() {
         <Box
           display={{ xs: "flex", sm: "none" }}
           justifyContent="flex-end"
-          paddingInline={1}
+          height={36}
           borderBottom="1px solid var(--border-primary)"
         >
           <Button
@@ -248,7 +248,7 @@ function RouteComponent() {
         <Box
           display={{ xs: "flex", sm: "none" }}
           justifyContent="flex-end"
-          paddingInline={1}
+          height={36}
           borderBottom="1px solid var(--border-primary)"
         >
           <Button
@@ -259,13 +259,11 @@ function RouteComponent() {
           </Button>
         </Box>
 
-        <Box borderLeft={{ sm: "1px solid var(--border-primary)" }}>
-          <OutputView
-            files={wirespecOutput?.result ?? []}
-            language={wirespecOutput?.language || "wirespec"}
-            controls={<EmitterSelector />}
-          />
-        </Box>
+        <OutputView
+          files={wirespecOutput?.result ?? []}
+          language={wirespecOutput?.language || "wirespec"}
+          controls={<EmitterSelector />}
+        />
       </Box>
     </Box>
   );

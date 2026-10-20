@@ -7,6 +7,10 @@ const darkTheme = createTheme({
   palette: {
     mode: "dark",
   },
+  // The page font rather than Roboto, so selects and menus match the rest.
+  typography: {
+    fontFamily: "inherit",
+  },
 });
 
 function App() {
