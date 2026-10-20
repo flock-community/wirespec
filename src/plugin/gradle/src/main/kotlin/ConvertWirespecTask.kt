@@ -38,7 +38,6 @@ public abstract class ConvertWirespecTask : BaseWirespecTask() {
     public abstract val format: Property<Format>
 
     @get:Input
-    @get:Option(option = "preProcessor", description = "pre-processor")
     public abstract val preProcessor: Property<(String) -> String>
 
     @TaskAction
