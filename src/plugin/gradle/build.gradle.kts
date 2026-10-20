@@ -24,6 +24,19 @@ dependencies {
     implementation(project(":src:converter:graphql"))
     implementation(project(":src:converter:openapi"))
     implementation(project(":src:plugin:arguments"))
+    testImplementation(libs.kotlin.junit)
+    testRuntimeOnly(libs.junit.launcher)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+// CI runs `./gradlew jvmTest`; this JVM-only module has no such task otherwise.
+tasks.register("jvmTest") {
+    group = "verification"
+    description = "Runs the tests of the Gradle plugin"
+    dependsOn(tasks.test)
 }
 
 java {
