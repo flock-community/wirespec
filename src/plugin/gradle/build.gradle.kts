@@ -32,6 +32,13 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// CI runs `./gradlew jvmTest`; this JVM-only module has no such task otherwise.
+tasks.register("jvmTest") {
+    group = "verification"
+    description = "Runs the tests of the Gradle plugin"
+    dependsOn(tasks.test)
+}
+
 java {
     withSourcesJar()
 }
