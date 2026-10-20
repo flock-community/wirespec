@@ -65,7 +65,7 @@ export function FileTree({ groups, active, onSelect }: FileTreeProps) {
           <Box key={label}>
             {label && (
               <ButtonBase
-                sx={{ ...rowSx, pl: 1 }}
+                sx={{ ...rowSx, pl: 2 }}
                 onClick={() => toggle(label)}
                 aria-expanded={open}
               >
@@ -80,7 +80,7 @@ export function FileTree({ groups, active, onSelect }: FileTreeProps) {
                   aria-current={file.file === active}
                   sx={{
                     ...rowSx,
-                    pl: label ? 3.5 : 1,
+                    pl: label ? 4.5 : 2,
                     ...(file.file === active && selectedSx),
                   }}
                 >

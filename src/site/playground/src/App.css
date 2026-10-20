@@ -119,6 +119,10 @@ q:after {
   content: none;
 }
 
+button {
+  font: inherit;
+}
+
 .show-on-small-screen {
   display: none;
 }

@@ -10,6 +10,7 @@ interface BreadcrumbProps {
   onSelect: (path: string) => void;
   treeOpen: boolean;
   onToggleTree: () => void;
+  controls?: ReactNode;
 }
 
 const buttonSx = {
@@ -69,6 +70,7 @@ export function Breadcrumb({
   onSelect,
   treeOpen,
   onToggleTree,
+  controls,
 }: BreadcrumbProps) {
   const [menu, setMenu] = useState<{
     anchor: HTMLElement;
@@ -82,7 +84,7 @@ export function Breadcrumb({
   };
 
   return (
-    <FileBar>
+    <FileBar controls={controls}>
       <ButtonBase
         onClick={onToggleTree}
         aria-label={treeOpen ? "Hide file tree" : "Show file tree"}
