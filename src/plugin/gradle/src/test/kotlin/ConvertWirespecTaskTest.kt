@@ -1,15 +1,14 @@
 package community.flock.wirespec.plugin.gradle
 
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.GradleRunner
 import java.nio.file.Files
-import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertFalse
 
-class ConvertWirespecTaskTest {
+class ConvertWirespecTaskTest : FunSpec({
 
-    @Test
-    fun `preProcessor set in the build script is applied to the input`() {
+    test("preProcessor set in the build script is applied to the input") {
         val projectDir = Files.createTempDirectory("wirespec-plugin").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("")
         projectDir.resolve("api.json").writeText(
@@ -53,7 +52,7 @@ class ConvertWirespecTaskTest {
             .build()
 
         val output = projectDir.resolve("build/out").walk().filter { it.isFile }.joinToString("\n") { it.readText() }
-        assertContains(output, "NewName")
-        assertFalse("OldName" in output)
+        output shouldContain "NewName"
+        output shouldNotContain "OldName"
     }
-}
+})

@@ -24,8 +24,8 @@ dependencies {
     implementation(project(":src:converter:graphql"))
     implementation(project(":src:converter:openapi"))
     implementation(project(":src:plugin:arguments"))
-    testImplementation(libs.kotlin.junit)
-    testRuntimeOnly(libs.junit.launcher)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions)
 }
 
 tasks.test {

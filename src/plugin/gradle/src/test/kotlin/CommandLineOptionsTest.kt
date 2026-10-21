@@ -1,13 +1,12 @@
 package community.flock.wirespec.plugin.gradle
 
+import io.kotest.core.spec.style.FunSpec
 import org.gradle.testkit.runner.GradleRunner
 import java.nio.file.Files
-import kotlin.test.Test
 
-class CommandLineOptionsTest {
+class CommandLineOptionsTest : FunSpec({
 
-    @Test
-    fun `several Wirespec tasks can be named in one invocation`() {
+    test("several Wirespec tasks can be named in one invocation") {
         val projectDir = Files.createTempDirectory("wirespec-plugin").toFile()
         projectDir.resolve("settings.gradle.kts").writeText("")
         projectDir.resolve("build.gradle.kts").writeText(
@@ -31,4 +30,4 @@ class CommandLineOptionsTest {
             .withArguments("--dry-run", "compileWirespec", "convertWirespec", "compileWirespec")
             .build()
     }
-}
+})
