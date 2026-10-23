@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>community.flock.wirespec.example.maven</groupId>
+    <artifactId>aeron</artifactId>
+    <version>0.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <!--
+      Wirespec rpc over Aeron (https://aeron.io/), both directions, one spec:
+      a Kotlin Spring Boot backend (server/) and a Rust client (client/) share
+      spec/quote.ws and exchange rpc frames through an Aeron media driver over
+      shared memory. The integration-test module runs both in Docker and
+      exercises the full loop, including a call from the server to the client.
+    -->
+    <modules>
+        <module>server</module>
+        <module>integration-test</module>
+    </modules>
+
+</project>
