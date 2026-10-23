@@ -106,16 +106,16 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(annotations: List<Ann
             ReferenceWirespec.Primitive.Type.Precision.P64 -> ConstructorStatement(
                 type = Type.Custom("Wirespec.GeneratorFieldNumber64"),
                 namedArguments = mapOf(
-                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toDouble(), Type.Number(Precision.P64))) } ?: NullableEmpty),
-                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toDouble(), Type.Number(Precision.P64))) } ?: NullableEmpty),
+                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.asDecimal(), Type.Number(Precision.P64))) } ?: NullableEmpty),
+                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.asDecimal(), Type.Number(Precision.P64))) } ?: NullableEmpty),
                     Name.of("annotations") to annotationsArg,
                 ),
             )
             ReferenceWirespec.Primitive.Type.Precision.P32 -> ConstructorStatement(
                 type = Type.Custom("Wirespec.GeneratorFieldNumber32"),
                 namedArguments = mapOf(
-                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.toFloat(), Type.Number(Precision.P32))) } ?: NullableEmpty),
-                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.toFloat(), Type.Number(Precision.P32))) } ?: NullableEmpty),
+                    Name.of("min") to (t.constraint?.min?.let { NullableOf(Literal(it.asDecimal(), Type.Number(Precision.P32))) } ?: NullableEmpty),
+                    Name.of("max") to (t.constraint?.max?.let { NullableOf(Literal(it.asDecimal(), Type.Number(Precision.P32))) } ?: NullableEmpty),
                     Name.of("annotations") to annotationsArg,
                 ),
             )
@@ -131,6 +131,8 @@ internal fun ReferenceWirespec.Primitive.toFieldDescriptor(annotations: List<Ann
     }
 }
 
+private fun String.asDecimal(): String = takeIf { '.' in it } ?: "$this.0"
+
 private val INTEGER_REGEX = Regex("^-?[0-9]+$")
 private val DOUBLE_REGEX = Regex("^-?[0-9]+\\.[0-9]+([eE]-?[0-9]+)?$")
 
@@ -138,7 +140,7 @@ internal fun coerceAnnotationValueLiteral(raw: String): Literal = when {
     raw == "true" -> Literal(true, Type.Boolean)
     raw == "false" -> Literal(false, Type.Boolean)
     INTEGER_REGEX.matches(raw) -> Literal(raw.toLong(), Type.Integer())
-    DOUBLE_REGEX.matches(raw) -> Literal(raw.toDouble(), Type.Number())
+    DOUBLE_REGEX.matches(raw) -> Literal(raw, Type.Number())
     else -> Literal(raw, Type.String)
 }
 

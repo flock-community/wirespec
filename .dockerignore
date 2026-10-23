@@ -1,4 +1,2 @@
 *
-!scripts/docker/*
 !src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-!types/*
