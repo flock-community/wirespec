@@ -64,9 +64,9 @@ applies to the languages it supports, and `supports` tells which those are:
 import { parse, emit, Emitters, Extensions } from "wirespec";
 
 const ast = parse(src);
-Extensions.SPRING.supports(Emitters.KOTLIN); // true
+Extensions.SPRING_MAPPING_ANNOTATIONS.supports(Emitters.KOTLIN); // true
 const kotlin = emit(ast.result, Emitters.KOTLIN, "community.flock.generated", false, [
-  Extensions.SPRING,
+  Extensions.SPRING_MAPPING_ANNOTATIONS,
   Extensions.JACKSON,
 ]);
 ```

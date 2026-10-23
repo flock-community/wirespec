@@ -19,9 +19,9 @@ public enum class Extension(private val languages: Set<FileExtension>) {
     Avro(setOf(FileExtension.Java, FileExtension.Kotlin)),
     Builder(setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala)),
     Jackson(setOf(FileExtension.Java, FileExtension.Kotlin)),
-    Kotest(setOf(FileExtension.Kotlin)),
+    KotestDsl(setOf(FileExtension.Kotlin)),
     KotlinxSerialization(setOf(FileExtension.Kotlin)),
-    Spring(setOf(FileExtension.Java, FileExtension.Kotlin)),
+    SpringMappingAnnotations(setOf(FileExtension.Java, FileExtension.Kotlin)),
     SpringNativeHints(setOf(FileExtension.Java, FileExtension.Kotlin)),
     ;
 
@@ -37,9 +37,9 @@ private fun Extension.toIrExtension(packageName: PackageName, language: FileExte
     Extension.Avro -> AvroExtension(packageName, language)
     Extension.Builder -> BuilderExtension(language)
     Extension.Jackson -> JacksonExtension()
-    Extension.Kotest -> KotestDslExtension(packageName)
+    Extension.KotestDsl -> KotestDslExtension(packageName)
     Extension.KotlinxSerialization -> KotlinxSerializationExtension()
-    Extension.Spring -> SpringMappingAnnotationsExtension(language)
+    Extension.SpringMappingAnnotations -> SpringMappingAnnotationsExtension(language)
     Extension.SpringNativeHints -> SpringNativeHintsExtension(packageName, language)
 }
 

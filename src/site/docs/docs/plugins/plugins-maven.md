@@ -105,7 +105,7 @@ The compile mojo supports the following parameters:
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
-- **bundledExtensions**: List of the [extensions bundled with the plugin](./plugins.md#ir-extensions) to apply, by name: `Avro`, `Builder`, `Jackson`, `Kotest`, `KotlinxSerialization`, `Spring` or `SpringNativeHints`. Each one applies to the languages it supports.
+- **bundledExtensions**: List of the [extensions bundled with the plugin](./plugins.md#ir-extensions) to apply, by name: `Avro`, `Builder`, `Jackson`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`. Each one applies to the languages it supports.
 - **extensionClasses**: List of fully qualified `IrExtension` class names. The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`, after the bundled extensions.
 
 ### Default values

@@ -13,14 +13,21 @@ class ExtensionTest {
 
     @Test
     fun testExtensions() {
-        Extension.toString() shouldBe "Avro, Builder, Jackson, Kotest, KotlinxSerialization, Spring, SpringNativeHints"
+        Extension.toString() shouldBe "Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints"
+    }
+
+    @Test
+    fun testNamesAreTheClassNames() {
+        Extension.entries.forEach { extension ->
+            listOf(extension).toIrExtensions(packageName, FileExtension.Kotlin).single()::class.simpleName shouldBe "${extension.name}Extension"
+        }
     }
 
     @Test
     fun testSupportedLanguages() {
         FileExtension.entries.associateWith { language -> Extension.entries.filter { it.supports(language) } }
             .filterValues { it.isNotEmpty() } shouldBe mapOf(
-            FileExtension.Java to listOf(Extension.Avro, Extension.Builder, Extension.Jackson, Extension.Spring, Extension.SpringNativeHints),
+            FileExtension.Java to listOf(Extension.Avro, Extension.Builder, Extension.Jackson, Extension.SpringMappingAnnotations, Extension.SpringNativeHints),
             FileExtension.Kotlin to Extension.entries,
             FileExtension.Scala to listOf(Extension.Builder),
         )

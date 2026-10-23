@@ -68,7 +68,7 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
-  -e, --extension=(Avro|Builder|Jackson|Kotest|KotlinxSerialization|Spring|SpringNativeHints)
+  -e, --extension=(Avro|Builder|Jackson|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 ```
@@ -91,7 +91,7 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
-  -e, --extension=(Avro|Builder|Jackson|Kotest|KotlinxSerialization|Spring|SpringNativeHints)
+  -e, --extension=(Avro|Builder|Jackson|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 
@@ -110,7 +110,7 @@ extension; the names are case-insensitive. Each extension applies to the languag
 models get Spring and Jackson annotations while the TypeScript is emitted as is:
 
 ```shell
-wirespec compile -i ./wirespec -o ./out -l Kotlin -l TypeScript -e Spring -e Jackson
+wirespec compile -i ./wirespec -o ./out -l Kotlin -l TypeScript -e SpringMappingAnnotations -e Jackson
 ```
 
 ## Default values

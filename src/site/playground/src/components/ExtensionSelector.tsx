@@ -16,9 +16,9 @@ const extensionOptions: Option[] = [
   { value: "avro", label: "Avro" },
   { value: "builder", label: "Builder" },
   { value: "jackson", label: "Jackson" },
-  { value: "kotest", label: "Kotest" },
+  { value: "kotest_dsl", label: "Kotest DSL" },
   { value: "kotlinx_serialization", label: "kotlinx.serialization" },
-  { value: "spring", label: "Spring" },
+  { value: "spring_mapping_annotations", label: "Spring mapping annotations" },
   { value: "spring_native_hints", label: "Spring native hints" },
 ];
 

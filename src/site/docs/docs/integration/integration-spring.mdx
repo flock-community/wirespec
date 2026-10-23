@@ -21,7 +21,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
 ## Setup
 
 The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bundled with every Wirespec plugin as
-`Spring`, for the Java and Kotlin targets; the CLI takes it as `-e Spring`.
+`SpringMappingAnnotations`, for the Java and Kotlin targets; the CLI takes it as `-e SpringMappingAnnotations`.
 
 <Tabs>
     <TabItem value="maven" label="Maven">
@@ -54,7 +54,7 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
                             <language>Java</language>
                         </languages>
                         <bundledExtensions>
-                            <bundledExtension>Spring</bundledExtension>
+                            <bundledExtension>SpringMappingAnnotations</bundledExtension>
                         </bundledExtensions>
                     </configuration>
                 </execution>
@@ -72,7 +72,7 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
         }
         ```
 
-        Then select the `Spring` extension that is bundled with the plugin:
+        Then select the `SpringMappingAnnotations` extension that is bundled with the plugin:
 
         ```gradle
         tasks.register<CompileWirespecTask>("wirespec-compile") {
@@ -82,7 +82,7 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
             languages = listOf(Language.Java)
-            bundledExtensions = listOf(community.flock.wirespec.plugin.Extension.Spring)
+            bundledExtensions = listOf(community.flock.wirespec.plugin.Extension.SpringMappingAnnotations)
         }
         ```
 

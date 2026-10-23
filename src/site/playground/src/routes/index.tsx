@@ -63,9 +63,9 @@ export type Extension =
   | "avro"
   | "builder"
   | "jackson"
-  | "kotest"
+  | "kotest_dsl"
   | "kotlinx_serialization"
-  | "spring"
+  | "spring_mapping_annotations"
   | "spring_native_hints";
 
 export type Language =

@@ -95,7 +95,7 @@
                                 <language>Kotlin</language>
                             </languages>
                             <bundledExtensions>
-                                <bundledExtension>Spring</bundledExtension>
+                                <bundledExtension>SpringMappingAnnotations</bundledExtension>
                             </bundledExtensions>
                             <packageName>community.flock.wirespec.generated.examples.spring.kotlin</packageName>
                         </configuration>

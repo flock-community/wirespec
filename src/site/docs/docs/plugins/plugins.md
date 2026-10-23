@@ -107,24 +107,26 @@ to the normal code generator, so the output stays idiomatic for the target langu
 Every plugin bundles the extensions that Wirespec ships, so you select them by name, without adding their
 integration module to the plugin or spelling out a class name:
 
-| Plugin | Option                                                                  |
-|--------|-------------------------------------------------------------------------|
-| CLI    | `-e`, `--extension`, once per extension: `-e Spring -e Jackson`         |
-| Gradle | `bundledExtensions = listOf(Extension.Spring, Extension.Jackson)`       |
-| Maven  | `<bundledExtensions><bundledExtension>Spring</bundledExtension></bundledExtensions>` |
-| npm    | the `extensions` argument of `emit`: `[Extensions.SPRING, Extensions.JACKSON]` |
+| Plugin | Option                                                                                         |
+|--------|------------------------------------------------------------------------------------------------|
+| CLI    | `-e`, `--extension`, once per extension: `-e SpringMappingAnnotations -e Jackson`              |
+| Gradle | `bundledExtensions = listOf(Extension.SpringMappingAnnotations, Extension.Jackson)`            |
+| Maven  | `<bundledExtensions><bundledExtension>SpringMappingAnnotations</bundledExtension></bundledExtensions>` |
+| npm    | the `extensions` argument of `emit`: `[Extensions.SPRING_MAPPING_ANNOTATIONS, Extensions.JACKSON]` |
 
 The [playground](https://playground.wirespec.io) offers them too, next to the output language.
 
-| Name                   | Extension                           | Languages             | Effect                                                                                                                                       |
-|------------------------|-------------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `Avro`                 | `AvroExtension`                     | Java, Kotlin          | Adds an Avro schema and converter next to every model — see [Avro](../integration/integration-avro.mdx)                                      |
-| `Builder`              | `BuilderExtension`                  | Java, Kotlin, Scala   | Adds an immutable `Builder` with `builder()` and `toBuilder()` to every model — see [Builders](../integration/integration-builders.mdx)       |
-| `Jackson`              | `JacksonExtension`                  | Java, Kotlin          | Adds Jackson annotations to every model — see [Jackson](../integration/integration-jackson.mdx)                                             |
-| `Kotest`               | `KotestDslExtension`                | Kotlin                | Adds a Kotest scenario DSL for every model, endpoint and channel                                                                             |
-| `KotlinxSerialization` | `KotlinxSerializationExtension`     | Kotlin                | Adds `@Serializable`/`@SerialName` to every model — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx)       |
-| `Spring`               | `SpringMappingAnnotationsExtension` | Java, Kotlin          | Adds Spring MVC mapping annotations to every endpoint handler — see [Spring](../integration/integration-spring.mdx)                         |
-| `SpringNativeHints`    | `SpringNativeHintsExtension`        | Java, Kotlin          | Adds a `WirespecNativeHints` class that registers the models and endpoints for GraalVM native images                                        |
+The name of a bundled extension is its class name without `Extension`: `Jackson` selects `JacksonExtension`.
+
+| Name                       | Languages           | Effect                                                                                                                                 |
+|----------------------------|---------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `Avro`                     | Java, Kotlin        | Adds an Avro schema and converter next to every model — see [Avro](../integration/integration-avro.mdx)                                |
+| `Builder`                  | Java, Kotlin, Scala | Adds an immutable `Builder` with `builder()` and `toBuilder()` to every model — see [Builders](../integration/integration-builders.mdx) |
+| `Jackson`                  | Java, Kotlin        | Adds Jackson annotations to every model — see [Jackson](../integration/integration-jackson.mdx)                                       |
+| `KotestDsl`                | Kotlin              | Adds a Kotest scenario DSL for every model, endpoint and channel                                                                       |
+| `KotlinxSerialization`     | Kotlin              | Adds `@Serializable`/`@SerialName` to every model — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+| `SpringMappingAnnotations` | Java, Kotlin        | Adds Spring MVC mapping annotations to every endpoint handler — see [Spring](../integration/integration-spring.mdx)                   |
+| `SpringNativeHints`        | Java, Kotlin        | Adds a `WirespecNativeHints` class that registers the models and endpoints for GraalVM native images                                  |
 
 The names are case-insensitive in the CLI. An extension applies to the languages it supports and leaves the others
 untouched, so one run can emit Kotlin with `KotlinxSerialization` next to TypeScript without it.
