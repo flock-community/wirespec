@@ -1,19 +1,19 @@
 package community.flock.wirespec.plugin.gradle
 
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.GradleRunner
 import java.nio.file.Files
-import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertFalse
 
-class ConvertWirespecTaskTest {
+class ConvertWirespecTaskTest :
+    FunSpec({
 
-    @Test
-    fun `preProcessor set in the build script is applied to the input`() {
-        val projectDir = Files.createTempDirectory("wirespec-plugin").toFile()
-        projectDir.resolve("settings.gradle.kts").writeText("")
-        projectDir.resolve("api.json").writeText(
-            """
+        test("preProcessor set in the build script is applied to the input") {
+            val projectDir = Files.createTempDirectory("wirespec-plugin").toFile()
+            projectDir.resolve("settings.gradle.kts").writeText("")
+            projectDir.resolve("api.json").writeText(
+                """
             {
               "openapi": "3.0.0",
               "info": { "title": "Test", "version": "1.0.0" },
@@ -24,10 +24,10 @@ class ConvertWirespecTaskTest {
                 }
               }
             }
-            """.trimIndent(),
-        )
-        projectDir.resolve("build.gradle.kts").writeText(
-            """
+                """.trimIndent(),
+            )
+            projectDir.resolve("build.gradle.kts").writeText(
+                """
             import community.flock.wirespec.plugin.Format
             import community.flock.wirespec.plugin.Language
             import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
@@ -43,17 +43,17 @@ class ConvertWirespecTaskTest {
                 languages = listOf(Language.Wirespec)
                 preProcessor = { it.replace("OldName", "NewName") }
             }
-            """.trimIndent(),
-        )
+                """.trimIndent(),
+            )
 
-        GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withPluginClasspath()
-            .withArguments("convertWirespec")
-            .build()
+            GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("convertWirespec")
+                .build()
 
-        val output = projectDir.resolve("build/out").walk().filter { it.isFile }.joinToString("\n") { it.readText() }
-        assertContains(output, "NewName")
-        assertFalse("OldName" in output)
-    }
-}
+            val output = projectDir.resolve("build/out").walk().filter { it.isFile }.joinToString("\n") { it.readText() }
+            output shouldContain "NewName"
+            output shouldNotContain "OldName"
+        }
+    })

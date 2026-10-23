@@ -21,10 +21,10 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Demonstrates the wiremock integration. The {@code wirespec(...)} factory mirrors WireMock's own
- * {@code get(urlEqualTo(...))} pattern: it takes the generated endpoint's {@code api} and returns a stub
- * builder driven by the endpoint's path template and HTTP method. {@code willReturn(response)} then turns a typed
- * Wirespec response into the stub's body, status, and headers — using a Jackson-backed serializer by default. Only
- * responses that belong to that endpoint type-check, so a mismatch is caught at compile time.
+ * {@code get(urlEqualTo(...))} pattern: it takes the generated endpoint's {@code api} and returns a stub builder driven
+ * by the endpoint's path template and HTTP method. {@code willReturn(response)} then turns a typed Wirespec response
+ * into the stub's body, status, and headers — using a Jackson-backed serializer by default. Only responses that belong
+ * to that endpoint type-check, so a mismatch is caught at compile time.
  */
 class TodoStubTest {
 
