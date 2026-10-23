@@ -74,10 +74,10 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var shared: Boolean = true
 
     /**
-     * Specifies the extensions bundled with the plugin to apply: [Extension]. Each one applies to the languages it supports.
+     * Specifies the names of the extensions bundled with the plugin to apply: [Extension]. Each one applies to the languages it supports.
      */
     @Parameter
-    protected var bundledExtensions: List<Extension> = listOf()
+    protected var extensionNames: List<Extension> = listOf()
 
     /**
      * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
@@ -147,7 +147,7 @@ public abstract class BaseMojo : AbstractMojo() {
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
             .map { emitter ->
                 emitter.withExtensions(
-                    bundledExtensions.toIrExtensions(PackageName(packageName), emitter.extension) + extensionInstances(emitter.extension),
+                    extensionNames.toIrExtensions(PackageName(packageName), emitter.extension) + extensionInstances(emitter.extension),
                 )
             }
             .toNonEmptySetOrNull()

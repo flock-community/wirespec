@@ -104,14 +104,14 @@ representation** (IR). An `IrExtension` lets you reshape that IR — for example
 annotations, or to add a file per definition — without forking an emitter. The transformed IR is then handed
 to the normal code generator, so the output stays idiomatic for the target language.
 
-Every plugin bundles the extensions that Wirespec ships, so you select them by name, without adding their
-integration module to the plugin or spelling out a class name:
+Every plugin bundles the extensions that Wirespec ships, so you select them by name with `extensionNames`, without
+adding their integration module to the plugin or spelling out a class name:
 
-| Plugin | Option                                                                                         |
-|--------|------------------------------------------------------------------------------------------------|
-| CLI    | `-e`, `--extension`, once per extension: `-e SpringMappingAnnotations -e Jackson`              |
-| Gradle | `bundledExtensions = listOf(Extension.SpringMappingAnnotations, Extension.Jackson)`            |
-| Maven  | `<bundledExtensions><bundledExtension>SpringMappingAnnotations</bundledExtension></bundledExtensions>` |
+| Plugin | Option                                                                                             |
+|--------|----------------------------------------------------------------------------------------------------|
+| CLI    | `-e`, `--extension`, once per extension: `-e SpringMappingAnnotations -e Jackson`                  |
+| Gradle | `extensionNames = listOf(Extension.SpringMappingAnnotations, Extension.Jackson)`                   |
+| Maven  | `<extensionNames><extensionName>SpringMappingAnnotations</extensionName></extensionNames>`         |
 | npm    | the `extensions` argument of `emit`: `[Extensions.SPRING_MAPPING_ANNOTATIONS, Extensions.JACKSON]` |
 
 The [playground](https://playground.wirespec.io) offers them too, next to the output language.
@@ -131,7 +131,7 @@ The name of a bundled extension is its class name without `Extension`: `Jackson`
 The names are case-insensitive in the CLI. An extension applies to the languages it supports and leaves the others
 untouched, so one run can emit Kotlin with `KotlinxSerialization` next to TypeScript without it.
 
-Your own extensions are registered with the `extensionClasses` parameter of the Maven and Gradle plugins. They
+Your own extensions are registered by class with the `extensionClasses` parameter of the Maven and Gradle plugins. They
 accept a list of `IrExtension` classes and instantiate them for you, injecting the `packageName` and `shared` settings
 and the target language into the constructor when the extension needs them. They apply to every language, after the
 bundled extensions. The classes of the bundled extensions are on the plugin's classpath, so `extensionClasses` keeps

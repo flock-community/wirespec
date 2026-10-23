@@ -53,9 +53,9 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
                         <languages>
                             <language>Java</language>
                         </languages>
-                        <bundledExtensions>
-                            <bundledExtension>SpringMappingAnnotations</bundledExtension>
-                        </bundledExtensions>
+                        <extensionNames>
+                            <extensionName>SpringMappingAnnotations</extensionName>
+                        </extensionNames>
                     </configuration>
                 </execution>
             </executions>
@@ -82,7 +82,7 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
             languages = listOf(Language.Java)
-            bundledExtensions = listOf(community.flock.wirespec.plugin.Extension.SpringMappingAnnotations)
+            extensionNames = listOf(community.flock.wirespec.plugin.Extension.SpringMappingAnnotations)
         }
         ```
 

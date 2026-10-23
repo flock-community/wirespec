@@ -58,8 +58,8 @@ public abstract class BaseWirespecTask : DefaultTask() {
 
     @get:Input
     @get:Optional
-    @get:Option(option = "bundledExtensions", description = "extensions bundled with the plugin")
-    public abstract val bundledExtensions: ListProperty<Extension>
+    @get:Option(option = "extensionNames", description = "names of the extensions bundled with the plugin")
+    public abstract val extensionNames: ListProperty<Extension>
 
     @get:Input
     @get:Optional
@@ -114,7 +114,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
         .map { it.toEmitter(packageNameValue(), sharedValue()) }
         .map { emitter ->
             emitter.withExtensions(
-                bundledExtensions.getOrElse(emptyList()).toIrExtensions(packageNameValue(), emitter.extension) + extensionInstances(emitter.extension),
+                extensionNames.getOrElse(emptyList()).toIrExtensions(packageNameValue(), emitter.extension) + extensionInstances(emitter.extension),
             )
         }
         .toNonEmptySetOrNull()

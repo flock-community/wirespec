@@ -52,7 +52,7 @@ class CompileWirespecTaskTest :
         }
 
         test("bundled extensions apply to the languages they support") {
-            val output = project("bundledExtensions = listOf(Extension.KotlinxSerialization, Extension.Builder)").compile()
+            val output = project("extensionNames = listOf(Extension.KotlinxSerialization, Extension.Builder)").compile()
 
             output.getValue("Todo.kt") shouldContain "@kotlinx.serialization.Serializable"
             output.getValue("Todo.kt") shouldContain "fun toBuilder()"

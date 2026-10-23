@@ -89,7 +89,7 @@ For any other target language the extension changes nothing.
 
 ## Setup
 
-The extension is bundled with every Wirespec plugin as `Builder`. Select it as a bundled extension; the plugins pass
+The extension is bundled with every Wirespec plugin as `Builder`. List it under `extensionNames`; the plugins pass
 the target language to the extension, so one registration covers every language you compile to.
 
 <Tabs>
@@ -105,7 +105,7 @@ the target language to the extension, so one registration covers every language 
         packageName = "community.flock.wirespec.generated"
         // Works for Java, Kotlin and Scala
         languages = listOf(Language.Java)
-        bundledExtensions = listOf(Extension.Builder)
+        extensionNames = listOf(Extension.Builder)
     }
     ```
   </TabItem>
@@ -128,9 +128,9 @@ the target language to the extension, so one registration covers every language 
                         <!-- Works for Java, Kotlin and Scala -->
                         <language>Java</language>
                     </languages>
-                    <bundledExtensions>
-                        <bundledExtension>Builder</bundledExtension>
-                    </bundledExtensions>
+                    <extensionNames>
+                        <extensionName>Builder</extensionName>
+                    </extensionNames>
                 </configuration>
             </execution>
         </executions>

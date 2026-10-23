@@ -61,7 +61,7 @@ untouched; only the top-level models are annotated.
 The extension applies to the **Kotlin** target only, and runs as part of the IR pipeline. It is bundled with every
 Wirespec plugin as `KotlinxSerialization`. You therefore need to:
 
-1. Select `KotlinxSerialization` as a bundled extension.
+1. List `KotlinxSerialization` under `extensionNames`.
 2. Disable shared-code emission (`shared = false`) so the
    Wirespec runtime classes come from the `wirespec-jvm` dependency rather than being re-emitted as
    source.
@@ -89,7 +89,7 @@ Wirespec plugin as `KotlinxSerialization`. You therefore need to:
         packageName = "community.flock.wirespec.generated.kotlin"
         languages = listOf(Language.Kotlin)
         shared = false
-        bundledExtensions = listOf(Extension.KotlinxSerialization)
+        extensionNames = listOf(Extension.KotlinxSerialization)
     }
     ```
   </TabItem>
@@ -112,9 +112,9 @@ Wirespec plugin as `KotlinxSerialization`. You therefore need to:
                         <language>Kotlin</language>
                     </languages>
                     <shared>false</shared>
-                    <bundledExtensions>
-                        <bundledExtension>KotlinxSerialization</bundledExtension>
-                    </bundledExtensions>
+                    <extensionNames>
+                        <extensionName>KotlinxSerialization</extensionName>
+                    </extensionNames>
                 </configuration>
             </execution>
         </executions>

@@ -99,7 +99,7 @@ This task compiles Wirespec definitions to various target languages.
 - `output`: DirectoryProperty - The output directory for generated code
 - `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `bundledExtensions`: ListProperty&lt;Extension&gt; - [Extensions bundled with the plugin](./plugins.md#ir-extensions) (Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints), each applied to the languages it supports
+- `extensionNames`: ListProperty&lt;Extension&gt; - [Extensions bundled with the plugin](./plugins.md#ir-extensions) (Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints), each applied to the languages it supports
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`, after the bundled extensions
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
@@ -116,7 +116,7 @@ This task converts from JSON or Avro to other formats.
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro, GraphQL, AsyncAPI)
 - `preProcessor`: Property&lt;(String) -> String&gt; - Function to preprocess the input content before conversion
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `bundledExtensions`: ListProperty&lt;Extension&gt; - [Extensions bundled with the plugin](./plugins.md#ir-extensions) (Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints), each applied to the languages it supports
+- `extensionNames`: ListProperty&lt;Extension&gt; - [Extensions bundled with the plugin](./plugins.md#ir-extensions) (Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints), each applied to the languages it supports
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`, after the bundled extensions
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
@@ -154,7 +154,7 @@ the details.
 ## Applying IR extensions
 
 The [IR extensions](./plugins.md#ir-extensions) that Wirespec ships are bundled with the plugin: select them with
-the `bundledExtensions` property. The built-in language targets always emit through the IR pipeline:
+the `extensionNames` property. The built-in language targets always emit through the IR pipeline:
 
 ```gradle title="build.gradle.kts"
 import community.flock.wirespec.plugin.Extension
@@ -167,7 +167,7 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
     packageName = "community.flock.wirespec.generated.kotlin"
     languages = listOf(Language.Kotlin)
     shared = false
-    bundledExtensions = listOf(Extension.KotlinxSerialization)
+    extensionNames = listOf(Extension.KotlinxSerialization)
 }
 ```
 

@@ -144,7 +144,7 @@ untouched; only the top-level models are annotated.
 
 The extension works for the **Java** and **Kotlin** targets and runs as part of the IR pipeline. It is bundled with
 every Wirespec plugin as `Jackson`. Disable shared-code emission (`shared = false`) so the Wirespec runtime classes
-come from the `wirespec-jvm` dependency, then select `Jackson` as a bundled extension.
+come from the `wirespec-jvm` dependency, then list `Jackson` under `extensionNames`.
 
 <Tabs>
   <TabItem value="gradle" label="Gradle">
@@ -160,7 +160,7 @@ come from the `wirespec-jvm` dependency, then select `Jackson` as a bundled exte
         // Works for both Java and Kotlin
         languages = listOf(Language.Kotlin)
         shared = false
-        bundledExtensions = listOf(Extension.Jackson)
+        extensionNames = listOf(Extension.Jackson)
     }
     ```
   </TabItem>
@@ -184,9 +184,9 @@ come from the `wirespec-jvm` dependency, then select `Jackson` as a bundled exte
                         <language>Kotlin</language>
                     </languages>
                     <shared>false</shared>
-                    <bundledExtensions>
-                        <bundledExtension>Jackson</bundledExtension>
-                    </bundledExtensions>
+                    <extensionNames>
+                        <extensionName>Jackson</extensionName>
+                    </extensionNames>
                 </configuration>
             </execution>
         </executions>

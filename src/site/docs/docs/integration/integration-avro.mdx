@@ -46,9 +46,9 @@ it as `-e Avro`.
                         <languages>
                             <language>Java</language>
                         </languages>
-                        <bundledExtensions>
-                            <bundledExtension>Avro</bundledExtension>
-                        </bundledExtensions>
+                        <extensionNames>
+                            <extensionName>Avro</extensionName>
+                        </extensionNames>
                     </configuration>
                 </execution>
             </executions>
@@ -83,9 +83,9 @@ it as `-e Avro`.
                         <languages>
                             <language>Kotlin</language>
                         </languages>
-                        <bundledExtensions>
-                            <bundledExtension>Avro</bundledExtension>
-                        </bundledExtensions>
+                        <extensionNames>
+                            <extensionName>Avro</extensionName>
+                        </extensionNames>
                     </configuration>
                 </execution>
             </executions>
@@ -112,7 +112,7 @@ it as `-e Avro`.
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
             languages = listOf(community.flock.wirespec.plugin.Language.Java)
-            bundledExtensions = listOf(community.flock.wirespec.plugin.Extension.Avro)
+            extensionNames = listOf(community.flock.wirespec.plugin.Extension.Avro)
         }
         ```
 
@@ -147,7 +147,7 @@ it as `-e Avro`.
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
             languages = listOf(community.flock.wirespec.plugin.Language.Kotlin)
-            bundledExtensions = listOf(community.flock.wirespec.plugin.Extension.Avro)
+            extensionNames = listOf(community.flock.wirespec.plugin.Extension.Avro)
         }
         ```
 

@@ -105,7 +105,7 @@ The compile mojo supports the following parameters:
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
-- **bundledExtensions**: List of the [extensions bundled with the plugin](./plugins.md#ir-extensions) to apply, by name: `Avro`, `Builder`, `Jackson`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`. Each one applies to the languages it supports.
+- **extensionNames**: List of the [extensions bundled with the plugin](./plugins.md#ir-extensions) to apply, by name: `Avro`, `Builder`, `Jackson`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`. Each one applies to the languages it supports.
 - **extensionClasses**: List of fully qualified `IrExtension` class names. The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`, after the bundled extensions.
 
 ### Default values
@@ -167,7 +167,7 @@ Or it will run automatically as part of the `generate-sources` phase during your
 ### Applying IR extensions
 
 The [IR extensions](./plugins.md#ir-extensions) that Wirespec ships are bundled with the plugin: list them by name
-under `bundledExtensions`. The built-in language targets always emit through the IR pipeline:
+under `extensionNames`. The built-in language targets always emit through the IR pipeline:
 
 ```xml
 <plugin>
@@ -187,9 +187,9 @@ under `bundledExtensions`. The built-in language targets always emit through the
                     <language>Kotlin</language>
                 </languages>
                 <shared>false</shared>
-                <bundledExtensions>
-                    <bundledExtension>KotlinxSerialization</bundledExtension>
-                </bundledExtensions>
+                <extensionNames>
+                    <extensionName>KotlinxSerialization</extensionName>
+                </extensionNames>
             </configuration>
         </execution>
     </executions>
