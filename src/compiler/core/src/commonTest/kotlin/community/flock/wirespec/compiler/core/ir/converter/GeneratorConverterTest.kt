@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.ir.LiteralList
 import community.flock.wirespec.compiler.core.ir.LiteralMap
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Precision
 import community.flock.wirespec.compiler.core.ir.Statement
 import community.flock.wirespec.compiler.core.ir.Switch
 import community.flock.wirespec.compiler.core.ir.Type
@@ -172,6 +173,31 @@ class GeneratorConverterTest {
     }
 
     @Test
+    fun testRefinedConvertToGeneratorKeepsNumberBoundsAsWritten() {
+        fun bounds(precision: Reference.Primitive.Type.Precision) = RefinedWirespec(
+            comment = null,
+            annotations = emptyList(),
+            identifier = definitionId("Ratio"),
+            reference = Reference.Primitive(
+                type = Reference.Primitive.Type.Number(
+                    precision = precision,
+                    constraint = Reference.Primitive.Type.Constraint.Bound(min = "-1.0", max = "4"),
+                ),
+                isNullable = false,
+            ),
+        ).convertToGenerator().collectExpressions<Literal>().filter { it.type is Type.Number }
+
+        assertEquals(
+            listOf(Literal("-1.0", Type.Number(Precision.P64)), Literal("4.0", Type.Number(Precision.P64))),
+            bounds(Reference.Primitive.Type.Precision.P64),
+        )
+        assertEquals(
+            listOf(Literal("-1.0", Type.Number(Precision.P32)), Literal("4.0", Type.Number(Precision.P32))),
+            bounds(Reference.Primitive.Type.Precision.P32),
+        )
+    }
+
+    @Test
     fun testUnionConvertToGeneratorHasSwitch() {
         val shape = UnionWirespec(
             comment = null,
@@ -231,9 +257,9 @@ class GeneratorConverterTest {
 
     @Test
     fun testCoerceAnnotationValueLiteralDouble() {
-        assertEquals(Literal(1.5, Type.Number()), coerceAnnotationValueLiteral("1.5"))
-        assertEquals(Literal(-3.14, Type.Number()), coerceAnnotationValueLiteral("-3.14"))
-        assertEquals(Literal(1.0e10, Type.Number()), coerceAnnotationValueLiteral("1.0e10"))
+        assertEquals(Literal("1.5", Type.Number()), coerceAnnotationValueLiteral("1.5"))
+        assertEquals(Literal("-3.14", Type.Number()), coerceAnnotationValueLiteral("-3.14"))
+        assertEquals(Literal("1.0e10", Type.Number()), coerceAnnotationValueLiteral("1.0e10"))
     }
 
     @Test
@@ -276,7 +302,7 @@ class GeneratorConverterTest {
         val ir = ann.toIrLiteralMap()
         val params = (ir.values.getValue("parameters") as LiteralMap).values
         assertEquals(Literal(0L, Type.Integer()), params.getValue("min"))
-        assertEquals(Literal(1.5, Type.Number()), params.getValue("max"))
+        assertEquals(Literal("1.5", Type.Number()), params.getValue("max"))
         assertEquals(Literal("hello", Type.String), params.getValue("label"))
         assertEquals(Literal(true, Type.Boolean), params.getValue("active"))
     }
