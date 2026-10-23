@@ -121,7 +121,7 @@ public abstract class BaseMojo : AbstractMojo() {
     private fun extensionInstances(language: FileExtension) = extensionClasses.mapNotNull { extensionClass ->
         try {
             when (val bundled = Extension.toMap()[extensionClass]) {
-                null -> getClassLoader(project).loadClass(extensionClass).toIrExtension(language)
+                null -> instantiate(getClassLoader(project).loadClass(extensionClass), language)
                 else -> bundled.toIrExtension(PackageName(packageName), language)
             }
         } catch (e: Exception) {
@@ -130,8 +130,9 @@ public abstract class BaseMojo : AbstractMojo() {
         }
     }
 
-    private fun Class<*>.toIrExtension(language: FileExtension): IrExtension? = when (val bundled = Extension.of(kotlin)) {
-        null -> constructors.first().let { constructor ->
+    // Not an extension on Class: its getPackageName() would shadow the packageName parameter.
+    private fun instantiate(extensionClass: Class<*>, language: FileExtension): IrExtension? = when (val bundled = Extension.of(extensionClass.kotlin)) {
+        null -> extensionClass.constructors.first().let { constructor ->
             val args: List<Any> = constructor.parameters
                 .map {
                     when (it.type) {
