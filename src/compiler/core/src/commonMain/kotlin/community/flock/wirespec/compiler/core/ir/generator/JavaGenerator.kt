@@ -56,6 +56,7 @@ import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.TypeParameter
 import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.Visibility
 import community.flock.wirespec.compiler.core.ir.annotatedFields
 import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.ir.Function as AstFunction
@@ -211,7 +212,7 @@ public object JavaGenerator :
         val isInsideStaticOrInterface = parents.any { it is Namespace || it is Interface }
         val typeModifier = when {
             indent == 0 -> "public record"
-            isInsideStaticOrInterface -> "public static record"
+            isInsideStaticOrInterface || visibility == Visibility.PUBLIC -> "public static record"
             else -> "record"
         }
 
