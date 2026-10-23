@@ -35,6 +35,7 @@ include(
     "src:ide:lsp",
     "src:plugin:arguments",
     "src:plugin:cli",
+    "src:plugin:extensions",
     "src:plugin:maven",
     "src:plugin:npm",
     "src:plugin:gradle",

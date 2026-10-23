@@ -39,6 +39,7 @@ kotlin {
                 api(project(":src:compiler:emitters:rust"))
                 api(project(":src:compiler:emitters:scala"))
                 api(project(":src:compiler:emitters:wirespec"))
+                implementation(project(":src:plugin:extensions"))
                 implementation(project(":src:converter:asyncapi"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:graphql"))

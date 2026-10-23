@@ -89,21 +89,15 @@ For any other target language the extension changes nothing.
 
 ## Setup
 
-Add the `jvm` integration to the plugin's classpath and register `BuilderExtension` with `extensionClasses`. The
-plugins pass the target language to the extension, so one registration covers every language you compile to.
+The extension is bundled with every Wirespec plugin as `Builder`. Select it as a bundled extension; the plugins pass
+the target language to the extension, so one registration covers every language you compile to.
 
 <Tabs>
   <TabItem value="gradle" label="Gradle">
     ```gradle title="build.gradle.kts"
-    import community.flock.wirespec.integration.jvm.extension.BuilderExtension
+    import community.flock.wirespec.plugin.Extension
     import community.flock.wirespec.plugin.gradle.CompileWirespecTask
     import community.flock.wirespec.plugin.Language
-
-    buildscript {
-        dependencies {
-            classpath("community.flock.wirespec.integration:jvm:{{WIRESPEC_VERSION}}")
-        }
-    }
 
     tasks.register<CompileWirespecTask>("wirespec-compile") {
         input = layout.projectDirectory.dir("src/main/wirespec")
@@ -111,7 +105,7 @@ plugins pass the target language to the extension, so one registration covers ev
         packageName = "community.flock.wirespec.generated"
         // Works for Java, Kotlin and Scala
         languages = listOf(Language.Java)
-        extensionClasses = listOf(BuilderExtension::class.java)
+        bundledExtensions = listOf(Extension.Builder)
     }
     ```
   </TabItem>
@@ -121,13 +115,6 @@ plugins pass the target language to the extension, so one registration covers ev
         <groupId>community.flock.wirespec.plugin.maven</groupId>
         <artifactId>wirespec-maven-plugin</artifactId>
         <version>{{WIRESPEC_VERSION}}</version>
-        <dependencies>
-            <dependency>
-                <groupId>community.flock.wirespec.integration</groupId>
-                <artifactId>jvm</artifactId>
-                <version>{{WIRESPEC_VERSION}}</version>
-            </dependency>
-        </dependencies>
         <executions>
             <execution>
                 <id>generate</id>
@@ -141,19 +128,24 @@ plugins pass the target language to the extension, so one registration covers ev
                         <!-- Works for Java, Kotlin and Scala -->
                         <language>Java</language>
                     </languages>
-                    <extensionClasses>
-                        <extensionClass>community.flock.wirespec.integration.jvm.extension.BuilderExtension</extensionClass>
-                    </extensionClasses>
+                    <bundledExtensions>
+                        <bundledExtension>Builder</bundledExtension>
+                    </bundledExtensions>
                 </configuration>
             </execution>
         </executions>
     </plugin>
     ```
   </TabItem>
+  <TabItem value="cli" label="CLI">
+    ```shell
+    # Works for Java, Kotlin and Scala
+    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Java -e Builder
+    ```
+  </TabItem>
 </Tabs>
 
-The extension only reshapes the generated code, so the `jvm` artifact is needed at code-generation time, on the
-plugin's classpath. Your application doesn't need it at runtime.
+The extension only reshapes the generated code, so your application doesn't need anything extra at runtime.
 
 :::info
 Make sure to use the latest version, found here:
@@ -166,4 +158,4 @@ Make sure to use the latest version, found here:
 The builder works together with the other IR extensions, for example the [Jackson](./integration-jackson.mdx)
 annotations. The [kotest](https://github.com/flock-community/wirespec/tree/master/src/integration/kotest) integration
 adds an empty companion object to Kotlin models; when it runs first, the builder extension replaces it with its own
-companion object, so the order in `extensionClasses` doesn't matter.
+companion object, so the order of the extensions doesn't matter.

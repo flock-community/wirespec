@@ -20,6 +20,9 @@ The integration works for both [producers](#restcontroller) (RestController) and
 
 ## Setup
 
+The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bundled with every Wirespec plugin as
+`Spring`, for the Java and Kotlin targets; the CLI takes it as `-e Spring`.
+
 <Tabs>
     <TabItem value="maven" label="Maven">
 
@@ -38,11 +41,6 @@ The integration works for both [producers](#restcontroller) (RestController) and
             <groupId>community.flock.wirespec.plugin.maven</groupId>
             <artifactId>wirespec-maven-plugin</artifactId>
             <version>{{WIRESPEC_VERSION}}</version>
-            <dependency>
-                <groupId>community.flock.wirespec.integration</groupId>
-                <artifactId>spring-jvm</artifactId>
-                <version>{{WIRESPEC_VERSION}}</version>
-            </dependency>
             <executions>
                 <execution>
                     <id>java</id>
@@ -55,9 +53,9 @@ The integration works for both [producers](#restcontroller) (RestController) and
                         <languages>
                             <language>Java</language>
                         </languages>
-                        <extensionClasses>
-                            <extensionClass>community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension</extensionClass>
-                        </extensionClasses>
+                        <bundledExtensions>
+                            <bundledExtension>Spring</bundledExtension>
+                        </bundledExtensions>
                     </configuration>
                 </execution>
             </executions>
@@ -66,19 +64,15 @@ The integration works for both [producers](#restcontroller) (RestController) and
 
     </TabItem>
     <TabItem value="gradle" label="Gradle">
-        Add the dependency to your depedencies, as well as the plugin dependencies
-
-        For single module project this is in the `build.gradle.kts`
+        Add the dependency to your dependencies:
 
         ```gradle
-        buildscript {
-            dependencies {
-                classpath("community.flock.wirespec.integration:spring:{{WIRESPEC_VERSION}}")
-            }
+        dependencies {
+            implementation("community.flock.wirespec.integration:spring-jvm:{{WIRESPEC_VERSION}}")
         }
         ```
 
-        For multi-module projects add the plugin dependency also to your `buildSrc/build.gradle.kts`, and the `build.gradle.kts` of the module to which you want to add the wirespec plugin
+        Then select the `Spring` extension that is bundled with the plugin:
 
         ```gradle
         tasks.register<CompileWirespecTask>("wirespec-compile") {
@@ -88,7 +82,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
             languages = listOf(Language.Java)
-            extensionClasses = listOf(community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension::class.java)
+            bundledExtensions = listOf(community.flock.wirespec.plugin.Extension.Spring)
         }
         ```
 
@@ -391,7 +385,7 @@ class FileController implements UploadFile.Handler {
 ## Native Images (GraalVM)
 
 Wirespec's Spring integration includes built-in support for GraalVM native images. When you compile your Wirespec
-definitions with the `SpringNativeHintsExtension` registered, a `WirespecNativeHints` class is automatically generated alongside your
+definitions with the `SpringNativeHints` extension selected, a `WirespecNativeHints` class is automatically generated alongside your
 models and endpoints. This class registers all generated types for reflection, which is required for serialization
 and deserialization in a native image.
 

@@ -142,22 +142,16 @@ Endpoint-internal structs (the `Path`, `Request`, `Response` types nested inside
 untouched; only the top-level models are annotated.
 :::
 
-The extension works for the **Java** and **Kotlin** targets and runs as part of the IR pipeline. Disable
-shared-code emission (`shared = false`) so the Wirespec runtime classes
-come from the `wirespec-jvm` dependency, then register `JacksonExtension` with `extensionClasses`.
+The extension works for the **Java** and **Kotlin** targets and runs as part of the IR pipeline. It is bundled with
+every Wirespec plugin as `Jackson`. Disable shared-code emission (`shared = false`) so the Wirespec runtime classes
+come from the `wirespec-jvm` dependency, then select `Jackson` as a bundled extension.
 
 <Tabs>
   <TabItem value="gradle" label="Gradle">
     ```gradle title="build.gradle.kts"
-    import community.flock.wirespec.integration.jackson.extension.JacksonExtension
+    import community.flock.wirespec.plugin.Extension
     import community.flock.wirespec.plugin.gradle.CompileWirespecTask
     import community.flock.wirespec.plugin.Language
-
-    buildscript {
-        dependencies {
-            classpath("community.flock.wirespec.integration:jackson:{{WIRESPEC_VERSION}}")
-        }
-    }
 
     tasks.register<CompileWirespecTask>("wirespec-compile") {
         input = layout.projectDirectory.dir("src/main/wirespec")
@@ -166,7 +160,7 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` with `
         // Works for both Java and Kotlin
         languages = listOf(Language.Kotlin)
         shared = false
-        extensionClasses = listOf(JacksonExtension::class.java)
+        bundledExtensions = listOf(Extension.Jackson)
     }
     ```
   </TabItem>
@@ -176,13 +170,6 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` with `
         <groupId>community.flock.wirespec.plugin.maven</groupId>
         <artifactId>wirespec-maven-plugin</artifactId>
         <version>{{WIRESPEC_VERSION}}</version>
-        <dependencies>
-            <dependency>
-                <groupId>community.flock.wirespec.integration</groupId>
-                <artifactId>jackson</artifactId>
-                <version>{{WIRESPEC_VERSION}}</version>
-            </dependency>
-        </dependencies>
         <executions>
             <execution>
                 <id>generate</id>
@@ -197,13 +184,19 @@ come from the `wirespec-jvm` dependency, then register `JacksonExtension` with `
                         <language>Kotlin</language>
                     </languages>
                     <shared>false</shared>
-                    <extensionClasses>
-                        <extensionClass>community.flock.wirespec.integration.jackson.extension.JacksonExtension</extensionClass>
-                    </extensionClasses>
+                    <bundledExtensions>
+                        <bundledExtension>Jackson</bundledExtension>
+                    </bundledExtensions>
                 </configuration>
             </execution>
         </executions>
     </plugin>
+    ```
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+    ```shell
+    # Works for both Java and Kotlin
+    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Kotlin -e Jackson
     ```
   </TabItem>
 </Tabs>

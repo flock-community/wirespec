@@ -2,7 +2,6 @@ package community.flock.wirespec.plugin.gradle
 
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
-import arrow.core.toNonEmptyListOrNull
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -10,10 +9,9 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
-import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -22,6 +20,8 @@ import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrExtensions
+import community.flock.wirespec.plugin.withExtensions
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -55,6 +55,11 @@ public abstract class BaseWirespecTask : DefaultTask() {
     @get:Optional
     @get:Option(option = "shared", description = "emit shared code")
     public abstract val shared: Property<Boolean>
+
+    @get:Input
+    @get:Optional
+    @get:Option(option = "bundledExtensions", description = "extensions bundled with the plugin")
+    public abstract val bundledExtensions: ListProperty<Extension>
 
     @get:Input
     @get:Optional
@@ -108,9 +113,9 @@ public abstract class BaseWirespecTask : DefaultTask() {
     protected fun emitters(): NonEmptySet<Emitter> = languages.get()
         .map { it.toEmitter(packageNameValue(), sharedValue()) }
         .map { emitter ->
-            extensionInstances(emitter.extension).toNonEmptyListOrNull()
-                ?.let { (emitter as? IrEmitter)?.applyExtensions(it) }
-                ?: emitter
+            emitter.withExtensions(
+                bundledExtensions.getOrElse(emptyList()).toIrExtensions(packageNameValue(), emitter.extension) + extensionInstances(emitter.extension),
+            )
         }
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguage()

@@ -3,7 +3,6 @@ package community.flock.wirespec.plugin.maven.mojo
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptySetOf
-import arrow.core.toNonEmptyListOrNull
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -13,9 +12,9 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
-import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -27,6 +26,8 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrExtensions
+import community.flock.wirespec.plugin.withExtensions
 import org.apache.maven.artifact.Artifact
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
@@ -71,6 +72,12 @@ public abstract class BaseMojo : AbstractMojo() {
      */
     @Parameter
     protected var shared: Boolean = true
+
+    /**
+     * Specifies the extensions bundled with the plugin to apply: [Extension]. Each one applies to the languages it supports.
+     */
+    @Parameter
+    protected var bundledExtensions: List<Extension> = listOf()
 
     /**
      * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
@@ -139,9 +146,9 @@ public abstract class BaseMojo : AbstractMojo() {
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
             .map { emitter ->
-                extensionInstances(emitter.extension).toNonEmptyListOrNull()
-                    ?.let { (emitter as? IrEmitter)?.applyExtensions(it) }
-                    ?: emitter
+                emitter.withExtensions(
+                    bundledExtensions.toIrExtensions(PackageName(packageName), emitter.extension) + extensionInstances(emitter.extension),
+                )
             }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguage()

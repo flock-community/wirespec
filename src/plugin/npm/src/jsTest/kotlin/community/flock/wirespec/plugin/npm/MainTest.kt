@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class MainTest {
 
@@ -76,5 +77,30 @@ class MainTest {
         val openApiV3 = emit(res.produce(), Emitters.OPENAPI_V3, "", true)
         assertEquals("""{"swagger":"2.0"""", openApiV2.first().result.substring(0, 16))
         assertEquals("""{"openapi":"3.0.0"""", openApiV3.first().result.substring(0, 18))
+    }
+
+    @Test
+    fun testEmitWithExtensions() {
+        val res = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), personWs))).getOrNull()
+        assertNotNull(res)
+        val supported = Extensions.entries.filter { it.supports(Emitters.KOTLIN) }
+        assertEquals(Extensions.entries, supported)
+        val kotlin = emit(res.produce(), Emitters.KOTLIN, "community.flock.next", false, supported.toTypedArray())
+            .joinToString("\n") { it.result }
+        listOf(
+            "@kotlinx.serialization.Serializable",
+            "@com.fasterxml.jackson.annotation.JsonProperty",
+            "@org.springframework.web.bind.annotation.GetMapping(\"/todos\")",
+            "class WirespecNativeHints",
+            "fun toBuilder()",
+            "object TodoAvro",
+            "public val GetTodos.generate: GetTodosGenerate",
+        ).forEach { assertTrue(it in kotlin, "Missing in the emitted Kotlin: $it") }
+
+        assertEquals(emptyList(), Extensions.entries.filter { it.supports(Emitters.TYPESCRIPT) })
+        val typeScript = emit(res.produce(), Emitters.TYPESCRIPT, "", false, Extensions.entries.toTypedArray())
+        assertEquals(emit(res.produce(), Emitters.TYPESCRIPT, "", false).map { it.result }, typeScript.map { it.result })
     }
 }

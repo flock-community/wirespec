@@ -68,6 +68,8 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
+  -e, --extension=(Avro|Builder|Jackson|Kotest|KotlinxSerialization|Spring|SpringNativeHints)
+                                                                              Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 ```
 
@@ -89,6 +91,8 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
+  -e, --extension=(Avro|Builder|Jackson|Kotest|KotlinxSerialization|Spring|SpringNativeHints)
+                                                                              Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 
 Arguments:
@@ -97,6 +101,16 @@ Arguments:
 
 ```shell
 wirespec convert OpenAPIV2 "$(cat types/openapi/petstore.json)"
+```
+
+## Extensions
+
+The [IR extensions](./plugins.md#ir-extensions) that Wirespec ships are bundled with the CLI. Add `-e` once per
+extension; the names are case-insensitive. Each extension applies to the languages it supports, so here the Kotlin
+models get Spring and Jackson annotations while the TypeScript is emitted as is:
+
+```shell
+wirespec compile -i ./wirespec -o ./out -l Kotlin -l TypeScript -e Spring -e Jackson
 ```
 
 ## Default values

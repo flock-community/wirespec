@@ -8,10 +8,14 @@ import { PlayGround } from "../components/PlayGround";
 import { OutputView } from "../components/OutputView";
 import { SpecificationSelector } from "../components/SpecificationSelector";
 import { EmitterSelector } from "../components/EmitterSelector";
+import { ExtensionSelector } from "../components/ExtensionSelector";
 import { FileBar } from "../components/FileBar";
 import { initializeMonaco } from "../utils/InitializeMonaco";
 import { MonacoError, setMonacoErrors } from "../utils/SetMonacoErrors";
-import { wirespecToTarget } from "../transformations/WirespecToTarget";
+import {
+  isExtension,
+  wirespecToTarget,
+} from "../transformations/WirespecToTarget";
 import {
   wsExample,
   wsGraphQLExample,
@@ -55,6 +59,15 @@ export type CompilerEmitter =
 export type ConverterEmitter = "wirespec";
 export type Emitter = CompilerEmitter | ConverterEmitter;
 
+export type Extension =
+  | "avro"
+  | "builder"
+  | "jackson"
+  | "kotest"
+  | "kotlinx_serialization"
+  | "spring"
+  | "spring_native_hints";
+
 export type Language =
   | "wirespec"
   | "kotlin"
@@ -69,6 +82,7 @@ export type Language =
 type Search = {
   specification: Specification;
   emitter: Emitter;
+  extensions?: Extension[];
 };
 
 export type CompilationResult = {
@@ -84,13 +98,16 @@ export const Route = createFileRoute("/")({
       specification:
         (search?.specification as Search["specification"]) || "wirespec",
       emitter: (search?.emitter as Search["emitter"]) || "typescript",
+      extensions: Array.isArray(search?.extensions)
+        ? search?.extensions.filter(isExtension)
+        : undefined,
     };
   },
 });
 
 function RouteComponent() {
   const monaco = useMonaco();
-  const { emitter, specification } = useSearch({ from: "/" });
+  const { emitter, specification, extensions } = useSearch({ from: "/" });
   const [code, setCode] = useState("");
   const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
   const [wirespecErrors, setWirespecErrors] = useState<MonacoError[]>([]);
@@ -100,7 +117,7 @@ function RouteComponent() {
 
   useEffect(() => {
     if (specification === "wirespec") {
-      const compiledOutput = wirespecToTarget(code, emitter);
+      const compiledOutput = wirespecToTarget(code, emitter, extensions ?? []);
       setWirespecOutput(compiledOutput);
       return;
     }
@@ -148,7 +165,7 @@ function RouteComponent() {
         ]);
       }
     }
-  }, [code, emitter, specification]);
+  }, [code, emitter, specification, extensions]);
 
   useEffect(() => {
     if (!monaco) return;
@@ -248,11 +265,15 @@ function RouteComponent() {
         <Box
           display={{ xs: "flex", sm: "none" }}
           justifyContent="flex-end"
+          alignItems="center"
           height={36}
+          pl={1}
           borderBottom="1px solid var(--border-primary)"
         >
+          {/* A phone has no room for it next to the file path. */}
+          <ExtensionSelector />
           <Button
-            sx={{ color: "var(--color-primary)" }}
+            sx={{ color: "var(--color-primary)", ml: "auto" }}
             onClick={() => setMobileDisplay("input")}
           >
             show input
@@ -262,7 +283,14 @@ function RouteComponent() {
         <OutputView
           files={wirespecOutput?.result ?? []}
           language={wirespecOutput?.language || "wirespec"}
-          controls={<EmitterSelector />}
+          controls={
+            <>
+              <EmitterSelector />
+              <Box display={{ xs: "none", sm: "contents" }}>
+                <ExtensionSelector />
+              </Box>
+            </>
+          }
         />
       </Box>
     </Box>

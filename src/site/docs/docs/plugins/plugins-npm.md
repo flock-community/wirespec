@@ -57,6 +57,20 @@ const ast = parse(src);
 const ts = emit(ast.result, Emitters.TYPESCRIPT, "");
 ```
 
+`emit` takes the [IR extensions](./plugins.md#ir-extensions) that Wirespec ships as its last argument. Each one
+applies to the languages it supports, and `supports` tells which those are:
+
+```typescript
+import { parse, emit, Emitters, Extensions } from "wirespec";
+
+const ast = parse(src);
+Extensions.SPRING.supports(Emitters.KOTLIN); // true
+const kotlin = emit(ast.result, Emitters.KOTLIN, "community.flock.generated", false, [
+  Extensions.SPRING,
+  Extensions.JACKSON,
+]);
+```
+
 ## Default values
 
 The `wirespec` command of the npm package is the [CLI](./plugins-cli.md#default-values), so it handles
