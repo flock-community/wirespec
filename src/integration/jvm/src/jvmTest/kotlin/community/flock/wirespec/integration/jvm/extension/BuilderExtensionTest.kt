@@ -85,6 +85,11 @@ class BuilderExtensionTest {
     }
 
     @Test
+    fun `Scala builder handles enum and empty type fields`() {
+        scalaCheck("buildsWithEnumAndEmptyType")
+    }
+
+    @Test
     fun `Scala builder fails on a missing required field`() {
         assertEquals("Todo.name is required", scalaCheck("missingRequiredFieldMessage"))
     }

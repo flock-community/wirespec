@@ -131,7 +131,7 @@ public object ScalaGenerator :
         return names
     }
 
-    private fun Struct.isModelStruct(): Boolean = interfaces.any { it.name.pascalCase() == "Wirespec.Model" }
+    private fun Struct.isModelStruct(): Boolean = interfaces.any { it.name.pascalCase() == "Wirespec.Shape" }
 
     private fun collectPrimaryFieldNames(elements: List<Element>): Map<String, Set<String>> {
         val result = mutableMapOf<String, Set<String>>()
@@ -234,7 +234,7 @@ public object ScalaGenerator :
                 val overridePrefix = "override ".takeIf { _ -> it.isOverride }.orEmpty()
                 "${overridePrefix}val ${it.name.value()}: ${it.type.emitGenerics()}"
             }
-            val entriesStr = entries.joinToString(",\n") { entry ->
+            val entriesStr = entries.joinToString("\n") { entry ->
                 val ext = entry.values.joinNonEmpty(", ", " extends ${name.pascalCase()}(", ")")
                 "case ${entry.name.value()}$ext".indentCode(indent + 1)
             }
@@ -438,7 +438,7 @@ public object ScalaGenerator :
     }
 
     // True when the named type is a Scala `object` (singleton) — those don't take parens.
-    // Wirespec.Model case classes with no fields are still emitted as `case class Foo()`,
+    // Wirespec.Shape case classes with no fields are still emitted as `case class Foo()`,
     // so they fall through to receive `()` apply-syntax below.
     private fun ConstructorStatement.isSingletonObject(): Boolean {
         val typeName = (type as? Type.Custom)?.name?.pascalCase() ?: return false

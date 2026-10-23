@@ -17,3 +17,15 @@ type Owner {
 endpoint GetTodo GET /todos/{id: TodoId} -> {
     200 -> Todo
 }
+
+enum TodoCategory {
+    WORK,
+    LIFE
+}
+
+type Archive {
+    category: TodoCategory,
+    empty: Empty
+}
+
+type Empty {}

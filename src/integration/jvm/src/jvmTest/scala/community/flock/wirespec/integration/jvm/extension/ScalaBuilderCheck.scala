@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.jvm.extension
 
-import community.flock.wirespec.integration.jvm.scala.generated.model.{Owner, Todo, TodoId}
+import community.flock.wirespec.integration.jvm.scala.generated.model.{Archive, Empty, Owner, Todo, TodoCategory, TodoId}
 
 // Exercises the generated Scala builders; BuilderExtensionTest calls these at runtime.
 object ScalaBuilderCheck {
@@ -17,6 +17,11 @@ object ScalaBuilderCheck {
 
     check(todo == Todo(TodoId("1"), "Groceries", false, Owner("Ann"), List("home"), 42L, Some("Milk")), s"unexpected $todo")
     check(todo.toBuilder().withName("Laundry").build() == todo.copy(name = "Laundry"), "toBuilder lost a field")
+  }
+
+  def buildsWithEnumAndEmptyType(): Unit = {
+    val archive = Archive.builder().withCategory(TodoCategory.LIFE).withEmpty(Empty()).build()
+    check(archive == Archive(TodoCategory.LIFE, Empty()), s"unexpected $archive")
   }
 
   def missingRequiredFieldMessage(): String =
