@@ -1,0 +1,169 @@
+---
+title: Builders
+slug: /integration/builders
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+The `jvm` integration ships an [IR extension](../plugins/plugins.md#ir-extensions) that adds a builder to every
+generated model, so you can create a model one field at a time and copy it with a few fields changed. It works for the
+**Java**, **Kotlin** and **Scala** targets.
+
+## What it does
+
+For every type with at least one field, the extension adds:
+
+- `builder()`, which starts an empty `Builder`.
+- `toBuilder()`, which starts a `Builder` from an existing model.
+- `Builder`, which holds every field as optional. It has a `with<Field>` method per field and a `build()` method.
+
+The builder is immutable: every `with<Field>` returns a new builder, so a builder can be shared and reused safely.
+`build()` throws an `IllegalStateException` naming the first required field that was not set, for example
+`Todo.name is required`. A field that is nullable in Wirespec can be left out.
+
+For example, this definition:
+
+```wirespec
+type Todo {
+  id: TodoId,
+  name: String,
+  done: Boolean,
+  description: String?
+}
+type TodoId = String(/^[0-9]+$/g)
+```
+
+can be built like this:
+
+<Tabs>
+  <TabItem value="java" label="Java">
+    ```java
+    Todo todo = Todo.builder()
+        .withId(new TodoId("1"))
+        .withName("Groceries")
+        .withDone(false)
+        .build();
+
+    Todo renamed = todo.toBuilder().withName("Laundry").build();
+    ```
+  </TabItem>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val todo = Todo.builder()
+        .withId(TodoId("1"))
+        .withName("Groceries")
+        .withDone(false)
+        .build()
+
+    val renamed = todo.toBuilder().withName("Laundry").build()
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    val todo = Todo.builder()
+      .withId(TodoId("1"))
+      .withName("Groceries")
+      .withDone(false)
+      .build()
+
+    val renamed = todo.toBuilder().withName("Laundry").build()
+    ```
+  </TabItem>
+</Tabs>
+
+Where the builder is placed depends on the target language:
+
+| Language | `Builder`                                    | `builder()`                         |
+|----------|----------------------------------------------|-------------------------------------|
+| Java     | A `public static record` nested in the model | A static method on the model record |
+| Kotlin   | A data class nested in the model             | A function in the companion object  |
+| Scala    | A case class in the model's companion object | A function in the companion object  |
+
+The builder only uses the standard library of the target language, so the generated code stays dependency-free.
+
+:::note
+Types without fields, and the structs inside an endpoint (`Path`, `Request`, `Response` and so on), get no builder.
+For any other target language the extension changes nothing.
+:::
+
+## Setup
+
+Add the `jvm` integration to the plugin's classpath and register `BuilderExtension` with `extensionClasses`. The
+plugins pass the target language to the extension, so one registration covers every language you compile to.
+
+<Tabs>
+  <TabItem value="gradle" label="Gradle">
+    ```gradle title="build.gradle.kts"
+    import community.flock.wirespec.integration.jvm.extension.BuilderExtension
+    import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+    import community.flock.wirespec.plugin.Language
+
+    buildscript {
+        dependencies {
+            classpath("community.flock.wirespec.integration:jvm:{{WIRESPEC_VERSION}}")
+        }
+    }
+
+    tasks.register<CompileWirespecTask>("wirespec-compile") {
+        input = layout.projectDirectory.dir("src/main/wirespec")
+        output = layout.buildDirectory.dir("generated")
+        packageName = "community.flock.wirespec.generated"
+        // Works for Java, Kotlin and Scala
+        languages = listOf(Language.Java)
+        extensionClasses = listOf(BuilderExtension::class.java)
+    }
+    ```
+  </TabItem>
+  <TabItem value="maven" label="Maven">
+    ```xml title="pom.xml"
+    <plugin>
+        <groupId>community.flock.wirespec.plugin.maven</groupId>
+        <artifactId>wirespec-maven-plugin</artifactId>
+        <version>{{WIRESPEC_VERSION}}</version>
+        <dependencies>
+            <dependency>
+                <groupId>community.flock.wirespec.integration</groupId>
+                <artifactId>jvm</artifactId>
+                <version>{{WIRESPEC_VERSION}}</version>
+            </dependency>
+        </dependencies>
+        <executions>
+            <execution>
+                <id>generate</id>
+                <goals>
+                    <goal>compile</goal>
+                </goals>
+                <configuration>
+                    <input>${project.basedir}/src/main/wirespec</input>
+                    <output>${project.build.directory}/generated-sources</output>
+                    <languages>
+                        <!-- Works for Java, Kotlin and Scala -->
+                        <language>Java</language>
+                    </languages>
+                    <extensionClasses>
+                        <extensionClass>community.flock.wirespec.integration.jvm.extension.BuilderExtension</extensionClass>
+                    </extensionClasses>
+                </configuration>
+            </execution>
+        </executions>
+    </plugin>
+    ```
+  </TabItem>
+</Tabs>
+
+The extension only reshapes the generated code, so the `jvm` artifact is needed at code-generation time, on the
+plugin's classpath. Your application doesn't need it at runtime.
+
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
+
+## Combining with other extensions
+
+The builder works together with the other IR extensions, for example the [Jackson](./integration-jackson.mdx)
+annotations. The [kotest](https://github.com/flock-community/wirespec/tree/master/src/integration/kotest) integration
+adds an empty companion object to Kotlin models; when it runs first, the builder extension replaces it with its own
+companion object, so the order in `extensionClasses` doesn't matter.

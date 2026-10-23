@@ -106,7 +106,6 @@ The compile mojo supports the following parameters:
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
 - **extensionClasses**: List of fully qualified `IrExtension` class names. The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`.
-- **ir**: Whether to emit through the intermediate representation. Required for `extensionClasses` to take effect on the built-in language targets. Default is 'false'.
 
 ### Default values
 

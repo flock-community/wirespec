@@ -24,7 +24,6 @@ emitter via `extensionClasses`.
                 <languages>
                     <language>Java</language>
                 </languages>
-                <ir>true</ir>
                 <extensionClasses>
                     <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
                 </extensionClasses>
