@@ -11,21 +11,25 @@ spotless {
         "**/resources/**",
     ).toTypedArray()
 
+    // Excludes go on the tree itself so the walk never enters them: a string target with
+    // targetExclude walks build/ too and fails when a task (e.g. KSP) rewrites it mid-walk.
+    fun sources(vararg include: String) = fileTree(projectDir) {
+        include(*include)
+        exclude(*exclude)
+    }
+
     format("misc") {
-        target("**/*.md")
-        targetExclude(*exclude)
+        target(sources("**/*.md"))
         endWithNewline()
     }
 
     format("wirespec") {
-        target("**/*.ws")
-        targetExclude(*exclude)
+        target(sources("**/*.ws"))
         endWithNewline()
     }
 
     kotlin {
-        target("**/*.kt", "**/*.kts")
-        targetExclude(*exclude)
+        target(sources("**/*.kt", "**/*.kts"))
         ktlint().editorConfigOverride(
             mapOf("ktlint_code_style" to "intellij_idea"),
         )

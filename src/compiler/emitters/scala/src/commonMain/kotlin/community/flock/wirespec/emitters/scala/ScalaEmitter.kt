@@ -71,7 +71,7 @@ public open class ScalaEmitter(
 
     // Pre-scan all generated files so cross-file constructor expressions can distinguish a
     // singleton object reference (`GetTodos.Request`) from an empty case class (`Foo()`).
-    // Scala objects can't be `apply`d but empty Wirespec.Model case classes require parens —
+    // Scala objects can't be `apply`d but empty Wirespec.Shape case classes require parens —
     // the IR uses the same `ConstructorStatement(type, emptyMap())` for both.
     override fun beforeGenerate(allFiles: List<LanguageFile>) {
         ScalaGenerator.setGlobalObjectNames(allFiles)

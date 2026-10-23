@@ -48,6 +48,8 @@ import community.flock.wirespec.compiler.core.ir.emit.placeInPackage
 import community.flock.wirespec.compiler.core.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
+import community.flock.wirespec.compiler.core.ir.Statement
+import community.flock.wirespec.compiler.core.ir.Transformer
 import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
 import community.flock.wirespec.compiler.core.ir.transformer.ensureEmptyStructHasConstructor
 import community.flock.wirespec.compiler.core.ir.transformer.injectEnumLabelField
@@ -93,27 +95,7 @@ public open class KotlinEmitter(
                 Name(listOf(sanitized))
             },
             sanitizeSymbol = { it.sanitizeSymbol() },
-            extraStatementTransforms = { stmt, tr ->
-                when {
-                    stmt is FunctionCall && stmt.name.value() == "validate" ->
-                        stmt.copy(typeArguments = emptyList()).transformChildren(tr)
-                    stmt is ConstructorStatement -> ConstructorStatement(
-                        type = tr.transformType(stmt.type),
-                        namedArguments = stmt.namedArguments.map { (name, expr) ->
-                            sanitizationConfig.sanitizeFieldName(name) to tr.transformExpression(expr)
-                        }.toMap(),
-                    )
-                    // References to parameters carry the raw wire name (Refresh-Token); case them
-                    // like the parameters they refer to, since the generator emits names verbatim.
-                    stmt is VariableReference -> {
-                        val cased = sanitizationConfig.parameterNameCase(stmt.name)
-                        val sanitized = sanitizationConfig.sanitizeSymbol(cased.value())
-                        val escaped = if (sanitized in reservedKeywords) sanitized.addBackticks() else sanitized
-                        VariableReference(Name(listOf(escaped)))
-                    }
-                    else -> stmt.transformChildren(tr)
-                }
-            },
+            extraStatementTransforms = statementTransforms { sanitizationConfig },
         )
     }
 
@@ -123,7 +105,32 @@ public open class KotlinEmitter(
         sanitizationConfig.copy(
             fieldNameCase = { name -> Name(listOf(name.value())) },
             sanitizeSymbol = { it.sanitizeFieldSymbol() },
+            extraStatementTransforms = statementTransforms { modelSanitizationConfig },
         )
+    }
+
+    // Named arguments are cased by [namedArguments], the config of the file being sanitized, so a
+    // model constructed from another file (a generator) names its fields the way the model does.
+    private fun statementTransforms(namedArguments: () -> SanitizationConfig): (Statement, Transformer) -> Statement = { stmt, tr ->
+        when {
+            stmt is FunctionCall && stmt.name.value() == "validate" ->
+                stmt.copy(typeArguments = emptyList()).transformChildren(tr)
+            stmt is ConstructorStatement -> ConstructorStatement(
+                type = tr.transformType(stmt.type),
+                namedArguments = stmt.namedArguments.map { (name, expr) ->
+                    namedArguments().sanitizeFieldName(name) to tr.transformExpression(expr)
+                }.toMap(),
+            )
+            // References to parameters carry the raw wire name (Refresh-Token); case them
+            // like the parameters they refer to, since the generator emits names verbatim.
+            stmt is VariableReference -> {
+                val cased = sanitizationConfig.parameterNameCase(stmt.name)
+                val sanitized = sanitizationConfig.sanitizeSymbol(cased.value())
+                val escaped = if (sanitized in reservedKeywords) sanitized.addBackticks() else sanitized
+                VariableReference(Name(listOf(escaped)))
+            }
+            else -> stmt.transformChildren(tr)
+        }
     }
 
     override fun emitShared(): File? {
@@ -184,7 +191,8 @@ public open class KotlinEmitter(
             is Union -> definition.convertToGenerator()
             else -> return null
         }
-        val sanitized = generatorFile.sanitizeNames(sanitizationConfig)
+        // A Type generator calls the model constructor, whose parameters keep the wire name.
+        val sanitized = generatorFile.sanitizeNames(if (definition is Type) modelSanitizationConfig else sanitizationConfig)
         val generatorOwnName = "${definition.identifier.value}Generator"
         val modelImports = sanitized.collectCustomTypeNames()
             .asSequence()

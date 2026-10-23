@@ -115,9 +115,10 @@ out of the box. Extensions run in the order they are listed.
 
 Wirespec ships several IR extensions in its integration modules:
 
-| Extension | Module | Effect |
-|---|---|---|
-| `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+| Extension                       | Module                  | Effect                                                                                                                                                              |
+|---------------------------------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx)                   |
+| `BuilderExtension`              | `jvm`                   | Adds an immutable `Builder` with `builder()` and `toBuilder()` to generated Java, Kotlin and Scala models — see [Builders](../integration/integration-builders.mdx) |
 
 An extension's constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and
 `FileExtension` (the target language of the emitter being extended); the plugins inject all of them. To

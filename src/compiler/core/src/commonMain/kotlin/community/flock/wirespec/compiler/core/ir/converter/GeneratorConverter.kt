@@ -42,11 +42,6 @@ internal fun Identifier.toGeneratorName(): Name = when (this) {
     )
 }
 
-internal fun FieldIdentifier.toFieldName(): Name {
-    val parts = value.split(Regex("[.\\s-]+")).filter { it.isNotEmpty() }
-    return Name(parts)
-}
-
 // A cross-reference to another definition's `*Generator` object. Its name must
 // match that object's emitted namespace, which every generator renders by
 // pascal-casing the `toGeneratorName()` parts. Mirror that here so a synthetic
@@ -215,7 +210,7 @@ public fun TypeWirespec.convertToGenerator(module: Module? = null): File {
                     ConstructorStatement(
                         type = Type.Custom(typeName),
                         namedArguments = shape.fields.associate { field ->
-                            val fieldName = field.identifier.toFieldName()
+                            val fieldName = field.identifier.toName()
                             fieldName to field.reference.toGeneratorExpression(
                                 typeName,
                                 field.identifier.value,

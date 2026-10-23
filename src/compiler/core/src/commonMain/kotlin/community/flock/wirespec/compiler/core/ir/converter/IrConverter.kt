@@ -354,7 +354,7 @@ public fun convertClientServer(): List<Element> = listOf(
     },
 )
 
-private fun Identifier.toName(): Name = when (this) {
+internal fun Identifier.toName(): Name = when (this) {
     is FieldIdentifier -> {
         // Tokenize into runs of separators (dashes, dots, spaces) and runs of non-separators,
         // keeping the separators as their own parts. This lets `Name.value()` reconstruct the

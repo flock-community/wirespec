@@ -39,19 +39,19 @@ object FieldNamesGenerator {
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      houseNumber = generator.generate(path + listOf("house-number"), Wirespec.GeneratorFieldString(
+      `house-number` = generator.generate(path + listOf("house-number"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      xApiKey = generator.generate(path + listOf("x-api-key"), Wirespec.GeneratorFieldString(
+      `x-api-key` = generator.generate(path + listOf("x-api-key"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      hTTPVersion = generator.generate(path + listOf("HTTP-version"), Wirespec.GeneratorFieldString(
+      `HTTP-version` = generator.generate(path + listOf("HTTP-version"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      _1stLine = generator.generate(path + listOf("1st-line"), Wirespec.GeneratorFieldString(
+      `1st-line` = generator.generate(path + listOf("1st-line"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
