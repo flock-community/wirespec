@@ -6,7 +6,7 @@ type Todo {
     final: Boolean,
     owner: Owner,
     tags: String[],
-    houseNumber: Integer,
+    `house-number`: Integer,
     description: String?
 }
 
