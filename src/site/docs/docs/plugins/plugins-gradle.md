@@ -99,8 +99,7 @@ This task compiles Wirespec definitions to various target languages.
 - `output`: DirectoryProperty - The output directory for generated code
 - `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `extensionNames`: ListProperty&lt;Extension&gt; - [Extensions bundled with the plugin](./plugins.md#ir-extensions) (Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints), each applied to the languages it supports
-- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`, after the bundled extensions
+- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
@@ -116,8 +115,7 @@ This task converts from JSON or Avro to other formats.
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro, GraphQL, AsyncAPI)
 - `preProcessor`: Property&lt;(String) -> String&gt; - Function to preprocess the input content before conversion
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `extensionNames`: ListProperty&lt;Extension&gt; - [Extensions bundled with the plugin](./plugins.md#ir-extensions) (Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints), each applied to the languages it supports
-- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`, after the bundled extensions
+- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
@@ -153,11 +151,13 @@ the details.
 
 ## Applying IR extensions
 
-The [IR extensions](./plugins.md#ir-extensions) that Wirespec ships are bundled with the plugin: select them with
-the `extensionNames` property. The built-in language targets always emit through the IR pipeline:
+[IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` property. The classes of the
+extensions that Wirespec ships are bundled with the plugin, so you reference them without adding a dependency. Put an
+extension of your own on the `buildscript` classpath, or declare it in the build script as in the
+[installation](#installation) example. The built-in language targets always emit through the IR pipeline:
 
 ```gradle title="build.gradle.kts"
-import community.flock.wirespec.plugin.Extension
+import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import community.flock.wirespec.plugin.Language
 
@@ -167,10 +167,6 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
     packageName = "community.flock.wirespec.generated.kotlin"
     languages = listOf(Language.Kotlin)
     shared = false
-    extensionNames = listOf(Extension.KotlinxSerialization)
+    extensionClasses = listOf(KotlinxSerializationExtension::class.java)
 }
 ```
-
-Your own extensions are registered with the `extensionClasses` property: put the artifact that provides them on the
-`buildscript` classpath, or declare them in the build script as in the [installation](#installation) example, then
-reference the class directly.

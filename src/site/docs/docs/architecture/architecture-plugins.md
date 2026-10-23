@@ -54,7 +54,7 @@ Wirespec's own first-party integrations are wired in this way. The Avro integrat
 
 The integration modules only target the JVM, so the `extensions` plugin module compiles their extension sources once more, for every target, and the `arguments` module maps the names of the bundled extensions (`Extension`) onto them. That way the CLI, the NPM package and the playground offer the same extensions as Maven and Gradle.
 
-The plugins load extension classes from the build classpath via reflection and instantiate them for every emitter of the task. The constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and/or `FileExtension` (the target language of the emitter being extended) — the plugin injects them from the build configuration. Any other constructor parameter is rejected at load time. Maven takes the fully-qualified names as strings:
+The plugins load extension classes from the build classpath via reflection and instantiate them for every emitter of the task. The constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and/or `FileExtension` (the target language of the emitter being extended) — the plugin injects them from the build configuration. Any other constructor parameter is rejected at load time. A class of a bundled extension is recognised, so it is only applied to the languages it supports. Maven takes the fully-qualified names as strings, or the name of a bundled extension (`Jackson` for `JacksonExtension`):
 
 ```xml
 <extensionClasses>

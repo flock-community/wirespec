@@ -4,6 +4,8 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -19,7 +21,9 @@ class ExtensionTest {
     @Test
     fun testNamesAreTheClassNames() {
         Extension.entries.forEach { extension ->
-            listOf(extension).toIrExtensions(packageName, FileExtension.Kotlin).single()::class.simpleName shouldBe "${extension.name}Extension"
+            val type = extension.toIrExtension(packageName, FileExtension.Kotlin).shouldNotBeNull()::class
+            type.simpleName shouldBe "${extension.name}Extension"
+            Extension.of(type) shouldBe extension
         }
     }
 
@@ -37,5 +41,6 @@ class ExtensionTest {
     fun testUnsupportedLanguagesAreLeftOut() {
         Extension.entries.toIrExtensions(packageName, FileExtension.Kotlin) shouldHaveSize Extension.entries.size
         Extension.entries.toIrExtensions(packageName, FileExtension.TypeScript).shouldBeEmpty()
+        Extension.Avro.toIrExtension(packageName, FileExtension.TypeScript).shouldBeNull()
     }
 }

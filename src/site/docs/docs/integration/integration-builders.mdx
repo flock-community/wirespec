@@ -89,13 +89,14 @@ For any other target language the extension changes nothing.
 
 ## Setup
 
-The extension is bundled with every Wirespec plugin as `Builder`. List it under `extensionNames`; the plugins pass
-the target language to the extension, so one registration covers every language you compile to.
+The extension is bundled with every Wirespec plugin as `Builder`. Register it with `extensionClasses`, by name in Maven
+and by class in Gradle; the plugins pass the target language to the extension, so one registration covers every
+language you compile to.
 
 <Tabs>
   <TabItem value="gradle" label="Gradle">
     ```gradle title="build.gradle.kts"
-    import community.flock.wirespec.plugin.Extension
+    import community.flock.wirespec.integration.jvm.extension.BuilderExtension
     import community.flock.wirespec.plugin.gradle.CompileWirespecTask
     import community.flock.wirespec.plugin.Language
 
@@ -105,7 +106,7 @@ the target language to the extension, so one registration covers every language 
         packageName = "community.flock.wirespec.generated"
         // Works for Java, Kotlin and Scala
         languages = listOf(Language.Java)
-        extensionNames = listOf(Extension.Builder)
+        extensionClasses = listOf(BuilderExtension::class.java)
     }
     ```
   </TabItem>
@@ -128,9 +129,9 @@ the target language to the extension, so one registration covers every language 
                         <!-- Works for Java, Kotlin and Scala -->
                         <language>Java</language>
                     </languages>
-                    <extensionNames>
-                        <extensionName>Builder</extensionName>
-                    </extensionNames>
+                    <extensionClasses>
+                        <extensionClass>Builder</extensionClass>
+                    </extensionClasses>
                 </configuration>
             </execution>
         </executions>

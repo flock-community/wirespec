@@ -22,8 +22,13 @@ class CompileWirespecTaskTest :
             )
             resolve("build.gradle.kts").writeText(
                 """
+                import community.flock.wirespec.compiler.core.ir.File
+                import community.flock.wirespec.compiler.core.ir.IR
+                import community.flock.wirespec.compiler.core.ir.RawElement
+                import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+                import community.flock.wirespec.compiler.core.parse.ast.AST
                 import community.flock.wirespec.integration.jvm.extension.BuilderExtension
-                import community.flock.wirespec.plugin.Extension
+                import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
                 import community.flock.wirespec.plugin.Language
                 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 
@@ -38,6 +43,12 @@ class CompileWirespecTaskTest :
                     shared = false
                     $task
                 }
+
+                class Marker : IrExtension {
+                    override fun extend(ir: IR, ast: AST): IR = ir.map { element ->
+                        if (element is File) element.copy(elements = listOf(RawElement("// marked")) + element.elements) else element
+                    }
+                }
                 """.trimIndent(),
             )
         }
@@ -51,17 +62,18 @@ class CompileWirespecTaskTest :
             return resolve("build/out").walk().filter { it.isFile }.associate { it.name to it.readText() }
         }
 
-        test("bundled extensions apply to the languages they support") {
-            val output = project("extensionNames = listOf(Extension.KotlinxSerialization, Extension.Builder)").compile()
+        test("the bundled extension classes ship with the plugin and apply to the languages they support") {
+            val output = project("extensionClasses = listOf(KotlinxSerializationExtension::class.java, BuilderExtension::class.java)").compile()
 
             output.getValue("Todo.kt") shouldContain "@kotlinx.serialization.Serializable"
             output.getValue("Todo.kt") shouldContain "fun toBuilder()"
             output.getValue("Todo.ts") shouldNotContain "kotlinx"
         }
 
-        test("the classes of the bundled extensions can be registered without adding them to the classpath") {
-            val output = project("extensionClasses = listOf(BuilderExtension::class.java)").compile()
+        test("an extension class of your own applies to every language") {
+            val output = project("extensionClasses = listOf(Marker::class.java)").compile()
 
-            output.getValue("Todo.kt") shouldContain "fun toBuilder()"
+            output.getValue("Todo.kt") shouldContain "// marked"
+            output.getValue("Todo.ts") shouldContain "// marked"
         }
     })

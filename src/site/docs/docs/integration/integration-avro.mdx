@@ -14,8 +14,8 @@ The integration works for both producers and consumers, and can be configured wi
 
 ## Setup
 
-The `AvroExtension` is bundled with every Wirespec plugin as `Avro`, for the Java and Kotlin targets; the CLI takes
-it as `-e Avro`.
+The `AvroExtension` is bundled with every Wirespec plugin as `Avro`, for the Java and Kotlin targets. Register it with
+`extensionClasses`, by name in Maven and by class in Gradle; the CLI takes it as `-e Avro`.
 
 <Tabs>
     <TabItem value="maven-java" label="Maven (Java)">
@@ -46,9 +46,9 @@ it as `-e Avro`.
                         <languages>
                             <language>Java</language>
                         </languages>
-                        <extensionNames>
-                            <extensionName>Avro</extensionName>
-                        </extensionNames>
+                        <extensionClasses>
+                            <extensionClass>Avro</extensionClass>
+                        </extensionClasses>
                     </configuration>
                 </execution>
             </executions>
@@ -83,9 +83,9 @@ it as `-e Avro`.
                         <languages>
                             <language>Kotlin</language>
                         </languages>
-                        <extensionNames>
-                            <extensionName>Avro</extensionName>
-                        </extensionNames>
+                        <extensionClasses>
+                            <extensionClass>Avro</extensionClass>
+                        </extensionClasses>
                     </configuration>
                 </execution>
             </executions>
@@ -112,7 +112,7 @@ it as `-e Avro`.
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
             languages = listOf(community.flock.wirespec.plugin.Language.Java)
-            extensionNames = listOf(community.flock.wirespec.plugin.Extension.Avro)
+            extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
         }
         ```
 
@@ -147,7 +147,7 @@ it as `-e Avro`.
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
             languages = listOf(community.flock.wirespec.plugin.Language.Kotlin)
-            extensionNames = listOf(community.flock.wirespec.plugin.Extension.Avro)
+            extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
         }
         ```
 

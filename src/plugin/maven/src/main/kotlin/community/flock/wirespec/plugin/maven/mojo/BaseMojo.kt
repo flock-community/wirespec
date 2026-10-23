@@ -26,7 +26,7 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import community.flock.wirespec.plugin.toEmitter
-import community.flock.wirespec.plugin.toIrExtensions
+import community.flock.wirespec.plugin.toIrExtension
 import community.flock.wirespec.plugin.withExtensions
 import org.apache.maven.artifact.Artifact
 import org.apache.maven.plugin.AbstractMojo
@@ -74,13 +74,9 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var shared: Boolean = true
 
     /**
-     * Specifies the names of the extensions bundled with the plugin to apply: [Extension]. Each one applies to the languages it supports.
-     */
-    @Parameter
-    protected var extensionNames: List<Extension> = listOf()
-
-    /**
-     * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
+     * Specifies the IR extensions to apply when an emitter is an [IrEmitter], in order: the name of an extension bundled
+     * with the plugin ([Extension], `Jackson` for `JacksonExtension`) or the fully qualified name of an [IrExtension]
+     * class. A bundled extension applies to the languages it supports, an extension of your own to every language.
      */
     @Parameter
     protected var extensionClasses: List<String> = listOf()
@@ -122,10 +118,20 @@ public abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    private fun extensionInstances(language: FileExtension) = extensionClasses.map { extensionClass ->
+    private fun extensionInstances(language: FileExtension) = extensionClasses.mapNotNull { extensionClass ->
         try {
-            val clazz = getClassLoader(project).loadClass(extensionClass)
-            val constructor = clazz.constructors.first()
+            when (val bundled = Extension.toMap()[extensionClass]) {
+                null -> getClassLoader(project).loadClass(extensionClass).toIrExtension(language)
+                else -> bundled.toIrExtension(PackageName(packageName), language)
+            }
+        } catch (e: Exception) {
+            logger.error("Cannot create instance of extension: $extensionClass")
+            throw e
+        }
+    }
+
+    private fun Class<*>.toIrExtension(language: FileExtension): IrExtension? = when (val bundled = Extension.of(kotlin)) {
+        null -> constructors.first().let { constructor ->
             val args: List<Any> = constructor.parameters
                 .map {
                     when (it.type) {
@@ -136,19 +142,15 @@ public abstract class BaseMojo : AbstractMojo() {
                     }
                 }
             constructor.newInstance(*args.toTypedArray()) as IrExtension
-        } catch (e: Exception) {
-            logger.error("Cannot create instance of extension: $extensionClass")
-            throw e
         }
+        else -> bundled.toIrExtension(PackageName(packageName), language)
     }
 
     protected val emitters: NonEmptySet<Emitter>
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
             .map { emitter ->
-                emitter.withExtensions(
-                    extensionNames.toIrExtensions(PackageName(packageName), emitter.extension) + extensionInstances(emitter.extension),
-                )
+                emitter.withExtensions(extensionInstances(emitter.extension))
             }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguage()

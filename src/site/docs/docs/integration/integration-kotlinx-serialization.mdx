@@ -61,7 +61,7 @@ untouched; only the top-level models are annotated.
 The extension applies to the **Kotlin** target only, and runs as part of the IR pipeline. It is bundled with every
 Wirespec plugin as `KotlinxSerialization`. You therefore need to:
 
-1. List `KotlinxSerialization` under `extensionNames`.
+1. Register it with `extensionClasses`: by name in Maven, by class in Gradle.
 2. Disable shared-code emission (`shared = false`) so the
    Wirespec runtime classes come from the `wirespec-jvm` dependency rather than being re-emitted as
    source.
@@ -71,7 +71,7 @@ Wirespec plugin as `KotlinxSerialization`. You therefore need to:
 <Tabs>
   <TabItem value="gradle" label="Gradle">
     ```gradle title="build.gradle.kts"
-    import community.flock.wirespec.plugin.Extension
+    import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
     import community.flock.wirespec.plugin.gradle.CompileWirespecTask
     import community.flock.wirespec.plugin.Language
 
@@ -89,7 +89,7 @@ Wirespec plugin as `KotlinxSerialization`. You therefore need to:
         packageName = "community.flock.wirespec.generated.kotlin"
         languages = listOf(Language.Kotlin)
         shared = false
-        extensionNames = listOf(Extension.KotlinxSerialization)
+        extensionClasses = listOf(KotlinxSerializationExtension::class.java)
     }
     ```
   </TabItem>
@@ -112,9 +112,9 @@ Wirespec plugin as `KotlinxSerialization`. You therefore need to:
                         <language>Kotlin</language>
                     </languages>
                     <shared>false</shared>
-                    <extensionNames>
-                        <extensionName>KotlinxSerialization</extensionName>
-                    </extensionNames>
+                    <extensionClasses>
+                        <extensionClass>KotlinxSerialization</extensionClass>
+                    </extensionClasses>
                 </configuration>
             </execution>
         </executions>

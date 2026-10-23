@@ -21,7 +21,8 @@ The integration works for both [producers](#restcontroller) (RestController) and
 ## Setup
 
 The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bundled with every Wirespec plugin as
-`SpringMappingAnnotations`, for the Java and Kotlin targets; the CLI takes it as `-e SpringMappingAnnotations`.
+`SpringMappingAnnotations`, for the Java and Kotlin targets. Register it with `extensionClasses`, by name in Maven and
+by class in Gradle; the CLI takes it as `-e SpringMappingAnnotations`.
 
 <Tabs>
     <TabItem value="maven" label="Maven">
@@ -53,9 +54,9 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
                         <languages>
                             <language>Java</language>
                         </languages>
-                        <extensionNames>
-                            <extensionName>SpringMappingAnnotations</extensionName>
-                        </extensionNames>
+                        <extensionClasses>
+                            <extensionClass>SpringMappingAnnotations</extensionClass>
+                        </extensionClasses>
                     </configuration>
                 </execution>
             </executions>
@@ -72,7 +73,7 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
         }
         ```
 
-        Then select the `SpringMappingAnnotations` extension that is bundled with the plugin:
+        Then register the `SpringMappingAnnotationsExtension` that is bundled with the plugin:
 
         ```gradle
         tasks.register<CompileWirespecTask>("wirespec-compile") {
@@ -82,7 +83,7 @@ The `SpringMappingAnnotationsExtension` that adds the mapping annotations is bun
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
             languages = listOf(Language.Java)
-            extensionNames = listOf(community.flock.wirespec.plugin.Extension.SpringMappingAnnotations)
+            extensionClasses = listOf(community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension::class.java)
         }
         ```
 
