@@ -31,7 +31,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Check formatting
         run: ./gradlew spotlessCheck
 
@@ -46,7 +47,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Run JVM tests
         run: ./gradlew jvmTest
 
@@ -61,7 +63,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Run Linux native tests
         run: ./gradlew -Pwirespec.nativeTargets=linuxX64 linuxX64Test
 
@@ -76,7 +79,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -96,7 +100,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Run native tests
         run: ./gradlew -Pwirespec.nativeTargets=macosArm64,macosX64 macosArm64Test macosX64Test
 
@@ -111,7 +116,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Run Windows native tests
         shell: bash
         run: ./gradlew -Pwirespec.nativeTargets=mingwX64 mingwX64Test
@@ -127,7 +133,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -170,7 +177,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -213,7 +221,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Test IntelliJ plugin
         run: ./gradlew :src:ide:intellij-plugin:test
       - name: Build IntelliJ plugin
@@ -230,7 +239,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Verify
         run: ./gradlew :src:verify:allTests -Pverify
 
@@ -245,7 +255,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Publish wirespec to Maven Local
         run: ./gradlew publishToMavenLocal :src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Upload Maven Local artifacts
@@ -292,7 +303,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'graalvm'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -382,7 +394,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Build CLI release executables
         run: |
           ./gradlew -Pwirespec.nativeTargets=macosX64,macosArm64,linuxX64,mingwX64 \
@@ -438,7 +451,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Run
         run: |
           ./gradlew :src:ide:intellij-plugin:publishPlugin
@@ -463,9 +477,10 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -574,9 +589,10 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 24
