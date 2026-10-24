@@ -21,13 +21,10 @@ class TestLib {
     fun testProduceConsume() {
         val path = Path("src/jsTest/resources/person.ws")
         val source = SystemFileSystem.source(path).buffered().readString()
-        object : ParseContext, NoLogger {
+        val ast = object : ParseContext, NoLogger {
             override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).map { ast ->
-            val output = ast.produce()
-            val input = output.consume()
-            assertEquals(input, ast)
-        }
+        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).fold({ fail(it.toString()) }, { it })
+        assertEquals(ast.modules.head.statements, ast.produce().consume().modules.head.statements)
     }
 
     @Test
