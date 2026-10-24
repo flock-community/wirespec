@@ -201,13 +201,7 @@ type User {}`,
 });
 
 describe("corpus", () => {
-  // Written in syntax the compiler no longer accepts, or never did: `type Name /regex/`, `union`, `refined`.
-  const invalid = new Set([
-    "src/compiler/lib/src/jsTest/resources/person.ws",
-    "src/site/docs/docs/architecture/architecture-ir.md #3",
-    "src/site/docs/docs/architecture/architecture-ir.md #4",
-  ]);
-  const sources = corpus().filter(({ name }) => !invalid.has(name));
+  const sources = corpus();
 
   it("finds the Wirespec sources of the repository", () => assert.ok(sources.length > 50));
 
