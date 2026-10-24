@@ -15,6 +15,7 @@
   "main": "./build/extension",
   "dependencies": {
     "@flock/wirespec": "file:../../plugin/npm/build/dist/js/productionLibrary/",
+    "@flock/wirespec-textmate": "file:../textmate",
     "typescript": "^5.4.5",
     "vscode-languageclient": "9.0.1"
   },
@@ -33,9 +34,10 @@
     "clean:build": "npx --yes rimraf build",
     "clean:node_modules": "npx --yes rimraf node_modules",
     "compile": "tsc",
-    "esbuild": "npm run esbuild:extension && npm run esbuild:server",
+    "esbuild": "npm run esbuild:extension && npm run esbuild:server && npm run esbuild:grammar",
     "esbuild:extension": "esbuild src/extension.ts --bundle --outfile=build/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild:server": "esbuild node_modules/@flock/wirespec/wirespec-lsp.mjs --bundle --outfile=build/server.js --external:vscode --format=cjs --platform=node",
+    "esbuild:grammar": "node -e \"require('fs').copyFileSync(require.resolve('@flock/wirespec-textmate'), 'build/wirespec.tmLanguage.json')\"",
     "start": "npm run build",
     "update": "update-ruecksichtslos && npm i",
     "vscode:prepublish": "npm run esbuild",
@@ -62,6 +64,13 @@
           "light": "./icons/wirespec.svg",
           "dark": "./icons/wirespec.svg"
         }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "wirespec",
+        "scopeName": "source.wirespec",
+        "path": "./build/wirespec.tmLanguage.json"
       }
     ]
   },

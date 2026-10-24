@@ -97,10 +97,10 @@ File("Role") {
 
 ## Union
 
-A Wirespec `union` is converted into a union with members referencing each entry type.
+A Wirespec union type is converted into a union with members referencing each entry type.
 
 ```wirespec
-union Animal { Cat | Dog | Bird }
+type Animal = Cat | Dog | Bird
 ```
 
 ```
@@ -115,10 +115,10 @@ File("Animal") {
 
 ## Refined
 
-A Wirespec `refined` type is converted into a struct that implements `Wirespec.Refined<T>`. It holds the underlying value and a `validate` function that checks the constraint (regex or bounds).
+A Wirespec refined type is converted into a struct that implements `Wirespec.Refined<T>`. It holds the underlying value and a `validate` function that checks the constraint (regex or bounds).
 
 ```wirespec
-refined Email /^[^@]+@[^@]+$/g
+type Email = String(/^[^@]+@[^@]+$/g)
 ```
 
 ```

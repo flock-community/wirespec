@@ -1,0 +1,423 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Wirespec",
+  "scopeName": "source.wirespec",
+  "fileTypes": ["ws"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#annotations" },
+    { "include": "#endpoint" },
+    { "include": "#enum" },
+    { "include": "#definitions" },
+    { "include": "#headers" },
+    { "include": "#field" },
+    { "include": "#type-expression" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.wirespec",
+          "begin": "/\\*\\*(?!/)",
+          "beginCaptures": { "0": { "name": "punctuation.definition.comment.begin.wirespec" } },
+          "end": "\\*/",
+          "endCaptures": { "0": { "name": "punctuation.definition.comment.end.wirespec" } }
+        },
+        {
+          "name": "comment.block.wirespec",
+          "begin": "/\\*",
+          "beginCaptures": { "0": { "name": "punctuation.definition.comment.begin.wirespec" } },
+          "end": "\\*/",
+          "endCaptures": { "0": { "name": "punctuation.definition.comment.end.wirespec" } }
+        },
+        {
+          "name": "comment.line.double-slash.wirespec",
+          "begin": "//",
+          "beginCaptures": { "0": { "name": "punctuation.definition.comment.wirespec" } },
+          "end": "$"
+        }
+      ]
+    },
+    "annotations": {
+      "patterns": [
+        {
+          "name": "meta.annotation.wirespec",
+          "begin": "(@)([A-Z][A-Za-z0-9_]*)\\s*(\\()",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.annotation.wirespec" },
+            "2": { "name": "storage.type.annotation.wirespec" },
+            "3": { "name": "punctuation.section.arguments.begin.wirespec" }
+          },
+          "end": "\\)",
+          "endCaptures": { "0": { "name": "punctuation.section.arguments.end.wirespec" } },
+          "patterns": [{ "include": "#annotation-arguments" }]
+        },
+        {
+          "name": "meta.annotation.wirespec",
+          "match": "(@)([A-Z][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "punctuation.definition.annotation.wirespec" },
+            "2": { "name": "storage.type.annotation.wirespec" }
+          }
+        }
+      ]
+    },
+    "annotation-arguments": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#annotation-key" },
+        { "include": "#annotation-array" },
+        { "include": "#annotation-dict" },
+        { "include": "#annotation-value" },
+        { "include": "#comma" }
+      ]
+    },
+    "annotation-key": {
+      "match": "(?:(\"(?:[^\"\\\\]|\\\\.)*\")|(?<![\\w`-])([A-Za-z_][A-Za-z0-9_-]*))\\s*(:)",
+      "captures": {
+        "1": { "name": "string.quoted.double.wirespec", "patterns": [{ "include": "#string-escape" }] },
+        "2": { "name": "variable.parameter.annotation.wirespec" },
+        "3": { "name": "punctuation.separator.key-value.wirespec" }
+      }
+    },
+    "annotation-array": {
+      "name": "meta.array.wirespec",
+      "begin": "\\[",
+      "beginCaptures": { "0": { "name": "punctuation.section.array.begin.wirespec" } },
+      "end": "\\]",
+      "endCaptures": { "0": { "name": "punctuation.section.array.end.wirespec" } },
+      "patterns": [{ "include": "#comments" }, { "include": "#annotation-value" }, { "include": "#comma" }]
+    },
+    "annotation-dict": {
+      "name": "meta.dictionary.wirespec",
+      "begin": "\\{",
+      "beginCaptures": { "0": { "name": "punctuation.section.dictionary.begin.wirespec" } },
+      "end": "\\}",
+      "endCaptures": { "0": { "name": "punctuation.section.dictionary.end.wirespec" } },
+      "patterns": [{ "include": "#annotation-arguments" }]
+    },
+    "annotation-value": {
+      "patterns": [
+        { "include": "#string" },
+        { "include": "#regex" },
+        { "include": "#number" },
+        { "include": "#language-constant" },
+        {
+          "name": "constant.other.wirespec",
+          "match": "`[A-Za-z0-9_-]+`|(?<![\\w`-])[A-Za-z_][A-Za-z0-9_-]*"
+        }
+      ]
+    },
+    "definitions": {
+      "patterns": [
+        {
+          "match": "\\b(type)\\b(?:\\s+([A-Za-z_][A-Za-z0-9_]*))?",
+          "captures": {
+            "1": { "name": "keyword.declaration.type.wirespec" },
+            "2": { "name": "entity.name.type.wirespec" }
+          }
+        },
+        {
+          "match": "\\b(part)\\b(?:\\s+([A-Za-z_][A-Za-z0-9_]*))?",
+          "captures": {
+            "1": { "name": "keyword.declaration.part.wirespec" },
+            "2": { "name": "entity.name.type.part.wirespec" }
+          }
+        },
+        {
+          "match": "\\b(channel)\\b(?:\\s+([A-Za-z_][A-Za-z0-9_]*))?",
+          "captures": {
+            "1": { "name": "keyword.declaration.channel.wirespec" },
+            "2": { "name": "entity.name.type.channel.wirespec" }
+          }
+        },
+        {
+          "match": "\\b(rpc)\\b(?:\\s+([A-Za-z_][A-Za-z0-9_]*))?",
+          "captures": {
+            "1": { "name": "keyword.declaration.rpc.wirespec" },
+            "2": { "name": "entity.name.function.rpc.wirespec" }
+          }
+        }
+      ]
+    },
+    "enum": {
+      "name": "meta.definition.enum.wirespec",
+      "begin": "\\b(enum)\\b(?:\\s+([A-Za-z_][A-Za-z0-9_]*))?",
+      "beginCaptures": {
+        "1": { "name": "keyword.declaration.enum.wirespec" },
+        "2": { "name": "entity.name.type.enum.wirespec" }
+      },
+      "end": "\\}|(?=^\\s*(?:type|enum|endpoint|channel|rpc|part)\\b)",
+      "endCaptures": { "0": { "name": "punctuation.section.block.end.wirespec" } },
+      "patterns": [
+        { "include": "#comments" },
+        { "name": "punctuation.section.block.begin.wirespec", "match": "\\{" },
+        {
+          "name": "variable.other.enummember.wirespec",
+          "match": "`[A-Za-z0-9_-]+`|-?\\d+|[A-Za-z_][A-Za-z0-9_-]*"
+        },
+        { "include": "#comma" }
+      ]
+    },
+    "endpoint": {
+      "name": "meta.definition.endpoint.wirespec",
+      "begin": "\\b(endpoint)\\b(?:\\s+([A-Za-z_][A-Za-z0-9_]*))?",
+      "beginCaptures": {
+        "1": { "name": "keyword.declaration.endpoint.wirespec" },
+        "2": { "name": "entity.name.function.endpoint.wirespec" }
+      },
+      "end": "\\}|(?=^\\s*(?:type|enum|endpoint|channel|rpc|part)\\b)",
+      "endCaptures": { "0": { "name": "punctuation.section.responses.end.wirespec" } },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#annotations" },
+        {
+          "name": "support.constant.http-method.wirespec",
+          "match": "\\b(?:GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b"
+        },
+        { "include": "#path-parameter" },
+        {
+          "match": "(/)([A-Za-z0-9_-]+)",
+          "captures": {
+            "1": { "name": "punctuation.separator.path.wirespec" },
+            "2": { "name": "string.unquoted.path.wirespec" }
+          }
+        },
+        { "name": "punctuation.separator.path.wirespec", "match": "/" },
+        { "include": "#query" },
+        { "include": "#headers" },
+        {
+          "match": "(->)\\s*(\\{)(?!\\s*[A-Z])",
+          "captures": {
+            "1": { "name": "keyword.operator.arrow.wirespec" },
+            "2": { "name": "punctuation.section.responses.begin.wirespec" }
+          }
+        },
+        { "name": "constant.numeric.status-code.wirespec", "match": "(?<![\\w.-])\\d+(?![\\w.])" },
+        { "include": "#type-expression" }
+      ]
+    },
+    "path-parameter": {
+      "name": "meta.parameter.path.wirespec",
+      "begin": "(/)\\s*(\\{)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.separator.path.wirespec" },
+        "2": { "name": "punctuation.section.parameter.begin.wirespec" }
+      },
+      "end": "\\}|(?=^\\s*(?:type|enum|endpoint|channel|rpc|part)\\b)",
+      "endCaptures": { "0": { "name": "punctuation.section.parameter.end.wirespec" } },
+      "patterns": [
+        { "include": "#comments" },
+        {
+          "match": "(`[A-Za-z0-9_-]+`|(?<![\\w`-])[a-z][A-Za-z0-9_-]*)\\s*(:)",
+          "captures": {
+            "1": { "name": "variable.parameter.path.wirespec" },
+            "2": { "name": "punctuation.separator.key-value.wirespec" }
+          }
+        },
+        { "include": "#type-expression" }
+      ]
+    },
+    "query": {
+      "name": "meta.parameters.query.wirespec",
+      "begin": "(\\?)\\s*(\\{)",
+      "beginCaptures": {
+        "1": { "name": "keyword.operator.query.wirespec" },
+        "2": { "name": "punctuation.section.parameters.begin.wirespec" }
+      },
+      "end": "\\}|(?=^\\s*(?:type|enum|endpoint|channel|rpc|part)\\b)",
+      "endCaptures": { "0": { "name": "punctuation.section.parameters.end.wirespec" } },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#annotations" },
+        { "include": "#spread" },
+        {
+          "match": "(`[A-Za-z0-9_-]+`|(?<![\\w`-])[a-z][A-Za-z0-9_-]*)\\s*(:)",
+          "captures": {
+            "1": { "name": "variable.parameter.query.wirespec" },
+            "2": { "name": "punctuation.separator.key-value.wirespec" }
+          }
+        },
+        { "include": "#field-default" },
+        { "include": "#type-expression" }
+      ]
+    },
+    "headers": {
+      "name": "meta.parameters.headers.wirespec",
+      "begin": "(#)\\s*(\\{)",
+      "beginCaptures": {
+        "1": { "name": "keyword.operator.headers.wirespec" },
+        "2": { "name": "punctuation.section.parameters.begin.wirespec" }
+      },
+      "end": "\\}|(?=^\\s*(?:type|enum|endpoint|channel|rpc|part)\\b)",
+      "endCaptures": { "0": { "name": "punctuation.section.parameters.end.wirespec" } },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#annotations" },
+        { "include": "#spread" },
+        {
+          "match": "(`[A-Za-z0-9_-]+`|(?<![\\w`-])[a-z][A-Za-z0-9_-]*)\\s*(:)",
+          "captures": {
+            "1": { "name": "variable.parameter.header.wirespec" },
+            "2": { "name": "punctuation.separator.key-value.wirespec" }
+          }
+        },
+        { "include": "#field-default" },
+        { "include": "#type-expression" }
+      ]
+    },
+    "block": {
+      "name": "meta.block.wirespec",
+      "begin": "\\{",
+      "beginCaptures": { "0": { "name": "punctuation.section.block.begin.wirespec" } },
+      "end": "\\}|(?=^\\s*(?:type|enum|endpoint|channel|rpc|part)\\b)",
+      "endCaptures": { "0": { "name": "punctuation.section.block.end.wirespec" } },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#annotations" },
+        { "include": "#spread" },
+        { "include": "#field" },
+        { "include": "#field-default" },
+        { "include": "#type-expression" }
+      ]
+    },
+    "field": {
+      "match": "(`[A-Za-z0-9_-]+`|(?<![\\w`-])[a-z][A-Za-z0-9_-]*)\\s*(:)",
+      "captures": {
+        "1": { "name": "variable.other.property.wirespec" },
+        "2": { "name": "punctuation.separator.key-value.wirespec" }
+      }
+    },
+    "field-default": {
+      "match": "(=)\\s*(?:(\"(?:[^\"\\\\]|\\\\.)*\")|(-?\\d+\\.\\d+)(?![\\w.])|(-?\\d+)(?![\\w.])|\\b(true|false)\\b|\\b(null)\\b|(`[A-Za-z0-9_-]+`|[A-Za-z_][A-Za-z0-9_-]*))?",
+      "captures": {
+        "1": { "name": "keyword.operator.assignment.wirespec" },
+        "2": { "name": "string.quoted.double.wirespec", "patterns": [{ "include": "#string-escape" }] },
+        "3": { "name": "constant.numeric.decimal.wirespec" },
+        "4": { "name": "constant.numeric.integer.wirespec" },
+        "5": { "name": "constant.language.boolean.wirespec" },
+        "6": { "name": "constant.language.null.wirespec" },
+        "7": { "name": "variable.other.enummember.wirespec" }
+      }
+    },
+    "spread": {
+      "match": "(\\.\\.\\.)\\s*([A-Z][A-Za-z0-9_]*)?",
+      "captures": {
+        "1": { "name": "keyword.operator.spread.wirespec" },
+        "2": { "name": "entity.name.type.wirespec" }
+      }
+    },
+    "type-expression": {
+      "patterns": [
+        { "include": "#block" },
+        { "include": "#type-reference" },
+        { "include": "#operators" },
+        { "include": "#punctuation" }
+      ]
+    },
+    "type-reference": {
+      "patterns": [
+        {
+          "name": "meta.constraint.wirespec",
+          "begin": "\\b(String|Integer32|Integer|Number32|Number)\\b\\s*(\\?)?\\s*(\\()",
+          "beginCaptures": {
+            "1": { "name": "support.type.primitive.wirespec" },
+            "2": { "name": "keyword.operator.nullable.wirespec" },
+            "3": { "name": "punctuation.section.constraint.begin.wirespec" }
+          },
+          "end": "\\)",
+          "endCaptures": { "0": { "name": "punctuation.section.constraint.end.wirespec" } },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#regex" },
+            { "include": "#number" },
+            { "name": "constant.language.unbounded.wirespec", "match": "(?<![\\w-])_(?![\\w-])" },
+            { "include": "#comma" }
+          ]
+        },
+        {
+          "name": "support.type.primitive.wirespec",
+          "match": "\\b(?:String|Integer32|Integer|Number32|Number|Boolean|Bytes)\\b"
+        },
+        { "name": "support.type.builtin.wirespec", "match": "\\b(?:Unit|Any)\\b" },
+        { "name": "entity.name.type.wirespec", "match": "\\b[A-Z][A-Za-z0-9_]*\\b" },
+        { "name": "keyword.operator.array.wirespec", "match": "\\[\\]" },
+        { "name": "keyword.operator.nullable.wirespec", "match": "\\?" }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        { "name": "keyword.operator.arrow.wirespec", "match": "->" },
+        { "name": "keyword.operator.spread.wirespec", "match": "\\.\\.\\." },
+        { "name": "keyword.operator.union.wirespec", "match": "\\|" },
+        { "name": "keyword.operator.error.wirespec", "match": "!" },
+        { "name": "keyword.operator.assignment.wirespec", "match": "=" }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        { "include": "#comma" },
+        { "name": "punctuation.separator.key-value.wirespec", "match": ":" },
+        { "name": "punctuation.section.parens.begin.wirespec", "match": "\\(" },
+        { "name": "punctuation.section.parens.end.wirespec", "match": "\\)" },
+        { "name": "punctuation.section.brackets.begin.wirespec", "match": "\\[" },
+        { "name": "punctuation.section.brackets.end.wirespec", "match": "\\]" },
+        { "name": "punctuation.section.block.end.wirespec", "match": "\\}" }
+      ]
+    },
+    "comma": {
+      "name": "punctuation.separator.comma.wirespec",
+      "match": ","
+    },
+    "string": {
+      "name": "string.quoted.double.wirespec",
+      "begin": "\"",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.wirespec" } },
+      "end": "\"",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.wirespec" } },
+      "patterns": [{ "include": "#string-escape" }]
+    },
+    "string-escape": {
+      "name": "constant.character.escape.wirespec",
+      "match": "\\\\."
+    },
+    "regex": {
+      "name": "string.regexp.wirespec",
+      "match": "(/)((?:\\\\/|[^/\\n])*)(/)([gimsuy]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.string.begin.wirespec" },
+        "2": { "patterns": [{ "include": "#regex-content" }] },
+        "3": { "name": "punctuation.definition.string.end.wirespec" },
+        "4": { "name": "keyword.other.regex-flags.wirespec" }
+      }
+    },
+    "regex-content": {
+      "patterns": [
+        { "name": "constant.character.escape.regexp.wirespec", "match": "\\\\." },
+        {
+          "name": "constant.other.character-class.set.regexp.wirespec",
+          "match": "\\[(?:\\\\.|[^\\]\\\\])*\\]"
+        },
+        {
+          "name": "keyword.operator.quantifier.regexp.wirespec",
+          "match": "[*+?]\\??|\\{\\d+(?:,\\d*)?\\}\\??"
+        },
+        { "name": "keyword.control.anchor.regexp.wirespec", "match": "[\\^$]" },
+        { "name": "punctuation.definition.group.regexp.wirespec", "match": "\\((?:\\?(?:[:=!]|<[=!]))?|\\)" },
+        { "name": "keyword.operator.or.regexp.wirespec", "match": "\\|" }
+      ]
+    },
+    "number": {
+      "patterns": [
+        { "name": "constant.numeric.decimal.wirespec", "match": "(?<![\\w.-])-?\\d+\\.\\d+(?![\\w.])" },
+        { "name": "constant.numeric.integer.wirespec", "match": "(?<![\\w.-])-?\\d+(?![\\w.])" }
+      ]
+    },
+    "language-constant": {
+      "patterns": [
+        { "name": "constant.language.boolean.wirespec", "match": "\\b(?:true|false)\\b" },
+        { "name": "constant.language.null.wirespec", "match": "\\bnull\\b" }
+      ]
+    }
+  }
+}
