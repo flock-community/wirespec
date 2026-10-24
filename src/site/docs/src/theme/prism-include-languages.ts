@@ -35,8 +35,8 @@ export default function prismIncludeLanguages(
     require(`prismjs/components/prism-${lang}`);
   });
 
-  // eslint-disable-next-line global-require, import/no-dynamic-require
-  require("./prism-wirespec.js");
+  // eslint-disable-next-line global-require
+  require("@flock/wirespec-prism")(PrismObject);
 
   // Clean up and eventually restore former globalThis.Prism object (if any)
   delete (globalThis as Optional<typeof globalThis, "Prism">).Prism;
