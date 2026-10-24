@@ -14,6 +14,9 @@ The integration works for both producers and consumers, and can be configured wi
 
 ## Setup
 
+The `AvroExtension` is bundled with every Wirespec plugin as `Avro`, for the Java and Kotlin targets. Register it with
+`extensionClasses`, by name in Maven and by class in Gradle; the CLI takes it as `-e Avro`.
+
 <Tabs>
     <TabItem value="maven-java" label="Maven (Java)">
         Add both the dependency and plugin to your pom.xml file:
@@ -44,7 +47,7 @@ The integration works for both producers and consumers, and can be configured wi
                             <language>Java</language>
                         </languages>
                         <extensionClasses>
-                            <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
+                            <extensionClass>Avro</extensionClass>
                         </extensionClasses>
                     </configuration>
                 </execution>
@@ -81,7 +84,7 @@ The integration works for both producers and consumers, and can be configured wi
                             <language>Kotlin</language>
                         </languages>
                         <extensionClasses>
-                            <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
+                            <extensionClass>Avro</extensionClass>
                         </extensionClasses>
                     </configuration>
                 </execution>

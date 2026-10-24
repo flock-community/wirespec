@@ -58,15 +58,14 @@ untouched; only the top-level models are annotated.
 
 ## Setup
 
-The extension applies to the **Kotlin** target only, and runs as part of the IR pipeline. You therefore
-need to:
+The extension applies to the **Kotlin** target only, and runs as part of the IR pipeline. It is bundled with every
+Wirespec plugin as `KotlinxSerialization`. You therefore need to:
 
-1. Add the integration artifact to the plugin's classpath.
-2. Register `KotlinxSerializationExtension` with `extensionClasses`.
-3. Disable shared-code emission (`shared = false`) so the
+1. Register it with `extensionClasses`: by name in Maven, by class in Gradle.
+2. Disable shared-code emission (`shared = false`) so the
    Wirespec runtime classes come from the `wirespec-jvm` dependency rather than being re-emitted as
    source.
-4. Apply the kotlinx.serialization compiler plugin and add its runtime to your project, so the generated
+3. Apply the kotlinx.serialization compiler plugin and add its runtime to your project, so the generated
    `@Serializable` annotations compile.
 
 <Tabs>
@@ -78,12 +77,6 @@ need to:
 
     plugins {
         kotlin("plugin.serialization") version "<kotlin-version>"
-    }
-
-    buildscript {
-        dependencies {
-            classpath("community.flock.wirespec.integration:kotlinx-serialization:{{WIRESPEC_VERSION}}")
-        }
     }
 
     dependencies {
@@ -106,13 +99,6 @@ need to:
         <groupId>community.flock.wirespec.plugin.maven</groupId>
         <artifactId>wirespec-maven-plugin</artifactId>
         <version>{{WIRESPEC_VERSION}}</version>
-        <dependencies>
-            <dependency>
-                <groupId>community.flock.wirespec.integration</groupId>
-                <artifactId>kotlinx-serialization</artifactId>
-                <version>{{WIRESPEC_VERSION}}</version>
-            </dependency>
-        </dependencies>
         <executions>
             <execution>
                 <id>kotlin</id>
@@ -127,12 +113,17 @@ need to:
                     </languages>
                     <shared>false</shared>
                     <extensionClasses>
-                        <extensionClass>community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension</extensionClass>
+                        <extensionClass>KotlinxSerialization</extensionClass>
                     </extensionClasses>
                 </configuration>
             </execution>
         </executions>
     </plugin>
+    ```
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+    ```shell
+    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Kotlin -e KotlinxSerialization
     ```
   </TabItem>
 </Tabs>

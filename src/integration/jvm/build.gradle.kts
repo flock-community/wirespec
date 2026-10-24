@@ -54,7 +54,7 @@ kotlin {
             dependencies {
                 api(project(":src:integration:wirespec"))
                 implementation(libs.kotlinx.coroutines.core)
-                // The BuilderExtension only reshapes the IR; the compiler comes from the
+                // The JvmBuilderExtension only reshapes the IR; the compiler comes from the
                 // Wirespec plugin that loads it, so it is not forced onto runtime consumers.
                 compileOnly(project(":src:compiler:core"))
             }

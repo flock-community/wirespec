@@ -61,6 +61,7 @@ tasks.publishToMavenLocal {
     dependsOn(":src:converter:graphql:publishToMavenLocal")
     dependsOn(":src:converter:asyncapi:publishToMavenLocal")
     dependsOn(":src:plugin:arguments:publishToMavenLocal")
+    dependsOn(":src:plugin:extensions:publishToMavenLocal")
 }
 
 mavenPlugin {

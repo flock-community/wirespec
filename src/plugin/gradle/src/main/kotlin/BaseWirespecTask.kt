@@ -2,7 +2,6 @@ package community.flock.wirespec.plugin.gradle
 
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
-import arrow.core.toNonEmptyListOrNull
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -10,10 +9,9 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
-import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -22,6 +20,8 @@ import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrExtension
+import community.flock.wirespec.plugin.withExtensions
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -86,19 +86,23 @@ public abstract class BaseWirespecTask : DefaultTask() {
     protected fun packageNameValue(): PackageName = packageName.getOrElse(DEFAULT_GENERATED_PACKAGE_STRING).let(PackageName::invoke)
     protected fun sharedValue(): EmitShared = shared.getOrElse(false).let(EmitShared::invoke)
 
-    protected fun extensionInstances(language: FileExtension): List<IrExtension> = extensionClasses.getOrElse(emptyList()).map { extensionClass ->
+    protected fun extensionInstances(language: FileExtension): List<IrExtension> = extensionClasses.getOrElse(emptyList()).mapNotNull { extensionClass ->
         try {
-            val constructor = extensionClass.declaredConstructors.first()
-            val args: List<Any> = constructor.parameters
-                .map {
-                    when (it.type) {
-                        PackageName::class.java -> packageNameValue()
-                        EmitShared::class.java -> sharedValue()
-                        FileExtension::class.java -> language
-                        else -> error("Cannot map constructor parameter")
-                    }
+            when (val bundled = Extension.of(extensionClass.kotlin)) {
+                null -> extensionClass.declaredConstructors.first().let { constructor ->
+                    val args: List<Any> = constructor.parameters
+                        .map {
+                            when (it.type) {
+                                PackageName::class.java -> packageNameValue()
+                                EmitShared::class.java -> sharedValue()
+                                FileExtension::class.java -> language
+                                else -> error("Cannot map constructor parameter")
+                            }
+                        }
+                    constructor.newInstance(*args.toTypedArray()) as IrExtension
                 }
-            constructor.newInstance(*args.toTypedArray()) as IrExtension
+                else -> bundled.toIrExtension(packageNameValue(), language)
+            }
         } catch (e: Exception) {
             logger.error("Cannot create instance of extension: ${extensionClass.simpleName}", e)
             throw e
@@ -108,9 +112,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
     protected fun emitters(): NonEmptySet<Emitter> = languages.get()
         .map { it.toEmitter(packageNameValue(), sharedValue()) }
         .map { emitter ->
-            extensionInstances(emitter.extension).toNonEmptyListOrNull()
-                ?.let { (emitter as? IrEmitter)?.applyExtensions(it) }
-                ?: emitter
+            emitter.withExtensions(extensionInstances(emitter.extension))
         }
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguage()

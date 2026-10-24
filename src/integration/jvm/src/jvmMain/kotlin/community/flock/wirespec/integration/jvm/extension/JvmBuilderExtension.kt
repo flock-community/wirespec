@@ -46,7 +46,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * nested in a case class would be an inner class bound to an instance. Register on the Java,
  * Kotlin or Scala emitter; for any other [language] the IR is returned unchanged.
  */
-public class BuilderExtension(
+public class JvmBuilderExtension(
     private val language: FileExtension,
 ) : IrExtension {
 

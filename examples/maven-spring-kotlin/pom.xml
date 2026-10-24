@@ -82,13 +82,6 @@
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
                 <artifactId>wirespec-maven-plugin</artifactId>
                 <version>${wirespec.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>community.flock.wirespec.integration</groupId>
-                        <artifactId>spring-jvm</artifactId>
-                        <version>${wirespec.version}</version>
-                    </dependency>
-                </dependencies>
                 <executions>
                     <execution>
                         <id>kotlin</id>
@@ -102,7 +95,7 @@
                                 <language>Kotlin</language>
                             </languages>
                             <extensionClasses>
-                                <extensionClass>community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension</extensionClass>
+                                <extensionClass>SpringMappingAnnotations</extensionClass>
                             </extensionClasses>
                             <packageName>community.flock.wirespec.generated.examples.spring.kotlin</packageName>
                         </configuration>

@@ -1,5 +1,12 @@
-import { emit, Emitters, parse, WsEmitted, WsError } from "@flock/wirespec";
-import { CompilationResult, Emitter, Language } from "../routes";
+import {
+  emit,
+  Emitters,
+  Extensions,
+  parse,
+  WsEmitted,
+  WsError,
+} from "@flock/wirespec";
+import { CompilationResult, Emitter, Extension, Language } from "../routes";
 
 const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
   switch (emitter) {
@@ -30,6 +37,22 @@ const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
   }
 };
 
+const extensions: Record<Extension, Extensions> = {
+  avro: Extensions.AVRO,
+  jackson: Extensions.JACKSON,
+  jvm_builder: Extensions.JVM_BUILDER,
+  kotest_dsl: Extensions.KOTEST_DSL,
+  kotlinx_serialization: Extensions.KOTLINX_SERIALIZATION,
+  spring_mapping_annotations: Extensions.SPRING_MAPPING_ANNOTATIONS,
+  spring_native_hints: Extensions.SPRING_NATIVE_HINTS,
+};
+
+export const isExtension = (value: unknown): value is Extension =>
+  Object.keys(extensions).includes(value as string);
+
+export const supports = (extension: Extension, emitter: Emitter) =>
+  extensions[extension].supports(getEmitterFor(emitter));
+
 const getLanguageFor: (emitter: Emitter) => Language = (emitter: Emitter) => {
   switch (emitter) {
     case "typescript":
@@ -55,13 +78,20 @@ export const PACKAGE_NAME = "community.flock.wirespec.generated";
 export const wirespecToTarget: (
   wirespec: string,
   emitter: Emitter,
-) => CompilationResult = (wirespec, emitter) => {
+  selected: Extension[],
+) => CompilationResult = (wirespec, emitter, selected) => {
   const internalEmitter = getEmitterFor(emitter);
   const parseResult = parse(wirespec);
   let result = [] as WsEmitted[];
   let errors = [] as WsError[];
   if (parseResult.result) {
-    result = emit(parseResult.result, internalEmitter, PACKAGE_NAME, false);
+    result = emit(
+      parseResult.result,
+      internalEmitter,
+      PACKAGE_NAME,
+      false,
+      selected.map((extension) => extensions[extension]),
+    );
     if (
       internalEmitter === Emitters.OPENAPI_V3 ||
       internalEmitter === Emitters.OPENAPI_V2 ||

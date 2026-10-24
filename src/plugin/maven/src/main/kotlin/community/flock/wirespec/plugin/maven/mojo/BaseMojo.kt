@@ -3,7 +3,6 @@ package community.flock.wirespec.plugin.maven.mojo
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptySetOf
-import arrow.core.toNonEmptyListOrNull
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -13,9 +12,9 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
-import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -27,6 +26,8 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import community.flock.wirespec.plugin.toEmitter
+import community.flock.wirespec.plugin.toIrExtension
+import community.flock.wirespec.plugin.withExtensions
 import org.apache.maven.artifact.Artifact
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
@@ -73,7 +74,9 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var shared: Boolean = true
 
     /**
-     * Specifies IR extension classes to apply when an emitter is an [IrEmitter].
+     * Specifies the IR extensions to apply when an emitter is an [IrEmitter], in order: the name of an extension bundled
+     * with the plugin ([Extension], `Jackson` for `JacksonExtension`) or the fully qualified name of an [IrExtension]
+     * class. A bundled extension applies to the languages it supports, an extension of your own to every language.
      */
     @Parameter
     protected var extensionClasses: List<String> = listOf()
@@ -115,10 +118,21 @@ public abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    private fun extensionInstances(language: FileExtension) = extensionClasses.map { extensionClass ->
+    private fun extensionInstances(language: FileExtension) = extensionClasses.mapNotNull { extensionClass ->
         try {
-            val clazz = getClassLoader(project).loadClass(extensionClass)
-            val constructor = clazz.constructors.first()
+            when (val bundled = Extension.toMap()[extensionClass]) {
+                null -> instantiate(getClassLoader(project).loadClass(extensionClass), language)
+                else -> bundled.toIrExtension(PackageName(packageName), language)
+            }
+        } catch (e: Exception) {
+            logger.error("Cannot create instance of extension: $extensionClass")
+            throw e
+        }
+    }
+
+    // Not an extension on Class: its getPackageName() would shadow the packageName parameter.
+    private fun instantiate(extensionClass: Class<*>, language: FileExtension): IrExtension? = when (val bundled = Extension.of(extensionClass.kotlin)) {
+        null -> extensionClass.constructors.first().let { constructor ->
             val args: List<Any> = constructor.parameters
                 .map {
                     when (it.type) {
@@ -129,19 +143,15 @@ public abstract class BaseMojo : AbstractMojo() {
                     }
                 }
             constructor.newInstance(*args.toTypedArray()) as IrExtension
-        } catch (e: Exception) {
-            logger.error("Cannot create instance of extension: $extensionClass")
-            throw e
         }
+        else -> bundled.toIrExtension(PackageName(packageName), language)
     }
 
     protected val emitters: NonEmptySet<Emitter>
         get() = languages
             .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
             .map { emitter ->
-                extensionInstances(emitter.extension).toNonEmptyListOrNull()
-                    ?.let { (emitter as? IrEmitter)?.applyExtensions(it) }
-                    ?: emitter
+                emitter.withExtensions(extensionInstances(emitter.extension))
             }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguage()

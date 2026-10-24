@@ -105,7 +105,7 @@ The compile mojo supports the following parameters:
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
-- **extensionClasses**: List of fully qualified `IrExtension` class names. The extensions are applied to the intermediate representation before code generation for every emitter that is an `IrEmitter`.
+- **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, for every emitter that is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
 
 ### Default values
 
@@ -165,9 +165,10 @@ Or it will run automatically as part of the `generate-sources` phase during your
 
 ### Applying IR extensions
 
-[IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` parameter. Add the
-integration artifact that provides the extension as a plugin `<dependency>`, then list the fully qualified
-class name. The built-in language targets always emit through the IR pipeline:
+[IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` parameter. The extensions
+that Wirespec ships are bundled with the plugin: list them by name. Add the artifact of an extension of your own as a
+plugin `<dependency>` and list its fully qualified class name. The built-in language targets always emit through the
+IR pipeline:
 
 ```xml
 <plugin>
@@ -176,9 +177,9 @@ class name. The built-in language targets always emit through the IR pipeline:
     <version>{{WIRESPEC_VERSION}}</version>
     <dependencies>
         <dependency>
-            <groupId>community.flock.wirespec.integration</groupId>
-            <artifactId>kotlinx-serialization</artifactId>
-            <version>{{WIRESPEC_VERSION}}</version>
+            <groupId>com.example</groupId>
+            <artifactId>my-extension</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
     <executions>
@@ -195,7 +196,8 @@ class name. The built-in language targets always emit through the IR pipeline:
                 </languages>
                 <shared>false</shared>
                 <extensionClasses>
-                    <extensionClass>community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension</extensionClass>
+                    <extensionClass>KotlinxSerialization</extensionClass>
+                    <extensionClass>com.example.MyExtension</extensionClass>
                 </extensionClasses>
             </configuration>
         </execution>

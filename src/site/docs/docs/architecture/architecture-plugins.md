@@ -40,7 +40,7 @@ For the per-option reference and worked invocations, see the [Plugins](../plugin
 
 ## IR extensions
 
-The built-in emitters are customised with **IR extensions** rather than replaced. Every language target lowers the AST into a language-neutral intermediate representation (IR) before generating code; an `IrExtension` receives that complete IR together with the parsed AST and returns the IR that is handed to the code generator. **Maven and Gradle support this**; the CLI and NPM plugins do not.
+The built-in emitters are customised with **IR extensions** rather than replaced. Every language target lowers the AST into a language-neutral intermediate representation (IR) before generating code; an `IrExtension` receives that complete IR together with the parsed AST and returns the IR that is handed to the code generator. Every plugin applies the extensions that Wirespec ships, selected by name; **Maven and Gradle** also load your own.
 
 ```kotlin
 fun interface IrExtension {
@@ -52,7 +52,9 @@ An extension can add files, drop files, or reshape the elements of existing ones
 
 Wirespec's own first-party integrations are wired in this way. The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
 
-The plugins load extension classes from the build classpath via reflection and instantiate them for every emitter of the task. The constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and/or `FileExtension` (the target language of the emitter being extended) — the plugin injects them from the build configuration. Any other constructor parameter is rejected at load time. Maven takes the fully-qualified names as strings:
+The integration modules only target the JVM, so the `extensions` plugin module compiles their extension sources once more, for every target, and the `arguments` module maps the names of the bundled extensions (`Extension`) onto them. That way the CLI, the NPM package and the playground offer the same extensions as Maven and Gradle.
+
+The plugins load extension classes from the build classpath via reflection and instantiate them for every emitter of the task. The constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and/or `FileExtension` (the target language of the emitter being extended) — the plugin injects them from the build configuration. Any other constructor parameter is rejected at load time. A class of a bundled extension is recognised, so it is only applied to the languages it supports. Maven takes the fully-qualified names as strings, or the name of a bundled extension (`Jackson` for `JacksonExtension`):
 
 ```xml
 <extensionClasses>

@@ -11,6 +11,8 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
 import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
@@ -46,7 +48,10 @@ import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
+import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.cli.main
+import community.flock.wirespec.plugin.toIrExtensions
+import community.flock.wirespec.plugin.withExtensions
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -75,6 +80,37 @@ public enum class Emitters {
     GRAPHQL,
     ASYNCAPI,
 }
+
+@JsExport
+public enum class Extensions(internal val extension: Extension) {
+    AVRO(Extension.Avro),
+    JACKSON(Extension.Jackson),
+    JVM_BUILDER(Extension.JvmBuilder),
+    KOTEST_DSL(Extension.KotestDsl),
+    KOTLINX_SERIALIZATION(Extension.KotlinxSerialization),
+    SPRING_MAPPING_ANNOTATIONS(Extension.SpringMappingAnnotations),
+    SPRING_NATIVE_HINTS(Extension.SpringNativeHints),
+    ;
+
+    public fun supports(emitter: Emitters): Boolean = emitter.language?.let(extension::supports) ?: false
+}
+
+private val Emitters.language: FileExtension?
+    get() = when (this) {
+        Emitters.TYPESCRIPT -> FileExtension.TypeScript
+        Emitters.JAVA -> FileExtension.Java
+        Emitters.KOTLIN -> FileExtension.Kotlin
+        Emitters.SCALA -> FileExtension.Scala
+        Emitters.PYTHON -> FileExtension.Python
+        Emitters.WIRESPEC,
+        Emitters.OPENAPI_V2,
+        Emitters.OPENAPI_V3,
+        Emitters.AVRO,
+        Emitters.AVRO_IDL,
+        Emitters.GRAPHQL,
+        Emitters.ASYNCAPI,
+        -> null
+    }
 
 @JsExport
 public enum class Converters {
@@ -116,15 +152,22 @@ public fun generate(source: String, type: String): WsStringResult = object : Par
     .produce()
 
 @JsExport
-public fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boolean): Array<WsEmitted> {
+public fun emit(
+    wsAst: WsAST,
+    emitter: Emitters,
+    packageName: String,
+    emitShared: Boolean,
+    extensions: Array<Extensions> = emptyArray(),
+): Array<WsEmitted> {
     val ast = wsAst.consume()
+    fun Emitter.extended() = withExtensions(extensions.map { it.extension }.toIrExtensions(PackageName(packageName), extension))
     return when (emitter) {
         Emitters.WIRESPEC -> WirespecEmitter().emit(ast, noLogger)
-        Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(ast, noLogger)
-        Emitters.JAVA -> JavaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
-        Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
-        Emitters.SCALA -> ScalaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
-        Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).emit(ast, noLogger)
+        Emitters.TYPESCRIPT -> TypeScriptEmitter().extended().emit(ast, noLogger)
+        Emitters.JAVA -> JavaEmitter(PackageName(packageName), EmitShared(emitShared)).extended().emit(ast, noLogger)
+        Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).extended().emit(ast, noLogger)
+        Emitters.SCALA -> ScalaEmitter(PackageName(packageName), EmitShared(emitShared)).extended().emit(ast, noLogger)
+        Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).extended().emit(ast, noLogger)
         Emitters.OPENAPI_V2 ->
             OpenAPIV2Emitter
                 .emitSwaggerObject(ast.modules.flatMap { it.statements }, noLogger)

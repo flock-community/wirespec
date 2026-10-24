@@ -38,7 +38,7 @@ export function EmitterSelector() {
   const { emitter, specification } = useSearch({ from: "/" });
   const handleChange = (event: { target: { value: string } }) =>
     navigate({
-      search: () => ({ emitter: event.target.value as Emitter, specification }),
+      search: (prev) => ({ ...prev, emitter: event.target.value as Emitter }),
     });
 
   // Select needs its items as direct children, so the groups are an array rather than a Fragment.

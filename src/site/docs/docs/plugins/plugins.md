@@ -104,21 +104,42 @@ representation** (IR). An `IrExtension` lets you reshape that IR — for example
 annotations, or to add a file per definition — without forking an emitter. The transformed IR is then handed
 to the normal code generator, so the output stays idiomatic for the target language.
 
-You register extensions with the `extensionClasses` parameter of the compile and convert operations. The
-Maven and Gradle plugins accept a list of `IrExtension` classes and instantiate them for you, injecting the
-`packageName` and `shared` settings and the target language into the constructor when the extension needs them.
+Every plugin bundles the extensions that Wirespec ships, so you use them without adding their integration module to
+the plugin:
+
+| Plugin | Option                                                                                                   |
+|--------|----------------------------------------------------------------------------------------------------------|
+| CLI    | `-e`, `--extension`, once per extension: `-e SpringMappingAnnotations -e Jackson`                        |
+| Gradle | `extensionClasses = listOf(SpringMappingAnnotationsExtension::class.java, JacksonExtension::class.java)` |
+| Maven  | `<extensionClasses><extensionClass>SpringMappingAnnotations</extensionClass></extensionClasses>`         |
+| npm    | the `extensions` argument of `emit`: `[Extensions.SPRING_MAPPING_ANNOTATIONS, Extensions.JACKSON]`       |
+
+The [playground](https://playground.wirespec.io) offers them too, next to the output language.
+
+The name of a bundled extension is its class name without `Extension`: `Jackson` selects `JacksonExtension`. In Maven
+that name replaces the fully qualified class name; in Gradle you reference the class, which ships with the plugin.
+
+| Name                       | Languages           | Effect                                                                                                                                 |
+|----------------------------|---------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `Avro`                     | Java, Kotlin        | Adds an Avro schema and converter next to every model — see [Avro](../integration/integration-avro.mdx)                                |
+| `Jackson`                  | Java, Kotlin        | Adds Jackson annotations to every model — see [Jackson](../integration/integration-jackson.mdx)                                       |
+| `JvmBuilder`               | Java, Kotlin, Scala | Adds an immutable `Builder` with `builder()` and `toBuilder()` to every model — see [Builders](../integration/integration-builders.mdx) |
+| `KotestDsl`                | Kotlin              | Adds a Kotest scenario DSL for every model, endpoint and channel                                                                       |
+| `KotlinxSerialization`     | Kotlin              | Adds `@Serializable`/`@SerialName` to every model — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+| `SpringMappingAnnotations` | Java, Kotlin        | Adds Spring MVC mapping annotations to every endpoint handler — see [Spring](../integration/integration-spring.mdx)                   |
+| `SpringNativeHints`        | Java, Kotlin        | Adds a `WirespecNativeHints` class that registers the models and endpoints for GraalVM native images                                  |
+
+The names are case-insensitive in the CLI. An extension applies to the languages it supports and leaves the others
+untouched, so one run can emit Kotlin with `KotlinxSerialization` next to TypeScript without it.
+
+Your own extensions go in the same `extensionClasses` parameter of the Maven and Gradle plugins, by class. The plugins
+instantiate them for you, injecting the `packageName` and `shared` settings and the target language into the
+constructor when the extension needs them. Your own extensions apply to every language.
 
 :::note
 The built-in language targets always emit through the IR pipeline, so registered extensions take effect
 out of the box. Extensions run in the order they are listed.
 :::
-
-Wirespec ships several IR extensions in its integration modules:
-
-| Extension                       | Module                  | Effect                                                                                                                                                              |
-|---------------------------------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `KotlinxSerializationExtension` | `kotlinx-serialization` | Adds `@Serializable`/`@SerialName` to generated Kotlin models — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx)                   |
-| `BuilderExtension`              | `jvm`                   | Adds an immutable `Builder` with `builder()` and `toBuilder()` to generated Java, Kotlin and Scala models — see [Builders](../integration/integration-builders.mdx) |
 
 An extension's constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and
 `FileExtension` (the target language of the emitter being extended); the plugins inject all of them. To

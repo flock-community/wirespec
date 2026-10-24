@@ -10,6 +10,7 @@ import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.read
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
 
 class WirespecCliTest {
@@ -130,6 +131,26 @@ class WirespecCliTest {
             |  val subject_set: SubjectSet?
             |)
         """.trimMargin()
+    }
+
+    @Test
+    fun testCliExtensions() {
+        val packageDir = DEFAULT_GENERATED_PACKAGE_STRING.replace(".", "/")
+        val input = "$inputDir/wirespec"
+        val output = outputDir()
+
+        WirespecCli(::compile, ::convert)
+            .main(arrayOf("compile", "-i", input, "-o", output, "-l", "Kotlin", "-l", "TypeScript", "-e", "kotlinxserialization", "-e", "JvmBuilder"))
+
+        FilePath(DirectoryPath("$output/$packageDir").resolve("model"), Name("Bla"), FileExtension.Kotlin).read().let { content ->
+            content shouldContain """
+                |@kotlinx.serialization.Serializable
+                |@kotlinx.serialization.SerialName("Bla")
+                |data class Bla(
+            """.trimMargin()
+            content shouldContain "fun toBuilder()"
+        }
+        FilePath(DirectoryPath("$output/model"), Name("Bla"), FileExtension.TypeScript).read() shouldNotContain "kotlinx"
     }
 
     @Test

@@ -99,7 +99,7 @@ This task compiles Wirespec definitions to various target languages.
 - `output`: DirectoryProperty - The output directory for generated code
 - `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
+- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
@@ -115,7 +115,7 @@ This task converts from JSON or Avro to other formats.
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro, GraphQL, AsyncAPI)
 - `preProcessor`: Property&lt;(String) -> String&gt; - Function to preprocess the input content before conversion
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`
+- `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
@@ -151,20 +151,15 @@ the details.
 
 ## Applying IR extensions
 
-[IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` property. Put the
-integration artifact that provides the extension on the `buildscript` classpath, then reference the class
-directly. The built-in language targets always emit through the IR pipeline:
+[IR extensions](./plugins.md#ir-extensions) are registered with the `extensionClasses` property. The classes of the
+extensions that Wirespec ships are bundled with the plugin, so you reference them without adding a dependency. Put an
+extension of your own on the `buildscript` classpath, or declare it in the build script as in the
+[installation](#installation) example. The built-in language targets always emit through the IR pipeline:
 
 ```gradle title="build.gradle.kts"
 import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import community.flock.wirespec.plugin.Language
-
-buildscript {
-    dependencies {
-        classpath("community.flock.wirespec.integration:kotlinx-serialization:{{WIRESPEC_VERSION}}")
-    }
-}
 
 tasks.register<CompileWirespecTask>("wirespec-compile") {
     input = layout.projectDirectory.dir("src/main/wirespec")
