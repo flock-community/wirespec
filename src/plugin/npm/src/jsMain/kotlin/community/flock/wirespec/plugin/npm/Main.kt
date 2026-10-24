@@ -84,8 +84,8 @@ public enum class Emitters {
 @JsExport
 public enum class Extensions(internal val extension: Extension) {
     AVRO(Extension.Avro),
-    BUILDER(Extension.Builder),
     JACKSON(Extension.Jackson),
+    JVM_BUILDER(Extension.JvmBuilder),
     KOTEST_DSL(Extension.KotestDsl),
     KOTLINX_SERIALIZATION(Extension.KotlinxSerialization),
     SPRING_MAPPING_ANNOTATIONS(Extension.SpringMappingAnnotations),

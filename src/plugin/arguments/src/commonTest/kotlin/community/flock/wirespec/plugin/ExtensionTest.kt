@@ -15,7 +15,7 @@ class ExtensionTest {
 
     @Test
     fun testExtensions() {
-        Extension.toString() shouldBe "Avro, Builder, Jackson, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints"
+        Extension.toString() shouldBe "Avro, Jackson, JvmBuilder, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints"
     }
 
     @Test
@@ -31,9 +31,9 @@ class ExtensionTest {
     fun testSupportedLanguages() {
         FileExtension.entries.associateWith { language -> Extension.entries.filter { it.supports(language) } }
             .filterValues { it.isNotEmpty() } shouldBe mapOf(
-            FileExtension.Java to listOf(Extension.Avro, Extension.Builder, Extension.Jackson, Extension.SpringMappingAnnotations, Extension.SpringNativeHints),
+            FileExtension.Java to listOf(Extension.Avro, Extension.Jackson, Extension.JvmBuilder, Extension.SpringMappingAnnotations, Extension.SpringNativeHints),
             FileExtension.Kotlin to Extension.entries,
-            FileExtension.Scala to listOf(Extension.Builder),
+            FileExtension.Scala to listOf(Extension.JvmBuilder),
         )
     }
 

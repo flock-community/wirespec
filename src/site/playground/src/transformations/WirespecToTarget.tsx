@@ -39,8 +39,8 @@ const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
 
 const extensions: Record<Extension, Extensions> = {
   avro: Extensions.AVRO,
-  builder: Extensions.BUILDER,
   jackson: Extensions.JACKSON,
+  jvm_builder: Extensions.JVM_BUILDER,
   kotest_dsl: Extensions.KOTEST_DSL,
   kotlinx_serialization: Extensions.KOTLINX_SERIALIZATION,
   spring_mapping_annotations: Extensions.SPRING_MAPPING_ANNOTATIONS,

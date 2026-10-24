@@ -89,14 +89,14 @@ For any other target language the extension changes nothing.
 
 ## Setup
 
-The extension is bundled with every Wirespec plugin as `Builder`. Register it with `extensionClasses`, by name in Maven
+The extension is bundled with every Wirespec plugin as `JvmBuilder`. Register it with `extensionClasses`, by name in Maven
 and by class in Gradle; the plugins pass the target language to the extension, so one registration covers every
 language you compile to.
 
 <Tabs>
   <TabItem value="gradle" label="Gradle">
     ```gradle title="build.gradle.kts"
-    import community.flock.wirespec.integration.jvm.extension.BuilderExtension
+    import community.flock.wirespec.integration.jvm.extension.JvmBuilderExtension
     import community.flock.wirespec.plugin.gradle.CompileWirespecTask
     import community.flock.wirespec.plugin.Language
 
@@ -106,7 +106,7 @@ language you compile to.
         packageName = "community.flock.wirespec.generated"
         // Works for Java, Kotlin and Scala
         languages = listOf(Language.Java)
-        extensionClasses = listOf(BuilderExtension::class.java)
+        extensionClasses = listOf(JvmBuilderExtension::class.java)
     }
     ```
   </TabItem>
@@ -130,7 +130,7 @@ language you compile to.
                         <language>Java</language>
                     </languages>
                     <extensionClasses>
-                        <extensionClass>Builder</extensionClass>
+                        <extensionClass>JvmBuilder</extensionClass>
                     </extensionClasses>
                 </configuration>
             </execution>
@@ -141,7 +141,7 @@ language you compile to.
   <TabItem value="cli" label="CLI">
     ```shell
     # Works for Java, Kotlin and Scala
-    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Java -e Builder
+    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Java -e JvmBuilder
     ```
   </TabItem>
 </Tabs>

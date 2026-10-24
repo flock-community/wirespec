@@ -68,7 +68,7 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
-  -e, --extension=(Avro|Builder|Jackson|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
+  -e, --extension=(Avro|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 ```
@@ -91,7 +91,7 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
-  -e, --extension=(Avro|Builder|Jackson|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
+  -e, --extension=(Avro|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 

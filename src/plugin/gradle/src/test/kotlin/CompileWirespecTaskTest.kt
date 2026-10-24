@@ -27,7 +27,7 @@ class CompileWirespecTaskTest :
                 import community.flock.wirespec.compiler.core.ir.RawElement
                 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
                 import community.flock.wirespec.compiler.core.parse.ast.AST
-                import community.flock.wirespec.integration.jvm.extension.BuilderExtension
+                import community.flock.wirespec.integration.jvm.extension.JvmBuilderExtension
                 import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
                 import community.flock.wirespec.plugin.Language
                 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
@@ -63,7 +63,7 @@ class CompileWirespecTaskTest :
         }
 
         test("the bundled extension classes ship with the plugin and apply to the languages they support") {
-            val output = project("extensionClasses = listOf(KotlinxSerializationExtension::class.java, BuilderExtension::class.java)").compile()
+            val output = project("extensionClasses = listOf(KotlinxSerializationExtension::class.java, JvmBuilderExtension::class.java)").compile()
 
             output.getValue("Todo.kt") shouldContain "@kotlinx.serialization.Serializable"
             output.getValue("Todo.kt") shouldContain "fun toBuilder()"

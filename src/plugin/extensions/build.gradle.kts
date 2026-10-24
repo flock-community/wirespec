@@ -21,7 +21,7 @@ val integrationExtensionSources = tasks.register<Sync>("syncIntegrationExtension
     from(layout.projectDirectory.dir("../../integration")) {
         include("avro/src/commonMain/kotlin/**/extension/*.kt")
         include("jackson/src/commonMain/kotlin/**/extension/*.kt")
-        include("jvm/src/jvmMain/kotlin/**/extension/BuilderExtension.kt")
+        include("jvm/src/jvmMain/kotlin/**/extension/JvmBuilderExtension.kt")
         include("kotest/src/commonMain/kotlin/**/extension/KotestDslExtension.kt")
         include("kotest/src/commonMain/kotlin/**/convert/*.kt")
         include("kotlinx-serialization/src/commonMain/kotlin/**/extension/*.kt")

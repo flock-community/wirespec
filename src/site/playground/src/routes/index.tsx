@@ -61,8 +61,8 @@ export type Emitter = CompilerEmitter | ConverterEmitter;
 
 export type Extension =
   | "avro"
-  | "builder"
   | "jackson"
+  | "jvm_builder"
   | "kotest_dsl"
   | "kotlinx_serialization"
   | "spring_mapping_annotations"

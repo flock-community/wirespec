@@ -34,7 +34,7 @@ import community.flock.wirespec.integration.jvm.kotlin.generated.model.Owner as 
 import community.flock.wirespec.integration.jvm.kotlin.generated.model.Todo as KotlinTodo
 import community.flock.wirespec.integration.jvm.kotlin.generated.model.TodoId as KotlinTodoId
 
-class BuilderExtensionTest {
+class JvmBuilderExtensionTest {
 
     @Test
     fun `Java builder builds a record`() {
@@ -110,7 +110,7 @@ class BuilderExtensionTest {
             }
         }
         val todo = KotlinEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false))
-            .applyExtensions(nonEmptyListOf(emptyCompanion, BuilderExtension(FileExtension.Kotlin)))
+            .applyExtensions(nonEmptyListOf(emptyCompanion, JvmBuilderExtension(FileExtension.Kotlin)))
             .emit(parse(SOURCE), noLogger)
             .file("model/Todo.kt")
 
@@ -142,7 +142,7 @@ class BuilderExtensionTest {
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
     private fun emit(emitter: IrEmitter, language: FileExtension): List<Emitted> = emitter
-        .applyExtensions(nonEmptyListOf(BuilderExtension(language)))
+        .applyExtensions(nonEmptyListOf(JvmBuilderExtension(language)))
         .emit(parse(SOURCE), noLogger)
         .toList()
 

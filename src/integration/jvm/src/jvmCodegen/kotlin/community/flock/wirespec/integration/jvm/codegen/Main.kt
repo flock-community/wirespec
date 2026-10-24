@@ -15,7 +15,7 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.scala.ScalaEmitter
-import community.flock.wirespec.integration.jvm.extension.BuilderExtension
+import community.flock.wirespec.integration.jvm.extension.JvmBuilderExtension
 import java.io.File
 
 /**
@@ -39,15 +39,15 @@ fun main(args: Array<String>) {
         .fold({ error("Cannot parse wirespec: ${it.first().message}") }, { it })
 
     JavaEmitter(PackageName("$basePackage.java.generated"), EmitShared(false))
-        .applyExtensions(nonEmptyListOf(BuilderExtension(FileExtension.Java)))
+        .applyExtensions(nonEmptyListOf(JvmBuilderExtension(FileExtension.Java)))
         .emit(ast, noLogger)
         .forEach { outputDir.resolve("java").resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result) }
     KotlinEmitter(PackageName("$basePackage.kotlin.generated"), EmitShared(false))
-        .applyExtensions(nonEmptyListOf(BuilderExtension(FileExtension.Kotlin)))
+        .applyExtensions(nonEmptyListOf(JvmBuilderExtension(FileExtension.Kotlin)))
         .emit(ast, noLogger)
         .forEach { outputDir.resolve("kotlin").resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result) }
     ScalaEmitter(PackageName("$basePackage.scala.generated"), EmitShared(false))
-        .applyExtensions(nonEmptyListOf(BuilderExtension(FileExtension.Scala)))
+        .applyExtensions(nonEmptyListOf(JvmBuilderExtension(FileExtension.Scala)))
         .emit(ast, noLogger)
         .forEach { outputDir.resolve("scala").resolve(it.file).apply { parentFile.mkdirs() }.writeText(it.result) }
 }
