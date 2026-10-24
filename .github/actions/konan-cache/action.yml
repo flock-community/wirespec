@@ -1,0 +1,15 @@
+name: 'Kotlin/Native cache'
+description: 'Cache the Kotlin/Native toolchain and its dependencies (~/.konan) per job and Kotlin version'
+runs:
+  using: 'composite'
+  steps:
+    - id: kotlin
+      name: Read Kotlin version
+      shell: bash
+      run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+    # Keyed per job: jobs on the same OS build different native targets and so download different toolchains.
+    - name: Cache ~/.konan
+      uses: actions/cache@v4
+      with:
+        path: ~/.konan
+        key: konan-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.kotlin.outputs.version }}

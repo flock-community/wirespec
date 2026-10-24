@@ -65,6 +65,8 @@ jobs:
           distribution: 'temurin'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Cache Kotlin/Native toolchain
+        uses: ./.github/actions/konan-cache
       - name: Run Linux native tests
         run: ./gradlew -Pwirespec.nativeTargets=linuxX64 linuxX64Test
 
@@ -102,6 +104,8 @@ jobs:
           distribution: 'temurin'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Cache Kotlin/Native toolchain
+        uses: ./.github/actions/konan-cache
       - name: Run native tests
         run: ./gradlew -Pwirespec.nativeTargets=macosArm64,macosX64 macosArm64Test macosX64Test
 
@@ -118,6 +122,8 @@ jobs:
           distribution: 'temurin'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Cache Kotlin/Native toolchain
+        uses: ./.github/actions/konan-cache
       - name: Run Windows native tests
         shell: bash
         run: ./gradlew -Pwirespec.nativeTargets=mingwX64 mingwX64Test
@@ -396,6 +402,8 @@ jobs:
           distribution: 'temurin'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Cache Kotlin/Native toolchain
+        uses: ./.github/actions/konan-cache
       - name: Build CLI release executables
         run: |
           ./gradlew -Pwirespec.nativeTargets=macosX64,macosArm64,linuxX64,mingwX64 \
