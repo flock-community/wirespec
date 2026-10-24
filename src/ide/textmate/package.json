@@ -1,0 +1,25 @@
+{
+  "name": "@flock/wirespec-textmate",
+  "version": "0.0.0",
+  "description": "TextMate grammar for Wirespec",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flock-community/wirespec",
+    "directory": "src/ide/textmate"
+  },
+  "main": "wirespec.tmLanguage.json",
+  "files": [
+    "wirespec.tmLanguage.json"
+  ],
+  "scripts": {
+    "test": "node --test test/grammar.test.mjs"
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
+  },
+  "prettier": {
+    "printWidth": 120
+  }
+}

@@ -26,6 +26,7 @@
     "@docusaurus/theme-search-algolia": "^3.9.2",
     "@flock/black-sun": "^0.2.0",
     "@flock/wirespec": "file:../../plugin/npm/build/dist/js/productionLibrary/",
+    "@flock/wirespec-prism": "file:../../ide/prism",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
     "prism-react-renderer": "^2.3.0",

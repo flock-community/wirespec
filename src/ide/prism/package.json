@@ -1,0 +1,24 @@
+{
+  "name": "@flock/wirespec-prism",
+  "version": "0.0.0",
+  "description": "Prism syntax highlighting for Wirespec",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flock-community/wirespec",
+    "directory": "src/ide/prism"
+  },
+  "main": "prism-wirespec.js",
+  "files": [
+    "prism-wirespec.js"
+  ],
+  "scripts": {
+    "test": "node --test test/grammar.test.mjs"
+  },
+  "devDependencies": {
+    "prismjs": "^1.30.0"
+  },
+  "prettier": {
+    "printWidth": 120
+  }
+}
