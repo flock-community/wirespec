@@ -20,6 +20,8 @@ repositories {
 
 wirespecCodegen {
     basePackage = "community.flock.wirespec.integration.jvm"
+    languages = listOf("Java", "Kotlin", "Scala")
+    irExtensions = listOf("JvmBuilder")
 }
 
 val scalaVersion = "3.3.4"
@@ -30,13 +32,6 @@ kotlin {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
     }
     jvm {
-        compilations.named("codegen") {
-            defaultSourceSet.dependencies {
-                implementation(project(":src:compiler:emitters:java"))
-                implementation(project(":src:compiler:emitters:kotlin"))
-                implementation(project(":src:compiler:emitters:scala"))
-            }
-        }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }

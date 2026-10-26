@@ -15,6 +15,7 @@ repositories {
 
 wirespecCodegen {
     basePackage = "community.flock.wirespec.integration.jackson"
+    languages = listOf("Java", "Kotlin")
 }
 
 kotlin {
@@ -23,12 +24,6 @@ kotlin {
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
     }
     jvm {
-        compilations.named("codegen") {
-            defaultSourceSet.dependencies {
-                implementation(project(":src:compiler:emitters:java"))
-                implementation(project(":src:compiler:emitters:kotlin"))
-            }
-        }
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))

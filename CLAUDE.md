@@ -43,7 +43,7 @@ kotest DSL entry points that `KotestDslExtension` writes into generated imports.
 ./gradlew :src:compiler:emitters:kotlin:allTests     # all targets for one module
 ```
 
-Scope tasks to the module you're working on (`:src:compiler:core`, `:src:compiler:emitters:{lang}`, ...) — a full multiplatform build is slow. Integration modules (`jackson`, `jvm`, `wiremock`, `spring`) generate their test sources into `build/generated/sources/wirespec` via the `module.wirespec-codegen` convention plugin: a `generateWirespecTestSources` task runs the module's `codegen/Main.kt` (built on `:src:compiler:test`) from a private `codegen` compilation; nothing generated is checked in.
+Scope tasks to the module you're working on (`:src:compiler:core`, `:src:compiler:emitters:{lang}`, ...) — a full multiplatform build is slow. Integration modules (`jackson`, `jvm`, `wiremock`, `spring`) generate their test sources into `build/generated/sources/wirespec` via the `module.wirespec-codegen` convention plugin: a `generateWirespecTestSources` task runs this build's own CLI (`:src:plugin:cli`) with the languages and IR extensions set in the module's `wirespecCodegen { }` block; nothing generated is checked in.
 
 ## Emitter Test Fixtures
 

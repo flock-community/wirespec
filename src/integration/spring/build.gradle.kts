@@ -18,6 +18,9 @@ repositories {
 wirespecCodegen {
     basePackage = "community.flock.wirespec.integration.spring"
     sources = layout.projectDirectory.dir("src/jvmTest/resources")
+    conversions = mapOf("petstore.json" to "OpenAPIV3")
+    languages = listOf("Java", "Kotlin")
+    irExtensions = listOf("SpringMappingAnnotations", "SpringNativeHints")
 }
 
 kotlin {
@@ -35,13 +38,6 @@ kotlin {
             }
         }
         val mainCompilation = compilations.getByName("main")
-        compilations.named("codegen") {
-            defaultSourceSet.dependencies {
-                implementation(project(":src:compiler:emitters:java"))
-                implementation(project(":src:compiler:emitters:kotlin"))
-                implementation(project(":src:converter:openapi"))
-            }
-        }
         // Spring Boot 4 scenario: a Jackson-3-only test classpath that exercises the
         // conditional wiring (WirespecJackson3Configuration) the regular Jackson-2 test
         // suite cannot, because Jackson 2 and 3 share jackson-annotations.
