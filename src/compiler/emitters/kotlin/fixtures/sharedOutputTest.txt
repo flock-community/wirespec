@@ -125,7 +125,7 @@ public object Wirespec {
       val annotations: List<Map<String, Any>>,
       val type: KType
     ) : GeneratorField<String>
-  public data class GeneratorFieldArray<T: Any>(
+  public data class GeneratorFieldArray<T: Any?>(
       val generate: (List<String>) -> T
     ) : GeneratorField<List<T>>
   public data class GeneratorFieldNullable<T: Any>(
@@ -136,7 +136,7 @@ public object Wirespec {
       val generate: (List<String>) -> T,
       val type: KType
     ) : GeneratorField<T>
-  public data class GeneratorFieldDict<V: Any>(
+  public data class GeneratorFieldDict<V: Any?>(
       val generate: (List<String>) -> V
     ) : GeneratorField<Map<String, V>>
   public interface Generator {

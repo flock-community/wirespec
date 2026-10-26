@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.converter.convertClient
 import community.flock.wirespec.compiler.core.ir.converter.convertEndpointClient
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.extension.ValidateExtension
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
@@ -33,8 +34,8 @@ public interface IrEmitter : Emitter {
 
     public val generator: Generator
 
-    /** Extensions applied to the complete IR before code generation. */
-    public val extensions: List<IrExtension> get() = emptyList()
+    /** Extensions applied to the complete IR before code generation, starting with the [ValidateExtension] every model needs. */
+    public val extensions: List<IrExtension> get() = listOf(ValidateExtension(extension))
 
     /** Parts are already flattened into the shapes that spread them, so they are left out before anything is emitted. */
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.withoutParts()

@@ -258,6 +258,11 @@ public fun Statement.transformChildren(transformer: Transformer): Statement = wh
         body = transformer.transformExpression(body),
     )
 
+    is FlatMapEntries -> copy(
+        receiver = transformer.transformExpression(receiver),
+        body = transformer.transformExpression(body),
+    )
+
     is ListConcat -> copy(lists = lists.map { transformer.transformExpression(it) })
     is Lambda -> copy(
         parameters = parameters.map { transformer.transformParameter(it) },
@@ -540,4 +545,33 @@ internal inline fun <reified T : Type> Element.findAllTypes(): List<T> = buildLi
     forEachType { type ->
         if (type is T) add(type)
     }
+}
+
+/**
+ * Replaces every free [variable] with [replacement], so a generator can inline a value where its
+ * language has no let-binding. A nested scope that binds the same name keeps its own variable.
+ */
+internal fun Expression.substitute(variable: Name, replacement: Expression): Expression = transformer {
+    expression { expression, transformer ->
+        when {
+            expression is VariableReference && expression.name == variable -> replacement
+            else -> expression.substituteOutsideScopeOf(variable, transformer) ?: expression.transformChildren(transformer)
+        }
+    }
+}.transformExpression(this)
+
+private fun Expression.substituteOutsideScopeOf(variable: Name, transformer: Transformer): Expression? = when (this) {
+    is NullCheck -> takeIf { variable == Name.of("it") }?.copy(
+        expression = transformer.transformExpression(expression),
+        alternative = alternative?.let(transformer::transformExpression),
+    )
+    is NullableMap -> takeIf { it.variable == variable }?.copy(
+        expression = transformer.transformExpression(expression),
+        alternative = transformer.transformExpression(alternative),
+    )
+    is MapExpression -> takeIf { it.variable == variable }?.copy(receiver = transformer.transformExpression(receiver))
+    is FlatMapIndexed -> takeIf { variable in listOf(indexVar, elementVar) }?.copy(receiver = transformer.transformExpression(receiver))
+    is FlatMapEntries -> takeIf { variable in listOf(keyVar, valueVar) }?.copy(receiver = transformer.transformExpression(receiver))
+    is Lambda -> takeIf { parameters.any { it.name == variable } }
+    else -> null
 }

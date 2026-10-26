@@ -22,11 +22,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.core.ir.converter.classifyValidatableFields
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertConstraint
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
-import community.flock.wirespec.compiler.core.ir.converter.convertWithValidation
 import community.flock.wirespec.compiler.core.ir.converter.requestParameters
 import community.flock.wirespec.compiler.core.ir.Assignment
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
@@ -252,18 +250,11 @@ public open class TypeScriptEmitter : IrEmitter {
     }
 
     override fun emit(type: AstType, module: Module): File {
-        val fieldValidations = type.classifyValidatableFields(module)
         val typeImports = type.importReferences().distinctBy { it.value }
             .map { import("./${it.value}", it.value) }
-        val validateImports = fieldValidations.map { it.typeName }.distinct()
-            .filter { it != type.identifier.value }
-            .map { import("./$it", "validate$it") }
-        val allImports = typeImports + validateImports
-        val fieldNames = type.shape.fields.map { it.identifier.value }.toSet()
-        val file = type.convertWithValidation(module)
+        val file = type.convert()
             .sanitizeNames(modelSanitizationConfig)
-            .renameValidateAndBindObjReceiver(type.identifier.value, fieldNames)
-        return if (allImports.isNotEmpty()) file.copy(elements = allImports + file.elements)
+        return if (typeImports.isNotEmpty()) file.copy(elements = typeImports + file.elements)
         else file
     }
 

@@ -1,0 +1,241 @@
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record Tag (
+  String value
+) implements Wirespec.Refined {
+  @Override
+  public Boolean validate() {
+    return java.util.regex.Pattern.compile("^[a-z]+$").matcher(value).find();
+  }
+  @Override
+  public String toString() {
+    return value;
+  }
+  @Override
+  public String value() {
+    return value;
+  }
+};
+
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record Score (
+  Long value
+) implements Wirespec.Refined {
+  @Override
+  public Boolean validate() {
+    return 0 <= value && value <= 100;
+  }
+  @Override
+  public String toString() {
+    return value.toString();
+  }
+  @Override
+  public Long value() {
+    return value;
+  }
+};
+
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record Label (
+  Tag name,
+  String code,
+  java.util.List<String> aliases
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.stream.Stream.of((!name().validate() ? java.util.List.of("name") : java.util.List.<String>of()), (java.util.regex.Pattern.compile("^[A-Z]{3}$").matcher(code()).find() ? java.util.List.<String>of() : java.util.List.of("code")), java.util.stream.IntStream.range(0, aliases().size()).mapToObj(i -> (java.util.regex.Pattern.compile("^[a-z]+$").matcher(aliases().get(i)).find() ? java.util.List.<String>of() : java.util.List.of("aliases[" + i + "]"))).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record Board (
+  java.util.Optional<Tag> owner,
+  java.util.Optional<java.util.List<Tag>> tags,
+  java.util.Optional<java.util.List<java.util.Optional<Tag>>> slots,
+  java.util.List<java.util.List<Score>> grid,
+  java.util.Map<String, Tag> tagsByKey,
+  java.util.Map<String, java.util.List<Score>> scoresByKey,
+  java.util.Optional<Label> label,
+  java.util.List<java.util.List<Label>> labels,
+  java.util.Map<String, Label> labelsByKey,
+  Long limit,
+  java.util.List<Double> ratios
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.stream.Stream.of(owner().map(it -> (!it.validate() ? java.util.List.of("owner") : java.util.List.<String>of())).orElse(java.util.List.<String>of()), tags().map(it -> java.util.stream.IntStream.range(0, it.size()).mapToObj(i1 -> (!it.get(i1).validate() ? java.util.List.of("tags[" + i1 + "]") : java.util.List.<String>of())).flatMap(java.util.Collection::stream).toList()).orElse(java.util.List.<String>of()), slots().map(it -> java.util.stream.IntStream.range(0, it.size()).mapToObj(i1 -> it.get(i1).map(it2 -> (!it2.validate() ? java.util.List.of("slots[" + i1 + "]") : java.util.List.<String>of())).orElse(java.util.List.<String>of())).flatMap(java.util.Collection::stream).toList()).orElse(java.util.List.<String>of()), java.util.stream.IntStream.range(0, grid().size()).mapToObj(i -> java.util.stream.IntStream.range(0, grid().get(i).size()).mapToObj(i1 -> (!grid().get(i).get(i1).validate() ? java.util.List.of("grid[" + i + "][" + i1 + "]") : java.util.List.<String>of())).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList(), tagsByKey().keySet().stream().map(k -> (!tagsByKey().get(k).validate() ? java.util.List.of("tagsByKey[" + k + "]") : java.util.List.<String>of())).flatMap(java.util.Collection::stream).toList(), scoresByKey().keySet().stream().map(k -> java.util.stream.IntStream.range(0, scoresByKey().get(k).size()).mapToObj(i1 -> (!scoresByKey().get(k).get(i1).validate() ? java.util.List.of("scoresByKey[" + k + "][" + i1 + "]") : java.util.List.<String>of())).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList(), label().map(it -> it.validate().stream().map(e -> "label." + e).toList()).orElse(java.util.List.<String>of()), java.util.stream.IntStream.range(0, labels().size()).mapToObj(i -> java.util.stream.IntStream.range(0, labels().get(i).size()).mapToObj(i1 -> labels().get(i).get(i1).validate().stream().map(e -> "labels[" + i + "][" + i1 + "]." + e).toList()).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList(), labelsByKey().keySet().stream().map(k -> labelsByKey().get(k).validate().stream().map(e -> "labelsByKey[" + k + "]." + e).toList()).flatMap(java.util.Collection::stream).toList(), (1 <= limit() && limit() <= 10 ? java.util.List.<String>of() : java.util.List.of("limit")), java.util.stream.IntStream.range(0, ratios().size()).mapToObj(i -> (0.0 <= ratios().get(i) && ratios().get(i) <= 1.0 ? java.util.List.<String>of() : java.util.List.of("ratios[" + i + "]"))).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList();
+  }
+};
+
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record TreeNode (
+  Tag tag,
+  java.util.List<TreeNode> children
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.stream.Stream.of((!tag().validate() ? java.util.List.of("tag") : java.util.List.<String>of()), java.util.stream.IntStream.range(0, children().size()).mapToObj(i -> children().get(i).validate().stream().map(e -> "children[" + i + "]." + e).toList()).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList();
+  }
+};
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Tag;
+
+public interface TagGenerator {
+  public static Tag generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Tag(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      java.util.Optional.of("^[a-z]+$"),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Score;
+
+public interface ScoreGenerator {
+  public static Score generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Score(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("value")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
+      java.util.Optional.of(0L),
+      java.util.Optional.of(100L),
+      java.util.List.<java.util.Map<String, Object>>of()
+    )));
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Label;
+import community.flock.wirespec.generated.model.Tag;
+
+public interface LabelGenerator {
+  public static Label generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Label(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p0) -> TagGenerator.generate(generator, p0),
+        Tag.class
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("code")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.of("^[A-Z]{3}$"),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("aliases")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldString(
+        java.util.Optional.of("^[a-z]+$"),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Board;
+import community.flock.wirespec.generated.model.Tag;
+import community.flock.wirespec.generated.model.Score;
+import community.flock.wirespec.generated.model.Label;
+
+public interface BoardGenerator {
+  public static Board generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Board(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("owner")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p1) -> TagGenerator.generate(generator, p1),
+        Tag.class
+      )))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tags")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldArray<>((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p2) -> TagGenerator.generate(generator, p2),
+        Tag.class
+      )))))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("slots")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldArray<>((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldNullable<>((p2) -> generator.generate(p2, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p3) -> TagGenerator.generate(generator, p3),
+        Tag.class
+      )))))))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("grid")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldArray<>((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p2) -> ScoreGenerator.generate(generator, p2),
+        Score.class
+      )))))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tagsByKey")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p1) -> TagGenerator.generate(generator, p1),
+        Tag.class
+      )))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("scoresByKey")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldArray<>((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p2) -> ScoreGenerator.generate(generator, p2),
+        Score.class
+      )))))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("label")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("name", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("code", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("aliases", java.util.List.<java.util.Map<String, Object>>of())),
+        (p1) -> LabelGenerator.generate(generator, p1),
+        Label.class
+      )))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("labels")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldArray<>((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("name", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("code", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("aliases", java.util.List.<java.util.Map<String, Object>>of())),
+        (p2) -> LabelGenerator.generate(generator, p2),
+        Label.class
+      )))))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("labelsByKey")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("name", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("code", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("aliases", java.util.List.<java.util.Map<String, Object>>of())),
+        (p1) -> LabelGenerator.generate(generator, p1),
+        Label.class
+      )))),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("limit")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
+        java.util.Optional.of(1L),
+        java.util.Optional.of(10L),
+        java.util.List.<java.util.Map<String, Object>>of()
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("ratios")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldNumber64(
+        java.util.Optional.of(0.0),
+        java.util.Optional.of(1.0),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.TreeNode;
+import community.flock.wirespec.generated.model.Tag;
+
+public interface TreeNodeGenerator {
+  public static TreeNode generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new TreeNode(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("tag")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldShape<>(
+        java.util.Collections.emptyMap(),
+        (p0) -> TagGenerator.generate(generator, p0),
+        Tag.class
+      )),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("children")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldShape<>(
+        java.util.Map.ofEntries(java.util.Map.entry("tag", java.util.List.<java.util.Map<String, Object>>of()), java.util.Map.entry("children", java.util.List.<java.util.Map<String, Object>>of())),
+        (p1) -> TreeNodeGenerator.generate(generator, p1),
+        TreeNode.class
+      ))))
+    );
+  }
+}

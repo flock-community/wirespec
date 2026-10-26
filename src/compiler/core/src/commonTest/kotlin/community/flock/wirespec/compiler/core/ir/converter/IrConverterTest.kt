@@ -11,7 +11,6 @@ import community.flock.wirespec.compiler.core.ir.Constraint
 import community.flock.wirespec.compiler.core.ir.Function
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Interface
-import community.flock.wirespec.compiler.core.ir.LiteralList
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.Precision
@@ -68,10 +67,6 @@ class IrConverterTest {
             struct("Foo") {
                 implements(Type.Custom("Wirespec.Shape"))
                 field(Name(listOf("bar")), string)
-                function("validate", isOverride = true) {
-                    returnType(Type.Array(Type.String))
-                    returns(LiteralList(emptyList(), Type.String))
-                }
             }
         }
 
@@ -120,10 +115,6 @@ class IrConverterTest {
                     implements(Type.Custom("Wirespec.Shape"))
                     implements(Type.Custom("MyUnion"))
                     field(Name(listOf("a")), string)
-                    function("validate", isOverride = true) {
-                        returnType(Type.Array(Type.String))
-                        returns(LiteralList(emptyList(), Type.String))
-                    }
                 }
             },
             file("Bar") {
@@ -131,10 +122,6 @@ class IrConverterTest {
                     implements(Type.Custom("Wirespec.Shape"))
                     implements(Type.Custom("MyUnion"))
                     field(Name(listOf("b")), string)
-                    function("validate", isOverride = true) {
-                        returnType(Type.Array(Type.String))
-                        returns(LiteralList(emptyList(), Type.String))
-                    }
                 }
             },
         )

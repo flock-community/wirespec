@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapEntries
 import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.IfExpression
@@ -428,7 +429,7 @@ public object RustGenerator :
         is Cast -> "(${expression.emit()} as ${targetType.emit()});\n".indentCode(indent)
         is NullCheck, is NullableMap, is NullableOf, is NullableGet,
         is Constraint.RegexMatch, is Constraint.BoundCheck,
-        is IfExpression, is MapExpression, is FlatMapIndexed,
+        is IfExpression, is MapExpression, is FlatMapIndexed, is FlatMapEntries,
         is ListConcat, is StringTemplate, is Lambda,
         -> "${emit()};\n".indentCode(indent)
         is NotExpression -> "!${expression.emit()};\n".indentCode(indent)
@@ -489,7 +490,7 @@ public object RustGenerator :
         is NullableMap -> {
             val exprStr = expression.emit()
             val bodyStr = body.emit()
-            "$exprStr.as_ref().map(|it| $bodyStr)${emitUnwrap(alternative)}"
+            "$exprStr.as_ref().map(|${variable.snakeCase()}| $bodyStr)${emitUnwrap(alternative)}"
         }
         is NullableOf -> "Some(${expression.emit()})"
         is NullableGet -> "${expression.emit()}.unwrap()"
@@ -515,6 +516,7 @@ public object RustGenerator :
             }
         }
         is FlatMapIndexed -> "${receiver.emit()}.iter().enumerate().flat_map(|(${indexVar.snakeCase()}, ${elementVar.snakeCase()})| ${body.emit()}).collect::<Vec<_>>()"
+        is FlatMapEntries -> "${receiver.emit()}.iter().flat_map(|(${keyVar.snakeCase()}, ${valueVar.snakeCase()})| ${body.emit()}).collect::<Vec<_>>()"
         is ListConcat -> when {
             lists.isEmpty() -> "vec![]"
             lists.size == 1 -> lists.single().emit()
@@ -539,71 +541,6 @@ public object RustGenerator :
             val params = parameters.joinToString(", ") { it.name.snakeCase().sanitize() }
             "Box::new(|$params| ${body.emit()})"
         }
-    }
-
-    private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {
-        is VariableReference -> if (name.value() == "it") replacement else emit()
-        is FunctionCall -> {
-            val recv = receiver
-            val funcName = if (name.value().contains("::")) name.value() else name.snakeCase().sanitize()
-            val awaitSuffix = if (isAwait) ".await" else ""
-            if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.$funcName(${arguments.values.joinToString(", ") { it.emitWithInlinedIt(replacement) }})$awaitSuffix"
-            } else {
-                "$funcName(${arguments.values.joinToString(", ") { it.emitWithInlinedIt(replacement) }})$awaitSuffix"
-            }
-        }
-        is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
-            "$receiverStr${field.snakeCase().sanitize()}"
-        }
-        is ArrayIndexCall -> {
-            if (!caseSensitive && index is Literal && index.type is Type.String) {
-                "${receiver.emitWithInlinedIt(replacement)}.iter().find(|(k, _)| k.eq_ignore_ascii_case(\"${index.value}\")).map(|(_, v)| v.clone())"
-            } else if (index is Literal && index.type is Type.String) {
-                "${receiver.emitWithInlinedIt(replacement)}.get(\"${index.value}\")"
-            } else {
-                val idxStr = if (index is Literal && (index.type is Type.Integer || index.type is Type.Number)) {
-                    "${index.value}"
-                } else {
-                    index.emitWithInlinedIt(replacement)
-                }
-                "${receiver.emitWithInlinedIt(replacement)}[$idxStr]"
-            }
-        }
-        is EnumValueCall -> "format!(\"{:?}\", ${expression.emitWithInlinedIt(replacement)})"
-        is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
-        is IfExpression -> "if ${condition.emitWithInlinedIt(replacement)} { ${thenExpr.emitWithInlinedIt(replacement)} } else { ${elseExpr.emitWithInlinedIt(replacement)} }"
-        is MapExpression -> {
-            val recv = receiver
-            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
-                recv.right.emitWithInlinedIt(replacement)
-            } else {
-                "${receiver.emitWithInlinedIt(replacement)}.iter().map(|${variable.snakeCase()}| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
-            }
-        }
-        is FlatMapIndexed -> "${receiver.emitWithInlinedIt(replacement)}.iter().enumerate().flat_map(|(${indexVar.snakeCase()}, ${elementVar.snakeCase()})| ${body.emitWithInlinedIt(replacement)}).collect::<Vec<_>>()"
-        is ListConcat -> when {
-            lists.isEmpty() -> "vec![]"
-            lists.size == 1 -> lists.single().emitWithInlinedIt(replacement)
-            else -> "vec![${lists.joinToString(", ") { "${it.emitWithInlinedIt(replacement)}.as_slice()" }}].concat()"
-        }
-        is StringTemplate -> {
-            val mapped = parts.map { part ->
-                when (part) {
-                    is StringTemplate.Part.Text -> part.value to null
-                    is StringTemplate.Part.Expr -> "{}" to part.expression.emitWithInlinedIt(replacement)
-                }
-            }
-            val formatStr = mapped.joinToString("") { it.first }
-            val args = mapped.mapNotNull { it.second }
-            if (args.isEmpty()) {
-                "String::from(\"$formatStr\")"
-            } else {
-                "format!(\"$formatStr\", ${args.joinToString(", ")})"
-            }
-        }
-        else -> emit()
     }
 
     private fun LiteralList.emit(): String {

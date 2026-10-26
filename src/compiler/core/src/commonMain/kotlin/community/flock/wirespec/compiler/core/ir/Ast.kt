@@ -379,6 +379,7 @@ internal data class NullableMap(
     val expression: Expression,
     val body: Expression,
     val alternative: Expression,
+    val variable: Name = Name.of("it"),
 ) : Statement,
     Expression
 
@@ -425,6 +426,15 @@ internal data class FlatMapIndexed(
     val receiver: Expression,
     val indexVar: Name,
     val elementVar: Name,
+    val body: Expression,
+) : Statement,
+    Expression
+
+// flatMap over the entries of a dict
+internal data class FlatMapEntries(
+    val receiver: Expression,
+    val keyVar: Name,
+    val valueVar: Name,
     val body: Expression,
 ) : Statement,
     Expression

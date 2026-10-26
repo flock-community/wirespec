@@ -46,8 +46,10 @@ The fields map to Python types as follows:
 | `{ T }`                | `dict[str, T]` |
 | `T?`                   | `Optional[T]`  |
 
-`validate()` returns the names of the fields that do not hold a valid value. Only refined values can be invalid, so
-`Todo` checks `id`. A type that contains another type passes on its errors with the field name as a prefix:
+`validate()` returns the paths of the values that are not valid. Only refined values and constrained fields, such as
+`String(/^[A-Z]+$/g)`, can be invalid, so `Todo` checks `id`. Values in lists, dicts and nullables are checked at any
+depth and reported as `tags[1]` or `labels[home]`, and a type that contains another type passes on its errors with the
+field name as a prefix:
 
 ```python wirespec file=model/TodoCreated.py
 ```

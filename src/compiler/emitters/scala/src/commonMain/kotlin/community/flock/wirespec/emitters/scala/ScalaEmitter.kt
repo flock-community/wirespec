@@ -27,12 +27,10 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
-import community.flock.wirespec.compiler.core.ir.converter.convertWithValidation
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.File
-import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
@@ -94,8 +92,6 @@ public open class ScalaEmitter(
             sanitizeSymbol = { it.sanitizeSymbol() },
             extraStatementTransforms = { stmt, tr ->
                 when {
-                    stmt is FunctionCall && stmt.name.value() == "validate" ->
-                        stmt.copy(typeArguments = emptyList()).transformChildren(tr)
                     stmt is ConstructorStatement -> ConstructorStatement(
                         type = tr.transformType(stmt.type),
                         namedArguments = stmt.namedArguments.map { (name, expr) ->
@@ -211,7 +207,7 @@ public open class ScalaEmitter(
     }
 
     override fun emit(type: Type, module: Module): File =
-        type.convertWithValidation(module)
+        type.convert()
             .sanitizeNames(sanitizationConfig)
             .ensureEmptyStructHasConstructor()
 

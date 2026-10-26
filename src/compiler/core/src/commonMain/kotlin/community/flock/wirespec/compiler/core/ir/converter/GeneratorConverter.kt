@@ -308,7 +308,7 @@ private fun buildLeafExpr(
                 namedArguments = mapOf(
                     Name.of("generate") to Lambda(
                         parameters = lambdaPathParam(depth + 1),
-                        body = buildLeafExpr(
+                        body = buildExpr(
                             ref.reference,
                             lambdaPathRef(depth + 1),
                             typeName,
@@ -331,7 +331,7 @@ private fun buildLeafExpr(
                 namedArguments = mapOf(
                     Name.of("generate") to Lambda(
                         parameters = lambdaPathParam(depth + 1),
-                        body = buildLeafExpr(
+                        body = buildExpr(
                             ref.reference,
                             lambdaPathRef(depth + 1),
                             typeName,
@@ -361,36 +361,42 @@ private fun buildLeafExpr(
     is ReferenceWirespec.Unit -> NullLiteral
 }
 
+// Like [buildLeafExpr], but a nullable [ref] (a field, list element or dict value) is wrapped in a
+// `GeneratorFieldNullable`: the seeded generator decides null vs invoke-the-thunk, so the call site has no `if`.
+private fun buildExpr(
+    ref: ReferenceWirespec,
+    pathExpr: Expression,
+    typeName: String,
+    annotations: List<AnnotationWirespec>,
+    module: Module?,
+    depth: Int,
+): Expression = if (ref.isNullable) {
+    FunctionCall(
+        receiver = VariableReference(Name.of("generator")),
+        name = Name.of("generate"),
+        arguments = mapOf(
+            Name.of("path") to pathExpr,
+            Name.of("field") to ConstructorStatement(
+                type = Type.Custom("Wirespec.GeneratorFieldNullable"),
+                namedArguments = mapOf(
+                    Name.of("generate") to Lambda(
+                        parameters = lambdaPathParam(depth + 1),
+                        body = buildLeafExpr(ref, lambdaPathRef(depth + 1), typeName, annotations, module, depth + 1),
+                    ),
+                ),
+            ),
+        ),
+    )
+} else {
+    buildLeafExpr(ref, pathExpr, typeName, annotations, module, depth)
+}
+
 private fun ReferenceWirespec.toGeneratorExpression(
     typeName: String,
     fieldNameStr: String,
     annotations: List<AnnotationWirespec>,
     module: Module?,
-): Expression {
-    val outerPath = pathPlus(fieldNameStr)
-
-    return if (this.isNullable) {
-        // The seeded generator decides null vs invoke-the-thunk; the call site has no `if`.
-        FunctionCall(
-            receiver = VariableReference(Name.of("generator")),
-            name = Name.of("generate"),
-            arguments = mapOf(
-                Name.of("path") to outerPath,
-                Name.of("field") to ConstructorStatement(
-                    type = Type.Custom("Wirespec.GeneratorFieldNullable"),
-                    namedArguments = mapOf(
-                        Name.of("generate") to Lambda(
-                            parameters = lambdaPathParam(0),
-                            body = buildLeafExpr(this, lambdaPathRef(0), typeName, annotations, module, 0),
-                        ),
-                    ),
-                ),
-            ),
-        )
-    } else {
-        buildLeafExpr(this, outerPath, typeName, annotations, module, -1)
-    }
-}
+): Expression = buildExpr(this, pathPlus(fieldNameStr), typeName, annotations, module, -1)
 
 public fun RefinedWirespec.convertToGenerator(): File {
     val generatorName = identifier.toGeneratorName()

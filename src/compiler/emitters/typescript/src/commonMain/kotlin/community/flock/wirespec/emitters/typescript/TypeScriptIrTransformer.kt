@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.ir.Case
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.ErrorStatement
 import community.flock.wirespec.compiler.core.ir.FieldCall
-import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.Name
@@ -15,7 +14,6 @@ import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
 import community.flock.wirespec.compiler.core.ir.Switch
 import community.flock.wirespec.compiler.core.ir.Transformer
-import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
 import community.flock.wirespec.compiler.core.ir.raw
 import community.flock.wirespec.compiler.core.ir.transform
@@ -24,33 +22,6 @@ import community.flock.wirespec.compiler.core.ir.transformer
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
 import community.flock.wirespec.compiler.core.ir.Type as LanguageType
-
-internal fun <T : Element> T.renameValidateAndBindObjReceiver(
-    typeName: String,
-    fieldNames: Set<String>,
-): T = transform {
-    matchingElements { fn: LanguageFunction ->
-        if (fn.name != Name.of("validate")) return@matchingElements fn
-        fn.copy(
-            name = Name.of("validate$typeName"),
-            parameters = listOf(Parameter(Name.of("obj"), LanguageType.Custom(typeName))),
-        ).transform {
-            statementAndExpression { s, t ->
-                when (s) {
-                    is FunctionCall if s.name == Name.of("validate") && s.receiver != null && s.typeArguments.isNotEmpty() -> {
-                        val tn = (s.typeArguments.first() as? LanguageType.Custom)?.name?.pascalCase() ?: ""
-                        FunctionCall(name = Name.of("validate$tn"), arguments = mapOf(Name.of("obj") to t.transformExpression(s.receiver!!)))
-                    }
-
-                    is FieldCall if s.receiver == null && s.field.camelCase() in fieldNames ->
-                        FieldCall(receiver = VariableReference(Name.of("obj")), field = s.field)
-
-                    else -> s.transformChildren(t)
-                }
-            }
-        }
-    }
-}
 
 internal fun <T : Element> T.stripTrailingSpaceFromErrorMessage(): T = transform {
     statement { stmt, transformer ->

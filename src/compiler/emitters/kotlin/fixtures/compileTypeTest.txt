@@ -44,9 +44,9 @@ object RequestGenerator {
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )) })),
-      body = generator.generate(path + listOf("body"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldDict(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldArray(generate = { p2 -> generator.generate(p2, Wirespec.GeneratorFieldString(
+      body = generator.generate(path + listOf("body"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldDict(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldNullable(generate = { p2 -> generator.generate(p2, Wirespec.GeneratorFieldArray(generate = { p3 -> generator.generate(p3, Wirespec.GeneratorFieldNullable(generate = { p4 -> generator.generate(p4, Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
-      )) })) })) }))
+      )) })) })) })) })) }))
     )
 }

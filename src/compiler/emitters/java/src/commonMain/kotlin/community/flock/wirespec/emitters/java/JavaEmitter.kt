@@ -23,9 +23,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
-import community.flock.wirespec.compiler.core.ir.converter.convertWithValidation
 import community.flock.wirespec.compiler.core.ir.File
-import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.Package
@@ -36,7 +34,6 @@ import community.flock.wirespec.compiler.core.ir.function
 import community.flock.wirespec.compiler.core.ir.import
 import community.flock.wirespec.compiler.core.ir.raw
 import community.flock.wirespec.compiler.core.ir.transform
-import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.emit.placeInPackage
 import community.flock.wirespec.compiler.core.ir.emit.prependImports
@@ -70,14 +67,6 @@ public open class JavaEmitter(
         },
         parameterNameCase = { name -> Name(listOf(name.camelCase())) },
         sanitizeSymbol = { it.sanitizeSymbol() },
-        extraStatementTransforms = { stmt, tr ->
-            when {
-                stmt is FunctionCall && stmt.name.value() == "validate" ->
-                    stmt.copy(typeArguments = emptyList()).transformChildren(tr)
-
-                else -> stmt.transformChildren(tr)
-            }
-        },
     )
 
     override fun emitShared(): File? {
@@ -167,7 +156,7 @@ public open class JavaEmitter(
     }
 
     override fun emit(type: AstType, module: Module): File =
-        type.convertWithValidation(module)
+        type.convert()
             .sanitizeNames(sanitizationConfig)
 
     override fun emit(enum: Enum, module: Module): File = enum

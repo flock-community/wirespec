@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapEntries
 import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.IfExpression
@@ -458,6 +459,7 @@ public object KotlinGenerator :
         is IfExpression -> "${emit()}\n".indentCode(indent)
         is MapExpression -> "${emit()}\n".indentCode(indent)
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
+        is FlatMapEntries -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
         is Lambda -> "${emit()}\n".indentCode(indent)
@@ -531,7 +533,7 @@ public object KotlinGenerator :
         is TypeDescriptor -> emitTypeDescriptor()
         is Cast -> "${expression.emit()} as ${targetType.emitGenerics()}"
         is NullCheck -> "(${expression.emit()}?.let { ${body.emit()} }${alternative?.emit()?.let { " ?: $it" } ?: ""})"
-        is NullableMap -> "(${expression.emit()}?.let { ${body.emit()} } ?: ${alternative.emit()})"
+        is NullableMap -> "(${expression.emit()}?.let { ${variable.letParameter()}${body.emit()} } ?: ${alternative.emit()})"
         is NullableOf -> expression.emit()
         is NullableGet -> "${expression.emit()}!!"
         is Constraint.RegexMatch -> "Regex(\"\"\"${pattern}\"\"\").matches(${value.emit()})"
@@ -553,6 +555,7 @@ public object KotlinGenerator :
         is IfExpression -> "if (${condition.emit()}) ${thenExpr.emit()} else ${elseExpr.emit()}"
         is MapExpression -> "${receiver.emit()}.map { ${variable.value().sanitize()} -> ${body.emit()} }"
         is FlatMapIndexed -> "${receiver.emit()}.flatMapIndexed { ${indexVar.value().sanitize()}, ${elementVar.value().sanitize()} -> ${body.emit()} }"
+        is FlatMapEntries -> "${receiver.emit()}.entries.flatMap { (${keyVar.value().sanitize()}, ${valueVar.value().sanitize()}) -> ${body.emit()} }"
         is ListConcat -> when {
             lists.isEmpty() -> "emptyList<String>()"
             lists.size == 1 -> lists.single().emit()
@@ -572,6 +575,8 @@ public object KotlinGenerator :
             if (params.isEmpty()) "{ ${body.emit()} }" else "{ $params -> ${body.emit()} }"
         }
     }
+
+    private fun Name.letParameter(): String = if (this == Name.of("it")) "" else "${value().sanitize()} -> "
 
     private fun LiteralList.emit(): String {
         if (values.isEmpty()) return "emptyList<${type.emitGenerics()}>()"

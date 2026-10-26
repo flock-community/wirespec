@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
+import community.flock.wirespec.compiler.test.CompileNestedValidationTest
 import community.flock.wirespec.compiler.test.CompilePartTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
@@ -117,6 +118,13 @@ class TypeScriptEmitterTest {
         val typescript = EmitterFixtures.compileComplexModelTest
 
         CompileComplexModelTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileNestedValidationTest() {
+        val typescript = EmitterFixtures.compileNestedValidationTest
+
+        CompileNestedValidationTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
     }
 
     @Test

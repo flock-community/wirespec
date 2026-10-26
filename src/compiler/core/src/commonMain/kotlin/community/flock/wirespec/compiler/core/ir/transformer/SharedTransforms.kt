@@ -4,14 +4,10 @@ import community.flock.wirespec.compiler.core.ir.Constructor
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.EnumReference
 import community.flock.wirespec.compiler.core.ir.Field
-import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.Function
 import community.flock.wirespec.compiler.core.ir.Name
-import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.Struct
-import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.transform
-import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.withLabelField
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -23,7 +19,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
-import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 public fun Struct.markMembersAsOverride(): Struct = copy(
     fields = fields.map { f -> if (f is Field) f.copy(isOverride = true) else f },
@@ -80,29 +75,6 @@ public fun <E : Element> E.sanitizeEnumDefaults(
         when (val initializer = field.initializer) {
             is EnumReference -> field.copy(initializer = initializer.copy(entry = Name(listOf(sanitizeEntry(initializer.entry.value())))))
             else -> field
-        }
-    }
-}
-
-public fun <E : Element> E.injectSelfReceiverToValidate(
-    fieldNames: Set<String>,
-    selfParamName: String = "self",
-): E = transform {
-    matchingElements { fn: Function ->
-        if (fn.name == Name.of("validate")) {
-            fn.copy(
-                parameters = listOf(Parameter(Name.of(selfParamName), LanguageType.Custom(""))),
-            ).transform {
-                statementAndExpression { s, t ->
-                    if (s is FieldCall && s.receiver == null && s.field.camelCase() in fieldNames) {
-                        FieldCall(receiver = VariableReference(Name.of("self")), field = s.field)
-                    } else {
-                        s.transformChildren(t)
-                    }
-                }
-            }
-        } else {
-            fn
         }
     }
 }
