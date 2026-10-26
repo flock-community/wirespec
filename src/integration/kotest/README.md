@@ -6,7 +6,7 @@ Two pieces, usable together or independently:
    [`Arb`][arb]s, driving the IR-emitted `*Generator.generate(...)` factories
    with deterministic, configurable test data.
 2. A **scenario DSL** emitted alongside your models by `KotestDslExtension`, so
-   endpoints and channels can be exercised as
+   endpoints, channels and rpcs can be exercised as
    `GetTodos.generate.request { … }.call()`.
 
 [kotest]: https://kotest.io
@@ -121,7 +121,7 @@ nested refined wrappers so each element has stable, reproducible identity.
 ## Part 2 — the scenario DSL
 
 `KotestDslExtension` is an `IrExtension`: register it on a Kotlin IR emitter and
-it emits one `<Endpoint>Dsl.kt` / `<Channel>Dsl.kt` per operation into
+it emits one `<Endpoint>Dsl.kt` / `<Channel>Dsl.kt` / `<Rpc>Dsl.kt` per operation into
 `<packageName>.kotest`, alongside the models the base emitter produces.
 
 ```kotlin
@@ -150,6 +150,15 @@ CampaignEvents.generate.message { eventType(CampaignEventType.ENDED) }.send("cam
 
 // Channels: consume via the listen scope.
 CampaignEvents.generate.listen { expecting { event -> event.eventType shouldBe CampaignEventType.CREATED } }
+
+// Rpcs: the parameters are drawn as a `<Rpc>Request`; call() hands one to the registered
+// `<Rpc>.Service` and returns what it answered (the `Response` union when the rpc declares an error).
+val user = GetUser.generate.request { id("u-042") }.call()
+user.shouldBeInstanceOf<GetUser.Result>()
+
+// Rpc outcomes are Gens too, e.g. to stub a service another component depends on.
+val stub = GetUser.Service { GetUser.generate.result { name("Alice") }.draw() }
+val missing: GetUser.Error = GetUser.generate.error { reason("gone") }.draw()
 
 // Standalone types: `<Type>.generate { … }` reads through the type name like the
 // endpoint/channel entry points and returns a `Gen<…>`, pinning only the fields you set.
@@ -184,18 +193,20 @@ overrides compose to any depth without duplicating builders.
 ### Wiring the transport
 
 The DSL resolves its transport and per-test `RandomSource` from an ambient
-context installed by two extensions — one per direction. Register whichever the
-spec drives (or both, they compose into one ambient sharing a `RandomSource`):
+context installed by an extension per kind of operation. Register whichever the
+spec drives (they compose into one ambient sharing a `RandomSource`):
 
 ```kotlin
 class MySpec : FunSpec({
     extension(WirespecEndpointExtension(WirespecEndpointContext(transportation, serialization)))
     extension(WirespecChannelExtension(WirespecChannelContext(transport, serialization)))
+    extension(WirespecRpcExtension(userService, Ping.Service { "pong" }))
 })
 ```
 
-`WirespecEndpointExtension` backs `call()`, `WirespecChannelExtension` backs
-`send()` / `expecting()`; supply whichever the spec needs. A call into a missing
+`WirespecEndpointExtension` backs an endpoint's `call()`, `WirespecChannelExtension` backs
+`send()` / `expecting()` and `WirespecRpcExtension` backs an rpc's `call()`, which runs on
+the one registered service implementing that rpc's `Service`; supply whichever the spec needs. A call into a missing
 context fails with a message naming the extension to add. Responses are
 validated against the contract — an
 undeclared status or a body that won't deserialize into the matched variant

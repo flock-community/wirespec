@@ -510,7 +510,7 @@ internal data class EndpointShape(
                 collectFieldTypeNames(fieldShapes, types)
             ).distinct()
 
-        private fun collectCustomNames(reference: Reference): List<String> = when (reference) {
+        internal fun collectCustomNames(reference: Reference): List<String> = when (reference) {
             is Reference.Custom -> listOf(reference.value)
             is Reference.Iterable -> collectCustomNames(reference.reference)
             is Reference.Dict -> collectCustomNames(reference.reference)

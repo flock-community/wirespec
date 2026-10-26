@@ -15,10 +15,12 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.integration.kotest.convert.ChannelDslFile
 import community.flock.wirespec.integration.kotest.convert.ChannelShape
 import community.flock.wirespec.integration.kotest.convert.EndpointDslFile
+import community.flock.wirespec.integration.kotest.convert.RpcDslFile
 import community.flock.wirespec.integration.kotest.convert.TypeDslFile
 
 public open class KotestDslExtension(
@@ -41,8 +43,11 @@ public open class KotestDslExtension(
             val payload = ChannelShape.from(it, types, refined).payloadType
             ChannelDslFile.build(it, packageName, types, refined, emitSend = sendPayloads.add(payload))
         }
+        val rpcDsl = modules.flatMap { module ->
+            module.statements.filterIsInstance<Rpc>().map { RpcDslFile.build(it, packageName, module, types, refined) }
+        }
 
-        val extra: List<Element> = typeDsl + endpointDsl + channelDsl
+        val extra: List<Element> = typeDsl + endpointDsl + channelDsl + rpcDsl
 
         val recordNames = types.values.map { Name.of(it.identifier.value).pascalCase() }.toSet()
         val modelPkg = "${packageName.value}.model"

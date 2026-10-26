@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
+import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -224,6 +225,74 @@ class KotestDslExtensionTest {
         output shouldContain "public fun description(value: String) {"
 
         output shouldContain "companion object"
+    }
+
+    @Test
+    fun emitsPerRpcDsl() {
+        val output = CompileRpcTest.compiler(::emitter).shouldBeRight()
+
+        output shouldContain "import com.example.api.rpc.GetUser"
+        output shouldContain "public class GetUserGenerate internal constructor()"
+        output shouldContain "public val GetUser.generate: GetUserGenerate"
+
+        output shouldContain "public data class GetUserRequest("
+        output shouldContain "public fun request(block: GetUserRequestBuilder.() -> Unit = {}): Arb<GetUserRequest> {"
+        output shouldContain "builder.id?.let { registerPath(\"id\") { it } }"
+        output shouldContain "}) { generator -> generateGetUserRequest(generator, emptyList()) }"
+        output shouldContain "public class GetUserRequestBuilder {"
+        output shouldContain "private fun generateGetUserRequest(generator: Wirespec.Generator, path: List<String>): GetUserRequest ="
+
+        output shouldContain "public fun result(block: UserBuilder.() -> Unit = {}): Arb<GetUser.Result> {"
+        output shouldContain "}) { generator -> GetUser.Result(generateGetUserResult(generator, emptyList())) }"
+        output shouldContain "generate = { p0 -> UserGenerator.generate(generator, p0) },"
+        output shouldContain "public fun error(): Arb<GetUser.Error> ="
+        output shouldContain "generatedGen { generator -> GetUser.Error(generateGetUserError(generator, emptyList())) }"
+
+        output shouldContain "public suspend fun Gen<GetUserRequest>.call(): GetUser.Response ="
+        output shouldContain "rpcCall(GetUser.Service::class, this) { service, request -> service.getUser(request.id) }"
+
+        output shouldContain "public data object PingRequest"
+        output shouldContain "public fun request(): Arb<PingRequest> ="
+        output shouldContain "generatedGen { PingRequest }"
+        output shouldContain "public fun result(): Arb<String> ="
+        output shouldContain "public suspend fun Gen<PingRequest>.call(): String ="
+        output shouldContain "rpcCall(Ping.Service::class, this) { service, _ -> service.ping() }"
+        output shouldNotContain "PingRequestBuilder"
+    }
+
+    @Test
+    fun rpcBuildersReachEveryValueTheContractGenerates() {
+        // language=ws
+        val source =
+            """
+            |type UserId = String(/^u-[0-9]{3}$/g)
+            |type Address { street: String }
+            |type Member { id: UserId, address: Address }
+            |rpc Find_Members {
+            |  `class`: String,
+            |  address: Address?,
+            |  limit: Integer(1, 50)
+            |} -> Member[]
+            |rpc Fire { id: UserId } -> Unit
+            """.trimMargin()
+        val output = compile(source)(::emitter).shouldBeRight()
+
+        output shouldNotContain "Find_Members"
+        output shouldContain "public val FindMembers.generate: FindMembersGenerate"
+        output shouldContain "rpcCall(FindMembers.Service::class, this) { service, request -> service.findMembers(request.`class`, request.address, request.limit) }"
+        output shouldContain "builder.`class`?.let { registerPath(\"class\") { it } }"
+        output shouldContain "`class` = generator.generate(path + listOf(\"class\")"
+        output shouldContain "nested_address.street?.let { registerPath(\"address\", \"street\") { it } }"
+        output shouldContain "min = 1L,"
+
+        output shouldContain "public fun result(block: MemberBuilder.() -> Unit = {}): Arb<List<Member>> {"
+        output shouldContain "builder.id?.let { registerPath(\"*\", \"id\") { it } }"
+        output shouldContain "public suspend fun Gen<FindMembersRequest>.call(): List<Member> ="
+
+        output shouldContain "public fun result(): Arb<Unit> ="
+        output shouldContain "generatedGen { Unit }"
+        output shouldContain "public suspend fun Gen<FireRequest>.call(): Unit ="
+        output shouldContain "type = typeOf<UserId>()"
     }
 
     @Test
