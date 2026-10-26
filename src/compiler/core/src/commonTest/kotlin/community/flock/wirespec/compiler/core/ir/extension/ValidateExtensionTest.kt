@@ -14,6 +14,9 @@ import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -43,6 +46,25 @@ class ValidateExtensionTest {
             """
             |override fun validate(): List<String> =
             |  (if (Regex(""${'"'}^[A-Z]+$""${'"'}).matches(code)) emptyList<String>() else listOf("code")) + (quantity?.let { if (0 <= it && it <= 10) emptyList<String>() else listOf("quantity") } ?: emptyList<String>())
+            """.trimMargin()
+    }
+
+    @Test
+    fun validatesAModelThatAChannelIsNamedAfter() {
+        val parsed = parseAst("type Order { tag: Tag }", "type Tag = String(/^[a-z]+$/g)")
+        // The Avro converter declares such a channel for the record it reads.
+        val channel = Channel(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("Order"),
+            reference = Reference.Custom("Order", isNullable = false),
+        )
+        val ast = parsed.copy(modules = parsed.modules.map { it.copy(statements = it.statements + channel) })
+
+        ValidateExtension(FileExtension.Kotlin).extend(parsed.ir(), ast).validateOf("Order") shouldBe
+            """
+            |override fun validate(): List<String> =
+            |  if (!tag.validate()) listOf("tag") else emptyList<String>()
             """.trimMargin()
     }
 

@@ -65,8 +65,14 @@ public class ValidateExtension(language: FileExtension) : IrExtension {
     }
 
     // Definitions are looked up across all modules, so a model can nest a type declared in another file.
+    // Only models and refined types are indexed: a channel may share its name with the model it carries.
     override fun extend(ir: IR, ast: AST): IR = dialect
-        ?.let { Validation(it, ast.modules.flatMap { module -> module.statements }.associateBy { it.identifier.value }) }
+        ?.let { dialect ->
+            ast.modules.flatMap { module -> module.statements }
+                .filter { it is Model || it is Refined }
+                .associateBy { it.identifier.value }
+                .let { Validation(dialect, it) }
+        }
         ?.let { validation -> ir.map { element -> (element as? File)?.let(validation::validate) ?: element } }
         ?: ir
 
@@ -169,7 +175,7 @@ public class ValidateExtension(language: FileExtension) : IrExtension {
         }
 
         private fun Reference.validated(): List<Definition> = when (this) {
-            is Reference.Custom -> listOfNotNull(definitions[value]?.takeIf { it is Refined || it is Model })
+            is Reference.Custom -> listOfNotNull(definitions[value])
             is Reference.Iterable -> reference.validated()
             is Reference.Dict -> reference.validated()
             is Reference.Primitive, is Reference.Any, is Reference.Unit -> emptyList()
