@@ -1,0 +1,181 @@
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+
+@dataclass
+class Tag(Wirespec.Refined[str]):
+    value: str
+    def validate(self) -> bool:
+        return bool(re.match(r"^[a-z]+$", self.value))
+    def __str__(self) -> str:
+        return self.value
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+
+@dataclass
+class Score(Wirespec.Refined[int]):
+    value: int
+    def validate(self) -> bool:
+        return 0 <= self.value and self.value <= 100
+    def __str__(self) -> str:
+        return str(self.value)
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .Tag import Tag
+
+@dataclass
+class Label(Wirespec.Shape):
+    name: Tag
+    code: str
+    aliases: list[str]
+    def validate(self) -> list[str]:
+        return (['name'] if not self.name.validate() else []) + ([] if bool(re.match(r"^[A-Z]{3}$", self.code)) else ['code']) + [item for i, el in enumerate(self.aliases) for item in ([] if bool(re.match(r"^[a-z]+$", el)) else [f"aliases[{i}]"])]
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .Tag import Tag
+from .Score import Score
+from .Label import Label
+
+@dataclass
+class Board(Wirespec.Shape):
+    owner: Optional[Tag]
+    tags: Optional[list[Tag]]
+    slots: Optional[list[Optional[Tag]]]
+    grid: list[list[Score]]
+    tagsByKey: dict[str, Tag]
+    scoresByKey: dict[str, list[Score]]
+    label: Optional[Label]
+    labels: list[list[Label]]
+    labelsByKey: dict[str, Label]
+    limit: int
+    ratios: list[float]
+    def validate(self) -> list[str]:
+        return ((['owner'] if not self.owner.validate() else []) if self.owner is not None else []) + ([item for i1, el1 in enumerate(self.tags) for item in ([f"tags[{i1}]"] if not el1.validate() else [])] if self.tags is not None else []) + ([item for i1, el1 in enumerate(self.slots) for item in (([f"slots[{i1}]"] if not el1.validate() else []) if el1 is not None else [])] if self.slots is not None else []) + [item for i, el in enumerate(self.grid) for item in [item for i1, el1 in enumerate(el) for item in ([f"grid[{i}][{i1}]"] if not el1.validate() else [])]] + [item for k, v in self.tagsByKey.items() for item in ([f"tagsByKey[{k}]"] if not v.validate() else [])] + [item for k, v in self.scoresByKey.items() for item in [item for i1, el1 in enumerate(v) for item in ([f"scoresByKey[{k}][{i1}]"] if not el1.validate() else [])]] + ([f"label.{e}" for e in self.label.validate()] if self.label is not None else []) + [item for i, el in enumerate(self.labels) for item in [item for i1, el1 in enumerate(el) for item in [f"labels[{i}][{i1}].{e}" for e in el1.validate()]]] + [item for k, v in self.labelsByKey.items() for item in [f"labelsByKey[{k}].{e}" for e in v.validate()]] + ([] if 1 <= self.limit and self.limit <= 10 else ['limit']) + [item for i, el in enumerate(self.ratios) for item in ([] if 0.0 <= el and el <= 1.0 else [f"ratios[{i}]"])]
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from .Tag import Tag
+
+@dataclass
+class TreeNode(Wirespec.Shape):
+    tag: Tag
+    children: list[TreeNode]
+    def validate(self) -> list[str]:
+        return (['tag'] if not self.tag.validate() else []) + [item for i, el in enumerate(self.children) for item in [f"children[{i}].{e}" for e in el.validate()]]
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Tag import Tag
+
+class TagGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Tag:
+        return Tag(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[a-z]+$', annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Score import Score
+
+class ScoreGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Score:
+        return Score(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldInteger64(min=0, max=100, annotations=[])))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Label import Label
+from ..model.Tag import Tag
+from .TagGenerator import TagGenerator
+
+class LabelGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Label:
+        return Label(name=generator.generate(path + ['name'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: TagGenerator.generate(generator, p0), type=Tag)), code=generator.generate(path + ['code'], Wirespec.GeneratorFieldString(regex='^[A-Z]{3}$', annotations=[])), aliases=generator.generate(path + ['aliases'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldString(regex='^[a-z]+$', annotations=[])))))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.Board import Board
+from ..model.Tag import Tag
+from ..model.Score import Score
+from ..model.Label import Label
+from .TagGenerator import TagGenerator
+from .ScoreGenerator import ScoreGenerator
+from .LabelGenerator import LabelGenerator
+
+class BoardGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> Board:
+        return Board(owner=generator.generate(path + ['owner'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p1: TagGenerator.generate(generator, p1), type=Tag)))), tags=generator.generate(path + ['tags'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldArray(generate=lambda p1: generator.generate(p1, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p2: TagGenerator.generate(generator, p2), type=Tag)))))), slots=generator.generate(path + ['slots'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldArray(generate=lambda p1: generator.generate(p1, Wirespec.GeneratorFieldNullable(generate=lambda p2: generator.generate(p2, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p3: TagGenerator.generate(generator, p3), type=Tag)))))))), grid=generator.generate(path + ['grid'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldArray(generate=lambda p1: generator.generate(p1, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p2: ScoreGenerator.generate(generator, p2), type=Score)))))), tagsByKey=generator.generate(path + ['tagsByKey'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p1: TagGenerator.generate(generator, p1), type=Tag)))), scoresByKey=generator.generate(path + ['scoresByKey'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldArray(generate=lambda p1: generator.generate(p1, Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p2: ScoreGenerator.generate(generator, p2), type=Score)))))), label=generator.generate(path + ['label'], Wirespec.GeneratorFieldNullable(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={'name': [], 'code': [], 'aliases': []}, generate=lambda p1: LabelGenerator.generate(generator, p1), type=Label)))), labels=generator.generate(path + ['labels'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldArray(generate=lambda p1: generator.generate(p1, Wirespec.GeneratorFieldShape(annotations={'name': [], 'code': [], 'aliases': []}, generate=lambda p2: LabelGenerator.generate(generator, p2), type=Label)))))), labelsByKey=generator.generate(path + ['labelsByKey'], Wirespec.GeneratorFieldDict(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={'name': [], 'code': [], 'aliases': []}, generate=lambda p1: LabelGenerator.generate(generator, p1), type=Label)))), limit=generator.generate(path + ['limit'], Wirespec.GeneratorFieldInteger64(min=1, max=10, annotations=[])), ratios=generator.generate(path + ['ratios'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldNumber64(min=0.0, max=1.0, annotations=[])))))
+
+from __future__ import annotations
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional
+import enum
+from ..wirespec import T, Wirespec, _raise
+from ..model.TreeNode import TreeNode
+from ..model.Tag import Tag
+from .TagGenerator import TagGenerator
+
+class TreeNodeGenerator:
+    @staticmethod
+    def generate(generator: Wirespec.Generator, path: list[str]) -> TreeNode:
+        return TreeNode(tag=generator.generate(path + ['tag'], Wirespec.GeneratorFieldShape(annotations={}, generate=lambda p0: TagGenerator.generate(generator, p0), type=Tag)), children=generator.generate(path + ['children'], Wirespec.GeneratorFieldArray(generate=lambda p0: generator.generate(p0, Wirespec.GeneratorFieldShape(annotations={'tag': [], 'children': []}, generate=lambda p1: TreeNodeGenerator.generate(generator, p1), type=TreeNode)))))
+
+from . import model
+from . import endpoint
+from . import wirespec
+
+
+
+
+
+

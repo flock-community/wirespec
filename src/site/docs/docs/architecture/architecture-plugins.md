@@ -50,7 +50,7 @@ fun interface IrExtension {
 
 An extension can add files, drop files, or reshape the elements of existing ones — annotate a struct, append a method, wrap a namespace. Because it operates on the IR rather than on generated text, one extension can serve several target languages and the generator still renders idiomatic code. Extensions are written in Kotlin: the IR is an Arrow `NonEmptyList`, a Kotlin value class that Java code cannot implement an interface against.
 
-Wirespec's own first-party integrations are wired in this way. The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
+Wirespec relies on this itself: every IR emitter applies the built-in `ValidateExtension` first, which gives each model its `validate` function, and the extensions selected in a plugin run after it. Wirespec's own first-party integrations are wired in this way too. The Avro integration's `AvroExtension`, for example, appends an `<Type>Avro` schema/converter class for every model when registered on the Java or Kotlin IR emitter (see the [Integration](../integration/integration.mdx) pages, with a worked example at `examples/maven-spring-avro/`).
 
 The integration modules only target the JVM, so the `extensions` plugin module compiles their extension sources once more, for every target, and the `arguments` module maps the names of the bundled extensions (`Extension`) onto them. That way the CLI, the NPM package and the playground offer the same extensions as Maven and Gradle.
 

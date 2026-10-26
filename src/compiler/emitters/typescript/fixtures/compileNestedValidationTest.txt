@@ -1,0 +1,122 @@
+import {Wirespec} from '../Wirespec'
+
+export type Tag = string;
+export const validateTag = (value: string) =>
+  /^[a-z]+$/g.test(value);
+
+import {Wirespec} from '../Wirespec'
+
+export type Score = number;
+export const validateScore = (value: number) =>
+  0 <= value && value <= 100;
+
+import {Wirespec} from '../Wirespec'
+import {Tag} from './Tag'
+import {validateTag} from './Tag'
+
+export type Label = {
+  "name": Tag,
+  "code": string,
+  "aliases": string[],
+}
+export function validateLabel(obj: Label): string[] {
+  return [...(!validateTag(obj.name) ? ['name'] : [] as string[]), ...(/^[A-Z]{3}$/g.test(obj.code) ? [] as string[] : ['code']), ...obj.aliases.flatMap((el, i) => (/^[a-z]+$/g.test(el) ? [] as string[] : [`aliases[${i}]`]))];
+}
+
+import {Wirespec} from '../Wirespec'
+import {Tag} from './Tag'
+import {Score} from './Score'
+import {Label} from './Label'
+import {validateTag} from './Tag'
+import {validateScore} from './Score'
+import {validateLabel} from './Label'
+
+export type Board = {
+  "owner": Tag | undefined,
+  "tags": Tag[] | undefined,
+  "slots": (Tag | undefined)[] | undefined,
+  "grid": Score[][],
+  "tagsByKey": Record<string, Tag>,
+  "scoresByKey": Record<string, Score[]>,
+  "label": Label | undefined,
+  "labels": Label[][],
+  "labelsByKey": Record<string, Label>,
+  "limit": number,
+  "ratios": number[],
+}
+export function validateBoard(obj: Board): string[] {
+  return [...obj.owner != null ? (!validateTag(obj.owner) ? ['owner'] : [] as string[]) : [] as string[], ...obj.tags != null ? obj.tags.flatMap((el1, i1) => (!validateTag(el1) ? [`tags[${i1}]`] : [] as string[])) : [] as string[], ...obj.slots != null ? obj.slots.flatMap((el1, i1) => el1 != null ? (!validateTag(el1) ? [`slots[${i1}]`] : [] as string[]) : [] as string[]) : [] as string[], ...obj.grid.flatMap((el, i) => el.flatMap((el1, i1) => (!validateScore(el1) ? [`grid[${i}][${i1}]`] : [] as string[]))), ...Object.entries(obj.tagsByKey).flatMap(([k, v]) => (!validateTag(v) ? [`tagsByKey[${k}]`] : [] as string[])), ...Object.entries(obj.scoresByKey).flatMap(([k, v]) => v.flatMap((el1, i1) => (!validateScore(el1) ? [`scoresByKey[${k}][${i1}]`] : [] as string[]))), ...obj.label != null ? validateLabel(obj.label).map(e => `label.${e}`) : [] as string[], ...obj.labels.flatMap((el, i) => el.flatMap((el1, i1) => validateLabel(el1).map(e => `labels[${i}][${i1}].${e}`))), ...Object.entries(obj.labelsByKey).flatMap(([k, v]) => validateLabel(v).map(e => `labelsByKey[${k}].${e}`)), ...(1 <= obj.limit && obj.limit <= 10 ? [] as string[] : ['limit']), ...obj.ratios.flatMap((el, i) => (0.0 <= el && el <= 1.0 ? [] as string[] : [`ratios[${i}]`]))];
+}
+
+import {Wirespec} from '../Wirespec'
+import {Tag} from './Tag'
+import {validateTag} from './Tag'
+
+export type TreeNode = {
+  "tag": Tag,
+  "children": TreeNode[],
+}
+export function validateTreeNode(obj: TreeNode): string[] {
+  return [...(!validateTag(obj.tag) ? ['tag'] : [] as string[]), ...obj.children.flatMap((el, i) => validateTreeNode(el).map(e => `children[${i}].${e}`))];
+}
+
+import {Wirespec} from '../Wirespec'
+import {Tag} from '../model/Tag'
+
+export namespace TagGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Tag {
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[a-z]+$', annotations: [] as Record<string, any>[] });
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Score} from '../model/Score'
+
+export namespace ScoreGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Score {
+    return generator.generate([...path, ...['value']], { kind: 'integer64', min: 0, max: 100, annotations: [] as Record<string, any>[] });
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Label} from '../model/Label'
+import {Tag} from '../model/Tag'
+import {TagGenerator} from './TagGenerator'
+
+export namespace LabelGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Label {
+    return { name: generator.generate([...path, ...['name']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => TagGenerator.generate(generator, p0), type: "Tag" }), code: generator.generate([...path, ...['code']], { kind: 'string', regex: '^[A-Z]{3}$', annotations: [] as Record<string, any>[] }), aliases: generator.generate([...path, ...['aliases']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'string', regex: '^[a-z]+$', annotations: [] as Record<string, any>[] }) }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {Board} from '../model/Board'
+import {Tag} from '../model/Tag'
+import {Score} from '../model/Score'
+import {Label} from '../model/Label'
+import {TagGenerator} from './TagGenerator'
+import {ScoreGenerator} from './ScoreGenerator'
+import {LabelGenerator} from './LabelGenerator'
+
+export namespace BoardGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): Board {
+    return { owner: generator.generate([...path, ...['owner']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: {}, generate: (p1: string[]) => TagGenerator.generate(generator, p1), type: "Tag" }) }), tags: generator.generate([...path, ...['tags']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'array', generate: (p1: string[]) => generator.generate(p1, { kind: 'shape', annotations: {}, generate: (p2: string[]) => TagGenerator.generate(generator, p2), type: "Tag" }) }) }), slots: generator.generate([...path, ...['slots']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'array', generate: (p1: string[]) => generator.generate(p1, { kind: 'nullable', generate: (p2: string[]) => generator.generate(p2, { kind: 'shape', annotations: {}, generate: (p3: string[]) => TagGenerator.generate(generator, p3), type: "Tag" }) }) }) }), grid: generator.generate([...path, ...['grid']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'array', generate: (p1: string[]) => generator.generate(p1, { kind: 'shape', annotations: {}, generate: (p2: string[]) => ScoreGenerator.generate(generator, p2), type: "Score" }) }) }), tagsByKey: generator.generate([...path, ...['tagsByKey']], { kind: 'dict', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: {}, generate: (p1: string[]) => TagGenerator.generate(generator, p1), type: "Tag" }) }), scoresByKey: generator.generate([...path, ...['scoresByKey']], { kind: 'dict', generate: (p0: string[]) => generator.generate(p0, { kind: 'array', generate: (p1: string[]) => generator.generate(p1, { kind: 'shape', annotations: {}, generate: (p2: string[]) => ScoreGenerator.generate(generator, p2), type: "Score" }) }) }), label: generator.generate([...path, ...['label']], { kind: 'nullable', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: { 'name': [] as Record<string, any>[], 'code': [] as Record<string, any>[], 'aliases': [] as Record<string, any>[] }, generate: (p1: string[]) => LabelGenerator.generate(generator, p1), type: "Label" }) }), labels: generator.generate([...path, ...['labels']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'array', generate: (p1: string[]) => generator.generate(p1, { kind: 'shape', annotations: { 'name': [] as Record<string, any>[], 'code': [] as Record<string, any>[], 'aliases': [] as Record<string, any>[] }, generate: (p2: string[]) => LabelGenerator.generate(generator, p2), type: "Label" }) }) }), labelsByKey: generator.generate([...path, ...['labelsByKey']], { kind: 'dict', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: { 'name': [] as Record<string, any>[], 'code': [] as Record<string, any>[], 'aliases': [] as Record<string, any>[] }, generate: (p1: string[]) => LabelGenerator.generate(generator, p1), type: "Label" }) }), limit: generator.generate([...path, ...['limit']], { kind: 'integer64', min: 1, max: 10, annotations: [] as Record<string, any>[] }), ratios: generator.generate([...path, ...['ratios']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'number64', min: 0.0, max: 1.0, annotations: [] as Record<string, any>[] }) }) };
+  }
+}
+
+import {Wirespec} from '../Wirespec'
+import {TreeNode} from '../model/TreeNode'
+import {Tag} from '../model/Tag'
+import {TagGenerator} from './TagGenerator'
+
+export namespace TreeNodeGenerator {
+  export function generate(generator: Wirespec.Generator, path: string[]): TreeNode {
+    return { tag: generator.generate([...path, ...['tag']], { kind: 'shape', annotations: {}, generate: (p0: string[]) => TagGenerator.generate(generator, p0), type: "Tag" }), children: generator.generate([...path, ...['children']], { kind: 'array', generate: (p0: string[]) => generator.generate(p0, { kind: 'shape', annotations: { 'tag': [] as Record<string, any>[], 'children': [] as Record<string, any>[] }, generate: (p1: string[]) => TreeNodeGenerator.generate(generator, p1), type: "TreeNode" }) }) };
+  }
+}
+
+export {Tag} from './Tag'
+export {Score} from './Score'
+export {Label} from './Label'
+export {Board} from './Board'
+export {TreeNode} from './TreeNode'

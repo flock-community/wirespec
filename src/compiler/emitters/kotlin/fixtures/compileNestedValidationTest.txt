@@ -1,0 +1,224 @@
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+data class Tag(
+  override val value: String
+) : Wirespec.Refined<String> {
+  override fun validate(): Boolean =
+    Regex("""^[a-z]+$""").matches(value)
+  override fun toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+data class Score(
+  override val value: Long
+) : Wirespec.Refined<Long> {
+  override fun validate(): Boolean =
+    0 <= value && value <= 100
+  override fun toString(): String =
+    value.toString()
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+data class Label(
+  val name: Tag,
+  val code: String,
+  val aliases: List<String>
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    (if (!name.validate()) listOf("name") else emptyList<String>()) + (if (Regex("""^[A-Z]{3}$""").matches(code)) emptyList<String>() else listOf("code")) + aliases.flatMapIndexed { i, el -> if (Regex("""^[a-z]+$""").matches(el)) emptyList<String>() else listOf("aliases[${i}]") }
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+data class Board(
+  val owner: Tag?,
+  val tags: List<Tag>?,
+  val slots: List<Tag?>?,
+  val grid: List<List<Score>>,
+  val tagsByKey: Map<String, Tag>,
+  val scoresByKey: Map<String, List<Score>>,
+  val label: Label?,
+  val labels: List<List<Label>>,
+  val labelsByKey: Map<String, Label>,
+  val limit: Long,
+  val ratios: List<Double>
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    (owner?.let { if (!it.validate()) listOf("owner") else emptyList<String>() } ?: emptyList<String>()) + (tags?.let { it.flatMapIndexed { i1, el1 -> if (!el1.validate()) listOf("tags[${i1}]") else emptyList<String>() } } ?: emptyList<String>()) + (slots?.let { it.flatMapIndexed { i1, el1 -> (el1?.let { it2 -> if (!it2.validate()) listOf("slots[${i1}]") else emptyList<String>() } ?: emptyList<String>()) } } ?: emptyList<String>()) + grid.flatMapIndexed { i, el -> el.flatMapIndexed { i1, el1 -> if (!el1.validate()) listOf("grid[${i}][${i1}]") else emptyList<String>() } } + tagsByKey.entries.flatMap { (k, v) -> if (!v.validate()) listOf("tagsByKey[${k}]") else emptyList<String>() } + scoresByKey.entries.flatMap { (k, v) -> v.flatMapIndexed { i1, el1 -> if (!el1.validate()) listOf("scoresByKey[${k}][${i1}]") else emptyList<String>() } } + (label?.let { it.validate().map { e -> "label.${e}" } } ?: emptyList<String>()) + labels.flatMapIndexed { i, el -> el.flatMapIndexed { i1, el1 -> el1.validate().map { e -> "labels[${i}][${i1}].${e}" } } } + labelsByKey.entries.flatMap { (k, v) -> v.validate().map { e -> "labelsByKey[${k}].${e}" } } + (if (1 <= limit && limit <= 10) emptyList<String>() else listOf("limit")) + ratios.flatMapIndexed { i, el -> if (0.0 <= el && el <= 1.0) emptyList<String>() else listOf("ratios[${i}]") }
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+data class TreeNode(
+  val tag: Tag,
+  val children: List<TreeNode>
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    (if (!tag.validate()) listOf("tag") else emptyList<String>()) + children.flatMapIndexed { i, el -> el.validate().map { e -> "children[${i}].${e}" } }
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Tag
+
+object TagGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Tag =
+    Tag(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+      regex = "^[a-z]+\$",
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Score
+
+object ScoreGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Score =
+    Score(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger64(
+      min = 0L,
+      max = 100L,
+      annotations = emptyList<Map<String, Any>>()
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Label
+import community.flock.wirespec.generated.model.Tag
+
+object LabelGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Label =
+    Label(
+      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p0 -> TagGenerator.generate(generator, p0) },
+        type = typeOf<Tag>()
+      )),
+      code = generator.generate(path + listOf("code"), Wirespec.GeneratorFieldString(
+        regex = "^[A-Z]{3}\$",
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      aliases = generator.generate(path + listOf("aliases"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+        regex = "^[a-z]+\$",
+        annotations = emptyList<Map<String, Any>>()
+      )) }))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Board
+import community.flock.wirespec.generated.model.Tag
+import community.flock.wirespec.generated.model.Score
+import community.flock.wirespec.generated.model.Label
+
+object BoardGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): Board =
+    Board(
+      owner = generator.generate(path + listOf("owner"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p1 -> TagGenerator.generate(generator, p1) },
+        type = typeOf<Tag>()
+      )) })),
+      tags = generator.generate(path + listOf("tags"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldArray(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p2 -> TagGenerator.generate(generator, p2) },
+        type = typeOf<Tag>()
+      )) })) })),
+      slots = generator.generate(path + listOf("slots"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldArray(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldNullable(generate = { p2 -> generator.generate(p2, Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p3 -> TagGenerator.generate(generator, p3) },
+        type = typeOf<Tag>()
+      )) })) })) })),
+      grid = generator.generate(path + listOf("grid"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldArray(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p2 -> ScoreGenerator.generate(generator, p2) },
+        type = typeOf<Score>()
+      )) })) })),
+      tagsByKey = generator.generate(path + listOf("tagsByKey"), Wirespec.GeneratorFieldDict(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p1 -> TagGenerator.generate(generator, p1) },
+        type = typeOf<Tag>()
+      )) })),
+      scoresByKey = generator.generate(path + listOf("scoresByKey"), Wirespec.GeneratorFieldDict(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldArray(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p2 -> ScoreGenerator.generate(generator, p2) },
+        type = typeOf<Score>()
+      )) })) })),
+      label = generator.generate(path + listOf("label"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+        annotations = mapOf("name" to emptyList<Map<String, Any>>(), "code" to emptyList<Map<String, Any>>(), "aliases" to emptyList<Map<String, Any>>()),
+        generate = { p1 -> LabelGenerator.generate(generator, p1) },
+        type = typeOf<Label>()
+      )) })),
+      labels = generator.generate(path + listOf("labels"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldArray(generate = { p1 -> generator.generate(p1, Wirespec.GeneratorFieldShape(
+        annotations = mapOf("name" to emptyList<Map<String, Any>>(), "code" to emptyList<Map<String, Any>>(), "aliases" to emptyList<Map<String, Any>>()),
+        generate = { p2 -> LabelGenerator.generate(generator, p2) },
+        type = typeOf<Label>()
+      )) })) })),
+      labelsByKey = generator.generate(path + listOf("labelsByKey"), Wirespec.GeneratorFieldDict(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+        annotations = mapOf("name" to emptyList<Map<String, Any>>(), "code" to emptyList<Map<String, Any>>(), "aliases" to emptyList<Map<String, Any>>()),
+        generate = { p1 -> LabelGenerator.generate(generator, p1) },
+        type = typeOf<Label>()
+      )) })),
+      limit = generator.generate(path + listOf("limit"), Wirespec.GeneratorFieldInteger64(
+        min = 1L,
+        max = 10L,
+        annotations = emptyList<Map<String, Any>>()
+      )),
+      ratios = generator.generate(path + listOf("ratios"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldNumber64(
+        min = 0.0,
+        max = 1.0,
+        annotations = emptyList<Map<String, Any>>()
+      )) }))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.TreeNode
+import community.flock.wirespec.generated.model.Tag
+
+object TreeNodeGenerator {
+  fun generate(generator: Wirespec.Generator, path: List<String>): TreeNode =
+    TreeNode(
+      tag = generator.generate(path + listOf("tag"), Wirespec.GeneratorFieldShape(
+        annotations = emptyMap<String, List<Map<String, Any>>>(),
+        generate = { p0 -> TagGenerator.generate(generator, p0) },
+        type = typeOf<Tag>()
+      )),
+      children = generator.generate(path + listOf("children"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+        annotations = mapOf("tag" to emptyList<Map<String, Any>>(), "children" to emptyList<Map<String, Any>>()),
+        generate = { p1 -> TreeNodeGenerator.generate(generator, p1) },
+        type = typeOf<TreeNode>()
+      )) }))
+    )
+}

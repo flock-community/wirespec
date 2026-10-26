@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapEntries
 import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.IfExpression
@@ -510,6 +511,7 @@ public object ScalaGenerator :
         is IfExpression -> "${emit()}\n".indentCode(indent)
         is MapExpression -> "${emit()}\n".indentCode(indent)
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
+        is FlatMapEntries -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
         is Lambda -> "${emit()}\n".indentCode(indent)
@@ -555,7 +557,7 @@ public object ScalaGenerator :
         is TypeDescriptor -> emitTypeDescriptor()
         is Cast -> "${expression.emit()}.asInstanceOf[${targetType.emitGenerics()}]"
         is NullCheck -> "(${expression.emit()}.map(it => ${body.emit()})${alternative?.emit()?.let { ".getOrElse($it)" } ?: ""})"
-        is NullableMap -> "(${expression.emit()}.map(it => ${body.emit()}).getOrElse(${alternative.emit()}))"
+        is NullableMap -> "(${expression.emit()}.map(${variable.camelCase()} => ${body.emit()}).getOrElse(${alternative.emit()}))"
         is NullableOf -> "Some(${expression.emit()})"
         is NullableGet -> "${expression.emit()}.get"
         is Constraint.RegexMatch -> "\"\"\"${pattern}\"\"\".r.findFirstIn(${value.emit()}).isDefined"
@@ -577,6 +579,7 @@ public object ScalaGenerator :
         is IfExpression -> "if (${condition.emit()}) ${thenExpr.emit()} else ${elseExpr.emit()}"
         is MapExpression -> "${receiver.emit()}.map(${variable.camelCase()} => ${body.emit()}).toList"
         is FlatMapIndexed -> "${receiver.emit()}.zipWithIndex.flatMap { case (${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emit()} }"
+        is FlatMapEntries -> "${receiver.emit()}.toList.flatMap { case (${keyVar.camelCase()}, ${valueVar.camelCase()}) => ${body.emit()} }"
         is ListConcat -> when {
             lists.isEmpty() -> "List.empty[String]"
             lists.size == 1 -> lists.single().emit()

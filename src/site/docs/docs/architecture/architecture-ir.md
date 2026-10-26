@@ -45,7 +45,7 @@ The converter produces a **shared model** — a single file called `Wirespec` th
 
 The shared model is wrapped in a `Wirespec` namespace and defines:
 
-- **Core interfaces** — `Model`, `Enum`, `Refined<T>`, `Endpoint`, `Channel`, and `Rpc`. Every generated definition implements one of these. For example, all generated types implement `Wirespec.Model` which provides a `validate` function.
+- **Core interfaces** — `Model`, `Enum`, `Refined<T>`, `Endpoint`, `Channel`, and `Rpc`. Every generated definition implements one of these. For example, all generated types implement `Wirespec.Shape`, which declares a `validate` function.
 - **HTTP primitives** — A `Method` enum (`GET`, `POST`, etc.) and typed `Request<T>` / `Response<T>` interfaces that describe HTTP messages with path, queries, headers, and body.
 - **Serialization contracts** — Serializer and deserializer interfaces for three layers: body (binary), path (string), and params (string lists). These combine into a unified `Serialization` interface.
 - **Raw transport** — `RawRequest` and `RawResponse` structs for untyped HTTP messages, and a `Transportation` interface that users implement to plug in their HTTP client.
@@ -54,7 +54,7 @@ Each language emitter transforms the shared model through the same Transform pip
 
 ## Type
 
-A Wirespec `type` is converted into a struct that implements `Wirespec.Model`. Each field in the Wirespec shape becomes a field in the struct, and a `validate` function is generated that returns a list of validation errors.
+A Wirespec `type` is converted into a struct that implements `Wirespec.Shape`. Each field in the Wirespec shape becomes a field in the struct. The `validate` function, which returns a list of validation errors, is added afterwards by the `ValidateExtension` (see below).
 
 ```wirespec
 type Address {
@@ -66,16 +66,15 @@ type Address {
 
 ```
 File("Address") {
-    Struct("Address") implements Wirespec.Model {
+    Struct("Address") implements Wirespec.Shape {
         Field("street", String)
         Field("number", Integer)
         Field("tags",   Array(String))
-        Function("validate") → Array(String)
     }
 }
 ```
 
-When a type has fields that reference other types or refined types, the `validate` function is extended with nested validation — calling `validate` on those fields and collecting the results with field path prefixes.
+Every IR emitter applies the `ValidateExtension` to the complete IR before any other [IR extension](./architecture-plugins.md#ir-extensions). It gives each model struct a `Function("validate") → Array(String)` that checks every refined type and constrained primitive the model holds, at any depth inside lists, dicts, nullables and other models, and collects the path of each invalid value, such as `address.postalCode`, `tags[1]` or `labels[home]`. Because the extension sees the whole AST, a model can reference definitions from any module. The function follows the language: a method on the model, taking `self` in Python and Rust, or a `validate<Model>(obj)` function next to a TypeScript type.
 
 ## Enum
 
@@ -255,7 +254,7 @@ Because transforms recurse automatically, a single type rename propagates throug
 
 ## Example: Transform and Generate
 
-Given the IR for the `Address` type shown above, a Java emitter transforms it to match Java conventions:
+Given the IR for the `Address` type shown above, with the `validate` function the `ValidateExtension` adds, a Java emitter transforms it to match Java conventions:
 
 ```
 File("Address") {

@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapEntries
 import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.IfExpression
@@ -54,6 +55,7 @@ import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.substitute
 import community.flock.wirespec.compiler.core.ir.Function as AstFunction
 
 public object PythonGenerator :
@@ -383,6 +385,7 @@ public object PythonGenerator :
         is IfExpression -> "${emit()}\n".indentCode(indent)
         is MapExpression -> "${emit()}\n".indentCode(indent)
         is FlatMapIndexed -> "${emit()}\n".indentCode(indent)
+        is FlatMapEntries -> "${emit()}\n".indentCode(indent)
         is ListConcat -> "${emit()}\n".indentCode(indent)
         is StringTemplate -> "${emit()}\n".indentCode(indent)
         is Lambda -> "${emit()}\n".indentCode(indent)
@@ -438,13 +441,13 @@ public object PythonGenerator :
         is Cast -> expression.emit()
         is NullCheck -> {
             val exprStr = expression.emit()
-            val bodyStr = body.emitWithInlinedIt(exprStr)
+            val bodyStr = body.substitute(Name.of("it"), RawExpression(exprStr)).emit()
             val altStr = alternative?.emit() ?: "None"
             "($bodyStr if $exprStr is not None else $altStr)"
         }
         is NullableMap -> {
             val exprStr = expression.emit()
-            val bodyStr = body.emitWithInlinedIt(exprStr)
+            val bodyStr = body.substitute(variable, RawExpression(exprStr)).emit()
             val altStr = alternative.emit()
             "($bodyStr if $exprStr is not None else $altStr)"
         }
@@ -475,6 +478,7 @@ public object PythonGenerator :
             }
         }
         is FlatMapIndexed -> "[item for ${indexVar.camelCase()}, ${elementVar.camelCase()} in enumerate(${receiver.emit()}) for item in ${body.emit()}]"
+        is FlatMapEntries -> "[item for ${keyVar.camelCase()}, ${valueVar.camelCase()} in ${receiver.emit()}.items() for item in ${body.emit()}]"
         is ListConcat -> when {
             lists.isEmpty() -> "[]"
             lists.size == 1 -> lists.single().emit()
@@ -490,49 +494,6 @@ public object PythonGenerator :
             val params = parameters.joinToString(", ") { it.name.camelCase() }
             if (params.isEmpty()) "lambda: ${body.emit()}" else "lambda $params: ${body.emit()}"
         }
-    }
-
-    private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {
-        is VariableReference -> if (name.value() == "it") replacement else emit()
-        is FunctionCall -> {
-            val recv = receiver
-            val inlinedArgs = arguments.mapValues { it.value.emitWithInlinedIt(replacement) }
-            if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.${name.value()}(${inlinedArgs.values.joinToString(", ")})"
-            } else {
-                "${name.value()}(${inlinedArgs.map { "${it.key.value()}=${it.value}" }.joinToString(", ")})"
-            }
-        }
-        is FieldCall -> {
-            val receiverStr = receiver?.let { "${it.emitWithInlinedIt(replacement)}." } ?: ""
-            "$receiverStr${field.value()}"
-        }
-        is ArrayIndexCall -> if (caseSensitive) {
-            "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
-        } else {
-            "next((v for k, v in ${receiver.emitWithInlinedIt(replacement)}.items() if k.lower() == ${index.emitWithInlinedIt(replacement)}.lower()), None)"
-        }
-        is EnumValueCall -> "${expression.emitWithInlinedIt(replacement)}.value"
-        is NotExpression -> "not ${expression.emitWithInlinedIt(replacement)}"
-        is IfExpression -> "(${thenExpr.emitWithInlinedIt(replacement)} if ${condition.emitWithInlinedIt(replacement)} else ${elseExpr.emitWithInlinedIt(replacement)})"
-        is MapExpression -> {
-            val recv = receiver
-            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
-                recv.right.emitWithInlinedIt(replacement)
-            } else {
-                "[${body.emitWithInlinedIt(replacement)} for ${variable.camelCase()} in ${receiver.emitWithInlinedIt(replacement)}]"
-            }
-        }
-        is FlatMapIndexed -> "[item for ${indexVar.camelCase()}, ${elementVar.camelCase()} in enumerate(${receiver.emitWithInlinedIt(replacement)}) for item in ${body.emitWithInlinedIt(replacement)}]"
-        is ListConcat -> lists.joinToString(" + ") { it.emitWithInlinedIt(replacement) }
-        is StringTemplate -> "f\"${parts.joinToString("") {
-            when (it) {
-                is StringTemplate.Part.Text -> it.value
-                is StringTemplate.Part.Expr -> "{${it.expression.emitWithInlinedIt(replacement)}}"
-            }
-        }}\""
-        is LiteralList -> emit()
-        else -> emit()
     }
 
     private fun LiteralList.emit(): String {

@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
+import community.flock.wirespec.compiler.test.CompileNestedValidationTest
 import community.flock.wirespec.compiler.test.CompilePartTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
@@ -171,6 +172,13 @@ class ScalaEmitterTest {
         val scala = EmitterFixtures.compileComplexModelTest
 
         CompileComplexModelTest.compiler { ScalaEmitter() } shouldBeRight scala
+    }
+
+    @Test
+    fun compileNestedValidationTest() {
+        val scala = EmitterFixtures.compileNestedValidationTest
+
+        CompileNestedValidationTest.compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test

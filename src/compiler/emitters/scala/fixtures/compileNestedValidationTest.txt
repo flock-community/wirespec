@@ -1,0 +1,224 @@
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class Tag(
+  override val value: String
+) extends Wirespec.Refined[String] {
+  override def validate(): Boolean =
+    """^[a-z]+$""".r.findFirstIn(value).isDefined
+  override def toString(): String =
+    value
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class Score(
+  override val value: Long
+) extends Wirespec.Refined[Long] {
+  override def validate(): Boolean =
+    0 <= value && value <= 100
+  override def toString(): String =
+    value.toString
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class Label(
+  val name: Tag,
+  val code: String,
+  val aliases: List[String]
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    (if (!name.validate()) List("name") else List.empty[String]) ++ (if ("""^[A-Z]{3}$""".r.findFirstIn(code).isDefined) List.empty[String] else List("code")) ++ aliases.zipWithIndex.flatMap { case (el, i) => if ("""^[a-z]+$""".r.findFirstIn(el).isDefined) List.empty[String] else List(s"aliases[${i}]") }
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class Board(
+  val owner: Option[Tag],
+  val tags: Option[List[Tag]],
+  val slots: Option[List[Option[Tag]]],
+  val grid: List[List[Score]],
+  val tagsByKey: Map[String, Tag],
+  val scoresByKey: Map[String, List[Score]],
+  val label: Option[Label],
+  val labels: List[List[Label]],
+  val labelsByKey: Map[String, Label],
+  val limit: Long,
+  val ratios: List[Double]
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    (owner.map(it => if (!it.validate()) List("owner") else List.empty[String]).getOrElse(List.empty[String])) ++ (tags.map(it => it.zipWithIndex.flatMap { case (el1, i1) => if (!el1.validate()) List(s"tags[${i1}]") else List.empty[String] }).getOrElse(List.empty[String])) ++ (slots.map(it => it.zipWithIndex.flatMap { case (el1, i1) => (el1.map(it2 => if (!it2.validate()) List(s"slots[${i1}]") else List.empty[String]).getOrElse(List.empty[String])) }).getOrElse(List.empty[String])) ++ grid.zipWithIndex.flatMap { case (el, i) => el.zipWithIndex.flatMap { case (el1, i1) => if (!el1.validate()) List(s"grid[${i}][${i1}]") else List.empty[String] } } ++ tagsByKey.toList.flatMap { case (k, v) => if (!v.validate()) List(s"tagsByKey[${k}]") else List.empty[String] } ++ scoresByKey.toList.flatMap { case (k, v) => v.zipWithIndex.flatMap { case (el1, i1) => if (!el1.validate()) List(s"scoresByKey[${k}][${i1}]") else List.empty[String] } } ++ (label.map(it => it.validate().map(e => s"label.${e}").toList).getOrElse(List.empty[String])) ++ labels.zipWithIndex.flatMap { case (el, i) => el.zipWithIndex.flatMap { case (el1, i1) => el1.validate().map(e => s"labels[${i}][${i1}].${e}").toList } } ++ labelsByKey.toList.flatMap { case (k, v) => v.validate().map(e => s"labelsByKey[${k}].${e}").toList } ++ (if (1 <= limit && limit <= 10) List.empty[String] else List("limit")) ++ ratios.zipWithIndex.flatMap { case (el, i) => if (0.0 <= el && el <= 1.0) List.empty[String] else List(s"ratios[${i}]") }
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class TreeNode(
+  val tag: Tag,
+  val children: List[TreeNode]
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    (if (!tag.validate()) List("tag") else List.empty[String]) ++ children.zipWithIndex.flatMap { case (el, i) => el.validate().map(e => s"children[${i}].${e}").toList }
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Tag
+
+object TagGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Tag =
+    new Tag(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldString(
+      regex = Some("^[a-z]+$"),
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Score
+
+object ScoreGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Score =
+    new Score(value = generator.generate(path ++ List("value"), new Wirespec.GeneratorFieldInteger64(
+      min = Some(0L),
+      max = Some(100L),
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Label
+import community.flock.wirespec.generated.model.Tag
+
+object LabelGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Label =
+    new Label(
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p0) => TagGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[Tag]
+      )),
+      code = generator.generate(path ++ List("code"), new Wirespec.GeneratorFieldString(
+        regex = Some("^[A-Z]{3}$"),
+        annotations = List.empty[Map[String, Any]]
+      )),
+      aliases = generator.generate(path ++ List("aliases"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldString(
+        regex = Some("^[a-z]+$"),
+        annotations = List.empty[Map[String, Any]]
+      ))))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Board
+import community.flock.wirespec.generated.model.Tag
+import community.flock.wirespec.generated.model.Score
+import community.flock.wirespec.generated.model.Label
+
+object BoardGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Board =
+    new Board(
+      owner = generator.generate(path ++ List("owner"), new Wirespec.GeneratorFieldNullable(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p1) => TagGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[Tag]
+      )))),
+      tags = generator.generate(path ++ List("tags"), new Wirespec.GeneratorFieldNullable(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldArray(generate = (p1) => generator.generate(p1, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p2) => TagGenerator.generate(generator, p2),
+        `type` = scala.reflect.classTag[Tag]
+      )))))),
+      slots = generator.generate(path ++ List("slots"), new Wirespec.GeneratorFieldNullable(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldArray(generate = (p1) => generator.generate(p1, new Wirespec.GeneratorFieldNullable(generate = (p2) => generator.generate(p2, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p3) => TagGenerator.generate(generator, p3),
+        `type` = scala.reflect.classTag[Tag]
+      )))))))),
+      grid = generator.generate(path ++ List("grid"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldArray(generate = (p1) => generator.generate(p1, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p2) => ScoreGenerator.generate(generator, p2),
+        `type` = scala.reflect.classTag[Score]
+      )))))),
+      tagsByKey = generator.generate(path ++ List("tagsByKey"), new Wirespec.GeneratorFieldDict(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p1) => TagGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[Tag]
+      )))),
+      scoresByKey = generator.generate(path ++ List("scoresByKey"), new Wirespec.GeneratorFieldDict(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldArray(generate = (p1) => generator.generate(p1, new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p2) => ScoreGenerator.generate(generator, p2),
+        `type` = scala.reflect.classTag[Score]
+      )))))),
+      label = generator.generate(path ++ List("label"), new Wirespec.GeneratorFieldNullable(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map("name" -> List.empty[Map[String, Any]], "code" -> List.empty[Map[String, Any]], "aliases" -> List.empty[Map[String, Any]]),
+        generate = (p1) => LabelGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[Label]
+      )))),
+      labels = generator.generate(path ++ List("labels"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldArray(generate = (p1) => generator.generate(p1, new Wirespec.GeneratorFieldShape(
+        annotations = Map("name" -> List.empty[Map[String, Any]], "code" -> List.empty[Map[String, Any]], "aliases" -> List.empty[Map[String, Any]]),
+        generate = (p2) => LabelGenerator.generate(generator, p2),
+        `type` = scala.reflect.classTag[Label]
+      )))))),
+      labelsByKey = generator.generate(path ++ List("labelsByKey"), new Wirespec.GeneratorFieldDict(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map("name" -> List.empty[Map[String, Any]], "code" -> List.empty[Map[String, Any]], "aliases" -> List.empty[Map[String, Any]]),
+        generate = (p1) => LabelGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[Label]
+      )))),
+      limit = generator.generate(path ++ List("limit"), new Wirespec.GeneratorFieldInteger64(
+        min = Some(1L),
+        max = Some(10L),
+        annotations = List.empty[Map[String, Any]]
+      )),
+      ratios = generator.generate(path ++ List("ratios"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldNumber64(
+        min = Some(0.0),
+        max = Some(1.0),
+        annotations = List.empty[Map[String, Any]]
+      ))))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.TreeNode
+import community.flock.wirespec.generated.model.Tag
+
+object TreeNodeGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): TreeNode =
+    new TreeNode(
+      tag = generator.generate(path ++ List("tag"), new Wirespec.GeneratorFieldShape(
+        annotations = Map.empty,
+        generate = (p0) => TagGenerator.generate(generator, p0),
+        `type` = scala.reflect.classTag[Tag]
+      )),
+      children = generator.generate(path ++ List("children"), new Wirespec.GeneratorFieldArray(generate = (p0) => generator.generate(p0, new Wirespec.GeneratorFieldShape(
+        annotations = Map("tag" -> List.empty[Map[String, Any]], "children" -> List.empty[Map[String, Any]]),
+        generate = (p1) => TreeNodeGenerator.generate(generator, p1),
+        `type` = scala.reflect.classTag[TreeNode]
+      ))))
+    )
+}

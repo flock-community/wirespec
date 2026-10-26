@@ -11,34 +11,25 @@ import community.flock.wirespec.compiler.core.ir.ErrorStatement
 import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
-import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
 import community.flock.wirespec.compiler.core.ir.FunctionCall
-import community.flock.wirespec.compiler.core.ir.IfExpression
-import community.flock.wirespec.compiler.core.ir.ListConcat
 import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.LiteralList
 import community.flock.wirespec.compiler.core.ir.LiteralMap
-import community.flock.wirespec.compiler.core.ir.MapExpression
 import community.flock.wirespec.compiler.core.ir.Name
-import community.flock.wirespec.compiler.core.ir.NotExpression
 import community.flock.wirespec.compiler.core.ir.NullCheck
 import community.flock.wirespec.compiler.core.ir.NullLiteral
 import community.flock.wirespec.compiler.core.ir.NullableEmpty
 import community.flock.wirespec.compiler.core.ir.NullableMap
 import community.flock.wirespec.compiler.core.ir.NullableOf
 import community.flock.wirespec.compiler.core.ir.Precision
-import community.flock.wirespec.compiler.core.ir.ReturnStatement
-import community.flock.wirespec.compiler.core.ir.StringTemplate
 import community.flock.wirespec.compiler.core.ir.Type
 import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.file
 import community.flock.wirespec.compiler.core.ir.`interface`
-import community.flock.wirespec.compiler.core.ir.transformMatchingElements
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
-import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.Constraint as LanguageConstraint
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
@@ -272,7 +263,8 @@ public fun PackageName.convert(): File = file("Wirespec") {
             // `generate` takes the path-for-this-element and returns a single
             // element; the seeded generator decides how many elements to put in
             // the resulting List<T> and what indices to attach to their paths.
-            typeParam(type("T"))
+            // T is unbounded (`Any?`) so an element can be nullable.
+            typeParam(type("T"), Type.Nullable(Type.Any))
             implements(type("GeneratorField", list(type("T"))))
             field("generate", Type.Function(listOf(list(string)), type("T")))
         }
@@ -291,7 +283,8 @@ public fun PackageName.convert(): File = file("Wirespec") {
         struct("GeneratorFieldDict") {
             // `generate` takes the path-for-this-entry and returns a single
             // value; the seeded generator decides keys and entry count.
-            typeParam(type("V"))
+            // V is unbounded (`Any?`) so a value can be nullable.
+            typeParam(type("V"), Type.Nullable(Type.Any))
             implements(type("GeneratorField", dict(string, type("V"))))
             field("generate", Type.Function(listOf(list(string)), type("V")))
         }
@@ -379,186 +372,6 @@ public fun TypeWirespec.convert(): File = file(identifier.toName()) {
                 type = it.reference.convert(),
                 initializer = it.defaultValue?.convert(it.reference),
             )
-        }
-        function("validate", isOverride = true) {
-            returnType(Type.Array(Type.String))
-            returns(LiteralList(emptyList(), Type.String))
-        }
-    }
-}
-
-public data class FieldValidation(
-    val fieldName: Name,
-    val fieldPath: String,
-    val kind: Kind,
-    val isNullable: Boolean,
-    val typeName: String,
-    val elementIsNullable: Boolean = false,
-)
-
-public enum class Kind { MODEL, REFINED, MODEL_ARRAY, REFINED_ARRAY }
-
-public fun TypeWirespec.convertWithValidation(module: Module): File {
-    val fieldValidations = classifyValidatableFields(module)
-    val file = convert()
-    return if (fieldValidations.isNotEmpty()) {
-        file.transformMatchingElements { fn: community.flock.wirespec.compiler.core.ir.Function ->
-            if (fn.name == Name.of("validate")) {
-                fn.copy(body = listOf(ReturnStatement(buildValidateBody(fieldValidations))))
-            } else {
-                fn
-            }
-        }
-    } else {
-        file
-    }
-}
-
-private fun buildValidateBody(validations: List<FieldValidation>): Expression {
-    if (validations.isEmpty()) return LiteralList(emptyList(), Type.String)
-    val exprs = validations.map { it.toExpression() }
-    return if (exprs.size == 1) exprs.single() else ListConcat(exprs)
-}
-
-private fun FieldValidation.toExpression(): Expression {
-    val fieldRef: Expression = FieldCall(field = fieldName)
-    // When nullable, NullableMap uses "it" as the lambda variable for the unwrapped value
-    val valueRef: Expression = if (isNullable) VariableReference(Name.of("it")) else fieldRef
-    // typeArguments carries the validated type name (used by TypeScript emitter to derive standalone function name)
-    val validateCall = FunctionCall(
-        receiver = valueRef,
-        name = Name.of("validate"),
-        typeArguments = listOf(Type.Custom(typeName)),
-    )
-
-    fun stringTemplate(vararg parts: StringTemplate.Part) = StringTemplate(parts.toList())
-    fun text(value: String) = StringTemplate.Part.Text(value)
-    fun expr(expression: Expression) = StringTemplate.Part.Expr(expression)
-
-    val body: Expression = when (kind) {
-        Kind.MODEL -> MapExpression(
-            receiver = validateCall,
-            variable = Name.of("e"),
-            body = stringTemplate(text("$fieldPath."), expr(VariableReference(Name.of("e")))),
-        )
-        Kind.REFINED -> IfExpression(
-            condition = NotExpression(validateCall),
-            thenExpr = LiteralList(listOf(Literal(fieldPath, Type.String)), Type.String),
-            elseExpr = LiteralList(emptyList(), Type.String),
-        )
-        Kind.MODEL_ARRAY -> FlatMapIndexed(
-            receiver = valueRef,
-            indexVar = Name.of("i"),
-            elementVar = Name.of("el"),
-            body = MapExpression(
-                receiver = FunctionCall(
-                    receiver = VariableReference(Name.of("el")),
-                    name = Name.of("validate"),
-                    typeArguments = listOf(Type.Custom(typeName)),
-                ),
-                variable = Name.of("e"),
-                body = stringTemplate(text("$fieldPath["), expr(VariableReference(Name.of("i"))), text("]."), expr(VariableReference(Name.of("e")))),
-            ),
-        )
-        Kind.REFINED_ARRAY -> FlatMapIndexed(
-            receiver = valueRef,
-            indexVar = Name.of("i"),
-            elementVar = Name.of("el"),
-            body = IfExpression(
-                condition = NotExpression(
-                    FunctionCall(
-                        receiver = VariableReference(Name.of("el")),
-                        name = Name.of("validate"),
-                        typeArguments = listOf(Type.Custom(typeName)),
-                    ),
-                ),
-                thenExpr = LiteralList(
-                    listOf(stringTemplate(text("$fieldPath["), expr(VariableReference(Name.of("i"))), text("]"))),
-                    Type.String,
-                ),
-                elseExpr = LiteralList(emptyList(), Type.String),
-            ),
-        )
-    }
-
-    return if (isNullable) {
-        NullableMap(
-            expression = fieldRef,
-            body = body,
-            alternative = LiteralList(emptyList(), Type.String),
-        )
-    } else {
-        body
-    }
-}
-
-public fun TypeWirespec.classifyValidatableFields(module: Module): List<FieldValidation> = buildList {
-    for (field in shape.fields) {
-        val fieldName = field.identifier.toName()
-        val fieldPath = field.identifier.value
-        val ref = field.reference
-        val isNullable = ref.isNullable
-        when (ref) {
-            is ReferenceWirespec.Custom -> {
-                val typeName = ref.value
-                val def = module.statements.firstOrNull {
-                    it.identifier.value == typeName
-                }
-                when (def) {
-                    is TypeWirespec -> add(
-                        FieldValidation(
-                            fieldName = fieldName,
-                            fieldPath = fieldPath,
-                            kind = Kind.MODEL,
-                            isNullable = isNullable,
-                            typeName = typeName,
-                        ),
-                    )
-                    is RefinedWirespec -> add(
-                        FieldValidation(
-                            fieldName = fieldName,
-                            fieldPath = fieldPath,
-                            kind = Kind.REFINED,
-                            isNullable = isNullable,
-                            typeName = typeName,
-                        ),
-                    )
-                    else -> {} // enum, union, etc. - skip
-                }
-            }
-            is ReferenceWirespec.Iterable -> {
-                val inner = ref.reference
-                if (inner is ReferenceWirespec.Custom) {
-                    val typeName = inner.value
-                    val def = module.statements.firstOrNull {
-                        it.identifier.value == typeName
-                    }
-                    when (def) {
-                        is TypeWirespec -> add(
-                            FieldValidation(
-                                fieldName = fieldName,
-                                fieldPath = fieldPath,
-                                kind = Kind.MODEL_ARRAY,
-                                isNullable = isNullable,
-                                typeName = typeName,
-                                elementIsNullable = inner.isNullable,
-                            ),
-                        )
-                        is RefinedWirespec -> add(
-                            FieldValidation(
-                                fieldName = fieldName,
-                                fieldPath = fieldPath,
-                                kind = Kind.REFINED_ARRAY,
-                                isNullable = isNullable,
-                                typeName = typeName,
-                                elementIsNullable = inner.isNullable,
-                            ),
-                        )
-                        else -> {}
-                    }
-                }
-            }
-            else -> {}
         }
     }
 }

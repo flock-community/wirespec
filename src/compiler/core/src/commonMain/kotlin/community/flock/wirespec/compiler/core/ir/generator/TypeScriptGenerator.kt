@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapEntries
 import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.IfExpression
@@ -56,6 +57,7 @@ import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.ir.forEachElement
+import community.flock.wirespec.compiler.core.ir.substitute
 import community.flock.wirespec.compiler.core.ir.Function as AstFunction
 
 public object TypeScriptGenerator :
@@ -393,7 +395,7 @@ public object TypeScriptGenerator :
                 body = renameVariables(expr.body, renames),
                 alternative = expr.alternative?.let { renameVariables(it, renames) },
             ) as T
-            is NullableMap -> NullableMap(
+            is NullableMap -> expr.copy(
                 expression = renameVariables(expr.expression, renames),
                 body = renameVariables(expr.body, renames),
                 alternative = renameVariables(expr.alternative, renames),
@@ -584,6 +586,7 @@ public object TypeScriptGenerator :
         is IfExpression -> "${emit()};\n".indentCode(indent)
         is MapExpression -> "${emit()};\n".indentCode(indent)
         is FlatMapIndexed -> "${emit()};\n".indentCode(indent)
+        is FlatMapEntries -> "${emit()};\n".indentCode(indent)
         is ListConcat -> "${emit()};\n".indentCode(indent)
         is StringTemplate -> "${emit()};\n".indentCode(indent)
         is Lambda -> "${emit()};\n".indentCode(indent)
@@ -631,13 +634,13 @@ public object TypeScriptGenerator :
             // When expression might be undefined (e.g. case-insensitive header lookup),
             // add non-null assertion for the inlined replacement in the body
             val bodyReplacement = if (expression is ArrayIndexCall && !expression.caseSensitive) "$exprStr!" else exprStr
-            val bodyStr = body.emitWithInlinedIt(bodyReplacement)
+            val bodyStr = body.substitute(Name.of("it"), RawExpression(bodyReplacement)).emit()
             val altStr = alternative?.emit() ?: "undefined"
             "$exprStr != null ? $bodyStr : $altStr"
         }
         is NullableMap -> {
             val exprStr = expression.emit()
-            val bodyStr = body.emitWithInlinedIt(exprStr)
+            val bodyStr = body.substitute(variable, RawExpression(exprStr)).emit()
             val altStr = alternative.emit()
             "$exprStr != null ? $bodyStr : $altStr"
         }
@@ -668,6 +671,7 @@ public object TypeScriptGenerator :
             }
         }
         is FlatMapIndexed -> "${receiver.emit()}.flatMap((${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emit()})"
+        is FlatMapEntries -> "Object.entries(${receiver.emit()}).flatMap(([${keyVar.camelCase()}, ${valueVar.camelCase()}]) => ${body.emit()})"
         is ListConcat -> when {
             lists.isEmpty() -> "[] as string[]"
             lists.size == 1 -> lists.single().emit()
@@ -683,46 +687,6 @@ public object TypeScriptGenerator :
             val params = parameters.joinToString(", ") { "${it.name.camelCase()}: ${it.type.emit()}" }
             "($params) => ${body.emit()}"
         }
-    }
-
-    private fun Expression.emitWithInlinedIt(replacement: String): String = when (this) {
-        is VariableReference -> if (name.value() == "it") replacement else emit()
-        is FunctionCall -> {
-            val recv = receiver
-            val inlinedArgs = arguments.mapValues { it.value.emitWithInlinedIt(replacement) }
-            if (recv != null) {
-                "${recv.emitWithInlinedIt(replacement)}.${name.value()}(${inlinedArgs.values.joinToString(", ")})"
-            } else {
-                "${name.value()}(${inlinedArgs.values.joinToString(", ")})"
-            }
-        }
-        is FieldCall -> tsFieldAccess(receiver?.emitWithInlinedIt(replacement), field.value())
-        is ArrayIndexCall -> if (caseSensitive) {
-            "${receiver.emitWithInlinedIt(replacement)}[${index.emitWithInlinedIt(replacement)}]"
-        } else {
-            "Object.entries(${receiver.emitWithInlinedIt(replacement)}).find(([k]) => k.toLowerCase() === ${index.emitWithInlinedIt(replacement)}.toLowerCase())?.[1]"
-        }
-        is EnumValueCall -> expression.emitWithInlinedIt(replacement)
-        is NotExpression -> "!${expression.emitWithInlinedIt(replacement)}"
-        is IfExpression -> "(${condition.emitWithInlinedIt(replacement)} ? ${thenExpr.emitWithInlinedIt(replacement)} : ${elseExpr.emitWithInlinedIt(replacement)})"
-        is MapExpression -> {
-            val recv = receiver
-            if (recv is BinaryOp && recv.operator == BinaryOp.Operator.UNTIL) {
-                recv.right.emitWithInlinedIt(replacement)
-            } else {
-                "${receiver.emitWithInlinedIt(replacement)}.map(${variable.camelCase()} => ${body.emitWithInlinedIt(replacement)})"
-            }
-        }
-        is FlatMapIndexed -> "${receiver.emitWithInlinedIt(replacement)}.flatMap((${elementVar.camelCase()}, ${indexVar.camelCase()}) => ${body.emitWithInlinedIt(replacement)})"
-        is ListConcat -> "[${lists.joinToString(", ") { "...${it.emitWithInlinedIt(replacement)}" }}]"
-        is StringTemplate -> "`${parts.joinToString("") {
-            when (it) {
-                is StringTemplate.Part.Text -> it.value
-                is StringTemplate.Part.Expr -> "\${${it.expression.emitWithInlinedIt(replacement)}}"
-            }
-        }}`"
-        is LiteralList -> emit()
-        else -> emit()
     }
 
     private fun LiteralList.emit(): String {

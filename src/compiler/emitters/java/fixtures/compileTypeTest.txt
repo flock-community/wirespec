@@ -44,10 +44,10 @@ public interface RequestGenerator {
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )))),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("body")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldDict<>((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldArray<>((p2) -> generator.generate(p2, new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("body")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> generator.generate(p0, new Wirespec.GeneratorFieldDict<>((p1) -> generator.generate(p1, new Wirespec.GeneratorFieldNullable<>((p2) -> generator.generate(p2, new Wirespec.GeneratorFieldArray<>((p3) -> generator.generate(p3, new Wirespec.GeneratorFieldNullable<>((p4) -> generator.generate(p4, new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
-      ))))))))
+      ))))))))))))
     );
   }
 }

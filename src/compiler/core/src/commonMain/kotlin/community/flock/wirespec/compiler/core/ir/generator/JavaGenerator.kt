@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.FlatMapEntries
 import community.flock.wirespec.compiler.core.ir.FlatMapIndexed
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.IfExpression
@@ -59,6 +60,7 @@ import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.Visibility
 import community.flock.wirespec.compiler.core.ir.annotatedFields
 import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.substitute
 import community.flock.wirespec.compiler.core.ir.Function as AstFunction
 
 public object JavaGenerator :
@@ -437,6 +439,7 @@ public object JavaGenerator :
         is IfExpression -> "${emit()};\n".indentCode(indent)
         is MapExpression -> "${emit()};\n".indentCode(indent)
         is FlatMapIndexed -> "${emit()};\n".indentCode(indent)
+        is FlatMapEntries -> "${emit()};\n".indentCode(indent)
         is ListConcat -> "${emit()};\n".indentCode(indent)
         is StringTemplate -> "${emit()};\n".indentCode(indent)
         is Lambda -> "${emit()};\n".indentCode(indent)
@@ -510,7 +513,7 @@ public object JavaGenerator :
                 is ErrorStatement -> "orElseThrow(() -> new IllegalStateException(${alt.message.emit()}))"
                 else -> "orElse(${alternative.emit()})"
             }
-            "${expression.emit()}.map(it -> ${body.emit()}).$orElse"
+            "${expression.emit()}.map(${variable.camelCase()} -> ${body.emit()}).$orElse"
         }
         is NullableOf -> "java.util.Optional.of(${expression.emit()})"
         is NullableGet -> "${expression.emit()}.get()"
@@ -542,8 +545,13 @@ public object JavaGenerator :
         }
         is FlatMapIndexed -> {
             val recv = receiver.emit()
-            val bodyWithSubstitution = body.emitWithSubstitution(elementVar, "$recv.get(${indexVar.camelCase()})")
-            "java.util.stream.IntStream.range(0, $recv.size()).mapToObj(${indexVar.camelCase()} -> $bodyWithSubstitution).flatMap(java.util.Collection::stream).toList()"
+            val element = body.substitute(elementVar, RawExpression("$recv.get(${indexVar.camelCase()})")).emit()
+            "java.util.stream.IntStream.range(0, $recv.size()).mapToObj(${indexVar.camelCase()} -> $element).flatMap(java.util.Collection::stream).toList()"
+        }
+        is FlatMapEntries -> {
+            val recv = receiver.emit()
+            val entry = body.substitute(valueVar, RawExpression("$recv.get(${keyVar.camelCase()})")).emit()
+            "$recv.keySet().stream().map(${keyVar.camelCase()} -> $entry).flatMap(java.util.Collection::stream).toList()"
         }
         is ListConcat -> when {
             lists.isEmpty() -> "java.util.List.of()"
@@ -560,40 +568,6 @@ public object JavaGenerator :
             val params = parameters.joinToString(", ") { it.name.camelCase().sanitize() }
             "($params) -> ${body.emit()}"
         }
-    }
-
-    private fun Expression.emitWithSubstitution(varName: Name, replacement: String): String = when (this) {
-        is VariableReference -> if (name == varName) replacement else emit()
-        is FunctionCall -> {
-            val recv = receiver?.emitWithSubstitution(varName, replacement)
-            val args = arguments.values.map { it.emitWithSubstitution(varName, replacement) }
-            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emitGenerics() }}>" else ""
-            val receiverStr = recv?.let { "$it." } ?: ""
-            "$receiverStr$typeArgsStr${name.value().sanitize()}(${args.joinToString(", ")})"
-        }
-        is FieldCall -> {
-            val recv = receiver?.emitWithSubstitution(varName, replacement) ?: ""
-            val dot = if (recv.isNotEmpty()) "." else ""
-            "$recv$dot${field.value().sanitize()}()"
-        }
-        is NotExpression -> "!${expression.emitWithSubstitution(varName, replacement)}"
-        is IfExpression -> "(${condition.emitWithSubstitution(varName, replacement)} ? ${thenExpr.emitWithSubstitution(varName, replacement)} : ${elseExpr.emitWithSubstitution(varName, replacement)})"
-        is MapExpression -> "${receiver.emitWithSubstitution(varName, replacement)}.stream().map(${variable.camelCase()} -> ${body.emitWithSubstitution(varName, replacement)}).toList()"
-        is LiteralList -> {
-            if (values.isEmpty()) {
-                "java.util.List.<${type.emitGenerics()}>of()"
-            } else {
-                val list = values.map { it.emitWithSubstitution(varName, replacement) }.joinToString(", ")
-                "java.util.List.of($list)"
-            }
-        }
-        is StringTemplate -> parts.joinToString(" + ") {
-            when (it) {
-                is StringTemplate.Part.Text -> "\"${it.value}\""
-                is StringTemplate.Part.Expr -> it.expression.emitWithSubstitution(varName, replacement)
-            }
-        }
-        else -> emit()
     }
 
     private fun LiteralList.emit(): String {

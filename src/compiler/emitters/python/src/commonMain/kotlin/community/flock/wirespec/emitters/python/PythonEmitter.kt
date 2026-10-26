@@ -22,11 +22,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
-import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
-import community.flock.wirespec.compiler.core.ir.converter.convertWithValidation
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.File
@@ -43,7 +41,6 @@ import community.flock.wirespec.compiler.core.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.ir.generator.PythonGenerator
 import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
-import community.flock.wirespec.compiler.core.ir.transformer.injectSelfReceiverToValidate
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
@@ -199,9 +196,7 @@ public open class PythonEmitter(
     override fun emit(type: Type, module: Module): File {
         val typeImports = type.importReferences().distinctBy { it.value }
             .map { import(".${it.value}", it.value) }
-        val fieldNames = type.shape.fields.map { it.identifier.value }.toSet()
-        return type.convertWithValidation(module)
-            .injectSelfReceiverToValidate(fieldNames)
+        return type.convert()
             .sanitizeNames(sanitizationConfig)
             .prependImports(typeImports.takeIf { it.isNotEmpty() })
     }

@@ -59,7 +59,7 @@ internal data class KotestFieldUnion(
     override val annotations: List<Map<String, Any>>,
 ) : KotestLeafField<String>
 
-internal data class KotestFieldArray<T : Any>(
+internal data class KotestFieldArray<T>(
     val generate: (List<String>) -> T,
 ) : KotestField<List<T>>
 
@@ -73,6 +73,6 @@ internal data class KotestFieldShape<T : Any>(
     val type: KType,
 ) : KotestField<T>
 
-internal data class KotestFieldDict<V : Any>(
+internal data class KotestFieldDict<V>(
     val generate: (List<String>) -> V,
 ) : KotestField<Map<String, V>>
