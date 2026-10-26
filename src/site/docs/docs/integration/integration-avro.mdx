@@ -43,9 +43,7 @@ The `AvroExtension` is bundled with every Wirespec plugin as `Avro`, for the Jav
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.build.directory}/generated-sources</output>
-                        <languages>
-                            <language>Java</language>
-                        </languages>
+                        <language>Java</language>
                         <extensionClasses>
                             <extensionClass>Avro</extensionClass>
                         </extensionClasses>
@@ -80,9 +78,7 @@ The `AvroExtension` is bundled with every Wirespec plugin as `Avro`, for the Jav
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.build.directory}/generated-sources</output>
-                        <languages>
-                            <language>Kotlin</language>
-                        </languages>
+                        <language>Kotlin</language>
                         <extensionClasses>
                             <extensionClass>Avro</extensionClass>
                         </extensionClasses>
@@ -111,7 +107,7 @@ The `AvroExtension` is bundled with every Wirespec plugin as `Avro`, for the Jav
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
-            languages = listOf(community.flock.wirespec.plugin.Language.Java)
+            language = community.flock.wirespec.plugin.Language.Java
             extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
         }
         ```
@@ -146,7 +142,7 @@ The `AvroExtension` is bundled with every Wirespec plugin as `Avro`, for the Jav
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated-sources")
             packageName = "community.flock.wirespec.generated"
-            languages = listOf(community.flock.wirespec.plugin.Language.Kotlin)
+            language = community.flock.wirespec.plugin.Language.Kotlin
             extensionClasses = listOf(community.flock.wirespec.integration.avro.extension.AvroExtension::class.java)
         }
         ```

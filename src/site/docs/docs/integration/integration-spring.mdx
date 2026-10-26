@@ -51,9 +51,7 @@ by class in Gradle; the CLI takes it as `-e SpringMappingAnnotations`.
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.build.directory}/generated-sources</output>
-                        <languages>
-                            <language>Java</language>
-                        </languages>
+                        <language>Java</language>
                         <extensionClasses>
                             <extensionClass>SpringMappingAnnotations</extensionClass>
                         </extensionClasses>
@@ -82,7 +80,7 @@ by class in Gradle; the CLI takes it as `-e SpringMappingAnnotations`.
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
-            languages = listOf(Language.Java)
+            language = Language.Java
             extensionClasses = listOf(community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension::class.java)
         }
         ```

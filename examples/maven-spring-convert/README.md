@@ -19,9 +19,7 @@
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.kotlin.v2</packageName>
                 <format>OpenAPIV2</format>
-                <languages>
-                    <language>Kotlin</language>
-                </languages>
+                <language>Kotlin</language>
                 <shared>true</shared>
             </configuration>
         </execution>
@@ -35,9 +33,7 @@
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.kotlin.v3</packageName>
                 <format>OpenAPIV3</format>
-                <languages>
-                    <language>Kotlin</language>
-                </languages>
+                <language>Kotlin</language>
                 <shared>false</shared>
             </configuration>
         </execution>
@@ -51,9 +47,7 @@
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.java.v2</packageName>
                 <format>OpenAPIV2</format>
-                <languages>
-                    <language>Java</language>
-                </languages>
+                <language>Java</language>
                 <shared>false</shared>
             </configuration>
         </execution>
@@ -67,9 +61,7 @@
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.java.v3</packageName>
                 <format>OpenAPIV3</format>
-                <languages>
-                    <language>Java</language>
-                </languages>
+                <language>Java</language>
                 <shared>false</shared>
             </configuration>
         </execution>

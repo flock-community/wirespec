@@ -16,7 +16,7 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 
 - **input:** Path to the input Wirespec file or directory.
 - **output:** Path to the output directory where the generated code will be placed.
-- **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`).
+- **language:** The target language for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`). A run generates one language: run the plugin once per language to generate several.
 - **package name:** The package name for the generated code.
 - **share:** A flag to indicate whether shared code should be emitted.
 - **strict:** A flag to enable strict mode during compilation.
@@ -58,8 +58,8 @@ The defaults in a Wirespec file are written by you, so compile never drops one w
 - **Invalid defaults** are always a compile error, also with ignore defaults. Examples are a value of the wrong type,
   a value outside the field's bounds, an entry the enum does not have, or a default on an endpoint query or header.
   See [Validation](../language/types.mdx#validation).
-- **Languages without default support** fail when the spec has defaults. There is one error per language and file, and
-  it names every field with a default:
+- **Languages without default support** fail when the spec has defaults. There is one error per file, and it names
+  every field with a default:
 
   ```
   Java does not support default values, but these fields have one: Settings.name, Settings.retries. Remove the defaults,
@@ -71,9 +71,8 @@ The defaults in a Wirespec file are written by you, so compile never drops one w
 - **Ignore defaults** removes the defaults after they are validated and before any code is generated. The generated
   code is then the same as for a spec without defaults.
 
-The ignore defaults option applies to every language of a single compile. To generate Kotlin with defaults and Java
-without them, compile them separately, for example with two Gradle tasks or two Maven executions. Ignore defaults is
-only set on the Java one.
+Every compile generates one language. To generate Kotlin with defaults and Java without them, compile them
+separately, for example with two Gradle tasks or two Maven executions. Ignore defaults is only set on the Java one.
 
 ### Convert
 

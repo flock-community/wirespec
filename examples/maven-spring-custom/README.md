@@ -32,9 +32,7 @@ value class that Java code cannot implement an interface against.
                 <output>${project.build.directory}/generated-sources/java</output>
                 <packageName>community.flock.wirespec.example.maven.custom.generated</packageName>
                 <shared>false</shared>
-                <languages>
-                    <language>Java</language>
-                </languages>
+                <language>Java</language>
                 <extensionClasses>
                     <extensionClass>community.flock.wirespec.example.maven.custom.extension.CustomExtension</extensionClass>
                 </extensionClasses>

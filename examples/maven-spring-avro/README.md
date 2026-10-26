@@ -21,9 +21,7 @@ emitter via `extensionClasses`.
                 <input>${project.basedir}/src/main/avro/test_avro_001.avsc</input>
                 <output>${project.build.directory}/generated-sources</output>
                 <format>Avro</format>
-                <languages>
-                    <language>Java</language>
-                </languages>
+                <language>Java</language>
                 <extensionClasses>
                     <extensionClass>community.flock.wirespec.integration.avro.extension.AvroExtension</extensionClass>
                 </extensionClasses>

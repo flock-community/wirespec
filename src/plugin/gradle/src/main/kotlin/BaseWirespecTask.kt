@@ -1,8 +1,6 @@
 package community.flock.wirespec.plugin.gradle
 
 import arrow.core.NonEmptyList
-import arrow.core.NonEmptySet
-import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
@@ -48,9 +46,8 @@ public abstract class BaseWirespecTask : DefaultTask() {
     public abstract val testOutput: DirectoryProperty
 
     @get:Input
-    @get:Optional
-    @get:Option(option = "languages", description = "languages list")
-    public abstract val languages: ListProperty<Language>
+    @get:Option(option = "language", description = "language")
+    public abstract val language: Property<Language>
 
     @get:Input
     @get:Optional
@@ -99,13 +96,9 @@ public abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    protected fun emitters(): NonEmptySet<Emitter> = languages.get()
-        .map { it.toEmitter(packageNameValue(), sharedValue()) }
-        .map { emitter ->
-            emitter.withExtensions(extensionInstances(emitter.extension))
-        }
-        .toNonEmptySetOrNull()
-        ?: throw PickAtLeastOneLanguage()
+    protected fun emitter(): Emitter = language.get()
+        .toEmitter(packageNameValue(), sharedValue())
+        .let { it.withExtensions(extensionInstances(it.extension)) }
 
     protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
         emittedList.forEach { emitted ->

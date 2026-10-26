@@ -63,10 +63,10 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var testOutput: String? = null
 
     /**
-     * Specifies the languages to compile to: [Language].
+     * Specifies the language to compile to: [Language]. Use one execution per language to generate several.
      */
-    @Parameter
-    protected var languages: List<Language> = listOf()
+    @Parameter(required = true)
+    protected lateinit var language: Language
 
     /**
      * Specifies whether to emit the shared Wirespec code.
@@ -137,14 +137,10 @@ public abstract class BaseMojo : AbstractMojo() {
         else -> bundled.toIrExtension(PackageName(packageName), language)
     }
 
-    protected val emitters: NonEmptySet<Emitter>
-        get() = languages
-            .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-            .map { emitter ->
-                emitter.withExtensions(extensionInstances(emitter.extension))
-            }
-            .toNonEmptySetOrNull()
-            ?: throw PickAtLeastOneLanguage()
+    protected val emitter: Emitter
+        get() = language
+            .toEmitter(PackageName(packageName), EmitShared(shared))
+            .let { it.withExtensions(extensionInstances(it.extension)) }
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements

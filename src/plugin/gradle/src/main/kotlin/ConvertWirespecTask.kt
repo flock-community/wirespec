@@ -64,7 +64,7 @@ public abstract class ConvertWirespecTask : BaseWirespecTask() {
         ConverterArguments(
             format = format.get(),
             input = nonEmptySetOf(sources),
-            emitters = emitters(),
+            emitter = emitter(),
             writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = packageNameValue(),

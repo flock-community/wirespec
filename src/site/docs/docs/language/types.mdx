@@ -234,7 +234,7 @@ Gradle:
 tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
-    languages.set(listOf(Language.Kotlin))
+    language.set(Language.Kotlin)
     ignoreDefaults.set(true)
 }
 ```
@@ -245,9 +245,7 @@ Maven:
 <configuration>
     <input>${project.basedir}/src/main/wirespec</input>
     <output>${project.build.directory}/generated-sources/wirespec</output>
-    <languages>
-        <language>Kotlin</language>
-    </languages>
+    <language>Kotlin</language>
     <ignoreDefaults>true</ignoreDefaults>
 </configuration>
 ```

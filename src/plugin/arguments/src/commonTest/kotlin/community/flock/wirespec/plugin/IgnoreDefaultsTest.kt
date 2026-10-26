@@ -31,7 +31,7 @@ class IgnoreDefaultsTest {
         compile(
             CompilerArguments(
                 input = nonEmptySetOf(Source(Name("settings"), source)),
-                emitters = nonEmptySetOf(emitter),
+                emitter = emitter,
                 writer = { emitted -> output = emitted.joinToString("\n") { it.result } },
                 error = { output = it },
                 packageName = PackageName("community.flock.wirespec.generated"),
@@ -102,7 +102,7 @@ class IgnoreDefaultsTest {
             ConverterArguments(
                 format = Format.OpenAPIV3,
                 input = nonEmptySetOf(Source<Source.Type.JSON>(Name("openapi"), openApi)),
-                emitters = nonEmptySetOf(emitter),
+                emitter = emitter,
                 writer = { emitted -> output = emitted.joinToString("\n") { it.result } },
                 error = { output = it },
                 packageName = PackageName("community.flock.wirespec.generated"),

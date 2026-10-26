@@ -139,8 +139,10 @@ class WirespecCliTest {
         val input = "$inputDir/wirespec"
         val output = outputDir()
 
-        WirespecCli(::compile, ::convert)
-            .main(arrayOf("compile", "-i", input, "-o", output, "-l", "Kotlin", "-l", "TypeScript", "-e", "kotlinxserialization", "-e", "JvmBuilder"))
+        listOf("Kotlin", "TypeScript").forEach { language ->
+            WirespecCli(::compile, ::convert)
+                .main(arrayOf("compile", "-i", input, "-o", output, "-l", language, "-e", "kotlinxserialization", "-e", "JvmBuilder"))
+        }
 
         FilePath(DirectoryPath("$output/$packageDir").resolve("model"), Name("Bla"), FileExtension.Kotlin).read().let { content ->
             content shouldContain """

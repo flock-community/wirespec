@@ -12,9 +12,9 @@ wirespec:
 
 An emitter turns a Wirespec specification into code or into a specification in another format. The language emitters
 generate typesafe, dependency-free code: apart from the `regex` crate for Rust, the output only needs the standard
-library of the target language. Pick one or more emitters with the `--language` option of the
-[CLI](../plugins/plugins-cli.md), or the `languages` setting of the [Gradle](../plugins/plugins-gradle.md) and
-[Maven](../plugins/plugins-maven.md) plugins.
+library of the target language. Pick an emitter with the `--language` option of the
+[CLI](../plugins/plugins-cli.md), or the `language` setting of the [Gradle](../plugins/plugins-gradle.md) and
+[Maven](../plugins/plugins-maven.md) plugins. A run uses one emitter; run once per language to generate several.
 
 | Emitter                                  | Language     | Generates                                                                       |
 |------------------------------------------|--------------|---------------------------------------------------------------------------------|

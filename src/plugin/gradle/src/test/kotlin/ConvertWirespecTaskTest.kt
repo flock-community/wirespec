@@ -40,7 +40,7 @@ class ConvertWirespecTaskTest :
                 input = layout.projectDirectory.file("api.json")
                 output = layout.buildDirectory.dir("out")
                 format = Format.OpenAPIV3
-                languages = listOf(Language.Wirespec)
+                language = Language.Wirespec
                 preProcessor = { it.replace("OldName", "NewName") }
             }
                 """.trimIndent(),

@@ -105,7 +105,7 @@ language you compile to.
         output = layout.buildDirectory.dir("generated")
         packageName = "community.flock.wirespec.generated"
         // Works for Java, Kotlin and Scala
-        languages = listOf(Language.Java)
+        language = Language.Java
         extensionClasses = listOf(JvmBuilderExtension::class.java)
     }
     ```
@@ -125,10 +125,8 @@ language you compile to.
                 <configuration>
                     <input>${project.basedir}/src/main/wirespec</input>
                     <output>${project.build.directory}/generated-sources</output>
-                    <languages>
-                        <!-- Works for Java, Kotlin and Scala -->
-                        <language>Java</language>
-                    </languages>
+                    <!-- Works for Java, Kotlin and Scala -->
+                    <language>Java</language>
                     <extensionClasses>
                         <extensionClass>JvmBuilder</extensionClass>
                     </extensionClasses>

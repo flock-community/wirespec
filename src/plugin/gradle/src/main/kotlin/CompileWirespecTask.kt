@@ -50,7 +50,7 @@ public abstract class CompileWirespecTask : BaseWirespecTask() {
         val testOutputDir = testOutputPath?.let { Directory(getOutPutPath(inputPath, it).or(::handleError)) }
         CompilerArguments(
             input = sources,
-            emitters = emitters(),
+            emitter = emitter(),
             writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = packageNameValue(),

@@ -9,7 +9,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.custom"
-    languages = listOf(Language.Kotlin)
+    language = Language.Kotlin
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
@@ -17,7 +17,7 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     output = layout.buildDirectory.dir("generated")
     format = Format.OpenAPIV3
     packageName = "community.flock.wirespec.openapi"
-    languages = listOf(Language.Kotlin)
+    language = Language.Kotlin
 }
 
 tasks.register<CustomWirespecTask>("wirespec-custom") {

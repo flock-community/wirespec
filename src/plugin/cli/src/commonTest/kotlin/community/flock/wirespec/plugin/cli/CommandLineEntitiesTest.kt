@@ -37,7 +37,7 @@ class CommandLineEntitiesTest {
         WirespecCli(
             noopCompiler {
                 it.input.shouldHaveSize(2).first().name.value shouldBe "todo"
-                it.emitters.shouldHaveSize(1).first().shouldBeTypeOf<WirespecEmitter>()
+                it.emitter.shouldBeTypeOf<WirespecEmitter>()
                 it.packageName.shouldNotBeNull().value shouldBe "packageName"
                 it.logger.run {
                     shouldDebugLog.shouldBeFalse()
@@ -60,7 +60,7 @@ class CommandLineEntitiesTest {
             noopConverter {
                 it.format.shouldBeTypeOf<Format>() shouldBe OpenAPIV2
                 it.input.shouldHaveSize(1).first().name.value shouldBe "keto"
-                it.emitters.shouldHaveSize(1).first().shouldBeTypeOf<WirespecEmitter>()
+                it.emitter.shouldBeTypeOf<WirespecEmitter>()
                 it.packageName.shouldNotBeNull().value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
                 it.logger.run {
                     shouldDebugLog.shouldBeFalse()

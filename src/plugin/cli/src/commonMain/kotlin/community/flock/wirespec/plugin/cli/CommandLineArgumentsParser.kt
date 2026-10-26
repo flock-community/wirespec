@@ -3,17 +3,18 @@ package community.flock.wirespec.plugin.cli
 import arrow.core.NonEmptyList
 import arrow.core.getOrElse
 import arrow.core.nonEmptySetOf
-import arrow.core.toNonEmptySetOrNull
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
+import com.github.ajalt.clikt.parameters.options.NullableOption
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.transformAll
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
@@ -27,7 +28,6 @@ import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
-import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Extension
@@ -105,9 +105,9 @@ private class Compile(
     private val compiler: (CompilerArguments) -> Unit,
 ) : CommonOptions() {
     private val stdin by argument(help = "stdin").optional()
-    private val languages by option(*Options.Language.flags, help = "Language")
+    private val language by option(*Options.Language.flags, help = "Language")
         .choice(choices = Language.toMap(), ignoreCase = true)
-        .multiple(default = listOf(Language.Kotlin))
+        .single(default = Language.Kotlin)
 
     override fun run() {
         val logger = Logger(logLevel.toLogLevel())
@@ -128,12 +128,12 @@ private class Compile(
             }
         }
 
-        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared), extensions)
+        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions)
 
         val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
             input = sources,
-            emitters = emitters,
+            emitter = emitter,
             writer = writer(outputDir),
             error = ::handleError,
             packageName = PackageName(packageName),
@@ -151,9 +151,9 @@ private class Convert(
 
     private val format by argument(help = "Input format").enum<Format>()
     private val stdin by argument(help = "stdin").optional()
-    private val languages by option(*Options.Language.flags, help = "Language")
+    private val language by option(*Options.Language.flags, help = "Language")
         .choice(choices = Language.toMap(), ignoreCase = true)
-        .multiple()
+        .single(default = Language.Wirespec)
 
     override fun run() {
         val logger = Logger(logLevel.toLogLevel())
@@ -169,12 +169,12 @@ private class Convert(
                 .also { logger.info("Found 1 file to process: $inputPath") }
         }
 
-        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared), extensions)
+        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions)
         val directory = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         ConverterArguments(
             format = format,
             input = nonEmptySetOf(source),
-            emitters = emitters,
+            emitter = emitter,
             writer = writer(directory),
             error = ::handleError,
             packageName = PackageName(packageName),
@@ -188,7 +188,13 @@ private class Convert(
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
 
-private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared, extensions: List<Extension>) = this
-    .map { it.toEmitter(packageName, emitShared) }
-    .map { it.withExtensions(extensions.toIrExtensions(packageName, it.extension)) }
-    .toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
+private fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared, extensions: List<Extension>) = toEmitter(packageName, emitShared)
+    .let { it.withExtensions(extensions.toIrExtensions(packageName, it.extension)) }
+
+private fun NullableOption<Language, Language>.single(default: Language) = transformAll(defaultForHelp = "$default") { languages ->
+    when (languages.size) {
+        0 -> default
+        1 -> languages.first()
+        else -> fail("Pick one language per run, not ${languages.joinToString()}.")
+    }
+}
