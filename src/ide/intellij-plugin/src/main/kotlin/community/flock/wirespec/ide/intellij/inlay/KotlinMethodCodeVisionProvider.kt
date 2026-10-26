@@ -3,16 +3,18 @@ package community.flock.wirespec.ide.intellij.inlay
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 public class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
     override val name: String = "Wirespec Kotlin Method Code Vision"
@@ -23,7 +25,7 @@ public class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider()
 
         return PsiTreeUtil.findChildrenOfType(file, KtNamedFunction::class.java)
             .mapNotNull { function ->
-                function.toLightMethods().firstNotNullOfOrNull { method ->
+                function.lightMethods().firstNotNullOfOrNull { method ->
                     method.findSuperMethods()
                         .mapNotNull { it.containingClass }
                         .firstNotNullOfOrNull { isWirespecHandler(it) }
@@ -48,6 +50,14 @@ public class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider()
             }
             .toList()
     }
+
+    // `toLightMethods()` and `LightClassUtil` are deprecated (KT-85385): look the light class up through Java PSI instead.
+    private fun KtNamedFunction.lightMethods(): List<PsiMethod> = containingClassOrObject
+        ?.fqName
+        ?.let { JavaPsiFacade.getInstance(project).findClass(it.asString(), resolveScope) }
+        ?.methods
+        ?.filter { it.navigationElement == this }
+        .orEmpty()
 
     private fun KtObjectDeclaration.getPropertyValue(propertyName: String): String? = declarations.filterIsInstance<KtProperty>()
         .firstOrNull { it.name == propertyName }
