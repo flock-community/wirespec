@@ -44,12 +44,12 @@ Wirespec fields can have [default values](../language/types.mdx#default-values).
 can write them, while Java, TypeScript, Python, Rust and Scala cannot yet. How a plugin deals with defaults depends on
 the operation and on the target language.
 
-| Situation                                             | Compile                                      | Convert                              |
-|-------------------------------------------------------|----------------------------------------------|--------------------------------------|
-| Target supports defaults (Kotlin, Wirespec, Avro, OpenAPI) | Defaults are generated                  | Defaults are generated               |
-| Target does not support defaults (Java, TypeScript, Python, Rust, Scala) | **Error**, unless ignore defaults is on | Defaults are left out, no error |
-| Invalid default                                       | **Error**, also with ignore defaults         | The default is dropped, no error     |
-| Ignore defaults is on                                 | Defaults are left out for every language     | Defaults are left out for every language |
+| Situation                                                                | Compile                                  | Convert                                  |
+|--------------------------------------------------------------------------|------------------------------------------|------------------------------------------|
+| Target supports defaults (Kotlin, Wirespec, Avro, OpenAPI)               | Defaults are generated                   | Defaults are generated                   |
+| Target does not support defaults (Java, TypeScript, Python, Rust, Scala) | **Error**, unless ignore defaults is on  | Defaults are left out, no error          |
+| Invalid default                                                          | **Error**, also with ignore defaults     | The default is dropped, no error         |
+| Ignore defaults is on                                                    | Defaults are left out for every language | Defaults are left out for every language |
 
 ### Compile
 
@@ -90,12 +90,12 @@ fails on them.
 
 ### How errors are reported
 
-| Plugin         | A default error…                                                                         |
-|----------------|-------------------------------------------------------------------------------------------|
-| CLI            | is printed, and `wirespec` exits with status 1                                            |
-| Gradle         | fails the task, with the error as the failure message                                     |
-| Maven          | fails the build, with the error as the failure message                                    |
-| npm            | is the same as the CLI for `wirespec` scripts and `cli()`. The programmatic `parse` result reports invalid defaults, but the AST it returns does not carry defaults yet, so `emit` generates code without them and never fails on them |
+| Plugin | A default error…                                                                                                                                                                                                                       |
+|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CLI    | is printed, and `wirespec` exits with status 1                                                                                                                                                                                         |
+| Gradle | fails the task, with the error as the failure message                                                                                                                                                                                  |
+| Maven  | fails the build, with the error as the failure message                                                                                                                                                                                 |
+| npm    | is the same as the CLI for `wirespec` scripts and `cli()`. The programmatic `parse` result reports invalid defaults, but the AST it returns does not carry defaults yet, so `emit` generates code without them and never fails on them |
 
 ## IR extensions
 

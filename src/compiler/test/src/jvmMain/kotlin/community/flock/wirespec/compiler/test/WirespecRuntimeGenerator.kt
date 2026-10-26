@@ -2,10 +2,12 @@
 
 package community.flock.wirespec.compiler.test
 
+import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import java.io.File
-import kotlin.reflect.full.primaryConstructor
 
 private data class Target(
     val outputRoot: File,
@@ -47,15 +49,7 @@ public fun main(args: Array<String>) {
     }
 }
 
-private fun emitterFor(fqcn: String): IrEmitter {
-    val ctor = Class.forName(fqcn).kotlin.primaryConstructor
-        ?: error("No primary constructor on $fqcn")
-    val emitSharedParam = ctor.parameters.firstOrNull { it.type.classifier == EmitShared::class }
-    val args = emitSharedParam?.let { mapOf(it to EmitShared(value = true)) }.orEmpty()
-    val instance = ctor.callBy(args)
-    require(instance is IrEmitter) { "$fqcn is not an IrEmitter" }
-    return instance
-}
+private fun emitterFor(fqcn: String): IrEmitter = Class.forName(fqcn).instantiate(PackageName(DEFAULT_GENERATED_PACKAGE_STRING), EmitShared(true))
 
 private fun IrEmitter.sharedSource(): String = emitShared()
     ?.let(generator::generate)

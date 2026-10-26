@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.utils.Logger
@@ -121,7 +122,7 @@ public abstract class BaseMojo : AbstractMojo() {
     private fun extensionInstances(language: FileExtension) = extensionClasses.mapNotNull { extensionClass ->
         try {
             when (val bundled = Extension.toMap()[extensionClass]) {
-                null -> instantiate(getClassLoader(project).loadClass(extensionClass), language)
+                null -> extensionInstance(getClassLoader(project).loadClass(extensionClass), language)
                 else -> bundled.toIrExtension(PackageName(packageName), language)
             }
         } catch (e: Exception) {
@@ -131,19 +132,8 @@ public abstract class BaseMojo : AbstractMojo() {
     }
 
     // Not an extension on Class: its getPackageName() would shadow the packageName parameter.
-    private fun instantiate(extensionClass: Class<*>, language: FileExtension): IrExtension? = when (val bundled = Extension.of(extensionClass.kotlin)) {
-        null -> extensionClass.constructors.first().let { constructor ->
-            val args: List<Any> = constructor.parameters
-                .map {
-                    when (it.type) {
-                        PackageName::class.java -> PackageName(packageName)
-                        EmitShared::class.java -> EmitShared(shared)
-                        FileExtension::class.java -> language
-                        else -> error("Cannot map constructor parameter")
-                    }
-                }
-            constructor.newInstance(*args.toTypedArray()) as IrExtension
-        }
+    private fun extensionInstance(extensionClass: Class<*>, language: FileExtension): IrExtension? = when (val bundled = Extension.of(extensionClass.kotlin)) {
+        null -> extensionClass.instantiate<IrExtension>(PackageName(packageName), EmitShared(shared), language)
         else -> bundled.toIrExtension(PackageName(packageName), language)
     }
 

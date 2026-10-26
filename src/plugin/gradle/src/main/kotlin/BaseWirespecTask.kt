@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.Extension
@@ -89,18 +90,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
     protected fun extensionInstances(language: FileExtension): List<IrExtension> = extensionClasses.getOrElse(emptyList()).mapNotNull { extensionClass ->
         try {
             when (val bundled = Extension.of(extensionClass.kotlin)) {
-                null -> extensionClass.declaredConstructors.first().let { constructor ->
-                    val args: List<Any> = constructor.parameters
-                        .map {
-                            when (it.type) {
-                                PackageName::class.java -> packageNameValue()
-                                EmitShared::class.java -> sharedValue()
-                                FileExtension::class.java -> language
-                                else -> error("Cannot map constructor parameter")
-                            }
-                        }
-                    constructor.newInstance(*args.toTypedArray()) as IrExtension
-                }
+                null -> extensionClass.instantiate<IrExtension>(packageNameValue(), sharedValue(), language)
                 else -> bundled.toIrExtension(packageNameValue(), language)
             }
         } catch (e: Exception) {

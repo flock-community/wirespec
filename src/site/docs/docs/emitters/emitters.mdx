@@ -16,17 +16,17 @@ library of the target language. Pick one or more emitters with the `--language` 
 [CLI](../plugins/plugins-cli.md), or the `languages` setting of the [Gradle](../plugins/plugins-gradle.md) and
 [Maven](../plugins/plugins-maven.md) plugins.
 
-| Emitter                                  | Language     | Generates                                                     |
-|------------------------------------------|--------------|---------------------------------------------------------------|
-| [Java](./emitters-java.mdx)              | `Java`       | Records, sealed interfaces and enums                          |
-| [Kotlin](./emitters-kotlin.mdx)          | `Kotlin`     | Data classes, sealed interfaces and enum classes              |
-| [TypeScript](./emitters-typescript.mdx)  | `TypeScript` | Types, namespaces and functions                               |
-| [Python](./emitters-python.mdx)          | `Python`     | Dataclasses, enums and abstract base classes                  |
-| [Rust](./emitters-rust.mdx)              | `Rust`       | Structs, enums, modules and traits                            |
-| [Scala](./emitters-scala.mdx)            | `Scala`      | Case classes, sealed traits and enums                         |
-| [OpenAPI v2](./emitters-open-api-v2.mdx) | `OpenAPIV2`  | A Swagger 2.0 document                                        |
-| [OpenAPI v3](./emitters-open-api-v3.mdx) | `OpenAPIV3`  | An OpenAPI 3.0 document                                       |
-| [Avro](./emitters-avro.mdx)              | `Avro`       | An Avro schema                                                |
+| Emitter                                  | Language     | Generates                                                                       |
+|------------------------------------------|--------------|---------------------------------------------------------------------------------|
+| [Java](./emitters-java.mdx)              | `Java`       | Records, sealed interfaces and enums                                            |
+| [Kotlin](./emitters-kotlin.mdx)          | `Kotlin`     | Data classes, sealed interfaces and enum classes                                |
+| [TypeScript](./emitters-typescript.mdx)  | `TypeScript` | Types, namespaces and functions                                                 |
+| [Python](./emitters-python.mdx)          | `Python`     | Dataclasses, enums and abstract base classes                                    |
+| [Rust](./emitters-rust.mdx)              | `Rust`       | Structs, enums, modules and traits                                              |
+| [Scala](./emitters-scala.mdx)            | `Scala`      | Case classes, sealed traits and enums                                           |
+| [OpenAPI v2](./emitters-open-api-v2.mdx) | `OpenAPIV2`  | A Swagger 2.0 document                                                          |
+| [OpenAPI v3](./emitters-open-api-v3.mdx) | `OpenAPIV3`  | An OpenAPI 3.0 document                                                         |
+| [Avro](./emitters-avro.mdx)              | `Avro`       | An Avro schema                                                                  |
 | Wirespec                                 | `Wirespec`   | Wirespec, mostly used to [convert](../converters/converters.md) OpenAPI or Avro |
 
 ## The example
@@ -37,15 +37,15 @@ definition of every kind:
 ```wirespec wirespec source
 ```
 
-| Definition                                                    | Kind                                     | What it shows                                                        |
-|---------------------------------------------------------------|------------------------------------------|----------------------------------------------------------------------|
-| `TodoId`                                                      | [Refined](../language/types.mdx#refined) | A `String` constrained by a regular expression                       |
-| `Priority`                                                    | [Enum](../language/types.mdx#enum)       | A fixed set of values                                                |
-| `Todo`, `TodoInput`, `ApiError`, `TodoCreated`, `TodoDeleted` | [Type](../language/types.mdx#composite)  | Fields of a refined type, an enum, a list and a nullable `String`, and [default values](#default-values) |
-| `TodoEvent`                                                   | [Union](../language/types.mdx#union)     | Either a `TodoCreated` or a `TodoDeleted`                            |
+| Definition                                                    | Kind                                     | What it shows                                                                                              |
+|---------------------------------------------------------------|------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `TodoId`                                                      | [Refined](../language/types.mdx#refined) | A `String` constrained by a regular expression                                                             |
+| `Priority`                                                    | [Enum](../language/types.mdx#enum)       | A fixed set of values                                                                                      |
+| `Todo`, `TodoInput`, `ApiError`, `TodoCreated`, `TodoDeleted` | [Type](../language/types.mdx#composite)  | Fields of a refined type, an enum, a list and a nullable `String`, and [default values](#default-values)   |
+| `TodoEvent`                                                   | [Union](../language/types.mdx#union)     | Either a `TodoCreated` or a `TodoDeleted`                                                                  |
 | `UpdateTodo`                                                  | [Endpoint](../language/endpoints.mdx)    | A path parameter, a query parameter, a request header, a request body, two responses and a response header |
-| `TodoEvents`                                                  | [Channel](../language/channels.mdx)      | A channel that carries the `TodoEvent` union                         |
-| `CompleteTodo`                                                | [RPC](../language/rpc.mdx)               | A call with a parameter, a result and an error                       |
+| `TodoEvents`                                                  | [Channel](../language/channels.mdx)      | A channel that carries the `TodoEvent` union                                                               |
+| `CompleteTodo`                                                | [RPC](../language/rpc.mdx)               | A call with a parameter, a result and an error                                                             |
 
 The code on the emitter pages is not written by hand: when the documentation is built, `todo.ws` is compiled with the
 Wirespec CLI, so the pages always show what the current version of Wirespec generates. For Kotlin, for example:
@@ -75,15 +75,15 @@ is the same for every specification. It is written when shared output is turned 
 
 Each Wirespec definition becomes the following construct:
 
-| Wirespec | Java                    | Kotlin                       | TypeScript                       | Python                    | Rust                        | Scala               |
-|----------|-------------------------|------------------------------|----------------------------------|---------------------------|-----------------------------|---------------------|
-| Type     | `record`                | `data class`                 | Object type and a validate function | `@dataclass`           | `struct`                    | `case class`        |
-| Refined  | `record` with a `value` | `data class` with a `value`  | Type alias and a validate function | `@dataclass` with a `value` | `struct` with a `value` | `case class` with a `value` |
-| Enum     | `enum`                  | `enum class`                 | Union of string literals         | `enum.Enum`               | `enum`                      | `enum`              |
-| Union    | `sealed interface`      | `sealed interface`           | Union type                       | Base class                | `enum` with a variant per type | `sealed trait`   |
-| Endpoint | `interface`             | `object`                     | `namespace`                      | Module with classes       | Module with structs and a `mod` | `object`        |
-| Channel  | `interface`             | `object`                     | `namespace`                      | Class                     | `mod` with traits           | `object`            |
-| RPC      | `interface`             | `object`                     | `namespace`                      | Class                     | `mod` with an enum and a trait | `object`         |
+| Wirespec | Java                    | Kotlin                      | TypeScript                          | Python                      | Rust                            | Scala                       |
+|----------|-------------------------|-----------------------------|-------------------------------------|-----------------------------|---------------------------------|-----------------------------|
+| Type     | `record`                | `data class`                | Object type and a validate function | `@dataclass`                | `struct`                        | `case class`                |
+| Refined  | `record` with a `value` | `data class` with a `value` | Type alias and a validate function  | `@dataclass` with a `value` | `struct` with a `value`         | `case class` with a `value` |
+| Enum     | `enum`                  | `enum class`                | Union of string literals            | `enum.Enum`                 | `enum`                          | `enum`                      |
+| Union    | `sealed interface`      | `sealed interface`          | Union type                          | Base class                  | `enum` with a variant per type  | `sealed trait`              |
+| Endpoint | `interface`             | `object`                    | `namespace`                         | Module with classes         | Module with structs and a `mod` | `object`                    |
+| Channel  | `interface`             | `object`                    | `namespace`                         | Class                       | `mod` with traits               | `object`                    |
+| RPC      | `interface`             | `object`                    | `namespace`                         | Class                       | `mod` with an enum and a trait  | `object`                    |
 
 The specification emitters work differently: [OpenAPI v2](./emitters-open-api-v2.mdx) and
 [OpenAPI v3](./emitters-open-api-v3.mdx) write one document with the schemas and paths of the API, and
@@ -95,13 +95,13 @@ cannot describe, such as channels and RPCs.
 `Todo` gives three of its fields a [default value](../language/types.mdx#default-values): `done`, `priority` and
 `dueDate`. Defaults are generated where the target supports them:
 
-| Emitter                                   | Default values                                                                                                  |
-|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| Kotlin                                    | Constructor parameter defaults, see the [Kotlin emitter](./emitters-kotlin.mdx#default-values)                   |
-| Avro                                      | The `default` of the record field, see the [Avro emitter](./emitters-avro.mdx#default-values)                    |
-| OpenAPI v2 and v3                         | The `default` of the property schema, see the [OpenAPI v3 emitter](./emitters-open-api-v3.mdx#default-values)    |
-| Wirespec                                  | `field: Type = value`                                                                                           |
-| Java, TypeScript, Python, Rust and Scala  | Not supported yet, see the [Java emitter](./emitters-java.mdx#default-values)                                    |
+| Emitter                                  | Default values                                                                                                |
+|------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Kotlin                                   | Constructor parameter defaults, see the [Kotlin emitter](./emitters-kotlin.mdx#default-values)                |
+| Avro                                     | The `default` of the record field, see the [Avro emitter](./emitters-avro.mdx#default-values)                 |
+| OpenAPI v2 and v3                        | The `default` of the property schema, see the [OpenAPI v3 emitter](./emitters-open-api-v3.mdx#default-values) |
+| Wirespec                                 | `field: Type = value`                                                                                         |
+| Java, TypeScript, Python, Rust and Scala | Not supported yet, see the [Java emitter](./emitters-java.mdx#default-values)                                 |
 
 The emitters that do not support defaults yet refuse to compile a specification that has them, so their pages compile
 `todo.ws` with the [ignore defaults option](../language/types.mdx#ignoring-defaults), which leaves the defaults out.

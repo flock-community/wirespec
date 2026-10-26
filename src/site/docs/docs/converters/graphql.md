@@ -75,9 +75,9 @@ holding its annotations, when it has a description, directives or interfaces, ha
 
 Wirespec has no interfaces, so a GraphQL interface is split over two Wirespec definitions:
 
-| Wirespec                                     | Holds                                                        |
-|----------------------------------------------|--------------------------------------------------------------|
-| `part NodeInterface { ... }`                 | the fields of the interface                                  |
+| Wirespec                                                      | Holds                                                                                     |
+|---------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| `part NodeInterface { ... }`                                  | the fields of the interface                                                               |
 | `@GraphQLInterface("NodeInterface") type Node = User \| Post` | the interface itself: its name, description and directives, and the types implementing it |
 
 The annotation on the union couples the two: it names the [part](../language/parts.mdx) with the fields. The part is
@@ -223,11 +223,11 @@ when that is all it does.
 
 Converting Wirespec to GraphQL reads `@GraphQLInterface` on a union or a type:
 
-| Wirespec                                              | GraphQL interface fields                                    | Implemented by                      |
-|-------------------------------------------------------|-------------------------------------------------------------|-------------------------------------|
-| `@GraphQLInterface("NodeInterface") type Node = A \| B` | the fields of the part `NodeInterface`                      | the types that spread the part      |
-| `@GraphQLInterface type Node = A \| B`                 | the fields every member has with the same name and type, with the annotations they all carry | the members of the union |
-| `@GraphQLInterface type Node { ... }`                 | the fields of the type itself                               | the types listed in `@GraphQLImplements` |
+| Wirespec                                                | GraphQL interface fields                                                                     | Implemented by                           |
+|---------------------------------------------------------|----------------------------------------------------------------------------------------------|------------------------------------------|
+| `@GraphQLInterface("NodeInterface") type Node = A \| B` | the fields of the part `NodeInterface`                                                       | the types that spread the part           |
+| `@GraphQLInterface type Node = A \| B`                  | the fields every member has with the same name and type, with the annotations they all carry | the members of the union                 |
+| `@GraphQLInterface type Node { ... }`                   | the fields of the type itself                                                                | the types listed in `@GraphQLImplements` |
 
 A type that spreads a plain part, one that no `@GraphQLInterface` names, implements the interfaces that part spreads.
 
@@ -262,26 +262,26 @@ always kept in `@GraphQLDefault`.
 
 ## Annotations
 
-| Annotation                                                                       | On                  | Carries                                                                                   |
-|----------------------------------------------------------------------------------|---------------------|-------------------------------------------------------------------------------------------|
-| `@Description("...")`                                                            | definitions, fields | the description of a definition, field or argument                                        |
-| `@GraphQLDirective("@key(fields: \"id\")")`                                      | definitions, fields | an applied directive, in GraphQL syntax; repeated for every directive                     |
-| `@GraphQLImplements(["Node"])`                                                   | types, unions       | the interfaces an object or interface implements without spreading them (see above)       |
-| `@GraphQLArgument(name: "first", type: "Int", defaultValue: "10", ...)`          | fields              | an argument of a field that is not an `rpc`; also `description` and `directives`          |
-| `@GraphQLDefault("MEDIUM")`                                                      | fields              | a default value that cannot be a Wirespec default (see above), in GraphQL syntax          |
-| `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                     | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
-| `@GraphQLName("todo")`                                                           | rpcs                | the field name of an `rpc` whose name does not read back as that field name              |
-| `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`       | enums               | the description and directives of an enum value; one for every such value                 |
-| `@GraphQLInterface("NodeInterface")`                                             | unions, types       | an interface, with the fields of the named part, implemented by the types that spread it; without a part, the fields of the type itself, or those all members of the union share |
-| `@GraphQLInput`                                                                  | types               | an input object                                                                           |
-| `@GraphQLUnion`, `@GraphQLEnum`                                                  | types               | a union or enum without members, which Wirespec cannot write as `union` or `enum`         |
-| `@GraphQLSchema(query: "Root")`                                                  | `type Schema`       | a `schema` definition, mapping each operation to its root type                            |
-| `@GraphQLDirectiveDefinition(name: "key", locations: [...], repeatable: "true")` | `type ...Directive` | a directive definition; its fields are the directive arguments                            |
-| `@GraphQLExtend("User")`                                                         | definitions         | an extension of the named type (`@GraphQLExtend` alone for a schema extension)            |
-| `@GraphQLName("_Service")`                                                       | definitions         | the GraphQL name of a definition whose name is not a valid Wirespec type name             |
-| `@GraphQLType("[_Any!]!")`                                                       | rpcs, fields        | the exact type of a reference to an undeclared type whose name Wirespec cannot spell      |
-| `@GraphQLUnionMembers([...])`                                                    | unions              | the same, for union members                                                               |
-| `@GraphQLBuiltIn`                                                                | `type ID`           | the `ID` type the converter added                                                         |
+| Annotation                                                                       | On                  | Carries                                                                                                                                                                                     |
+|----------------------------------------------------------------------------------|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `@Description("...")`                                                            | definitions, fields | the description of a definition, field or argument                                                                                                                                          |
+| `@GraphQLDirective("@key(fields: \"id\")")`                                      | definitions, fields | an applied directive, in GraphQL syntax; repeated for every directive                                                                                                                       |
+| `@GraphQLImplements(["Node"])`                                                   | types, unions       | the interfaces an object or interface implements without spreading them (see above)                                                                                                         |
+| `@GraphQLArgument(name: "first", type: "Int", defaultValue: "10", ...)`          | fields              | an argument of a field that is not an `rpc`; also `description` and `directives`                                                                                                            |
+| `@GraphQLDefault("MEDIUM")`                                                      | fields              | a default value that cannot be a Wirespec default (see above), in GraphQL syntax                                                                                                            |
+| `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                      | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
+| `@GraphQLName("todo")`                                                           | rpcs                | the field name of an `rpc` whose name does not read back as that field name                                                                                                                 |
+| `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`       | enums               | the description and directives of an enum value; one for every such value                                                                                                                   |
+| `@GraphQLInterface("NodeInterface")`                                             | unions, types       | an interface, with the fields of the named part, implemented by the types that spread it; without a part, the fields of the type itself, or those all members of the union share            |
+| `@GraphQLInput`                                                                  | types               | an input object                                                                                                                                                                             |
+| `@GraphQLUnion`, `@GraphQLEnum`                                                  | types               | a union or enum without members, which Wirespec cannot write as `union` or `enum`                                                                                                           |
+| `@GraphQLSchema(query: "Root")`                                                  | `type Schema`       | a `schema` definition, mapping each operation to its root type                                                                                                                              |
+| `@GraphQLDirectiveDefinition(name: "key", locations: [...], repeatable: "true")` | `type ...Directive` | a directive definition; its fields are the directive arguments                                                                                                                              |
+| `@GraphQLExtend("User")`                                                         | definitions         | an extension of the named type (`@GraphQLExtend` alone for a schema extension)                                                                                                              |
+| `@GraphQLName("_Service")`                                                       | definitions         | the GraphQL name of a definition whose name is not a valid Wirespec type name                                                                                                               |
+| `@GraphQLType("[_Any!]!")`                                                       | rpcs, fields        | the exact type of a reference to an undeclared type whose name Wirespec cannot spell                                                                                                        |
+| `@GraphQLUnionMembers([...])`                                                    | unions              | the same, for union members                                                                                                                                                                 |
+| `@GraphQLBuiltIn`                                                                | `type ID`           | the `ID` type the converter added                                                                                                                                                           |
 
 _Definitions_ are types, enums, unions, refined types and rpcs, and _fields_ are the fields of a type and the
 parameters of an rpc.

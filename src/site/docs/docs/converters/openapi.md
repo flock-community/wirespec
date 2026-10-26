@@ -11,13 +11,13 @@ OpenAPI emitters.
 
 Primitve types are mapped as follows:
 
-| OAS Type | Wirespec Type | Notes |
-|---|---|---|
-| `string` | `String` | Pattern constraints are preserved as RegExp |
-| `integer` | `Integer` | `int32` maps to 32-bit, `int64` (and default) maps to 64-bit |
-| `number` | `Number` | `float` maps to 32-bit, `double` (and default) maps to 64-bit |
-| `boolean` | `Boolean` | |
-| `array` | `Type[]` | Converted to an Iterable of the item type |
+| OAS Type  | Wirespec Type | Notes                                                         |
+|-----------|---------------|---------------------------------------------------------------|
+| `string`  | `String`      | Pattern constraints are preserved as RegExp                   |
+| `integer` | `Integer`     | `int32` maps to 32-bit, `int64` (and default) maps to 64-bit  |
+| `number`  | `Number`      | `float` maps to 32-bit, `double` (and default) maps to 64-bit |
+| `boolean` | `Boolean`     |                                                               |
+| `array`   | `Type[]`      | Converted to an Iterable of the item type                     |
 
 ## Composition
 

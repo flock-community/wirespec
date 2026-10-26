@@ -20,12 +20,12 @@ Because the contract is shared, the JVM, Native, and JS CLI binaries all dispatc
 
 ## Available plugins
 
-| Plugin | Runtime targets | Use it from |
-|---|---|---|
-| **CLI** | JVM, Native, JS (Node) | shell, scripts, CI — see [CLI docs](../plugins/plugins-cli.md) |
-| **Maven** | JVM | `pom.xml` — see [Maven docs](../plugins/plugins-maven.md) |
-| **Gradle** | JVM | Gradle build script — see [Gradle docs](../plugins/plugins-gradle.md) |
-| **NPM** | JS (Node) | npm project — see [NPM docs](../plugins/plugins-npm.md) |
+| Plugin     | Runtime targets        | Use it from                                                           |
+|------------|------------------------|-----------------------------------------------------------------------|
+| **CLI**    | JVM, Native, JS (Node) | shell, scripts, CI — see [CLI docs](../plugins/plugins-cli.md)        |
+| **Maven**  | JVM                    | `pom.xml` — see [Maven docs](../plugins/plugins-maven.md)             |
+| **Gradle** | JVM                    | Gradle build script — see [Gradle docs](../plugins/plugins-gradle.md) |
+| **NPM**    | JS (Node)              | npm project — see [NPM docs](../plugins/plugins-npm.md)               |
 
 Source: `src/plugin/{cli,maven,gradle,npm}`.
 

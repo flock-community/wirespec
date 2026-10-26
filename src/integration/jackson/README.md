@@ -15,10 +15,10 @@ This single artifact supports both **Jackson 2** (`com.fasterxml.jackson`) and *
 (`tools.jackson`). Pick the package matching the Jackson version on your classpath; the
 consumer supplies the Jackson runtime (both are `compileOnly` here).
 
-| Jackson | Package |
-|---|---|
-| 2.x | `community.flock.wirespec.integration.jackson.v2.{java,kotlin}` |
-| 3.x | `community.flock.wirespec.integration.jackson.v3.{java,kotlin}` |
+| Jackson | Package                                                         |
+|---------|-----------------------------------------------------------------|
+| 2.x     | `community.flock.wirespec.integration.jackson.v2.{java,kotlin}` |
+| 3.x     | `community.flock.wirespec.integration.jackson.v3.{java,kotlin}` |
 
 > **Migration note:** the Jackson 2 classes moved from `…jackson.{java,kotlin}` to
 > `…jackson.v2.{java,kotlin}`. Update existing imports accordingly.

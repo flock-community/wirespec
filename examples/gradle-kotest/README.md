@@ -42,18 +42,18 @@ build/generated/.../generated/
 
 ## Layout
 
-| Path | Role |
-|---|---|
-| `src/main/wirespec/campaign.ws` | The app's own contract (its REST surface + channel) |
-| `src/main/wirespec/inventory.ws` | A downstream service the app *calls* (client only) |
-| `controller/` | Implement the generated `*.Handler` interfaces (incl. `AvailabilityController`) |
-| `downstream/` | `InventoryClient` + HTTP transportation driving the generated `GetStock` client |
-| `service/`, `repository/` | In-memory domain logic |
-| `kafka/` | Publisher/consumer implementing the generated channel `Sender`/`Listener` |
-| `CampaignEndpointScenarioTest` | HTTP scenarios |
-| `CampaignChannelScenarioTest` | Kafka messaging scenarios (`@EmbeddedKafka`) |
-| `ProductAvailabilityMockTest` | Mocks the downstream inventory service with `.mock { req -> … }` |
-| `ProjectConfig` | Registers every extension once for the whole suite, plus `KafkaChannelTransport` (producer-only `ChannelTransport` backing `send()`) and `WireMockMockServer` (the `MockServer` the `.mock` DSL drives) |
+| Path                             | Role                                                                                                                                                                                                    |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `src/main/wirespec/campaign.ws`  | The app's own contract (its REST surface + channel)                                                                                                                                                     |
+| `src/main/wirespec/inventory.ws` | A downstream service the app *calls* (client only)                                                                                                                                                      |
+| `controller/`                    | Implement the generated `*.Handler` interfaces (incl. `AvailabilityController`)                                                                                                                         |
+| `downstream/`                    | `InventoryClient` + HTTP transportation driving the generated `GetStock` client                                                                                                                         |
+| `service/`, `repository/`        | In-memory domain logic                                                                                                                                                                                  |
+| `kafka/`                         | Publisher/consumer implementing the generated channel `Sender`/`Listener`                                                                                                                               |
+| `CampaignEndpointScenarioTest`   | HTTP scenarios                                                                                                                                                                                          |
+| `CampaignChannelScenarioTest`    | Kafka messaging scenarios (`@EmbeddedKafka`)                                                                                                                                                            |
+| `ProductAvailabilityMockTest`    | Mocks the downstream inventory service with `.mock { req -> … }`                                                                                                                                        |
+| `ProjectConfig`                  | Registers every extension once for the whole suite, plus `KafkaChannelTransport` (producer-only `ChannelTransport` backing `send()`) and `WireMockMockServer` (the `MockServer` the `.mock` DSL drives) |
 
 ## How the tests wire the transport
 
