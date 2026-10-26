@@ -6,21 +6,23 @@ import arrow.core.nonEmptyListOf
 import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.utils.NoLogger
 import java.io.File
-import kotlin.reflect.full.primaryConstructor
 
 /**
  * Single shared updater entry point used by every emitter's `updateEmitterFixtures`
  * Gradle task. The emitter's fully qualified class name is passed as the second arg,
- * and we reflectively build a factory that supplies `EmitShared(true)` to its primary
- * constructor when applicable, so the generator can produce the shared file.
+ * and we reflectively build a factory that supplies `EmitShared(true)` to its
+ * constructor when it takes one, so the generator can produce the shared file.
  *
  * Only fixtures whose `<name>.txt` already exists in the target directory are
  * regenerated. New fixtures must be seeded with an empty file first — this keeps each
@@ -38,15 +40,9 @@ public fun main(args: Array<String>) {
         "No existing fixtures in $fixturesDir — seed an empty <name>.txt before running."
     }
 
-    val ctor = Class.forName(fqcn).kotlin.primaryConstructor
-        ?: error("No primary constructor on $fqcn")
-    val emitSharedParam = ctor.parameters.firstOrNull { it.type.classifier == EmitShared::class }
-
-    val defaultFactory: () -> IrEmitter = { ctor.callBy(emptyMap()).asIrEmitter(fqcn) }
-    val sharedFactory: () -> IrEmitter = {
-        val args = emitSharedParam?.let { mapOf(it to EmitShared(value = true)) }.orEmpty()
-        ctor.callBy(args).asIrEmitter(fqcn)
-    }
+    val emitter = Class.forName(fqcn)
+    val defaultFactory: () -> IrEmitter = { emitter.instantiate(PackageName(DEFAULT_GENERATED_PACKAGE_STRING), EmitShared(false)) }
+    val sharedFactory: () -> IrEmitter = { emitter.instantiate(PackageName(DEFAULT_GENERATED_PACKAGE_STRING), EmitShared(true)) }
 
     val allFixtures = nodeFixtures(defaultFactory) +
         compileFixtures(defaultFactory) +
@@ -59,11 +55,6 @@ public fun main(args: Array<String>) {
             target.writeText(produce())
             println("[fixtures] wrote ${target.absolutePath}")
         }
-}
-
-private fun Any.asIrEmitter(fqcn: String): IrEmitter {
-    require(this is IrEmitter) { "$fqcn is not an IrEmitter" }
-    return this
 }
 
 private fun IrEmitter.sharedOutputAsString(): String = emitShared()

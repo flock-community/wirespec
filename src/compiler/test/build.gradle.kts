@@ -45,10 +45,5 @@ kotlin {
                 implementation(libs.kotest.property)
             }
         }
-        jvmMain {
-            dependencies {
-                implementation(libs.kotlin.reflect)
-            }
-        }
     }
 }

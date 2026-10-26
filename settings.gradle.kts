@@ -5,6 +5,7 @@ pluginManagement {
     includeBuild("gradle/plugins/spotless")
     includeBuild("gradle/plugins/emitter-fixtures")
     includeBuild("gradle/plugins/native-targets")
+    includeBuild("gradle/plugins/wirespec-codegen")
     repositories {
         mavenLocal()
         gradlePluginPortal()
