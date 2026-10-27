@@ -6,27 +6,27 @@ Two pieces, usable together or independently:
    [`Arb`][arb]s, driving the IR-emitted `*Generator.generate(...)` factories
    with deterministic, configurable test data.
 2. A **scenario DSL** emitted alongside your models by `KotestDslExtension`, so
-   endpoints and channels can be exercised as
+   endpoints, channels and rpcs can be exercised as
    `GetTodos.generate.request { … }.call()`.
+
+The user guide is the [Kotest integration page][docs] of the Wirespec docs; this
+README covers the same ground in more depth for contributors.
 
 [kotest]: https://kotest.io
 [arb]: https://kotest.io/docs/proptest/property-test-generators.html
+[docs]: https://wirespec.io/docs/integration/kotest
 
 ## Targets
 
-Only the `jvm()` target is declared, against Kotlin-emitted code, but most of
-the module lives in `commonMain` and uses no JVM APIs:
+Only the `jvm()` target is declared, against Kotlin-emitted code. All sources
+live in `commonMain`, and the runtime parts (`ArbReceiver`, `EndpointReflection`,
+`CallExecutor`, the `*CallBuilder` terminals, `JvmRefinedWrapper`) use
+`kotlin-reflect` and `java.*`.
 
-- **`commonMain`** — the generator algorithm and `KotestField` mirror types, the
-  `KotestDslExtension` emitter (operates on the multiplatform compiler AST/IR),
-  and the framework-neutral `WirespecTestContext` / `WirespecChannelContext` /
-  `WirespecAmbient` types. These reference only the `Wirespec.*` interfaces
-  (themselves `commonMain` in `:src:integration:wirespec`), `kotest-property`,
-  and `kotlin.coroutines`.
-- **`jvmMain`** — everything that reflects over generated classes at runtime
-  (`ArbReceiver`, `EndpointReflection`, `CallExecutor`, the `*CallBuilder`
-  terminals, `JvmRefinedWrapper`). These are anchored to the JVM by
-  `kotlin-reflect` and `java.*`, not by choice of target.
+The DSL emitter is the exception: `extension/KotestDslExtension.kt` and
+`convert/` only use the multiplatform compiler AST/IR, because
+`:src:plugin:extensions` compiles them again for every target so the plugins,
+the CLI and the npm package can bundle the extension.
 
 Regex generation uses [`community.flock.kotlinx.rgxgen`][rgxgen] (multiplatform),
 not `Arb.stringPattern` (which is JVM-only in kotest 6.x).
@@ -40,10 +40,15 @@ testImplementation("community.flock.wirespec.integration:kotest-jvm:<version>")
 testImplementation("io.kotest:kotest-property:<version>")
 ```
 
+Use the source set that compiles the generated code: the DSL lands next to the
+models, so when they are main sources these are `implementation` dependencies.
+The endpoint DSL reads constructor parameter names at runtime, so compile the
+generated code with `-java-parameters` (Spring Boot's Gradle plugin sets it).
+
 ## Part 1 — the generator
 
 ```kotlin
-import community.flock.wirespec.integration.kotest.kotestWirespecKotlinGenerator
+import community.flock.wirespec.integration.kotest.generator.kotestWirespecKotlinGenerator
 
 val gen = kotestWirespecKotlinGenerator(seed = 1L)
 val member: Member = MemberGenerator.generate(gen, emptyList())
@@ -86,6 +91,9 @@ val gen = kotestWirespecKotlinGenerator(seed = 1L) {
 - Registering the same path pattern or field key twice fails fast; two
   equally-specific patterns matching the same path fail at lookup with an
   "Ambiguous" error.
+- A field override (forms 2 and 3) matches on the record a field belongs to,
+  which the generator only knows for a record generated inside another one.
+  For the record you generate at the root, override its fields by path.
 
 ### Refined fields auto-wrap
 
@@ -121,7 +129,7 @@ nested refined wrappers so each element has stable, reproducible identity.
 ## Part 2 — the scenario DSL
 
 `KotestDslExtension` is an `IrExtension`: register it on a Kotlin IR emitter and
-it emits one `<Endpoint>Dsl.kt` / `<Channel>Dsl.kt` per operation into
+it emits one `<Endpoint>Dsl.kt` / `<Channel>Dsl.kt` / `<Rpc>Dsl.kt` per operation into
 `<packageName>.kotest`, alongside the models the base emitter produces.
 
 ```kotlin
@@ -146,10 +154,17 @@ val canned: PutTodo.Response200 = PutTodo.generate.response200().draw()
 
 // Channels: publish by chaining send() on the message Gen. send() takes an optional
 // destination topic (and key); omit them to fall back to the channel object's simple name.
+// The DSL only drives the sending side; assert on what the app published with your own consumer.
 CampaignEvents.generate.message { eventType(CampaignEventType.ENDED) }.send("campaign-events")
 
-// Channels: consume via the listen scope.
-CampaignEvents.generate.listen { expecting { event -> event.eventType shouldBe CampaignEventType.CREATED } }
+// Rpcs: the parameters are drawn as a `<Rpc>Request`; call() hands one to the registered
+// `<Rpc>.Service` and returns what it answered (the `Response` union when the rpc declares an error).
+val user = GetUser.generate.request { id("u-042") }.call()
+user.shouldBeInstanceOf<GetUser.Result>()
+
+// Rpc outcomes are Gens too, e.g. to stub a service another component depends on.
+val stub = GetUser.Service { GetUser.generate.result { name("Alice") }.draw() }
+val missing: GetUser.Error = GetUser.generate.error { reason("gone") }.draw()
 
 // Standalone types: `<Type>.generate { … }` reads through the type name like the
 // endpoint/channel entry points and returns a `Gen<…>`, pinning only the fields you set.
@@ -157,9 +172,11 @@ val gen: Gen<Campaign> = Campaign.generate { name("Summer sale") }
 val one: Campaign = gen.draw()
 ```
 
-Every scope slot has both an assignable `var` form (`path = { … }`) and a
-same-named function form (`path { … }`). Un-overridden fields keep the value the
-generator drew, so a scenario only spells out the fields it actually cares about.
+Scope slots (`path`, `query`, `header`, `body`) are set with a block, `path { … }`.
+Path, query and header parameters are not generated: a required one that is not
+set fails the request with a message naming it, a nullable one defaults to `null`.
+Un-overridden body fields keep the value the generator drew, so a scenario only
+spells out the fields it actually cares about.
 
 Field slots follow the same pair. Each is a `Gen<…>?` property plus a same-named
 single-arg function that pins a constant, so a fixed value needs no `Arb` wrapper:
@@ -184,24 +201,26 @@ overrides compose to any depth without duplicating builders.
 ### Wiring the transport
 
 The DSL resolves its transport and per-test `RandomSource` from an ambient
-context installed by two extensions — one per direction. Register whichever the
-spec drives (or both, they compose into one ambient sharing a `RandomSource`):
+context installed by an extension per kind of operation. Register whichever the
+spec drives (they compose into one ambient sharing a `RandomSource`):
 
 ```kotlin
 class MySpec : FunSpec({
     extension(WirespecEndpointExtension(WirespecEndpointContext(transportation, serialization)))
     extension(WirespecChannelExtension(WirespecChannelContext(transport, serialization)))
+    extension(WirespecRpcExtension(userService, Ping.Service { "pong" }))
 })
 ```
 
-`WirespecEndpointExtension` backs `call()`, `WirespecChannelExtension` backs
-`send()` / `expecting()`; supply whichever the spec needs. A call into a missing
+`WirespecEndpointExtension` backs an endpoint's `call()`, `WirespecChannelExtension` backs
+`send()`, `WirespecMockExtension` backs `mock { … }` and `WirespecRpcExtension` backs an rpc's `call()`, which runs on
+the one registered service implementing that rpc's `Service`; supply whichever the spec needs. A call into a missing
 context fails with a message naming the extension to add. Responses are
 validated against the contract — an
 undeclared status or a body that won't deserialize into the matched variant
 fails the test with the seed printed for reproduction.
 
-For endpoint specs against a running server, the module ships a ready
-`Wirespec.Transportation` — `community.flock.wirespec.integration.jvm.transport.HttpTransportation`
-(JDK `HttpClient`) — so you can wire `WirespecEndpointContext(HttpTransportation("http://localhost:$port"), serialization)`
-without hand-rolling one.
+For endpoint specs against a running server, the `jvm` integration
+(`community.flock.wirespec.integration:jvm-jvm`) ships a ready `Wirespec.Transportation` —
+`community.flock.wirespec.integration.jvm.transport.HttpTransportation` (JDK `HttpClient`) — so you can wire
+`WirespecEndpointContext(HttpTransportation("http://localhost:$port"), serialization)` without hand-rolling one.

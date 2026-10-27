@@ -123,7 +123,7 @@ that name replaces the fully qualified class name; in Gradle you reference the c
 | `Avro`                     | Java, Kotlin        | Adds an Avro schema and converter next to every model — see [Avro](../integration/integration-avro.mdx)                                |
 | `Jackson`                  | Java, Kotlin        | Adds Jackson annotations to every model — see [Jackson](../integration/integration-jackson.mdx)                                       |
 | `JvmBuilder`               | Java, Kotlin, Scala | Adds an immutable `Builder` with `builder()` and `toBuilder()` to every model — see [Builders](../integration/integration-builders.mdx) |
-| `KotestDsl`                | Kotlin              | Adds a Kotest scenario DSL for every model, endpoint and channel                                                                       |
+| `KotestDsl`                | Kotlin              | Adds a Kotest scenario DSL for every model, endpoint, channel and rpc — see [Kotest](../integration/integration-kotest.mdx)            |
 | `KotlinxSerialization`     | Kotlin              | Adds `@Serializable`/`@SerialName` to every model — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
 | `SpringMappingAnnotations` | Java, Kotlin        | Adds Spring MVC mapping annotations to every endpoint handler — see [Spring](../integration/integration-spring.mdx)                   |
 | `SpringNativeHints`        | Java, Kotlin        | Adds a `WirespecNativeHints` class that registers the models and endpoints for GraalVM native images                                  |

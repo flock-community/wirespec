@@ -2,6 +2,7 @@ plugins {
     id("module.publication")
     id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
+    id("module.wirespec-codegen")
 }
 
 group = "${libs.versions.group.id.get()}.integration"
@@ -12,8 +13,17 @@ repositories {
     mavenLocal()
 }
 
+wirespecCodegen {
+    basePackage = "community.flock.wirespec.integration.kotest"
+}
+
 kotlin {
     jvm {
+        compilations.named("codegen") {
+            defaultSourceSet.dependencies {
+                implementation(project(":src:compiler:emitters:kotlin"))
+            }
+        }
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))

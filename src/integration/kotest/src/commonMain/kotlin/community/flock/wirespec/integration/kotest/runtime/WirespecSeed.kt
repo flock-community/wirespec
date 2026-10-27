@@ -20,10 +20,10 @@ internal fun WirespecSeed?.orNew(): WirespecSeed = this ?: WirespecSeed(newSeede
 
 internal suspend fun currentRandomSource(): RandomSource = coroutineContext[WirespecSeed]?.randomSource ?: error(
     "No wirespec seed in scope. Register a wirespec extension " +
-        "(`WirespecEndpointExtension`, `WirespecChannelExtension` or `WirespecMockExtension`) on the spec.",
+        "(`WirespecEndpointExtension`, `WirespecChannelExtension`, `WirespecRpcExtension` or `WirespecMockExtension`) on the spec.",
 )
 
 internal suspend fun currentSeed(): Long = coroutineContext[WirespecSeed]?.seed ?: error(
     "No wirespec seed in scope. Register a wirespec extension " +
-        "(`WirespecEndpointExtension`, `WirespecChannelExtension` or `WirespecMockExtension`) on the spec.",
+        "(`WirespecEndpointExtension`, `WirespecChannelExtension`, `WirespecRpcExtension` or `WirespecMockExtension`) on the spec.",
 )
