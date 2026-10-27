@@ -55,9 +55,7 @@
                             <output>${project.build.directory}/generated-sources/java</output>
                             <packageName>community.flock.wirespec.example.maven.custom.generated</packageName>
                             <shared>false</shared>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
+                            <language>Java</language>
                             <extensionClasses>
                                 <extensionClass>community.flock.wirespec.example.maven.custom.extension.CustomExtension</extensionClass>
                             </extensionClasses>
@@ -73,9 +71,7 @@
                             <output>${project.build.directory}/generated-sources/java</output>
                             <packageName>community.flock.wirespec.example.maven.custom.generated</packageName>
                             <shared>false</shared>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
+                            <language>Java</language>
                             <extensionClasses>
                                 <extensionClass>community.flock.wirespec.example.maven.custom.extension.CustomExtension</extensionClass>
                             </extensionClasses>
@@ -91,9 +87,7 @@
                             <output>${project.build.directory}/generated-sources/openapi</output>
                             <preProcessor>community.flock.wirespec.example.maven.custom.pre_processor.PreProcessor</preProcessor>
                             <format>OpenAPIV3</format>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
+                            <language>Java</language>
                         </configuration>
                     </execution>
                 </executions>

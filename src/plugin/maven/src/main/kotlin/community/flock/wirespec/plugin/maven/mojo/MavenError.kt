@@ -9,5 +9,3 @@ internal class ConvertNeedsAFile : RuntimeException("To convert, please specify 
 internal sealed class SpecificFile(extension: FileExtension) : RuntimeException("No ${extension.name} file found")
 internal class JSONFileError : SpecificFile(FileExtension.JSON)
 internal class WirespecFileError : SpecificFile(FileExtension.Wirespec)
-
-internal class PickAtLeastOneLanguage : RuntimeException("Pick at least one language.")

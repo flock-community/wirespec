@@ -96,7 +96,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
-    languages = listOf(Language.Kotlin)
+    language = Language.Kotlin
     extensionClasses = listOf(KotlinxSerializationExtension::class.java)
 }
 
@@ -106,7 +106,7 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.typescript"
-    languages = listOf(Language.TypeScript)
+    language = Language.TypeScript
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
@@ -115,7 +115,7 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     input = layout.projectDirectory.file("src/main/openapi/petstorev3.json")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.openapi"
-    languages = listOf(Language.Wirespec)
+    language = Language.Wirespec
     format = Format.OpenAPIV3
     preProcessor = { it.replaceFirst("http://www.apache.org/licenses/LICENSE-2.0.html", "https://flock.community") }
 }

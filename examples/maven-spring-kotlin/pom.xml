@@ -91,9 +91,7 @@
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
-                            <languages>
-                                <language>Kotlin</language>
-                            </languages>
+                            <language>Kotlin</language>
                             <extensionClasses>
                                 <extensionClass>SpringMappingAnnotations</extensionClass>
                             </extensionClasses>

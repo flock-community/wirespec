@@ -34,9 +34,7 @@ To use the Wirespec Maven plugin, you need to add it to your `pom.xml` file. Her
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.basedir}/src/main/typescript/generated</output>
-                        <languages>
-                            <language>Kotlin</language>
-                        </languages>
+                        <language>Kotlin</language>
                     </configuration>
                 </execution>
             </executions>
@@ -53,7 +51,7 @@ mvn wirespec:compile
 
 ## Compile
 
-The `compile` goal is the primary functionality of the Wirespec Maven plugin. It compiles Wirespec definition files into code in your target languages.
+The `compile` goal is the primary functionality of the Wirespec Maven plugin. It compiles Wirespec definition files into code in your target language.
 
 ### Usage
 
@@ -73,11 +71,7 @@ The compile mojo is already shown in the installation section above. Here's a mo
             <configuration>
                 <input>${project.basedir}/src/main/wirespec</input>
                 <output>${project.build.directory}/generated-sources/wirespec</output>
-                <languages>
-                    <language>Java</language>
-                    <language>Kotlin</language>
-                    <language>TypeScript</language>
-                </languages>
+                <language>Java</language>
                 <packageName>com.example.generated</packageName>
                 <strict>true</strict>
                 <shared>true</shared>
@@ -93,7 +87,8 @@ The compile mojo supports the following parameters:
 
 - **input** (required): Specifies the input files or directories. Multiple paths can be provided, separated by commas. Files can also be loaded from the classpath using the 'classpath:' prefix (e.g., 'classpath:wirespec/petstore.ws').
 - **output** (required): Specifies the output directory where generated code will be placed.
-- **languages**: List of target languages to compile to. Supported languages are:
+- **language** (required): The target language to compile to. An execution compiles to one language: add an execution
+  per language to generate several. Supported languages are:
   - `Java`: Generate Java code
   - `Kotlin`: Generate Kotlin code
   - `TypeScript`: Generate TypeScript code
@@ -105,16 +100,16 @@ The compile mojo supports the following parameters:
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
-- **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, for every emitter that is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
+- **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, when the emitter is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
 
 ### Default values
 
 The `compile` goal fails the build when the Wirespec files have [default values](../language/types.mdx#default-values)
-and one of the `languages` does not support them, such as Java. The failure message names the fields that have a
-default. Set `ignoreDefaults` to generate the code without them.
+and the `language` does not support them, such as Java. The failure message names the fields that have a default. Set
+`ignoreDefaults` to generate the code without them.
 
-`ignoreDefaults` applies to every language of the execution. Use one execution per language to keep the defaults where
-they are supported:
+Every execution compiles to one language, so the defaults stay where they are supported when only the executions of the
+other languages set `ignoreDefaults`:
 
 ```xml
 <executions>
@@ -126,9 +121,7 @@ they are supported:
         <configuration>
             <input>${project.basedir}/src/main/wirespec</input>
             <output>${project.build.directory}/generated-sources/wirespec-kotlin</output>
-            <languages>
-                <language>Kotlin</language>
-            </languages>
+            <language>Kotlin</language>
         </configuration>
     </execution>
     <execution>
@@ -139,9 +132,7 @@ they are supported:
         <configuration>
             <input>${project.basedir}/src/main/wirespec</input>
             <output>${project.build.directory}/generated-sources/wirespec-java</output>
-            <languages>
-                <language>Java</language>
-            </languages>
+            <language>Java</language>
             <!-- Java does not support defaults yet: leave them out instead of failing the build. -->
             <ignoreDefaults>true</ignoreDefaults>
         </configuration>
@@ -191,9 +182,7 @@ IR pipeline:
             <configuration>
                 <input>${project.basedir}/src/main/wirespec</input>
                 <output>${project.build.directory}/generated-sources</output>
-                <languages>
-                    <language>Kotlin</language>
-                </languages>
+                <language>Kotlin</language>
                 <shared>false</shared>
                 <extensionClasses>
                     <extensionClass>KotlinxSerialization</extensionClass>
@@ -207,7 +196,7 @@ IR pipeline:
 
 ## Convert
 
-The `convert` goal allows you to convert files from other formats to Wirespec format and then generate code in your target languages. This is particularly useful for working with existing API specifications like OpenAPI.
+The `convert` goal allows you to convert files from other formats to Wirespec format and then generate code in your target language. This is particularly useful for working with existing API specifications like OpenAPI.
 
 ### Usage
 
@@ -228,10 +217,7 @@ To use the convert mojo, add it to your `pom.xml` file with the `convert` goal:
                 <input>${project.basedir}/src/main/openapi/specification.json</input>
                 <output>${project.build.directory}/generated-sources/openapi</output>
                 <format>OpenAPIV3</format>
-                <languages>
-                    <language>Java</language>
-                    <language>Kotlin</language>
-                </languages>
+                <language>Java</language>
             </configuration>
         </execution>
     </executions>
@@ -240,7 +226,7 @@ To use the convert mojo, add it to your `pom.xml` file with the `convert` goal:
 
 ### Parameters
 
-In addition to the common parameters (input, output, languages), the convert mojo has the following specific parameters:
+In addition to the common parameters (input, output, language), the convert mojo has the following specific parameters:
 
 - **format** (required): Specifies the format to convert from. Supported formats are:
   - `OpenAPIV2`: OpenAPI Specification version 2.0 (formerly Swagger)

@@ -54,7 +54,7 @@ Wirespec relies on this itself: every IR emitter applies the built-in `ValidateE
 
 The integration modules only target the JVM, so the `extensions` plugin module compiles their extension sources once more, for every target, and the `arguments` module maps the names of the bundled extensions (`Extension`) onto them. That way the CLI, the NPM package and the playground offer the same extensions as Maven and Gradle.
 
-The plugins load extension classes from the build classpath via reflection and instantiate them for every emitter of the task. The constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and/or `FileExtension` (the target language of the emitter being extended) — the plugin injects them from the build configuration. Any other constructor parameter is rejected at load time. A class of a bundled extension is recognised, so it is only applied to the languages it supports. Maven takes the fully-qualified names as strings, or the name of a bundled extension (`Jackson` for `JacksonExtension`):
+The plugins load extension classes from the build classpath via reflection and instantiate them for the emitter of the task. The constructor may declare zero or more parameters of type `PackageName`, `EmitShared`, and/or `FileExtension` (the target language of the emitter being extended) — the plugin injects them from the build configuration. Any other constructor parameter is rejected at load time. A class of a bundled extension is recognised, so it is only applied to the languages it supports. Maven takes the fully-qualified names as strings, or the name of a bundled extension (`Jackson` for `JacksonExtension`):
 
 ```xml
 <extensionClasses>
@@ -72,7 +72,7 @@ Extensions run in the order they are listed, after all built-in files (models, e
 
 ## Shared contract
 
-The `arguments` module is the seam between the compiler and the plugins. Every plugin builds a `WirespecArguments` value (input sources, emitters, writer, error handler, package name, logger, plus the `shared` / `strict` / `ir` flags) and calls the top-level `compile(args)` or `convert(args)` function:
+The `arguments` module is the seam between the compiler and the plugins. Every plugin builds a `WirespecArguments` value (input sources, emitter, writer, error handler, package name, logger, plus the `shared` / `strict` / `ir` flags) and calls the top-level `compile(args)` or `convert(args)` function:
 
 ```
 plugin (CLI / Maven / Gradle / NPM)

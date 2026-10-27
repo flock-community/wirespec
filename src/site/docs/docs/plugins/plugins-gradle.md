@@ -29,7 +29,7 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName.set("community.flock.wirespec.generated.typescript")
-    languages.set(listOf(Language.TypeScript))
+    language.set(Language.TypeScript)
     shared.set(true)
     strict.set(false)
 }
@@ -39,6 +39,7 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     input = layout.projectDirectory.file("src/main/openapi/schema.json")
     output = layout.buildDirectory.dir("openapi")
     format = Format.OpenAPIV2
+    language = Language.Wirespec
     // Example of using preProcessor to modify the input content before conversion
     preProcessor = { it }
 }
@@ -50,7 +51,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName.set("community.flock.wirespec.generated.kotlin")
-    languages.set(listOf(Language.Kotlin))
+    language.set(Language.Kotlin)
     extensionClasses.set(listOf(SerializableExtension::class.java))
     shared = true
     strict = false
@@ -91,13 +92,13 @@ The Wirespec Gradle plugin provides two main task types:
 
 ### CompileWirespecTask
 
-This task compiles Wirespec definitions to various target languages.
+This task compiles Wirespec definitions to one target language. Register a task per language to generate several.
 
 **Properties:**
 
 - `input`: DirectoryProperty - The input directory containing Wirespec files
 - `output`: DirectoryProperty - The output directory for generated code
-- `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
+- `language`: Property&lt;Language&gt; - The target language (Java, Kotlin, TypeScript, Python, Rust, Scala, Wirespec, OpenAPIV2, OpenAPIV3, Avro)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
@@ -113,6 +114,7 @@ This task converts from JSON or Avro to other formats.
 - `input`: RegularFileProperty - The input file (JSON or Avro)
 - `output`: DirectoryProperty - The output directory for generated code
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro, GraphQL, AsyncAPI)
+- `language`: Property&lt;Language&gt; - The target language, see `CompileWirespecTask`
 - `preProcessor`: Property&lt;(String) -> String&gt; - Function to preprocess the input content before conversion
 - `packageName`: Property&lt;String&gt; - Package name for generated code
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
@@ -123,23 +125,23 @@ This task converts from JSON or Avro to other formats.
 ## Default values
 
 A `CompileWirespecTask` fails when the Wirespec files have [default values](../language/types.mdx#default-values) and
-one of its `languages` does not support them, such as Java. The task failure names the fields that have a default.
-Set `ignoreDefaults` to generate the code without them.
+its `language` does not support them, such as Java. The task failure names the fields that have a default. Set
+`ignoreDefaults` to generate the code without them.
 
-`ignoreDefaults` applies to every language of the task. Use one task per language to keep the defaults where they are
-supported:
+Every task generates one language, so the defaults stay where they are supported when only the tasks of the other
+languages set `ignoreDefaults`:
 
 ```kotlin
 tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated/kotlin")
-    languages.set(listOf(Language.Kotlin))
+    language.set(Language.Kotlin)
 }
 
 tasks.register<CompileWirespecTask>("wirespec-java") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated/java")
-    languages.set(listOf(Language.Java))
+    language.set(Language.Java)
     // Java does not support defaults yet: leave them out instead of failing the task.
     ignoreDefaults.set(true)
 }
@@ -165,7 +167,7 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
-    languages = listOf(Language.Kotlin)
+    language = Language.Kotlin
     shared = false
     extensionClasses = listOf(KotlinxSerializationExtension::class.java)
 }

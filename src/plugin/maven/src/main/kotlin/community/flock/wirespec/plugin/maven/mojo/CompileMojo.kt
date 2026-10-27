@@ -48,7 +48,7 @@ public class CompileMojo : BaseMojo() {
         val testOutputDir = testOutput?.let { Directory(getOutPutPath(inputPath, it).or(::handleError)) }
         CompilerArguments(
             input = sources,
-            emitters = emitters,
+            emitter = emitter,
             writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = PackageName(packageName),

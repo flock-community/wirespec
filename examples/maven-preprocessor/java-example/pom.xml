@@ -40,9 +40,7 @@
                             <sourceDirectory>${project.basedir}/src/wirespec/java</sourceDirectory>
                             <preProcessor>community.flock.wirespec.example.maven.preprocessor.PreProcessor</preProcessor>
                             <format>OpenAPIV3</format>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
+                            <language>Java</language>
                         </configuration>
                     </execution>
                 </executions>

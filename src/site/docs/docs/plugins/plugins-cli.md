@@ -110,8 +110,12 @@ extension; the names are case-insensitive. Each extension applies to the languag
 models get Spring and Jackson annotations while the TypeScript is emitted as is:
 
 ```shell
-wirespec compile -i ./wirespec -o ./out -l Kotlin -l TypeScript -e SpringMappingAnnotations -e Jackson
+wirespec compile -i ./wirespec -o ./out/kotlin -l Kotlin -e SpringMappingAnnotations -e Jackson
+wirespec compile -i ./wirespec -o ./out/typescript -l TypeScript -e SpringMappingAnnotations -e Jackson
 ```
+
+`-l` takes one language per run: `compile` defaults to `Kotlin` and `convert` to `Wirespec`. Run the command once per
+language to generate several.
 
 ## Default values
 
@@ -129,8 +133,7 @@ Add `--ignore-defaults` to generate the code without the defaults:
 wirespec compile -i ./wirespec -o ./out -l Java --ignore-defaults
 ```
 
-`--ignore-defaults` applies to every `-l` language of the command. Run `wirespec compile` once per language to keep the
-defaults for Kotlin and leave them out for Java:
+Every run compiles to one language, so the defaults stay for Kotlin when only the Java run ignores them:
 
 ```shell
 wirespec compile -i ./wirespec -o ./out/kotlin -l Kotlin

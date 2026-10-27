@@ -130,9 +130,7 @@
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <packageName>community.flock.wirespec.example.maven.wiremock.generated</packageName>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
+                            <language>Java</language>
                         </configuration>
                     </execution>
                 </executions>

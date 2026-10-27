@@ -148,9 +148,7 @@
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.basedir}/src/main/typescript/generated</output>
-                            <languages>
-                                <language>TypeScript</language>
-                            </languages>
+                            <language>TypeScript</language>
                         </configuration>
                     </execution>
                     <execution>
@@ -162,9 +160,7 @@
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <packageName>community.flock.wirespec.generated.java</packageName>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
+                            <language>Java</language>
                         </configuration>
                     </execution>
                     <execution>
@@ -175,9 +171,7 @@
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/openapi</output>
-                            <languages>
-                                <language>OpenAPIV3</language>
-                            </languages>
+                            <language>OpenAPIV3</language>
                         </configuration>
                     </execution>
                 </executions>

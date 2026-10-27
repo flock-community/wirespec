@@ -159,7 +159,7 @@ Gradle.
         output = layout.buildDirectory.dir("generated")
         packageName = "community.flock.wirespec.generated"
         // Works for both Java and Kotlin
-        languages = listOf(Language.Kotlin)
+        language = Language.Kotlin
         shared = false
         extensionClasses = listOf(JacksonExtension::class.java)
     }
@@ -180,10 +180,8 @@ Gradle.
                 <configuration>
                     <input>${project.basedir}/src/main/wirespec</input>
                     <output>${project.build.directory}/generated-sources</output>
-                    <languages>
-                        <!-- Works for both Java and Kotlin -->
-                        <language>Kotlin</language>
-                    </languages>
+                    <!-- Works for both Java and Kotlin -->
+                    <language>Kotlin</language>
                     <shared>false</shared>
                     <extensionClasses>
                         <extensionClass>Jackson</extensionClass>

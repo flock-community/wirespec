@@ -3,6 +3,7 @@ package community.flock.wirespec.plugin.cli
 import com.github.ajalt.clikt.testing.CliktCommandTestResult
 import com.github.ajalt.clikt.testing.test
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
 
 class WirespecCliErrorsTest {
@@ -53,6 +54,12 @@ class WirespecCliErrorsTest {
     fun testChooseALogLevel() = inContext(arrayOf("compile", "-l", "Kotlin", "-i", "src/commonTest/resources/wirespec", "--log-level", "yolo")) {
         statusCode shouldBe 1
         stderr shouldBe "Choose one of these log levels: DEBUG, INFO, WARN, ERROR.\n"
+    }
+
+    @Test
+    fun testPickOneLanguage() = inContext(arrayOf("compile", "-l", "Kotlin", "-l", "TypeScript", "-i", "src/commonTest/resources/wirespec")) {
+        statusCode shouldBe 1
+        stderr shouldContain "Pick one language per run, not Kotlin, TypeScript."
     }
 
     @Test

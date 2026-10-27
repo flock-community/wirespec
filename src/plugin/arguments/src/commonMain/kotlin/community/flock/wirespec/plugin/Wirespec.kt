@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin
 
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
+import arrow.core.nonEmptySetOf
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.FileUri
@@ -22,7 +23,7 @@ import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 public fun compile(arguments: CompilerArguments) {
     val ctx = object : CompilationContext {
         override val logger = arguments.logger
-        override val emitters = arguments.emitters
+        override val emitters = nonEmptySetOf(arguments.emitter)
     }
 
     ctx
@@ -52,13 +53,7 @@ public fun convert(arguments: ConverterArguments) {
         // Unlike compile, convert does not fail on defaults a language cannot generate: the defaults come from the
         // converted spec, and those languages leave them out.
         .map { list -> list.map { if (arguments.ignoreDefaults) it.withoutDefaults() else it } }
-        .map { list ->
-            list.flatMap { ast ->
-                arguments.emitters.flatMap {
-                    it.emit(ast, arguments.logger)
-                }
-            }
-        }
+        .map { list -> list.flatMap { arguments.emitter.emit(it, arguments.logger) } }
         .fold(arguments)
 }
 

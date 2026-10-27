@@ -103,7 +103,7 @@ public class ConvertMojo : BaseMojo() {
         ConverterArguments(
             format = format,
             input = nonEmptySetOf(sources),
-            emitters = emitters,
+            emitter = emitter,
             writer = writer(outputDir, testOutputDir),
             error = { throw RuntimeException(it) },
             packageName = PackageName(packageName),

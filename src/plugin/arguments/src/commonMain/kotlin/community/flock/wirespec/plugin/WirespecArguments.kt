@@ -13,7 +13,7 @@ import community.flock.wirespec.plugin.io.Source.Type.Wirespec
 
 internal sealed interface WirespecArguments {
     val input: NonEmptySet<Source<Type>>
-    val emitters: NonEmptySet<Emitter>
+    val emitter: Emitter
     val writer: (NonEmptyList<Emitted>) -> Unit
     val error: (String) -> Unit
     val packageName: PackageName
@@ -25,7 +25,7 @@ internal sealed interface WirespecArguments {
 
 public data class CompilerArguments(
     override val input: NonEmptySet<Source<Wirespec>>,
-    override val emitters: NonEmptySet<Emitter>,
+    override val emitter: Emitter,
     override val writer: (NonEmptyList<Emitted>) -> Unit,
     override val error: (String) -> Unit,
     override val packageName: PackageName,
@@ -38,7 +38,7 @@ public data class CompilerArguments(
 public data class ConverterArguments(
     val format: Format,
     override val input: NonEmptySet<Source<JSON>>,
-    override val emitters: NonEmptySet<Emitter>,
+    override val emitter: Emitter,
     override val writer: (NonEmptyList<Emitted>) -> Unit,
     override val error: (String) -> Unit,
     override val packageName: PackageName,
