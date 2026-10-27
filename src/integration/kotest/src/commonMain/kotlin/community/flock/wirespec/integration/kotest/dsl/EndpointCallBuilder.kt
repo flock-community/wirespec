@@ -35,7 +35,7 @@ public class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Res
     @PublishedApi
     internal val reflection: EndpointReflection = EndpointReflection.of(endpointObject)
 
-    @PublishedApi internal var bodyTransform: ((Any, RandomSource) -> Any)? = null
+    private var bodyTransform: ((BodyT, RandomSource) -> BodyT)? = null
 
     @PublishedApi internal var bodyListSizeGen: Gen<Int>? = null
 
@@ -45,9 +45,13 @@ public class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Res
 
     @PublishedApi internal val headerGens: MutableMap<String, Gen<*>> = mutableMapOf()
 
-    public fun bodyTransform(transform: (Any, RandomSource) -> Any): EndpointCallBuilder<BodyT, Req, Resp> = apply {
+    public fun bodyTransform(transform: (BodyT, RandomSource) -> BodyT): EndpointCallBuilder<BodyT, Req, Resp> = apply {
         bodyTransform = transform
     }
+
+    // The request is assembled reflectively, so the generated body only meets BodyT here.
+    @Suppress("UNCHECKED_CAST")
+    internal fun transformBody(generated: Any, rs: RandomSource): Any = bodyTransform?.invoke(generated as BodyT, rs) ?: generated
 
     public fun bodyListSize(gen: Gen<Int>): EndpointCallBuilder<BodyT, Req, Resp> = apply { bodyListSizeGen = gen }
 

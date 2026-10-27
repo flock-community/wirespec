@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.kotest.dsl
 
-import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.generator.kotestWirespecKotlinGenerator
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.property.RandomSource
@@ -14,15 +13,7 @@ public class ArbReceiver internal constructor(private val randomSource: RandomSo
         kotestWirespecKotlinGenerator(seed = randomSource.random.nextLong())
 
     @Suppress("UNCHECKED_CAST")
-    internal fun <T> generateModel(
-        modelClass: Class<*>,
-        overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null,
-    ): T {
-        val generator = overrides
-            ?.let { kotestWirespecKotlinGenerator(seed = randomSource.random.nextLong(), block = it) }
-            ?: this.generator
-        return generatorFor(modelClass).generate(generator, emptyList()) as T
-    }
+    internal fun <T> generateModel(modelClass: Class<*>): T = generatorFor(modelClass).generate(generator, emptyList()) as T
 
     @PublishedApi
     internal fun generatorFor(modelClass: Class<*>): GeneratorHandle = cache.computeIfAbsent(modelClass) {

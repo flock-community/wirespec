@@ -46,15 +46,17 @@ internal object RpcDslFile {
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
 
-            import("community.flock.wirespec.integration.kotest.dsl", "generatedGen")
+            if (shape.generatedValues.isNotEmpty()) {
+                import("community.flock.wirespec.integration.kotest.dsl", "generatedGen")
+                import("community.flock.wirespec.kotlin", "Wirespec")
+            }
             import("community.flock.wirespec.integration.kotest.dsl", "rpcCall")
             if (shape.requestFields.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
-                import("io.kotest.property.arbitrary", "constant")
+                import("community.flock.wirespec.integration.kotest.dsl", "draw")
+                import("io.kotest.property", "RandomSource")
             }
-            if (shape.generatedValues.isNotEmpty()) {
-                import("community.flock.wirespec.kotlin", "Wirespec")
-            }
+            import("io.kotest.property.arbitrary", "constant")
             if (shape.generatorImports.isNotEmpty()) {
                 import("kotlin.reflect", "typeOf")
             }
@@ -102,15 +104,13 @@ internal object RpcDslFile {
                     arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
                     returnType(requestArb)
                     raw("val builder = $builder().apply(block)")
-                    raw("return generatedGen({")
-                    raw(RecordBuilder.renderRegistration(shape.requestFields, "builder", emptyList(), "    ").trimEnd())
-                    raw("}) { generator -> ${RpcShape.GeneratedValue.call(shape.requestName)} }")
+                    raw("return generatedGen { generator, rs -> builder.applyTo(${RpcShape.GeneratedValue.call(shape.requestName)}, rs) }")
                 }
             } else {
                 function("request") {
                     visibility(Visibility.PUBLIC)
                     returnType(requestArb)
-                    returns(rawExpr("generatedGen { ${shape.requestName} }"))
+                    returns(rawExpr("Arb.constant(${shape.requestName})"))
                 }
             }
             outcomeFunction("result", shape.result)
@@ -119,21 +119,21 @@ internal object RpcDslFile {
     }
 
     private fun StructBuilder.outcomeFunction(name: String, outcome: RpcShape.Outcome) {
-        val value = outcome.generated?.let { RpcShape.GeneratedValue.call(it.name) } ?: "Unit"
-        val drawn = outcome.wrapper?.let { "$it($value)" } ?: value
+        val value = outcome.generated?.let { RpcShape.GeneratedValue.call(it.name) }
+        val wrap = { drawn: String -> outcome.wrapper?.let { "$it($drawn)" } ?: drawn }
         val record = outcome.record
         function(name) {
             visibility(Visibility.PUBLIC)
             returnType(IrType.Custom("Arb", listOf(IrType.Custom(outcome.type))))
-            if (record != null) {
-                val builder = RecordBuilder.builderName(record.typeName)
-                arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
-                raw("val builder = $builder().apply(block)")
-                raw("return generatedGen({")
-                raw(RecordBuilder.renderRegistration(record.fields, "builder", record.pathPrefix, "    ").trimEnd())
-                raw("}) { generator -> $drawn }")
-            } else {
-                returns(rawExpr("generatedGen { ${outcome.generated?.let { "generator -> $drawn" } ?: drawn} }"))
+            when {
+                value == null -> returns(rawExpr("Arb.constant(${wrap("Unit")})"))
+                record == null -> returns(rawExpr("generatedGen { generator, _ -> ${wrap(value)} }"))
+                else -> {
+                    val builder = RecordBuilder.builderName(record.typeName)
+                    arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
+                    raw("val builder = $builder().apply(block)")
+                    raw("return generatedGen { generator, rs -> ${wrap(record.applyBuilder(value, "builder"))} }")
+                }
             }
         }
     }
@@ -200,15 +200,13 @@ internal data class RpcShape(
         }
     }
 
+    /** A [record] outcome, or a list of records, takes that record's builder. */
     data class Outcome(
         val type: String,
         val wrapper: String?,
         val generated: GeneratedValue.Value?,
-        val record: Record?,
+        val record: RecordRef?,
     )
-
-    /** A record outcome, or a list of records, takes that record's builder; [pathPrefix] is where its fields are generated. */
-    data class Record(val typeName: String, val pathPrefix: List<String>, val fields: List<EndpointShape.BodyFieldShape>)
 
     val generatedValues: List<GeneratedValue>
         get() = listOfNotNull(
@@ -226,8 +224,8 @@ internal data class RpcShape(
             val name = Name.of(rpc.identifier.value).pascalCase()
             val requestName = "${name}Request"
             val parameters = rpc.shape.fields
-            val requestFields = EndpointShape.extractBodyFields(requestName, types + (requestName to syntheticType(requestName, parameters)), refined, visited = emptySet())
-            val result = outcome(name, "Result", rpc.result, wrapped = rpc.error != null, types, refined)
+            val requestFields = EndpointShape.extractBodyFields(requestName, types + (requestName to syntheticType(requestName, parameters)), refined)
+            val result = outcome(name, "Result", rpc.result, wrapped = rpc.error != null, types)
             val references = parameters.map { it.reference } + listOfNotNull(rpc.result, rpc.error)
 
             return RpcShape(
@@ -237,9 +235,9 @@ internal data class RpcShape(
                 parameters = parameters,
                 requestFields = requestFields,
                 result = result,
-                error = rpc.error?.let { outcome(name, "Error", it, wrapped = true, types, refined) },
+                error = rpc.error?.let { outcome(name, "Error", it, wrapped = true, types) },
                 callReturnType = if (rpc.error != null) "$name.Response" else result.type,
-                modelImports = EndpointShape.modelImportsFor(references, requestFields, types),
+                modelImports = EndpointShape.modelImportsFor(references),
                 generatorImports = references.flatMap(EndpointShape::collectCustomNames).distinct(),
             )
         }
@@ -250,25 +248,15 @@ internal data class RpcShape(
             reference: Reference,
             wrapped: Boolean,
             types: Map<String, Type>,
-            refined: Map<String, Refined>,
         ): Outcome {
             val valueType = KotlinGenerator.generateType(reference.convert())
             return Outcome(
                 type = if (wrapped) "$rpcName.$kind" else valueType,
                 wrapper = "$rpcName.$kind".takeIf { wrapped },
                 generated = GeneratedValue.Value("$rpcName$kind", valueType, reference).takeIf { reference !is Reference.Unit },
-                record = recordOf(reference, types, refined),
+                record = RecordRef.of(reference, types)?.takeIf { types.getValue(it.typeName).shape.fields.isNotEmpty() },
             )
         }
-
-        private fun recordOf(reference: Reference, types: Map<String, Type>, refined: Map<String, Refined>): Record? = when (reference) {
-            is Reference.Custom -> reference.value to emptyList<String>()
-            is Reference.Iterable -> (reference.reference as? Reference.Custom)?.let { it.value to listOf("*") }
-            else -> null
-        }
-            ?.takeIf { (typeName, _) -> typeName in types }
-            ?.let { (typeName, prefix) -> Record(typeName, prefix, EndpointShape.extractBodyFields(typeName, types, refined, visited = emptySet())) }
-            ?.takeIf { it.fields.isNotEmpty() }
     }
 }
 

@@ -30,14 +30,17 @@ internal object TypeDslFile {
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
 
-            import("community.flock.wirespec.integration.kotest.dsl", "recordGen")
+            import("community.flock.wirespec.integration.kotest.dsl", "generatedGen")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             import("io.kotest.property", "Arb")
+            import("io.kotest.property", "RandomSource")
             if (shape.fields.isNotEmpty()) {
+                import("community.flock.wirespec.integration.kotest.dsl", "draw")
                 import("io.kotest.property", "Gen")
                 import("io.kotest.property.arbitrary", "constant")
             }
             (listOf(shape.name) + shape.modelImports).distinct().forEach { import(modelPkg, Name.of(it).pascalCase()) }
+            import("${packageName.value}.generator", "${model}Generator")
 
             function("generate") {
                 visibility(Visibility.PUBLIC)
@@ -45,9 +48,7 @@ internal object TypeDslFile {
                 arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
                 returnType(IrType.Custom("Arb", listOf(IrType.Custom(model))))
                 raw("val builder = $builder().apply(block)")
-                raw("return recordGen<$model> {")
-                raw(RecordBuilder.renderRegistration(shape.fields, "builder", emptyList(), "    ").trimEnd())
-                raw("}")
+                raw("return generatedGen { generator, rs -> builder.applyTo(${model}Generator.generate(generator, emptyList()), rs) }")
             }
 
             elements.add(RecordBuilder.buildBuilderClass(shape.name, shape.fields))
@@ -67,9 +68,8 @@ internal data class TypeShape(
             refined: Map<String, Refined> = emptyMap(),
         ): TypeShape {
             val name = type.identifier.value
-            val fields = EndpointShape.extractBodyFields(name, types, refined, visited = emptySet())
-            val directRefs = type.shape.fields.map { it.reference }
-            val modelImports = EndpointShape.modelImportsFor(directRefs, fields, types)
+            val fields = EndpointShape.extractBodyFields(name, types, refined)
+            val modelImports = EndpointShape.modelImportsFor(type.shape.fields.map { it.reference })
             return TypeShape(name = name, fields = fields, modelImports = modelImports)
         }
     }
