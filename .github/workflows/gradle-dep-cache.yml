@@ -1,0 +1,67 @@
+name: Gradle dependency cache
+
+# Publishes a Gradle read-only dependency cache (GRADLE_RO_DEP_CACHE layout: modules-2/) as the
+# asset of the `gradle-dep-cache` release. The Claude Code cloud environment's setup script
+# downloads it, so cloud sessions don't each fetch every dependency from Maven Central.
+# Dependencies missing from it are still downloaded as usual into the writable ~/.gradle cache.
+
+on:
+  schedule:
+    - cron: '17 3 1 * *'
+  workflow_dispatch:
+  # Build the cache (without publishing) when this pipeline itself changes.
+  pull_request:
+    paths:
+      - .github/workflows/gradle-dep-cache.yml
+      - .github/gradle/resolve-all-dependencies.init.gradle.kts
+
+permissions:
+  contents: read
+
+jobs:
+  build-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # A fresh Gradle home, so the archive holds only what this build resolves.
+      # Set via GITHUB_ENV: the `runner` context isn't available in job-level `env`.
+      - name: Use a fresh Gradle home
+        run: |
+          echo "GRADLE_USER_HOME=$RUNNER_TEMP/gradle-home" >> "$GITHUB_ENV"
+          echo "ARCHIVE=$RUNNER_TEMP/gradle-ro-dep-cache.tar.gz" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # `build --dry-run` configures the build (plugins, included builds) without running tasks;
+      # `resolveAllDependencies` then downloads every resolvable configuration.
+      - name: Resolve dependencies
+        run: |
+          ./gradlew build --dry-run
+          ./gradlew resolveAllDependencies --no-configuration-cache \
+            --init-script .github/gradle/resolve-all-dependencies.init.gradle.kts
+          ./gradlew --stop
+
+      # Per the Gradle docs, a read-only cache is a copy of caches/modules-2 without lock files.
+      - name: Package read-only cache
+        run: |
+          cd "$GRADLE_USER_HOME/caches"
+          find modules-2 \( -name '*.lock' -o -name 'gc.properties' \) -delete
+          tar -czf "$ARCHIVE" modules-2
+          du -sh modules-2 "$ARCHIVE"
+
+      - name: Publish to the gradle-dep-cache release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view gradle-dep-cache >/dev/null 2>&1 || gh release create gradle-dep-cache \
+            --prerelease --target "$GITHUB_SHA" --title "Gradle dependency cache" \
+            --notes "Rolling Gradle read-only dependency cache for Claude Code cloud sessions. Rebuilt on the 1st of each month by .github/workflows/gradle-dep-cache.yml."
+          gh release upload gradle-dep-cache "$ARCHIVE" --clobber
