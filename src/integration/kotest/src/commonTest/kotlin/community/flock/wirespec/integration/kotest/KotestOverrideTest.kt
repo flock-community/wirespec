@@ -4,15 +4,20 @@ import community.flock.wirespec.integration.kotest.generator.KotestFieldShape
 import community.flock.wirespec.integration.kotest.generator.KotestFieldString
 import community.flock.wirespec.integration.kotest.generator.kotestGenerator
 import io.kotest.property.Arb
+import io.kotest.property.Exhaustive
 import io.kotest.property.arbitrary.constant
+import io.kotest.property.exhaustive.enum
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class KotestOverrideTest {
+
+    private enum class Genre { FICTION, NON_FICTION, POETRY, DRAMA }
 
     @Test
     fun `registerPath fires at the exact path`() {
@@ -237,4 +242,22 @@ class KotestOverrideTest {
         )
         assertEquals("v@x", gen.generate(listOf("u"), shape)["email"])
     }
+
+    @Test
+    fun `registerPath with an Exhaustive draws across its values, not only the first`() {
+        val draws = (0L until 50L).map(::drawGenre).toSet()
+        assertTrue(draws.size > 1, "expected varied draws across seeds, got $draws")
+    }
+
+    @Test
+    fun `registerPath with an Exhaustive is deterministic for a fixed seed`() {
+        assertEquals(setOf(drawGenre(7L)), (1..20).map { drawGenre(7L) }.toSet())
+    }
+
+    private fun drawGenre(seed: Long): Genre = kotestGenerator(seed = seed) {
+        registerPath("book", "genre") { Exhaustive.enum<Genre>() }
+    }.generate(
+        path = listOf("book", "genre"),
+        field = KotestFieldShape(annotations = emptyMap(), generate = { Genre.FICTION }, type = typeOf<Genre>()),
+    )
 }
