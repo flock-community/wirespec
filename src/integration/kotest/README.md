@@ -198,6 +198,13 @@ builder for a given record, rather than each emitting its own copy. Nested recor
 fields expose a `<field>Block { … }` sub-block that opens the nested type's builder, so
 overrides compose to any depth without duplicating builders.
 
+A builder does not steer the generator. Each entry point draws a record from the
+emitted `<Type>Generator`, then the builder's `applyTo` copies the pinned fields onto
+it with the record's `copy`. A nested block hands its record to the nested builder's
+`applyTo`. The Kotlin compiler checks every pinned value against the model, including
+the wrapping of a refined field's inner value (also in a list, dict or nullable field).
+The generator overrides of Part 1 are not involved.
+
 ### Wiring the transport
 
 The DSL resolves its transport and per-test `RandomSource` from an ambient

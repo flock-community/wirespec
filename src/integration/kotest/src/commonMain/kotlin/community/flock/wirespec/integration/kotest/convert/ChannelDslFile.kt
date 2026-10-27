@@ -12,7 +12,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Type
-import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.Type as IrType
 
 internal object ChannelDslFile {
@@ -37,7 +36,14 @@ internal object ChannelDslFile {
         return file(Name.of(fileName)) {
             `package`(kotestPkg)
 
-            import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
+            val isRecord = shape.payloadFieldShapes.isNotEmpty()
+            if (emitSend || !isRecord) {
+                import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
+            }
+            if (isRecord) {
+                import("community.flock.wirespec.integration.kotest.dsl", "generatedGen")
+                import("${packageName.value}.generator", "${payload}Generator")
+            }
             import("io.kotest.property", "Arb")
             import("io.kotest.property", "Gen")
             import(channelPkg, shape.name)
@@ -47,16 +53,14 @@ internal object ChannelDslFile {
                 plainClass()
                 visibility(Visibility.PUBLIC)
                 constructorVisibility(Visibility.INTERNAL)
-                if (shape.payloadFieldShapes.isNotEmpty()) {
+                if (isRecord) {
                     val builder = RecordBuilder.builderName(payload)
                     function("message") {
                         visibility(Visibility.PUBLIC)
                         arg("block", functionType(returnType = IrType.Unit, receiver = IrType.Custom(builder)), rawExpr("{}"))
                         returnType(arbPayload)
                         raw("val builder = $builder().apply(block)")
-                        raw("return channelCall<$payload>(${shape.name}::class).messageGen {")
-                        raw(RecordBuilder.renderRegistration(shape.payloadFieldShapes, "builder", emptyList(), "    ").trimEnd())
-                        raw("}")
+                        raw("return generatedGen { generator, rs -> builder.applyTo(${payload}Generator.generate(generator, emptyList()), rs) }")
                     }
                 } else {
                     function("message") {
@@ -109,21 +113,14 @@ internal data class ChannelShape(
             val payloadCustom = payloadRef as? Reference.Custom
 
             val payloadFieldShapes = payloadCustom
-                ?.let { EndpointShape.extractBodyFields(it.value, types, refined, visited = emptySet()) }
+                ?.let { EndpointShape.extractBodyFields(it.value, types, refined) }
                 ?: emptyList()
-
-            val directRefs = payloadCustom
-                ?.let { types[it.value] }
-                ?.shape?.fields
-                ?.map { it.reference }
-                ?: emptyList()
-            val modelImports = EndpointShape.modelImportsFor(listOf(payloadRef) + directRefs, payloadFieldShapes, types)
 
             return ChannelShape(
                 name = Name.of(channel.identifier.value).pascalCase(),
                 payloadType = payloadType,
                 payloadFieldShapes = payloadFieldShapes,
-                modelImports = modelImports,
+                modelImports = EndpointShape.modelImportsFor(listOf(payloadRef)),
             )
         }
     }

@@ -217,8 +217,10 @@ class KotestDslExtensionTest {
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
 
         output shouldContain "public fun TodoDto.Companion.generate(block: TodoDtoBuilder.() -> Unit = {}): Arb<TodoDto> {"
-        output shouldContain "return recordGen<TodoDto> {"
-        output shouldContain "builder.description?.let { registerPath(\"description\") { it } }"
+        output shouldContain "return generatedGen { generator, rs -> builder.applyTo(TodoDtoGenerator.generate(generator, emptyList()), rs) }"
+        output shouldContain "internal fun applyTo(base: TodoDto, rs: RandomSource): TodoDto ="
+        output shouldContain "description = this.description.let { gen -> if (gen == null) base.description else gen.draw(rs) },"
+        output shouldNotContain "registerPath"
 
         output shouldContain "public class TodoDtoBuilder {"
         output shouldContain "public var description: Gen<String>? = null"
@@ -237,23 +239,22 @@ class KotestDslExtensionTest {
 
         output shouldContain "public data class GetUserRequest("
         output shouldContain "public fun request(block: GetUserRequestBuilder.() -> Unit = {}): Arb<GetUserRequest> {"
-        output shouldContain "builder.id?.let { registerPath(\"id\") { it } }"
-        output shouldContain "}) { generator -> generateGetUserRequest(generator, emptyList()) }"
+        output shouldContain "return generatedGen { generator, rs -> builder.applyTo(generateGetUserRequest(generator, emptyList()), rs) }"
         output shouldContain "public class GetUserRequestBuilder {"
         output shouldContain "private fun generateGetUserRequest(generator: Wirespec.Generator, path: List<String>): GetUserRequest ="
 
         output shouldContain "public fun result(block: UserBuilder.() -> Unit = {}): Arb<GetUser.Result> {"
-        output shouldContain "}) { generator -> GetUser.Result(generateGetUserResult(generator, emptyList())) }"
+        output shouldContain "return generatedGen { generator, rs -> GetUser.Result(builder.applyTo(generateGetUserResult(generator, emptyList()), rs)) }"
         output shouldContain "generate = { p0 -> UserGenerator.generate(generator, p0) },"
         output shouldContain "public fun error(): Arb<GetUser.Error> ="
-        output shouldContain "generatedGen { generator -> GetUser.Error(generateGetUserError(generator, emptyList())) }"
+        output shouldContain "generatedGen { generator, _ -> GetUser.Error(generateGetUserError(generator, emptyList())) }"
 
         output shouldContain "public suspend fun Gen<GetUserRequest>.call(): GetUser.Response ="
         output shouldContain "rpcCall(GetUser.Service::class, this) { service, request -> service.getUser(request.id) }"
 
         output shouldContain "public data object PingRequest"
         output shouldContain "public fun request(): Arb<PingRequest> ="
-        output shouldContain "generatedGen { PingRequest }"
+        output shouldContain "Arb.constant(PingRequest)"
         output shouldContain "public fun result(): Arb<String> ="
         output shouldContain "public suspend fun Gen<PingRequest>.call(): String ="
         output shouldContain "rpcCall(Ping.Service::class, this) { service, _ -> service.ping() }"
@@ -280,19 +281,21 @@ class KotestDslExtensionTest {
         output shouldNotContain "Find_Members"
         output shouldContain "public val FindMembers.generate: FindMembersGenerate"
         output shouldContain "rpcCall(FindMembers.Service::class, this) { service, request -> service.findMembers(request.`class`, request.address, request.limit) }"
-        output shouldContain "builder.`class`?.let { registerPath(\"class\") { it } }"
+        output shouldContain "`class` = this.`class`.let { gen -> if (gen == null) base.`class` else gen.draw(rs) },"
         output shouldContain "`class` = generator.generate(path + listOf(\"class\")"
-        output shouldContain "nested_address.street?.let { registerPath(\"address\", \"street\") { it } }"
+        output shouldContain "address = this.address?.draw(rs) ?: this._addressBlock?.let { block -> base.address?.let { AddressBuilder().apply(block).applyTo(it, rs) } } ?: base.address,"
         output shouldContain "min = 1L,"
 
         output shouldContain "public fun result(block: MemberBuilder.() -> Unit = {}): Arb<List<Member>> {"
-        output shouldContain "builder.id?.let { registerPath(\"*\", \"id\") { it } }"
+        output shouldContain "generateFindMembersResult(generator, emptyList()).map { e -> builder.applyTo(e, rs) }"
+        output shouldContain "id = this.id.let { gen -> if (gen == null) base.id else UserId(gen.draw(rs)) },"
         output shouldContain "public suspend fun Gen<FindMembersRequest>.call(): List<Member> ="
 
         output shouldContain "public fun result(): Arb<Unit> ="
-        output shouldContain "generatedGen { Unit }"
+        output shouldContain "Arb.constant(Unit)"
         output shouldContain "public suspend fun Gen<FireRequest>.call(): Unit ="
         output shouldContain "type = typeOf<UserId>()"
+        output shouldNotContain "registerPath"
     }
 
     @Test
@@ -300,6 +303,7 @@ class KotestDslExtensionTest {
         val output = CompileFullEndpointTest.compiler(::emitter).shouldBeRight()
 
         output.split("public class PotentialTodoDtoBuilder {").size shouldBe 2
+        output shouldContain "inner.bodyTransform { base, rs -> builder.applyTo(base, rs) }"
         output shouldContain "public fun PotentialTodoDto.Companion.generate(block: PotentialTodoDtoBuilder.() -> Unit = {}): Arb<PotentialTodoDto> {"
         output shouldContain "public fun Error.Companion.generate(block: ErrorBuilder.() -> Unit = {}): Arb<Error> {"
         output shouldNotContain "BodyBuilder"

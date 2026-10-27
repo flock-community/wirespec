@@ -113,19 +113,17 @@ internal object CallExecutor {
     ): Map<String, Any?> {
         val args = mutableMapOf<String, Any?>()
 
-        fun withBodyTransform(default: Any): Any = call.bodyTransform?.invoke(default, rs) ?: default
-
         when {
             reflection.hasBody && reflection.bodyElementClass != null -> {
                 val size = (call.bodyListSizeGen ?: Arb.int(1..3)).draw(rs)
                 val default = (0 until size).map { i -> generatedValueFor(reflection.bodyElementClass, arb, rs, listOf("$i")) }
-                args["body"] = withBodyTransform(default)
+                args["body"] = call.transformBody(default, rs)
             }
             reflection.hasBody -> {
                 val bodyType = reflection.requestConstructor.parameters
                     .firstOrNull { it.name == "body" }?.type
                     ?: error("${reflection.endpointName}: hasBody=true but no `body` constructor param.")
-                args["body"] = withBodyTransform(generatedValueFor(bodyType, arb, rs, emptyList()))
+                args["body"] = call.transformBody(generatedValueFor(bodyType, arb, rs, emptyList()), rs)
             }
         }
 

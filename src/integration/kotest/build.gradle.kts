@@ -24,6 +24,14 @@ kotlin {
                 implementation(project(":src:compiler:emitters:kotlin"))
             }
         }
+        // The endpoint DSL reads the generated constructors' parameter names at runtime.
+        compilations.named("test") {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    javaParameters.set(true)
+                }
+            }
+        }
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))

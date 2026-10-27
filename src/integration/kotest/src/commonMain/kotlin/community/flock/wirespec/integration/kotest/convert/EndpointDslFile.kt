@@ -43,7 +43,7 @@ internal object EndpointDslFile {
                 import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
                 import("community.flock.wirespec.integration.kotest.dsl", "responseMock")
             }
-            if (shape.bodyFieldShapes.isNotEmpty() || shape.bodyKind == EndpointShape.BodyKind.Primitive) {
+            if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
             }
             import(endpointPkg, shape.name)
@@ -243,25 +243,15 @@ internal object EndpointDslFile {
             }
         }
         if (shape.bodyFieldShapes.isNotEmpty()) {
-            val builderName = RecordBuilder.builderName(shape.requireBodyElementType())
+            val elementType = shape.requireBodyElementType()
             val isList = shape.bodyKind == EndpointShape.BodyKind.List
-            val elementType = shape.bodyElementType
+            val body = RecordRef(elementType, isList = isList, isNullable = false, isElementNullable = false)
             appendLine("body?.let { block ->")
-            appendLine("    val builder = $builderName().apply(block)")
+            appendLine("    val builder = ${RecordBuilder.builderName(elementType)}().apply(block)")
             if (isList) {
                 appendLine("    inner.bodyListSize(Arb.int(bodyCount))")
             }
-            appendLine("    inner.bodyTransform { rawBase, rs ->")
-            if (isList) {
-                appendLine("        @Suppress(\"UNCHECKED_CAST\")")
-                appendLine("        (rawBase as List<$elementType>).map { base ->")
-                appendBodyCopy("base", "builder", shape, indent = "            ")
-                appendLine("        }")
-            } else {
-                appendLine("        val base = rawBase as $elementType")
-                appendBodyCopy("base", "builder", shape, indent = "        ")
-            }
-            appendLine("    }")
+            appendLine("    inner.bodyTransform { base, rs -> ${body.applyBuilder("base", "builder")} }")
             appendLine("}")
         }
         if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
@@ -301,69 +291,6 @@ internal object EndpointDslFile {
         }
     }
 
-    private fun StringBuilder.appendBodyCopy(
-        baseExpr: String,
-        receiver: String,
-        shape: EndpointShape,
-        indent: String,
-    ) {
-        appendLine("$indent$baseExpr.copy(")
-        shape.bodyFieldShapes.forEach { f ->
-            appendLine("$indent    ${f.name.escapeKotlinIdentifier()} = ${copyValueExpr(f, baseExpr, receiver)},")
-        }
-        appendLine("$indent)")
-    }
-
-    private fun copyValueExpr(
-        field: EndpointShape.BodyFieldShape,
-        baseExpr: String,
-        receiver: String,
-    ): String {
-        val fieldRef = field.name.escapeKotlinIdentifier()
-        val baseField = "$baseExpr.$fieldRef"
-        return when (field) {
-            is EndpointShape.BodyFieldShape.Primitive ->
-                "$receiver.$fieldRef.let { gen -> if (gen == null) $baseField else ${wrapDrawn("gen.draw(rs)", field)} }"
-            is EndpointShape.BodyFieldShape.NestedObject ->
-                nestedCopyExpr(field.name, field.typeName, field.fields, baseExpr, receiver, isList = false)
-            is EndpointShape.BodyFieldShape.NestedList ->
-                nestedCopyExpr(field.name, field.elementTypeName, field.fields, baseExpr, receiver, isList = true)
-        }
-    }
-
-    private fun nestedCopyExpr(
-        fieldName: String,
-        nestedTypeName: String,
-        fields: List<EndpointShape.BodyFieldShape>,
-        baseExpr: String,
-        receiver: String,
-        isList: Boolean,
-    ): String {
-        val fieldRef = fieldName.escapeKotlinIdentifier()
-        val blockRef = "_${fieldName}Block".escapeKotlinIdentifier()
-        val baseField = "$baseExpr.$fieldRef"
-        val nestedBuilder = RecordBuilder.builderName(nestedTypeName)
-        val nestedVar = "nested_$fieldName".escapeKotlinIdentifier()
-        val elemVar = "${if (isList) "elem" else "base"}_$fieldName".escapeKotlinIdentifier()
-        val overBase = if (isList) "?.map" else "?.let"
-        val subs = fields.joinToString(", ") {
-            "${it.name.escapeKotlinIdentifier()} = ${copyValueExpr(it, elemVar, nestedVar)}"
-        }
-        return "$receiver.$fieldRef.let { gen -> if (gen != null) gen.draw(rs) else " +
-            "$receiver.$blockRef?.let { block -> val $nestedVar = $nestedBuilder().apply(block); " +
-            "$baseField$overBase { $elemVar -> $elemVar.copy($subs) } } ?: $baseField }"
-    }
-
-    private fun wrapDrawn(drawn: String, field: EndpointShape.BodyFieldShape.Primitive): String {
-        val refined = field.refinedTypeName ?: return drawn
-        return when {
-            field.isList && field.isNullable -> "$drawn?.map { $refined(it) }"
-            field.isList -> "$drawn.map { $refined(it) }"
-            field.isNullable -> "$drawn?.let { $refined(it) }"
-            else -> "$refined($drawn)"
-        }
-    }
-
     private fun EndpointShape.requireBodyElementType(): String = bodyElementType ?: error("bodyFieldShapes present but no bodyElementType for $name")
 
     private fun EndpointShape.requireBodyPrimitiveType(): IrType = bodyPrimitiveType ?: error("BodyKind.Primitive but no bodyPrimitiveType for $name")
@@ -397,22 +324,17 @@ internal data class EndpointShape(
     sealed interface BodyFieldShape {
         val name: String
 
+        /** Pinned by [type], the field's type with every refined type replaced by its inner primitive. */
         data class Primitive(
             override val name: String,
             val type: IrType,
-            val refinedTypeName: String? = null,
-            val isList: Boolean = false,
-            val isNullable: Boolean = false,
+            val refinement: Refinement?,
         ) : BodyFieldShape
-        data class NestedObject(
+
+        /** Pinned as a whole value, or field by field with the record's own builder. */
+        data class Nested(
             override val name: String,
-            val typeName: String,
-            val fields: List<BodyFieldShape>,
-        ) : BodyFieldShape
-        data class NestedList(
-            override val name: String,
-            val elementTypeName: String,
-            val fields: List<BodyFieldShape>,
+            val record: RecordRef,
         ) : BodyFieldShape
     }
 
@@ -437,7 +359,7 @@ internal data class EndpointShape(
                 ?.let { if (it is IrType.Nullable) it.type else it }
 
             val bodyFieldShapes: List<BodyFieldShape> = bodyElementType
-                ?.let { extractBodyFields(it, types, refined, visited = emptySet()) }
+                ?.let { extractBodyFields(it, types, refined) }
                 ?: emptyList()
 
             val responseVariants = endpoint.responses
@@ -469,12 +391,7 @@ internal data class EndpointShape(
                     response.headers.fields.forEach { add(it.reference) }
                 }
             }
-            val bodyFieldRefs = bodyElementType
-                ?.let { types[it] }
-                ?.shape?.fields
-                ?.map { it.reference }
-                ?: emptyList()
-            val modelImports = modelImportsFor(refs + bodyFieldRefs, bodyFieldShapes, types)
+            val modelImports = modelImportsFor(refs)
 
             return EndpointShape(
                 name = Name.of(endpoint.identifier.value).pascalCase(),
@@ -500,15 +417,7 @@ internal data class EndpointShape(
             else -> BodyKind.None to null
         }
 
-        internal fun modelImportsFor(
-            refs: List<Reference>,
-            fieldShapes: List<BodyFieldShape>,
-            types: Map<String, Type>,
-        ): List<String> = (
-            refs.flatMap(::collectCustomNames) +
-                collectNestedTypeNames(fieldShapes) +
-                collectFieldTypeNames(fieldShapes, types)
-            ).distinct()
+        internal fun modelImportsFor(refs: List<Reference>): List<String> = refs.flatMap(::collectCustomNames).distinct()
 
         internal fun collectCustomNames(reference: Reference): List<String> = when (reference) {
             is Reference.Custom -> listOf(reference.value)
@@ -517,92 +426,18 @@ internal data class EndpointShape(
             else -> emptyList()
         }
 
-        private val BodyFieldShape.nestedTypeName: String?
-            get() = when (this) {
-                is BodyFieldShape.NestedObject -> typeName
-                is BodyFieldShape.NestedList -> elementTypeName
-                is BodyFieldShape.Primitive -> null
-            }
-
-        private val BodyFieldShape.childFields: List<BodyFieldShape>
-            get() = when (this) {
-                is BodyFieldShape.NestedObject -> fields
-                is BodyFieldShape.NestedList -> fields
-                is BodyFieldShape.Primitive -> emptyList()
-            }
-
-        private fun collectNestedTypeNames(fields: List<BodyFieldShape>): List<String> = fields.flatMap { f ->
-            listOfNotNull(f.nestedTypeName) + collectNestedTypeNames(f.childFields)
-        }
-
-        private fun collectFieldTypeNames(
-            fields: List<BodyFieldShape>,
-            types: Map<String, Type>,
-        ): List<String> = fields.flatMap { f ->
-            val nestedFieldRefs = f.nestedTypeName
-                ?.let { types[it]?.shape?.fields?.flatMap { field -> collectCustomNames(field.reference) } }
-                ?: emptyList()
-            nestedFieldRefs + collectFieldTypeNames(f.childFields, types)
-        }
-
         internal fun extractBodyFields(
             typeName: String,
             types: Map<String, Type>,
             refined: Map<String, Refined>,
-            visited: Set<String>,
-        ): List<BodyFieldShape> {
-            if (typeName in visited) return emptyList()
-            val type = types[typeName] ?: return emptyList()
-            val nextVisited = visited + typeName
-            return type.shape.fields.map { field ->
-                val name = field.identifier.value
-                when (val ref = field.reference) {
-                    is Reference.Custom -> if (ref.value in types) {
-                        BodyFieldShape.NestedObject(
-                            name = name,
-                            typeName = ref.value,
-                            fields = extractBodyFields(ref.value, types, refined, nextVisited),
-                        )
-                    } else {
-                        primitiveOf(name, ref, refined)
-                    }
-                    is Reference.Iterable -> {
-                        val inner = ref.reference
-                        if (inner is Reference.Custom && inner.value in types) {
-                            BodyFieldShape.NestedList(
-                                name = name,
-                                elementTypeName = inner.value,
-                                fields = extractBodyFields(inner.value, types, refined, nextVisited),
-                            )
-                        } else {
-                            primitiveOf(name, ref, refined)
-                        }
-                    }
-                    else -> primitiveOf(name, ref, refined)
-                }
-            }
-        }
-
-        private fun primitiveOf(
-            name: String,
-            ref: Reference,
-            refined: Map<String, Refined>,
-        ): BodyFieldShape.Primitive {
-            val (refinedTypeName, isList) = when {
-                ref is Reference.Custom && ref.value in refined -> ref.value to false
-                ref is Reference.Iterable -> {
-                    val inner = ref.reference
-                    if (inner is Reference.Custom && inner.value in refined) inner.value to true else null to false
-                }
-                else -> null to false
-            }
-            return BodyFieldShape.Primitive(
-                name = name,
-                type = mapWithRefinedUnwrap(ref, refined),
-                refinedTypeName = refinedTypeName,
-                isList = isList,
-                isNullable = ref.isNullable,
-            )
+        ): List<BodyFieldShape> = types[typeName]?.shape?.fields.orEmpty().map { field ->
+            RecordRef.of(field.reference, types)
+                ?.let { BodyFieldShape.Nested(field.identifier.value, it) }
+                ?: BodyFieldShape.Primitive(
+                    name = field.identifier.value,
+                    type = mapWithRefinedUnwrap(field.reference, refined),
+                    refinement = Refinement.of(field.reference, refined),
+                )
         }
 
         private fun mapWithRefinedUnwrap(reference: Reference, refined: Map<String, Refined>): IrType = when (reference) {

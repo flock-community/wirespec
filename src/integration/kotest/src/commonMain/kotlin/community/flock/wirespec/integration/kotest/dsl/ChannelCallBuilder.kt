@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.kotest.dsl
 
 import community.flock.wirespec.integration.kotest.extension.currentChannelContext
-import community.flock.wirespec.integration.kotest.generator.KotestWirespecGeneratorBuilder
 import community.flock.wirespec.integration.kotest.runtime.PrimitiveArbs
 import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import io.kotest.property.Arb
@@ -26,7 +25,7 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     public fun topic(value: String): ChannelCallBuilder<P> = apply { topic = value }
     public fun key(value: String): ChannelCallBuilder<P> = apply { key = value }
 
-    public fun messageGen(overrides: (KotestWirespecGeneratorBuilder.() -> Unit)? = null): Arb<P> = arbitrary { rs -> buildPayload(rs, overrides) }
+    public fun messageGen(): Arb<P> = arbitrary { rs -> buildPayload(rs) }
 
     public suspend fun send(gen: Gen<P>): P {
         val payload = gen.draw(currentRandomSource())
@@ -35,15 +34,9 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun buildPayload(rs: RandomSource, overrides: (KotestWirespecGeneratorBuilder.() -> Unit)?): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
-        null -> ArbReceiver(rs).generateModel(payloadClass, overrides)
-        else -> {
-            require(overrides == null) {
-                "${channelClass.simpleName}: per-field message { } overrides are only supported for record " +
-                    "payloads, not the primitive payload ${payloadClass.simpleName}."
-            }
-            primitive.draw(rs) as P
-        }
+    private fun buildPayload(rs: RandomSource): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
+        null -> ArbReceiver(rs).generateModel(payloadClass)
+        else -> primitive.draw(rs) as P
     }
 
     private suspend fun publish(payload: P) {
