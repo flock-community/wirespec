@@ -102,7 +102,9 @@ describe("types", () => {
   it("highlights refined types", () => {
     const source = `type Name = String(/^[0-9a-z]{1,50}\\/x$/g)
 type Age = Integer(0, _)
-type Score = Number(-1.0, 10.0)`;
+type Score = Number(-1.0, 10.0)
+type Id = String(uuid-v7)
+type At = String(date-time)`;
     expectScopes(source, [
       ["Name", "entity.name.type.wirespec"],
       ["=", "keyword.operator.assignment.wirespec"],
@@ -118,6 +120,8 @@ type Score = Number(-1.0, 10.0)`;
       [")", "punctuation.section.constraint.end.wirespec"],
       ["_", "constant.language.unbounded.wirespec"],
       ["-1.0", "constant.numeric.decimal.wirespec"],
+      ["uuid-v7", "constant.language.format.wirespec"],
+      ["date-time", "constant.language.format.wirespec"],
     ]);
   });
 
