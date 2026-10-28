@@ -36,6 +36,13 @@ public class NullableRefinedReferenceException(fileUri: FileUri, referenceName: 
         message = "A refined type cannot be nullable: $referenceName",
     )
 
+internal class UnknownStringFormatException(fileUri: FileUri, format: String, formats: Set<String>, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "Unknown string format: \"$format\", expected one of: ${formats.joinToString { "\"$it\"" }}",
+    )
+
 internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,

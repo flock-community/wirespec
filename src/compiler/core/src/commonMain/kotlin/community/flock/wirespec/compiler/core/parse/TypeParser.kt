@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadExceptio
 import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
+import community.flock.wirespec.compiler.core.exceptions.UnknownStringFormatException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.hasBackticks
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
@@ -239,6 +240,10 @@ private fun TokenProvider.parseUnionTypeEntries() = either {
 private fun TokenProvider.parseTypeConstraint() = parseToken {
     when (token.type) {
         is RegExp -> Reference.Primitive.Type.Constraint.RegExp(token.value).also { eatToken().bind() }
+        is LiteralString -> token.value.removeSurrounding("\"")
+            .let { format -> stringFormats[format] ?: raise(UnknownStringFormatException(fileUri, format, stringFormats.keys, token.coordinates)) }
+            .also { eatToken().bind() }
+
         else -> raiseWrongToken<RegExp>().bind()
     }.also {
         expect<RightParenthesis>().bind()

@@ -24,6 +24,7 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
@@ -115,6 +116,35 @@ class ParseTypeTest {
                     type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/^([0-9]{4}[A-Z]{2})$/g")
                 }
             }
+    }
+
+    @Test
+    fun testRefinedParserStringFormat() {
+        val source =
+            // language=ws
+            """
+            |type Date = String("date")
+            |type DateTime = String("date-time")
+            |type Id = String("uuidv7")
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .map { it.shouldBeInstanceOf<Refined>().reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>().constraint }
+            .shouldBe(listOf(stringFormats["date"], stringFormats["date-time"], stringFormats["uuidv7"]))
+    }
+
+    @Test
+    fun testRefinedParserUnknownStringFormat() {
+        val source =
+            // language=ws
+            """
+            |type Time = String("time")
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeLeft()
+            .head.message shouldStartWith "Unknown string format: \"time\", expected one of: \"date\", \"date-time\", \"uuid\""
     }
 
     @Test
