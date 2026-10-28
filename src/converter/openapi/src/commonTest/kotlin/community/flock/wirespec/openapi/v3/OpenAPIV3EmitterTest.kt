@@ -578,7 +578,7 @@ class OpenAPIV3EmitterTest {
             |    "schemas": {
             |      "TodoId": {
             |        "type": "string",
-            |        "pattern": "/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$/g"
+            |        "pattern": "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$"
             |      },
             |      "TodoNoRegex": {
             |        "type": "string"

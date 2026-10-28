@@ -84,7 +84,7 @@ describe("types", () => {
 
   it("highlights refined types", () => {
     expectTypes(
-      "type Name = String(/^[a-z]\\/x$/g)\ntype Age = Integer(0, _)\ntype Score = Number(-1.0, _)\ntype Id = String(uuid-v7)\ntype At = String(date-time)",
+      "type Name = String(/^[a-z]\\/x$/g)\ntype Age = Integer(0, _)\ntype Score = Number(-1.0, _)\ntype Id = String(uuid-v7)\ntype At {\n  at: String?(date-time)\n}",
       [
         ["Name", "class-name"],
         ["/", "regex > regex-delimiter"],

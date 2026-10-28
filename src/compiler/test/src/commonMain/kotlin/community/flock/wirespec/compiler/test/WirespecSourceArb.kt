@@ -30,7 +30,7 @@ public data class WirespecFeatures(
         public val roundTrippable: WirespecFeatures = WirespecFeatures(
             annotations = true,
             comments = true,
-            constrainedReferences = false,
+            constrainedReferences = true,
         )
     }
 }

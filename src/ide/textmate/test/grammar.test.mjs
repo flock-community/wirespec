@@ -104,7 +104,9 @@ describe("types", () => {
 type Age = Integer(0, _)
 type Score = Number(-1.0, 10.0)
 type Id = String(uuid-v7)
-type At = String(date-time)`;
+type At {
+  at: String?(date-time)
+}`;
     expectScopes(source, [
       ["Name", "entity.name.type.wirespec"],
       ["=", "keyword.operator.assignment.wirespec"],

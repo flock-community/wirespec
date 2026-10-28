@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.common.toDefaultValue
@@ -38,7 +39,10 @@ internal object AvroConverter {
         is AvroModel.ArrayType -> Reference.Iterable(reference = items.toReference(false), isNullable = isNullable)
         is AvroModel.RecordType -> Reference.Custom(value = name, isNullable = isNullable)
         is AvroModel.EnumType -> Reference.Custom(value = name, isNullable = isNullable)
-        is AvroModel.LogicalType -> AvroModel.SimpleType(value = type).toReference(isNullable)
+        is AvroModel.LogicalType -> when {
+            type == "string" && logicalType == "uuid" -> Reference.Primitive(type = Reference.Primitive.Type.String(StringFormat.UUID.regExp), isNullable = isNullable)
+            else -> AvroModel.SimpleType(value = type).toReference(isNullable)
+        }
         is AvroModel.MapType -> Reference.Dict(reference = values.toReference(false), isNullable = isNullable)
         is AvroModel.UnionType -> Reference.Custom(value = name, isNullable = isNullable)
     }

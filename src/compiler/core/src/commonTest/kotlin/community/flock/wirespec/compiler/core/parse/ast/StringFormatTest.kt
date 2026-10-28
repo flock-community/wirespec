@@ -1,14 +1,26 @@
-package community.flock.wirespec.compiler.core.parse
+package community.flock.wirespec.compiler.core.parse.ast
 
+import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Constraint.RegExp
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class StringFormatsTest {
+class StringFormatTest {
 
-    private fun matching(format: String, vararg values: String) = stringFormats.getValue(format).value
+    private fun matching(format: String, vararg values: String) = StringFormat.of(format)!!.regExp.value
         .removeSurrounding("/")
         .let(::Regex)
         .let { regex -> values.filter(regex::matches) }
+
+    @Test
+    fun lookup() {
+        StringFormat.entries.forEach { format ->
+            StringFormat.of(format.label) shouldBe format
+            StringFormat.of(format.regExp) shouldBe format
+        }
+        StringFormat.of("time") shouldBe null
+        StringFormat.of(RegExp("/^[0-9]+$/")) shouldBe null
+    }
 
     @Test
     fun date() {

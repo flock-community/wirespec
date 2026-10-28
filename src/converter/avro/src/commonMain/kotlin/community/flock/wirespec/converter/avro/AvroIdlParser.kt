@@ -220,6 +220,10 @@ internal object AvroIdlParser : Parser {
                     expectSymbol('}')
                     AvroModel.UnionType(name = "", type = AvroModel.TypeList(types))
                 }
+                "uuid" -> {
+                    advance()
+                    AvroModel.LogicalType(type = "string", logicalType = "uuid")
+                }
                 else -> {
                     advance()
                     AvroModel.SimpleType(token.value)

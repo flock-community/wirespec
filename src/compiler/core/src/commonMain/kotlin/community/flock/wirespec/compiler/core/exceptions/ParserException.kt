@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.exceptions
 
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.name
@@ -36,11 +37,11 @@ public class NullableRefinedReferenceException(fileUri: FileUri, referenceName: 
         message = "A refined type cannot be nullable: $referenceName",
     )
 
-internal class UnknownStringFormatException(fileUri: FileUri, format: String, formats: Set<String>, coordinates: Token.Coordinates) :
+internal class UnknownStringFormatException(fileUri: FileUri, format: String, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,
         coordinates = coordinates,
-        message = "Unknown string format: $format, expected one of: ${formats.joinToString()}",
+        message = "Unknown string format: $format, expected one of: ${StringFormat.entries.joinToString { it.label }}",
     )
 
 internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coordinates) :

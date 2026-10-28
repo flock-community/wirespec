@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -130,7 +131,7 @@ class ParseTypeTest {
         parser(source)
             .shouldBeRight { it.head.message }
             .map { it.shouldBeInstanceOf<Refined>().reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>().constraint }
-            .shouldBe(listOf(stringFormats["date"], stringFormats["date-time"], stringFormats["uuid-v7"]))
+            .shouldBe(listOf(StringFormat.DATE.regExp, StringFormat.DATE_TIME.regExp, StringFormat.UUID_V7.regExp))
     }
 
     @Test

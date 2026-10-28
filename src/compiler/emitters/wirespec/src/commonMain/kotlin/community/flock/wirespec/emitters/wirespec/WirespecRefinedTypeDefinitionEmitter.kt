@@ -1,30 +1,13 @@
 package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 
 internal interface WirespecRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(refined: Refined) =
-        "type ${emit(refined.identifier)} = ${refined.reference.copy(isNullable = false).emit()}${refined.emitValidator()}\n"
+        "type ${emit(refined.identifier)} = ${refined.reference.copy(isNullable = false).emit()}\n"
 
-    override fun Refined.emitValidator():String {
-        return when (val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: ""
-            is Reference.Primitive.Type.Number -> type.constraint?.emitDecimal() ?: ""
-            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: ""
-            Reference.Primitive.Type.Boolean -> ""
-            Reference.Primitive.Type.Bytes -> ""
-        }
-    }
-
-    private fun Reference.Primitive.Type.Constraint.Bound.emitDecimal(): String =
-        "(${min.toBoundDecimal()}, ${max.toBoundDecimal()})"
-
-    private fun String?.toBoundDecimal(): String = when {
-        this == null -> "_"
-        contains(".") -> this
-        else -> "$this.0"
-    }
+    // A Wirespec reference carries its own constraint, so a refined type adds nothing to it.
+    override fun Refined.emitValidator(): String = ""
 }

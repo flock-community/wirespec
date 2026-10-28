@@ -26,6 +26,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
 import community.flock.wirespec.compiler.core.parse.ast.Spread
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
@@ -240,7 +241,7 @@ private fun TokenProvider.parseUnionTypeEntries() = either {
 private fun TokenProvider.parseTypeConstraint() = parseToken {
     when (token.type) {
         is RegExp -> Reference.Primitive.Type.Constraint.RegExp(token.value).also { eatToken().bind() }
-        is WirespecIdentifier -> (stringFormats[token.value] ?: raise(UnknownStringFormatException(fileUri, token.value, stringFormats.keys, token.coordinates)))
+        is WirespecIdentifier -> (StringFormat.of(token.value)?.regExp ?: raise(UnknownStringFormatException(fileUri, token.value, token.coordinates)))
             .also { eatToken().bind() }
 
         else -> raiseWrongToken<RegExp>().bind()

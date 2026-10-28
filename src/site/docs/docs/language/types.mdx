@@ -308,7 +308,8 @@ type OrderId = String(uuid-v7)
 | `uuid-v1` to `uuid-v8` | UUID of that version, as defined by RFC 9562                             | `017f22e2-79b0-7cc3-98c4-dc0c0c07398f` |
 
 An alias is replaced by its regular expression when the specification is compiled, so the generated code validates it
-like any other pattern.
+like any other pattern. The [converters](../converters/converters.md) map the formats of OpenAPI, AsyncAPI and Avro onto
+these aliases.
 
 ```wirespec
 type Age = Integer(0, _)
