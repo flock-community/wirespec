@@ -29,10 +29,10 @@ rpc CompleteTodo {
   id: TodoId
 } -> Todo ! TodoError
 
-// Refined with a built-in format: DATE, DATE_TIME, UUID or UUID_V1 to UUID_V8
-type TodoId = String(UUID_V4)
-type Date = String(DATE)
-type Timestamp = String(DATE_TIME)
+// Refined with a built-in format: date, date-time, uuid or uuid-v1 to uuid-v8
+type TodoId = String(uuid-v4)
+type Date = String(date)
+type Timestamp = String(date-time)
 
 // Refined with a regular expression of your own
 type Name = String(/^[0-9a-zA-Z]{1,50}$/g)

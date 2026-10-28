@@ -12,9 +12,9 @@ private const val OFFSET = "(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])"
 private fun uuid(version: String, variant: String) = "$HEX{8}-$HEX{4}-$version$HEX{3}-$variant$HEX{3}-$HEX{12}"
 
 internal val stringFormats: Map<String, RegExp> = mapOf(
-    "DATE" to DATE,
-    "DATE_TIME" to "${DATE}T$TIME$OFFSET",
-    "UUID" to uuid(version = HEX, variant = HEX),
+    "date" to DATE,
+    "date-time" to "${DATE}T$TIME$OFFSET",
+    "uuid" to uuid(version = HEX, variant = HEX),
 )
-    .plus((1..8).associate { "UUID_V$it" to uuid(version = "$it", variant = "[89abAB]") })
+    .plus((1..8).associate { "uuid-v$it" to uuid(version = "$it", variant = "[89abAB]") })
     .mapValues { (_, pattern) -> RegExp("/^$pattern$/") }

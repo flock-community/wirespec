@@ -122,15 +122,15 @@ class ParseTypeTest {
         val source =
             // language=ws
             """
-            |type Date = String(DATE)
-            |type DateTime = String(DATE_TIME)
-            |type Id = String(UUID_V7)
+            |type Date = String(date)
+            |type DateTime = String(date-time)
+            |type Id = String(uuid-v7)
             """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
             .map { it.shouldBeInstanceOf<Refined>().reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>().constraint }
-            .shouldBe(listOf(stringFormats["DATE"], stringFormats["DATE_TIME"], stringFormats["UUID_V7"]))
+            .shouldBe(listOf(stringFormats["date"], stringFormats["date-time"], stringFormats["uuid-v7"]))
     }
 
     @Test
@@ -138,12 +138,12 @@ class ParseTypeTest {
         val source =
             // language=ws
             """
-            |type Time = String(TIME)
+            |type Time = String(time)
             """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
-            .head.message shouldBe "Unknown string format: TIME, expected one of: DATE, DATE_TIME, UUID, UUID_V1, UUID_V2, UUID_V3, UUID_V4, UUID_V5, UUID_V6, UUID_V7, UUID_V8"
+            .head.message shouldBe "Unknown string format: time, expected one of: date, date-time, uuid, uuid-v1, uuid-v2, uuid-v3, uuid-v4, uuid-v5, uuid-v6, uuid-v7, uuid-v8"
     }
 
     @Test

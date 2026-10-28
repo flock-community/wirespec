@@ -240,7 +240,7 @@ private fun TokenProvider.parseUnionTypeEntries() = either {
 private fun TokenProvider.parseTypeConstraint() = parseToken {
     when (token.type) {
         is RegExp -> Reference.Primitive.Type.Constraint.RegExp(token.value).also { eatToken().bind() }
-        is TypeIdentifier -> (stringFormats[token.value] ?: raise(UnknownStringFormatException(fileUri, token.value, stringFormats.keys, token.coordinates)))
+        is WirespecIdentifier -> (stringFormats[token.value] ?: raise(UnknownStringFormatException(fileUri, token.value, stringFormats.keys, token.coordinates)))
             .also { eatToken().bind() }
 
         else -> raiseWrongToken<RegExp>().bind()
