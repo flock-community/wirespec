@@ -52,6 +52,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
 import community.flock.wirespec.compiler.core.ir.transformer.ensureEmptyStructHasConstructor
 import community.flock.wirespec.compiler.core.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.compiler.core.ir.transformer.markMembersAsOverride
+import community.flock.wirespec.compiler.core.ir.transformer.pinResponseStatus
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
@@ -235,6 +236,7 @@ public open class ScalaEmitter(
             .appendClientServerObjects(endpoint, isRequestObject(endpointNamespace))
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
+            .pinResponseStatus()
             .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })
     }
 
