@@ -598,22 +598,9 @@ public object JavaGenerator :
     }
 
     private fun Literal.emit(): String = when {
-        type is Type.String -> "\"${value.toString().escapeJavaString()}\""
+        type is Type.String -> "\"${value.toString().escapeStringLiteral('"')}\""
         value is Long -> "${value}L"
         else -> value.toString()
-    }
-
-    private fun String.escapeJavaString(): String = buildString {
-        for (c in this@escapeJavaString) {
-            when (c) {
-                '\\' -> append("\\\\")
-                '"' -> append("\\\"")
-                '\n' -> append("\\n")
-                '\r' -> append("\\r")
-                '\t' -> append("\\t")
-                else -> append(c)
-            }
-        }
     }
 
     private fun Switch.rewriteAsReturnChain(): Switch = copy(

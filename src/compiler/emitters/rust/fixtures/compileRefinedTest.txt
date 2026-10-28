@@ -165,7 +165,7 @@ use super::super::model::todo_id::TodoId;
 pub struct TodoIdGenerator;
 impl TodoIdGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoId {
-        return TodoId { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return TodoId { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 

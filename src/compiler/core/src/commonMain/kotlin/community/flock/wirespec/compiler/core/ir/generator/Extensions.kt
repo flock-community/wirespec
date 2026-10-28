@@ -17,6 +17,18 @@ internal fun String.prefixIfNotEmpty(prefix: String): String = if (isEmpty()) th
 /** Wraps the string with a prefix and suffix when it is not empty. */
 internal fun String.wrapIfNotEmpty(prefix: String, suffix: String): String = if (isEmpty()) this else "$prefix$this$suffix"
 
+/** Escapes the string for a literal delimited by [quote]; [escaped] lists further characters the language treats as special. */
+internal fun String.escapeStringLiteral(quote: Char, vararg escaped: Char): String = asIterable().joinToString("") {
+    when (it) {
+        '\\' -> "\\\\"
+        '\n' -> "\\n"
+        '\r' -> "\\r"
+        '\t' -> "\\t"
+        quote, in escaped -> "\\$it"
+        else -> it.toString()
+    }
+}
+
 /** Indents every non-empty line by `level * width` spaces. */
 internal fun String.indentLines(level: Int, width: Int = 2): String {
     if (level <= 0) return this
