@@ -295,17 +295,17 @@ type Date = String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
 Common string formats have a built-in alias, so you do not have to write the regular expression yourself:
 
 ```wirespec
-type Date = String("date")
-type Timestamp = String("date-time")
-type OrderId = String("uuidv7")
+type Date = String(DATE)
+type Timestamp = String(DATE_TIME)
+type OrderId = String(UUID_V7)
 ```
 
-| Alias                  | Matches                                                                  | Example                                |
-|------------------------|--------------------------------------------------------------------------|----------------------------------------|
-| `date`                 | ISO 8601 calendar date                                                   | `2024-02-29`                           |
-| `date-time`            | ISO 8601 date-time with seconds and a UTC offset, as defined by RFC 3339 | `2024-02-29T13:45:30.123+01:00`        |
-| `uuid`                 | UUID of any version                                                      | `123e4567-e89b-12d3-a456-426614174000` |
-| `uuidv1` to `uuidv8`   | UUID of that version, as defined by RFC 9562                             | `017f22e2-79b0-7cc3-98c4-dc0c0c07398f` |
+| Alias                    | Matches                                                                  | Example                                |
+|--------------------------|--------------------------------------------------------------------------|----------------------------------------|
+| `DATE`                   | ISO 8601 calendar date                                                   | `2024-02-29`                           |
+| `DATE_TIME`              | ISO 8601 date-time with seconds and a UTC offset, as defined by RFC 3339 | `2024-02-29T13:45:30.123+01:00`        |
+| `UUID`                   | UUID of any version                                                      | `123e4567-e89b-12d3-a456-426614174000` |
+| `UUID_V1` to `UUID_V8`   | UUID of that version, as defined by RFC 9562                             | `017f22e2-79b0-7cc3-98c4-dc0c0c07398f` |
 
 An alias is replaced by its regular expression when the specification is compiled, so the generated code validates it
 like any other pattern.

@@ -40,7 +40,7 @@ internal class UnknownStringFormatException(fileUri: FileUri, format: String, fo
     ParserException(
         fileUri,
         coordinates = coordinates,
-        message = "Unknown string format: \"$format\", expected one of: ${formats.joinToString { "\"$it\"" }}",
+        message = "Unknown string format: $format, expected one of: ${formats.joinToString()}",
     )
 
 internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coordinates) :

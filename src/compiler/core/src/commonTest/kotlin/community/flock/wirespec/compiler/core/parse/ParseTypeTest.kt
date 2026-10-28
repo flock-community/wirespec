@@ -24,7 +24,6 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
@@ -123,15 +122,15 @@ class ParseTypeTest {
         val source =
             // language=ws
             """
-            |type Date = String("date")
-            |type DateTime = String("date-time")
-            |type Id = String("uuidv7")
+            |type Date = String(DATE)
+            |type DateTime = String(DATE_TIME)
+            |type Id = String(UUID_V7)
             """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
             .map { it.shouldBeInstanceOf<Refined>().reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>().constraint }
-            .shouldBe(listOf(stringFormats["date"], stringFormats["date-time"], stringFormats["uuidv7"]))
+            .shouldBe(listOf(stringFormats["DATE"], stringFormats["DATE_TIME"], stringFormats["UUID_V7"]))
     }
 
     @Test
@@ -139,12 +138,12 @@ class ParseTypeTest {
         val source =
             // language=ws
             """
-            |type Time = String("time")
+            |type Time = String(TIME)
             """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
-            .head.message shouldStartWith "Unknown string format: \"time\", expected one of: \"date\", \"date-time\", \"uuid\""
+            .head.message shouldBe "Unknown string format: TIME, expected one of: DATE, DATE_TIME, UUID, UUID_V1, UUID_V2, UUID_V3, UUID_V4, UUID_V5, UUID_V6, UUID_V7, UUID_V8"
     }
 
     @Test

@@ -12,14 +12,14 @@ class StringFormatsTest {
 
     @Test
     fun date() {
-        matching("date", "2024-02-29", "1999-12-31", "0001-01-01").shouldContainExactly("2024-02-29", "1999-12-31", "0001-01-01")
-        matching("date", "2024-13-01", "2024-00-10", "2024-01-32", "24-01-01", "2024-1-01", "2024-01-01T00:00:00Z").shouldContainExactly()
+        matching("DATE", "2024-02-29", "1999-12-31", "0001-01-01").shouldContainExactly("2024-02-29", "1999-12-31", "0001-01-01")
+        matching("DATE", "2024-13-01", "2024-00-10", "2024-01-32", "24-01-01", "2024-1-01", "2024-01-01T00:00:00Z").shouldContainExactly()
     }
 
     @Test
     fun dateTime() {
         matching(
-            "date-time",
+            "DATE_TIME",
             "2024-02-29T13:45:30Z",
             "2024-02-29T13:45:30.123Z",
             "2024-02-29T00:00:00+01:00",
@@ -31,7 +31,7 @@ class StringFormatsTest {
             "2024-02-29T23:59:59.123456-05:30",
         )
         matching(
-            "date-time",
+            "DATE_TIME",
             "2024-02-29",
             "2024-02-29T13:45Z",
             "2024-02-29T24:00:00Z",
@@ -45,7 +45,7 @@ class StringFormatsTest {
     @Test
     fun uuid() {
         matching(
-            "uuid",
+            "UUID",
             "123e4567-e89b-12d3-a456-426614174000",
             "00000000-0000-0000-0000-000000000000",
             "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF",
@@ -55,7 +55,7 @@ class StringFormatsTest {
             "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF",
         )
         matching(
-            "uuid",
+            "UUID",
             "123e4567e89b12d3a456426614174000",
             "123e4567-e89b-12d3-a456-42661417400g",
             "{123e4567-e89b-12d3-a456-426614174000}",
@@ -75,9 +75,9 @@ class StringFormatsTest {
             "5c146b14-3c52-8afd-938a-375d0df1fbf6",
         )
         samples.forEachIndexed { index, sample ->
-            matching("uuidv${index + 1}", *samples.toTypedArray()).shouldContainExactly(sample)
+            matching("UUID_V${index + 1}", *samples.toTypedArray()).shouldContainExactly(sample)
         }
-        matching("uuid", *samples.toTypedArray()).shouldContainExactly(samples)
-        matching("uuidv4", "919108f7-52d1-4320-cbac-f847db4148a8", "919108f7-52d1-4320-7bac-f847db4148a8").shouldContainExactly()
+        matching("UUID", *samples.toTypedArray()).shouldContainExactly(samples)
+        matching("UUID_V4", "919108f7-52d1-4320-cbac-f847db4148a8", "919108f7-52d1-4320-7bac-f847db4148a8").shouldContainExactly()
     }
 }

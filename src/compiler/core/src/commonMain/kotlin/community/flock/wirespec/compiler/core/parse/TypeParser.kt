@@ -240,8 +240,7 @@ private fun TokenProvider.parseUnionTypeEntries() = either {
 private fun TokenProvider.parseTypeConstraint() = parseToken {
     when (token.type) {
         is RegExp -> Reference.Primitive.Type.Constraint.RegExp(token.value).also { eatToken().bind() }
-        is LiteralString -> token.value.removeSurrounding("\"")
-            .let { format -> stringFormats[format] ?: raise(UnknownStringFormatException(fileUri, format, stringFormats.keys, token.coordinates)) }
+        is TypeIdentifier -> (stringFormats[token.value] ?: raise(UnknownStringFormatException(fileUri, token.value, stringFormats.keys, token.coordinates)))
             .also { eatToken().bind() }
 
         else -> raiseWrongToken<RegExp>().bind()
