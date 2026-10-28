@@ -528,6 +528,23 @@ class DslTest {
     }
 
     @Test
+    fun testStringLiteralEscaping() {
+        val file = file("EscapeModule") {
+            function("test") {
+                assign("note", literal("It's \"quoted\" C:\\path\n\$1"))
+                returns(RawExpression("note"))
+            }
+        }
+
+        assertTrue(JavaGenerator.generate(file).contains(""""It's \"quoted\" C:\\path\n$1""""))
+        assertTrue(KotlinGenerator.generate(file).contains(""""It's \"quoted\" C:\\path\n\$1""""))
+        assertTrue(ScalaGenerator.generate(file).contains(""""It's \"quoted\" C:\\path\n$1""""))
+        assertTrue(TypeScriptGenerator.generate(file).contains("""'It\'s "quoted" C:\\path\n$1'"""))
+        assertTrue(PythonGenerator.generate(file).contains("""'It\'s "quoted" C:\\path\n$1'"""))
+        assertTrue(RustGenerator.generate(file).contains("""String::from("It's \"quoted\" C:\\path\n$1")"""))
+    }
+
+    @Test
     fun testEmptyLiterals() {
         val file = file("EmptyLiteralsModule") {
             function("test") {

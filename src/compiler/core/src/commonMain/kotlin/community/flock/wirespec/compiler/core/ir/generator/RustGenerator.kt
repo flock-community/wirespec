@@ -558,7 +558,7 @@ public object RustGenerator :
     }
 
     private fun Literal.emit(): String = when (type) {
-        is Type.String -> "String::from(\"$value\")"
+        is Type.String -> "String::from(\"${value.toString().escapeStringLiteral('"')}\")"
         is Type.Number -> "${value}_${when (type.precision) {
             Precision.P32 -> "f32"
             Precision.P64 -> "f64"
