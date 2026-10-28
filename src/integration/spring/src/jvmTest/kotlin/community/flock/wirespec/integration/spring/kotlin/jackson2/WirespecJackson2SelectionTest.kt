@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  * is selected and the Jackson 3 config backs off via `@ConditionalOnMissingClass` — and,
  * importantly, that the Jackson 3 config class still loads cleanly on a Jackson-3-free
  * classpath, as it must inside a real Spring Boot 3 app. The Jackson-3-only counterpart
- * lives in the `jvmJackson3Test` source set.
+ * lives in the `jvmSpringBoot4Test` source set.
  */
 class WirespecJackson2SelectionTest {
 
