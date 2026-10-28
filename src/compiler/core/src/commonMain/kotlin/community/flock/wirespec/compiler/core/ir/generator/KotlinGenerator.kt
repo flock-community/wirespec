@@ -593,24 +593,10 @@ public object KotlinGenerator :
     }
 
     private fun Literal.emit(): String = when (val t = type) {
-        Type.String -> "\"${value.toString().escapeKotlinString()}\""
+        Type.String -> "\"${value.toString().escapeStringLiteral('"', '$')}\""
         is Type.Integer -> if (t.precision == Precision.P64) "${value}L" else value.toString()
         is Type.Number -> if (t.precision == Precision.P32) "${value}f" else value.toString()
         else -> value.toString()
-    }
-
-    private fun String.escapeKotlinString(): String = buildString {
-        for (c in this@escapeKotlinString) {
-            when (c) {
-                '\\' -> append("\\\\")
-                '"' -> append("\\\"")
-                '$' -> append("\\$")
-                '\n' -> append("\\n")
-                '\r' -> append("\\r")
-                '\t' -> append("\\t")
-                else -> append(c)
-            }
-        }
     }
 
     private fun TypeDescriptor.emitTypeDescriptor(): String = "typeOf<${type.emitGenerics()}>()"

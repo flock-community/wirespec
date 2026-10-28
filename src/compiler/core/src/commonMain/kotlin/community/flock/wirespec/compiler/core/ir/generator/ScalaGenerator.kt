@@ -615,22 +615,9 @@ public object ScalaGenerator :
     }
 
     private fun Literal.emit(): String = when (type) {
-        Type.String -> "\"${value.toString().escapeScalaString()}\""
+        Type.String -> "\"${value.toString().escapeStringLiteral('"')}\""
         is Type.Integer -> if (type.precision == Precision.P64) "${value}L" else value.toString()
         else -> value.toString()
-    }
-
-    private fun String.escapeScalaString(): String = buildString {
-        for (c in this@escapeScalaString) {
-            when (c) {
-                '\\' -> append("\\\\")
-                '"' -> append("\\\"")
-                '\n' -> append("\\n")
-                '\r' -> append("\\r")
-                '\t' -> append("\\t")
-                else -> append(c)
-            }
-        }
     }
 
     private fun ArrayIndexCall.emitArrayIndex(): String {

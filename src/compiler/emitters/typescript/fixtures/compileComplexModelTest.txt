@@ -83,7 +83,7 @@ import {Email} from '../model/Email'
 
 export namespace EmailGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): Email {
-    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', annotations: [] as Record<string, any>[] });
   }
 }
 
@@ -92,7 +92,7 @@ import {PhoneNumber} from '../model/PhoneNumber'
 
 export namespace PhoneNumberGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): PhoneNumber {
-    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^\+[1-9]\d{1,14}$', annotations: [] as Record<string, any>[] });
+    return generator.generate([...path, ...['value']], { kind: 'string', regex: '^\\+[1-9]\\d{1,14}$', annotations: [] as Record<string, any>[] });
   }
 }
 

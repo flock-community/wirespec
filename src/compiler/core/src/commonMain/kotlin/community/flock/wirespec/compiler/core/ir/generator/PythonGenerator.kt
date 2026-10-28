@@ -509,7 +509,7 @@ public object PythonGenerator :
     }
 
     private fun Literal.emit(): String = when (type) {
-        Type.String -> "'$value'"
+        Type.String -> "'${value.toString().escapeStringLiteral('\'')}'"
         Type.Boolean -> value.toString().replaceFirstChar { it.uppercase() }
         else -> value.toString()
     }
