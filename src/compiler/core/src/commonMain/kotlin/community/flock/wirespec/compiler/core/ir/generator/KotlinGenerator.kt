@@ -230,7 +230,9 @@ public object KotlinGenerator :
         val name = name.pascalCase()
         val implStr = interfaces.map { it.emitGenerics() }.distinct().joinNonEmpty(", ", " : ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "<", ">") { it.emit() }
-        val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
+        val (members, nested) = elements.partition { it is Field }
+        val memberProperties = members.joinToString("") { it.emit(indent + 1, parents = parents + this) }
+        val nestedContent = nested.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitKotlin(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
 
@@ -238,9 +240,11 @@ public object KotlinGenerator :
         val primary = constructors.singleOrNull()?.takeIf { it.parameters.isEmpty() }
         if (primary != null) {
             val assignments = primary.body.filterIsInstance<Assignment>().associateBy { it.name.value() }
-            val fieldProperties = fields.joinToString("\n") { field ->
+            val values = members.filterIsInstance<Field>().map { it to it.initializer } +
+                fields.map { it to assignments[it.name.value()]?.value }
+            val fieldProperties = values.joinToString("\n") { (field, value) ->
                 val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
-                val valueStr = assignments[field.name.value()]?.let { " = ${it.value.emit()}" }.orEmpty()
+                val valueStr = value?.let { " = ${it.emit()}" }.orEmpty()
                 "${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}$valueStr".indentCode(indent + 1)
             }
             val bodyContent = listOf(fieldProperties, nestedContent).filter { it.isNotEmpty() }.joinToString("\n")
@@ -252,10 +256,11 @@ public object KotlinGenerator :
         }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
-            return if (nestedContent.isEmpty()) {
+            val objectContent = memberProperties + nestedContent
+            return if (objectContent.isEmpty()) {
                 "${visibility.prefix()}object $name$implStr\n\n".indentCode(indent)
             } else {
-                "${visibility.prefix()}object $name$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
+                "${visibility.prefix()}object $name$implStr {\n$objectContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
@@ -266,9 +271,9 @@ public object KotlinGenerator :
             "$annotationPrefix${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}$defaultStr".indentCode(indent + 1)
         }
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
-        val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
-        return if (hasBody) {
-            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+        val bodyContent = memberProperties + customConstructors + nestedContent
+        return if (bodyContent.isNotEmpty()) {
+            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
         } else {
             "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }

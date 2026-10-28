@@ -52,6 +52,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
 import community.flock.wirespec.compiler.core.ir.transformer.ensureEmptyStructHasConstructor
 import community.flock.wirespec.compiler.core.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.compiler.core.ir.transformer.markMembersAsOverride
+import community.flock.wirespec.compiler.core.ir.transformer.pinResponseStatus
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumDefaults
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
@@ -230,6 +231,7 @@ public open class KotlinEmitter(
         val body = endpointNamespace.injectApiObject(endpoint)
         return LanguageFile(Name.of(endpoint.identifier.sanitize()), listOf(body))
             .sanitizeNames(sanitizationConfig)
+            .pinResponseStatus()
             .prependImports(imports.takeIf { it.isNotEmpty() })
     }
 

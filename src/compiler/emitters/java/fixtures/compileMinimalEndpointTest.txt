@@ -27,12 +27,15 @@ public interface GetTodos extends Wirespec.Endpoint {
   public static record Response200Headers () implements Wirespec.Response.Headers {
   };
   public static record Response200 (
-    Integer status,
     Response200Headers headers,
     java.util.List<TodoDto> body
   ) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
     public Response200(java.util.List<TodoDto> body) {
-      this(200, new Response200Headers(), body);
+      this(new Response200Headers(), body);
+    }
+    @Override
+    public Integer status() {
+      return 200;
     }
   };
   public interface Handler extends Wirespec.Handler {

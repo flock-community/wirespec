@@ -219,7 +219,9 @@ public object JavaGenerator :
         }
 
         val customConstructors = constructors.joinToString("") { it.emit(name.pascalCase(), fields, 1, isRecord = true) }
-        val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
+        val nestedContent = elements
+            .map { (it as? Field)?.asAccessor() ?: it }
+            .joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
         val paramParts = annotatedFields().map { (field, annotations) ->
             val annotationPrefix = annotations.joinToString("") { "$it " }
@@ -228,6 +230,17 @@ public object JavaGenerator :
         val paramsStr = if (paramParts.isEmpty()) " ()" else paramParts.joinToString(",\n", " (\n", "\n)")
 
         return "$typeModifier ${name.pascalCase()}$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
+    }
+
+    // A record cannot declare an instance field, so a member fixed to a value becomes the accessor returning it.
+    private fun Field.asAccessor(): AstFunction? = initializer?.let { value ->
+        AstFunction(
+            name = name,
+            parameters = emptyList(),
+            returnType = type,
+            body = listOf(ReturnStatement(value)),
+            isOverride = isOverride,
+        )
     }
 
     private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int, isRecord: Boolean, modifier: String = "public"): String {
