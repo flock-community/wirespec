@@ -125,17 +125,18 @@ pub enum ResponseError {
 pub struct Response200Headers;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response200 {
-    pub status: i32,
     pub headers: Response200Headers,
     pub body: TodoDto,
 }
 impl Response200 {
     pub fn new(body: TodoDto) -> Self {
         Response200 {
-            status: 200_i32,
             headers: Response200Headers {},
             body: body
         }
+    }
+    pub fn status(&self) -> i32 {
+        return 200_i32;
     }
 }
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -145,34 +146,36 @@ pub struct Response201Headers {
 }
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response201 {
-    pub status: i32,
     pub headers: Response201Headers,
     pub body: TodoDto,
 }
 impl Response201 {
     pub fn new(token: Token, refresh_token: Option<Token>, body: TodoDto) -> Self {
         Response201 {
-            status: 201_i32,
             headers: Response201Headers { token: token, refresh_token: refresh_token },
             body: body
         }
+    }
+    pub fn status(&self) -> i32 {
+        return 201_i32;
     }
 }
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response500Headers;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response500 {
-    pub status: i32,
     pub headers: Response500Headers,
     pub body: Error,
 }
 impl Response500 {
     pub fn new(body: Error) -> Self {
         Response500 {
-            status: 500_i32,
             headers: Response500Headers {},
             body: body
         }
+    }
+    pub fn status(&self) -> i32 {
+        return 500_i32;
     }
 }
 pub mod PutTodo {
@@ -192,13 +195,13 @@ pub mod PutTodo {
     pub fn to_raw_response(serialization: &impl Serializer, response: Response) -> RawResponse {
         match response {
             Response::Response200(r) => {
-                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
+                return RawResponse { status_code: r.status(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
             }
             Response::Response201(r) => {
-                return RawResponse { status_code: r.status, headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&r.headers.token, std::any::TypeId::of::<Token>())), (String::from("refreshToken"), r.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
+                return RawResponse { status_code: r.status(), headers: std::collections::HashMap::from([(String::from("token"), serialization.serialize_param(&r.headers.token, std::any::TypeId::of::<Token>())), (String::from("refreshToken"), r.headers.refresh_token.as_ref().map(|it| serialization.serialize_param(it, std::any::TypeId::of::<Token>())).unwrap_or(Vec::<String>::new()))]), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<TodoDto>())) };
             }
             Response::Response500(r) => {
-                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Error>())) };
+                return RawResponse { status_code: r.status(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Error>())) };
             }
         }
     }

@@ -46,6 +46,7 @@ import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.ir.generator.RustGenerator
 import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
+import community.flock.wirespec.compiler.core.ir.transformer.pinResponseStatus
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
@@ -415,6 +416,7 @@ public open class RustEmitter(
         .injectResponseFromImpls()
         .injectApiStruct(endpoint)
         .sanitizeNames(sanitizationConfig)
+        .pinResponseStatus()
         .prependImports(endpoint.buildEndpointImports())
 
     override fun emit(channel: Channel): File =

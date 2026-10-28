@@ -42,6 +42,7 @@ import community.flock.wirespec.compiler.core.ir.NullableGet
 import community.flock.wirespec.compiler.core.ir.NullableMap
 import community.flock.wirespec.compiler.core.ir.NullableOf
 import community.flock.wirespec.compiler.core.ir.Package
+import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.Precision
 import community.flock.wirespec.compiler.core.ir.PrintStatement
 import community.flock.wirespec.compiler.core.ir.RawElement
@@ -214,16 +215,14 @@ public object RustGenerator :
         val fields = fieldList()
         val rustName = name.pascalCase()
         val typeParamsStr = if (typeParameters.isEmpty()) "" else "<${typeParameters.joinToString(", ") { it.type.emit() }}>"
-        val functions = elements.filterIsInstance<AstFunction>()
-        val nonFunctions = elements.filterNot { it is AstFunction }
+        val members = elements.map { (it as? Field)?.asAccessor() ?: it }
+        val functions = members.filterIsInstance<AstFunction>()
+        val nonFunctions = members.filterNot { it is AstFunction }
         val nestedContent = nonFunctions.joinToString("") { it.emit(indent, parents = parents + this, isStaticScope = false) }
 
-        val implBlock = if (functions.isNotEmpty()) {
-            val fnsContent = functions.joinToString("") { it.emit(1, isInInterface = false) }
-            "impl $rustName {\n$fnsContent}\n\n".indentCode(indent)
-        } else {
-            ""
-        }
+        val implContent = constructors.joinToString("") { it.emit(rustName, fields) } +
+            functions.joinToString("") { it.emit(1, isInInterface = false) }
+        val implBlock = if (implContent.isNotEmpty()) "impl $rustName {\n$implContent}\n\n".indentCode(indent) else ""
 
         if (fields.isEmpty() && constructors.isEmpty()) {
             val structDef = "pub struct $rustName$typeParamsStr;\n\n".indentCode(indent)
@@ -236,12 +235,20 @@ public object RustGenerator :
         }
         val structDef = "pub struct $rustName$typeParamsStr {\n$fieldsStr\n}\n\n".indentCode(indent)
 
-        val customConstructors = constructors.joinToString("") { it.emit(rustName, fields, indent) }
-
-        return "$structDef$customConstructors$implBlock$nestedContent"
+        return "$structDef$implBlock$nestedContent"
     }
 
-    private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int): String {
+    // A struct field cannot be fixed to a value, so a member fixed to a value becomes the method returning it.
+    private fun Field.asAccessor(): AstFunction? = initializer?.let { value ->
+        AstFunction(
+            name = name,
+            parameters = listOf(Parameter(Name.of("&self"), Type.Custom(""))),
+            returnType = type,
+            body = listOf(ReturnStatement(value)),
+        )
+    }
+
+    private fun Constructor.emit(structName: String, structFields: List<Field>): String {
         val params = parameters.joinToString(", ") { "${it.name.snakeCase().sanitize()}: ${it.type.emit()}" }
         val assignments = body.filterIsInstance<Assignment>().associate {
             it.name.value() to it.value.emit()
@@ -251,8 +258,7 @@ public object RustGenerator :
             "${field.name.snakeCase().sanitize()}: $value".indentCode(1)
         }
         val constructorBody = "$structName {\n$fieldInits\n}".indentCode(1)
-        val fnBody = "pub fn new($params) -> Self {\n$constructorBody\n}".indentCode(1)
-        return "impl $structName {\n$fnBody\n}\n\n".indentCode(indent)
+        return "pub fn new($params) -> Self {\n$constructorBody\n}\n".indentCode(1)
     }
 
     private fun AstFunction.emit(indent: Int, isInInterface: Boolean = false): String {

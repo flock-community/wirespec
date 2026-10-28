@@ -57,17 +57,18 @@ pub enum ResponseListTodoDto {
 pub struct Response200Headers;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Response200 {
-    pub status: i32,
     pub headers: Response200Headers,
     pub body: Vec<TodoDto>,
 }
 impl Response200 {
     pub fn new(body: Vec<TodoDto>) -> Self {
         Response200 {
-            status: 200_i32,
             headers: Response200Headers {},
             body: body
         }
+    }
+    pub fn status(&self) -> i32 {
+        return 200_i32;
     }
 }
 pub mod GetTodos {
@@ -87,7 +88,7 @@ pub mod GetTodos {
     pub fn to_raw_response(serialization: &impl Serializer, response: Response) -> RawResponse {
         match response {
             Response::Response200(r) => {
-                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Vec<TodoDto>>())) };
+                return RawResponse { status_code: r.status(), headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Vec<TodoDto>>())) };
             }
         }
     }

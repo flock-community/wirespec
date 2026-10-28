@@ -88,7 +88,8 @@ request and its responses:
   `RequestHeaders`. `Request` combines them with the method and the body, and `Request::new` takes all values as flat
   parameters.
 - **Responses**: every status code gets a response struct, `Response200` and `Response404`, with a struct for its
-  headers. The enum `Response` has a variant for every response, and `Response2XX`, `Response4XX`, `ResponseTodo` and
+  headers. The status is the method `status()`, not a field, so a `Response404` always has status 404. The enum
+  `Response` has a variant for every response, and `Response2XX`, `Response4XX`, `ResponseTodo` and
   `ResponseApiError` group them per status class and per body type.
 - **Handler and Call**: `Handler` is the trait the server implements, `Call` is the trait the client implements.
 - **Serialization**: the inner module `UpdateTodo` has the functions `to_raw_request`, `from_raw_request`,

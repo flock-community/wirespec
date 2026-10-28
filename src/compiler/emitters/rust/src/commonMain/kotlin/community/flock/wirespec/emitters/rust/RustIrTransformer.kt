@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.Statement
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.Switch
 import community.flock.wirespec.compiler.core.ir.Transformer
@@ -135,7 +136,7 @@ internal fun fixResponseSwitchPatterns(): Transformer = transformer {
             if (typeName != null && rustResponsePattern.matches(typeName)) {
                 Case(
                     value = RawExpression("Response::$typeName(${s.variable!!.snakeCase()})"),
-                    body = case.body.map { t.transformStatement(it) },
+                    body = case.body.map { t.transformStatement(it).callStatusOf(s.variable!!) },
                     type = null,
                 )
             } else {
@@ -153,6 +154,17 @@ internal fun fixResponseSwitchPatterns(): Transformer = transformer {
         )
     }
 }
+
+// A response's status is fixed to its status code, so it is read with the `status()` method instead of a field.
+private fun Statement.callStatusOf(response: Name): Statement = transformer {
+    statementAndExpression { s, t ->
+        if (s is FieldCall && s.field == Name.of("status") && s.receiver == VariableReference(response)) {
+            FunctionCall(receiver = s.receiver, name = s.field)
+        } else {
+            s.transformChildren(t)
+        }
+    }
+}.transformStatement(this)
 
 internal fun fixConstructorCalls(): Transformer = transformer {
     statementAndExpression { s, t ->
