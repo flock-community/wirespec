@@ -458,7 +458,7 @@ public object ScalaGenerator :
             val bodyStr = case.body.joinToString("") { it.emit(1) }
             val pattern = if (isPatternSwitch) {
                 val varName = variable?.camelCase() ?: "_"
-                "case $varName: ${case.type?.emitGenerics() ?: "Any"}"
+                "case $varName: ${case.type?.emitTypeAnnotation() ?: "Any"}"
             } else {
                 "case ${case.value.emit()}"
             }
