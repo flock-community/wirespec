@@ -92,13 +92,12 @@ internal class JsonSchemaWriter(
     }.let { if (isNullable) it.nullable() else it }
 
     private fun PrimitiveType.schema(): JsonObject = when (this) {
-        is PrimitiveType.String -> when (val format = constraint?.let(StringFormat::of)) {
-            null -> jsonObjectOf(
+        is PrimitiveType.String -> constraint?.let(StringFormat::of)
+            ?.let { format -> jsonObjectOf("type" to JsonPrimitive("string"), "format" to JsonPrimitive(format.label)) }
+            ?: jsonObjectOf(
                 "type" to JsonPrimitive("string"),
                 "pattern" to constraint?.value?.toPattern()?.let(::JsonPrimitive),
             )
-            else -> jsonObjectOf("type" to JsonPrimitive("string"), "format" to JsonPrimitive(format.label))
-        }
         is PrimitiveType.Integer -> jsonObjectOf(
             "type" to JsonPrimitive("integer"),
             "format" to JsonPrimitive("int32").takeIf { precision == PrimitiveType.Precision.P32 },
