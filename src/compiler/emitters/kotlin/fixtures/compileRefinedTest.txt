@@ -2,8 +2,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TodoId(
+@JvmInline
+value class TodoId(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
@@ -16,8 +18,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TodoNoRegex(
+@JvmInline
+value class TodoNoRegex(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
@@ -30,8 +34,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestInt(
+@JvmInline
+value class TestInt(
   override val value: Long
 ) : Wirespec.Refined<Long> {
   override fun validate(): Boolean =
@@ -44,8 +50,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestInt0(
+@JvmInline
+value class TestInt0(
   override val value: Long
 ) : Wirespec.Refined<Long> {
   override fun validate(): Boolean =
@@ -58,8 +66,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestInt1(
+@JvmInline
+value class TestInt1(
   override val value: Long
 ) : Wirespec.Refined<Long> {
   override fun validate(): Boolean =
@@ -72,8 +82,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestInt2(
+@JvmInline
+value class TestInt2(
   override val value: Long
 ) : Wirespec.Refined<Long> {
   override fun validate(): Boolean =
@@ -86,8 +98,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestNum(
+@JvmInline
+value class TestNum(
   override val value: Double
 ) : Wirespec.Refined<Double> {
   override fun validate(): Boolean =
@@ -100,8 +114,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestNum0(
+@JvmInline
+value class TestNum0(
   override val value: Double
 ) : Wirespec.Refined<Double> {
   override fun validate(): Boolean =
@@ -114,8 +130,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestNum1(
+@JvmInline
+value class TestNum1(
   override val value: Double
 ) : Wirespec.Refined<Double> {
   override fun validate(): Boolean =
@@ -128,8 +146,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class TestNum2(
+@JvmInline
+value class TestNum2(
   override val value: Double
 ) : Wirespec.Refined<Double> {
   override fun validate(): Boolean =

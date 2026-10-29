@@ -2,6 +2,8 @@ plugins {
     id("module.publication")
     id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlinx.serialization)
+    id("module.wirespec-codegen")
 }
 
 group = "${libs.versions.group.id.get()}.integration"
@@ -12,12 +14,21 @@ repositories {
     mavenLocal()
 }
 
+wirespecCodegen {
+    basePackage = "community.flock.wirespec.integration.kotlinxserialization"
+}
+
 kotlin {
     compilerOptions {
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.api.get()))
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(libs.versions.kotlin.language.get()))
     }
     jvm {
+        compilations.named("codegen") {
+            defaultSourceSet.dependencies {
+                implementation(project(":src:compiler:emitters:kotlin"))
+            }
+        }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
@@ -54,6 +65,7 @@ kotlin {
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.kotlin.junit)
+                implementation(libs.kotlinx.serialization)
             }
         }
     }

@@ -218,10 +218,12 @@ public open class KotlinEmitter(
         .convert()
         .sanitizeNames(sanitizationConfig)
 
+    // A value class serializes as its underlying value (kotlinx.serialization), so refined types stay flat on the wire.
     override fun emit(refined: Refined): File {
         val file = refined.convert().sanitizeNames(sanitizationConfig)
-        val updatedStruct = file.findElement<Struct>()?.markMembersAsOverride()
+        val updatedStruct = file.findElement<Struct>()?.markMembersAsOverride()?.copy(kind = Struct.Kind.VALUE_CLASS)
         return LanguageFile(Name.of(refined.identifier.sanitize()), listOfNotNull(updatedStruct))
+            .prependImports(listOf(import("kotlin.jvm", "JvmInline")))
     }
 
     override fun emit(endpoint: Endpoint): File {

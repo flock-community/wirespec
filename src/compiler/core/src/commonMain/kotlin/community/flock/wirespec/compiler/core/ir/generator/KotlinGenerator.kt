@@ -266,11 +266,12 @@ public object KotlinGenerator :
             "$annotationPrefix${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitGenerics()}$defaultStr".indentCode(indent + 1)
         }
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
+        val classKeyword = if (kind == Struct.Kind.VALUE_CLASS) "@JvmInline\n${visibility.prefix()}value class" else "${visibility.prefix()}data class"
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
         return if (hasBody) {
-            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+            "$classKeyword $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            "$classKeyword $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 

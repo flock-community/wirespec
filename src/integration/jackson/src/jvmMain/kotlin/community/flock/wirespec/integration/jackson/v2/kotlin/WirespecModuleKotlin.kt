@@ -97,7 +97,7 @@ private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wi
 private class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined<*>>(vc) {
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined<*> {
         val node = jp.codec.readTree<JsonNode>(jp)
-        val constructor = vc.declaredConstructors.first()
+        val constructor = vc.declaredConstructors.first().apply { isAccessible = true }
         val value = jp.codec.treeToValue(node, constructor.parameterTypes.first())
         return constructor.newInstance(value) as Wirespec.Refined<*>
     }

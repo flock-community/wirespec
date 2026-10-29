@@ -2,8 +2,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class Email(
+@JvmInline
+value class Email(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
@@ -16,8 +18,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class PhoneNumber(
+@JvmInline
+value class PhoneNumber(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
@@ -30,8 +34,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class Tag(
+@JvmInline
+value class Tag(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
@@ -44,8 +50,10 @@ package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+import kotlin.jvm.JvmInline
 
-data class EmployeeAge(
+@JvmInline
+value class EmployeeAge(
   override val value: Long
 ) : Wirespec.Refined<Long> {
   override fun validate(): Boolean =
