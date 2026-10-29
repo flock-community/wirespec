@@ -21,6 +21,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
  * - records and refined types get `@Serializable` + `@SerialName("<wirespec name>")`
  * - unions and enums get `@Serializable`
  *
+ * Refined types are emitted as `@JvmInline value class`, which kotlinx.serialization
+ * flattens to the wrapped primitive: `{"id":"42"}` instead of `{"id":{"value":"42"}}`.
+ *
  * The annotations are emitted fully qualified, so generated code needs only the
  * kotlinx-serialization runtime on its classpath — no imports are added and the
  * IR stays language-neutral.
@@ -39,23 +42,32 @@ public class KotlinxSerializationExtension : IrExtension {
         val serialNames = definitions
             .filter { it is TypeDefinition || it is Refined }
             .associate { Name.of(it.identifier.value).pascalCase() to it.identifier.value }
+        val refinedNames = definitions
+            .filterIsInstance<Refined>()
+            .map { Name.of(it.identifier.value).pascalCase() }
+            .toSet()
         val serializableOnlyNames = definitions
             .filter { it is UnionDefinition || it is EnumDefinition }
             .map { Name.of(it.identifier.value).pascalCase() }
             .toSet()
         return ir.map { element ->
-            if (element is LanguageFile) element.annotateSerializable(serialNames, serializableOnlyNames) else element
+            if (element is LanguageFile) element.annotateSerializable(serialNames, refinedNames, serializableOnlyNames) else element
         }
     }
 
     private fun LanguageFile.annotateSerializable(
         serialNames: Map<String, String>,
+        refinedNames: Set<String>,
         serializableOnlyNames: Set<String>,
     ): LanguageFile = copy(
         elements = elements.flatMap { element ->
             when {
                 element is Struct && element.name.pascalCase() in serialNames ->
-                    listOf(serializable, serialName(serialNames.getValue(element.name.pascalCase())), element)
+                    listOf(
+                        serializable,
+                        serialName(serialNames.getValue(element.name.pascalCase())),
+                        if (element.name.pascalCase() in refinedNames) element.copy(kind = Struct.Kind.VALUE_CLASS) else element,
+                    )
                 element is HasName && (element is Union || element is Enum) && element.name.pascalCase() in serializableOnlyNames ->
                     listOf(serializable, element)
                 else ->

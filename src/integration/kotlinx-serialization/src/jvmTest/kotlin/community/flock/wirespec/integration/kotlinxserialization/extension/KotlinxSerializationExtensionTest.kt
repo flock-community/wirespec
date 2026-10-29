@@ -63,14 +63,15 @@ class KotlinxSerializationExtensionTest {
     }
 
     @Test
-    fun `Should annotate refined models with Serializable and SerialName`() {
+    fun `Should annotate refined models with Serializable and SerialName and emit them as value classes`() {
         val todoId = emit().single { it.file.endsWith("TodoId.kt") }.result
 
         assertContains(todoId, "@kotlinx.serialization.Serializable")
         assertContains(
             todoId,
             """@kotlinx.serialization.SerialName("TodoId")
-            |data class TodoId(
+            |@kotlin.jvm.JvmInline
+            |value class TodoId(
             """.trimMargin(),
         )
     }

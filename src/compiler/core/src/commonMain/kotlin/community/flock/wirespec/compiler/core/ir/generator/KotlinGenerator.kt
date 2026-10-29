@@ -267,10 +267,14 @@ public object KotlinGenerator :
         }
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
+        val header = when (kind) {
+            Struct.Kind.VALUE_CLASS -> "@kotlin.jvm.JvmInline\n${visibility.prefix()}value class"
+            Struct.Kind.PLAIN_CLASS, null -> "${visibility.prefix()}data class"
+        }
         return if (hasBody) {
-            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+            "$header $name$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            "$header $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
