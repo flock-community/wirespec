@@ -1,0 +1,298 @@
+---
+title: Backend
+slug: /getting-started/backend
+sidebar_position: 2
+description: Generate Kotlin or Java from a Wirespec contract in your Gradle or Maven build and implement the endpoints in Spring Boot.
+wirespec:
+  source: todo.ws
+  language: Kotlin
+  package: com.example.todo
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Getting started as a backend engineer
+
+Wirespec generates the models, the request and response types and a `Handler` interface for every endpoint in the
+contract. You implement the handlers, and the compiler checks that you only return the responses the contract allows.
+The generated code only needs the standard library of your language.
+
+This guide uses Spring Boot with Kotlin or Java. Using another language or framework? See
+[other languages](#other-languages).
+
+## Add the contract
+
+Save the contract in `src/main/wirespec/todo.ws`. Your build generates code from every `.ws` file in this directory.
+
+```wirespec wirespec source
+```
+
+## Generate code in your build
+
+Add the Wirespec plugin and the Spring integration to your build, and select the `SpringMappingAnnotations` extension
+that comes with the plugin. It adds the Spring request mappings to the generated handlers, so Spring routes requests to
+them.
+
+<Tabs groupId="build-tool">
+  <TabItem value="gradle" label="Gradle">
+
+```kotlin title="build.gradle.kts"
+import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
+import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+
+plugins {
+    id("community.flock.wirespec.plugin.gradle") version "{{WIRESPEC_VERSION}}"
+}
+
+dependencies {
+    implementation("community.flock.wirespec.integration:spring-jvm:{{WIRESPEC_VERSION}}")
+}
+
+val wirespecCompile = tasks.register<CompileWirespecTask>("wirespec-compile") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated/wirespec")
+    packageName = "com.example.todo"
+    language = Language.Kotlin // or Language.Java
+    extensionClasses = listOf(SpringMappingAnnotationsExtension::class.java)
+}
+
+sourceSets.main {
+    java.srcDir(wirespecCompile.flatMap { it.output })
+}
+```
+
+Run `./gradlew build`. Because the source set points at the output of the task, Gradle generates the code before it
+compiles your sources.
+
+  </TabItem>
+  <TabItem value="maven" label="Maven">
+
+```xml title="pom.xml"
+<dependencies>
+    <dependency>
+        <groupId>community.flock.wirespec.integration</groupId>
+        <artifactId>spring-jvm</artifactId>
+        <version>{{WIRESPEC_VERSION}}</version>
+    </dependency>
+</dependencies>
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>community.flock.wirespec.plugin.maven</groupId>
+            <artifactId>wirespec-maven-plugin</artifactId>
+            <version>{{WIRESPEC_VERSION}}</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <input>${project.basedir}/src/main/wirespec</input>
+                        <output>${project.build.directory}/generated-sources/wirespec</output>
+                        <packageName>com.example.todo</packageName>
+                        <language>Kotlin</language> <!-- or Java -->
+                        <extensionClasses>
+                            <extensionClass>SpringMappingAnnotations</extensionClass>
+                        </extensionClasses>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+Run `mvn compile` to generate the code. The plugin adds the output directory to the sources of your project. If you
+configure `sourceDirs` of the `kotlin-maven-plugin` yourself, add the output directory there too.
+
+  </TabItem>
+</Tabs>
+
+Every type becomes a data class in Kotlin, or a record in Java:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+
+```kotlin wirespec file=model/Todo.kt
+```
+
+  </TabItem>
+  <TabItem value="java" label="Java">
+
+```java wirespec file=model/Todo.java language=Java
+```
+
+  </TabItem>
+</Tabs>
+
+## Implement the endpoints
+
+Enable the Wirespec controllers in your application:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+
+```kotlin title="Application.kt"
+import community.flock.wirespec.integration.spring.kotlin.configuration.EnableWirespecController
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
+
+@SpringBootApplication
+@EnableWirespecController
+class Application
+
+fun main(args: Array<String>) {
+    runApplication<Application>(*args)
+}
+```
+
+  </TabItem>
+  <TabItem value="java" label="Java">
+
+```java title="Application.java"
+import community.flock.wirespec.integration.spring.java.configuration.EnableWirespecController;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+@EnableWirespecController
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+```
+
+  </TabItem>
+</Tabs>
+
+Then implement the `Handler` of every endpoint in a `@RestController`. A handler gets the typed request, with its path
+parameters, query parameters, headers and body, and returns one of the responses of its endpoint:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+
+```kotlin title="TodoController.kt"
+import com.example.todo.endpoint.CreateTodo
+import com.example.todo.endpoint.GetTodo
+import com.example.todo.endpoint.GetTodos
+import com.example.todo.model.ApiError
+import com.example.todo.model.Todo
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+class TodoController : GetTodos.Handler, GetTodo.Handler, CreateTodo.Handler {
+
+    private val todos = mutableMapOf(1L to Todo(id = 1, title = "Write the contract", done = true))
+
+    override suspend fun getTodos(request: GetTodos.Request): GetTodos.Response<*> =
+        GetTodos.Response200(todos.values.toList())
+
+    override suspend fun getTodo(request: GetTodo.Request): GetTodo.Response<*> =
+        todos[request.path.id]
+            ?.let { GetTodo.Response200(it) }
+            ?: GetTodo.Response404(ApiError(message = "Todo ${request.path.id} not found"))
+
+    override suspend fun createTodo(request: CreateTodo.Request): CreateTodo.Response<*> =
+        if (request.body.title.isBlank()) {
+            CreateTodo.Response400(ApiError(message = "A todo needs a title"))
+        } else {
+            Todo(id = todos.size + 1L, title = request.body.title, done = false)
+                .also { todos[it.id] = it }
+                .let { CreateTodo.Response201(it) }
+        }
+}
+```
+
+The handlers are `suspend` functions. Spring MVC runs them when `kotlinx-coroutines-reactor` is on the classpath.
+
+  </TabItem>
+  <TabItem value="java" label="Java">
+
+```java title="TodoController.java"
+import com.example.todo.endpoint.CreateTodo;
+import com.example.todo.endpoint.GetTodo;
+import com.example.todo.endpoint.GetTodos;
+import com.example.todo.model.ApiError;
+import com.example.todo.model.Todo;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
+@RestController
+class TodoController implements GetTodos.Handler, GetTodo.Handler, CreateTodo.Handler {
+
+    private final Map<Long, Todo> todos = new ConcurrentHashMap<>(Map.of(1L, new Todo(1L, "Write the contract", true)));
+
+    @Override
+    public CompletableFuture<GetTodos.Response<?>> getTodos(GetTodos.Request request) {
+        return completedFuture(new GetTodos.Response200(List.copyOf(todos.values())));
+    }
+
+    @Override
+    public CompletableFuture<GetTodo.Response<?>> getTodo(GetTodo.Request request) {
+        var id = request.path().id();
+        return completedFuture(todos.containsKey(id)
+                ? new GetTodo.Response200(todos.get(id))
+                : new GetTodo.Response404(new ApiError("Todo " + id + " not found")));
+    }
+
+    @Override
+    public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request request) {
+        if (request.body().title().isBlank()) {
+            return completedFuture(new CreateTodo.Response400(new ApiError("A todo needs a title")));
+        }
+        var todo = new Todo(todos.size() + 1L, request.body().title(), false);
+        todos.put(todo.id(), todo);
+        return completedFuture(new CreateTodo.Response201(todo));
+    }
+}
+```
+
+  </TabItem>
+</Tabs>
+
+Start the application and call the API:
+
+```bash
+curl http://localhost:8080/todos/1
+# {"id":1,"title":"Write the contract","done":true}
+```
+
+If the contract changes, for example when `GetTodo` gets another response, the generated code changes with it and the
+compiler shows you where your implementation has to follow.
+
+## Other languages
+
+Wirespec also generates [Python](../emitters/emitters-python.mdx), [Rust](../emitters/emitters-rust.mdx),
+[Scala](../emitters/emitters-scala.mdx) and [TypeScript](../emitters/emitters-typescript.mdx) for Node.js. Install the
+[CLI](../plugins/plugins-cli.md) or the [npm package](../plugins/plugins-npm.md) and run it in your build, for
+example:
+
+```bash
+wirespec compile -i ./wirespec -o ./gen -l Python -p todo --shared
+```
+
+Not on Spring? The generated endpoints also contain the functions that convert between the typed requests and responses
+and their raw HTTP form, so you can connect the handlers to any framework. The [emitters](../emitters/emitters.mdx)
+section describes the generated code for every language.
+
+## Next steps
+
+- [Spring](../integration/integration-spring.mdx): call other Wirespec APIs with the `WebClient`, handle multipart
+  requests and build native images.
+- [Jackson](../integration/integration-jackson.mdx) and
+  [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx): configure the JSON serialization.
+- [WireMock](../integration/integration-wiremock.mdx): stub the APIs your service calls in tests.
+- [Kotest](../integration/integration-kotest.mdx): generate test data and requests that match the contract.
+- [Kotlin](../emitters/emitters-kotlin.mdx) and [Java](../emitters/emitters-java.mdx) emitters: everything that is
+  generated.
+- [Gradle](../plugins/plugins-gradle.md) and [Maven](../plugins/plugins-maven.md) plugins: all options.

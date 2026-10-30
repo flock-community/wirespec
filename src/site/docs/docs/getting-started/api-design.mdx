@@ -1,0 +1,76 @@
+---
+title: API design
+slug: /getting-started/api-design
+sidebar_position: 3
+description: Design an API contract first with Wirespec, try it in the Playground and your IDE, and publish it as OpenAPI.
+wirespec:
+  source: ../emitters/todo.ws
+  language: OpenAPIV3
+---
+
+# Getting started as an API designer
+
+With Wirespec, the contract comes before the code. You describe the API in a language that is short enough to read in
+a review, and every team generates its code from that one file. Nobody has to translate a document by hand, so the
+implementations cannot drift away from what you designed.
+
+## Try it in the Playground
+
+The [Playground](https://playground.wirespec.io) compiles Wirespec in your browser and shows the code it generates for
+the language you pick. It is the quickest way to sketch an API, and you don't need to install anything.
+
+## Set up your editor
+
+Once the contract lives in a repository, install the plugin for [IntelliJ IDEA or VS Code](../ide/ide.md). It
+highlights `.ws` files, shows errors while you type and renames a type everywhere it is used.
+
+## Learn the language
+
+A Wirespec file is a list of definitions. This contract has one of every kind:
+
+```wirespec wirespec source
+```
+
+| Definition                                | Use it for                                                                 |
+|-------------------------------------------|----------------------------------------------------------------------------|
+| [Type](../language/types.mdx#composite)   | The shape of the data, with required, nullable (`?`) and list (`[]`) fields and default values |
+| [Refined](../language/types.mdx#refined)  | A `String` that matches a regular expression, or a number within bounds, such as `TodoId` |
+| [Enum](../language/types.mdx#enum)        | A fixed set of values, such as `Priority`                                  |
+| [Union](../language/types.mdx#union)      | A value that is one of several types, such as `TodoEvent`                  |
+| [Endpoint](../language/endpoints.mdx)     | An HTTP call: method, path and query parameters, headers, body and every response by status code |
+| [Channel](../language/channels.mdx)       | A stream of messages, such as events on a message broker                   |
+| [RPC](../language/rpc.mdx)                | A call with parameters, a result and an error, independent of HTTP         |
+| [Part](../language/parts.mdx)             | A set of fields that recur in several types                                |
+
+A comment above a definition documents it, and becomes its description in the generated OpenAPI document.
+
+## Publish the contract as OpenAPI
+
+Not every consumer uses Wirespec. Generate an OpenAPI document for API portals, Swagger UI or teams that use other
+tools:
+
+```shell wirespec command
+```
+
+The endpoint `UpdateTodo` becomes this path:
+
+```json wirespec select=paths./todos/{id}
+```
+
+Use `OpenAPIV2` for a Swagger 2.0 document, or `Avro` for an Avro schema of the types. Channels and RPCs have no
+OpenAPI counterpart, see the [OpenAPI emitter](../emitters/emitters-open-api-v3.mdx).
+
+## Hand the contract to the teams
+
+Keep the contract in a repository that every team can read, and review a change to it like a change to the code. From
+there, each team generates its own code:
+
+- Frontend teams generate a typed TypeScript client: [Getting started as a frontend engineer](./frontend.mdx).
+- Backend teams generate models and handlers in their build: [Getting started as a backend engineer](./backend.mdx).
+
+## Next steps
+
+- [Contract first](../intro/intro-contract.md): why Wirespec puts the specification before the implementation.
+- [Language](../language/language.mdx): the complete reference, including comments and annotations.
+- [Converters](../converters/converters.md): start from an OpenAPI, AsyncAPI, Avro or GraphQL specification you
+  already have.
