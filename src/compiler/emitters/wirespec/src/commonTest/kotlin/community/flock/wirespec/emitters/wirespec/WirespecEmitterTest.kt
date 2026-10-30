@@ -2,8 +2,10 @@ package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
@@ -245,6 +247,37 @@ class WirespecEmitterTest {
         )
 
         WirespecEmitter().emit(refined) shouldBe "type TestNumIntBounds = Number(0.0, 1.0)\n"
+    }
+
+    @Test
+    fun compileResponseWithMultipleContentTypesTest() {
+        val pet = Reference.Custom(value = "Pet", isNullable = false)
+        val response = { type: String ->
+            Endpoint.Response(
+                status = "200",
+                headers = Shape(emptyList()),
+                content = Endpoint.Content(type = type, reference = pet),
+                annotations = emptyList(),
+            )
+        }
+        val endpoint = Endpoint(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("GetPet"),
+            method = Endpoint.Method.GET,
+            path = listOf(Endpoint.Segment.Literal("pet")),
+            queries = Shape(emptyList()),
+            headers = Shape(emptyList()),
+            requests = listOf(Endpoint.Request(null)),
+            responses = listOf(response("application/json"), response("application/xml")),
+        )
+
+        WirespecEmitter().emit(endpoint) shouldBe """
+            |endpoint GetPet GET /pet -> {
+            |  200 -> Pet
+            |}
+            |
+        """.trimMargin()
     }
 
     @Test
