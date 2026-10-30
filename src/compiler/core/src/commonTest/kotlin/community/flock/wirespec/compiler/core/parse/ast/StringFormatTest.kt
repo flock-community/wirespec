@@ -18,7 +18,7 @@ class StringFormatTest {
             StringFormat.of(format.label) shouldBe format
             StringFormat.of(format.regExp) shouldBe format
         }
-        StringFormat.of("time") shouldBe null
+        StringFormat.of("postcode") shouldBe null
         StringFormat.of(RegExp("/^[0-9]+$/")) shouldBe null
     }
 
@@ -52,6 +52,14 @@ class StringFormatTest {
             "2024-02-29T13:45:30+0100",
             "2024-02-29T13:45:30.Z",
         ).shouldContainExactly()
+    }
+
+    @Test
+    fun time() {
+        matching("time", "13:45:30Z", "00:00:00.123+01:00", "23:59:59.123456-05:30")
+            .shouldContainExactly("13:45:30Z", "00:00:00.123+01:00", "23:59:59.123456-05:30")
+        matching("time", "13:45:30", "13:45Z", "24:00:00Z", "13:60:00Z", "13:45:30.Z", "13:45:30+0100", "2024-02-29T13:45:30Z")
+            .shouldContainExactly()
     }
 
     @Test

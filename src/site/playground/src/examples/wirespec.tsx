@@ -29,7 +29,7 @@ rpc CompleteTodo {
   id: TodoId
 } -> Todo ! TodoError
 
-// Refined with a built-in format: date, date-time, email, uuid or uuid-v1 to uuid-v8
+// Refined with a built-in format: date, date-time, time, email, uuid or uuid-v1 to uuid-v8
 type TodoId = String(uuid-v4)
 type Date = String(date)
 type Timestamp = String(date-time)

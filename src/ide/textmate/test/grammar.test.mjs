@@ -106,7 +106,8 @@ type Score = Number(-1.0, 10.0)
 type Id = String(uuid-v7)
 type At {
   at: String?(date-time),
-  by: String(email)
+  by: String(email),
+  from: String(time)
 }`;
     expectScopes(source, [
       ["Name", "entity.name.type.wirespec"],
@@ -126,6 +127,7 @@ type At {
       ["uuid-v7", "constant.language.format.wirespec"],
       ["date-time", "constant.language.format.wirespec"],
       ["email", "constant.language.format.wirespec"],
+      ["time", "constant.language.format.wirespec"],
     ]);
   });
 

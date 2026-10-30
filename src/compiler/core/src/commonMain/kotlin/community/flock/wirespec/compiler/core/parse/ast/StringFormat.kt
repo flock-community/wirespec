@@ -20,6 +20,7 @@ private fun uuid(version: String, variant: String = "[89abAB]") = "$HEX{8}-$HEX{
 public enum class StringFormat(public val label: String, pattern: String) {
     DATE("date", FULL_DATE),
     DATE_TIME("date-time", "${FULL_DATE}T$PARTIAL_TIME$TIME_OFFSET"),
+    TIME("time", "$PARTIAL_TIME$TIME_OFFSET"),
     EMAIL("email", "$ATOM(\\.$ATOM){0,31}@($LABEL\\.){1,126}$LABEL"),
     UUID("uuid", uuid(version = HEX, variant = HEX)),
     UUID_V1("uuid-v1", uuid(version = "1")),

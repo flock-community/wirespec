@@ -100,21 +100,21 @@ Wirespec type the payload is.
 `components.schemas` and the schemas in messages are JSON Schema. A component schema keeps its name, and a schema that
 is declared inline is named after where it is used: the property `assignee` of `Todo` becomes the type `TodoAssignee`.
 
-| JSON Schema                                          | Wirespec                                                                                                                                |
-|------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `object` with `properties`                           | `type`; a property that is not `required` is nullable                                                                                   |
-| `object` with only `additionalProperties`            | a dictionary, `{ String }`                                                                                                              |
-| `array`                                              | `Type[]`                                                                                                                                |
-| `enum`                                               | `enum`                                                                                                                                  |
-| `oneOf`, `anyOf` of objects or references            | a union, `type Shape = Circle \| Square`                                                                                                |
-| `allOf`                                              | a `type` with the properties of all its schemas                                                                                         |
-| `string`                                             | `String`; `format: binary` becomes `Bytes`, and `date`, `date-time`, `email` and `uuid` [string formats](../language/types.mdx#refined) |
-| `integer`                                            | `Integer`; `format: int32` becomes `Integer32`                                                                                          |
-| `number`                                             | `Number`; `format: float` becomes `Number32`                                                                                            |
-| `boolean`                                            | `Boolean`                                                                                                                               |
-| a component schema of a primitive type               | a refined type with its `pattern`, `minimum` and `maximum`                                                                              |
-| `"type": ["string", "null"]`, or `oneOf` with `null` | a nullable reference, `String?`                                                                                                         |
-| `{}`, a reference to another file and anything else  | `Any`                                                                                                                                   |
+| JSON Schema                                          | Wirespec                                                                                                                                        |
+|------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `object` with `properties`                           | `type`; a property that is not `required` is nullable                                                                                           |
+| `object` with only `additionalProperties`            | a dictionary, `{ String }`                                                                                                                      |
+| `array`                                              | `Type[]`                                                                                                                                        |
+| `enum`                                               | `enum`                                                                                                                                          |
+| `oneOf`, `anyOf` of objects or references            | a union, `type Shape = Circle \| Square`                                                                                                        |
+| `allOf`                                              | a `type` with the properties of all its schemas                                                                                                 |
+| `string`                                             | `String`; `format: binary` becomes `Bytes`, and `date`, `date-time`, `time`, `email` and `uuid` [string formats](../language/types.mdx#refined) |
+| `integer`                                            | `Integer`; `format: int32` becomes `Integer32`                                                                                                  |
+| `number`                                             | `Number`; `format: float` becomes `Number32`                                                                                                    |
+| `boolean`                                            | `Boolean`                                                                                                                                       |
+| a component schema of a primitive type               | a refined type with its `pattern`, `minimum` and `maximum`                                                                                      |
+| `"type": ["string", "null"]`, or `oneOf` with `null` | a nullable reference, `String?`                                                                                                                 |
+| `{}`, a reference to another file and anything else  | `Any`                                                                                                                                           |
 
 The `description` of a schema or property is a `@Description`, and a `default` a Wirespec
 [default value](../language/types.mdx#default-values) where the field can hold it.
