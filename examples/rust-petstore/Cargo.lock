@@ -2253,7 +2253,6 @@ dependencies = [
  "actix-web",
  "regex",
  "reqwest",
- "serde",
  "serde_json",
  "tokio",
 ]

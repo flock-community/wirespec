@@ -1,93 +1,65 @@
-use crate::gen::wirespec::{Client, RawRequest, RawResponse, Transportation};
-use crate::serialization::JsonSerialization;
-use std::collections::HashMap;
+//! Sends the raw requests of the generated client over HTTP with reqwest.
 
-pub struct ReqwestTransport {
+use reqwest::Url;
+use reqwest::header::{ACCEPT, CONTENT_TYPE};
+
+use crate::generated::wirespec::{RawRequest, RawResponse, Transportation};
+use crate::{group, ungroup};
+
+pub struct Http {
     client: reqwest::Client,
-    base_url: String,
+    base_url: Url,
 }
 
-impl ReqwestTransport {
+impl Http {
     pub fn new(base_url: &str) -> Self {
-        ReqwestTransport {
+        Http {
             client: reqwest::Client::new(),
-            base_url: base_url.to_string(),
+            base_url: Url::parse(base_url).expect("invalid base URL"),
         }
     }
 }
 
-impl Transportation for ReqwestTransport {
+impl Transportation for Http {
     async fn transport(&self, request: &RawRequest) -> RawResponse {
-        let path = request.path.join("/");
-        let url = format!("{}/{}", self.base_url, path);
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .expect("invalid base URL")
+            .pop_if_empty()
+            .extend(&request.path);
 
-        let mut req_builder = match request.method.as_str() {
-            "GET" => self.client.get(&url),
-            "POST" => self.client.post(&url),
-            "PUT" => self.client.put(&url),
-            "DELETE" => self.client.delete(&url),
-            "PATCH" => self.client.patch(&url),
-            "HEAD" => self.client.head(&url),
-            _ => self.client.get(&url),
+        let builder = self
+            .client
+            .request(request.method.parse().expect("invalid method"), url)
+            .query(&ungroup(&request.queries).collect::<Vec<_>>())
+            .header(ACCEPT, "application/json");
+        let builder = ungroup(&request.headers).fold(builder, |builder, (name, value)| {
+            builder.header(name, value)
+        });
+        let builder = match &request.body {
+            Some(body) => builder
+                .header(CONTENT_TYPE, "application/json")
+                .body(body.clone()),
+            None => builder,
         };
 
-        for (key, values) in &request.queries {
-            for value in values {
-                req_builder = req_builder.query(&[(key, value)]);
-            }
-        }
-
-        for (key, values) in &request.headers {
-            if let Some(value) = values.first() {
-                req_builder = req_builder.header(key.as_str(), value.as_str());
-            }
-        }
-
-        req_builder = req_builder.header("Accept", "application/json");
-        req_builder = req_builder.header("Content-Type", "application/json");
-
-        if let Some(body) = &request.body {
-            req_builder = req_builder.body(body.clone());
-        }
-
-        match req_builder.send().await {
-            Ok(response) => {
-                let status_code = response.status().as_u16() as i32;
-                let mut headers: HashMap<String, Vec<String>> = HashMap::new();
-                for (key, value) in response.headers() {
-                    headers
-                        .entry(key.to_string())
-                        .or_default()
-                        .push(value.to_str().unwrap_or("").to_string());
-                }
-                let body = response.bytes().await.ok().map(|b| b.to_vec());
-
-                RawResponse {
-                    status_code,
-                    headers,
-                    body,
-                }
-            }
-            Err(e) => {
-                eprintln!("Transport error: {}", e);
-                RawResponse {
-                    status_code: 0,
-                    headers: HashMap::new(),
-                    body: None,
-                }
-            }
+        let response = builder.send().await.expect("request failed");
+        RawResponse {
+            status_code: response.status().as_u16().into(),
+            headers: group(response.headers().iter().map(|(name, value)| {
+                (
+                    name.to_string(),
+                    value.to_str().unwrap_or_default().to_string(),
+                )
+            })),
+            body: Some(
+                response
+                    .bytes()
+                    .await
+                    .expect("cannot read the response")
+                    .to_vec(),
+            )
+            .filter(|body| !body.is_empty()),
         }
     }
-}
-
-pub struct ClientProxy<T: Transportation> {
-    pub transport: T,
-    pub serialization: JsonSerialization,
-}
-
-impl<T: Transportation> Client for ClientProxy<T> {
-    type Transport = T;
-    type Ser = JsonSerialization;
-    fn transport(&self) -> &T { &self.transport }
-    fn serialization(&self) -> &JsonSerialization { &self.serialization }
 }
