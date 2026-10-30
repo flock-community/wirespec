@@ -1,4 +1,5 @@
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useMemo } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Box } from "@mui/material";
 import { WsEmitted } from "@flock/wirespec";
 import { PlayGround } from "./PlayGround";
@@ -15,8 +16,10 @@ interface OutputViewProps {
 }
 
 export function OutputView({ files, language, controls }: OutputViewProps) {
-  const [selected, setSelected] = useState<string>();
-  const [treeOpen, setTreeOpen] = useState(false);
+  const navigate = useNavigate({ from: "/" });
+  const { file: selected, tree: treeOpen = false } = useSearch({ from: "/" });
+  const setSelected = (file: string) =>
+    navigate({ replace: true, search: (prev) => ({ ...prev, file }) });
 
   const { prefix, groups } = useMemo(() => groupFiles(files), [files]);
   // Resolve the selected file by path so the selection survives recompilation
@@ -42,7 +45,12 @@ export function OutputView({ files, language, controls }: OutputViewProps) {
         active={activeFile?.file}
         onSelect={setSelected}
         treeOpen={treeOpen}
-        onToggleTree={() => setTreeOpen((open) => !open)}
+        onToggleTree={() =>
+          navigate({
+            replace: true,
+            search: (prev) => ({ ...prev, tree: !prev.tree || undefined }),
+          })
+        }
         controls={controls}
       />
       <Box display="flex">

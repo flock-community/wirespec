@@ -24,6 +24,7 @@ export function SpecificationSelector() {
           ...prev,
           specification: "wirespec",
           emitter: "typescript",
+          code: undefined,
         }),
       });
     }
@@ -33,6 +34,7 @@ export function SpecificationSelector() {
         ...prev,
         specification: event.target.value as Specification,
         emitter: "wirespec",
+        code: undefined,
       }),
     });
   };

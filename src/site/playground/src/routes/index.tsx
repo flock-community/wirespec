@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { WsError, WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
 import { Box, Button } from "@mui/material";
@@ -12,6 +12,7 @@ import { ExtensionSelector } from "../components/ExtensionSelector";
 import { FileBar } from "../components/FileBar";
 import { initializeMonaco } from "../utils/InitializeMonaco";
 import { MonacoError, setMonacoErrors } from "../utils/SetMonacoErrors";
+import { decodeCode, encodeCode } from "../utils/ShareCode";
 import {
   isExtension,
   wirespecToTarget,
@@ -83,6 +84,10 @@ type Search = {
   specification: Specification;
   emitter: Emitter;
   extensions?: Extension[];
+  // Only when edited, so a link to an example follows changes to it.
+  code?: string;
+  file?: string;
+  tree?: boolean;
 };
 
 export type CompilationResult = {
@@ -101,14 +106,61 @@ export const Route = createFileRoute("/")({
       extensions: Array.isArray(search?.extensions)
         ? search?.extensions.filter(isExtension)
         : undefined,
+      code: typeof search?.code === "string" ? search.code : undefined,
+      file: typeof search?.file === "string" ? search.file : undefined,
+      tree: search?.tree === true || undefined,
     };
   },
 });
 
+const exampleFor = (specification: Specification, emitter: Emitter) => {
+  switch (specification) {
+    case "wirespec":
+      return emitter === "graphql"
+        ? wsGraphQLExample
+        : emitter === "asyncapi"
+          ? wsAsyncAPIExample
+          : wsExample;
+    case "open_api_v2":
+      return swaggerExample;
+    case "open_api_v3":
+      return openapiExample;
+    case "avro":
+      return avroExample;
+    case "graphql":
+      return graphqlExample;
+    case "asyncapi":
+      return asyncapiExample;
+  }
+};
+
+const examples = [
+  wsExample,
+  wsGraphQLExample,
+  wsAsyncAPIExample,
+  swaggerExample,
+  openapiExample,
+  avroExample,
+  graphqlExample,
+  asyncapiExample,
+];
+
 function RouteComponent() {
   const monaco = useMonaco();
-  const { emitter, specification, extensions } = useSearch({ from: "/" });
-  const [code, setCode] = useState("");
+  const navigate = useNavigate({ from: "/" });
+  const {
+    emitter,
+    specification,
+    extensions,
+    code: linkedCode,
+  } = useSearch({ from: "/" });
+  // Undefined until the code in the link is decoded.
+  const [code, setCode] = useState<string>();
+  // What the link held when the code was last read from or written to it, so
+  // the page does not read back its own writes.
+  const linked = useRef<{ specification: Specification; code?: string }>(
+    undefined,
+  );
   const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
   const [wirespecErrors, setWirespecErrors] = useState<MonacoError[]>([]);
   const [mobileDisplay, setMobileDisplay] = useState<"input" | "output">(
@@ -116,6 +168,7 @@ function RouteComponent() {
   );
 
   useEffect(() => {
+    if (code === undefined) return;
     if (specification === "wirespec") {
       const compiledOutput = wirespecToTarget(code, emitter, extensions ?? []);
       setWirespecOutput(compiledOutput);
@@ -178,32 +231,43 @@ function RouteComponent() {
     setMonacoErrors(monaco, wirespecErrors);
   }, [wirespecErrors, monaco]);
 
+  // On load, on switching specifications and on going back or forward.
   useEffect(() => {
-    switch (specification) {
-      case "wirespec":
-        return setCode(wsExample);
-      case "open_api_v2":
-        return setCode(swaggerExample);
-      case "open_api_v3":
-        return setCode(openapiExample);
-      case "avro":
-        return setCode(avroExample);
-      case "graphql":
-        return setCode(graphqlExample);
-      case "asyncapi":
-        return setCode(asyncapiExample);
-    }
-  }, [specification]);
+    if (
+      linked.current?.specification === specification &&
+      linked.current.code === linkedCode
+    )
+      return;
+    linked.current = { specification, code: linkedCode };
+    const example = exampleFor(specification, emitter);
+    if (!linkedCode) return setCode(example);
+    decodeCode(linkedCode).then(setCode, () => setCode(example));
+  }, [specification, linkedCode]);
+
+  useEffect(() => {
+    if (code === undefined) return;
+    let cancelled = false;
+    (code === exampleFor(specification, emitter)
+      ? Promise.resolve(undefined)
+      : encodeCode(code)
+    ).then((encoded) => {
+      if (cancelled || encoded === linked.current?.code) return;
+      linked.current = { specification, code: encoded };
+      navigate({
+        replace: true,
+        search: (prev) => ({ ...prev, code: encoded }),
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [code]);
 
   // Only an unedited example follows the output, so switching outputs never loses changes.
   useEffect(() => {
     setCode((current) =>
-      [wsExample, wsGraphQLExample, wsAsyncAPIExample].includes(current)
-        ? emitter === "graphql"
-          ? wsGraphQLExample
-          : emitter === "asyncapi"
-            ? wsAsyncAPIExample
-            : wsExample
+      current !== undefined && examples.includes(current)
+        ? exampleFor(specification, emitter)
         : current,
     );
   }, [emitter]);
@@ -246,7 +310,7 @@ function RouteComponent() {
           </Box>
         </FileBar>
         <PlayGround
-          code={code}
+          code={code ?? ""}
           setCode={setCode}
           language={
             specification === "wirespec" || specification === "graphql"
