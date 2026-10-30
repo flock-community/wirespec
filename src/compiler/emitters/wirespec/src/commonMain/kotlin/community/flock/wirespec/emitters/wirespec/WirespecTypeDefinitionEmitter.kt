@@ -52,25 +52,37 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
     }
 
     override fun Reference.emit(): String = when (this) {
-        is Reference.Dict -> "{ ${reference.emit()} }"
-        is Reference.Iterable -> "${reference.emit()}[]"
-        is Reference.Unit -> "Unit"
-        is Reference.Any -> "Any"
-        is Reference.Custom -> value
+        is Reference.Dict -> "{ ${reference.emit()} }${emitNullable()}"
+        is Reference.Iterable -> "${reference.emit()}[]${emitNullable()}"
+        is Reference.Unit -> "Unit${emitNullable()}"
+        is Reference.Any -> "Any${emitNullable()}"
+        is Reference.Custom -> "$value${emitNullable()}"
+        // The parser reads the `?` of a String before its constraint, and that of a number after it.
         is Reference.Primitive -> when (val t = type) {
-            is Reference.Primitive.Type.String -> "String"
-            is Reference.Primitive.Type.Boolean -> "Boolean"
-            is Reference.Primitive.Type.Bytes -> "Bytes"
+            is Reference.Primitive.Type.String -> "String${emitNullable()}${t.constraint?.emit().orEmpty()}"
+            is Reference.Primitive.Type.Boolean -> "Boolean${emitNullable()}"
+            is Reference.Primitive.Type.Bytes -> "Bytes${emitNullable()}"
             is Reference.Primitive.Type.Integer -> when (t.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Integer32"
                 Reference.Primitive.Type.Precision.P64 -> "Integer"
-            }
+            } + t.constraint?.emit().orEmpty() + emitNullable()
 
             is Reference.Primitive.Type.Number -> when (t.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Number32"
                 Reference.Primitive.Type.Precision.P64 -> "Number"
-            }
+            } + t.constraint?.emitDecimal().orEmpty() + emitNullable()
         }
-    }.let { if (isNullable) "$it?" else it }
+    }
+
+    private fun Reference.emitNullable(): String = if (isNullable) "?" else ""
+
+    private fun Reference.Primitive.Type.Constraint.Bound.emitDecimal(): String =
+        "(${min.toBoundDecimal()}, ${max.toBoundDecimal()})"
+
+    private fun String?.toBoundDecimal(): String = when {
+        this == null -> "_"
+        contains(".") -> this
+        else -> "$this.0"
+    }
 
 }

@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 
@@ -314,7 +315,7 @@ object Ast {
                         identifier = FieldIdentifier("email"),
                         annotations = emptyList(),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String(null),
+                            type = Reference.Primitive.Type.String(StringFormat.EMAIL.regExp),
                             isNullable = false,
                         ),
                     ),

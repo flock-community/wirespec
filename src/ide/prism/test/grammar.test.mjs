@@ -83,14 +83,21 @@ describe("types", () => {
   });
 
   it("highlights refined types", () => {
-    expectTypes("type Name = String(/^[a-z]\\/x$/g)\ntype Age = Integer(0, _)\ntype Score = Number(-1.0, _)", [
-      ["Name", "class-name"],
-      ["/", "regex > regex-delimiter"],
-      ["^[a-z]\\/x$", "regex"],
-      ["g", "regex > regex-flags"],
-      ["_", "unbounded/constant"],
-      ["-1.0", "number"],
-    ]);
+    expectTypes(
+      "type Name = String(/^[a-z]\\/x$/g)\ntype Age = Integer(0, _)\ntype Score = Number(-1.0, _)\ntype Id = String(uuid-v7)\ntype At {\n  at: String?(date-time),\n  by: String(email),\n  from: String(time)\n}",
+      [
+        ["Name", "class-name"],
+        ["/", "regex > regex-delimiter"],
+        ["^[a-z]\\/x$", "regex"],
+        ["g", "regex > regex-flags"],
+        ["_", "unbounded/constant"],
+        ["-1.0", "number"],
+        ["uuid-v7", "format/constant"],
+        ["date-time", "format/constant"],
+        ["email", "format/constant"],
+        ["time", "format/constant"],
+      ],
+    );
   });
 
   it("highlights unions", () => {

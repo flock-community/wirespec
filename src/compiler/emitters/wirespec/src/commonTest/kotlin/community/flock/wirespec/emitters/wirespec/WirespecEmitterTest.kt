@@ -202,6 +202,32 @@ class WirespecEmitterTest {
     }
 
     @Test
+    fun compileStringFormatTest() {
+        val source = """
+            |type Date = String(date)
+            |
+            |type Timestamp = String(date-time)
+            |
+            |type Id = String(uuid-v7)
+            |
+            |type Pattern = String(/^[0-9]+$/g)
+            |
+            |type Product {
+            |  id: String(uuid),
+            |  createdAt: String?(date-time),
+            |  code: String(/^[A-Z]{3}$/g),
+            |  quantity: Integer(1, 10)?,
+            |  price: Number(0.0, _),
+            |  updatedAt: Timestamp?
+            |}
+            |
+        """.trimMargin()
+
+        val compiler = compile(source)
+        compiler { WirespecEmitter() } shouldBeRight source
+    }
+
+    @Test
     fun compileNumberIntegerBoundsTest() {
         // Integer-valued Number bounds cannot be parsed from Wirespec source (Number bounds must be
         // decimals), but they can arrive via conversion (e.g. OpenAPI). The emitter must render them

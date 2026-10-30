@@ -332,6 +332,10 @@
             { "include": "#regex" },
             { "include": "#number" },
             { "name": "constant.language.unbounded.wirespec", "match": "(?<![\\w-])_(?![\\w-])" },
+            {
+              "name": "constant.language.format.wirespec",
+              "match": "(?<![\\w-])(?:date-time|date|time|email|uuid(?:-v[1-8])?)(?![\\w-])"
+            },
             { "include": "#comma" }
           ]
         },

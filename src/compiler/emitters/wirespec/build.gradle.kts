@@ -17,7 +17,12 @@ repositories {
 
 kotlin {
     js(IR) {
-        nodejs()
+        nodejs {
+            testTask {
+                // The round-trip property test parses hundreds of generated specs, which outlasts mocha's 2s default.
+                useMocha { timeout = "10s" }
+            }
+        }
         useEsModules()
     }
     jvm {

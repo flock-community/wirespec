@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -91,10 +92,12 @@ internal class JsonSchemaWriter(
     }.let { if (isNullable) it.nullable() else it }
 
     private fun PrimitiveType.schema(): JsonObject = when (this) {
-        is PrimitiveType.String -> jsonObjectOf(
-            "type" to JsonPrimitive("string"),
-            "pattern" to constraint?.value?.toPattern()?.let(::JsonPrimitive),
-        )
+        is PrimitiveType.String -> constraint?.let(StringFormat::of)
+            ?.let { format -> jsonObjectOf("type" to JsonPrimitive("string"), "format" to JsonPrimitive(format.label)) }
+            ?: jsonObjectOf(
+                "type" to JsonPrimitive("string"),
+                "pattern" to constraint?.value?.toPattern()?.let(::JsonPrimitive),
+            )
         is PrimitiveType.Integer -> jsonObjectOf(
             "type" to JsonPrimitive("integer"),
             "format" to JsonPrimitive("int32").takeIf { precision == PrimitiveType.Precision.P32 },

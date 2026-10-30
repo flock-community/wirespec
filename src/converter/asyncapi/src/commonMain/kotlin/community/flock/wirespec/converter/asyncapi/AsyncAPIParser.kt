@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.Action
@@ -694,10 +695,11 @@ private class AsyncAPIConverter(private val document: JsonObject) {
             .fold(emptyList()) { entries, value -> entries + value.toName().unique(entries.toSet()) }
 
         fun JsonObject.primitive(type: String?, constrained: Boolean): PrimitiveType = when (type) {
-            "string" -> when (string("format")) {
+            "string" -> when (val format = string("format")) {
                 "binary" -> PrimitiveType.Bytes
                 else -> PrimitiveType.String(
-                    string("pattern")?.takeIf { constrained && '\n' !in it && '\r' !in it }?.let { PrimitiveType.Constraint.RegExp("/${it.escapeSlashes()}/g") },
+                    string("pattern")?.takeIf { constrained && '\n' !in it && '\r' !in it }?.let { PrimitiveType.Constraint.RegExp("/${it.escapeSlashes()}/g") }
+                        ?: format?.let(StringFormat::of)?.regExp,
                 )
             }
             "integer" -> PrimitiveType.Integer(
