@@ -133,7 +133,7 @@ public class WirespecWebClient {
      */
     private static Map<String, List<String>> toRawHeaders(HttpHeaders headers) {
         final var map = new LinkedMultiValueMap<String, String>();
-        map.putAll(headers);
+        headers.forEach(map::put);
         return map;
     }
 }
