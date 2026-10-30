@@ -34,7 +34,8 @@ class StringFormatTest {
         |      "placedOn": { "type": "string", "format": "date" },
         |      "shippedAt": { "type": "string", "format": "date-time" },
         |      "reference": { "type": "string", "format": "uuid", "pattern": "^[0-9]+${'$'}" },
-        |      "email": { "type": "string", "format": "email" }
+        |      "email": { "type": "string", "format": "email" },
+        |      "website": { "type": "string", "format": "uri" }
         |    }
         |  }
         |}
@@ -71,7 +72,8 @@ class StringFormatTest {
         |  placedOn: String(date),
         |  shippedAt: String?(date-time),
         |  reference: String?(/^[0-9]+${'$'}/),
-        |  email: String?
+        |  email: String?(email),
+        |  website: String?
         |}
         |
         """.trimMargin()
@@ -118,7 +120,8 @@ class StringFormatTest {
             get("pattern") shouldBe null
         }
         getValue("reference").jsonObject["pattern"] shouldBe JsonPrimitive("^[0-9]+${'$'}")
-        getValue("email").jsonObject["format"] shouldBe null
+        getValue("email").jsonObject["format"] shouldBe JsonPrimitive("email")
+        getValue("website").jsonObject["format"] shouldBe null
     }
 
     @Test

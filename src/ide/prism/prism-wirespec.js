@@ -44,7 +44,7 @@
     },
     regex,
     format: {
-      pattern: /(\bString\s*\??\s*\(\s*)(?:date-time|date|uuid(?:-v[1-8])?)(?![\w-])/,
+      pattern: /(\bString\s*\??\s*\(\s*)(?:date-time|date|email|uuid(?:-v[1-8])?)(?![\w-])/,
       lookbehind: true,
       alias: "constant",
     },

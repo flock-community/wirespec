@@ -55,6 +55,40 @@ class StringFormatTest {
     }
 
     @Test
+    fun email() {
+        val local = "a".repeat(64)
+        val label = "a".repeat(63)
+        matching(
+            "email",
+            "john.doe@example.com",
+            "first.last+tag@sub.example.co.uk",
+            "o'hara/sales@x.io",
+            "a@$label.io",
+            "a@${"a.".repeat(126)}io",
+        ).shouldContainExactly(
+            "john.doe@example.com",
+            "first.last+tag@sub.example.co.uk",
+            "o'hara/sales@x.io",
+            "a@$label.io",
+            "a@${"a.".repeat(126)}io",
+        )
+        matching(
+            "email",
+            "john@localhost",
+            "a..b@x.io",
+            ".a@x.io",
+            "a.@x.io",
+            "a@-x.io",
+            "a@x-.io",
+            "a@x..io",
+            "a b@x.io",
+            "a@${label}a.io",
+            "a@${"a.".repeat(127)}io",
+            "${"a.".repeat(32)}$local@x.io",
+        ).shouldContainExactly()
+    }
+
+    @Test
     fun uuid() {
         matching(
             "uuid",

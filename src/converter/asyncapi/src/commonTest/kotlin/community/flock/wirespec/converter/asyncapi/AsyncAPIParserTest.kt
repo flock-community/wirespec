@@ -121,7 +121,7 @@ class AsyncAPIParserTest {
                       "children": { "type": "array", "items": { "$REF": "#/components/schemas/Node" } },
                       "labels": { "type": "object", "additionalProperties": { "type": "string" } },
                       "createdAt": { "type": "string", "format": "date-time" },
-                      "email": { "type": "string", "format": "email" },
+                      "website": { "type": "string", "format": "uri" },
                       "x-trace.id": { "type": "string" },
                       "external": { "$REF": "other.json#/Thing" },
                       "tags": { "type": "array", "items": { "type": "string" }, "default": [] }
@@ -156,8 +156,8 @@ class AsyncAPIParserTest {
             |  children: Node[]?,
             |  labels: { String }?,
             |  createdAt: String?(date-time),
-            |  @AsyncAPISchema(format: "email")
-            |  email: String?,
+            |  @AsyncAPISchema(format: "uri")
+            |  website: String?,
             |  @AsyncAPIName("x-trace.id")
             |  x-trace_id: String?,
             |  @AsyncAPISchema("$REF": "other.json#/Thing")

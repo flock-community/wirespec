@@ -1335,7 +1335,7 @@ class OpenAPIV3ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = null,
+                                    constraint = StringFormat.EMAIL.regExp,
                                 ),
                                 isNullable = false,
                             ),

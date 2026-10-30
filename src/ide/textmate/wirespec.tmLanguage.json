@@ -334,7 +334,7 @@
             { "name": "constant.language.unbounded.wirespec", "match": "(?<![\\w-])_(?![\\w-])" },
             {
               "name": "constant.language.format.wirespec",
-              "match": "(?<![\\w-])(?:date-time|date|uuid(?:-v[1-8])?)(?![\\w-])"
+              "match": "(?<![\\w-])(?:date-time|date|email|uuid(?:-v[1-8])?)(?![\\w-])"
             },
             { "include": "#comma" }
           ]

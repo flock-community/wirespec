@@ -144,7 +144,7 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeLeft()
-            .head.message shouldBe "Unknown string format: time, expected one of: date, date-time, uuid, uuid-v1, uuid-v2, uuid-v3, uuid-v4, uuid-v5, uuid-v6, uuid-v7, uuid-v8"
+            .head.message shouldBe "Unknown string format: time, expected one of: date, date-time, email, uuid, uuid-v1, uuid-v2, uuid-v3, uuid-v4, uuid-v5, uuid-v6, uuid-v7, uuid-v8"
     }
 
     @Test
