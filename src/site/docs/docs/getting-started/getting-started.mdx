@@ -3,219 +3,82 @@ id: getting-started
 title: Getting Started
 slug: /getting-started
 sidebar_position: 0
+wirespec:
+  source: todo.ws
 ---
 
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
+import { Persona, Personas } from "@site/src/components/Personas";
 
-## What is Wirespec?
+Wirespec is a small language for describing APIs. You write the contract once, in a `.ws` file, and every side of the
+API generates its own typesafe, dependency-free code from it: TypeScript for the frontend, Kotlin, Java, Python, Rust or
+Scala for the backend, and OpenAPI or Avro for everyone else.
 
-Wirespec is a modern tool that enhances software development by streamlining the process of designing, documenting,
-and implementing APIs. While the software industry offers numerous solutions for designing contracts between services,
-Wirespec distinguishes itself by using a simple language model and multi-language compatibility.
+## Where do you want to start?
 
-## Installation
+Pick the description that fits you best. Each guide gets you from nothing to working code in a few minutes, with the
+tools you already use.
 
-WireSpec can be installed either as an npm package for use within a project or as a standalone command-line interface
-(CLI) tool.
+<Personas>
+  <Persona
+    role="Frontend engineer"
+    title="I build the app that calls the API"
+    to="/docs/getting-started/frontend"
+    uses={["TypeScript", "npm", "fetch", "MSW"]}
+  >
+    Generate a typed TypeScript client, call the API with typed requests and responses, and mock it until the backend
+    is live.
+  </Persona>
+  <Persona
+    role="Backend engineer"
+    title="I build the service behind the API"
+    to="/docs/getting-started/backend"
+    uses={["Kotlin", "Java", "Spring Boot", "Gradle", "Maven"]}
+  >
+    Generate the models and a handler interface per endpoint in your build, and implement them in Spring Boot. Python,
+    Rust and Scala are supported too.
+  </Persona>
+  <Persona
+    role="API designer"
+    title="I design the API between teams"
+    to="/docs/getting-started/api-design"
+    uses={["Playground", "IDE", "Language", "OpenAPI"]}
+  >
+    Write the contract before the code, try it in the Playground and your IDE, and publish it as OpenAPI for everyone
+    who consumes it.
+  </Persona>
+  <Persona
+    role="Existing specification"
+    title="I already have an API specification"
+    to="/docs/getting-started/existing-specification"
+    uses={["OpenAPI", "AsyncAPI", "Avro", "GraphQL"]}
+  >
+    Convert your OpenAPI, AsyncAPI, Avro or GraphQL specification to Wirespec, or generate code from it straight
+    away.
+  </Persona>
+</Personas>
 
-[//]: # "TODO should be Npm + Docker + Homebrew"
+## What a contract looks like
 
-<Tabs>
-    <TabItem value="npm" label="Npm">
-        1. Install [Node.js](https://nodejs.org/en)
+The guides share one small contract: a todo API with three types and three endpoints. The frontend generates a client
+from this file and the backend generates the handlers it implements, so both sides always agree on paths, bodies and
+status codes.
 
-        2. Install the Wirespec package
-        ```bash
-        npm install -g @flock/wirespec
-        ```
-    </TabItem>
-    <TabItem value="Cli-linux" label="Cli - Linux">
-        1. Download and install the CLI
-
-        ```bash
-        curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
-        chmod +x wirespec
-        sudo mv ./wirespec /usr/local/bin/wirespec
-        ```
-    </TabItem>
-    <TabItem value="Cli-arm" label="Cli - macOs(X64)">
-        1. Download and install the CLI
-
-        ```bash
-        curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
-        chmod +x wirespec
-        sudo mv ./wirespec /usr/local/bin/wirespec
-        ```
-    </TabItem>
-    <TabItem value="Cli-amd" label="Cli - macOs(Arm64)">
-        1. Download and install the CLI
-
-        ```bash
-        curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
-        chmod +x wirespec
-        sudo mv ./wirespec /usr/local/bin/wirespec
-        ```
-    </TabItem>
-
-</Tabs>
-
----
-
-Alongside the CLI tool Wirespec is also available as various [plugins](plugins).
-
-## Example
-
-Imagine a common situation where a frontend (TypeScript) and backend (Kotlin/Java) have negotiated a contract. This
-means that the API's structure and behavior are defined _before_ any code is written, ensuring a shared understanding
-and facilitating parallel development.
-
-### Creating a Definition
-
-The following `todo.ws` file defines such a contract for the basic CRUD operations of a Todo resource:
-
-```wirespec title="todo.ws"
-type TodoDto {
-    id: Integer?,
-    name: String,
-    assignee: UserDto?
-}
-
-type UserDto {
-    name: String,
-    role: Role
-}
-
-enum Role {
-    Admin, Editor, Viewer
-}
-
-endpoint GetTodos GET /api/todos -> {
-    200 -> TodoDto[]
-}
-
-endpoint GetById GET /api/todos/{id: Integer} -> {
-    200 -> TodoDto
-    404 -> String
-}
-
-endpoint CreateTodo POST TodoDto /api/todos -> {
-    201 -> TodoDto
-}
-
-endpoint DeleteTodo DELETE /api/todos/{id: Integer} -> {
-    204 -> Unit
-    404 -> String
-}
-
-endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
-    200 -> TodoDto
-}
+```wirespec wirespec source
 ```
 
-### Generating code
+Every endpoint lists the responses it can return, and the generated code turns them into types: a client sees that
+`GetTodo` can answer `404` with an `ApiError`, and a server can only return the status codes the contract defines.
 
-Next, both sides can use the **shared** definition to generate language specific code, by running
-one of the following commands referencing the directory where you put your `todo.ws` file:
+## Something else?
 
-<Tabs>
-    <TabItem value="TypeScript" label="TypeScript">
-        ```bash
-        wirespec compile --input . --language typescript
-        ```
-
-        This will generate the following file:
-        ```
-        project/out/community/flock/wirespec/generated/
-          └─ Todo.ts
-        ```
-
-    </TabItem>
-    <TabItem value="Kotlin" label="Kotlin">
-        ```bash
-        wirespec compile --input . --language kotlin
-        ```
-
-        This will generate the following file:
-        ```
-        project/out/community/flock/wirespec/generated/
-          └─ CreateTodoEndpoint.kt
-          └─ DeleteTodoEndpoint.kt
-          └─ GetByIdEndpoint.kt
-          └─ GetTodosEndpoint.kt
-          └─ TodoDto.kt
-          └─ UpdateTodoEndpoint.kt
-        ```
-    </TabItem>
-
-    <TabItem value="Java" label="Java">
-        ```bash
-        wirespec compile --input . --language java
-        ```
-
-        This will generate the following files:
-        ```
-        project/out/community/flock/wirespec/generated/
-          └─ CreateTodoEndpoint.java
-          └─ DeleteTodoEndpoint.java
-          └─ GetByIdEndpoint.java
-          └─ GetTodosEndpoint.java
-          └─ TodoDto.java
-          └─ UpdateTodoEndpoint.java
-        ```
-    </TabItem>
-
-</Tabs>
-
----
-
-The output contains the required Data Transfer Objects (DTOs), endpoint structures with defined response codes, etc.
-Once you've plugged in your HTTP client it is now **easy** for both sides to adhere to the contract.
-
-From here there are several options to integrate Wirespec further into your landscape, development environment, and
-create more elaborate definitions.
-
-[//]: # "Gotta knock it out of the park here"
-
-## What's next?
-
-<div style={{ display: "flex", gap: "20px" }}>
-  {" "}
-  {}
-  <div
-    style={{
-      flex: "1",
-      border: "1px solid #ccc",
-      padding: "15px",
-      borderRadius: "5px",
-    }}
-  >
-    <h3>Wirespec Language</h3>
-    <p>A concise overview of the language concepts in Wirespec.</p>
-    <a href="/docs/language">Read More</a>
-  </div>
-  <div
-    style={{
-      flex: "1",
-      border: "1px solid #ccc",
-      padding: "15px",
-      borderRadius: "5px",
-    }}
-  >
-    <h3>Integration</h3>
-    <p>Explore different ways to hook up your HTTP client.</p>
-    <a href="/docs/integration">Read More</a>
-  </div>
-  <div
-    style={{
-      flex: "1",
-      border: "1px solid #ccc",
-      padding: "15px",
-      borderRadius: "5px",
-    }}
-  >
-    <h3>IDE Plugin</h3>
-    <p>Wirespec supports two IDEs: IntelliJ IDEA and VS Code.</p>
-    <a href="/docs/integration">Read More</a>
-  </div>
-</div>
+- **Just looking around?** Edit Wirespec and see the generated code live in the
+  [Playground](https://playground.wirespec.io), no installation needed, or read why Wirespec puts the
+  [contract first](../intro/intro-contract.md).
+- **Testing against an API?** Stub a Wirespec API in JVM tests with [WireMock](../integration/integration-wiremock.mdx),
+  or in the browser and Node.js with [MSW](./frontend.mdx#mock-the-api). Generate test data that matches the contract
+  with [Kotest](../integration/integration-kotest.mdx).
+- **Extending Wirespec?** Learn how the compiler works in [Architecture](../architecture/architecture.md), change the
+  generated code with [IR extensions](../plugins/plugins.md#ir-extensions), or connect an editor through the
+  [Language Server](../ide/lsp.md).
+- **Only need to install a tool?** Go straight to the [CLI](../plugins/plugins-cli.md), [npm](../plugins/plugins-npm.md),
+  [Gradle](../plugins/plugins-gradle.md) or [Maven](../plugins/plugins-maven.md) plugin, or the [IDE plugins](../ide/ide.md).
