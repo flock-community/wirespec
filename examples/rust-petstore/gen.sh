@@ -23,7 +23,7 @@ fi
 
 "$CLI_KEXE" convert OpenAPIV2 \
   -i "$SCRIPT_DIR/petstore.json" \
-  -o "$SCRIPT_DIR/src/gen" \
+  -o "$SCRIPT_DIR/src/generated" \
   -l Rust \
   -p '' \
   --shared
