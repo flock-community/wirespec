@@ -6,7 +6,7 @@ The website is built using [Docusaurus](https://docusaurus.io/), a modern static
 
 ## Maintaining / updating the documentation
 
-As the `docs` are part of the wirespec monorepo, they will automatically be build when building the whole project ([see root readme](../../../README.md)).
+As the `docs` are part of the wirespec monorepo, they will automatically be build when building the whole project ([see CONTRIBUTING](../../../CONTRIBUTING.md)).
 
 To run docusaurus locally:
 

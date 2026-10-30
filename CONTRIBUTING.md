@@ -14,6 +14,8 @@ expect from the improvement and what the use case is.
 
 Help out the whole community by sending your merge requests and issues. Check out how to set it up:
 
+Prerequisites: the JDK and Node.js versions pinned in [`.sdkmanrc`](.sdkmanrc) and [`.nvmrc`](.nvmrc), and Docker.
+
 Setup:
 
 ``` bash
@@ -30,6 +32,9 @@ Make sure everything works as expected:
 ``` bash
 make
 ```
+
+This builds and tests the project, and compiles the definitions in `types` with every CLI artifact. The result is in
+`types/out`.
 
 Create a Pull Request:
 
@@ -50,6 +55,28 @@ Some things that will increase the chance that your merge request is accepted:
 - Write in a functional style (we use [Arrow](https://arrow-kt.io/))
 - Write test scripts.
 - Write a [good commit message](https://www.conventionalcommits.org/).
+
+## Emitter test fixtures
+
+Each emitter keeps its expected output as `.txt` files under `src/compiler/emitters/<lang>/fixtures/`, and its tests
+compare the generated code against them. When you change the output of an emitter on purpose, regenerate the fixtures
+of that module, substituting `kotlin` with the language you changed:
+
+``` bash
+./gradlew :src:compiler:emitters:kotlin:updateEmitterFixtures
+```
+
+The task overwrites the `.txt` files, so always review the diff before committing.
+
+## Releases
+
+A release is made in the GitHub UI, at [new release](https://github.com/flock-community/wirespec/releases/new):
+
+![release](images/release.png)
+
+- Create a tag according to the pattern `v*.*.*`
+- Enter the release title `Release *.*.*`
+- Click `Publish release`
 
 ## Claude Code cloud sessions
 
