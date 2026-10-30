@@ -6,7 +6,7 @@ import { Breadcrumb } from "./Breadcrumb";
 import { FileTree } from "./FileTree";
 import { Language } from "../routes";
 import { foldRawConversions } from "../utils/FoldRawConversions";
-import { groupFiles } from "../utils/FileGroups";
+import { counterpartOf, groupFiles } from "../utils/FileGroups";
 
 interface OutputViewProps {
   files: WsEmitted[];
@@ -18,14 +18,14 @@ export function OutputView({ files, language, controls }: OutputViewProps) {
   const [selected, setSelected] = useState<string>();
   const [treeOpen, setTreeOpen] = useState(false);
 
-  // Resolve the currently selected file by path so the selection survives
-  // recompilation (which produces a fresh `files` array on every edit). When
-  // the selected file no longer exists, fall back to the first file.
-  const activeFile = useMemo(
-    () => files.find((file) => file.file === selected) ?? files[0],
-    [files, selected],
-  );
   const { prefix, groups } = useMemo(() => groupFiles(files), [files]);
+  // Resolve the selected file by path so the selection survives recompilation
+  // (a fresh `files` array on every edit) and switching languages (other
+  // paths). When it has no counterpart, fall back to the first file.
+  const activeFile = useMemo(
+    () => counterpartOf(groups, selected) ?? files[0],
+    [groups, files, selected],
+  );
 
   return (
     // The width the editor has on its own, so the breadcrumb shrinks with it
