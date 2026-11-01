@@ -14,10 +14,11 @@ import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
-import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Part
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -38,8 +39,8 @@ import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.collectCustomTypeNames
 import community.flock.wirespec.compiler.core.ir.fieldList
+import community.flock.wirespec.compiler.core.ir.findElement
 import community.flock.wirespec.compiler.core.ir.import
-import community.flock.wirespec.compiler.core.ir.`interface`
 import community.flock.wirespec.compiler.core.ir.transform
 import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
@@ -51,11 +52,14 @@ import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.sortKey
 import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
-import community.flock.wirespec.compiler.core.ir.File as LanguageFile
-import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
 import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 private const val STRUCT_DERIVE = "#[derive(Debug, Clone, Default, PartialEq)]"
+
+private val wirespecImports = listOf(
+    import("super::super::wirespec", "*"),
+    import("", "regex"),
+)
 
 public open class RustEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -96,306 +100,95 @@ public open class RustEmitter(
 
     override fun transformTestFile(file: File): File = file
         .transform { apply(fixResponseSwitchPatterns()) }
-        .let(RustTransform::apply)
+        .applyBorrowRules()
 
-    private val modelImports = listOf(
-        import("super::super::wirespec", "*"),
-        import("", "regex"),
-    )
-
-    private val endpointImports = listOf(
-        import("super::super::wirespec", "*"),
-        import("", "regex"),
-    )
-
-    override fun emitShared(): File? {
-
-        val rustImports = listOf(
-            import("std::any", "TypeId"),
-            import("std::collections", "HashMap"),
-        )
-
-        val requestHeaders = `interface`("RequestHeaders") {
-            extends(LanguageType.Custom("Headers"))
-        }
-
-        val responseHeaders = `interface`("ResponseHeaders") {
-            extends(LanguageType.Custom("Headers"))
-        }
-
-        val client = RawElement(
-            """
-            pub trait Client {
-                type Transport: Transportation;
-                type Ser: Serialization;
-                fn transport(&self) -> &Self::Transport;
-                fn serialization(&self) -> &Self::Ser;
-            }
-            """.trimIndent()
-        )
-
-        val server = RawElement(
-            """
-            pub trait Server {
-                type Req;
-                type Res;
-                fn path_template(&self) -> &'static str;
-                fn method(&self) -> Method;
-            }
-            """.trimIndent()
-        )
-
-        val enumTrait = `interface`("Enum") {
-            extends(LanguageType.Custom("Sized"))
-            function("label") {
-                arg("&self", LanguageType.Custom(""))
-                returnType(LanguageType.Custom("&str"))
-            }
-            function("from_label", isStatic = true) {
-                arg("s", LanguageType.Custom("&str"))
-                returnType(LanguageType.Custom("Option<Self>"))
-            }
-        }
-
-        val refinedTrait = `interface`("Refined") {
-            typeParam(type("T"))
-            function("value") {
-                arg("&self", LanguageType.Custom(""))
-                returnType(type("T").borrow())
-            }
-            function("validate") {
-                arg("&self", LanguageType.Custom(""))
-                returnType(boolean)
-            }
-        }
-
-        val requestTrait = `interface`("Request") {
-            typeParam(type("T"))
-            field("path", type("Path").borrowDyn())
-            field("method", type("Method").borrow())
-            field("queries", type("Queries").borrowDyn())
-            field("headers", type("RequestHeaders").borrowDyn())
-            field("body", type("T").borrow())
-        }
-
-        val responseTrait = `interface`("Response") {
-            typeParam(type("T"))
-            field("status", integer32)
-            field("headers", type("ResponseHeaders").borrowDyn())
-            field("body", type("T").borrow())
-        }
-
-        val rawElementInterfaces = mapOf(
-            "BodySerializer" to RawElement("pub trait BodySerializer {\n    fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;\n}"),
-            "BodyDeserializer" to RawElement("pub trait BodyDeserializer {\n    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;\n}"),
-            "PathSerializer" to RawElement("pub trait PathSerializer {\n    fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;\n}"),
-            "PathDeserializer" to RawElement("pub trait PathDeserializer {\n    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;\n}"),
-            "ParamSerializer" to RawElement("pub trait ParamSerializer {\n    fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;\n}"),
-            "ParamDeserializer" to RawElement("pub trait ParamDeserializer {\n    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;\n}"),
-        )
-
-        val transportationTrait = `interface`("Transportation") {
-            asyncFunction("transport") {
-                arg("&self", LanguageType.Custom(""))
-                arg("request", type("RawRequest").borrow())
-                returnType(type("RawResponse"))
-            }
-        }
-
-        val dslTraits = mapOf(
-            "Enum" to enumTrait,
-            "Refined" to refinedTrait,
-            "Request" to requestTrait,
-            "Response" to responseTrait,
-            "Transportation" to transportationTrait,
-        )
-
-        val wirespecFile = PackageName("shared")
-            .convert()
-            .transform {
-                matchingElements { file: LanguageFile ->
-                    val namespace = file.elements.filterIsInstance<Namespace>().first()
-                    file.copy(elements = rustImports + namespace.elements)
-                }
-                matchingElements { enum: LanguageEnum ->
-                    if (enum.name == Name.of("Method")) {
-                        RawElement(
-                            """
-                            #[derive(Debug, Clone, Default, PartialEq)]
-                            pub enum Method {
-                                #[default]
-                                GET,
-                                PUT,
-                                POST,
-                                DELETE,
-                                OPTIONS,
-                                HEAD,
-                                PATCH,
-                                TRACE,
-                            }
-                            """.trimIndent()
-                        )
-                    } else enum
-                }
-                matchingElements { file: LanguageFile ->
-                    val newElements = file.elements.flatMap { element ->
-                        if (element !is Interface) return@flatMap listOf(element)
-                        val name = element.name.pascalCase()
-                        when {
-                            name in dslTraits -> buildList {
-                                add(dslTraits[name]!!)
-                                if (name == "Request") add(requestHeaders)
-                                if (name == "Response") add(responseHeaders)
-                            }
-                            name in rawElementInterfaces -> listOf(rawElementInterfaces[name]!!)
-                            else -> listOf(element)
-                        }
-                    } + client + server
-                    file.copy(elements = newElements)
-                }
-            }
-            .let { file ->
-                LanguageFile(file.name, file.elements.flatMap { element ->
-                    if (element !is Struct) return@flatMap listOf(element)
-                    val structFields = element.fieldList()
-                    val derive = when {
-                        structFields.any { containsUnderiveable(it.type) } -> ""
-                        structFields.any { containsWildcard(it.type) } -> "#[derive(Debug, Default)]"
-                        element.name.pascalCase() in setOf("RawRequest", "RawResponse") -> "#[derive(Debug, Clone, PartialEq)]"
-                        else -> STRUCT_DERIVE
-                    }
-                    val prefix = if (derive.isEmpty()) emptyList() else listOf(RawElement(derive))
-                    listOf(LanguageFile(element.name, prefix + element))
-                })
-            }
-            .let(RustTransform::apply)
-
-        val source: String = wirespecFile
-            .transform {
-                matchingElements { iface: Interface ->
-                    iface.transform {
-                        matchingElements { fn: LanguageFunction ->
-                            val hasSelf = fn.parameters.any { it.name.value() == "&self" || it.name.value() == "self" }
-                            if (hasSelf || fn.isStatic) fn
-                            else fn.copy(parameters = listOf(rustSelfParam) + fn.parameters)
-                        }
-                    }
-                }
-            }
-            .let { file ->
-                val groups = file.elements.fold(mutableListOf<MutableList<Element>>()) { acc, element ->
-                    val isImport = element is community.flock.wirespec.compiler.core.ir.Import
-                    val lastGroupIsImports = acc.lastOrNull()?.firstOrNull() is community.flock.wirespec.compiler.core.ir.Import
-                    if (isImport && lastGroupIsImports) acc.last().add(element)
-                    else acc.add(mutableListOf(element))
-                    acc
-                }
-                groups.joinToString("\n\n") { group ->
-                    group.joinToString("") { RustGenerator.generate(it) }.trimEnd('\n')
-                } + "\n"
-            }
-
-        return if (emitShared.value) {
-            File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(source)))
-        } else {
-            null
-        }
+    override fun emitShared(): File? = if (emitShared.value) {
+        File(Name.of(packageName.toDir() + "wirespec"), listOf(RawElement(generator.generate(sharedFile()))))
+    } else {
+        null
     }
+
+    private fun sharedFile(): File = PackageName("shared").convert()
+        .findElement<Namespace>()!!
+        .elements
+        .flatMap { element ->
+            when (element) {
+                is LanguageEnum if element.name == Name.of("Method") -> listOf(sharedMethod)
+                is Interface -> listOf(sharedTraits[element.name.pascalCase()] ?: element.withSelfReceivers())
+                is Struct -> listOfNotNull(sharedDerive.takeIf { element.fieldList().all { it.type.isDerivable() } }, element)
+                else -> listOf(element)
+            }
+        }
+        .let { File(Name.of("Wirespec"), sharedImports + it + sharedClientAndServer) }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
-        val statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!
-        return super.emit(module.copy(statements = statements), logger).let { files ->
-            fun emitMod(def: Definition) = "pub mod ${def.identifier.sanitize()};"
-            val endpoints = module.statements.filterIsInstance<Endpoint>()
-            val endpointMods = endpoints.joinToString("\n") { emitMod(it) }
-            val clientMod = if (endpoints.isNotEmpty()) "\npub mod client;" else ""
-            val modRs = File(
-                Name.of(packageName.toDir() + "mod"),
-                listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;${clientMod}\npub mod wirespec;"))
-            )
-            val modEndpoint = File(
-                Name.of(packageName.toDir() + "endpoint/" + "mod"),
-                listOf(RawElement(endpointMods))
-            )
-            val modModel = File(
-                Name.of(packageName.toDir() + "model/" + "mod"),
-                listOf(RawElement(module.statements.filterIsInstance<Model>().joinToString("\n") { emitMod(it) }))
-            )
-            if (emitShared.value)
-                files + modRs + modEndpoint + modModel
-            else
-                files + modRs
+        val files = super.emit(module.copy(statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!), logger)
+        val endpoints = module.statements.filterIsInstance<Endpoint>()
+        val clientMod = if (endpoints.isNotEmpty()) "\npub mod client;" else ""
+        val modRs = File(
+            Name.of(packageName.toDir() + "mod"),
+            listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;${clientMod}\npub mod wirespec;")),
+        )
+        return if (emitShared.value) {
+            files + modRs + modFile("endpoint/", endpoints) + modFile("model/", module.statements.filterIsInstance<Model>())
+        } else {
+            files + modRs
         }
     }
+
+    private fun modFile(directory: String, definitions: List<Definition>): File = File(
+        Name.of(packageName.toDir() + directory + "mod"),
+        listOf(RawElement(definitions.joinToString("\n") { "pub mod ${it.identifier.moduleName()};" })),
+    )
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
-        val subPackageName = packageName + definition
-        val importHeader = when (definition) {
-            is Endpoint -> endpointImports
-            else -> modelImports
-        }
-        val file = super.emit(definition, module, logger).let(RustTransform::apply)
+        val file = super.emit(definition, module, logger).applyBorrowRules()
         return File(
-            name = Name.of(subPackageName.toDir() + file.name.pascalCase().toSnakeCase()),
-            elements = importHeader + file.elements.flatMap { element ->
-                if (element is Struct) listOf(RawElement(STRUCT_DERIVE), element)
-                else listOf(element)
-            }
+            name = Name.of((packageName + definition).toDir() + file.name.pascalCase().toSnakeCase()),
+            elements = wirespecImports + file.elements.withStructDerives(),
         )
     }
 
-    override fun emitGenerator(definition: Definition, module: Module): File? {
-        val generatorFile = when (definition) {
-            is Type -> definition.convertToGenerator(module)
-            is Enum -> definition.convertToGenerator()
-            is Refined -> definition.convertToGenerator()
-            is Union -> definition.convertToGenerator()
-            else -> return null
-        }.sanitizeNames(sanitizationConfig)
-
-        val generatorOwnName = "${definition.identifier.value}Generator"
-        val customNames = generatorFile.collectCustomTypeNames()
-            .asSequence()
-            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
-            .filterNot { it == generatorOwnName }
-            .map { it.substringBefore('<') }
-            .distinct()
-            .toList()
-        val generatorRefs = mutableSetOf<String>()
-        generatorFile.transform {
-            expression { expr, t ->
-                if (expr is RawExpression && expr.code.endsWith("Generator") && expr.code != generatorOwnName) {
-                    generatorRefs.add(expr.code)
+    override fun emitGenerator(definition: Definition, module: Module): File? = when (definition) {
+        is Type -> definition.convertToGenerator(module)
+        is Enum -> definition.convertToGenerator()
+        is Refined -> definition.convertToGenerator()
+        is Union -> definition.convertToGenerator()
+        is Endpoint, is Channel, is Rpc, is Part -> null
+    }?.sanitizeNames(sanitizationConfig)?.let { generatorFile ->
+        val generatorReferences = buildSet {
+            generatorFile.transform {
+                expression { expr, t ->
+                    if (expr is RawExpression && expr.code.endsWith("Generator")) add(expr.code)
+                    expr.transformChildren(t)
                 }
-                expr.transformChildren(t)
             }
         }
-        val generatorImports = (customNames.filter { it.endsWith("Generator") } + generatorRefs)
+        val (generators, types) = generatorFile.collectCustomTypeNames()
+            .filterNot { it.startsWith("Wirespec.") || it == "Wirespec" }
+            .map { it.substringBefore('<') }
+            .plus(generatorReferences)
             .distinct()
-            .map { import("super::${it.toSnakeCase()}", it) }
-        val typeImports = customNames
-            .filterNot { it.endsWith("Generator") }
-            .map { import("super::super::model::${it.toSnakeCase()}", it) }
-
-        val subPackageName = packageName + "generator"
-        return File(
-            name = Name.of(subPackageName.toDir() + generatorFile.name.pascalCase().toSnakeCase()),
-            elements = modelImports + typeImports + generatorImports + generatorFile.elements,
+            .filterNot { it == "${definition.identifier.value}Generator" }
+            .partition { it.endsWith("Generator") }
+        File(
+            name = Name.of((packageName + "generator").toDir() + generatorFile.name.pascalCase().toSnakeCase()),
+            elements = wirespecImports +
+                types.map { import("super::super::model::${it.toSnakeCase()}", it) } +
+                generators.map { import("super::${it.toSnakeCase()}", it) } +
+                generatorFile.elements,
         )
     }
 
-    override fun emit(type: Type, module: Module): File =
-        type.convert()
-            .sanitizeNames(sanitizationConfig)
-            .prependImports(type.buildModelImports())
-
+    override fun emit(type: Type, module: Module): File = type.convert()
+        .sanitizeNames(sanitizationConfig)
+        .withImports(type.importReferences().toImports("super::"))
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()
         .sanitizeEnumEntries(sanitizeEntry = { it.sanitizeEnum().sanitizeKeywords() })
 
-    override fun emit(union: Union): File =
-        union.convert()
+    override fun emit(union: Union): File = union.convert()
 
     override fun emit(refined: Refined): File = refined
         .convert()
@@ -406,199 +199,241 @@ public open class RustEmitter(
         .flattenForRust()
         .stripWirespecPrefix()
         .convertSimpleRawExpressionsToVariableRefs()
-        .stripHandlerExtends()
+        .rustHandlerTraits()
         .stripResponseGenerics()
-        .transform { apply(fixResponseSwitchPatterns()) }
-        .transform { apply(fixConstructorCalls()) }
-        .injectSelfToHandlerMethods()
+        .transform {
+            apply(fixResponseSwitchPatterns())
+            apply(fixConstructorCalls())
+        }
         .injectHandlerImplForClient()
         .injectResponseFromImpls()
         .injectApiStruct(endpoint)
         .sanitizeNames(sanitizationConfig)
-        .prependImports(endpoint.buildEndpointImports())
+        .withImports(endpoint.importReferences().toImports("super::super::model::"))
 
-    override fun emit(channel: Channel): File =
-        channel.convert()
+    override fun emit(channel: Channel): File = channel.convert()
 
-    override fun emit(rpc: Rpc): File = rpc.convert()
-        .let { file ->
-            val rpcImports = rpc.importReferences().distinctBy { it.value }
-                .map { import("super::super::model::${it.value.toSnakeCase()}", Name.of(it.value).pascalCase()) }
-            file.copy(
-                elements = rpcImports + file.elements.map { element ->
-                    if (element is Namespace) element.copy(
-                        elements = element.elements.flatMap {
-                            if (it is Struct) listOf(RawElement(STRUCT_DERIVE), it)
-                            else listOf(it)
-                        },
-                    )
-                    else element
-                },
-            )
-        }
+    override fun emit(rpc: Rpc): File = rpc.convert().let { file ->
+        file.copy(
+            elements = rpc.importReferences().toImports("super::super::model::") + file.elements.map { element ->
+                if (element is Namespace) element.copy(elements = element.elements.withStructDerives()) else element
+            },
+        )
+    }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
-        val endpointName = endpoint.identifier.value
-        val endpointModuleName = endpointName.toSnakeCase()
-        val clientName = "${endpointName}Client"
-        val methodName = endpointName.toSnakeCase()
-        val (paramsStr, requestArgs) = endpoint.buildClientParams()
-        val requestConstruction = "$endpointModuleName::Request::new($requestArgs)"
-
-        val modelImports = endpoint.importReferences().distinctBy { it.value }
-            .map { import("super::super::model::${it.value.toSnakeCase()}", it.value) }
-        val namespacePath = "$endpointModuleName::$endpointName"
-        val code = buildList {
-            add("pub struct $clientName<'a, S: Serialization, T: Transportation> {")
-            add("    pub serialization: &'a S,")
-            add("    pub transportation: &'a T,")
-            add("}")
-            add("impl<'a, S: Serialization, T: Transportation> $namespacePath::Call for $clientName<'a, S, T> {")
-            add("    async fn $methodName(&self$paramsStr) -> $endpointModuleName::Response {")
-            add("        let request = $requestConstruction;")
-            add("        let raw_request = $namespacePath::to_raw_request(self.serialization, request);")
-            add("        let raw_response = self.transportation.transport(&raw_request).await;")
-            add("        $namespacePath::from_raw_response(self.serialization, raw_response)")
-            add("    }")
-            add("}")
-        }.joinToString("\n")
-
-        val subPackageName = packageName + "client"
+        val module = endpoint.identifier.value.toSnakeCase()
+        val namespace = "$module::${endpoint.identifier.value}"
+        val (params, args) = endpoint.clientParameters()
+        val code = """
+            pub struct ${endpoint.clientName}<'a, S: Serialization, T: Transportation> {
+                pub serialization: &'a S,
+                pub transportation: &'a T,
+            }
+            impl<'a, S: Serialization, T: Transportation> $namespace::Call for ${endpoint.clientName}<'a, S, T> {
+                async fn $module(&self$params) -> $module::Response {
+                    let request = $module::Request::new($args);
+                    let raw_request = $namespace::to_raw_request(self.serialization, request);
+                    let raw_response = self.transportation.transport(&raw_request).await;
+                    $namespace::from_raw_response(self.serialization, raw_response)
+                }
+            }
+        """.trimIndent()
         return File(
-            name = Name.of(subPackageName.toDir() + clientName.toSnakeCase()),
-            elements = buildList {
-                add(import("super::super::wirespec", "*"))
-                add(import("super::super::endpoint", endpointModuleName))
-                addAll(modelImports)
-                add(RawElement(code))
-            },
+            name = Name.of((packageName + "client").toDir() + endpoint.clientName.toSnakeCase()),
+            elements = listOf(import("super::super::wirespec", "*"), import("super::super::endpoint", module)) +
+                endpoint.importReferences().toImports("super::super::model::") +
+                RawElement(code),
         )
     }
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
         logger.info("Emitting main Client for ${endpoints.size} endpoints")
-
-        val modDeclarations = endpoints.joinToString("\n") { endpoint ->
-            "pub mod ${(endpoint.identifier.value + "Client").toSnakeCase()};"
+        val modDeclarations = endpoints.joinToString("\n") { "pub mod ${it.clientName.toSnakeCase()};" }
+        val modelImports = endpoints.flatMap { it.importReferences() }
+            .filter { ref -> endpoints.none { it.identifier.value == ref.value } }
+            .toImports("super::model::")
+        val endpointAndClientImports = endpoints.flatMap {
+            listOf(import("super::endpoint", it.identifier.value.toSnakeCase()), import(it.clientName.toSnakeCase(), it.clientName))
         }
-
-        val modelImports = endpoints.flatMap { it.importReferences() }.distinctBy { it.value }
-            .filter { imp -> endpoints.none { it.identifier.value == imp.value } }
-            .map { import("super::model::${it.value.toSnakeCase()}", it.value) }
-
-        val endpointAndClientImports = endpoints.flatMap { endpoint ->
-            val endpointModuleName = endpoint.identifier.value.toSnakeCase()
-            val clientModuleName = "${endpoint.identifier.value}Client".toSnakeCase()
-            listOf(
-                import("super::endpoint", endpointModuleName),
-                import(clientModuleName, "${endpoint.identifier.value}Client"),
-            )
+        val implementations = endpoints.joinToString("\n") { endpoint ->
+            val module = endpoint.identifier.value.toSnakeCase()
+            val (params, args) = endpoint.clientParameters()
+            """
+            impl<S: Serialization, T: Transportation> $module::${endpoint.identifier.value}::Call for Client<S, T> {
+                async fn $module(&self$params) -> $module::Response {
+                    ${endpoint.clientName} { serialization: &self.serialization, transportation: &self.transportation }
+                        .$module($args).await
+                }
+            }
+            """.trimIndent()
         }
-
-        val implBlocks = endpoints.flatMap { endpoint ->
-            val endpointName = endpoint.identifier.value
-            val endpointModuleName = endpointName.toSnakeCase()
-            val namespacePath = "$endpointModuleName::$endpointName"
-            val methodName = endpointName.toSnakeCase()
-            val (paramsStr, callArgs) = endpoint.buildClientParams()
-            val delegateCall = "${endpointName}Client { serialization: &self.serialization, transportation: &self.transportation }\n" +
-                "            .$methodName($callArgs).await"
-
-            listOf(
-                "impl<S: Serialization, T: Transportation> $namespacePath::Call for Client<S, T> {",
-                "    async fn $methodName(&self$paramsStr) -> $endpointModuleName::Response {",
-                "        $delegateCall",
-                "    }",
-                "}",
-            )
-        }
-
-        val code = (
-            listOf(
-                "pub struct Client<S: Serialization, T: Transportation> {",
-                "    pub serialization: S,",
-                "    pub transportation: T,",
-                "}",
-            ) + implBlocks
-        ).joinToString("\n")
-
+        val code = "pub struct Client<S: Serialization, T: Transportation> {\n    pub serialization: S,\n    pub transportation: T,\n}\n$implementations"
         return File(
             name = Name.of(packageName.toDir() + "client"),
-            elements = buildList {
-                add(RawElement(modDeclarations))
-                add(import("super::wirespec", "*"))
-                addAll(modelImports)
-                addAll(endpointAndClientImports)
-                add(RawElement(code))
-            },
+            elements = listOf(RawElement(modDeclarations), import("super::wirespec", "*")) + modelImports + endpointAndClientImports + RawElement(code),
         )
     }
 
-    private fun Identifier.sanitize(): String = value
-        .split(".", " ")
-        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
-        .joinToString("")
-        .filter { it.isLetterOrDigit() || it == '_' }
-        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
-        .let { if (this is FieldIdentifier) it.sanitizeKeywords() else it }
-        .toSnakeCase()
+    private val Endpoint.clientName: String get() = "${identifier.value}Client"
 
-    private fun String.toSnakeCase(): String = Name.of(this).snakeCase()
-
-    private fun String.toPascalCase(): String = split("_").joinToString("") { s ->
-        s.replaceFirstChar { it.uppercaseChar() }
-    }
-
-    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "r#$this" else this
-
-    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_")
-        .toPascalCase()
-        .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
-
-    private fun File.prependImports(imports: List<Element>): File =
-        if (imports.isNotEmpty()) copy(elements = imports + elements)
-        else this
-
-    private fun containsWildcard(type: LanguageType): Boolean = when (type) {
-        LanguageType.Wildcard -> true
-        is LanguageType.Custom -> type.generics.any { containsWildcard(it) }
-        is LanguageType.Nullable -> containsWildcard(type.type)
-        is LanguageType.Array -> containsWildcard(type.elementType)
-        is LanguageType.Dict -> containsWildcard(type.keyType) || containsWildcard(type.valueType)
-        else -> false
-    }
-
-    /**
-     * Detects field types that don't auto-derive cleanly. None of `Box<dyn Any>`,
-     * `Box<dyn Fn(..)>`, or `std::any::TypeId` cooperate with the default
-     * `#[derive(Debug, Clone, Default, PartialEq)]` — `dyn Any` lacks `Clone`/`PartialEq`,
-     * `dyn Fn` lacks all four, and `TypeId` lacks `Default`. Any struct with one of
-     * these falls back to no derive at all, since the verify tests only construct these
-     * structs inline and never clone/compare/default-construct/format them.
-     */
-    private fun containsUnderiveable(type: LanguageType): Boolean = when (type) {
-        LanguageType.Any -> true
-        LanguageType.Reflect -> true
-        is LanguageType.Function -> true
-        is LanguageType.Custom -> type.generics.any { containsUnderiveable(it) }
-        is LanguageType.Nullable -> containsUnderiveable(type.type)
-        is LanguageType.Array -> containsUnderiveable(type.elementType)
-        is LanguageType.Dict -> containsUnderiveable(type.keyType) || containsUnderiveable(type.valueType)
-        else -> false
-    }
-
-
-    private fun Endpoint.buildClientParams(): Pair<String, String> {
-        val params = requestParameters()
-        val argsStr = params.joinToString(", ") { (name, _) -> name.snakeCase().sanitizeKeywords() }
-        val paramsStr = if (params.isEmpty()) "" else ", " + params.joinToString(", ") { (name, type) ->
-            "${name.snakeCase().sanitizeKeywords()}: ${with(RustTransform) { type.rustName() }}"
-        }
-        return paramsStr to argsStr
-    }
+    private fun Endpoint.clientParameters(): Pair<String, String> = requestParameters()
+        .map { (name, type) -> name.snakeCase().sanitizeKeywords() to type.rustName() }
+        .let { params -> params.joinToString("") { (name, type) -> ", $name: $type" } to params.joinToString(", ") { it.first } }
 
     public companion object : Keywords by RustGenerator {
         public fun VariableReference.borrow(): VariableReference = VariableReference(Name(listOf("&${name.snakeCase()}")))
     }
-
 }
+
+private fun Identifier.moduleName(): String = value
+    .split(".", " ")
+    .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+    .joinToString("")
+    .filter { it.isLetterOrDigit() || it == '_' }
+    .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
+    .toSnakeCase()
+
+private fun String.sanitizeEnum(): String = split("-", ", ", ".", " ", "//", "_")
+    .joinToString("") { s -> s.replaceFirstChar { it.uppercaseChar() } }
+    .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
+
+private fun List<Reference.Custom>.toImports(path: String): List<Element> = distinctBy { it.value }
+    .map { import("$path${it.value.toSnakeCase()}", Name.of(it.value).pascalCase()) }
+
+private fun File.withImports(imports: List<Element>): File = copy(elements = imports + elements)
+
+private fun List<Element>.withStructDerives(): List<Element> = flatMap { if (it is Struct) listOf(RawElement(STRUCT_DERIVE), it) else listOf(it) }
+
+// `Box<dyn Any>` and `Box<dyn Fn(..)>` implement neither `Clone` nor `PartialEq`.
+private fun LanguageType.isDerivable(): Boolean = when (this) {
+    LanguageType.Any, is LanguageType.Function -> false
+    is LanguageType.Custom -> generics.all { it.isDerivable() }
+    is LanguageType.Nullable -> type.isDerivable()
+    is LanguageType.Array -> elementType.isDerivable()
+    is LanguageType.Dict -> keyType.isDerivable() && valueType.isDerivable()
+    is LanguageType.Integer, is LanguageType.Number, LanguageType.String, LanguageType.Boolean, LanguageType.Bytes,
+    LanguageType.Unit, LanguageType.Wildcard, LanguageType.Reflect, is LanguageType.IntegerLiteral, is LanguageType.StringLiteral,
+    -> true
+}
+
+private val sharedImports = listOf(
+    import("std::any", "TypeId"),
+    import("std::collections", "HashMap"),
+)
+
+private val sharedDerive = RawElement("#[derive(Debug, Clone, PartialEq)]")
+
+private val sharedMethod = RawElement(
+    """
+    #[derive(Debug, Clone, Default, PartialEq)]
+    pub enum Method {
+        #[default]
+        GET,
+        PUT,
+        POST,
+        DELETE,
+        OPTIONS,
+        HEAD,
+        PATCH,
+        TRACE,
+    }
+    """.trimIndent(),
+)
+
+// The shared traits whose Rust signatures differ from what the generator renders from the shared IR.
+private val sharedTraits: Map<String, RawElement> = mapOf(
+    "Enum" to """
+        pub trait Enum: Sized {
+            fn label(&self) -> &str;
+            fn from_label(s: &str) -> Option<Self>;
+        }
+    """,
+    "Refined" to """
+        pub trait Refined<T> {
+            fn value(&self) -> &T;
+            fn validate(&self) -> bool;
+        }
+    """,
+    "Request" to """
+        pub trait Request<T> {
+            fn path(&self) -> &dyn Path;
+            fn method(&self) -> &Method;
+            fn queries(&self) -> &dyn Queries;
+            fn headers(&self) -> &dyn RequestHeaders;
+            fn body(&self) -> &T;
+        }
+        pub trait RequestHeaders: Headers {}
+    """,
+    "Response" to """
+        pub trait Response<T> {
+            fn status(&self) -> i32;
+            fn headers(&self) -> &dyn ResponseHeaders;
+            fn body(&self) -> &T;
+        }
+        pub trait ResponseHeaders: Headers {}
+    """,
+    "BodySerializer" to """
+        pub trait BodySerializer {
+            fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+        }
+    """,
+    "BodyDeserializer" to """
+        pub trait BodyDeserializer {
+            fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
+        }
+    """,
+    "PathSerializer" to """
+        pub trait PathSerializer {
+            fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;
+        }
+    """,
+    "PathDeserializer" to """
+        pub trait PathDeserializer {
+            fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;
+        }
+    """,
+    "ParamSerializer" to """
+        pub trait ParamSerializer {
+            fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;
+        }
+    """,
+    "ParamDeserializer" to """
+        pub trait ParamDeserializer {
+            fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
+        }
+    """,
+    "Transportation" to """
+        pub trait Transportation {
+            async fn transport(&self, request: &RawRequest) -> RawResponse;
+        }
+    """,
+    "Generator" to """
+        pub trait Generator {
+            fn generate<T>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T;
+        }
+    """,
+).mapValues { (_, code) -> RawElement(code.trimIndent()) }
+
+private val sharedClientAndServer = listOf(
+    RawElement(
+        """
+        pub trait Client {
+            type Transport: Transportation;
+            type Ser: Serialization;
+            fn transport(&self) -> &Self::Transport;
+            fn serialization(&self) -> &Self::Ser;
+        }
+        """.trimIndent(),
+    ),
+    RawElement(
+        """
+        pub trait Server {
+            type Req;
+            type Res;
+            fn path_template(&self) -> &'static str;
+            fn method(&self) -> Method;
+        }
+        """.trimIndent(),
+    ),
+)
