@@ -42,20 +42,26 @@ kotlin {
                 implementation(project(":src:converter:openapi"))
             }
         }
-        // Spring Boot 4 scenario: a Jackson-3-only test classpath that exercises the
-        // conditional wiring (WirespecJackson3Configuration) the regular Jackson-2 test
-        // suite cannot, because Jackson 2 and 3 share jackson-annotations.
-        compilations.create("jackson3Test") {
+        // Spring Boot 4 scenario: runs main, compiled against Spring Boot 3 / Spring Framework 6,
+        // on a consumer's Spring Boot 4 / Spring Framework 7 / Jackson 3 classpath. Covers what the
+        // regular suite cannot: the Jackson 3 conditional wiring (Jackson 2 and 3 share
+        // jackson-annotations) and binary compatibility with Spring Framework 7.
+        compilations.create("springBoot4Test") {
             associateWith(mainCompilation)
-            defaultSourceSet.dependencies {
-                implementation(project(":src:integration:wirespec"))
-                implementation(project(":src:integration:jackson"))
-                implementation(libs.bundles.jackson3)
-                implementation(libs.spring.boot.web)
-                implementation(libs.spring.boot.test)
-                implementation(libs.kotlin.test)
-                implementation(libs.kotlin.junit)
-                runtimeOnly(libs.junit.launcher)
+            defaultSourceSet {
+                kotlin.srcDir(wirespecCodegen.outputDir.dir("kotlin"))
+                dependencies {
+                    implementation(project.dependencies.platform(libs.spring.boot4.dependencies))
+                    implementation(project(":src:integration:wirespec"))
+                    implementation(project(":src:integration:jackson"))
+                    implementation(libs.bundles.jackson3)
+                    implementation(libs.spring.boot.web)
+                    implementation(libs.spring.boot.test)
+                    implementation(libs.kotlin.test)
+                    implementation(libs.kotlin.junit)
+                    implementation(libs.wiremock)
+                    runtimeOnly(libs.junit.launcher)
+                }
             }
         }
     }
@@ -119,17 +125,14 @@ kotlin {
     }
 }
 
-// Jackson 3 requires a newer jackson-annotations than Spring Boot 3's BOM pins (2.17.2).
-// Override it to the Jackson-3-compatible version on the jackson3Test classpath only.
-// eachDependency runs after the dependency-management BOM substitution, so it wins.
+// The dependency-management plugin rewrites every requested version on every configuration to the
+// Spring Boot 3 BOM, the constraints of the Spring Boot 4 platform included. Undo that on the
+// springBoot4Test classpaths, so Gradle's own conflict resolution lets the platform's versions win.
 configurations
-    .matching { it.name.startsWith("jvmJackson3Test") }
+    .matching { it.name.startsWith("jvmSpringBoot4Test") }
     .configureEach {
         resolutionStrategy.eachDependency {
-            if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-annotations") {
-                useVersion("2.21")
-                because("Jackson 3 requires jackson-annotations 2.21; Spring Boot 3's BOM pins it lower")
-            }
+            requested.version?.takeIf { it != target.version }?.let { useVersion(it) }
         }
     }
 
@@ -138,17 +141,28 @@ configurations
 tasks.withType<GenerateMavenPom>().configureEach {
     notCompatibleWithConfigurationCache("io.spring.dependency-management's POM customization references the Project")
 }
-val jvmJackson3TestCompilation = kotlin.jvm().compilations.named("jackson3Test")
 
-val jvmJackson3Test = tasks.register<Test>("jvmJackson3Test") {
-    description = "Runs Spring integration tests on a Jackson-3-only classpath (Spring Boot 4 scenario)."
+tasks.named<JavaCompile>("compileJvmSpringBoot4TestJava") {
+    source(wirespecCodegen.outputDir.dir("java"))
+    dependsOn("generateWirespecTestSources")
+}
+
+tasks.named("compileSpringBoot4TestKotlinJvm") {
+    dependsOn("generateWirespecTestSources")
+}
+
+val jvmSpringBoot4TestCompilation = kotlin.jvm().compilations.named("springBoot4Test")
+
+val jvmSpringBoot4Test = tasks.register<Test>("jvmSpringBoot4Test") {
+    description = "Runs Spring integration tests on a Spring Boot 4 / Spring Framework 7 / Jackson 3 classpath."
     group = "verification"
-    val compilation = jvmJackson3TestCompilation.get()
+    val compilation = jvmSpringBoot4TestCompilation.get()
     testClassesDirs = compilation.output.classesDirs
     classpath = compilation.output.allOutputs + compilation.runtimeDependencyFiles
     useJUnitPlatform()
 }
 
-tasks.named("check") {
-    dependsOn(jvmJackson3Test)
+// CI runs jvmTest, not check.
+tasks.named("jvmTest") {
+    dependsOn(jvmSpringBoot4Test)
 }
