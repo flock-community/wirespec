@@ -4,12 +4,16 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import community.flock.wirespec.integration.jackson.v3.java.WirespecSerialization;
 import community.flock.wirespec.integration.spring.java.generated.endpoint.DeletePet;
 import community.flock.wirespec.integration.spring.java.generated.endpoint.RequestParrot;
+import community.flock.wirespec.integration.spring.java.generated.model.Error;
 import community.flock.wirespec.integration.spring.java.generated.model.RequestBodyParrot;
 import community.flock.wirespec.java.Wirespec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Optional;
@@ -17,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.delete;
+import static com.github.tomakehurst.wiremock.client.WireMock.jsonResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -36,15 +41,16 @@ class WirespecWebClientTest {
     @BeforeEach
     void start() {
         server.start();
-        client = new WirespecWebClient(
-                WebClient.create(server.baseUrl()),
-                new WirespecSerialization(JsonMapper.builder().build())
-        );
+        client = wirespecWebClient(WebClient.create(server.baseUrl()));
     }
 
     @AfterEach
     void stop() {
         server.stop();
+    }
+
+    private static WirespecWebClient wirespecWebClient(WebClient webClient) {
+        return new WirespecWebClient(webClient, new WirespecSerialization(JsonMapper.builder().build()));
     }
 
     @Test
@@ -75,5 +81,20 @@ class WirespecWebClientTest {
                 .get(10, TimeUnit.SECONDS);
 
         assertEquals(new DeletePet.Response400(), response);
+    }
+
+    @Test
+    void readsAnErrorResponseThatAFilterRaisesAsAWebClientResponseException() throws Exception {
+        server.stubFor(post(urlPathEqualTo("/api/parrot")).willReturn(jsonResponse("{\"code\": 500, \"description\": \"boom\"}", 500)));
+        ExchangeFilterFunction raiseErrors = ExchangeFilterFunction.ofResponseProcessor(response -> response.statusCode().isError()
+                ? response.createException().flatMap(Mono::<ClientResponse>error)
+                : Mono.just(response));
+        WirespecWebClient filteringClient = wirespecWebClient(WebClient.builder().baseUrl(server.baseUrl()).filter(raiseErrors).build());
+
+        Wirespec.Response<?> response = filteringClient
+                .send(new RequestParrot.Request(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), new RequestBodyParrot(1L, "test")))
+                .get(10, TimeUnit.SECONDS);
+
+        assertEquals(new RequestParrot.Response500(new Error(500L, "boom")), response);
     }
 }

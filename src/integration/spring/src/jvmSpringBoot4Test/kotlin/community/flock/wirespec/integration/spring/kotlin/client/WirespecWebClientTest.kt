@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.spring.kotlin.client
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.delete
+import com.github.tomakehurst.wiremock.client.WireMock.jsonResponse
 import com.github.tomakehurst.wiremock.client.WireMock.okJson
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
@@ -10,9 +11,13 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import community.flock.wirespec.integration.jackson.v3.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.DeletePet
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.RequestParrot
+import community.flock.wirespec.integration.spring.kotlin.generated.model.Error
 import community.flock.wirespec.integration.spring.kotlin.generated.model.RequestBodyParrot
 import kotlinx.coroutines.runBlocking
+import org.springframework.web.reactive.function.client.ClientResponse
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 import tools.jackson.module.kotlin.jsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import kotlin.test.AfterTest
@@ -28,12 +33,12 @@ class WirespecWebClientTest {
 
     private val server = WireMockServer(options().dynamicPort())
 
-    private val client by lazy {
-        WirespecWebClient(
-            client = WebClient.create(server.baseUrl()),
-            wirespecSerde = WirespecSerialization(jsonMapper { addModule(kotlinModule()) }),
-        )
-    }
+    private val client by lazy { wirespecWebClient(WebClient.create(server.baseUrl())) }
+
+    private fun wirespecWebClient(webClient: WebClient) = WirespecWebClient(
+        client = webClient,
+        wirespecSerde = WirespecSerialization(jsonMapper { addModule(kotlinModule()) }),
+    )
 
     @BeforeTest
     fun start() = server.start()
@@ -80,5 +85,26 @@ class WirespecWebClientTest {
         val response = client.send<DeletePet.Request, DeletePet.Response<*>>(DeletePet.Request(petId = 1, api_key = null))
 
         assertEquals(DeletePet.Response400, response)
+    }
+
+    @Test
+    fun `reads an error response that a filter raises as a WebClientResponseException`(): Unit = runBlocking {
+        server.stubFor(post(urlPathEqualTo("/api/parrot")).willReturn(jsonResponse("""{"code": 500, "description": "boom"}""", 500)))
+        val raiseErrors = ExchangeFilterFunction.ofResponseProcessor { response ->
+            if (response.statusCode().isError) response.createException().flatMap { Mono.error<ClientResponse>(it) } else Mono.just(response)
+        }
+        val filteringClient = wirespecWebClient(WebClient.builder().baseUrl(server.baseUrl()).filter(raiseErrors).build())
+
+        val response = filteringClient.send<RequestParrot.Request, RequestParrot.Response<*>>(
+            RequestParrot.Request(
+                queryParam = null,
+                RanDoMQueRY = null,
+                xRequestID = null,
+                RanDoMHeADer = null,
+                body = RequestBodyParrot(number = 1, string = "test"),
+            ),
+        )
+
+        assertEquals(RequestParrot.Response500(Error(code = 500, description = "boom")), response)
     }
 }
