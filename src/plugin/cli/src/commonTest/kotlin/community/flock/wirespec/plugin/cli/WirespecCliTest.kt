@@ -233,6 +233,30 @@ class WirespecCliTest {
         }
     }
 
+    @Test
+    fun testCliCompileConverterOutputsWithSpecNameAndVersion() {
+        val input = "$inputDir/wirespec"
+        fun compileTo(language: String) = outputDir().also { output ->
+            WirespecCli(::compile, ::convert).main(
+                arrayOf(
+                    "compile",
+                    "-i", input,
+                    "-o", output,
+                    "-l", language,
+                    "--spec-name", "Todos",
+                    "--spec-version", "1.2.3",
+                ),
+            )
+        }
+
+        FilePath(DirectoryPath(compileTo("AsyncAPI")), Name("Todos"), FileExtension.JSON).read().let { content ->
+            content shouldContain "\"title\": \"Todos\""
+            content shouldContain "\"version\": \"1.2.3\""
+        }
+        FilePath(DirectoryPath(compileTo("AvroIdl")), Name("Todos"), FileExtension.AvroIdl).read() shouldContain "protocol TodosProtocol {"
+        FilePath(DirectoryPath(compileTo("GraphQL")), Name("Todos"), FileExtension.GraphQL).read() shouldContain "Todo"
+    }
+
     private fun getRandomString(length: Int) = (1..length)
         .map { allowedChars.random() }
         .joinToString("")

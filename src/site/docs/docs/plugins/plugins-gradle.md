@@ -98,14 +98,14 @@ This task compiles Wirespec definitions to one target language. Register a task 
 
 - `input`: DirectoryProperty - The input directory containing Wirespec files
 - `output`: DirectoryProperty - The output directory for generated code
-- `language`: Property&lt;Language&gt; - The target language (Java, Kotlin, TypeScript, Python, Rust, Scala, Wirespec, OpenAPIV2, OpenAPIV3, Avro)
+- `language`: Property&lt;Language&gt; - The target language (Java, Kotlin, TypeScript, Python, Rust, Scala, Wirespec, OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL, AsyncAPI)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
-- `specName`: Property&lt;String&gt; - The name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3 and Avro. See [Name and version](../converters/converters.md#name-and-version)
-- `specVersion`: Property&lt;String&gt; - The version of the specification, for OpenAPIV2 and OpenAPIV3
+- `specName`: Property&lt;String&gt; - The name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI. See [Name and version](../converters/converters.md#name-and-version)
+- `specVersion`: Property&lt;String&gt; - The version of the specification, for OpenAPIV2, OpenAPIV3 and AsyncAPI
 
 ### ConvertWirespecTask
 
@@ -123,8 +123,8 @@ This task converts from JSON or Avro to other formats.
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
-- `specName`: Property&lt;String&gt; - The name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3 and Avro. See [Name and version](../converters/converters.md#name-and-version)
-- `specVersion`: Property&lt;String&gt; - The version of the specification, for OpenAPIV2 and OpenAPIV3
+- `specName`: Property&lt;String&gt; - The name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI. See [Name and version](../converters/converters.md#name-and-version)
+- `specVersion`: Property&lt;String&gt; - The version of the specification, for OpenAPIV2, OpenAPIV3 and AsyncAPI
 
 ## Specification name and version
 

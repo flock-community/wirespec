@@ -67,11 +67,12 @@ Options:
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
-  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Rust|Scala|Wirespec|OpenAPIV2|OpenAPIV3|Avro|AvroIdl|GraphQL|AsyncAPI)
+                                                                              Language
   -e, --extension=(Avro|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
-  --spec-name=<text>                                                          Name of the specification, and of its file: OpenAPIV2, OpenAPIV3 and Avro
-  --spec-version=<text>                                                       Version of the specification: OpenAPIV2 and OpenAPIV3
+  --spec-name=<text>                                                          Name of the specification, and of its file: OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI
+  --spec-version=<text>                                                       Version of the specification: OpenAPIV2, OpenAPIV3 and AsyncAPI
   -h, --help                                                                  Show this message and exit
 ```
 
@@ -92,11 +93,12 @@ Options:
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
-  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Rust|Scala|Wirespec|OpenAPIV2|OpenAPIV3|Avro|AvroIdl|GraphQL|AsyncAPI)
+                                                                              Language
   -e, --extension=(Avro|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
-  --spec-name=<text>                                                          Name of the specification, and of its file: OpenAPIV2, OpenAPIV3 and Avro
-  --spec-version=<text>                                                       Version of the specification: OpenAPIV2 and OpenAPIV3
+  --spec-name=<text>                                                          Name of the specification, and of its file: OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI
+  --spec-version=<text>                                                       Version of the specification: OpenAPIV2, OpenAPIV3 and AsyncAPI
   -h, --help                                                                  Show this message and exit
 
 Arguments:

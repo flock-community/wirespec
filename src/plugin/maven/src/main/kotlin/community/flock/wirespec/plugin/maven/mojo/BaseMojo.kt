@@ -102,15 +102,15 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var ignoreDefaults: Boolean = false
 
     /**
-     * Specifies the name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3 and Avro. Default
-     * 'null', which keeps the default name of the language.
+     * Specifies the name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3, Avro, AvroIdl,
+     * GraphQL and AsyncAPI. Default 'null', which keeps the default name of the language.
      */
     @Parameter
     protected var specName: String? = null
 
     /**
-     * Specifies the version of the specification, for OpenAPIV2 and OpenAPIV3. Default 'null', which keeps the
-     * default version of the language.
+     * Specifies the version of the specification, for OpenAPIV2, OpenAPIV3 and AsyncAPI. Default 'null', which keeps
+     * the default version of the language.
      */
     @Parameter
     protected var specVersion: String? = null

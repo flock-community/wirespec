@@ -96,12 +96,17 @@ The compile mojo supports the following parameters:
   - `Wirespec`: Generate Wirespec code (useful for transformations)
   - `OpenAPIV2`: Generate OpenAPI v2 specifications
   - `OpenAPIV3`: Generate OpenAPI v3 specifications
+  - `Avro`: Generate an Avro schema
+  - `AvroIdl`: Generate an Avro IDL protocol
+  - `GraphQL`: Generate a GraphQL schema
+  - `AsyncAPI`: Generate an AsyncAPI document
 - **packageName**: Package name for the generated code. Default is 'generated'.
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
-- **specName**: The name of the specification, also the name of its file, for `OpenAPIV2`, `OpenAPIV3` and `Avro`. See
-  [Name and version](../converters/converters.md#name-and-version).
-- **specVersion**: The version of the specification, for `OpenAPIV2` and `OpenAPIV3`, such as `${project.version}`.
+- **specName**: The name of the specification, also the name of its file, for `OpenAPIV2`, `OpenAPIV3`, `Avro`,
+  `AvroIdl`, `GraphQL` and `AsyncAPI`. See [Name and version](../converters/converters.md#name-and-version).
+- **specVersion**: The version of the specification, for `OpenAPIV2`, `OpenAPIV3` and `AsyncAPI`, such as
+  `${project.version}`.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
 - **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, when the emitter is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
 

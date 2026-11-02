@@ -86,8 +86,8 @@ private abstract class CommonOptions : CliktCommand() {
     val extensions by option(*Options.Extension.flags, help = "Extension, applied to the languages it supports")
         .choice(choices = Extension.toMap(), ignoreCase = true)
         .multiple()
-    val specName by option(*Options.SpecName.flags, help = "Name of the specification, and of its file: OpenAPIV2, OpenAPIV3 and Avro")
-    val specVersion by option(*Options.SpecVersion.flags, help = "Version of the specification: OpenAPIV2 and OpenAPIV3")
+    val specName by option(*Options.SpecName.flags, help = "Name of the specification, and of its file: OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI")
+    val specVersion by option(*Options.SpecVersion.flags, help = "Version of the specification: OpenAPIV2, OpenAPIV3 and AsyncAPI")
 
     val context get() = ConverterContext(specName, specVersion)
 
