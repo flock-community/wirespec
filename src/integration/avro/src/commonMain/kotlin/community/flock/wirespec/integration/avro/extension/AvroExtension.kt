@@ -421,7 +421,7 @@ private fun String.avroClass(): String = replace(".model.", ".avro.") + "Avro"
  * first time they appear, and the seeded name makes a type that refers back to itself — directly
  * or through a nested record — resolve by name instead of trying to inline itself forever.
  */
-private fun emitAvroSchema(packageName: PackageName, definition: Definition, module: Module) = with(AvroJsonEmitter) {
+private fun emitAvroSchema(packageName: PackageName, definition: Definition, module: Module) = with(AvroJsonEmitter()) {
     when (definition) {
         is Type ->
             definition

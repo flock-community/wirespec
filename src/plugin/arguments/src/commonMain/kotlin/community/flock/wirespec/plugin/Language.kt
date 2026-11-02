@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.python.PythonEmitter
@@ -33,7 +34,7 @@ public enum class Language {
     }
 }
 
-public fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared): Emitter = when (this) {
+public fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared, context: ConverterContext = ConverterContext()): Emitter = when (this) {
     Language.Java -> JavaEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinEmitter(packageName, emitShared)
     Language.Python -> PythonEmitter(packageName, emitShared)
@@ -41,7 +42,7 @@ public fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared):
     Language.Scala -> ScalaEmitter(packageName, emitShared)
     Language.TypeScript -> TypeScriptEmitter()
     Language.Wirespec -> WirespecEmitter()
-    Language.OpenAPIV2 -> OpenAPIV2Emitter
-    Language.OpenAPIV3 -> OpenAPIV3Emitter
-    Language.Avro -> AvroJsonEmitter
+    Language.OpenAPIV2 -> OpenAPIV2Emitter(context)
+    Language.OpenAPIV3 -> OpenAPIV3Emitter(context)
+    Language.Avro -> AvroJsonEmitter(context)
 }

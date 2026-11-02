@@ -241,7 +241,7 @@ class AsyncAPIParserTest {
         val parsed = parse(WirespecEmitter().emit(converted, noLogger).single().result).shouldBeRight()
 
         parsed.modules.head.statements.toList() shouldBe converted.modules.head.statements.toList()
-        AsyncAPIEmitter.emit(parsed, noLogger).single().result shouldEqualJson this
+        AsyncAPIEmitter().emit(parsed, noLogger).single().result shouldEqualJson this
     }
 
     private companion object {

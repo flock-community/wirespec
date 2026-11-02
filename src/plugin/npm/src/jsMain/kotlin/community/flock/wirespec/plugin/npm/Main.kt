@@ -35,6 +35,7 @@ import community.flock.wirespec.converter.asyncapi.AsyncAPIParser
 import community.flock.wirespec.converter.avro.AvroIdlEmitter
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.converter.avro.AvroJsonParser
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.converter.graphql.GraphQLEmitter
 import community.flock.wirespec.converter.graphql.GraphQLParser
 import community.flock.wirespec.emitters.java.JavaEmitter
@@ -158,8 +159,11 @@ public fun emit(
     packageName: String,
     emitShared: Boolean,
     extensions: Array<Extensions> = emptyArray(),
+    specName: String? = null,
+    specVersion: String? = null,
 ): Array<WsEmitted> {
     val ast = wsAst.consume()
+    val context = ConverterContext(specName, specVersion)
     fun Emitter.extended() = withExtensions(extensions.map { it.extension }.toIrExtensions(PackageName(packageName), extension))
     return when (emitter) {
         Emitters.WIRESPEC -> WirespecEmitter().emit(ast, noLogger)
@@ -169,25 +173,25 @@ public fun emit(
         Emitters.SCALA -> ScalaEmitter(PackageName(packageName), EmitShared(emitShared)).extended().emit(ast, noLogger)
         Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).extended().emit(ast, noLogger)
         Emitters.OPENAPI_V2 ->
-            OpenAPIV2Emitter
+            OpenAPIV2Emitter(context)
                 .emitSwaggerObject(ast.modules.flatMap { it.statements }, noLogger)
                 .let(encode(OpenAPIV2ModelSerializer))
-                .let { Emitted("openapi.json", it) }
+                .let { Emitted(context.fileName("openapi", "json"), it) }
                 .let { nonEmptyListOf(it) }
         Emitters.OPENAPI_V3 ->
-            OpenAPIV3Emitter
-                .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null, noLogger)
+            OpenAPIV3Emitter(context)
+                .emitOpenAPIObject(ast.modules.flatMap { it.statements }, noLogger)
                 .let(encode(OpenAPIV3ModelSerializer))
-                .let { Emitted("openapi.json", it) }
+                .let { Emitted(context.fileName("openapi", "json"), it) }
                 .let { nonEmptyListOf(it) }
         Emitters.AVRO ->
             ast.modules
-                .map { ast -> AvroJsonEmitter.emit(ast) }
+                .map { module -> AvroJsonEmitter(context).emit(module) }
                 .map { Json.encodeToString(it) }
-                .map { Emitted("avro.json", it) }
-        Emitters.AVRO_IDL -> AvroIdlEmitter.emit(ast, noLogger)
-        Emitters.GRAPHQL -> GraphQLEmitter.emit(ast, noLogger)
-        Emitters.ASYNCAPI -> AsyncAPIEmitter.emit(ast, noLogger)
+                .map { Emitted(context.fileName("avro", "json"), it) }
+        Emitters.AVRO_IDL -> AvroIdlEmitter(context).emit(ast, noLogger)
+        Emitters.GRAPHQL -> GraphQLEmitter(context).emit(ast, noLogger)
+        Emitters.ASYNCAPI -> AsyncAPIEmitter(context).emit(ast, noLogger)
     }
         .map { it.produce() }
         .toTypedArray()

@@ -97,7 +97,7 @@ class AvroDefaultValueTest {
             """.trimMargin(),
         )
 
-        AvroJsonEmitter.emit(ast.modules.first()).let { json.encodeToString(it) } shouldEqualJson
+        AvroJsonEmitter().emit(ast.modules.first()).let { json.encodeToString(it) } shouldEqualJson
             // language=json
             """
             |[
@@ -127,7 +127,7 @@ class AvroDefaultValueTest {
     @Test
     fun testJsonRoundTrip() {
         val ast = AvroJsonParser.parse(ModuleContent(FileUri("test.avsc"), schema), true)
-        val record = AvroJsonEmitter.emit(ast.modules.first()).filterIsInstance<AvroModel.RecordType>().first().let { json.encodeToString(it) }
+        val record = AvroJsonEmitter().emit(ast.modules.first()).filterIsInstance<AvroModel.RecordType>().first().let { json.encodeToString(it) }
 
         // The emitter writes enums as schemas of their own, which this single record does not include.
         AvroJsonParser.parse(ModuleContent(FileUri("test.avsc"), record), true)
@@ -183,7 +183,7 @@ class AvroDefaultValueTest {
             """.trimMargin(),
         )
 
-        AvroIdlEmitter.emit(ast.modules.first()).run {
+        AvroIdlEmitter().emit(ast.modules.first()).run {
             shouldContain("string name = \"say \\\"hi\\\"\";")
             shouldContain("long retries = 3;")
             shouldContain("boolean active = true;")

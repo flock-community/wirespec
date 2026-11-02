@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
@@ -73,6 +74,16 @@ public abstract class BaseWirespecTask : DefaultTask() {
     @get:Option(option = "ignoreDefaults", description = "leave field default values out of the emitted code")
     public abstract val ignoreDefaults: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    @get:Option(option = "specName", description = "name of the specification, and of its file")
+    public abstract val specName: Property<String>
+
+    @get:Input
+    @get:Optional
+    @get:Option(option = "specVersion", description = "version of the specification")
+    public abstract val specVersion: Property<String>
+
     @Internal
     public val wirespecLogger: Logger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)
@@ -97,7 +108,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun emitter(): Emitter = language.get()
-        .toEmitter(packageNameValue(), sharedValue())
+        .toEmitter(packageNameValue(), sharedValue(), ConverterContext(specName.orNull, specVersion.orNull))
         .let { it.withExtensions(extensionInstances(it.extension)) }
 
     protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->

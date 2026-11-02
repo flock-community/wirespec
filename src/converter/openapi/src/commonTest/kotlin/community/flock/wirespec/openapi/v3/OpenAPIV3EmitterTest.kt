@@ -30,7 +30,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun astArray() {
-        val res = OpenAPIV3Emitter.emitOpenAPIObject(Ast.array, null, noLogger)
+        val res = OpenAPIV3Emitter().emitOpenAPIObject(Ast.array, noLogger)
         val openapi = json.encodeToString(res)
         val expect =
             $$"""
@@ -156,7 +156,7 @@ class OpenAPIV3EmitterTest {
         val petstoreOpenAPi = OpenAPIV3.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse().shouldNotBeNull()
 
-        val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null, noLogger)
+        val petstoreConvertedOpenAPi = OpenAPIV3Emitter().emitOpenAPIObject(petstoreAst, noLogger)
 
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
 
@@ -191,7 +191,7 @@ class OpenAPIV3EmitterTest {
             |}
             """.trimMargin()
 
-        val result = compile(source).invoke { OpenAPIV3Emitter }
+        val result = compile(source).invoke { OpenAPIV3Emitter() }
 
         val expect =
             // language=json
@@ -275,7 +275,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun compileFullEndpointTest() {
-        val result = CompileFullEndpointTest.compiler { OpenAPIV3Emitter }
+        val result = CompileFullEndpointTest.compiler { OpenAPIV3Emitter() }
         val expect =
             // language=json
             $$"""
@@ -464,7 +464,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun compileMinimalEndpointTest() {
-        val result = CompileMinimalEndpointTest.compiler { OpenAPIV3Emitter }
+        val result = CompileMinimalEndpointTest.compiler { OpenAPIV3Emitter() }
         val expect =
             // language=json
             $$"""
@@ -521,7 +521,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun compileChannelTest() {
-        val result = CompileChannelTest.compiler { OpenAPIV3Emitter }
+        val result = CompileChannelTest.compiler { OpenAPIV3Emitter() }
         val expect =
             // language=json
             """
@@ -542,7 +542,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun compileEnumTest() {
-        val result = CompileEnumTest.compiler { OpenAPIV3Emitter }
+        val result = CompileEnumTest.compiler { OpenAPIV3Emitter() }
         val expect =
             // language=json
             """
@@ -568,7 +568,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun compileRefinedTest() {
-        val result = CompileRefinedTest.compiler { OpenAPIV3Emitter }
+        val result = CompileRefinedTest.compiler { OpenAPIV3Emitter() }
         val expect =
             // language=json
             """
@@ -635,7 +635,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun compileUnionTest() {
-        val result = CompileUnionTest.compiler { OpenAPIV3Emitter }
+        val result = CompileUnionTest.compiler { OpenAPIV3Emitter() }
         val expect =
             // language=json
             $$"""
@@ -694,7 +694,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun compileTypeTest() {
-        val result = CompileTypeTest.compiler { OpenAPIV3Emitter }
+        val result = CompileTypeTest.compiler { OpenAPIV3Emitter() }
         val expect =
             // language=json
             """
@@ -772,7 +772,7 @@ class OpenAPIV3EmitterTest {
             |}
             """.trimMargin()
 
-        val result = compile(source).invoke { OpenAPIV3Emitter }
+        val result = compile(source).invoke { OpenAPIV3Emitter() }
 
         val emittedJson = result.shouldBeRight()
         val emittedTree = Json.parseToJsonElement(emittedJson) as kotlinx.serialization.json.JsonObject
@@ -810,7 +810,7 @@ class OpenAPIV3EmitterTest {
         val openApiSource = SystemFileSystem.source(path).buffered().readString()
         val ast = OpenAPIV3.decodeFromString(openApiSource).parse().shouldNotBeNull()
 
-        val emitted = OpenAPIV3Emitter.emitOpenAPIObject(ast, null, noLogger)
+        val emitted = OpenAPIV3Emitter().emitOpenAPIObject(ast, noLogger)
         val emittedJson = json.encodeToString(emitted)
 
         val expectedLinks =

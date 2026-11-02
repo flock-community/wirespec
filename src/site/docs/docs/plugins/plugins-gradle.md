@@ -104,6 +104,8 @@ This task compiles Wirespec definitions to one target language. Register a task 
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
+- `specName`: Property&lt;String&gt; - The name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3 and Avro. See [Name and version](../converters/converters.md#name-and-version)
+- `specVersion`: Property&lt;String&gt; - The version of the specification, for OpenAPIV2 and OpenAPIV3
 
 ### ConvertWirespecTask
 
@@ -121,6 +123,24 @@ This task converts from JSON or Avro to other formats.
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
+- `specName`: Property&lt;String&gt; - The name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3 and Avro. See [Name and version](../converters/converters.md#name-and-version)
+- `specVersion`: Property&lt;String&gt; - The version of the specification, for OpenAPIV2 and OpenAPIV3
+
+## Specification name and version
+
+`specName` and `specVersion` name the specification a task emits and give it a version:
+
+```kotlin
+tasks.register<CompileWirespecTask>("wirespec-openapi") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("openapi")
+    language = Language.OpenAPIV3
+    specName = "petstore"
+    specVersion = project.version.toString()
+}
+```
+
+This writes `build/openapi/petstore.json`, with `petstore` as `info.title` and the project version as `info.version`.
 
 ## Default values
 

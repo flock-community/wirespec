@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.converter.graphql.GraphQLDocumentPrinter.print
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
@@ -31,7 +32,13 @@ class GraphQLEmitterTest {
         """.trimMargin()
 
         GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), graphql), strict = true)
-            .let { GraphQLEmitter.emit(it, noLogger).single() } shouldBe Emitted("schema.graphql", GraphQLDocumentParser(graphql).parseDocument().print())
+            .let { GraphQLEmitter().emit(it, noLogger).single() } shouldBe Emitted("schema.graphql", GraphQLDocumentParser(graphql).parseDocument().print())
+    }
+
+    @Test
+    fun theContextNamesTheFile() {
+        GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), "type Query { ok: Boolean }"), strict = true)
+            .let { GraphQLEmitter(ConverterContext(name = "Todos", version = "1.2.3")).emit(it, noLogger).single().file } shouldBe "Todos.graphql"
     }
 
     @Test
@@ -317,5 +324,5 @@ class GraphQLEmitterTest {
         override val spec = WirespecSpec
     }.parse(nonEmptyListOf(ModuleContent(FileUri("todo.ws"), this)))
         .shouldBeRight()
-        .let { GraphQLEmitter.emit(it, noLogger).single().result }
+        .let { GraphQLEmitter().emit(it, noLogger).single().result }
 }

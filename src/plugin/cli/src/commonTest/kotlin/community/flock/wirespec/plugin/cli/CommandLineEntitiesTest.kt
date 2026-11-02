@@ -27,6 +27,8 @@ class CommandLineEntitiesTest {
                     Options.Extension -> "Jackson"
                     Options.PackageName -> "packageName"
                     Options.LogLevel -> "error"
+                    Options.SpecName -> "Petstore"
+                    Options.SpecVersion -> "1.2.3"
                     // To enable flags, they only need the flag name. Therefore, the 'argument' part is null.
                     Options.Shared -> null
                     Options.Strict -> null
