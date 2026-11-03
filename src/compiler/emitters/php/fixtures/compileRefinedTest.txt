@@ -1,0 +1,489 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<string>
+ */
+final readonly class TodoId implements Wirespec\Refined
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (\preg_match('/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$/', $this->value) === 1);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<string>
+ */
+final readonly class TodoNoRegex implements Wirespec\Refined
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return true;
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<int>
+ */
+final readonly class TestInt implements Wirespec\Refined
+{
+    public function __construct(
+        public int $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return true;
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<int>
+ */
+final readonly class TestInt0 implements Wirespec\Refined
+{
+    public function __construct(
+        public int $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (true);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<int>
+ */
+final readonly class TestInt1 implements Wirespec\Refined
+{
+    public function __construct(
+        public int $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (0 <= $this->value);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<int>
+ */
+final readonly class TestInt2 implements Wirespec\Refined
+{
+    public function __construct(
+        public int $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (1 <= $this->value && $this->value <= 3);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<float>
+ */
+final readonly class TestNum implements Wirespec\Refined
+{
+    public function __construct(
+        public float $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return true;
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<float>
+ */
+final readonly class TestNum0 implements Wirespec\Refined
+{
+    public function __construct(
+        public float $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (true);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<float>
+ */
+final readonly class TestNum1 implements Wirespec\Refined
+{
+    public function __construct(
+        public float $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return ($this->value <= 0.5);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<float>
+ */
+final readonly class TestNum2 implements Wirespec\Refined
+{
+    public function __construct(
+        public float $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (-0.2 <= $this->value && $this->value <= 0.5);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TodoId;
+
+final class TodoIdGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TodoId
+    {
+        return new TodoId(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldString(regex: '^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$', annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TodoNoRegex;
+
+final class TodoNoRegexGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TodoNoRegex
+    {
+        return new TodoNoRegex(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestInt;
+
+final class TestIntGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestInt
+    {
+        return new TestInt(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldInteger64(min: null, max: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestInt0;
+
+final class TestInt0Generator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestInt0
+    {
+        return new TestInt0(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldInteger64(min: null, max: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestInt1;
+
+final class TestInt1Generator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestInt1
+    {
+        return new TestInt1(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldInteger64(min: 0, max: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestInt2;
+
+final class TestInt2Generator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestInt2
+    {
+        return new TestInt2(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldInteger64(min: 1, max: 3, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestNum;
+
+final class TestNumGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestNum
+    {
+        return new TestNum(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldNumber64(min: null, max: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestNum0;
+
+final class TestNum0Generator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestNum0
+    {
+        return new TestNum0(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldNumber64(min: null, max: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestNum1;
+
+final class TestNum1Generator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestNum1
+    {
+        return new TestNum1(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldNumber64(min: null, max: 0.5, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TestNum2;
+
+final class TestNum2Generator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TestNum2
+    {
+        return new TestNum2(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldNumber64(min: -0.2, max: 0.5, annotations: [])));
+    }
+}

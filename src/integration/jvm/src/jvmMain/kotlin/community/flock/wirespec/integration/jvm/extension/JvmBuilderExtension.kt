@@ -60,6 +60,7 @@ public class JvmBuilderExtension(
         FileExtension.Scala -> Target.Scala
         FileExtension.TypeScript,
         FileExtension.Python,
+        FileExtension.Php,
         FileExtension.Rust,
         FileExtension.Wirespec,
         FileExtension.JSON,

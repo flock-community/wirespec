@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.php.PhpEmitter
 import community.flock.wirespec.emitters.python.PythonEmitter
 import community.flock.wirespec.emitters.rust.RustEmitter
 import community.flock.wirespec.emitters.scala.ScalaEmitter
@@ -19,6 +20,7 @@ public enum class Language {
     Kotlin,
     TypeScript,
     Python,
+    Php,
     Rust,
     Scala,
     Wirespec,
@@ -37,6 +39,7 @@ public fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared):
     Language.Java -> JavaEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinEmitter(packageName, emitShared)
     Language.Python -> PythonEmitter(packageName, emitShared)
+    Language.Php -> PhpEmitter(packageName, emitShared)
     Language.Rust -> RustEmitter(packageName, emitShared)
     Language.Scala -> ScalaEmitter(packageName, emitShared)
     Language.TypeScript -> TypeScriptEmitter()
