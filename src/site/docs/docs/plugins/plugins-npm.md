@@ -57,7 +57,7 @@ const ast = parse(src);
 const ts = emit(ast.result, Emitters.TYPESCRIPT, "");
 ```
 
-`emit` takes the [IR extensions](./plugins.md#ir-extensions) that Wirespec ships as its last argument. Each one
+`emit` takes the [IR extensions](./plugins.md#ir-extensions) that Wirespec ships as its fifth argument. Each one
 applies to the languages it supports, and `supports` tells which those are:
 
 ```typescript
@@ -69,6 +69,14 @@ const kotlin = emit(ast.result, Emitters.KOTLIN, "community.flock.generated", fa
   Extensions.SPRING_MAPPING_ANNOTATIONS,
   Extensions.JACKSON,
 ]);
+```
+
+Its last two arguments are the name and the version of a specification, such as OpenAPI. The name is also the name of
+the file; see [Name and version](../converters/converters.md#name-and-version):
+
+```typescript
+const [openapi] = emit(ast.result, Emitters.OPENAPI_V3, "", false, [], "petstore", "1.2.0");
+openapi.file; // petstore.json
 ```
 
 ## Default values

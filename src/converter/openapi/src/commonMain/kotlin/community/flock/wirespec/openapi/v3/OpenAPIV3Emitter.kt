@@ -2,7 +2,6 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.InfoObject
 import community.flock.kotlinx.openapi.bindings.MediaType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Components
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Header
@@ -44,21 +43,20 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.common.ConverterContext
+import community.flock.wirespec.openapi.common.DEFAULT_FILE_NAME
 import community.flock.wirespec.openapi.common.LinkInfo
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.emitPattern
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.findLinks
 import community.flock.wirespec.openapi.common.json
+import community.flock.wirespec.openapi.common.toInfoObject
 import community.flock.wirespec.openapi.common.toSchemaDefault
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
-public object OpenAPIV3Emitter : Emitter {
-    public data class Options(
-        val title: String,
-        val version: String,
-    )
+public class OpenAPIV3Emitter(private val context: ConverterContext = ConverterContext()) : Emitter {
 
     override val extension: FileExtension = FileExtension.JSON
 
@@ -74,18 +72,15 @@ public object OpenAPIV3Emitter : Emitter {
         }
         .let {
             Emitted(
-                "OpenAPI.${extension.value}",
-                json.encodeToString(emitOpenAPIObject(it, null, logger)),
+                context.fileName(DEFAULT_FILE_NAME, extension.value),
+                json.encodeToString(emitOpenAPIObject(it, logger)),
             )
         }
         .let { nonEmptyListOf(it) }
 
-    public fun emitOpenAPIObject(statements: Statements, options: Options? = null, logger: Logger): OpenAPIV3Model = OpenAPIV30Model(
+    public fun emitOpenAPIObject(statements: Statements, logger: Logger): OpenAPIV3Model = OpenAPIV30Model(
         openapi = "3.0.0",
-        info = InfoObject(
-            title = options?.title ?: "Wirespec",
-            version = options?.version ?: "0.0.0",
-        ),
+        info = context.toInfoObject(),
         paths = statements.emitPaths(logger),
         components = statements.emitComponents(logger),
     )

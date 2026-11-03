@@ -67,9 +67,12 @@ Options:
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
-  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Rust|Scala|Wirespec|OpenAPIV2|OpenAPIV3|Avro|AvroIdl|GraphQL|AsyncAPI)
+                                                                              Language
   -e, --extension=(Avro|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
+  --spec-name=<text>                                                          Name of the specification, and of its file: OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI
+  --spec-version=<text>                                                       Version of the specification: OpenAPIV2, OpenAPIV3 and AsyncAPI
   -h, --help                                                                  Show this message and exit
 ```
 
@@ -90,9 +93,12 @@ Options:
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
-  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Rust|Scala|Wirespec|OpenAPIV2|OpenAPIV3|Avro|AvroIdl|GraphQL|AsyncAPI)
+                                                                              Language
   -e, --extension=(Avro|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
+  --spec-name=<text>                                                          Name of the specification, and of its file: OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI
+  --spec-version=<text>                                                       Version of the specification: OpenAPIV2, OpenAPIV3 and AsyncAPI
   -h, --help                                                                  Show this message and exit
 
 Arguments:
@@ -116,6 +122,25 @@ wirespec compile -i ./wirespec -o ./out/typescript -l TypeScript -e SpringMappin
 
 `-l` takes one language per run: `compile` defaults to `Kotlin` and `convert` to `Wirespec`. Run the command once per
 language to generate several.
+
+## Specification name and version
+
+When the language is a specification, `--spec-name` and `--spec-version` name it and give it a version. The name is
+also the name of the file:
+
+```shell
+wirespec compile -i ./wirespec -o ./out -l OpenAPIV3 --spec-name petstore --spec-version 1.2.0
+```
+
+This writes `./out/petstore.json`, with `petstore` as `info.title` and `1.2.0` as `info.version`. Without them, the
+file is `OpenAPI.json`, with title `Wirespec` and version `0.0.0`. `convert` takes them too, for instance to convert
+OpenAPI v2 to v3:
+
+```shell
+wirespec convert OpenAPIV2 -i ./petstore.json -o ./out -l OpenAPIV3 --spec-name petstore --spec-version 1.2.0
+```
+
+See [Name and version](../converters/converters.md#name-and-version) for what each format does with them.
 
 ## Default values
 

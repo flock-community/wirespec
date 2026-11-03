@@ -162,8 +162,8 @@ class DefaultValueTest {
 
     @Test
     fun testEmitV3Defaults() {
-        val openapi = OpenAPIV3Emitter
-            .emitOpenAPIObject(parseWirespec(wirespec).modules.head.statements, null, noLogger)
+        val openapi = OpenAPIV3Emitter()
+            .emitOpenAPIObject(parseWirespec(wirespec).modules.head.statements, noLogger)
             .let { Json.encodeToString(it) }
             .let(Json::parseToJsonElement)
 
@@ -189,7 +189,7 @@ class DefaultValueTest {
 
     @Test
     fun testEmitV2Defaults() {
-        val swagger = OpenAPIV2Emitter
+        val swagger = OpenAPIV2Emitter()
             .emitSwaggerObject(parseWirespec(wirespec).modules.head.statements, noLogger)
             .let { Json.encodeToString(it) }
             .let(Json::parseToJsonElement)

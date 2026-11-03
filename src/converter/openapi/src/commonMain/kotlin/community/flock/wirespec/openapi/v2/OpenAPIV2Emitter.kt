@@ -2,7 +2,6 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.InfoObject
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Header
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Operation
@@ -31,16 +30,19 @@ import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.openapi.common.APPLICATION_JSON
+import community.flock.wirespec.openapi.common.DEFAULT_FILE_NAME
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.emitPattern
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.json
+import community.flock.wirespec.openapi.common.toInfoObject
 import community.flock.wirespec.openapi.common.toSchemaDefault
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
-public object OpenAPIV2Emitter : Emitter {
+public class OpenAPIV2Emitter(private val context: ConverterContext = ConverterContext()) : Emitter {
 
     override val extension: FileExtension = FileExtension.JSON
 
@@ -56,7 +58,7 @@ public object OpenAPIV2Emitter : Emitter {
         }
         .let {
             Emitted(
-                "OpenAPI.${extension.value}",
+                context.fileName(DEFAULT_FILE_NAME, extension.value),
                 json.encodeToString(emitSwaggerObject(it, logger)),
             )
         }
@@ -64,10 +66,7 @@ public object OpenAPIV2Emitter : Emitter {
 
     public fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = OpenAPIV20Model(
         swagger = "2.0",
-        info = InfoObject(
-            title = "Wirespec",
-            version = "0.0.0",
-        ),
+        info = context.toInfoObject(),
         consumes = listOf(APPLICATION_JSON),
         produces = listOf(APPLICATION_JSON),
         paths = statements.emitPaths(logger),

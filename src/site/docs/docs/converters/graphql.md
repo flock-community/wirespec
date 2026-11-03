@@ -386,6 +386,16 @@ from. Any other Wirespec gets the closest GraphQL counterpart:
 - **Multiple files**: each file is converted on its own. A schema split over several files references types declared in
   the other files; convert all of them to compile the result.
 
+## Plugins
+
+To write a GraphQL schema from Wirespec, pick the language `GraphQL` in the [CLI](../plugins/plugins-cli.md), or in the
+[Maven](../plugins/plugins-maven.md) or [Gradle](../plugins/plugins-gradle.md) plugin. Give it a
+[name and version](./converters.md#name-and-version) with the spec name and version options:
+
+```shell
+wirespec compile -i ./wirespec -o ./out -l GraphQL --spec-name todo --spec-version 1.0.0
+```
+
 ## Playground
 
 You can try the conversion online: [Playground convert GraphQL](https://playground.wirespec.io/?specification=graphql&emitter=wirespec),

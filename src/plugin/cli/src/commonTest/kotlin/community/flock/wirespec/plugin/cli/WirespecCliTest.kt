@@ -188,6 +188,75 @@ class WirespecCliTest {
         """.trimMargin()
     }
 
+    @Test
+    fun testCliCompileOpenAPIWithSpecNameAndVersion() {
+        val input = "$inputDir/wirespec"
+        val output = outputDir()
+
+        WirespecCli(::compile, ::convert).main(
+            arrayOf(
+                "compile",
+                "-i", input,
+                "-o", output,
+                "-l", "OpenAPIV3",
+                "--spec-name", "Petstore",
+                "--spec-version", "1.2.3",
+            ),
+        )
+
+        FilePath(DirectoryPath(output), Name("Petstore"), FileExtension.JSON).read().let { content ->
+            content shouldContain "\"title\": \"Petstore\""
+            content shouldContain "\"version\": \"1.2.3\""
+        }
+    }
+
+    @Test
+    fun testCliConvertOpenAPIWithSpecNameAndVersion() {
+        val input = "$inputDir/openapi/petstore.json"
+        val output = outputDir()
+
+        WirespecCli(::compile, ::convert).main(
+            arrayOf(
+                "convert", "openapiv2",
+                "-i", input,
+                "-o", output,
+                "-l", "OpenAPIV3",
+                "--spec-name", "Petstore",
+                "--spec-version", "1.2.3",
+            ),
+        )
+
+        FilePath(DirectoryPath(output), Name("Petstore"), FileExtension.JSON).read().let { content ->
+            content shouldContain "\"openapi\": \"3.0.0\""
+            content shouldContain "\"title\": \"Petstore\""
+            content shouldContain "\"version\": \"1.2.3\""
+        }
+    }
+
+    @Test
+    fun testCliCompileConverterOutputsWithSpecNameAndVersion() {
+        val input = "$inputDir/wirespec"
+        fun compileTo(language: String) = outputDir().also { output ->
+            WirespecCli(::compile, ::convert).main(
+                arrayOf(
+                    "compile",
+                    "-i", input,
+                    "-o", output,
+                    "-l", language,
+                    "--spec-name", "Todos",
+                    "--spec-version", "1.2.3",
+                ),
+            )
+        }
+
+        FilePath(DirectoryPath(compileTo("AsyncAPI")), Name("Todos"), FileExtension.JSON).read().let { content ->
+            content shouldContain "\"title\": \"Todos\""
+            content shouldContain "\"version\": \"1.2.3\""
+        }
+        FilePath(DirectoryPath(compileTo("AvroIdl")), Name("Todos"), FileExtension.AvroIdl).read() shouldContain "protocol TodosProtocol {"
+        FilePath(DirectoryPath(compileTo("GraphQL")), Name("Todos"), FileExtension.GraphQL).read() shouldContain "Todo"
+    }
+
     private fun getRandomString(length: Int) = (1..length)
         .map { allowedChars.random() }
         .joinToString("")

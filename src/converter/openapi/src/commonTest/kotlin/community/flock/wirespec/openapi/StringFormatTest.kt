@@ -89,8 +89,8 @@ class StringFormatTest {
 
     @Test
     fun testEmitV3Formats() {
-        OpenAPIV3Emitter
-            .emitOpenAPIObject(OpenAPIV3Parser.parse(ModuleContent(FileUri("openapi.json"), v3), true).modules.head.statements, null, noLogger)
+        OpenAPIV3Emitter()
+            .emitOpenAPIObject(OpenAPIV3Parser.parse(ModuleContent(FileUri("openapi.json"), v3), true).modules.head.statements, noLogger)
             .let { Json.encodeToString(it) }
             .let(Json::parseToJsonElement)
             .properties("components", "schemas", "Order")
@@ -99,7 +99,7 @@ class StringFormatTest {
 
     @Test
     fun testEmitV2Formats() {
-        OpenAPIV2Emitter
+        OpenAPIV2Emitter()
             .emitSwaggerObject(OpenAPIV2Parser.parse(ModuleContent(FileUri("swagger.json"), v2), true).modules.head.statements, noLogger)
             .let { Json.encodeToString(it) }
             .let(Json::parseToJsonElement)

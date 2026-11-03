@@ -16,11 +16,12 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.converter.common.toJsonElement
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-public object AvroJsonEmitter : Emitter {
+public class AvroJsonEmitter(private val context: ConverterContext = ConverterContext()) : Emitter {
 
     override val extension: FileExtension = FileExtension.JSON
 
@@ -35,7 +36,7 @@ public object AvroJsonEmitter : Emitter {
             emit(it)
         }
         .map { Json.encodeToString(it) }
-        .map { Emitted("schema.avsc", it) }
+        .map { Emitted(context.fileName("schema", FileExtension.AvroJson.value), it) }
 
     public fun Enum.emit(): AvroModel.EnumType = AvroModel.EnumType(
         type = "enum",

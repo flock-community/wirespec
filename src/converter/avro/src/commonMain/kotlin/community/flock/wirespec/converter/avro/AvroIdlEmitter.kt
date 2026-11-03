@@ -15,28 +15,27 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.converter.common.toJsonElement
 
-public object AvroIdlEmitter : Emitter {
+private const val INDENT = "    "
+
+// The playground compiles source that has no file of its own under this name.
+private const val UNKNOWN_FILE = "unknown"
+
+public class AvroIdlEmitter(private val context: ConverterContext = ConverterContext()) : Emitter {
 
     override val extension: FileExtension = FileExtension.AvroIdl
 
     override val supportsDefaults: Boolean = true
 
-    private const val INDENT = "    "
-
-    // The playground compiles source that has no file of its own under this name.
-    private const val UNKNOWN_FILE = "unknown"
-
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules
         .map {
             logger.info("Emitting Avro IDL from ${it.fileUri.value}")
-            Emitted("schema.avdl", emit(it, deriveProtocolName(it)))
+            Emitted(context.fileName("schema", extension.value), emit(it, deriveProtocolName(it)))
         }
 
-    private fun deriveProtocolName(module: Module): String = module.fileUri.value
-        .substringAfterLast('/')
-        .substringBeforeLast('.')
+    private fun deriveProtocolName(module: Module): String = (context.name ?: module.fileUri.value.substringAfterLast('/').substringBeforeLast('.'))
         .takeIf { it.isNotBlank() && it != UNKNOWN_FILE }
         ?.let { it.replaceFirstChar { c -> c.uppercaseChar() } + "Protocol" }
         ?: "WirespecProtocol"

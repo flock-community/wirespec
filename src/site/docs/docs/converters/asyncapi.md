@@ -214,6 +214,16 @@ channel TodoUpdates -> Todo
   `#/components/messages/TodoUpdated/payload` or another file, is kept in `@AsyncAPISchema` as it is and converts to
   `Any`.
 
+## Plugins
+
+To write an AsyncAPI document from Wirespec, pick the language `AsyncAPI` in the [CLI](../plugins/plugins-cli.md), or in the
+[Maven](../plugins/plugins-maven.md) or [Gradle](../plugins/plugins-gradle.md) plugin. Give it a
+[name and version](./converters.md#name-and-version) with the spec name and version options:
+
+```shell
+wirespec compile -i ./wirespec -o ./out -l AsyncAPI --spec-name todo --spec-version 1.0.0
+```
+
 ## Playground
 
 You can try the conversion online: [Playground convert AsyncAPI](https://playground.wirespec.io/?specification=asyncapi&emitter=wirespec),

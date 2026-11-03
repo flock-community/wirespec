@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
@@ -101,6 +102,20 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var ignoreDefaults: Boolean = false
 
     /**
+     * Specifies the name of the specification, also the name of its file, for OpenAPIV2, OpenAPIV3, Avro, AvroIdl,
+     * GraphQL and AsyncAPI. Default 'null', which keeps the default name of the language.
+     */
+    @Parameter
+    protected var specName: String? = null
+
+    /**
+     * Specifies the version of the specification, for OpenAPIV2, OpenAPIV3 and AsyncAPI. Default 'null', which keeps
+     * the default version of the language.
+     */
+    @Parameter
+    protected var specVersion: String? = null
+
+    /**
      * Source directory. Default 'null'.
      */
     @Parameter
@@ -139,7 +154,7 @@ public abstract class BaseMojo : AbstractMojo() {
 
     protected val emitter: Emitter
         get() = language
-            .toEmitter(PackageName(packageName), EmitShared(shared))
+            .toEmitter(PackageName(packageName), EmitShared(shared), ConverterContext(specName, specVersion))
             .let { it.withExtensions(extensionInstances(it.extension)) }
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {

@@ -27,6 +27,7 @@ import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.has
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.named
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.single
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.value
+import community.flock.wirespec.converter.common.ConverterContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -40,9 +41,10 @@ import kotlinx.serialization.json.JsonPrimitive
  * and everything else that belongs to the document as a whole, and the other annotations hold what the definitions
  * cannot. Any other Wirespec gets an AsyncAPI 3.0 document in which every channel has one message, carrying the type
  * of the channel, and a `send` operation, unless annotations say otherwise. Types, enums, unions and refined types
- * become schemas. Endpoints and rpcs have no AsyncAPI counterpart and are left out.
+ * become schemas. Endpoints and rpcs have no AsyncAPI counterpart and are left out. The name and version of the
+ * [ConverterContext] are the title and version of either document.
  */
-public object AsyncAPIEmitter : Emitter {
+public class AsyncAPIEmitter(private val context: ConverterContext = ConverterContext()) : Emitter {
 
     override val extension: FileExtension = FileExtension.JSON
 
@@ -53,11 +55,11 @@ public object AsyncAPIEmitter : Emitter {
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules
         .onEach { logger.info("Emitting AsyncAPI from ${it.fileUri.value}") }
         .flatMap { it.statements }
-        .let { WirespecToAsyncAPI(it).document() }
-        .let { nonEmptyListOf(Emitted("asyncapi.${extension.value}", json.encodeToString(JsonObject.serializer(), it))) }
+        .let { WirespecToAsyncAPI(it, context).document() }
+        .let { nonEmptyListOf(Emitted(context.fileName("asyncapi", extension.value), json.encodeToString(JsonObject.serializer(), it))) }
 }
 
-private class WirespecToAsyncAPI(definitions: List<Definition>) {
+private class WirespecToAsyncAPI(definitions: List<Definition>, private val context: ConverterContext) {
 
     private val holder: Type? = definitions.filterIsInstance<Type>().find { it.annotations.has(DOCUMENT) }
 
@@ -76,9 +78,15 @@ private class WirespecToAsyncAPI(definitions: List<Definition>) {
 
     private val channels = definitions.filterIsInstance<Channel>()
 
-    private val root: JsonObject = holder?.annotations?.find(DOCUMENT)?.fields() ?: DEFAULT_DOCUMENT
+    private val root: JsonObject = (holder?.annotations?.find(DOCUMENT)?.fields() ?: DEFAULT_DOCUMENT).withInfo()
 
     private val majorVersion = if ((root["asyncapi"] as? JsonPrimitive)?.content?.startsWith("2.") == true) 2 else 3
+
+    /** The name and version of the context take the place of the title and version of the document. */
+    private fun JsonObject.withInfo(): JsonObject = jsonObjectOf("title" to context.name?.let(::JsonPrimitive), "version" to context.version?.let(::JsonPrimitive))
+        .toJsonObjectOrNull()
+        ?.let { info -> JsonObject(this + ("info" to JsonObject((this["info"] as? JsonObject).orEmpty() + info))) }
+        ?: this
 
     fun document(): JsonObject = JsonObject(
         root + jsonObjectOf(

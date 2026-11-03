@@ -1,11 +1,13 @@
 package community.flock.wirespec.openapi.common
 
+import community.flock.kotlinx.openapi.bindings.InfoObject
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.converter.common.toJsonElement
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -112,3 +114,10 @@ internal fun List<Definition>.resolveEndpointNameCollisions(): List<Definition> 
 internal val json: Json = Json { prettyPrint = true }
 
 internal const val APPLICATION_JSON: String = "application/json"
+
+internal const val DEFAULT_FILE_NAME: String = "OpenAPI"
+
+internal fun ConverterContext.toInfoObject(): InfoObject = InfoObject(
+    title = name ?: "Wirespec",
+    version = version ?: "0.0.0",
+)

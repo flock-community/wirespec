@@ -34,7 +34,7 @@ class OpenAPIV2EmitterTest {
         val petstoreOpenAPi = OpenAPIV2.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse().shouldNotBeNull()
 
-        val petstoreConvertedOpenAPI = OpenAPIV2Emitter.emitSwaggerObject(petstoreAst, noLogger)
+        val petstoreConvertedOpenAPI = OpenAPIV2Emitter().emitSwaggerObject(petstoreAst, noLogger)
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPI.parse().shouldNotBeNull()
 
         val actual = petstoreAst.toList()
@@ -72,7 +72,7 @@ class OpenAPIV2EmitterTest {
             |}
             """.trimMargin()
 
-        val result = compile(source).invoke { OpenAPIV2Emitter }
+        val result = compile(source).invoke { OpenAPIV2Emitter() }
 
         val expect =
             $$"""
@@ -158,7 +158,7 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun compileFullEndpointTest() {
-        val result = CompileFullEndpointTest.compiler { OpenAPIV2Emitter }
+        val result = CompileFullEndpointTest.compiler { OpenAPIV2Emitter() }
         val expect =
             // language=json
             $$"""
@@ -324,7 +324,7 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun compileMinimalEndpointTest() {
-        val result = CompileMinimalEndpointTest.compiler { OpenAPIV2Emitter }
+        val result = CompileMinimalEndpointTest.compiler { OpenAPIV2Emitter() }
         val expect =
             // language=json
             $$"""
@@ -375,7 +375,7 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun compileChannelTest() {
-        val result = CompileChannelTest.compiler { OpenAPIV2Emitter }
+        val result = CompileChannelTest.compiler { OpenAPIV2Emitter() }
         val expect =
             // language=json
             """
@@ -400,7 +400,7 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun compileEnumTest() {
-        val result = CompileEnumTest.compiler { OpenAPIV2Emitter }
+        val result = CompileEnumTest.compiler { OpenAPIV2Emitter() }
         val expect =
             // language=json
             """
@@ -426,7 +426,7 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun compileRefinedTest() {
-        val result = CompileRefinedTest.compiler { OpenAPIV2Emitter }
+        val result = CompileRefinedTest.compiler { OpenAPIV2Emitter() }
         val expect =
             // language=json
             """
@@ -493,7 +493,7 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun compileUnionTest() {
-        val result = CompileUnionTest.compiler { OpenAPIV2Emitter }
+        val result = CompileUnionTest.compiler { OpenAPIV2Emitter() }
         val expect =
             // language=json
             $$"""
@@ -557,7 +557,7 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun compileTypeTest() {
-        val result = CompileTypeTest.compiler { OpenAPIV2Emitter }
+        val result = CompileTypeTest.compiler { OpenAPIV2Emitter() }
         val expect =
             // language=json
             """

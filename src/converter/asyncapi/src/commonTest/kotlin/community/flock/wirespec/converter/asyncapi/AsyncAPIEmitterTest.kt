@@ -2,10 +2,15 @@ package community.flock.wirespec.converter.asyncapi
 
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.test.parse
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.converter.common.ConverterContext
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.json.shouldEqualJson
+import io.kotest.matchers.shouldBe
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 
 class AsyncAPIEmitterTest {
@@ -104,10 +109,43 @@ class AsyncAPIEmitterTest {
         val asyncAPI = wirespec.toAsyncAPI()
 
         AsyncAPIParser.parse(ModuleContent(FileUri("asyncapi.json"), asyncAPI), strict = true)
-            .let { AsyncAPIEmitter.emit(it, noLogger).single().result } shouldEqualJson asyncAPI
+            .let { AsyncAPIEmitter().emit(it, noLogger).single().result } shouldEqualJson asyncAPI
     }
 
-    private fun String.toAsyncAPI(): String = AsyncAPIEmitter.emit(parse(this).shouldBeRight(), noLogger).single().result
+    @Test
+    fun theContextNamesTheDocumentAndItsFile() {
+        AsyncAPIEmitter(ConverterContext(name = "Todos", version = "1.2.3")).emit(parse(wirespec).shouldBeRight(), noLogger).single().run {
+            file shouldBe "Todos.json"
+            info() shouldEqualJson """{ "title": "Todos", "version": "1.2.3" }"""
+        }
+    }
+
+    @Test
+    fun withoutContextTheDefaultsStay() {
+        AsyncAPIEmitter().emit(parse(wirespec).shouldBeRight(), noLogger).single().run {
+            file shouldBe "asyncapi.json"
+            info() shouldEqualJson """{ "title": "Wirespec", "version": "0.0.0" }"""
+        }
+    }
+
+    @Test
+    fun theContextTakesThePlaceOfTheTitleAndVersionOfAConvertedDocument() {
+        val asyncAPI = """
+            {
+              "asyncapi": "3.0.0",
+              "info": { "title": "Original", "version": "0.1.0", "description": "Kept as is" },
+              "channels": {}
+            }
+        """
+
+        AsyncAPIParser.parse(ModuleContent(FileUri("asyncapi.json"), asyncAPI), strict = true)
+            .let { AsyncAPIEmitter(ConverterContext(version = "1.0.0")).emit(it, noLogger).single() }
+            .info() shouldEqualJson """{ "title": "Original", "version": "1.0.0", "description": "Kept as is" }"""
+    }
+
+    private fun Emitted.info(): String = Json.parseToJsonElement(result).jsonObject.getValue("info").toString()
+
+    private fun String.toAsyncAPI(): String = AsyncAPIEmitter().emit(parse(this).shouldBeRight(), noLogger).single().result
 
     private companion object {
         const val REF = "\$ref"

@@ -28,6 +28,7 @@ import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
+import community.flock.wirespec.converter.common.ConverterContext
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Extension
@@ -60,6 +61,8 @@ internal enum class Options(vararg val flags: String) {
     Shared("--shared"),
     Strict("--strict"),
     IgnoreDefaults("--ignore-defaults"),
+    SpecName("--spec-name"),
+    SpecVersion("--spec-version"),
 }
 
 internal class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -83,6 +86,10 @@ private abstract class CommonOptions : CliktCommand() {
     val extensions by option(*Options.Extension.flags, help = "Extension, applied to the languages it supports")
         .choice(choices = Extension.toMap(), ignoreCase = true)
         .multiple()
+    val specName by option(*Options.SpecName.flags, help = "Name of the specification, and of its file: OpenAPIV2, OpenAPIV3, Avro, AvroIdl, GraphQL and AsyncAPI")
+    val specVersion by option(*Options.SpecVersion.flags, help = "Version of the specification: OpenAPIV2, OpenAPIV3 and AsyncAPI")
+
+    val context get() = ConverterContext(specName, specVersion)
 
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG
@@ -128,7 +135,7 @@ private class Compile(
             }
         }
 
-        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions)
+        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), context, extensions)
 
         val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
@@ -169,7 +176,7 @@ private class Convert(
                 .also { logger.info("Found 1 file to process: $inputPath") }
         }
 
-        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions)
+        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), context, extensions)
         val directory = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         ConverterArguments(
             format = format,
@@ -188,7 +195,7 @@ private class Convert(
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
 
-private fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared, extensions: List<Extension>) = toEmitter(packageName, emitShared)
+private fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared, context: ConverterContext, extensions: List<Extension>) = toEmitter(packageName, emitShared, context)
     .let { it.withExtensions(extensions.toIrExtensions(packageName, it.extension)) }
 
 private fun NullableOption<Language, Language>.single(default: Language) = transformAll(defaultForHelp = "$default") { languages ->

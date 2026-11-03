@@ -84,6 +84,17 @@ type is dropped as well.
 - **Defaults**: Only defaults that Wirespec supports are converted, see [Defaults](#defaults).
 - **Unions**: There are some restrictions on Unions involving multiple simple types.
 
+## Plugins
+
+To write Avro from Wirespec, pick the language `Avro` for a schema (`.avsc`) or `AvroIdl` for an IDL protocol (`.avdl`)
+in the [CLI](../plugins/plugins-cli.md), or in the [Maven](../plugins/plugins-maven.md) or
+[Gradle](../plugins/plugins-gradle.md) plugin. A [name](./converters.md#name-and-version) names the file, and the IDL
+protocol:
+
+```shell
+wirespec compile -i ./wirespec -o ./out -l AvroIdl --spec-name todo
+```
+
 ## Playground
 
 You can try the conversion online: [Playground convert Avro](https://playground.wirespec.io/?emitter=avro&specification=wirespec    )

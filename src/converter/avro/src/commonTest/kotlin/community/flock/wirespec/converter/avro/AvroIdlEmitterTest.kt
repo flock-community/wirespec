@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.converter.common.ConverterContext
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -32,7 +33,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitsProtocolWrapper() {
         val ast = parse("type Pet { name: String }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "PetProtocol")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "PetProtocol")
         output shouldStartWith "protocol PetProtocol {\n"
         output.trim().endsWith("}") shouldBe true
     }
@@ -40,7 +41,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitsSimpleRecord() {
         val ast = parse("type Pet { name: String, age: Integer }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "record Pet {"
         output shouldContain "string name;"
         output shouldContain "long age;"
@@ -58,7 +59,7 @@ class AvroIdlEmitterTest {
             }
             """.trimIndent(),
         )
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "string s;"
         output shouldContain "long i;"
         output shouldContain "double n;"
@@ -68,7 +69,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitsNullableFieldAsUnionWithNull() {
         val ast = parse("type Pet { name: String, nickname: String? }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "union { null, string } nickname;"
         output shouldContain "string name;"
     }
@@ -76,14 +77,14 @@ class AvroIdlEmitterTest {
     @Test
     fun emitsArrayField() {
         val ast = parse("type Pet { tags: String[] }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "array<string> tags;"
     }
 
     @Test
     fun emitsNullableArrayField() {
         val ast = parse("type Pet { tags: String[]? }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "union { null, array<string> } tags;"
     }
 
@@ -95,7 +96,7 @@ class AvroIdlEmitterTest {
             type Pet { home: Address }
             """.trimIndent(),
         )
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "record Address {"
         output shouldContain "Address home;"
     }
@@ -108,7 +109,7 @@ class AvroIdlEmitterTest {
             type Pet { home: Address? }
             """.trimIndent(),
         )
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "union { null, Address } home;"
     }
 
@@ -120,7 +121,7 @@ class AvroIdlEmitterTest {
             type Doc { status: Status }
             """.trimIndent(),
         )
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "enum Status {"
         output shouldContain "PUBLIC, PRIVATE"
     }
@@ -135,7 +136,7 @@ class AvroIdlEmitterTest {
             type Doc { value: Either }
             """.trimIndent(),
         )
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "record Either {"
         output shouldContain "union {"
         output shouldContain "Left"
@@ -152,7 +153,7 @@ class AvroIdlEmitterTest {
             |enum Status { ACTIVE, INACTIVE }
             """.trimMargin(),
         )
-        AvroIdlEmitter.emit(ast.modules.first(), "Test") shouldBe
+        AvroIdlEmitter().emit(ast.modules.first(), "Test") shouldBe
             """
             |protocol Test {
             |    record Address {
@@ -186,7 +187,7 @@ class AvroIdlEmitterTest {
             |type Person { name: Name, age: Age, weight: Weight?, aliases: Name[] }
             """.trimMargin(),
         )
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "string name;"
         output shouldContain "long age;"
         output shouldContain "union { null, double } weight;"
@@ -201,7 +202,7 @@ class AvroIdlEmitterTest {
             fileUri = FileUri("unknown"),
             statements = ast.modules.first().statements,
         )
-        val output = AvroIdlEmitter.emit(
+        val output = AvroIdlEmitter().emit(
             community.flock.wirespec.compiler.core.parse.ast.Root(nonEmptyListOf(module)),
             noLogger,
         )
@@ -225,7 +226,7 @@ class AvroIdlEmitterTest {
             }
         """.trimIndent()
         val ast = parse(source)
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "TodoProtocol")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "TodoProtocol")
         output shouldStartWith "protocol TodoProtocol {\n"
         output shouldContain "enum Status {"
         output shouldContain "record Todo {"
@@ -239,7 +240,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitFromCompileMinimalEndpointTest() {
         val result = CompileMinimalEndpointTest.compiler {
-            AvroIdlEmitter
+            AvroIdlEmitter()
         }
         val output = result.shouldBeRight()
         output shouldContain "protocol"
@@ -250,7 +251,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitFromCompileFullEndpointTest() {
         val result = CompileFullEndpointTest.compiler {
-            AvroIdlEmitter
+            AvroIdlEmitter()
         }
         val output = result.shouldBeRight()
         output shouldContain "record PotentialTodoDto {"
@@ -265,7 +266,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitFromCompileEnumTest() {
         val result = CompileEnumTest.compiler {
-            AvroIdlEmitter
+            AvroIdlEmitter()
         }
         val output = result.shouldBeRight()
         output shouldContain "enum MyAwesomeEnum {"
@@ -277,7 +278,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitFromCompileChannelTestProducesEmptyProtocol() {
         val result = CompileChannelTest.compiler {
-            AvroIdlEmitter
+            AvroIdlEmitter()
         }
         val output = result.shouldBeRight()
         output shouldStartWith "protocol"
@@ -288,7 +289,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitFromCompileRefinedTestRendersRefinedAsComment() {
         val result = CompileRefinedTest.compiler {
-            AvroIdlEmitter
+            AvroIdlEmitter()
         }
         val output = result.shouldBeRight()
         output shouldContain "// refined"
@@ -297,7 +298,7 @@ class AvroIdlEmitterTest {
     @Test
     fun emitFromCompileUnionTest() {
         val result = CompileUnionTest.compiler {
-            AvroIdlEmitter
+            AvroIdlEmitter()
         }
         val output = result.shouldBeRight()
         output shouldContain "record UserAccount {"
@@ -308,7 +309,7 @@ class AvroIdlEmitterTest {
 
     @Test
     fun emitFromCompileTypeTest() {
-        val result = CompileTypeTest.compiler { AvroIdlEmitter }
+        val result = CompileTypeTest.compiler { AvroIdlEmitter() }
         val output = result.shouldBeRight()
         output shouldContain "record Request {"
         output shouldContain "array<string> params;"
@@ -320,21 +321,21 @@ class AvroIdlEmitterTest {
     @Test
     fun emitWithDictField() {
         val ast = parse("type Mappy { entries: { String } }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "map<string> entries;"
     }
 
     @Test
     fun emitWithDictOfArrayField() {
         val ast = parse("type Outer { values: { String[] } }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "map<array<string>> values;"
     }
 
     @Test
     fun emitWithIntegerPrecisionLong() {
         val ast = parse("type X { id: Integer }")
-        val output = AvroIdlEmitter.emit(ast.modules.first(), "Test")
+        val output = AvroIdlEmitter().emit(ast.modules.first(), "Test")
         output shouldContain "long id;"
     }
 
@@ -353,7 +354,7 @@ class AvroIdlEmitterTest {
         """.trimIndent()
 
         val ast1 = AvroIdlParser.parse(ModuleContent(FileUri("test.ws"), source), true)
-        val emitted = AvroIdlEmitter.emit(ast1.modules.first(), "Test")
+        val emitted = AvroIdlEmitter().emit(ast1.modules.first(), "Test")
         val ast2 = AvroIdlParser.parse(ModuleContent(FileUri("test.ws"), emitted), true)
 
         ast1.modules.first().statements.toList().map { it.identifier.value } shouldBe
@@ -362,8 +363,8 @@ class AvroIdlEmitterTest {
 
     @Test
     fun emitterUsesAvroIdlExtension() {
-        AvroIdlEmitter.extension shouldBe community.flock.wirespec.compiler.core.emit.FileExtension.AvroIdl
-        AvroIdlEmitter.extension.value shouldBe "avdl"
+        AvroIdlEmitter().extension shouldBe community.flock.wirespec.compiler.core.emit.FileExtension.AvroIdl
+        AvroIdlEmitter().extension.value shouldBe "avdl"
     }
 
     @Test
@@ -373,10 +374,26 @@ class AvroIdlEmitterTest {
             fileUri = FileUri("path/to/myfile.ws"),
             statements = ast.modules.first().statements,
         )
-        val output = AvroIdlEmitter.emit(
+        val output = AvroIdlEmitter().emit(
             community.flock.wirespec.compiler.core.parse.ast.Root(nonEmptyListOf(moduleWithUri)),
             noLogger,
         )
         output.first().result shouldContain "protocol MyfileProtocol {"
+    }
+
+    @Test
+    fun theContextNamesTheProtocolAndTheFile() {
+        AvroIdlEmitter(ConverterContext(name = "petstore", version = "1.2.3")).emit(parse("type Pet { name: String }"), noLogger).single().run {
+            file shouldBe "petstore.avdl"
+            result shouldStartWith "protocol PetstoreProtocol {"
+        }
+    }
+
+    @Test
+    fun withoutContextTheFileKeepsItsDefaultName() {
+        AvroIdlEmitter().emit(parse("type Pet { name: String }"), noLogger).single().run {
+            file shouldBe "schema.avdl"
+            result shouldStartWith "protocol TestProtocol {"
+        }
     }
 }

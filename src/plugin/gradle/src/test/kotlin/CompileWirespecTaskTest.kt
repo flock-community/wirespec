@@ -87,6 +87,38 @@ class CompileWirespecTaskTest :
             output.getValue("Todo.ts") shouldContain "// marked"
         }
 
+        test("the spec name and version name the OpenAPI document and its file") {
+            val projectDir = project(
+                """
+                import community.flock.wirespec.plugin.Language
+                import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+
+                plugins {
+                    id("community.flock.wirespec.plugin.gradle")
+                }
+
+                tasks.register<CompileWirespecTask>("wirespec") {
+                    input = layout.projectDirectory.dir("src/main/wirespec")
+                    output = layout.buildDirectory.dir("out")
+                    language = Language.OpenAPIV3
+                    specName = "Todos"
+                    specVersion = "1.2.3"
+                }
+                """.trimIndent(),
+            )
+
+            GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("wirespec")
+                .build()
+
+            projectDir.resolve("build/out/Todos.json").readText().run {
+                this shouldContain "\"title\": \"Todos\""
+                this shouldContain "\"version\": \"1.2.3\""
+            }
+        }
+
         test("a task needs a language") {
             val projectDir = project(
                 """
