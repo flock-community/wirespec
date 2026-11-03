@@ -48,7 +48,7 @@ import community.flock.wirespec.generated.model.User;
 
 public interface UserGenerator {
   public static User generate(Wirespec.Generator generator, java.util.List<String> path) {
-    return new User(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+    return new User(generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
       java.util.Optional.empty(),
       java.util.List.<java.util.Map<String, Object>>of()
     )));
