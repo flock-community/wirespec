@@ -282,7 +282,7 @@ class KotestDslExtensionTest {
         output shouldContain "public val FindMembers.generate: FindMembersGenerate"
         output shouldContain "rpcCall(FindMembers.Service::class, this) { service, request -> service.findMembers(request.`class`, request.address, request.limit) }"
         output shouldContain "`class` = this.`class`.let { gen -> if (gen == null) base.`class` else gen.draw(rs) },"
-        output shouldContain "`class` = generator.generate(path + listOf(\"class\")"
+        output shouldContain "`class` = generator.generate(path + listOf<String>(\"class\")"
         output shouldContain "address = this.address?.draw(rs) ?: this._addressBlock?.let { block -> base.address?.let { AddressBuilder().apply(block).applyTo(it, rs) } } ?: base.address,"
         output shouldContain "min = 1L,"
 

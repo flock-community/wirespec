@@ -34,7 +34,7 @@ class ValidateExtensionTest {
         ValidateExtension(FileExtension.Kotlin).extend(ast.ir(), ast).validateOf("Person") shouldBe
             """
             |override fun validate(): List<String> =
-            |  (if (!email.validate()) listOf("email") else emptyList<String>()) + (emails?.let { it.entries.flatMap { (k1, v1) -> v1.flatMapIndexed { i2, el2 -> if (!el2.validate()) listOf("emails[${'$'}{k1}][${'$'}{i2}]") else emptyList<String>() } } } ?: emptyList<String>())
+            |  (if (!email.validate()) listOf<String>("email") else emptyList<String>()) + (emails?.let { it.entries.flatMap { (k1, v1) -> v1.flatMapIndexed { i2, el2 -> if (!el2.validate()) listOf<String>("emails[${'$'}{k1}][${'$'}{i2}]") else emptyList<String>() } } } ?: emptyList<String>())
             """.trimMargin()
     }
 
@@ -45,7 +45,7 @@ class ValidateExtensionTest {
         ValidateExtension(FileExtension.Kotlin).extend(ast.ir(), ast).validateOf("Product") shouldBe
             """
             |override fun validate(): List<String> =
-            |  (if (Regex(""${'"'}^[A-Z]+$""${'"'}).matches(code)) emptyList<String>() else listOf("code")) + (quantity?.let { if (0 <= it && it <= 10) emptyList<String>() else listOf("quantity") } ?: emptyList<String>())
+            |  (if (Regex(""${'"'}^[A-Z]+$""${'"'}).matches(code)) emptyList<String>() else listOf<String>("code")) + (quantity?.let { if (0 <= it && it <= 10) emptyList<String>() else listOf<String>("quantity") } ?: emptyList<String>())
             """.trimMargin()
     }
 
@@ -64,7 +64,7 @@ class ValidateExtensionTest {
         ValidateExtension(FileExtension.Kotlin).extend(parsed.ir(), ast).validateOf("Order") shouldBe
             """
             |override fun validate(): List<String> =
-            |  if (!tag.validate()) listOf("tag") else emptyList<String>()
+            |  if (!tag.validate()) listOf<String>("tag") else emptyList<String>()
             """.trimMargin()
     }
 

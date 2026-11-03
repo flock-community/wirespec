@@ -110,6 +110,6 @@ class UnderscoreTypeNameGeneratorTest {
         )
         val kotlin = KotlinGenerator.generate(parent.convertToGenerator() as Element)
         assertTrue(kotlin.contains("_embedded = generator.generate"), kotlin)
-        assertTrue(kotlin.contains("listOf(\"_embedded\")"), kotlin)
+        assertTrue(kotlin.contains("listOf<String>(\"_embedded\")"), kotlin)
     }
 }
