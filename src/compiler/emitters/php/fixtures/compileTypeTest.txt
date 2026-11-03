@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Request implements Wirespec\Shape
+{
+    /**
+     * @param list<string> $params
+     * @param array<string, string> $headers
+     * @param array<string, list<?string>|null>|null $body
+     */
+    public function __construct(
+        public string $type,
+        public string $url,
+        public ?string $BODY_TYPE,
+        public array $params,
+        public array $headers,
+        public ?array $body,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Request;
+
+final class RequestGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Request
+    {
+        return new Request(type: $generator->generate([...$path, ...['type']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), url: $generator->generate([...$path, ...['url']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), BODY_TYPE: $generator->generate([...$path, ...['BODY_TYPE']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))), params: $generator->generate([...$path, ...['params']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))), headers: $generator->generate([...$path, ...['headers']], new Wirespec\GeneratorFieldDict(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))), body: $generator->generate([...$path, ...['body']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldDict(generate: fn (array $p1) => $generator->generate($p1, new Wirespec\GeneratorFieldNullable(generate: fn (array $p2) => $generator->generate($p2, new Wirespec\GeneratorFieldArray(generate: fn (array $p3) => $generator->generate($p3, new Wirespec\GeneratorFieldNullable(generate: fn (array $p4) => $generator->generate($p4, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))))))))))));
+    }
+}

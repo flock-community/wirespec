@@ -93,6 +93,7 @@ The compile mojo supports the following parameters:
   - `Kotlin`: Generate Kotlin code
   - `TypeScript`: Generate TypeScript code
   - `Python`: Generate Python code
+  - `Php`: Generate PHP code
   - `Wirespec`: Generate Wirespec code (useful for transformations)
   - `OpenAPIV2`: Generate OpenAPI v2 specifications
   - `OpenAPIV3`: Generate OpenAPI v3 specifications

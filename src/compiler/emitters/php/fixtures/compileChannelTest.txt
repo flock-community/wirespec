@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Channel\Queue;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+interface Sender
+{
+    public function queue(string $message): void;
+}
+
+interface Listener
+{
+    /**
+     * @param \Closure(string): null $handler
+     */
+    public function queue(\Closure $handler): void;
+}
+
+namespace Community\Flock\Wirespec\Generated\Channel;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+interface Queue extends Wirespec\Channel
+{
+}

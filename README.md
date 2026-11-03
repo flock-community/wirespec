@@ -44,7 +44,7 @@ endpoint GetTodo GET /todos/{id: Integer} -> {
 ```
 
 From the contract, Wirespec generates typesafe, dependency-free code for each side of the API: TypeScript for the
-frontend, and Kotlin, Java, Python, Rust or Scala for the backend. It can also publish the contract as OpenAPI or Avro,
+frontend, and Kotlin, Java, Python, PHP, Rust or Scala for the backend. It can also publish the contract as OpenAPI or Avro,
 and turn an existing OpenAPI, AsyncAPI, Avro or GraphQL specification into Wirespec.
 
 Wirespec is built around three ideas, each explained in the documentation:
