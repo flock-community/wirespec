@@ -16,9 +16,11 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.compile
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.Test
 
@@ -125,6 +127,34 @@ class TypeScriptEmitterTest {
         val typescript = EmitterFixtures.compileNestedValidationTest
 
         CompileNestedValidationTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileCapitalisedFieldValidationTest() {
+        // Field names that collide with a global (`Error`) or a type (`UserCompany`) must still be read from `obj`.
+        val source = """
+            |type BunqId {
+            |  id: Integer(1, _)
+            |}
+            |
+            |type UserCompany {
+            |  name: String
+            |}
+            |
+            |type Note {
+            |  `Id`: BunqId?,
+            |  `Error`: BunqId,
+            |  `UserCompany`: UserCompany?,
+            |  attachment: BunqId?
+            |}
+        """.trimMargin()
+
+        val compiler = compile(source)
+        compiler { TypeScriptEmitter() }.shouldBeRight() shouldContain """
+            |export function validateNote(obj: Note): string[] {
+            |  return [...obj.Id != null ? validateBunqId(obj.Id).map(e => `Id.${'$'}{e}`) : [] as string[], ...validateBunqId(obj.Error).map(e => `Error.${'$'}{e}`), ...obj.UserCompany != null ? validateUserCompany(obj.UserCompany).map(e => `UserCompany.${'$'}{e}`) : [] as string[], ...obj.attachment != null ? validateBunqId(obj.attachment).map(e => `attachment.${'$'}{e}`) : [] as string[]];
+            |}
+        """.trimMargin()
     }
 
     @Test
