@@ -98,7 +98,7 @@ This task compiles Wirespec definitions to one target language. Register a task 
 
 - `input`: DirectoryProperty - The input directory containing Wirespec files
 - `output`: DirectoryProperty - The output directory for generated code
-- `language`: Property&lt;Language&gt; - The target language (Java, Kotlin, TypeScript, Python, Rust, Scala, Wirespec, OpenAPIV2, OpenAPIV3, Avro)
+- `language`: Property&lt;Language&gt; - The target language (Java, Kotlin, TypeScript, Python, Php, Rust, Scala, Wirespec, OpenAPIV2, OpenAPIV3, Avro)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
 - `extensionClasses`: ListProperty&lt;Class&lt;\*&gt;&gt; - `IrExtension` classes applied to the intermediate representation before code generation when an emitter is an `IrEmitter`. The classes of the [extensions bundled with the plugin](./plugins.md#ir-extensions) ship with it and apply to the languages they support
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)

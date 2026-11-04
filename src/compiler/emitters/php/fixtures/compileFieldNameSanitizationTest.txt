@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class FieldNames implements Wirespec\Shape
+{
+    public function __construct(
+        public string $street,
+        public string $postalCode,
+        public string $snake_cased,
+        public string $houseNumber,
+        public string $xApiKey,
+        public string $hTTPVersion,
+        public string $_1stLine,
+        public string $BODY_TYPE,
+        public string $type,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\FieldNames;
+
+final class FieldNamesGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): FieldNames
+    {
+        return new FieldNames(street: $generator->generate([...$path, ...['street']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), postalCode: $generator->generate([...$path, ...['postalCode']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), snake_cased: $generator->generate([...$path, ...['snake_cased']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), houseNumber: $generator->generate([...$path, ...['house-number']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), xApiKey: $generator->generate([...$path, ...['x-api-key']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), hTTPVersion: $generator->generate([...$path, ...['HTTP-version']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), _1stLine: $generator->generate([...$path, ...['1st-line']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), BODY_TYPE: $generator->generate([...$path, ...['BODY_TYPE']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), type: $generator->generate([...$path, ...['type']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}

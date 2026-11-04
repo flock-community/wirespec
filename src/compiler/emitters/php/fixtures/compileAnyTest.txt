@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Message implements Wirespec\Shape
+{
+    /**
+     * @param list<mixed> $attachments
+     * @param array<string, mixed> $extensions
+     */
+    public function __construct(
+        public mixed $payload,
+        public mixed $metadata,
+        public array $attachments,
+        public array $extensions,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Message;
+
+final class MessageGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Message
+    {
+        return new Message(payload: $generator->generate([...$path, ...['payload']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), metadata: $generator->generate([...$path, ...['metadata']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))), attachments: $generator->generate([...$path, ...['attachments']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))), extensions: $generator->generate([...$path, ...['extensions']], new Wirespec\GeneratorFieldDict(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))));
+    }
+}

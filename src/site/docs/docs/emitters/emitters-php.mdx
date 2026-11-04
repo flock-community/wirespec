@@ -1,0 +1,187 @@
+---
+title: PHP Emitter
+slug: /emitters/php
+sidebar_position: 4.5
+wirespec:
+  source: todo.ws
+  language: Php
+  package: community.flock.todo
+  shared: true
+  ignoreDefaults: true
+---
+
+# PHP Emitter
+
+The PHP emitter generates readonly classes, backed enums and interfaces that only depend on the PHP standard library.
+It needs PHP 8.2 or newer. This page shows the code it generates for the [Todo example](./emitters.mdx#the-example).
+The PHP emitter does not support [default values](#default-values) yet, so the example is compiled with
+`--ignore-defaults`:
+
+```shell wirespec command
+```
+
+```text wirespec tree
+```
+
+The package becomes the root namespace, with every segment capitalized: `community.flock.todo` is
+`Community\Flock\Todo`, with `Model`, `Endpoint`, `Channel`, `Rpc`, `Client` and `Generator` below it. PHP cannot nest
+classes, so a type that another language declares inside an endpoint, channel or RPC moves to a namespace named after
+it: the `Request` of `UpdateTodo` is `UpdateTodo\Request`. Because such a file declares several classes, load the
+generated code with a classmap autoloader, such as Composer's `classmap`:
+
+```json
+{
+  "autoload": {
+    "classmap": ["src/generated/"]
+  }
+}
+```
+
+## Type
+
+A type becomes a `final readonly class` that implements `Wirespec\Shape`, with a promoted constructor property per
+field:
+
+```php wirespec file=Model/Todo.php
+```
+
+The fields map to PHP types as follows. PHP has no generic types, so the element type of a list or dict is written in
+the `@param` tag of the constructor, which static analysers such as PHPStan and Psalm read:
+
+| Wirespec               | PHP                                             |
+|------------------------|-------------------------------------------------|
+| `String`               | `string`                                        |
+| `Integer`, `Integer32` | `int`                                           |
+| `Number`, `Number32`   | `float`                                         |
+| `Boolean`              | `bool`                                          |
+| `Bytes`                | `string`                                        |
+| `T[]`                  | `array`, documented as `list<T>`                |
+| `{ T }`                | `array`, documented as `array<string, T>`       |
+| `T?`                   | `?T`                                            |
+
+`validate()` returns the paths of the values that are not valid. Only refined values and constrained fields, such as
+`String(/^[A-Z]+$/g)`, can be invalid, so `Todo` checks `id`. Values in lists, dicts and nullables are checked at any
+depth and reported as `tags[1]` or `labels[home]`, and a type that contains another type passes on its errors with the
+field name as a prefix:
+
+```php wirespec file=Model/TodoCreated.php
+```
+
+## Refined
+
+A refined type becomes a `final readonly class` that wraps the value and implements `Wirespec\Refined`. `validate()`
+checks the regular expression with `preg_match`, and `__toString()` returns the plain value. A refined `Integer` or
+`Number` checks its bounds instead.
+
+```php wirespec file=Model/TodoId.php
+```
+
+## Enum
+
+An enum becomes a string-backed `enum` that implements `Wirespec\Enum`. The value of every case is the value as it is
+written in Wirespec, so `Priority::from('HIGH')` reads it back:
+
+```php wirespec file=Model/Priority.php
+```
+
+## Union
+
+A union becomes an interface:
+
+```php wirespec file=Model/TodoEvent.php
+```
+
+Every member of the union implements it, as `TodoCreated` above does with `implements Wirespec\Shape, TodoEvent`, so
+`$event instanceof TodoEvent` holds for both members.
+
+## Endpoint
+
+An endpoint becomes one file that holds everything that is needed to send and receive the request and its responses:
+
+- **Request**: the path parameters, query parameters and request headers each get a class, `UpdateTodo\Path`,
+  `UpdateTodo\Queries` and `UpdateTodo\RequestHeaders`. `UpdateTodo\Request` combines them with the method and the
+  body. Its constructor takes all values as flat parameters.
+- **Responses**: every status code gets a response class, `UpdateTodo\Response200` and `UpdateTodo\Response404`, with
+  a class for its headers. Interfaces group them: `UpdateTodo\Response` for all of them, `Response2XX` and
+  `Response4XX` per status class, and `ResponseTodo` and `ResponseApiError` per body type.
+- **Handler and Call**: `UpdateTodo\Handler` is the interface the server implements, `UpdateTodo\Call` is the
+  interface the client implements.
+- **Serialization**: the class `UpdateTodo` has the static methods `toRawRequest`, `fromRawRequest`, `toRawResponse`
+  and `fromRawResponse`. They convert between the typed request and response and the `Wirespec\RawRequest` and
+  `Wirespec\RawResponse` that go over the wire, and delegate the serialization of the path, parameters, headers and
+  body to a `Wirespec\Serializer` or `Wirespec\Deserializer`. The type they pass along is a PHPDoc type string, such as
+  `'bool'`, `Todo::class` or `'list<' . Todo::class . '>'`, so a serializer knows what to build.
+
+```php wirespec file=Endpoint/UpdateTodo.php
+```
+
+## Channel
+
+A channel becomes an interface with a `Sender` to publish messages and a `Listener` to receive them:
+
+```php wirespec file=Channel/TodoEvents.php
+```
+
+## RPC
+
+An RPC becomes an interface with a `Service` to implement. Because `CompleteTodo` declares an error, the service
+returns a `Response` that is either a `Result` or an `Error`. Without an error, it returns the result type directly:
+
+```php wirespec file=Rpc/CompleteTodo.php
+```
+
+## Client
+
+For every endpoint, a client implements its `Call` interface. It builds the `Request`, converts it with `toRawRequest`,
+sends it with a `Wirespec\Transportation` and converts the answer with `fromRawResponse`:
+
+```php wirespec file=Client/UpdateTodoClient.php
+```
+
+`Client` implements the `Call` interface of every endpoint in the specification, so one instance can call the whole
+API:
+
+```php wirespec file=Client.php
+```
+
+## Generator
+
+For every type, refined type, enum and union, a generator builds an instance with values from a `Wirespec\Generator`.
+It passes the path to the field and a description of the value it needs, such as the regular expression of a refined
+type. This is how you create test data that matches the specification:
+
+```php wirespec file=Generator/TodoIdGenerator.php
+```
+
+## Shared
+
+`Wirespec.php` is the same for every specification. It declares, in the `Wirespec` namespace:
+
+| Declarations                                                  | Purpose                                                      |
+|---------------------------------------------------------------|--------------------------------------------------------------|
+| `Model`, `Shape`, `Enum`, `Refined`                           | Implemented by the generated types, enums and refined types  |
+| `Endpoint`, `Channel`, `Rpc`, `Handler`, `Call`               | Implemented by the generated endpoints, channels and RPCs    |
+| `Method`, `Request`, `Response`, `Path`, `Queries`, `Headers` | The typed request and response of an endpoint                |
+| `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters    |
+| `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them       |
+| `Generator`, `GeneratorField` and its implementations         | Generate values for the generators                           |
+
+<details>
+  <summary>The complete Wirespec.php</summary>
+
+```php wirespec file=Wirespec.php
+```
+
+</details>
+
+## Default values
+
+The PHP emitter does not support [default values](../language/types.mdx#default-values) yet. Without
+`--ignore-defaults`, compiling the example to PHP fails, and the error names the fields that have a default:
+
+```text wirespec error ignoreDefaults=false
+```
+
+To generate PHP anyway, leave the defaults out with the
+[ignore defaults option](../language/types.mdx#ignoring-defaults), as this page does. A
+[conversion](../converters/converters.md) from OpenAPI or Avro to PHP does not fail: it leaves the defaults out.

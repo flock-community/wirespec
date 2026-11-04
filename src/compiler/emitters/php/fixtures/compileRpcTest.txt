@@ -1,0 +1,107 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class User implements Wirespec\Shape
+{
+    public function __construct(
+        public string $name,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Rpc\GetUser;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\User;
+
+interface Response
+{
+}
+
+final readonly class Result implements Response
+{
+    public function __construct(
+        public User $value,
+    ) {
+    }
+}
+
+final readonly class Error implements Response
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+}
+
+interface Service
+{
+    public function getUser(string $id): Response;
+}
+
+namespace Community\Flock\Wirespec\Generated\Rpc;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\User;
+
+interface GetUser extends Wirespec\Rpc
+{
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Rpc\Ping;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+interface Service
+{
+    public function ping(): string;
+}
+
+namespace Community\Flock\Wirespec\Generated\Rpc;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+interface Ping extends Wirespec\Rpc
+{
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\User;
+
+final class UserGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): User
+    {
+        return new User(name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}

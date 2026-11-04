@@ -1,0 +1,484 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Endpoint\PutTodo;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Token;
+use Community\Flock\Wirespec\Generated\Model\PotentialTodoDto;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+use Community\Flock\Wirespec\Generated\Model\Error;
+
+final readonly class Path implements Wirespec\Path
+{
+    public function __construct(
+        public string $id,
+    ) {
+    }
+}
+
+final readonly class Queries implements Wirespec\Queries
+{
+    public function __construct(
+        public bool $done,
+        public ?string $name,
+    ) {
+    }
+}
+
+final readonly class RequestHeaders implements Wirespec\Request\Headers
+{
+    public function __construct(
+        public Token $token,
+        public ?Token $refreshToken,
+    ) {
+    }
+}
+
+/**
+ * @implements Wirespec\Request<PotentialTodoDto>
+ */
+final readonly class Request implements Wirespec\Request
+{
+    public Path $path;
+    public Wirespec\Method $method;
+    public Queries $queries;
+    public RequestHeaders $headers;
+    public PotentialTodoDto $body;
+
+    public function __construct(
+        string $id,
+        bool $done,
+        ?string $name,
+        Token $token,
+        ?Token $refreshToken,
+        PotentialTodoDto $body,
+    ) {
+        $this->path = new Path(id: $id);
+        $this->method = Wirespec\Method::PUT;
+        $this->queries = new Queries(done: $done, name: $name);
+        $this->headers = new RequestHeaders(token: $token, refreshToken: $refreshToken);
+        $this->body = $body;
+    }
+}
+
+/**
+ * @template T
+ * @extends Wirespec\Response<T>
+ */
+interface Response extends Wirespec\Response
+{
+}
+
+/**
+ * @template T
+ * @extends Response<T>
+ */
+interface Response2XX extends Response
+{
+}
+
+/**
+ * @template T
+ * @extends Response<T>
+ */
+interface Response5XX extends Response
+{
+}
+
+/**
+ * @extends Response<TodoDto>
+ */
+interface ResponseTodoDto extends Response
+{
+}
+
+/**
+ * @extends Response<Error>
+ */
+interface ResponseError extends Response
+{
+}
+
+final readonly class Response200Headers implements Wirespec\Response\Headers
+{
+}
+
+/**
+ * @implements Response2XX<TodoDto>
+ */
+final readonly class Response200 implements Response2XX, ResponseTodoDto
+{
+    public int $status;
+    public Response200Headers $headers;
+    public TodoDto $body;
+
+    public function __construct(TodoDto $body)
+    {
+        $this->status = 200;
+        $this->headers = new Response200Headers();
+        $this->body = $body;
+    }
+}
+
+final readonly class Response201Headers implements Wirespec\Response\Headers
+{
+    public function __construct(
+        public Token $token,
+        public ?Token $refreshToken,
+    ) {
+    }
+}
+
+/**
+ * @implements Response2XX<TodoDto>
+ */
+final readonly class Response201 implements Response2XX, ResponseTodoDto
+{
+    public int $status;
+    public Response201Headers $headers;
+    public TodoDto $body;
+
+    public function __construct(Token $token, ?Token $refreshToken, TodoDto $body)
+    {
+        $this->status = 201;
+        $this->headers = new Response201Headers(token: $token, refreshToken: $refreshToken);
+        $this->body = $body;
+    }
+}
+
+final readonly class Response500Headers implements Wirespec\Response\Headers
+{
+}
+
+/**
+ * @implements Response5XX<Error>
+ */
+final readonly class Response500 implements Response5XX, ResponseError
+{
+    public int $status;
+    public Response500Headers $headers;
+    public Error $body;
+
+    public function __construct(Error $body)
+    {
+        $this->status = 500;
+        $this->headers = new Response500Headers();
+        $this->body = $body;
+    }
+}
+
+interface Handler extends Wirespec\Handler
+{
+    public function putTodo(Request $request): Response;
+}
+
+interface Call extends Wirespec\Call
+{
+    public function putTodo(
+        string $id,
+        bool $done,
+        ?string $name,
+        Token $token,
+        ?Token $refreshToken,
+        PotentialTodoDto $body,
+    ): Response;
+}
+
+namespace Community\Flock\Wirespec\Generated\Endpoint;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Token;
+use Community\Flock\Wirespec\Generated\Model\PotentialTodoDto;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+use Community\Flock\Wirespec\Generated\Model\Error;
+
+final class PutTodo implements Wirespec\Endpoint
+{
+    public static function toRawRequest(Wirespec\Serializer $serialization, PutTodo\Request $request): Wirespec\RawRequest
+    {
+        return new Wirespec\RawRequest(method: $request->method->value, path: ['todos', $serialization->serializePath($request->path->id, 'string')], queries: ['done' => $serialization->serializeParam($request->queries->done, 'bool'), 'name' => ($request->queries->name !== null ? $serialization->serializeParam($request->queries->name, 'string') : [])], headers: ['token' => $serialization->serializeParam($request->headers->token, Token::class), 'Refresh-Token' => ($request->headers->refreshToken !== null ? $serialization->serializeParam($request->headers->refreshToken, Token::class) : [])], body: $serialization->serializeBody($request->body, PotentialTodoDto::class));
+    }
+
+    public static function fromRawRequest(
+        Wirespec\Deserializer $serialization,
+        Wirespec\RawRequest $request,
+    ): PutTodo\Request {
+        return new PutTodo\Request(id: $serialization->deserializePath($request->path[1], 'string'), done: (($request->queries['done'] ?? null) !== null ? $serialization->deserializeParam(($request->queries['done'] ?? null), 'bool') : throw new \Exception('Param done cannot be null')), name: (($request->queries['name'] ?? null) !== null ? $serialization->deserializeParam(($request->queries['name'] ?? null), 'string') : null), token: ((\array_change_key_case($request->headers)['token'] ?? null) !== null ? $serialization->deserializeParam((\array_change_key_case($request->headers)['token'] ?? null), Token::class) : throw new \Exception('Param token cannot be null')), refreshToken: ((\array_change_key_case($request->headers)['refresh-token'] ?? null) !== null ? $serialization->deserializeParam((\array_change_key_case($request->headers)['refresh-token'] ?? null), Token::class) : null), body: ($request->body !== null ? $serialization->deserializeBody($request->body, PotentialTodoDto::class) : throw new \Exception('body is null')));
+    }
+
+    public static function toRawResponse(
+        Wirespec\Serializer $serialization,
+        PutTodo\Response $response,
+    ): Wirespec\RawResponse {
+        return match (true) {
+            $response instanceof PutTodo\Response200 => new Wirespec\RawResponse(statusCode: $response->status, headers: [], body: $serialization->serializeBody($response->body, TodoDto::class)),
+            $response instanceof PutTodo\Response201 => new Wirespec\RawResponse(statusCode: $response->status, headers: ['token' => $serialization->serializeParam($response->headers->token, Token::class), 'refreshToken' => ($response->headers->refreshToken !== null ? $serialization->serializeParam($response->headers->refreshToken, Token::class) : [])], body: $serialization->serializeBody($response->body, TodoDto::class)),
+            $response instanceof PutTodo\Response500 => new Wirespec\RawResponse(statusCode: $response->status, headers: [], body: $serialization->serializeBody($response->body, Error::class)),
+            default => throw new \Exception(('Cannot match response with status: ' . $response->status)),
+        };
+    }
+
+    public static function fromRawResponse(
+        Wirespec\Deserializer $serialization,
+        Wirespec\RawResponse $response,
+    ): PutTodo\Response {
+        return match ($response->statusCode) {
+            200 => new PutTodo\Response200(body: ($response->body !== null ? $serialization->deserializeBody($response->body, TodoDto::class) : throw new \Exception('body is null'))),
+            201 => new PutTodo\Response201(token: ((\array_change_key_case($response->headers)['token'] ?? null) !== null ? $serialization->deserializeParam((\array_change_key_case($response->headers)['token'] ?? null), Token::class) : throw new \Exception('Param token cannot be null')), refreshToken: ((\array_change_key_case($response->headers)['refreshtoken'] ?? null) !== null ? $serialization->deserializeParam((\array_change_key_case($response->headers)['refreshtoken'] ?? null), Token::class) : null), body: ($response->body !== null ? $serialization->deserializeBody($response->body, TodoDto::class) : throw new \Exception('body is null'))),
+            500 => new PutTodo\Response500(body: ($response->body !== null ? $serialization->deserializeBody($response->body, Error::class) : throw new \Exception('body is null'))),
+            default => throw new \Exception(('Cannot match response with status: ' . $response->statusCode)),
+        };
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class PotentialTodoDto implements Wirespec\Shape
+{
+    public function __construct(
+        public string $name,
+        public bool $done,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Token implements Wirespec\Shape
+{
+    public function __construct(
+        public string $iss,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class TodoDto implements Wirespec\Shape
+{
+    public function __construct(
+        public string $id,
+        public string $name,
+        public bool $done,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Error implements Wirespec\Shape
+{
+    public function __construct(
+        public int $code,
+        public string $description,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Client;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Endpoint\PutTodo;
+use Community\Flock\Wirespec\Generated\Model\Token;
+use Community\Flock\Wirespec\Generated\Model\PotentialTodoDto;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+use Community\Flock\Wirespec\Generated\Model\Error;
+
+final readonly class PutTodoClient implements PutTodo\Call
+{
+    public function __construct(
+        public Wirespec\Serialization $serialization,
+        public Wirespec\Transportation $transportation,
+    ) {
+    }
+
+    public function putTodo(
+        string $id,
+        bool $done,
+        ?string $name,
+        Token $token,
+        ?Token $refreshToken,
+        PotentialTodoDto $body,
+    ): PutTodo\Response {
+        $request = new PutTodo\Request(id: $id, done: $done, name: $name, token: $token, refreshToken: $refreshToken, body: $body);
+        $rawRequest = PutTodo::toRawRequest($this->serialization, $request);
+        $rawResponse = $this->transportation->transport($rawRequest);
+        return PutTodo::fromRawResponse($this->serialization, $rawResponse);
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\PotentialTodoDto;
+
+final class PotentialTodoDtoGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): PotentialTodoDto
+    {
+        return new PotentialTodoDto(name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), done: $generator->generate([...$path, ...['done']], new Wirespec\GeneratorFieldBoolean(annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Token;
+
+final class TokenGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Token
+    {
+        return new Token(iss: $generator->generate([...$path, ...['iss']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+
+final class TodoDtoGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TodoDto
+    {
+        return new TodoDto(id: $generator->generate([...$path, ...['id']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), done: $generator->generate([...$path, ...['done']], new Wirespec\GeneratorFieldBoolean(annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Error;
+
+final class ErrorGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Error
+    {
+        return new Error(code: $generator->generate([...$path, ...['code']], new Wirespec\GeneratorFieldInteger64(min: null, max: null, annotations: [])), description: $generator->generate([...$path, ...['description']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Endpoint\PutTodo;
+use Community\Flock\Wirespec\Generated\Client\PutTodoClient;
+use Community\Flock\Wirespec\Generated\Model\Token;
+use Community\Flock\Wirespec\Generated\Model\PotentialTodoDto;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+use Community\Flock\Wirespec\Generated\Model\Error;
+
+final readonly class Client implements PutTodo\Call
+{
+    public function __construct(
+        public Wirespec\Serialization $serialization,
+        public Wirespec\Transportation $transportation,
+    ) {
+    }
+
+    public function putTodo(
+        string $id,
+        bool $done,
+        ?string $name,
+        Token $token,
+        ?Token $refreshToken,
+        PotentialTodoDto $body,
+    ): PutTodo\Response {
+        return (new PutTodoClient(serialization: $this->serialization, transportation: $this->transportation))->putTodo($id, $done, $name, $token, $refreshToken, $body);
+    }
+}
