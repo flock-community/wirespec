@@ -31,7 +31,7 @@ public class ParserDefinition : ParserDefinition {
 
     override fun createParser(project: Project): Parser = Parser()
 
-    override fun getFileNodeType(): IFileElementType = IFileElementType(Language)
+    override fun getFileNodeType(): IFileElementType = FILE
 
     override fun createFile(viewProvider: FileViewProvider): File = File(viewProvider)
 
@@ -45,6 +45,11 @@ public class ParserDefinition : ParserDefinition {
         is CustomTypeRef -> CustomTypeElementRef(node)
         is Body -> BodyElement(node)
         else -> error("Cannot create type")
+    }
+
+    private companion object {
+        // Every IElementType registers itself globally and the registry is capped at Short.MAX_VALUE.
+        val FILE = IFileElementType(Language)
     }
 }
 

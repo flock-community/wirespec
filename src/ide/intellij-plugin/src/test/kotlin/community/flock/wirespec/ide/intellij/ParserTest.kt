@@ -6,6 +6,7 @@ import community.flock.wirespec.ide.intellij.parser.CustomTypeElementDef
 import community.flock.wirespec.ide.intellij.parser.CustomTypeElementRef
 import community.flock.wirespec.ide.intellij.parser.EndpointDefElement
 import community.flock.wirespec.ide.intellij.parser.Parser
+import community.flock.wirespec.ide.intellij.parser.ParserDefinition
 
 class ParserTest : BasePlatformTestCase() {
 
@@ -14,6 +15,13 @@ class ParserTest : BasePlatformTestCase() {
 
         assertEquals(FileType, file.fileType)
         assertInstanceOf(file, File::class.java)
+    }
+
+    fun testFileNodeTypeIsASingleRegisteredElementType() {
+        val file = myFixture.configureByText("todo.ws", "type TodoDto { description: String }")
+
+        assertSame(file.node.elementType, ParserDefinition().fileNodeType)
+        assertSame(ParserDefinition().fileNodeType, ParserDefinition().fileNodeType)
     }
 
     fun testParsesEveryDefinitionKind() {
