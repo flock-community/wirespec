@@ -137,10 +137,16 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Subscriptions get no client`() {
-        assertFailsWith<ClassNotFoundException> {
-            Class.forName("community.flock.wirespec.integration.graphql.kotlin.generated.graphql.TodoAddedClient")
+    fun `Only rpcs marked as a query or a mutation get a client`() {
+        listOf("TodoAddedClient", "CountTodosClient").forEach { client ->
+            assertFailsWith<ClassNotFoundException> {
+                Class.forName("community.flock.wirespec.integration.graphql.kotlin.generated.graphql.$client")
+            }
         }
+        assertEquals(
+            listOf("QueryTodo", "Todos", "AddTodo", "CompleteTodo", "ClearTodos").map { "$it.Service" },
+            KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
+        )
     }
 
     @Test

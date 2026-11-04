@@ -1,7 +1,7 @@
 # GraphQL client integration
 
 Ships the `GraphQLClientExtension`, an IR extension that generates a typed Java or Kotlin GraphQL client for the
-query and mutation rpcs of a contract, such as the rpcs the GraphQL converter writes for a schema. The generated
+rpcs marked `@GraphQLQuery` or `@GraphQLMutation`, such as the rpcs the GraphQL converter writes for a schema. The generated
 client is dependency-free: it sends the operation through `Wirespec.Transportation` and `Wirespec.Serialization`.
 
 The extension is bundled with every Wirespec plugin as `GraphQLClient`. See the

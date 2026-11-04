@@ -13,8 +13,10 @@ It works for the **Java** and **Kotlin** targets.
 
 ## What it does
 
-Every rpc becomes a GraphQL operation: an rpc marked `@GraphQLMutation` is a mutation, one marked `@GraphQLSubscription`
-is left out, and any other rpc is a query. For each of them the extension adds, in the `graphql` package:
+Every rpc marked `@GraphQLQuery` or `@GraphQLMutation`, the annotations the [GraphQL converter](../converters/graphql.md)
+puts on the fields of `Query` and `Mutation`, becomes a GraphQL operation. Any other rpc gets no client: a subscription,
+and an rpc without a GraphQL annotation, so a contract can mix GraphQL operations with rpcs served another way. For each
+operation the extension adds, in the `graphql` package:
 
 - `<Rpc>Client`, which implements the `Service` of the rpc. It posts the GraphQL document of the rpc to `/graphql` with
   the parameters as its variables, and reads the result from the response.
@@ -171,6 +173,8 @@ Make sure to use the latest version, found here:
 ## Limitations
 
 - Subscriptions get no client, because they are not a single request and response.
+- An rpc you write yourself needs `@GraphQLQuery` or `@GraphQLMutation` to get a client. Mark it with `@GraphQLName`
+  when the field it calls is not named after the rpc, such as `@GraphQLName("todo")` on `rpc QueryTodo`.
 - Arguments of nested fields are not passed: a field that requires one is left out or fails the build, as described
   in [The query](#the-query).
 - The query selects whole types; there is no way yet to select fewer fields than the type has.

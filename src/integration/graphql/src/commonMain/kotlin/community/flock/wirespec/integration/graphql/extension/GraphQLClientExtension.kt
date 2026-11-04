@@ -41,9 +41,9 @@ import community.flock.wirespec.converter.graphql.GraphQLOperations
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 
 /**
- * Generates a typed GraphQL client for every `rpc` that is a query or a mutation, as the GraphQL converter reads and
- * writes them: an rpc marked `@GraphQLMutation` is a mutation, one marked `@GraphQLSubscription` is left out, and any
- * other rpc is a query.
+ * Generates a typed GraphQL client for every `rpc` marked `@GraphQLQuery` or `@GraphQLMutation`, as the GraphQL
+ * converter marks the fields of the root operation types. Any other rpc, a subscription or one without a GraphQL
+ * annotation, gets no client.
  *
  * ```kotlin
  * val client = GraphQLClient(serialization, transportation)
@@ -88,6 +88,7 @@ public class GraphQLClientExtension(
             val definitions = ast.modules.flatMap { it.statements }
             val operations = GraphQLOperations(definitions)
             definitions.filterIsInstance<Rpc>()
+                .filter { rpc -> rpc.annotations.any { it.name in OPERATIONS } }
                 .mapNotNull { rpc -> operations.document(rpc, RESULT)?.let { Operation(rpc, it, ir.serviceOf(rpc)) } }
                 .takeIf { it.isNotEmpty() }
                 ?.let { ir + Client(dialect, it).files() }
@@ -330,6 +331,7 @@ public class GraphQLClientExtension(
         public const val GRAPHQL_ERROR: String = "GraphQLError"
 
         private const val GRAPHQL = "graphql"
+        private val OPERATIONS = setOf("GraphQLQuery", "GraphQLMutation")
         private const val GRAPHQL_CLIENT = "GraphQLClient"
         private const val RPC = "Wirespec.Rpc"
         private const val SERVICE = "Service"

@@ -51,5 +51,7 @@ rpc ClearTodos {} -> Unit
 @GraphQLSubscription
 rpc TodoAdded {} -> Todo
 
+rpc CountTodos {} -> Integer
+
 @GraphQLBuiltIn
 type ID = String
