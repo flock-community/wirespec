@@ -84,6 +84,7 @@ public enum class Emitters {
 @JsExport
 public enum class Extensions(internal val extension: Extension) {
     AVRO(Extension.Avro),
+    GRAPHQL_CLIENT(Extension.GraphQLClient),
     JACKSON(Extension.Jackson),
     JVM_BUILDER(Extension.JvmBuilder),
     KOTEST_DSL(Extension.KotestDsl),

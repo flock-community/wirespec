@@ -46,6 +46,7 @@ include(
     "src:converter:graphql",
     "src:converter:openapi",
     "src:integration:avro",
+    "src:integration:graphql",
     "src:integration:jackson",
     "src:integration:jvm",
     "src:integration:kotest",

@@ -123,6 +123,16 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
         }.any { it.isJson() }
     }
 
+    /** The GraphQL name of a type, enum, union or scalar. */
+    fun graphQLName(definition: String): String = names[definition] ?: definition
+
+    /** The root operation an rpc is a field of: an rpc without an operation annotation is a query. */
+    fun operation(rpc: Rpc): Operation = Operation.entries.firstOrNull { operation -> rpc.annotations.has(operation.annotationName) } ?: Operation.QUERY
+
+    fun fieldDefinition(rpc: Rpc): FieldDefinition = rpc.toFieldDefinition()
+
+    fun fieldDefinition(field: Field): FieldDefinition = field.toFieldDefinition()
+
     fun convert(): Document = Document(
         definitions.flatMap { listOfNotNull(it.convert(), (it as? Type)?.toInputCopy()) } +
             listOfNotNull(ScalarTypeDefinition(null, JSON, emptyList(), false).takeIf { usesJson && JSON !in names.values }),
@@ -233,11 +243,12 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
         InputObjectTypeDefinition(description(), name, emptyList(), shape.fields.map { it.toInputValue() }, false)
     }
 
-    /** An rpc without an operation annotation does not come from GraphQL, and is a query. */
-    private fun Rpc.rootType(): Pair<String, String?> = Operation.entries
-        .firstNotNullOfOrNull { operation -> annotations.firstOrNull { it.name == operation.annotationName }?.let { operation to it } }
-        ?.let { (operation, annotation) -> (annotation.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to annotation.single("extend") }
-        ?: (Operation.QUERY.defaultTypeName to null)
+    /** The root operation type an rpc is a field of, and the `extend` block it is in. */
+    private fun Rpc.rootType(): Pair<String, String?> = operation(this).let { operation ->
+        annotations.firstOrNull { it.name == operation.annotationName }
+            ?.let { (it.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to it.single("extend") }
+            ?: (operation.defaultTypeName to null)
+    }
 
     private fun Definition.graphQLName(): String = annotations.single(EXTEND) ?: annotations.single(NAME) ?: identifier.value
 

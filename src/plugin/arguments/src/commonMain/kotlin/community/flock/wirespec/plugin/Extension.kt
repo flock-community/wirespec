@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.integration.avro.extension.AvroExtension
+import community.flock.wirespec.integration.graphql.extension.GraphQLClientExtension
 import community.flock.wirespec.integration.jackson.extension.JacksonExtension
 import community.flock.wirespec.integration.jvm.extension.JvmBuilderExtension
 import community.flock.wirespec.integration.kotest.extension.KotestDslExtension
@@ -18,6 +19,7 @@ import kotlin.reflect.KClass
 
 public enum class Extension(private val type: KClass<out IrExtension>, private val languages: Set<FileExtension>) {
     Avro(AvroExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
+    GraphQLClient(GraphQLClientExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
     Jackson(JacksonExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
     JvmBuilder(JvmBuilderExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala)),
     KotestDsl(KotestDslExtension::class, setOf(FileExtension.Kotlin)),
@@ -42,6 +44,7 @@ public enum class Extension(private val type: KClass<out IrExtension>, private v
 public fun Extension.toIrExtension(packageName: PackageName, language: FileExtension): IrExtension? = takeIf { it.supports(language) }?.let {
     when (it) {
         Extension.Avro -> AvroExtension(packageName, language)
+        Extension.GraphQLClient -> GraphQLClientExtension(packageName, language)
         Extension.Jackson -> JacksonExtension()
         Extension.JvmBuilder -> JvmBuilderExtension(language)
         Extension.KotestDsl -> KotestDslExtension(packageName)

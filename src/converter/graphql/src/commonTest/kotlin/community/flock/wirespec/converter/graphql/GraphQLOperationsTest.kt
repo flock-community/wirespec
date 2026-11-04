@@ -1,0 +1,199 @@
+package community.flock.wirespec.converter.graphql
+
+import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.ParseContext
+import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
+import community.flock.wirespec.compiler.utils.NoLogger
+import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.emitters.wirespec.WirespecEmitter
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import kotlin.test.Test
+
+class GraphQLOperationsTest {
+
+    @Test
+    fun selectsEveryFieldOfTheResult() {
+        """
+            |type Todo {
+            |  id: ID!
+            |  title: String!
+            |  owner: User!
+            |  tags: [String!]
+            |}
+            |
+            |type User {
+            |  name: String!
+            |}
+            |
+            |type Query {
+            |  todo(id: ID!): Todo
+            |  todos: [Todo!]!
+            |  count: Int!
+            |}
+        """.trimMargin().fromGraphQL().documents() shouldBe mapOf(
+            "QueryTodo" to "query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id title owner { name } tags } }",
+            "Todos" to "query Todos { result: todos { id title owner { name } tags } }",
+            "Count" to "query Count { result: count }",
+        )
+    }
+
+    @Test
+    fun passesArgumentsAsVariablesWithTheirDefaults() {
+        """
+            |enum Order { ASC DESC }
+            |
+            |input Filter {
+            |  done: Boolean
+            |}
+            |
+            |type Todo {
+            |  id: ID!
+            |}
+            |
+            |type Query {
+            |  search(filter: Filter!, first: Int = 10, order: Order = ASC): [Todo!]!
+            |}
+            |
+            |type Mutation {
+            |  complete(id: ID!): Todo!
+            |}
+            |
+            |type Subscription {
+            |  completed: Todo!
+            |}
+        """.trimMargin().fromGraphQL().documents() shouldBe mapOf(
+            "Search" to "query Search(\$filter: Filter!, \$first: Int = 10, \$order: Order = ASC) " +
+                "{ result: search(filter: \$filter, first: \$first, order: \$order) { id } }",
+            "Complete" to "mutation Complete(\$id: ID!) { result: complete(id: \$id) { id } }",
+        )
+    }
+
+    @Test
+    fun selectsTheMembersOfUnionsAndInterfaces() {
+        """
+            |interface Node {
+            |  id: ID!
+            |}
+            |
+            |type User implements Node {
+            |  id: ID!
+            |  email: String
+            |}
+            |
+            |type Post implements Node {
+            |  id: ID!
+            |  title: String!
+            |}
+            |
+            |union SearchResult = User | Post
+            |
+            |type Query {
+            |  node(id: ID!): Node
+            |  search(text: String!): [SearchResult!]!
+            |}
+        """.trimMargin().fromGraphQL().documents() shouldBe mapOf(
+            "QueryNode" to "query QueryNode(\$id: ID!) { result: node(id: \$id) { __typename ... on User { id email } ... on Post { id title } } }",
+            "Search" to "query Search(\$text: String!) " +
+                "{ result: search(text: \$text) { __typename ... on User { id email } ... on Post { id title } } }",
+        )
+    }
+
+    @Test
+    fun usesTheGraphQLNamesOfRenamedTypes() {
+        """
+            |type _Service {
+            |  sdl: String
+            |}
+            |
+            |union Entity = _Service
+            |
+            |type Query {
+            |  entities: [Entity]!
+            |}
+        """.trimMargin().fromGraphQL().documents() shouldBe mapOf(
+            "Entities" to "query Entities { result: entities { __typename ... on _Service { sdl } } }",
+        )
+    }
+
+    @Test
+    fun leavesOutNullableFieldsThatCannotBeSelected() {
+        """
+            |type Todo {
+            |  id: ID!
+            |  parent: Todo
+            |  owner: User!
+            |  comments(first: Int!): [String!]
+            |}
+            |
+            |type User {
+            |  name: String!
+            |  todos: [Todo!]
+            |}
+            |
+            |type Query {
+            |  todo(id: ID!): Todo
+            |}
+        """.trimMargin().fromGraphQL().documents() shouldBe mapOf(
+            "QueryTodo" to "query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id owner { name } } }",
+        )
+    }
+
+    @Test
+    fun failsOnARequiredFieldThatRefersBack() {
+        shouldThrow<IllegalStateException> {
+            """
+                |type Todo {
+                |  id: ID!
+                |  owner: User!
+                |}
+                |
+                |type User {
+                |  todos: [Todo!]!
+                |}
+                |
+                |type Query {
+                |  todo(id: ID!): Todo
+                |}
+            """.trimMargin().fromGraphQL().documents()
+        }.message shouldContain "rpc QueryTodo: field owner.todos of its result refers back to a type it is selected in"
+    }
+
+    @Test
+    fun treatsAnRpcThatDoesNotComeFromGraphQLAsAQuery() {
+        """
+            |type Todo {
+            |  id: String,
+            |  done: Boolean
+            |}
+            |
+            |rpc SearchTodos {
+            |  query: String,
+            |  limit: Integer?
+            |} -> Todo[]
+        """.trimMargin().parsed().documents() shouldBe mapOf(
+            "SearchTodos" to "query SearchTodos(\$query: String!, \$limit: Int) { result: searchTodos(query: \$query, limit: \$limit) { id done } }",
+        )
+    }
+
+    private fun String.fromGraphQL(): List<Definition> = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
+        .let { WirespecEmitter().emit(it, noLogger).single().result }
+        .parsed()
+
+    private fun String.parsed(): List<Definition> = object : ParseContext, NoLogger {
+        override val spec = WirespecSpec
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("schema.ws"), this)))
+        .shouldBeRight()
+        .modules.flatMap { it.statements }
+
+    private fun List<Definition>.documents(): Map<String, String> = GraphQLOperations(this).let { operations ->
+        filterIsInstance<Rpc>().mapNotNull { rpc -> operations.document(rpc, "result")?.let { rpc.identifier.value to it } }.toMap()
+    }
+}
