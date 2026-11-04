@@ -27,6 +27,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient as JavaGraphQLClient
 import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLRequests as JavaRequests
+import community.flock.wirespec.integration.graphql.java.generated.graphql.TodoResult as JavaTodoResult
+import community.flock.wirespec.integration.graphql.java.generated.graphql.UserResult as JavaUserResult
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority as JavaPriority
 import community.flock.wirespec.integration.graphql.java.generated.model.Todo as JavaTodo
@@ -36,6 +38,8 @@ import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteT
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient as KotlinGraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLRequests as KotlinRequests
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoClient as KotlinQueryTodoClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.TodoResult as KotlinTodoResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.UserResult as KotlinUserResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo as KotlinNewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority as KotlinPriority
@@ -191,6 +195,51 @@ class GraphQLClientExtensionTest {
 
         assertEquals("query Todos(\$done: Boolean) { result: todos(done: \$done) { id owner { name } } }", request.query())
         assertEquals(Optional.of(true), request.variables().done())
+    }
+
+    @Test
+    fun `Kotlin client reads the selected fields into the partial result`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":{"title":"Groceries","owner":{"name":"Ann"}}}}""")
+
+        val todo: KotlinTodoResult? = server.client().queryTodo(KotlinID("1")) {
+            title()
+            owner { name() }
+        }
+
+        assertEquals(KotlinTodoResult(id = null, title = "Groceries", done = null, priority = null, owner = KotlinUserResult(name = "Ann")), todo)
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { title owner { name } } }", server.json()["query"])
+    }
+
+    @Test
+    fun `Kotlin client reads a union into the partial result with its typename`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":[{"__typename":"User","name":"Ann"},{"__typename":"Todo","title":"Milk"}]}}""")
+
+        val results = server.client().search("a") {
+            onTodo { title() }
+            onUser { name() }
+        }
+
+        assertEquals(listOf("User" to "Ann", "Todo" to "Milk"), results.map { it.__typename to (it.name ?: it.title) })
+    }
+
+    @Test
+    fun `Kotlin client fails a selected call on GraphQL errors, also with an error type`() {
+        val error = assertFailsWith<IllegalStateException> {
+            runBlocking { KotlinServer("""{"errors":[{"message":"Unknown todo"}]}""").client().completeTodo(KotlinID("3")) { id() } }
+        }
+        assertEquals("GraphQL request failed: [TodoError(message=Unknown todo)]", error.message)
+    }
+
+    @Test
+    fun `Java client reads the selected fields into the partial result`() {
+        val server = JavaServer("""{"data":{"result":[{"id":"1","owner":{"name":"Ann"}}]}}""")
+
+        val todos: List<JavaTodoResult> = server.client().todos(Optional.empty()) { todo -> todo.id().owner { owner -> owner.name() } }.join()
+
+        assertEquals(
+            listOf(JavaTodoResult(Optional.of(JavaID("1")), Optional.empty(), Optional.empty(), Optional.empty(), Optional.of(JavaUserResult(Optional.of("Ann"))))),
+            todos,
+        )
     }
 
     @Test

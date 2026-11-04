@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.ir.BinaryOp
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.Function
 import community.flock.wirespec.compiler.core.ir.FunctionCall
@@ -19,6 +20,7 @@ import community.flock.wirespec.compiler.core.ir.StructBuilder
 import community.flock.wirespec.compiler.core.ir.Type
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.Visibility
+import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
 import community.flock.wirespec.compiler.core.ir.struct
 import community.flock.wirespec.compiler.core.parse.ast.Channel
@@ -73,10 +75,55 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
             function(TO_GRAPHQL) {
                 visibility(Visibility.PUBLIC)
                 returnType(Type.String)
-                returns(concat(Literal(if (model is Union) "{ __typename" else "{", Type.String), FieldCall(field = FIELDS), Literal(" }", Type.String)))
+                returns(concat(Literal(if (model is Union) "{ $TYPENAME" else "{", Type.String), FieldCall(field = FIELDS), Literal(" }", Type.String)))
             }
         }
     }
+
+    /** A partial result: its struct, and the models its fields refer to, which its file imports. */
+    class Result(val struct: Struct, val models: List<String>)
+
+    /**
+     * The result of every type and union that [results] return, with every field nullable: a field that was not
+     * selected is null. A field of a type or union is its result, and a union has `__typename` and the fields of all its
+     * members, but for a field that members declare with different types, which GraphQL cannot select in both.
+     */
+    fun results(results: List<Reference>): List<Result> = reachable(results).map { model ->
+        model.resultFields().let { fields ->
+            Result(
+                struct = Struct(name = Name.of(model.result()), fields = fields.map { (name, reference) -> Field(Name(listOf(name)), Type.Nullable(resultType(reference.copy(isNullable = false)))) }),
+                models = fields.mapNotNull { (_, reference) -> reference.model() }.distinct(),
+            )
+        }
+    }
+
+    /** The type a [reference] reads as in a partial result: a type or union is its result, through any list. */
+    fun resultType(reference: Reference): Type = when (reference) {
+        is Reference.Iterable -> Type.Array(resultType(reference.reference))
+        is Reference.Custom -> operations.composite(reference)?.let { Type.Custom(it.result()) } ?: reference.copy(isNullable = false).convert()
+        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> reference.copy(isNullable = false).convert()
+    }.let { if (reference.isNullable) Type.Nullable(it) else it }
+
+    private fun Definition.resultFields(): List<Pair<String, Reference>> = when (this) {
+        is Union -> listOf(TYPENAME to Reference.Primitive(Reference.Primitive.Type.String(null), isNullable = false)) +
+            entries.mapNotNull { operations.composite(it) as? TypeDefinition }
+                .flatMap { member -> member.resultFields() }
+                .groupBy({ it.first }, { it.second })
+                .filterValues { references -> references.distinct().size == 1 }
+                .map { (name, references) -> name to references.first() }
+        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.map { it.identifier.value to it.reference }
+        is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> emptyList()
+    }
+
+    /** The model a field of a partial result refers to, which is not a result itself. */
+    private fun Reference.model(): String? = when (this) {
+        is Reference.Iterable -> reference.model()
+        is Reference.Custom -> value.takeIf { operations.composite(this) == null }?.let { Name.of(it).pascalCase() }
+        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> null
+    }
+
+    /** The block that selects the fields of the result of [reference], or null for a scalar or enum. */
+    fun block(reference: Reference): Type? = operations.composite(reference)?.block()
 
     /**
      * Kotlin resolves a call in a block against every enclosing receiver, so `owner { title() }` would select the
@@ -167,6 +214,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     private fun Definition.selection(): String = "${Name.of(identifier.value).pascalCase()}Selection"
 
+    private fun Definition.result(): String = "${Name.of(identifier.value).pascalCase()}Result"
+
     /** Java has no escape for a keyword; Kotlin backticks it. */
     private fun String.sanitized(): String = when (language) {
         FileExtension.Java -> if (this in JavaGenerator.reservedKeywords) "_$this" else this
@@ -186,5 +235,6 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         private val APPLY = Name(listOf("apply"))
         private val VALUE = Name.of("value")
         private const val STRING_BUILDER = "StringBuilder"
+        private const val TYPENAME = "__typename"
     }
 }

@@ -153,9 +153,52 @@ result. In the block you call the fields on `this`, a field of a type opens a bl
 </Tabs>
 
 The builder is written with the IR DSL and only uses the standard library, so the generated code stays
-dependency-free. Because the selection is up to you, the response no longer matches the model
-classes: send the request with the `Wirespec.Serialization` and `Wirespec.Transportation` of your choice, and read
-the `data.result` of the response into a type of your own or a JSON tree.
+dependency-free.
+
+### Partial results
+
+A response to a selection only holds the fields you selected, so it cannot be read into the models, whose fields are
+required. Every type and union that a query or mutation returns therefore also gets a `<Type>Result`: the same fields,
+all nullable, with a field of a type or union read as its own result. A union result has `__typename` and the fields of
+all its members; a field that members declare with different types is left out, because GraphQL cannot select it in
+both.
+
+The clients take a selection too. Next to `queryTodo(id)`, which returns the full `Todo`, there is `queryTodo(id) { ... }`,
+which sends the request that the builder writes and returns a `TodoResult`. The fields you selected are filled, the
+others are `null` (or `Optional.empty()` in Java):
+
+<Tabs>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val todo: TodoResult? = client.queryTodo(ID("1")) {
+        title()
+        owner { name() }
+    }
+
+    todo?.title       // "Groceries"
+    todo?.owner?.name // "Ann"
+    todo?.done        // null, not selected
+
+    val results: List<SearchResultResult> = client.search("milk") {
+        onTodo { title() }
+        onUser { name() }
+    }
+    results.map { it.__typename } // ["Todo", "User"]
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    Optional<TodoResult> todo = client.queryTodo(new ID("1"), t -> t
+        .title()
+        .owner(owner -> owner.name())).join();
+
+    todo.flatMap(TodoResult::title); // Optional["Groceries"]
+    ```
+  </TabItem>
+</Tabs>
+
+A call with a selection fails with an `IllegalStateException` on GraphQL errors, also for an rpc with an error type:
+its `Result` and `Error` hold the full models.
 
 ## Setup
 
@@ -226,5 +269,5 @@ Make sure to use the latest version, found here:
   when the field it calls is not named after the rpc, such as `@GraphQLName("todo")` on `rpc QueryTodo`.
 - Arguments of nested fields are not passed: a field that requires one is left out or fails the build, as described
   in [The query](#the-query).
-- The typed clients select whole types. The [query builder](#query-builder) selects fewer fields, but does not send the
-  request or read the response.
+- A [partial result](#partial-results) cannot tell a field that was not selected from a field that is `null`: both
+  read as `null`.

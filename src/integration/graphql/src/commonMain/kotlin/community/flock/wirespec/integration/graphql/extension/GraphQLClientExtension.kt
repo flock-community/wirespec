@@ -95,7 +95,7 @@ public class GraphQLClientExtension(
                     operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, ir.serviceOf(rpc)) }
                 }
                 .takeIf { it.isNotEmpty() }
-                ?.let { ir + Client(dialect, it).files() + QueryBuilder(dialect, GraphQLQueryBuilder(operations, language), it).files() }
+                ?.let { GraphQLQueryBuilder(operations, language).let { builder -> ir + Client(dialect, builder, it).files() + QueryBuilder(dialect, builder, it).files() } }
         }
         ?: ir
 
@@ -115,6 +115,7 @@ public class GraphQLClientExtension(
         private val results = operations.map { it.rpc.result }
 
         fun files(): List<LanguageFile> = builder.selections(results).map { it.inFile(dialect, emptyList(), listOfNotNull(builder.dslMarker)) } +
+            builder.results(results).map { result -> result.struct.inFile(dialect, result.models.map { import("${packageName.value}.model", it) }) } +
             listOfNotNull(builder.dslMarkerDefinition?.let { LanguageFile(Name.of(GraphQLQueryBuilder.DSL_MARKER), listOf(it)).placeInPackage(packageName, GRAPHQL) }) +
             builder.requests(operations.map { GraphQLQueryBuilder.Request(it.service.function, it.open, it.rpc.result, it.client, it.variables.map { (field, parameter) -> field.name to parameter }) })
                 .inFile(dialect, operations.flatMap { it.service.imports })
@@ -139,7 +140,7 @@ public class GraphQLClientExtension(
         }
         ?: error("The emitter wrote no Service for rpc ${rpc.identifier.value}")
 
-    private inner class Client(private val dialect: Dialect, private val operations: List<Operation>) {
+    private inner class Client(private val dialect: Dialect, private val builder: GraphQLQueryBuilder, private val operations: List<Operation>) {
 
         fun files(): List<LanguageFile> = operations.map { it.file() } +
             listOfNotNull(errorFile().takeIf { operations.any { it.rpc.error == null } }) +
@@ -148,7 +149,7 @@ public class GraphQLClientExtension(
         private fun Operation.file(): LanguageFile = struct(
             name = client,
             interfaces = listOf(Type.Custom("$name.Service")),
-            elements = listOf(call(), fromRawResponse()) + envelopes(),
+            elements = listOf(call(), fromRawResponse()) + listOfNotNull(selectedCall(), selectedFromRawResponse()) + envelopes() + selectedEnvelopes(),
         ).inFile(service.imports + import("${packageName.value}.rpc", name))
 
         private fun Operation.call(): Function = service.function.copy(
@@ -157,9 +158,55 @@ public class GraphQLClientExtension(
             body = listOf(
                 Assignment(Name.of("request"), ConstructorStatement(Type.Custom(REQUEST), requestArguments())),
                 Assignment(Name.of("rawRequest"), rawRequest()),
-                ReturnStatement(dialect.transport(returnType() == Type.Unit)),
+                ReturnStatement(dialect.transport(FROM_RAW_RESPONSE, returnType() == Type.Unit)),
             ),
         )
+
+        /** The block that selects the fields of the result, for a result with fields. */
+        private val Operation.block: Type? get() = builder.block(rpc.result)
+
+        /** `queryTodo(id) { ... }` reads the fields the block selects into the partial result. */
+        private fun Operation.selectedCall(): Function? = block?.let { block ->
+            service.function.copy(
+                parameters = service.function.parameters + Parameter(SELECTION, block),
+                returnType = builder.resultType(rpc.result),
+                body = listOf(
+                    Assignment(
+                        Name.of("request"),
+                        FunctionCall(
+                            receiver = RawExpression(GraphQLQueryBuilder.REQUESTS),
+                            name = Name(listOf(service.function.name.camelCase())),
+                            arguments = (service.function.parameters.map { it.name } + SELECTION).associateWith { VariableReference(it) },
+                        ),
+                    ),
+                    Assignment(Name.of("rawRequest"), rawRequest()),
+                    ReturnStatement(dialect.transport(FROM_SELECTED_RAW_RESPONSE, false)),
+                ),
+            )
+        }
+
+        private fun Operation.selectedFromRawResponse(): Function? = block?.let {
+            Function(
+                name = FROM_SELECTED_RAW_RESPONSE,
+                parameters = listOf(Parameter(Name.of("rawResponse"), Type.Custom("Wirespec.RawResponse"))),
+                returnType = builder.resultType(rpc.result),
+                body = dialect.fromSelectedRawResponse(this),
+                visibility = Visibility.PRIVATE,
+            )
+        }
+
+        private fun Operation.selectedEnvelopes(): List<Struct> = block?.let {
+            listOf(
+                nested(
+                    SELECTED_RESPONSE,
+                    listOf(
+                        Field(Name.of("data"), Type.Nullable(Type.Custom(SELECTED_DATA))),
+                        Field(Name.of("errors"), Type.Nullable(Type.Array(rpc.error?.convert() ?: Type.Custom(GRAPHQL_ERROR)))),
+                    ),
+                ),
+                nested(SELECTED_DATA, listOf(Field(Name.of(RESULT), builder.resultType(rpc.result.copy(isNullable = true))))),
+            )
+        }.orEmpty()
 
         private fun Operation.requestArguments(): Map<Name, Expression> = mapOf(Name.of("query") to Literal(document, Type.String)) +
             variables.takeIf { it.isNotEmpty() }
@@ -230,25 +277,29 @@ public class GraphQLClientExtension(
         private fun graphQLClientFile(): LanguageFile = struct(
             name = GRAPHQL_CLIENT,
             interfaces = operations.map { Type.Custom("${it.name}.Service") },
-            elements = operations.map { operation ->
-                operation.service.function.copy(
-                    returnType = operation.returnType(),
-                    isOverride = true,
-                    body = listOf(
-                        ReturnStatement(
-                            FunctionCall(
-                                receiver = ConstructorStatement(
-                                    Type.Custom(operation.client),
-                                    mapOf(SERIALIZATION to FieldCall(field = SERIALIZATION), TRANSPORTATION to FieldCall(field = TRANSPORTATION)),
-                                ),
-                                name = Name(listOf(operation.service.function.name.camelCase())),
-                                arguments = operation.service.function.parameters.associate { it.name to VariableReference(it.name) },
-                            ),
-                        ),
-                    ),
+            elements = operations.flatMap { operation ->
+                listOfNotNull(
+                    operation.service.function.copy(returnType = operation.returnType(), isOverride = true).delegating(operation),
+                    operation.selectedCall()?.delegating(operation),
                 )
             },
         ).inFile(operations.flatMap { it.service.imports + import("${packageName.value}.rpc", it.name) })
+
+        /** Calls the same function on the client of [operation]. */
+        private fun Function.delegating(operation: Operation): Function = copy(
+            body = listOf(
+                ReturnStatement(
+                    FunctionCall(
+                        receiver = ConstructorStatement(
+                            Type.Custom(operation.client),
+                            mapOf(SERIALIZATION to FieldCall(field = SERIALIZATION), TRANSPORTATION to FieldCall(field = TRANSPORTATION)),
+                        ),
+                        name = Name(listOf(name.camelCase())),
+                        arguments = parameters.associate { it.name to VariableReference(it.name) },
+                    ),
+                ),
+            ),
+        )
 
         private fun struct(name: String, fields: List<Field> = CLIENT_FIELDS, interfaces: List<Type.Custom> = emptyList(), elements: List<Element>): Struct = Struct(name = Name.of(name), fields = fields, interfaces = interfaces, elements = elements)
 
@@ -264,16 +315,11 @@ public class GraphQLClientExtension(
 
             override fun type(name: String): Expression = TypeDescriptor(Type.Custom(name))
 
-            override fun transport(isUnit: Boolean): Expression = RawExpression("fromRawResponse(transportation.transport(rawRequest))")
+            override fun transport(read: Name, isUnit: Boolean): Expression = RawExpression("${read.value()}(transportation.transport(rawRequest))")
 
             override fun fromRawResponse(operation: Operation): List<Statement> = listOfNotNull(
-                Assignment(
-                    Name.of("response"),
-                    RawExpression(
-                        "serialization.deserializeBody<$RESPONSE>(rawResponse.body ?: error(\"GraphQL response without a body, status \" + rawResponse.statusCode), typeOf<$RESPONSE>())",
-                    ),
-                ),
-                RawExpression("response.errors?.takeIf { it.isNotEmpty() }?.let { error(\"GraphQL request failed: \" + it) }").takeIf { operation.rpc.error == null },
+                read(RESPONSE),
+                failOnErrors().takeIf { operation.rpc.error == null },
                 ReturnStatement(
                     when (operation.rpc.error) {
                         null -> RawExpression(result(operation.rpc))
@@ -281,6 +327,17 @@ public class GraphQLClientExtension(
                     },
                 ),
             )
+
+            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOf(read(SELECTED_RESPONSE), failOnErrors(), ReturnStatement(RawExpression(result(operation.rpc))))
+
+            private fun read(response: String): Statement = Assignment(
+                Name.of("response"),
+                RawExpression(
+                    "serialization.deserializeBody<$response>(rawResponse.body ?: error(\"GraphQL response without a body, status \" + rawResponse.statusCode), typeOf<$response>())",
+                ),
+            )
+
+            private fun failOnErrors(): Statement = RawExpression("response.errors?.takeIf { it.isNotEmpty() }?.let { error(\"GraphQL request failed: \" + it) }")
 
             private fun result(rpc: Rpc): String = when {
                 rpc.result is Reference.Unit -> "Unit"
@@ -294,22 +351,16 @@ public class GraphQLClientExtension(
 
             override fun type(name: String): Expression = RawExpression("Wirespec.getType($name.class, null)")
 
-            override fun transport(isUnit: Boolean): Expression = RawExpression(
+            override fun transport(read: Name, isUnit: Boolean): Expression = RawExpression(
                 when {
-                    isUnit -> "transportation().transport(rawRequest).thenApply(rawResponse -> { fromRawResponse(rawResponse); return null; })"
-                    else -> "transportation().transport(rawRequest).thenApply(this::fromRawResponse)"
+                    isUnit -> "transportation().transport(rawRequest).thenApply(rawResponse -> { ${read.value()}(rawResponse); return null; })"
+                    else -> "transportation().transport(rawRequest).thenApply(this::${read.value()})"
                 },
             )
 
             override fun fromRawResponse(operation: Operation): List<Statement> = listOfNotNull(
-                Assignment(
-                    Name.of("response"),
-                    RawExpression(
-                        "serialization().<$RESPONSE>deserializeBody(rawResponse.body().orElseThrow(() -> new IllegalStateException(\"GraphQL response without a body, status \" + rawResponse.statusCode())), Wirespec.getType($RESPONSE.class, null))",
-                    ),
-                ),
-                RawExpression("response.errors().filter(errors -> !errors.isEmpty()).ifPresent(errors -> { throw new IllegalStateException(\"GraphQL request failed: \" + errors); })")
-                    .takeIf { operation.rpc.error == null },
+                read(RESPONSE),
+                failOnErrors().takeIf { operation.rpc.error == null },
                 when (operation.rpc.error) {
                     null -> result(operation.rpc)?.let { ReturnStatement(RawExpression(it)) }
                     else -> ReturnStatement(
@@ -321,11 +372,22 @@ public class GraphQLClientExtension(
                 },
             )
 
+            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOfNotNull(read(SELECTED_RESPONSE), failOnErrors(), result(operation.rpc, SELECTED_DATA)?.let { ReturnStatement(RawExpression(it)) })
+
+            private fun read(response: String): Statement = Assignment(
+                Name.of("response"),
+                RawExpression(
+                    "serialization().<$response>deserializeBody(rawResponse.body().orElseThrow(() -> new IllegalStateException(\"GraphQL response without a body, status \" + rawResponse.statusCode())), Wirespec.getType($response.class, null))",
+                ),
+            )
+
+            private fun failOnErrors(): Statement = RawExpression("response.errors().filter(errors -> !errors.isEmpty()).ifPresent(errors -> { throw new IllegalStateException(\"GraphQL request failed: \" + errors); })")
+
             /** Null for a Unit result, whose `fromRawResponse` is void. */
-            private fun result(rpc: Rpc): String? = when {
+            private fun result(rpc: Rpc, data: String = DATA): String? = when {
                 rpc.result is Reference.Unit -> null
-                rpc.result.isNullable -> "response.data().flatMap($DATA::$RESULT)"
-                else -> "response.data().flatMap($DATA::$RESULT).orElseThrow(() -> new IllegalStateException(\"${rpc.noData()}\"))"
+                rpc.result.isNullable -> "response.data().flatMap($data::$RESULT)"
+                else -> "response.data().flatMap($data::$RESULT).orElseThrow(() -> new IllegalStateException(\"${rpc.noData()}\"))"
             }
         },
         ;
@@ -335,10 +397,13 @@ public class GraphQLClientExtension(
         /** The runtime type of an envelope, as `Wirespec.Serialization` takes it. */
         abstract fun type(name: String): Expression
 
-        /** Sends `rawRequest` and reads the response with `fromRawResponse`. */
-        abstract fun transport(isUnit: Boolean): Expression
+        /** Sends `rawRequest` and reads the response with the function named [read]. */
+        abstract fun transport(read: Name, isUnit: Boolean): Expression
 
         abstract fun fromRawResponse(operation: Operation): List<Statement>
+
+        /** Reads the partial result; GraphQL errors fail it, whether or not the rpc has an error type. */
+        abstract fun fromSelectedRawResponse(operation: Operation): List<Statement>
 
         protected fun Rpc.noData(): String = "GraphQL response without data for ${identifier.value}"
     }
@@ -357,10 +422,14 @@ public class GraphQLClientExtension(
         private const val VARIABLES = "GraphQLVariables"
         private const val RESPONSE = "GraphQLResponse"
         private const val DATA = "GraphQLData"
+        private const val SELECTED_RESPONSE = "GraphQLSelectedResponse"
+        private const val SELECTED_DATA = "GraphQLSelectedData"
 
         private val SERIALIZATION = Name.of("serialization")
         private val TRANSPORTATION = Name.of("transportation")
         private val FROM_RAW_RESPONSE = Name.of("fromRawResponse")
+        private val FROM_SELECTED_RAW_RESPONSE = Name.of("fromSelectedRawResponse")
+        private val SELECTION = Name.of("selection")
         private val CLIENT_FIELDS = listOf(
             Field(SERIALIZATION, Type.Custom("Wirespec.Serialization")),
             Field(TRANSPORTATION, Type.Custom("Wirespec.Transportation")),
