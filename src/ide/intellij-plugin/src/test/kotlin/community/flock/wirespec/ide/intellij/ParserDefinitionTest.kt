@@ -14,10 +14,12 @@ class ParserDefinitionTest : BasePlatformTestCase() {
 
     fun testParsingFilesDoesNotRegisterNewElementTypes() {
         myFixture.configureByText("warmup.ws", "type TodoDto { description: String }")
-        val registered = IElementType.getAllocatedTypesCount()
+        val registered = wirespecElementTypeCount()
 
         repeat(10) { myFixture.configureByText("todo$it.ws", "type TodoDto { description: String }") }
 
-        assertEquals(registered, IElementType.getAllocatedTypesCount())
+        assertEquals(registered, wirespecElementTypeCount())
     }
+
+    private fun wirespecElementTypeCount(): Int = IElementType.enumerate { it.language == Language }.size
 }
