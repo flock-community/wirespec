@@ -13,7 +13,6 @@ import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
-import community.flock.wirespec.compiler.core.ir.ReturnStatement
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.StructBuilder
 import community.flock.wirespec.compiler.core.ir.Type
@@ -50,7 +49,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * `t -> t.id().owner(o -> o.name())`. A field of a type or union takes a block that selects its fields, and a union has
  * an `on<Member>` block per member. The builder of each rpc, `<Rpc>GraphQL`, runs a block on a new selection and puts it
  * in the operation of the rpc, with the parameters as its variables. The rpc reaches it as `QueryTodo.graphQL`: an
- * extension property in Kotlin and a static method in Java.
+ * extension property in Kotlin and a static field in Java.
  */
 internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: FileExtension) {
 
@@ -186,15 +185,9 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         )
     }
 
-    /** `QueryTodo.graphQL()` in Java: a static method on the rpc interface. */
-    fun staticAccessor(request: Request): Function? = takeIf { language == FileExtension.Java }?.let {
-        Function(
-            name = ACCESSOR,
-            parameters = emptyList(),
-            returnType = Type.Custom(request.builder),
-            body = listOf(ReturnStatement(ConstructorStatement(Type.Custom(request.builder)))),
-            isStatic = true,
-        )
+    /** `QueryTodo.graphQL` in Java: a static field of the rpc interface. */
+    fun staticAccessor(request: Request): Field? = takeIf { language == FileExtension.Java }?.let {
+        Field(name = ACCESSOR, type = Type.Custom(request.builder), initializer = ConstructorStatement(Type.Custom(request.builder)))
     }
 
     /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */

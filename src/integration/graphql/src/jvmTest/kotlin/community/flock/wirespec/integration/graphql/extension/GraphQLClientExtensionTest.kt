@@ -194,7 +194,7 @@ class GraphQLClientExtensionTest {
 
     @Test
     fun `Java query builder writes the request with the selected fields`() {
-        val request = JavaTodos.graphQL().request(Optional.of(true)) { todo -> todo.id().owner { user -> user.name() } }
+        val request = JavaTodos.graphQL.request(Optional.of(true)) { todo -> todo.id().owner { user -> user.name() } }
 
         assertEquals("query Todos(\$done: Boolean) { result: todos(done: \$done) { id owner { name } } }", request.query())
         assertEquals(Optional.of(true), request.variables().done())

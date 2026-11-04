@@ -1,10 +1,28 @@
 package community.flock.wirespec.compiler.core.ir.generator
 
+import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.file
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertFalse
 
 class JavaStructTest {
+
+    @Test
+    fun testFieldWithInitializerInNamespaceEmitsAsConstant() {
+        val file = file("Constants") {
+            `package`("com.example")
+            namespace("Constants") {
+                property("builder", type("Builder"), initializer = ConstructorStatement(type("Builder")))
+                property("plain", type("Builder"))
+            }
+        }
+
+        val output = JavaGenerator.generate(file)
+
+        assertContains(output, "  Builder builder = new Builder();\n")
+        assertFalse("plain" in output)
+    }
 
     @Test
     fun testEmptyStructEmitAsRecord() {

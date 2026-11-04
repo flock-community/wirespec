@@ -112,7 +112,7 @@ left out. Configure the serialization to leave out null values to use the defaul
 
 The clients select every field of a result. To pick the fields yourself, the extension also generates a query
 builder for every rpc: `<Rpc>GraphQL`, in the `graphql` package. The rpc reaches it as `graphQL`, an extension property
-of the rpc object in Kotlin and a static method of the rpc interface in Java. Its `request` function takes the
+of the rpc object in Kotlin and a static field of the rpc interface in Java. Its `request` function takes the
 parameters of the rpc and a block that selects the fields of its result. In the block you call the fields on `this`, a
 field of a type opens a block of its own, and a union has an `on<Member>` block per member. It returns the
 `GraphQLRequest` of the rpc: the `query` and its typed `variables`.
@@ -143,7 +143,7 @@ field of a type opens a block of its own, and a union has an `on<Member>` block 
   </TabItem>
   <TabItem value="java" label="Java">
     ```java
-    var request = QueryTodo.graphQL().request(new ID("1"), todo -> todo
+    var request = QueryTodo.graphQL.request(new ID("1"), todo -> todo
         .id()
         .title()
         .owner(owner -> owner.name()));

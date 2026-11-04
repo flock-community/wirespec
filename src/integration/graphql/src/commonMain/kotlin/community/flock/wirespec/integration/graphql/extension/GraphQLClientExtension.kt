@@ -115,7 +115,7 @@ public class GraphQLClientExtension(
         val variablesType: String = "$builderType.${GraphQLQueryBuilder.GRAPHQL_VARIABLES}"
     }
 
-    /** Java reaches the builder of an rpc through a static method on the rpc interface, which imports it from the `graphql` package. */
+    /** Java reaches the builder of an rpc through a static field of the rpc interface, which imports it from the `graphql` package. */
     private fun IR.withStaticAccessors(builder: GraphQLQueryBuilder, operations: List<Operation>): IR = map { element ->
         (element as? LanguageFile)
             ?.let { file ->
