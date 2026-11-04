@@ -92,9 +92,9 @@ public interface PutTodo extends Wirespec.Endpoint {
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
     return new Wirespec.RawRequest(
       request.method().name(),
-      java.util.List.of("todos", serialization.<String>serializePath(request.path().id(), Wirespec.getType(String.class, null))),
-      java.util.Map.ofEntries(java.util.Map.entry("done", serialization.<Boolean>serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", request.queries().name().map(it -> serialization.<String>serializeParam(it, Wirespec.getType(String.class, null))).orElse(java.util.List.<String>of()))),
-      java.util.Map.ofEntries(java.util.Map.entry("token", serialization.<Token>serializeParam(request.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", request.headers().refreshToken().map(it -> serialization.<Token>serializeParam(it, Wirespec.getType(Token.class, null))).orElse(java.util.List.<String>of()))),
+      java.util.List.<String>of("todos", serialization.<String>serializePath(request.path().id(), Wirespec.getType(String.class, null))),
+      java.util.Map.<String, java.util.List<String>>ofEntries(java.util.Map.entry("done", serialization.<Boolean>serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", request.queries().name().map(it -> serialization.<String>serializeParam(it, Wirespec.getType(String.class, null))).orElse(java.util.List.<String>of()))),
+      java.util.Map.<String, java.util.List<String>>ofEntries(java.util.Map.entry("token", serialization.<Token>serializeParam(request.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", request.headers().refreshToken().map(it -> serialization.<Token>serializeParam(it, Wirespec.getType(Token.class, null))).orElse(java.util.List.<String>of()))),
       java.util.Optional.of(serialization.<PotentialTodoDto>serializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null)))
     );
   }
@@ -118,7 +118,7 @@ public interface PutTodo extends Wirespec.Endpoint {
     } else if (response instanceof Response201 r) {
       return new Wirespec.RawResponse(
         r.status(),
-        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.<Token>serializeParam(r.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", r.headers().refreshToken().map(it -> serialization.<Token>serializeParam(it, Wirespec.getType(Token.class, null))).orElse(java.util.List.<String>of()))),
+        java.util.Map.<String, java.util.List<String>>ofEntries(java.util.Map.entry("token", serialization.<Token>serializeParam(r.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", r.headers().refreshToken().map(it -> serialization.<Token>serializeParam(it, Wirespec.getType(Token.class, null))).orElse(java.util.List.<String>of()))),
         java.util.Optional.of(serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, null)))
       );
     } else if (response instanceof Response500 r) {
@@ -279,11 +279,11 @@ import community.flock.wirespec.generated.model.PotentialTodoDto;
 public interface PotentialTodoDtoGenerator {
   public static PotentialTodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new PotentialTodoDto(
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
     );
   }
 }
@@ -295,7 +295,7 @@ import community.flock.wirespec.generated.model.Token;
 
 public interface TokenGenerator {
   public static Token generate(Wirespec.Generator generator, java.util.List<String> path) {
-    return new Token(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("iss")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+    return new Token(generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("iss")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
       java.util.Optional.empty(),
       java.util.List.<java.util.Map<String, Object>>of()
     )));
@@ -310,15 +310,15 @@ import community.flock.wirespec.generated.model.TodoDto;
 public interface TodoDtoGenerator {
   public static TodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new TodoDto(
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("id")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("id")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("done")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldBoolean(java.util.List.<java.util.Map<String, Object>>of()))
     );
   }
 }
@@ -331,12 +331,12 @@ import community.flock.wirespec.generated.model.Error;
 public interface ErrorGenerator {
   public static Error generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new Error(
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("code")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("code")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldInteger64(
         java.util.Optional.empty(),
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       ))

@@ -585,7 +585,7 @@ public object KotlinGenerator :
     private fun LiteralList.emit(): String {
         if (values.isEmpty()) return "emptyList<${type.emitGenerics()}>()"
         val list = values.joinToString(", ") { it.emit() }
-        return "listOf($list)"
+        return "listOf<${type.emitGenerics()}>($list)"
     }
 
     private fun LiteralMap.emit(): String {
@@ -593,7 +593,7 @@ public object KotlinGenerator :
         val map = values.entries.joinToString(", ") {
             "${Literal(it.key, keyType).emit()} to ${it.value.emit()}"
         }
-        return "mapOf($map)"
+        return "mapOf<${keyType.emitGenerics()}, ${valueType.emitGenerics()}>($map)"
     }
 
     private fun Literal.emit(): String = when (val t = type) {

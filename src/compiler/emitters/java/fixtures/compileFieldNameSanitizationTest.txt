@@ -27,39 +27,39 @@ import community.flock.wirespec.generated.model.FieldNames;
 public interface FieldNamesGenerator {
   public static FieldNames generate(Wirespec.Generator generator, java.util.List<String> path) {
     return new FieldNames(
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("street")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("street")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("postalCode")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("postalCode")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("snake_cased")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("snake_cased")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("house-number")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("house-number")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("x-api-key")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("x-api-key")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("HTTP-version")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("HTTP-version")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("1st-line")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("1st-line")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("BODY_TYPE")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("BODY_TYPE")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       )),
-      generator.generate(java.util.stream.Stream.of(path, java.util.List.of("type")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("type")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
         java.util.Optional.empty(),
         java.util.List.<java.util.Map<String, Object>>of()
       ))

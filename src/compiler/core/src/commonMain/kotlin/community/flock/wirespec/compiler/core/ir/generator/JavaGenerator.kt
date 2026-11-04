@@ -573,7 +573,7 @@ public object JavaGenerator :
     private fun LiteralList.emit(): String {
         if (values.isEmpty()) return "java.util.List.<${type.emitGenerics()}>of()"
         val list = values.joinToString(", ") { it.emit() }
-        return "java.util.List.of($list)"
+        return "java.util.List.<${type.emitGenerics()}>of($list)"
     }
 
     private fun LiteralMap.emit(): String {
@@ -581,7 +581,7 @@ public object JavaGenerator :
         val map = values.entries.joinToString(", ") {
             "java.util.Map.entry(${Literal(it.key, keyType).emit()}, ${it.value.emit()})"
         }
-        return "java.util.Map.ofEntries($map)"
+        return "java.util.Map.<${keyType.emitGenerics()}, ${valueType.emitGenerics()}>ofEntries($map)"
     }
 
     private fun Literal.emit(): String = when {

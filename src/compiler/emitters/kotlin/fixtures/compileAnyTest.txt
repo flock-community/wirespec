@@ -22,19 +22,19 @@ import community.flock.wirespec.generated.model.Message
 object MessageGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Message =
     Message(
-      payload = generator.generate(path + listOf("payload"), Wirespec.GeneratorFieldString(
+      payload = generator.generate(path + listOf<String>("payload"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      metadata = generator.generate(path + listOf("metadata"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+      metadata = generator.generate(path + listOf<String>("metadata"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )) })),
-      attachments = generator.generate(path + listOf("attachments"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+      attachments = generator.generate(path + listOf<String>("attachments"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )) })),
-      extensions = generator.generate(path + listOf("extensions"), Wirespec.GeneratorFieldDict(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+      extensions = generator.generate(path + listOf<String>("extensions"), Wirespec.GeneratorFieldDict(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )) }))
