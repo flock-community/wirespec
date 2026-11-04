@@ -488,7 +488,10 @@ class DslTest {
         println(tsCode)
 
         // Java
-        assertTrue(javaCode.contains("final var tags = java.util.List.of(\"tag1\", \"tag2\");"))
+        assertTrue(javaCode.contains("final var tags = java.util.List.<String>of(\"tag1\", \"tag2\");"))
+
+        // Kotlin
+        assertTrue(KotlinGenerator.generate(file).contains("val tags = listOf<String>(\"tag1\", \"tag2\")"))
 
         // Python
         assertTrue(pythonCode.contains("tags = ['tag1', 'tag2']"))
@@ -518,7 +521,10 @@ class DslTest {
         println(tsCode)
 
         // Java
-        assertTrue(javaCode.contains("final var scores = java.util.Map.ofEntries(java.util.Map.entry(\"Alice\", 10), java.util.Map.entry(\"Bob\", 20));"))
+        assertTrue(javaCode.contains("final var scores = java.util.Map.<String, Integer>ofEntries(java.util.Map.entry(\"Alice\", 10), java.util.Map.entry(\"Bob\", 20));"))
+
+        // Kotlin
+        assertTrue(KotlinGenerator.generate(file).contains("val scores = mapOf<String, Int>(\"Alice\" to 10, \"Bob\" to 20)"))
 
         // Python
         assertTrue(pythonCode.contains("scores = {'Alice': 10, 'Bob': 20}"))

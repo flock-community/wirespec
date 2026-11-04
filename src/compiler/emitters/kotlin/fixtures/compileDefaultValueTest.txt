@@ -60,65 +60,65 @@ import community.flock.wirespec.generated.model.Priority
 object SettingsGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Settings =
     Settings(
-      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      greeting = generator.generate(path + listOf("greeting"), Wirespec.GeneratorFieldString(
+      greeting = generator.generate(path + listOf<String>("greeting"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      retries = generator.generate(path + listOf("retries"), Wirespec.GeneratorFieldInteger64(
+      retries = generator.generate(path + listOf<String>("retries"), Wirespec.GeneratorFieldInteger64(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      offset = generator.generate(path + listOf("offset"), Wirespec.GeneratorFieldInteger64(
+      offset = generator.generate(path + listOf<String>("offset"), Wirespec.GeneratorFieldInteger64(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      port = generator.generate(path + listOf("port"), Wirespec.GeneratorFieldInteger32(
+      port = generator.generate(path + listOf<String>("port"), Wirespec.GeneratorFieldInteger32(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      ratio = generator.generate(path + listOf("ratio"), Wirespec.GeneratorFieldNumber64(
+      ratio = generator.generate(path + listOf<String>("ratio"), Wirespec.GeneratorFieldNumber64(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      scale = generator.generate(path + listOf("scale"), Wirespec.GeneratorFieldNumber64(
+      scale = generator.generate(path + listOf<String>("scale"), Wirespec.GeneratorFieldNumber64(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      weight = generator.generate(path + listOf("weight"), Wirespec.GeneratorFieldNumber32(
+      weight = generator.generate(path + listOf<String>("weight"), Wirespec.GeneratorFieldNumber32(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      active = generator.generate(path + listOf("active"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>())),
-      nickname = generator.generate(path + listOf("nickname"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+      active = generator.generate(path + listOf<String>("active"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>())),
+      nickname = generator.generate(path + listOf<String>("nickname"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )) })),
-      limit = generator.generate(path + listOf("limit"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldInteger64(
+      limit = generator.generate(path + listOf<String>("limit"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldInteger64(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )) })),
-      status = generator.generate(path + listOf("status"), Wirespec.GeneratorFieldShape(
+      status = generator.generate(path + listOf<String>("status"), Wirespec.GeneratorFieldShape(
         annotations = emptyMap<String, List<Map<String, Any>>>(),
         generate = { p0 -> StatusGenerator.generate(generator, p0) },
         type = typeOf<Status>()
       )),
-      priority = generator.generate(path + listOf("priority"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+      priority = generator.generate(path + listOf<String>("priority"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
         annotations = emptyMap<String, List<Map<String, Any>>>(),
         generate = { p1 -> PriorityGenerator.generate(generator, p1) },
         type = typeOf<Priority>()
       )) })),
-      tags = generator.generate(path + listOf("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
+      tags = generator.generate(path + listOf<String>("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )) }))
@@ -133,8 +133,8 @@ import community.flock.wirespec.generated.model.Status
 
 object StatusGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Status =
-    Status.valueOf(generator.generate(path + listOf("value"), Wirespec.GeneratorFieldEnum(
-      values = listOf("ACTIVE", "INACTIVE"),
+    Status.valueOf(generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldEnum(
+      values = listOf<String>("ACTIVE", "INACTIVE"),
       annotations = emptyList<Map<String, Any>>(),
       type = typeOf<Status>()
     )))
@@ -148,8 +148,8 @@ import community.flock.wirespec.generated.model.Priority
 
 object PriorityGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Priority =
-    Priority.valueOf(generator.generate(path + listOf("value"), Wirespec.GeneratorFieldEnum(
-      values = listOf("1", "2"),
+    Priority.valueOf(generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldEnum(
+      values = listOf<String>("1", "2"),
       annotations = emptyList<Map<String, Any>>(),
       type = typeOf<Priority>()
     )))
