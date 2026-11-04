@@ -145,7 +145,7 @@ public data class Struct(
     val constructorVisibility: Visibility? = null,
 ) : HasName,
     HasElements {
-    public enum class Kind { PLAIN_CLASS }
+    public enum class Kind { PLAIN_CLASS, VALUE_CLASS }
 }
 
 /**

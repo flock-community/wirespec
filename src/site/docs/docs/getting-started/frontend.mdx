@@ -1,0 +1,139 @@
+---
+title: Frontend
+slug: /getting-started/frontend
+sidebar_position: 1
+description: Generate a typed TypeScript client from a Wirespec contract, call the API with fetch and mock it with MSW.
+wirespec:
+  source: todo.ws
+  language: TypeScript
+  shared: true
+---
+
+# Getting started as a frontend engineer
+
+Wirespec generates a TypeScript client from the API contract. Every request, response and status code is typed, so a
+change in the contract shows up as a compile error in your app instead of a bug in production. The generated code has
+no dependencies and works in the browser and in Node.js.
+
+In this guide you install Wirespec, generate TypeScript from a contract, call the API with the generated client and
+mock the API while the backend is not ready yet.
+
+## Install
+
+Add Wirespec to your project as a dev dependency:
+
+```bash
+npm install --save-dev @flock/wirespec
+```
+
+## Add the contract
+
+Save the contract in `wirespec/todo.ws`. In a real project you write it together with the backend team, or they share
+it with you.
+
+```wirespec wirespec source
+```
+
+## Generate TypeScript
+
+Add a script to your `package.json` that compiles everything in `wirespec` to `src/gen`. `--shared` also writes
+`Wirespec.ts`, the few types that all generated files use.
+
+```json title="package.json"
+{
+  "scripts": {
+    "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared"
+  }
+}
+```
+
+Run it with `npm run generate`. Every type in the contract becomes a TypeScript type with a function that validates it:
+
+```typescript wirespec file=model/Todo.ts
+```
+
+Every endpoint becomes a namespace in `src/gen/endpoint`, with its request, a type per response and the functions to
+convert them, and `src/gen/Client.ts` combines a client for every endpoint. Regenerate whenever the contract changes,
+for example in a `prebuild` script.
+
+:::note
+The TypeScript emitter does not support [default values](../language/types.mdx#default-values) yet. If your contract
+uses them, add `--ignore-defaults` to the command.
+:::
+
+## Call the API
+
+The npm package comes with a JSON serialization and a transport based on `fetch`. Pass them to the generated `client`:
+
+```typescript title="src/api.ts"
+import { wirespecFetchIr } from "@flock/wirespec/fetch";
+import { wirespecSerialization } from "@flock/wirespec/serialization";
+import { client } from "./gen/Client";
+
+export const api = client(wirespecSerialization, {
+  transport: (request) =>
+    wirespecFetchIr(request, (path, init) => fetch(`https://api.example.com${path}`, init)),
+});
+```
+
+The second argument of `wirespecFetchIr` sends the request. Use it to set the base URL, add an authorization header or
+use a `fetch` of your own.
+
+Every method of `api` takes the parameters of its endpoint and returns one of its responses. A response has a literal
+`status`, so TypeScript knows that the body of a `200` is a `Todo` and the body of a `404` is an `ApiError`:
+
+```typescript
+import { api } from "./api";
+
+const response = await api.getTodo({ id: 1 });
+
+switch (response.status) {
+  case 200:
+    console.log(response.body.title);
+    break;
+  case 404:
+    console.error(response.body.message);
+    break;
+}
+```
+
+## Mock the API
+
+You don't have to wait for the backend. The package turns the generated endpoints into typed handlers for
+[Mock Service Worker](https://mswjs.io) (MSW). Install MSW:
+
+```bash
+npm install --save-dev msw
+```
+
+Then mock the endpoints you need. The resolver gets the typed request and must return one of the responses of that
+endpoint: a body that does not match the contract, or a response of another endpoint, does not compile.
+
+```typescript title="src/mocks.ts"
+import { setupWorker } from "msw/browser";
+import { wirespec } from "@flock/wirespec/msw";
+import { GetTodo } from "./gen/endpoint";
+
+export const worker = setupWorker(
+  wirespec(
+    GetTodo.api,
+    async (request) =>
+      request.path.id === 1
+        ? GetTodo.response200({ body: { id: 1, title: "Write the contract", done: true } })
+        : GetTodo.response404({ body: { message: `Todo ${request.path.id} not found` } }),
+    { baseUrl: "https://api.example.com" },
+  ),
+);
+```
+
+Start the worker with `await worker.start()` before your app renders, as described in the
+[MSW browser integration](https://mswjs.io/docs/integrations/browser). In tests, use `setupServer` from `msw/node`
+with the same handlers.
+
+## Next steps
+
+- [TypeScript emitter](../emitters/emitters-typescript.mdx): everything that is generated, including the generators
+  that create test data matching the contract.
+- [npm package](../plugins/plugins-npm.md): use the compiler from JavaScript to build your own integrations.
+- [Language](../language/language.mdx): types, refined types, enums, unions, endpoints and more.
+- [IDE plugins](../ide/ide.md): highlighting, errors and refactoring for `.ws` files in IntelliJ IDEA and VS Code.

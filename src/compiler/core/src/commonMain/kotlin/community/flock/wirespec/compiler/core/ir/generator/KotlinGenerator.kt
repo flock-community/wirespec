@@ -272,10 +272,14 @@ public object KotlinGenerator :
         }
         val paramsStr = paramParts.joinNonEmpty(",\n", "(\n", "\n${")".indentCode(indent)}") { it }
         val bodyContent = memberProperties + customConstructors + nestedContent
+        val header = when (kind) {
+            Struct.Kind.VALUE_CLASS -> "@kotlin.jvm.JvmInline\n${visibility.prefix()}value class"
+            Struct.Kind.PLAIN_CLASS, null -> "${visibility.prefix()}data class"
+        }
         return if (bodyContent.isNotEmpty()) {
-            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
+            "$header $name$typeParamsStr$paramsStr$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
         } else {
-            "${visibility.prefix()}data class $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
+            "$header $name$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
     }
 
@@ -586,7 +590,7 @@ public object KotlinGenerator :
     private fun LiteralList.emit(): String {
         if (values.isEmpty()) return "emptyList<${type.emitGenerics()}>()"
         val list = values.joinToString(", ") { it.emit() }
-        return "listOf($list)"
+        return "listOf<${type.emitGenerics()}>($list)"
     }
 
     private fun LiteralMap.emit(): String {
@@ -594,28 +598,14 @@ public object KotlinGenerator :
         val map = values.entries.joinToString(", ") {
             "${Literal(it.key, keyType).emit()} to ${it.value.emit()}"
         }
-        return "mapOf($map)"
+        return "mapOf<${keyType.emitGenerics()}, ${valueType.emitGenerics()}>($map)"
     }
 
     private fun Literal.emit(): String = when (val t = type) {
-        Type.String -> "\"${value.toString().escapeKotlinString()}\""
+        Type.String -> "\"${value.toString().escapeStringLiteral('"', '$')}\""
         is Type.Integer -> if (t.precision == Precision.P64) "${value}L" else value.toString()
         is Type.Number -> if (t.precision == Precision.P32) "${value}f" else value.toString()
         else -> value.toString()
-    }
-
-    private fun String.escapeKotlinString(): String = buildString {
-        for (c in this@escapeKotlinString) {
-            when (c) {
-                '\\' -> append("\\\\")
-                '"' -> append("\\\"")
-                '$' -> append("\\$")
-                '\n' -> append("\\n")
-                '\r' -> append("\\r")
-                '\t' -> append("\\t")
-                else -> append(c)
-            }
-        }
     }
 
     private fun TypeDescriptor.emitTypeDescriptor(): String = "typeOf<${type.emitGenerics()}>()"

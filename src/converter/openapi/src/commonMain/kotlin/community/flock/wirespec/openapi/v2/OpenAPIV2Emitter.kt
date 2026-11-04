@@ -33,6 +33,7 @@ import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.common.APPLICATION_JSON
 import community.flock.wirespec.openapi.common.emitFormat
+import community.flock.wirespec.openapi.common.emitPattern
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.json
 import community.flock.wirespec.openapi.common.toSchemaDefault
@@ -107,7 +108,8 @@ public object OpenAPIV2Emitter : Emitter {
                         refined.identifier.value to when (val pattern = type.constraint) {
                             is Reference.Primitive.Type.Constraint.RegExp -> OpenAPIV20Schema(
                                 type = OpenAPIV20Type.STRING,
-                                pattern = pattern.value,
+                                format = pattern.emitFormat(),
+                                pattern = pattern.emitPattern(),
                             )
 
                             null -> OpenAPIV20Schema(
@@ -297,7 +299,7 @@ public object OpenAPIV2Emitter : Emitter {
     private fun Reference.emitPattern() = when (this) {
         is Reference.Primitive -> when (val t = type) {
             is Reference.Primitive.Type.String -> when (val p = t.constraint) {
-                is Reference.Primitive.Type.Constraint.RegExp -> p.value
+                is Reference.Primitive.Type.Constraint.RegExp -> p.emitPattern()
                 else -> null
             }
 

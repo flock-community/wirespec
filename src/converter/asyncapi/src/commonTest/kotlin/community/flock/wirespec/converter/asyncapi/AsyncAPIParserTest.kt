@@ -121,6 +121,7 @@ class AsyncAPIParserTest {
                       "children": { "type": "array", "items": { "$REF": "#/components/schemas/Node" } },
                       "labels": { "type": "object", "additionalProperties": { "type": "string" } },
                       "createdAt": { "type": "string", "format": "date-time" },
+                      "website": { "type": "string", "format": "uri" },
                       "x-trace.id": { "type": "string" },
                       "external": { "$REF": "other.json#/Thing" },
                       "tags": { "type": "array", "items": { "type": "string" }, "default": [] }
@@ -154,8 +155,9 @@ class AsyncAPIParserTest {
             |  parent: Node?,
             |  children: Node[]?,
             |  labels: { String }?,
-            |  @AsyncAPISchema(format: "date-time")
-            |  createdAt: String?,
+            |  createdAt: String?(date-time),
+            |  @AsyncAPISchema(format: "uri")
+            |  website: String?,
             |  @AsyncAPIName("x-trace.id")
             |  x-trace_id: String?,
             |  @AsyncAPISchema("$REF": "other.json#/Thing")
@@ -165,6 +167,48 @@ class AsyncAPIParserTest {
             |}
             |
         """.trimMargin()
+    }
+
+    @Test
+    fun convertsFormatsToStringFormats() {
+        val document = """
+            {
+              "asyncapi": "3.0.0",
+              "info": { "title": "Orders", "version": "1.0.0" },
+              "components": {
+                "schemas": {
+                  "OrderId": { "type": "string", "format": "uuid" },
+                  "Order": {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {
+                      "id": { "$REF": "#/components/schemas/OrderId" },
+                      "placedOn": { "type": "string", "format": "date" },
+                      "shippedAt": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+        """
+
+        document.toWirespec() shouldBe """
+            |@AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Orders", version: "1.0.0" })
+            |@AsyncAPIComponents
+            |type AsyncAPI {
+            |
+            |}
+            |
+            |type OrderId = String(uuid)
+            |
+            |type Order {
+            |  id: OrderId,
+            |  placedOn: String?(date),
+            |  shippedAt: String?(date-time)
+            |}
+            |
+        """.trimMargin()
+        document.shouldRoundTrip()
     }
 
     @Test

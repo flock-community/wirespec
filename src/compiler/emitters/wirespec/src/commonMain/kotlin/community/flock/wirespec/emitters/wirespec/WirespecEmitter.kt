@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.HasAnnotations
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.utils.Logger
 
 private interface WirespecEmitters:
@@ -47,7 +48,7 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
         ((this as? HasAnnotations)?.annotations.orEmpty().map { it.emit() } + listOfNotNull(comment?.emit())).joinToString("") { "$it\n" }
 
     override fun Reference.Primitive.Type.Constraint.emit(): String = when(this){
-        is Reference.Primitive.Type.Constraint.RegExp -> "(${value})"
+        is Reference.Primitive.Type.Constraint.RegExp -> "(${StringFormat.of(this)?.label ?: value})"
         is Reference.Primitive.Type.Constraint.Bound -> "(${min ?: "_"}, ${max ?: "_"})"
     }
 }

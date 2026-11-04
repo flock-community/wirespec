@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -82,7 +83,7 @@ class OpenAPIV3ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = null,
+                                    constraint = StringFormat.DATE_TIME.regExp,
                                 ),
                                 isNullable = true,
                             ),
@@ -1018,7 +1019,7 @@ class OpenAPIV3ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = Primitive.Type.Constraint.RegExp("^[\\d-]+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("/^[\\d-]+\$/"),
                                 ),
                                 isNullable = true,
                             ),
@@ -1208,7 +1209,7 @@ class OpenAPIV3ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = Primitive.Type.Constraint.RegExp("^\\d+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("/^\\d+\$/"),
                                 ),
                                 isNullable = false,
                             ),
@@ -1242,7 +1243,7 @@ class OpenAPIV3ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = null,
+                                    constraint = StringFormat.DATE_TIME.regExp,
                                 ),
                                 isNullable = false,
                             ),
@@ -1282,7 +1283,7 @@ class OpenAPIV3ParserTest {
                             type = "application/json",
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = Primitive.Type.Constraint.RegExp("^\\d+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("/^\\d+\$/"),
                                 ),
                                 isNullable = false,
                             ),
@@ -1301,7 +1302,7 @@ class OpenAPIV3ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = Primitive.Type.Constraint.RegExp("^\\d+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("/^\\d+\$/"),
                                 ),
                                 isNullable = true,
                             ),
@@ -1334,7 +1335,7 @@ class OpenAPIV3ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = null,
+                                    constraint = StringFormat.EMAIL.regExp,
                                 ),
                                 isNullable = false,
                             ),

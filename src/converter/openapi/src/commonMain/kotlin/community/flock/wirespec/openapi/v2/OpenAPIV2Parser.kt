@@ -45,6 +45,7 @@ import community.flock.wirespec.openapi.common.jsonDefault
 import community.flock.wirespec.openapi.common.parseOpenApi
 import community.flock.wirespec.openapi.common.resolveEndpointNameCollisions
 import community.flock.wirespec.openapi.common.sanitize
+import community.flock.wirespec.openapi.common.stringType
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.common.toDict
 import community.flock.wirespec.openapi.common.toIterable
@@ -494,13 +495,8 @@ private fun OpenAPIV2Model.toReference(schema: Schema, name: String, isNullable:
 
 private fun OpenAPIV20Base.toPrimitive() = when (this.type) {
     OpenAPIV20Type.STRING -> when {
-        pattern != null -> Reference.Primitive.Type.String(
-            constraint = Reference.Primitive.Type.Constraint.RegExp(
-                pattern!!,
-            ),
-        )
-        format == "binary" -> Reference.Primitive.Type.Bytes
-        else -> Reference.Primitive.Type.String(null)
+        pattern == null && format == "binary" -> Reference.Primitive.Type.Bytes
+        else -> stringType(pattern, format)
     }
 
     OpenAPIV20Type.INTEGER -> Reference.Primitive.Type.Integer(

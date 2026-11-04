@@ -134,7 +134,7 @@ use super::super::model::email::Email;
 pub struct EmailGenerator;
 impl EmailGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Email {
-        return Email { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return Email { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -145,7 +145,7 @@ use super::super::model::phone_number::PhoneNumber;
 pub struct PhoneNumberGenerator;
 impl PhoneNumberGenerator {
     pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> PhoneNumber {
-        return PhoneNumber { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^\+[1-9]\d{1,14}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return PhoneNumber { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^\\+[1-9]\\d{1,14}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 

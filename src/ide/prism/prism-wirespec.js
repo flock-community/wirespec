@@ -43,6 +43,11 @@
       },
     },
     regex,
+    format: {
+      pattern: /(\bString\s*\??\s*\(\s*)(?:date-time|date|time|email|uuid(?:-v[1-8])?)(?![\w-])/,
+      lookbehind: true,
+      alias: "constant",
+    },
     enum: {
       pattern: /\benum\b[^{}]*\{[^{}]*\}/,
       inside: {

@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.java.JavaEmitter
@@ -186,6 +187,18 @@ class AvroExtensionTest {
             |
             """.trimMargin()
         assertEquals(expected, javaEmitter.emit(ast, noLogger).avro("packageName/avro/IdentifierAvro.java"))
+    }
+
+    @Test
+    fun emitJavaConstrainedString() {
+        val constrained = type.copy(
+            shape = Shape(listOf(field("id", Reference.Primitive(Reference.Primitive.Type.String(StringFormat.UUID.regExp), isNullable = false)))),
+        )
+        val emitted = javaEmitter.emit(AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(constrained)))), noLogger)
+            .avro("packageName/avro/IdentifierAvro.java").orEmpty()
+
+        // Avro hands back every string as Utf8, whatever its constraint.
+        assertContains(emitted, "return new Identifier((String) record.get(0).toString());")
     }
 
     @Test

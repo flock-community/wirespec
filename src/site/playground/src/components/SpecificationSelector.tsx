@@ -20,14 +20,21 @@ export function SpecificationSelector() {
   const handleChange = (event: { target: { value: string } }) => {
     if (event.target.value === "wirespec") {
       return navigate({
-        search: () => ({ specification: "wirespec", emitter: "typescript" }),
+        search: (prev) => ({
+          ...prev,
+          specification: "wirespec",
+          emitter: "typescript",
+          code: undefined,
+        }),
       });
     }
 
     return navigate({
-      search: () => ({
+      search: (prev) => ({
+        ...prev,
         specification: event.target.value as Specification,
         emitter: "wirespec",
+        code: undefined,
       }),
     });
   };

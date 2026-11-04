@@ -662,7 +662,7 @@ public fun EndpointWirespec.convert(): File {
                                     )
                                 },
                                 keyType = Type.String,
-                                valueType = Type.Custom("List<String>"),
+                                valueType = Type.Array(Type.String),
                             ),
                         )
                         arg(
@@ -678,7 +678,7 @@ public fun EndpointWirespec.convert(): File {
                                     )
                                 },
                                 keyType = Type.String,
-                                valueType = Type.Custom("List<String>"),
+                                valueType = Type.Array(Type.String),
                             ),
                         )
                         arg(
@@ -793,7 +793,7 @@ public fun EndpointWirespec.convert(): File {
                                                 )
                                             },
                                             keyType = Type.String,
-                                            valueType = Type.Custom("List<String>"),
+                                            valueType = Type.Array(Type.String),
                                         ),
                                     )
                                     arg(

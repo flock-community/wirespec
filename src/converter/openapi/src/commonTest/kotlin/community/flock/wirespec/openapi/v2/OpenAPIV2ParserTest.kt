@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Iterable
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.openapi.common.Ast
@@ -210,7 +211,7 @@ class OpenAPIV2ParserTest {
                             annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    constraint = null,
+                                    constraint = StringFormat.DATE_TIME.regExp,
                                 ),
                                 isNullable = true,
                             ),

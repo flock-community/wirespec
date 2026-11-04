@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Statements
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.converter.common.withValidEnumDefaults
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.Reference as OpenAPIReference
@@ -105,6 +106,17 @@ internal fun Path.toName(): String = value
             false -> className(it)
         }
     }
+
+/**
+ * A `string` schema as a Wirespec String: its `pattern` as a regex literal, which ends at the first `/` that is not
+ * escaped and cannot span lines, or else its `format` when that is one of the [StringFormat]s.
+ */
+internal fun stringType(pattern: String?, format: String?): Reference.Primitive.Type.String = Reference.Primitive.Type.String(
+    pattern?.takeIf { '\n' !in it && '\r' !in it }?.let { Reference.Primitive.Type.Constraint.RegExp("/${it.escapeSlashes()}/") }
+        ?: format?.let(StringFormat::of)?.regExp,
+)
+
+private fun String.escapeSlashes(): String = Regex("\\\\.|/").replace(this) { if (it.value == "/") "\\/" else it.value }
 
 internal fun Reference.toIterable(isNullable: Boolean) = Reference.Iterable(reference = this, isNullable = isNullable)
 

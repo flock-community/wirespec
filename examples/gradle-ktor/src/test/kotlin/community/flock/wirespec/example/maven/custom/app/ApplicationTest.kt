@@ -18,7 +18,7 @@ class ApplicationTest {
         }
 
         client.get("/api/todos").apply {
-            val expected = """[{"id":{"value":"8132b795-143f-4afb-8c8a-0608cb63c79c"},"name":"Name","done":true}]"""
+            val expected = """[{"id":"8132b795-143f-4afb-8c8a-0608cb63c79c","name":"Name","done":true}]"""
             assertEquals(HttpStatusCode.OK, status)
             assertEquals(expected, bodyAsText())
         }

@@ -2,8 +2,9 @@ package community.flock.wirespec.converter.asyncapi
 
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 
-/** A reference as written in Wirespec, such as `Todo`, `String?[]` or `{ Integer }`, to name a type in an annotation. */
+/** A reference as written in Wirespec, such as `Todo`, `String?[]`, `String?(uuid)` or `{ Integer }`, to name a type in an annotation. */
 internal fun Reference.toWirespec(): String = when (this) {
     is Reference.Any -> "Any"
     is Reference.Unit -> "Unit"
@@ -17,7 +18,14 @@ internal fun Reference.toWirespec(): String = when (this) {
         is Reference.Primitive.Type.Integer -> if (type.precision == Precision.P32) "Integer32" else "Integer"
         is Reference.Primitive.Type.Number -> if (type.precision == Precision.P32) "Number32" else "Number"
     }
-} + if (isNullable) "?" else ""
+} + (if (isNullable) "?" else "") + emitFormat()
+
+// As in Wirespec, the format of a String comes after its `?`.
+private fun Reference.emitFormat(): String = ((this as? Reference.Primitive)?.type as? Reference.Primitive.Type.String)
+    ?.constraint
+    ?.let(StringFormat::of)
+    ?.let { "(${it.label})" }
+    .orEmpty()
 
 /** Reads a reference written by [toWirespec], from the right: the suffixes `?` and `[]` wrap what comes before them. */
 internal fun String.toReference(): Reference = trim().let { source ->
@@ -25,6 +33,10 @@ internal fun String.toReference(): Reference = trim().let { source ->
         source.endsWith("?") -> source.dropLast(1).toReference().copy(isNullable = true)
         source.endsWith("[]") -> Reference.Iterable(source.dropLast(2).toReference(), isNullable = false)
         source.startsWith("{") && source.endsWith("}") -> Reference.Dict(source.drop(1).dropLast(1).toReference(), isNullable = false)
+        source.endsWith(")") -> Reference.Primitive(
+            type = Reference.Primitive.Type.String(StringFormat.of(source.substringAfter('(').dropLast(1).trim())?.regExp),
+            isNullable = source.substringBefore('(').trim().endsWith("?"),
+        )
         else -> when (source) {
             "Any" -> Reference.Any(isNullable = false)
             "Unit" -> Reference.Unit(isNullable = false)

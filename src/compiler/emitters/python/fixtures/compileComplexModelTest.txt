@@ -143,7 +143,7 @@ from ..model.Email import Email
 class EmailGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Email:
-        return Email(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', annotations=[])))
+        return Email(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', annotations=[])))
 
 from __future__ import annotations
 import re
@@ -157,7 +157,7 @@ from ..model.PhoneNumber import PhoneNumber
 class PhoneNumberGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> PhoneNumber:
-        return PhoneNumber(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^\+[1-9]\d{1,14}$', annotations=[])))
+        return PhoneNumber(value=generator.generate(path + ['value'], Wirespec.GeneratorFieldString(regex='^\\+[1-9]\\d{1,14}$', annotations=[])))
 
 from __future__ import annotations
 import re

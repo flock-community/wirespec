@@ -15,4 +15,18 @@ class FilePathTest {
             extension shouldBe FileExtension.JSON
         }
     }
+
+    @Test
+    fun testParseFileNameWithoutDirectory() {
+        FilePath("test.json").run {
+            directory.value shouldBe "."
+            name.value shouldBe "test"
+            toString() shouldBe "./test.json"
+        }
+    }
+
+    @Test
+    fun testParseFileInRoot() {
+        FilePath("/test.json").toString() shouldBe "/test.json"
+    }
 }

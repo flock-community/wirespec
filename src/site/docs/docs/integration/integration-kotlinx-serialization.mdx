@@ -17,6 +17,7 @@ or wrap the generated code by hand.
 The extension annotates the top-level model declarations of each generated Kotlin file:
 
 - records and refined types get `@Serializable` and `@SerialName("<wirespec name>")`
+- refined types are emitted as `@JvmInline value class`, so they serialize as their bare value
 - `union` and `enum` types get `@Serializable`
 
 For example, this definition:
@@ -42,11 +43,16 @@ data class Todo(
 
 @kotlinx.serialization.Serializable
 @kotlinx.serialization.SerialName("TodoId")
-data class TodoId(/* ... */)
+@kotlin.jvm.JvmInline
+value class TodoId(/* ... */)
 
 @kotlinx.serialization.Serializable
 sealed interface UserAccount
 ```
+
+Because `TodoId` is a value class, kotlinx.serialization flattens it to the wrapped value:
+`Todo(TodoId("1"), "Write docs")` encodes as `{"id":"1","name":"Write docs"}` rather than
+`{"id":{"value":"1"},"name":"Write docs"}`, and decodes back the same way.
 
 The annotations are emitted fully qualified, so the generated code stays dependency-free apart from the
 kotlinx.serialization runtime — no imports are added.

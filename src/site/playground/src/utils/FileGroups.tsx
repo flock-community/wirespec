@@ -44,3 +44,32 @@ export const groupFiles = (
 
 export const groupOf = (groups: FileGroup[], path?: string) =>
   groups.find((group) => group.files.some((file) => file.file === path));
+
+// "Todo.kt", "Todo.java" and "todo.py" are the same file in another language.
+const sameName = (a: string, b: string) => {
+  const stem = (path: string) =>
+    fileName(path)
+      .replace(/\.[^.]*$/, "")
+      .replace(/[^a-z0-9]/gi, "")
+      .toLowerCase();
+  return stem(a) === stem(b);
+};
+
+// The file at `path`, or else the same file in the output of another
+// language: by name in the same package, by name anywhere, or the first file
+// of the same package.
+export const counterpartOf = (
+  groups: FileGroup[],
+  path?: string,
+): WsEmitted | undefined => {
+  if (!path) return undefined;
+  const label = labelOf(packageOf(path));
+  const files = groups.flatMap((group) => group.files);
+  const group = groups.find((it) => it.label === label);
+  return (
+    files.find((file) => file.file === path) ??
+    group?.files.find((file) => sameName(file.file, path)) ??
+    files.find((file) => sameName(file.file, path)) ??
+    group?.files[0]
+  );
+};

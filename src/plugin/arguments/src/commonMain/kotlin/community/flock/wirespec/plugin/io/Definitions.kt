@@ -54,7 +54,8 @@ public data class FilePath(val directory: DirectoryPath, val name: Name, val ext
             val extension = entries.find { it.value == ext } ?: error("Invalid file extension: $ext")
             val idxOfFileName = list.size - 2
             val filename = Name(list[idxOfFileName])
-            val path = list.subList(0, idxOfFileName).joinToString("/")
+            // A bare file name is in the working directory; an empty first segment is the root of an absolute path.
+            val path = list.subList(0, idxOfFileName).ifEmpty { listOf(".") }.joinToString("/")
             return FilePath(DirectoryPath(path), filename, extension)
         }
     }

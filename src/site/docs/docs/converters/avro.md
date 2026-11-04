@@ -17,6 +17,14 @@ Wirespec supports converting Avro schemas (.avsc) into Wirespec types.
 | `bytes`   | `Bytes`       |                                    |
 | `null`    | `Unit`        | Or used to mark a type as nullable |
 
+### Logical Types
+
+| Avro Type | Wirespec Type  | Notes                                                                                                       |
+|-----------|----------------|-------------------------------------------------------------------------------------------------------------|
+| `uuid`    | `String(uuid)` | A `string` with `"logicalType": "uuid"`, or `uuid` in IDL; a [string format](../language/types.mdx#refined) |
+
+Any other logical type converts to the type it is based on, such as `Integer32` for a `date`.
+
 ### Complex Types
 
 | Avro Type | Wirespec Type | Notes                                                                    |

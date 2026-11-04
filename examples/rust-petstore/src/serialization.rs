@@ -1,298 +1,252 @@
-use std::any::{Any, TypeId};
-use crate::gen::wirespec::*;
-use crate::gen::model::pet::Pet;
-use crate::gen::model::category::Category;
-use crate::gen::model::tag::Tag;
-use crate::gen::model::pet_status::PetStatus;
-use crate::gen::model::order::Order;
-use crate::gen::model::order_status::OrderStatus;
-use crate::gen::model::user::User;
-use crate::gen::model::api_response::ApiResponse;
+//! JSON serialization for the generated code, built on `serde_json`.
+//!
+//! The generated models have no serde derives: Wirespec hands every body and parameter to the
+//! serializer as a plain `T: 'static`. `Json` finds out which Petstore type `T` is, and converts it
+//! with that type's `JsonValue` impl.
 
-pub struct JsonSerialization;
+use std::any::{Any, TypeId, type_name};
+use std::collections::HashMap;
+use std::fmt::{Debug, Display};
+use std::str::FromStr;
 
-impl BodySerializer for JsonSerialization {
-    fn serialize_body<T: 'static>(&self, t: &T, _type: TypeId) -> Vec<u8> {
-        let any: &dyn Any = t;
-        let value = if let Some(v) = any.downcast_ref::<Pet>() {
-            pet_to_json(v)
-        } else if let Some(v) = any.downcast_ref::<Vec<Pet>>() {
-            serde_json::Value::Array(v.iter().map(pet_to_json).collect())
-        } else if let Some(v) = any.downcast_ref::<Order>() {
-            order_to_json(v)
-        } else if let Some(v) = any.downcast_ref::<User>() {
-            user_to_json(v)
-        } else if let Some(v) = any.downcast_ref::<Vec<User>>() {
-            serde_json::Value::Array(v.iter().map(user_to_json).collect())
-        } else if let Some(v) = any.downcast_ref::<ApiResponse>() {
-            api_response_to_json(v)
-        } else if let Some(v) = any.downcast_ref::<String>() {
-            serde_json::Value::String(v.clone())
-        } else if let Some(v) = any.downcast_ref::<std::collections::HashMap<String, i32>>() {
-            let map: serde_json::Map<String, serde_json::Value> = v
-                .iter()
-                .map(|(k, v)| (k.clone(), serde_json::Value::Number((*v).into())))
-                .collect();
-            serde_json::Value::Object(map)
-        } else {
-            panic!("Unsupported body type for serialization: {:?}", _type)
-        };
-        serde_json::to_vec(&value).unwrap()
+use serde_json::Value;
+
+use crate::generated::model::{
+    api_response::ApiResponse, category::Category, order::Order, order_status::OrderStatus,
+    pet::Pet, pet_status::PetStatus, tag::Tag, user::User,
+};
+use crate::generated::wirespec::*;
+
+pub struct Json;
+
+impl Serialization for Json {}
+impl Serializer for Json {}
+impl Deserializer for Json {}
+
+impl BodySerializer for Json {
+    fn serialize_body<T: 'static>(&self, body: &T, _: TypeId) -> Vec<u8> {
+        to_json(body).to_string().into_bytes()
     }
 }
 
-impl BodyDeserializer for JsonSerialization {
-    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T {
-        let value: serde_json::Value = serde_json::from_slice(raw).unwrap();
-        let boxed: Box<dyn Any> = if r#type == TypeId::of::<Pet>() {
-            Box::new(json_to_pet(&value))
-        } else if r#type == TypeId::of::<Vec<Pet>>() {
-            Box::new(
-                value
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(json_to_pet)
-                    .collect::<Vec<Pet>>(),
-            )
-        } else if r#type == TypeId::of::<Order>() {
-            Box::new(json_to_order(&value))
-        } else if r#type == TypeId::of::<User>() {
-            Box::new(json_to_user(&value))
-        } else if r#type == TypeId::of::<Vec<User>>() {
-            Box::new(
-                value
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(json_to_user)
-                    .collect::<Vec<User>>(),
-            )
-        } else if r#type == TypeId::of::<ApiResponse>() {
-            Box::new(json_to_api_response(&value))
-        } else if r#type == TypeId::of::<String>() {
-            Box::new(value.as_str().unwrap_or_default().to_string())
-        } else if r#type == TypeId::of::<std::collections::HashMap<String, i32>>() {
-            let map: std::collections::HashMap<String, i32> = value
-                .as_object()
-                .unwrap()
-                .iter()
-                .map(|(k, v)| (k.clone(), v.as_i64().unwrap_or(0) as i32))
-                .collect();
-            Box::new(map)
-        } else {
-            panic!("Unsupported body type for deserialization: {:?}", r#type)
-        };
-        *boxed.downcast::<T>().unwrap()
+impl BodyDeserializer for Json {
+    fn deserialize_body<T: 'static>(&self, raw: &[u8], _: TypeId) -> T {
+        serde_json::from_slice(raw)
+            .ok()
+            .and_then(|json| from_json(&json))
+            .unwrap_or_else(|| panic!("body is not a valid {}", type_name::<T>()))
     }
 }
 
-impl PathSerializer for JsonSerialization {
-    fn serialize_path<T: std::fmt::Display>(&self, t: &T, _type: TypeId) -> String {
-        t.to_string()
+impl PathSerializer for Json {
+    fn serialize_path<T: Display>(&self, value: &T, _: TypeId) -> String {
+        value.to_string()
     }
 }
 
-impl PathDeserializer for JsonSerialization {
-    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, _type: TypeId) -> T
+impl PathDeserializer for Json {
+    fn deserialize_path<T: FromStr>(&self, raw: &str, _: TypeId) -> T
     where
-        T::Err: std::fmt::Debug,
+        T::Err: Debug,
     {
-        raw.parse().unwrap()
+        raw.parse().expect("invalid path parameter")
     }
 }
 
-impl ParamSerializer for JsonSerialization {
-    fn serialize_param<T: 'static>(&self, value: &T, _type: TypeId) -> Vec<String> {
-        let any: &dyn Any = value;
-        if let Some(s) = any.downcast_ref::<String>() {
-            vec![s.clone()]
-        } else if let Some(v) = any.downcast_ref::<Vec<String>>() {
-            v.clone()
-        } else if let Some(b) = any.downcast_ref::<bool>() {
-            vec![b.to_string()]
-        } else if let Some(n) = any.downcast_ref::<i32>() {
-            vec![n.to_string()]
-        } else if let Some(n) = any.downcast_ref::<i64>() {
-            vec![n.to_string()]
-        } else {
-            panic!("Unsupported param type for serialization: {:?}", _type)
+/// Query parameters and headers are sent as strings: one per item of a list.
+impl ParamSerializer for Json {
+    fn serialize_param<T: 'static>(&self, value: &T, _: TypeId) -> Vec<String> {
+        match to_json(value) {
+            Value::Array(items) => items.iter().map(text).collect(),
+            item => vec![text(&item)],
         }
     }
 }
 
-impl ParamDeserializer for JsonSerialization {
-    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T {
-        let boxed: Box<dyn Any> = if r#type == TypeId::of::<String>() {
-            Box::new(values.first().cloned().unwrap_or_default())
-        } else if r#type == TypeId::of::<Vec<String>>() {
-            Box::new(values.to_vec())
-        } else if r#type == TypeId::of::<bool>() {
-            Box::new(
-                values
-                    .first()
-                    .map(|v| v == "true")
-                    .unwrap_or(false),
-            )
-        } else if r#type == TypeId::of::<i32>() {
-            Box::new(
-                values
-                    .first()
-                    .and_then(|v| v.parse::<i32>().ok())
-                    .unwrap_or(0),
-            )
-        } else if r#type == TypeId::of::<i64>() {
-            Box::new(
-                values
-                    .first()
-                    .and_then(|v| v.parse::<i64>().ok())
-                    .unwrap_or(0),
-            )
-        } else {
-            panic!("Unsupported param type for deserialization: {:?}", r#type)
-        };
-        *boxed.downcast::<T>().unwrap()
+/// The strings do not say what they hold, so try them as a list, a string, and a literal such as `42`.
+impl ParamDeserializer for Json {
+    fn deserialize_param<T: 'static>(&self, values: &[String], _: TypeId) -> T {
+        let first = values.first().map(String::as_str).unwrap_or_default();
+        from_json(&values.iter().cloned().map(Value::String).collect())
+            .or_else(|| from_json(&Value::from(first)))
+            .or_else(|| from_json(&serde_json::from_str(first).ok()?))
+            .unwrap_or_else(|| panic!("{values:?} is not a valid {}", type_name::<T>()))
     }
 }
 
-impl Serializer for JsonSerialization {}
-impl Deserializer for JsonSerialization {}
-impl Serialization for JsonSerialization {}
-
-// --- Pet ---
-
-fn pet_to_json(pet: &Pet) -> serde_json::Value {
-    serde_json::json!({
-        "id": pet.id,
-        "category": pet.category.as_ref().map(category_to_json),
-        "name": pet.name,
-        "photoUrls": pet.photo_urls,
-        "tags": pet.tags.as_ref().map(|tags| tags.iter().map(tag_to_json).collect::<Vec<_>>()),
-        "status": pet.status.as_ref().map(|s| s.label()),
-    })
+fn text(json: &Value) -> String {
+    json.as_str().map_or_else(|| json.to_string(), String::from)
 }
 
-fn json_to_pet(v: &serde_json::Value) -> Pet {
-    Pet {
-        id: v.get("id").and_then(|v| v.as_i64()),
-        category: v.get("category").and_then(|v| if v.is_null() { None } else { Some(json_to_category(v)) }),
-        name: v.get("name").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-        photo_urls: v
-            .get("photoUrls")
-            .and_then(|v| v.as_array())
-            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
-            .unwrap_or_default(),
-        tags: v.get("tags").and_then(|v| {
-            if v.is_null() { None } else { v.as_array().map(|a| a.iter().map(json_to_tag).collect()) }
-        }),
-        status: v
-            .get("status")
-            .and_then(|v| v.as_str())
-            .and_then(PetStatus::from_label),
+/// Every type the Petstore sends or receives as a body or a parameter.
+macro_rules! petstore_types {
+    ($($type:ty),* $(,)?) => {
+        fn to_json<T: 'static>(value: &T) -> Value {
+            let value: &dyn Any = value;
+            $(if let Some(value) = value.downcast_ref::<$type>() {
+                return value.to_json();
+            })*
+            panic!("{} is not a Petstore type", type_name::<T>())
+        }
+
+        fn from_json<T: 'static>(json: &Value) -> Option<T> {
+            let mut result: Option<T> = None;
+            let slot: &mut dyn Any = &mut result;
+            $(if let Some(slot) = slot.downcast_mut::<Option<$type>>() {
+                *slot = <$type>::from_json(json);
+                return result;
+            })*
+            panic!("{} is not a Petstore type", type_name::<T>())
+        }
+    };
+}
+
+petstore_types!(
+    Pet,
+    Vec<Pet>,
+    Order,
+    User,
+    Vec<User>,
+    ApiResponse,
+    HashMap<String, i32>,
+    String,
+    Vec<String>,
+    i32,
+);
+
+trait JsonValue: Sized {
+    fn to_json(&self) -> Value;
+    fn from_json(json: &Value) -> Option<Self>;
+}
+
+/// Wirespec renames fields to snake case, so every field is mapped to its name in the contract.
+macro_rules! object {
+    ($type:ident { $($field:ident: $name:literal),* $(,)? }) => {
+        impl JsonValue for $type {
+            fn to_json(&self) -> Value {
+                [$(($name, self.$field.to_json())),*]
+                    .into_iter()
+                    .filter(|(_, value)| !value.is_null())
+                    .collect()
+            }
+
+            fn from_json(json: &Value) -> Option<Self> {
+                Some($type { $($field: JsonValue::from_json(&json[$name])?),* })
+            }
+        }
+    };
+}
+
+object!(Pet {
+    id: "id",
+    category: "category",
+    name: "name",
+    photo_urls: "photoUrls",
+    tags: "tags",
+    status: "status"
+});
+object!(Category {
+    id: "id",
+    name: "name"
+});
+object!(Tag {
+    id: "id",
+    name: "name"
+});
+object!(Order {
+    id: "id",
+    pet_id: "petId",
+    quantity: "quantity",
+    ship_date: "shipDate",
+    status: "status",
+    complete: "complete"
+});
+object!(User {
+    id: "id",
+    username: "username",
+    first_name: "firstName",
+    last_name: "lastName",
+    email: "email",
+    password: "password",
+    phone: "phone",
+    user_status: "userStatus"
+});
+object!(ApiResponse {
+    code: "code",
+    r#type: "type",
+    message: "message"
+});
+
+/// Generated enums implement `Enum`, which converts between a variant and its label in the contract.
+macro_rules! enumeration {
+    ($($type:ident),*) => {$(
+        impl JsonValue for $type {
+            fn to_json(&self) -> Value {
+                self.label().into()
+            }
+
+            fn from_json(json: &Value) -> Option<Self> {
+                Self::from_label(json.as_str()?)
+            }
+        }
+    )*};
+}
+
+enumeration!(PetStatus, OrderStatus);
+
+macro_rules! scalar {
+    ($type:ty, $read:ident) => {
+        impl JsonValue for $type {
+            fn to_json(&self) -> Value {
+                self.clone().into()
+            }
+
+            fn from_json(json: &Value) -> Option<Self> {
+                json.$read()?.try_into().ok()
+            }
+        }
+    };
+}
+
+scalar!(String, as_str);
+scalar!(bool, as_bool);
+scalar!(i32, as_i64);
+scalar!(i64, as_i64);
+
+impl<T: JsonValue> JsonValue for Option<T> {
+    fn to_json(&self) -> Value {
+        self.as_ref().map_or(Value::Null, T::to_json)
+    }
+
+    fn from_json(json: &Value) -> Option<Self> {
+        match json {
+            Value::Null => Some(None),
+            json => T::from_json(json).map(Some),
+        }
     }
 }
 
-// --- Category ---
+impl<T: JsonValue> JsonValue for Vec<T> {
+    fn to_json(&self) -> Value {
+        self.iter().map(T::to_json).collect()
+    }
 
-fn category_to_json(cat: &Category) -> serde_json::Value {
-    serde_json::json!({
-        "id": cat.id,
-        "name": cat.name,
-    })
-}
-
-fn json_to_category(v: &serde_json::Value) -> Category {
-    Category {
-        id: v.get("id").and_then(|v| v.as_i64()),
-        name: v.get("name").and_then(|v| v.as_str()).map(String::from),
+    fn from_json(json: &Value) -> Option<Self> {
+        json.as_array()?.iter().map(T::from_json).collect()
     }
 }
 
-// --- Tag ---
-
-fn tag_to_json(tag: &Tag) -> serde_json::Value {
-    serde_json::json!({
-        "id": tag.id,
-        "name": tag.name,
-    })
-}
-
-fn json_to_tag(v: &serde_json::Value) -> Tag {
-    Tag {
-        id: v.get("id").and_then(|v| v.as_i64()),
-        name: v.get("name").and_then(|v| v.as_str()).map(String::from),
+impl<T: JsonValue> JsonValue for HashMap<String, T> {
+    fn to_json(&self) -> Value {
+        self.iter()
+            .map(|(key, value)| (key.clone(), value.to_json()))
+            .collect()
     }
-}
 
-// --- Order ---
-
-fn order_to_json(order: &Order) -> serde_json::Value {
-    serde_json::json!({
-        "id": order.id,
-        "petId": order.pet_id,
-        "quantity": order.quantity,
-        "shipDate": order.ship_date,
-        "status": order.status.as_ref().map(|s| s.label()),
-        "complete": order.complete,
-    })
-}
-
-fn json_to_order(v: &serde_json::Value) -> Order {
-    Order {
-        id: v.get("id").and_then(|v| v.as_i64()),
-        pet_id: v.get("petId").and_then(|v| v.as_i64()),
-        quantity: v.get("quantity").and_then(|v| v.as_i64()).map(|n| n as i32),
-        ship_date: v.get("shipDate").and_then(|v| v.as_str()).map(String::from),
-        status: v
-            .get("status")
-            .and_then(|v| v.as_str())
-            .and_then(OrderStatus::from_label),
-        complete: v.get("complete").and_then(|v| v.as_bool()),
-    }
-}
-
-// --- User ---
-
-fn user_to_json(user: &User) -> serde_json::Value {
-    serde_json::json!({
-        "id": user.id,
-        "username": user.username,
-        "firstName": user.first_name,
-        "lastName": user.last_name,
-        "email": user.email,
-        "password": user.password,
-        "phone": user.phone,
-        "userStatus": user.user_status,
-    })
-}
-
-fn json_to_user(v: &serde_json::Value) -> User {
-    User {
-        id: v.get("id").and_then(|v| v.as_i64()),
-        username: v.get("username").and_then(|v| v.as_str()).map(String::from),
-        first_name: v.get("firstName").and_then(|v| v.as_str()).map(String::from),
-        last_name: v.get("lastName").and_then(|v| v.as_str()).map(String::from),
-        email: v.get("email").and_then(|v| v.as_str()).map(String::from),
-        password: v.get("password").and_then(|v| v.as_str()).map(String::from),
-        phone: v.get("phone").and_then(|v| v.as_str()).map(String::from),
-        user_status: v.get("userStatus").and_then(|v| v.as_i64()).map(|n| n as i32),
-    }
-}
-
-// --- ApiResponse ---
-
-fn api_response_to_json(resp: &ApiResponse) -> serde_json::Value {
-    serde_json::json!({
-        "code": resp.code,
-        "type": resp.r#type,
-        "message": resp.message,
-    })
-}
-
-fn json_to_api_response(v: &serde_json::Value) -> ApiResponse {
-    ApiResponse {
-        code: v.get("code").and_then(|v| v.as_i64()).map(|n| n as i32),
-        r#type: v.get("type").and_then(|v| v.as_str()).map(String::from),
-        message: v.get("message").and_then(|v| v.as_str()).map(String::from),
+    fn from_json(json: &Value) -> Option<Self> {
+        json.as_object()?
+            .iter()
+            .map(|(key, value)| Some((key.clone(), T::from_json(value)?)))
+            .collect()
     }
 }

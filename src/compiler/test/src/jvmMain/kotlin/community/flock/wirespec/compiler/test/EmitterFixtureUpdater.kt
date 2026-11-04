@@ -67,6 +67,7 @@ private fun compileFixtures(emitterFactory: () -> Emitter): Map<String, () -> St
     "compileRpcTest" to { compile(CompileRpcTest, emitterFactory) },
     "compileEnumTest" to { compile(CompileEnumTest, emitterFactory) },
     "compileMinimalEndpointTest" to { compile(CompileMinimalEndpointTest, emitterFactory) },
+    "compileUnitResponseEndpointTest" to { compile(CompileUnitResponseEndpointTest, emitterFactory) },
     "compileRefinedTest" to { compile(CompileRefinedTest, emitterFactory) },
     "compileUnionTest" to { compile(CompileUnionTest, emitterFactory) },
     "compileTypeTest" to { compile(CompileTypeTest, emitterFactory) },

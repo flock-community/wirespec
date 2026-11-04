@@ -704,7 +704,7 @@ public object TypeScriptGenerator :
     }
 
     private fun Literal.emit(): String = when (type) {
-        Type.String -> "'$value'"
+        Type.String -> "'${value.toString().escapeStringLiteral('\'')}'"
         else -> value.toString()
     }
 }

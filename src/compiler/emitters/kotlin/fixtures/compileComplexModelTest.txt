@@ -64,7 +64,7 @@ data class ContactInfo(
   val phone: PhoneNumber?
 ) : Wirespec.Shape {
   override fun validate(): List<String> =
-    (if (!email.validate()) listOf("email") else emptyList<String>()) + (phone?.let { if (!it.validate()) listOf("phone") else emptyList<String>() } ?: emptyList<String>())
+    (if (!email.validate()) listOf<String>("email") else emptyList<String>()) + (phone?.let { if (!it.validate()) listOf<String>("phone") else emptyList<String>() } ?: emptyList<String>())
 }
 
 package community.flock.wirespec.generated.model
@@ -79,7 +79,7 @@ data class Employee(
   val tags: List<Tag>
 ) : Wirespec.Shape {
   override fun validate(): List<String> =
-    (if (!age.validate()) listOf("age") else emptyList<String>()) + contactInfo.validate().map { e -> "contactInfo.${e}" } + tags.flatMapIndexed { i, el -> if (!el.validate()) listOf("tags[${i}]") else emptyList<String>() }
+    (if (!age.validate()) listOf<String>("age") else emptyList<String>()) + contactInfo.validate().map { e -> "contactInfo.${e}" } + tags.flatMapIndexed { i, el -> if (!el.validate()) listOf<String>("tags[${i}]") else emptyList<String>() }
 }
 
 package community.flock.wirespec.generated.model
@@ -116,7 +116,7 @@ import community.flock.wirespec.generated.model.Email
 
 object EmailGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Email =
-    Email(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+    Email(value = generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldString(
       regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$",
       annotations = emptyList<Map<String, Any>>()
     )))
@@ -130,7 +130,7 @@ import community.flock.wirespec.generated.model.PhoneNumber
 
 object PhoneNumberGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): PhoneNumber =
-    PhoneNumber(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+    PhoneNumber(value = generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldString(
       regex = "^\\+[1-9]\\d{1,14}\$",
       annotations = emptyList<Map<String, Any>>()
     )))
@@ -144,7 +144,7 @@ import community.flock.wirespec.generated.model.Tag
 
 object TagGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Tag =
-    Tag(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldString(
+    Tag(value = generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldString(
       regex = "^[a-z][a-z0-9-]{0,19}\$",
       annotations = emptyList<Map<String, Any>>()
     )))
@@ -158,7 +158,7 @@ import community.flock.wirespec.generated.model.EmployeeAge
 
 object EmployeeAgeGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): EmployeeAge =
-    EmployeeAge(value = generator.generate(path + listOf("value"), Wirespec.GeneratorFieldInteger64(
+    EmployeeAge(value = generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldInteger64(
       min = 18L,
       max = 65L,
       annotations = emptyList<Map<String, Any>>()
@@ -176,12 +176,12 @@ import community.flock.wirespec.generated.model.PhoneNumber
 object ContactInfoGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): ContactInfo =
     ContactInfo(
-      email = generator.generate(path + listOf("email"), Wirespec.GeneratorFieldShape(
+      email = generator.generate(path + listOf<String>("email"), Wirespec.GeneratorFieldShape(
         annotations = emptyMap<String, List<Map<String, Any>>>(),
         generate = { p0 -> EmailGenerator.generate(generator, p0) },
         type = typeOf<Email>()
       )),
-      phone = generator.generate(path + listOf("phone"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+      phone = generator.generate(path + listOf<String>("phone"), Wirespec.GeneratorFieldNullable(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
         annotations = emptyMap<String, List<Map<String, Any>>>(),
         generate = { p1 -> PhoneNumberGenerator.generate(generator, p1) },
         type = typeOf<PhoneNumber>()
@@ -201,21 +201,21 @@ import community.flock.wirespec.generated.model.Tag
 object EmployeeGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Employee =
     Employee(
-      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      age = generator.generate(path + listOf("age"), Wirespec.GeneratorFieldShape(
+      age = generator.generate(path + listOf<String>("age"), Wirespec.GeneratorFieldShape(
         annotations = emptyMap<String, List<Map<String, Any>>>(),
         generate = { p0 -> EmployeeAgeGenerator.generate(generator, p0) },
         type = typeOf<EmployeeAge>()
       )),
-      contactInfo = generator.generate(path + listOf("contactInfo"), Wirespec.GeneratorFieldShape(
-        annotations = mapOf("email" to emptyList<Map<String, Any>>(), "phone" to emptyList<Map<String, Any>>()),
+      contactInfo = generator.generate(path + listOf<String>("contactInfo"), Wirespec.GeneratorFieldShape(
+        annotations = mapOf<String, List<Map<String, Any>>>("email" to emptyList<Map<String, Any>>(), "phone" to emptyList<Map<String, Any>>()),
         generate = { p0 -> ContactInfoGenerator.generate(generator, p0) },
         type = typeOf<ContactInfo>()
       )),
-      tags = generator.generate(path + listOf("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+      tags = generator.generate(path + listOf<String>("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
         annotations = emptyMap<String, List<Map<String, Any>>>(),
         generate = { p1 -> TagGenerator.generate(generator, p1) },
         type = typeOf<Tag>()
@@ -233,12 +233,12 @@ import community.flock.wirespec.generated.model.Employee
 object DepartmentGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Department =
     Department(
-      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      employees = generator.generate(path + listOf("employees"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
-        annotations = mapOf("name" to emptyList<Map<String, Any>>(), "age" to emptyList<Map<String, Any>>(), "contactInfo" to emptyList<Map<String, Any>>(), "tags" to emptyList<Map<String, Any>>()),
+      employees = generator.generate(path + listOf<String>("employees"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+        annotations = mapOf<String, List<Map<String, Any>>>("name" to emptyList<Map<String, Any>>(), "age" to emptyList<Map<String, Any>>(), "contactInfo" to emptyList<Map<String, Any>>(), "tags" to emptyList<Map<String, Any>>()),
         generate = { p1 -> EmployeeGenerator.generate(generator, p1) },
         type = typeOf<Employee>()
       )) }))
@@ -255,12 +255,12 @@ import community.flock.wirespec.generated.model.Department
 object CompanyGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Company =
     Company(
-      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      departments = generator.generate(path + listOf("departments"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
-        annotations = mapOf("name" to emptyList<Map<String, Any>>(), "employees" to emptyList<Map<String, Any>>()),
+      departments = generator.generate(path + listOf<String>("departments"), Wirespec.GeneratorFieldArray(generate = { p0 -> generator.generate(p0, Wirespec.GeneratorFieldShape(
+        annotations = mapOf<String, List<Map<String, Any>>>("name" to emptyList<Map<String, Any>>(), "employees" to emptyList<Map<String, Any>>()),
         generate = { p1 -> DepartmentGenerator.generate(generator, p1) },
         type = typeOf<Department>()
       )) }))

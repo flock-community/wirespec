@@ -4,8 +4,10 @@ import community.flock.wirespec.integration.spring.shared.filterNotEmpty
 import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import kotlinx.coroutines.reactor.awaitSingle
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
+import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.reactive.function.client.bodyToMono
@@ -60,7 +62,7 @@ public class WirespecWebClient(
                 .map { body ->
                     Wirespec.RawResponse(
                         statusCode = response.statusCode().value(),
-                        headers = response.headers().asHttpHeaders().toMap(),
+                        headers = response.headers().asHttpHeaders().toRawHeaders(),
                         body = body,
                     )
                 }
@@ -68,7 +70,7 @@ public class WirespecWebClient(
                     Mono.just(
                         Wirespec.RawResponse(
                             statusCode = response.statusCode().value(),
-                            headers = response.headers().asHttpHeaders().toMap(),
+                            headers = response.headers().asHttpHeaders().toRawHeaders(),
                             body = null,
                         ),
                     ),
@@ -79,7 +81,7 @@ public class WirespecWebClient(
                 is WebClientResponseException ->
                     Wirespec.RawResponse(
                         statusCode = throwable.statusCode.value(),
-                        headers = throwable.headers.toMap(),
+                        headers = throwable.headers.toRawHeaders(),
                         body = throwable.responseBodyAsByteArray,
                     ).let { Mono.just(it) }
 
@@ -87,4 +89,10 @@ public class WirespecWebClient(
             }
         }
         .awaitSingle()
+
+    // Not toMap(): HttpHeaders is a Map in Spring Framework 6, which this is compiled against, but not
+    // in Spring Framework 7, so the cast fails at runtime there. HttpHeaders.forEach exists in both.
+    private fun HttpHeaders.toRawHeaders(): Map<String, List<String>> = LinkedMultiValueMap<String, String>().also { map ->
+        forEach { name, values -> map[name] = values }
+    }
 }

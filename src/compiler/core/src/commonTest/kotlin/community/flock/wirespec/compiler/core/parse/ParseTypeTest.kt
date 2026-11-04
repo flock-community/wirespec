@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
@@ -115,6 +116,35 @@ class ParseTypeTest {
                     type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/^([0-9]{4}[A-Z]{2})$/g")
                 }
             }
+    }
+
+    @Test
+    fun testRefinedParserStringFormat() {
+        val source =
+            // language=ws
+            """
+            |type Date = String(date)
+            |type DateTime = String(date-time)
+            |type Id = String(uuid-v7)
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .map { it.shouldBeInstanceOf<Refined>().reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>().constraint }
+            .shouldBe(listOf(StringFormat.DATE.regExp, StringFormat.DATE_TIME.regExp, StringFormat.UUID_V7.regExp))
+    }
+
+    @Test
+    fun testRefinedParserUnknownStringFormat() {
+        val source =
+            // language=ws
+            """
+            |type PostalCode = String(postcode)
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeLeft()
+            .head.message shouldBe "Unknown string format: postcode, expected one of: date, date-time, time, email, uuid, uuid-v1, uuid-v2, uuid-v3, uuid-v4, uuid-v5, uuid-v6, uuid-v7, uuid-v8"
     }
 
     @Test

@@ -24,6 +24,7 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.CompileUnitResponseEndpointTest
 import community.flock.wirespec.compiler.test.NodeFixtures
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
@@ -151,6 +152,13 @@ class ScalaEmitterTest {
         val scala = EmitterFixtures.compileMinimalEndpointTest
 
         CompileMinimalEndpointTest.compiler { ScalaEmitter() } shouldBeRight scala
+    }
+
+    @Test
+    fun compileUnitResponseEndpointTest() {
+        val scala = EmitterFixtures.compileUnitResponseEndpointTest
+
+        CompileUnitResponseEndpointTest.compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test

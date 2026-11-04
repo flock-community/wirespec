@@ -29,14 +29,19 @@ rpc CompleteTodo {
   id: TodoId
 } -> Todo ! TodoError
 
-type TodoId = String(/^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g)
+// Refined with a built-in format: date, date-time, time, email, uuid or uuid-v1 to uuid-v8
+type TodoId = String(uuid-v4)
+type Date = String(date)
+type Timestamp = String(date-time)
+type Email = String(email)
+
+// Refined with a regular expression of your own
 type Name = String(/^[0-9a-zA-Z]{1,50}$/g)
 type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
-type Date = String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
 
 part Audited {
-  createdAt: Date,
-  updatedAt: Date?
+  createdAt: Timestamp,
+  updatedAt: Timestamp?
 }
 
 part Paging {
@@ -53,6 +58,7 @@ type Address {
 type Person {
   firstname: Name,
   lastName: Name,
+  email: Email,
   age: Integer,
   address: Address
 }
@@ -62,6 +68,7 @@ type Todo {
   person: Person,
   done: Boolean,
   prio: Integer,
+  dueDate: Date?,
   ...Audited
 }
 

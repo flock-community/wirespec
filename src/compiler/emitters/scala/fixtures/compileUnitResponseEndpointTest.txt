@@ -1,0 +1,172 @@
+package community.flock.wirespec.generated.endpoint
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.TodoDto
+
+object PutTodo extends Wirespec.Endpoint {
+  case class Path(
+      val id: String
+    ) extends Wirespec.Path
+  object Queries extends Wirespec.Queries
+  object RequestHeaders extends Wirespec.Request.Headers
+  case class Request(
+      override val path: Path,
+      override val method: Wirespec.Method,
+      override val queries: Queries.type,
+      override val headers: RequestHeaders.type,
+      override val body: Unit
+    ) extends Wirespec.Request[Unit] {
+      def this(id: String) = this(Path(id = id), Wirespec.Method.PUT, Queries, RequestHeaders, ())
+    }
+  sealed trait Response[T] extends Wirespec.Response[T]
+  sealed trait Response2XX[T] extends Response[T]
+  sealed trait Response4XX[T] extends Response[T]
+  sealed trait ResponseTodoDto extends Response[TodoDto]
+  sealed trait ResponseUnit extends Response[Unit]
+  object Response200Headers extends Wirespec.Response.Headers
+  case class Response200(
+      override val status: Int,
+      override val headers: Response200Headers.type,
+      override val body: TodoDto
+    ) extends Response2XX[TodoDto] with ResponseTodoDto {
+      def this(body: TodoDto) = this(200, Response200Headers, body)
+    }
+  object Response404Headers extends Wirespec.Response.Headers
+  object Response404 extends Response4XX[Unit] with ResponseUnit {
+      override val status: Int = 404
+      override val headers: Response404Headers.type = Response404Headers
+      override val body: Unit = ()  }
+  trait Handler[F[_]] extends Wirespec.Handler {
+      def putTodo(request: Request): F[Response[?]]
+  }
+  trait Call[F[_]] extends Wirespec.Call {
+      def putTodo(id: String): F[Response[?]]
+  }
+  def toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    new Wirespec.RawRequest(
+      method = request.method.toString,
+      path = List("todos", serialization.serializePath[String](request.path.id, scala.reflect.classTag[String])),
+      queries = Map.empty,
+      headers = Map.empty,
+      body = None
+    )
+  def fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    new Request(id = serialization.deserializePath[String](request.path(1), scala.reflect.classTag[String]))
+  def toRawResponse(serialization: Wirespec.Serializer, response: Response[?]): Wirespec.RawResponse = {
+    response match {
+        case r: Response200 => {
+          new Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = Map.empty,
+            body = Some(serialization.serializeBody(r.body, scala.reflect.classTag[TodoDto]))
+          )
+        }
+        case r: Response404.type => {
+          new Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = Map.empty,
+            body = None
+          )
+        }
+        case _ => {
+          throw new IllegalStateException(("Cannot match response with status: " + response.status))
+        }
+    }
+  }
+  def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response[?] = {
+    response.statusCode match {
+        case 200 => {
+          new Response200(body = (response.body.map(it => serialization.deserializeBody[TodoDto](it, scala.reflect.classTag[TodoDto])).getOrElse(throw new IllegalStateException("body is null"))))
+        }
+        case 404 => {
+          Response404
+        }
+        case _ => {
+          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode))
+        }
+    }
+  }
+  object Client extends Wirespec.Client[Request, Response[?]] {
+    override val pathTemplate: String = "/todos/{id}"
+    override val method: String = "PUT"
+    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[String]))
+    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request, Response[?]] = new Wirespec.ClientEdge[Request, Response[?]] {
+      override def to(request: Request): Wirespec.RawRequest = toRawRequest(serialization, request)
+      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
+    }
+  }
+  object Server extends Wirespec.Server[Request, Response[?]] {
+    override val pathTemplate: String = "/todos/{id}"
+    override val method: String = "PUT"
+    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("todos"), Wirespec.Param("id", scala.reflect.classTag[String]))
+    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request, Response[?]] = new Wirespec.ServerEdge[Request, Response[?]] {
+      override def from(request: Wirespec.RawRequest): Request = fromRawRequest(serialization, request)
+      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
+    }
+  }
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class TodoDto(
+  val id: String
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    List.empty[String]
+}
+
+package community.flock.wirespec.generated.client
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.TodoDto
+import community.flock.wirespec.generated.endpoint.PutTodo
+
+case class PutTodoClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) extends PutTodo.Call[[A] =>> A] {
+  override def putTodo(id: String): PutTodo.Response[?] = {
+    val request = new PutTodo.Request(id = id)
+    val rawRequest = PutTodo.toRawRequest(serialization, request)
+    val rawResponse = transportation.transport(rawRequest)
+    PutTodo.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.TodoDto
+
+object TodoDtoGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): TodoDto =
+    new TodoDto(id = generator.generate(path ++ List("id"), new Wirespec.GeneratorFieldString(
+      regex = None,
+      annotations = List.empty[Map[String, Any]]
+    )))
+}
+
+package community.flock.wirespec.generated
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.TodoDto
+import community.flock.wirespec.generated.endpoint.PutTodo
+import community.flock.wirespec.generated.client.PutTodoClient
+
+case class Client(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) extends PutTodo.Call[[A] =>> A] {
+  override def putTodo(id: String): PutTodo.Response[?] =
+    new PutTodoClient(
+      serialization = serialization,
+      transportation = transportation
+    ).putTodo(id)
+}

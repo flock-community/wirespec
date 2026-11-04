@@ -78,9 +78,9 @@ object PutTodo : Wirespec.Endpoint {
   fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       method = request.method.name,
-      path = listOf("todos", serialization.serializePath<String>(request.path.id, typeOf<String>())),
-      queries = mapOf("done" to serialization.serializeParam<Boolean>(request.queries.done, typeOf<Boolean>()), "name" to (request.queries.name?.let { serialization.serializeParam<String>(it, typeOf<String>()) } ?: emptyList<String>())),
-      headers = mapOf("token" to serialization.serializeParam<Token>(request.headers.token, typeOf<Token>()), "Refresh-Token" to (request.headers.refreshToken?.let { serialization.serializeParam<Token>(it, typeOf<Token>()) } ?: emptyList<String>())),
+      path = listOf<String>("todos", serialization.serializePath<String>(request.path.id, typeOf<String>())),
+      queries = mapOf<String, List<String>>("done" to serialization.serializeParam<Boolean>(request.queries.done, typeOf<Boolean>()), "name" to (request.queries.name?.let { serialization.serializeParam<String>(it, typeOf<String>()) } ?: emptyList<String>())),
+      headers = mapOf<String, List<String>>("token" to serialization.serializeParam<Token>(request.headers.token, typeOf<Token>()), "Refresh-Token" to (request.headers.refreshToken?.let { serialization.serializeParam<Token>(it, typeOf<Token>()) } ?: emptyList<String>())),
       body = serialization.serializeBody<PotentialTodoDto>(request.body, typeOf<PotentialTodoDto>())
     )
   fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
@@ -104,7 +104,7 @@ object PutTodo : Wirespec.Endpoint {
         is Response201 -> {
           return Wirespec.RawResponse(
             statusCode = r.status,
-            headers = mapOf("token" to serialization.serializeParam<Token>(r.headers.token, typeOf<Token>()), "refreshToken" to (r.headers.refreshToken?.let { serialization.serializeParam<Token>(it, typeOf<Token>()) } ?: emptyList<String>())),
+            headers = mapOf<String, List<String>>("token" to serialization.serializeParam<Token>(r.headers.token, typeOf<Token>()), "refreshToken" to (r.headers.refreshToken?.let { serialization.serializeParam<Token>(it, typeOf<Token>()) } ?: emptyList<String>())),
             body = serialization.serializeBody(r.body, typeOf<TodoDto>())
           )
         }
@@ -244,11 +244,11 @@ import community.flock.wirespec.generated.model.PotentialTodoDto
 object PotentialTodoDtoGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): PotentialTodoDto =
     PotentialTodoDto(
-      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      done = generator.generate(path + listOf("done"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>()))
+      done = generator.generate(path + listOf<String>("done"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>()))
     )
 }
 
@@ -260,7 +260,7 @@ import community.flock.wirespec.generated.model.Token
 
 object TokenGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Token =
-    Token(iss = generator.generate(path + listOf("iss"), Wirespec.GeneratorFieldString(
+    Token(iss = generator.generate(path + listOf<String>("iss"), Wirespec.GeneratorFieldString(
       regex = null,
       annotations = emptyList<Map<String, Any>>()
     )))
@@ -275,15 +275,15 @@ import community.flock.wirespec.generated.model.TodoDto
 object TodoDtoGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): TodoDto =
     TodoDto(
-      id = generator.generate(path + listOf("id"), Wirespec.GeneratorFieldString(
+      id = generator.generate(path + listOf<String>("id"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      name = generator.generate(path + listOf("name"), Wirespec.GeneratorFieldString(
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      done = generator.generate(path + listOf("done"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>()))
+      done = generator.generate(path + listOf<String>("done"), Wirespec.GeneratorFieldBoolean(annotations = emptyList<Map<String, Any>>()))
     )
 }
 
@@ -296,12 +296,12 @@ import community.flock.wirespec.generated.model.Error
 object ErrorGenerator {
   fun generate(generator: Wirespec.Generator, path: List<String>): Error =
     Error(
-      code = generator.generate(path + listOf("code"), Wirespec.GeneratorFieldInteger64(
+      code = generator.generate(path + listOf<String>("code"), Wirespec.GeneratorFieldInteger64(
         min = null,
         max = null,
         annotations = emptyList<Map<String, Any>>()
       )),
-      description = generator.generate(path + listOf("description"), Wirespec.GeneratorFieldString(
+      description = generator.generate(path + listOf<String>("description"), Wirespec.GeneratorFieldString(
         regex = null,
         annotations = emptyList<Map<String, Any>>()
       ))

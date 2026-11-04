@@ -47,7 +47,7 @@ public interface GetTodos extends Wirespec.Endpoint {
   public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
     return new Wirespec.RawRequest(
       request.method().name(),
-      java.util.List.of("todos"),
+      java.util.List.<String>of("todos"),
       java.util.Collections.emptyMap(),
       java.util.Collections.emptyMap(),
       java.util.Optional.empty()
@@ -150,7 +150,7 @@ import community.flock.wirespec.generated.model.TodoDto;
 
 public interface TodoDtoGenerator {
   public static TodoDto generate(Wirespec.Generator generator, java.util.List<String> path) {
-    return new TodoDto(generator.generate(java.util.stream.Stream.of(path, java.util.List.of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+    return new TodoDto(generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("description")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
       java.util.Optional.empty(),
       java.util.List.<java.util.Map<String, Object>>of()
     )));

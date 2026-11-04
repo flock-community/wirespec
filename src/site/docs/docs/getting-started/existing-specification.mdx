@@ -1,0 +1,118 @@
+---
+title: Existing specification
+slug: /getting-started/existing-specification
+sidebar_position: 4
+description: Convert an OpenAPI, AsyncAPI, Avro or GraphQL specification to Wirespec, or generate code from it in your build.
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Getting started with an existing specification
+
+You don't have to start from scratch. Wirespec reads these formats:
+
+| Format                                | `<format>`               | File                         |
+|---------------------------------------|--------------------------|------------------------------|
+| [OpenAPI](../converters/openapi.md)   | `OpenAPIV2`, `OpenAPIV3` | Swagger 2.0 or OpenAPI 3, JSON |
+| [AsyncAPI](../converters/asyncapi.md) | `AsyncAPI`               | AsyncAPI 2 or 3, JSON        |
+| [Avro](../converters/avro.md)         | `Avro`                   | Avro schema, JSON            |
+| [GraphQL](../converters/graphql.md)   | `GraphQL`                | GraphQL schema (SDL)         |
+
+There are two ways to use them. Convert once when Wirespec becomes the source of truth from now on. Generate from the
+specification when it stays the source of truth, for example because another team or a vendor maintains it.
+
+## Convert to Wirespec
+
+Install the [CLI](../plugins/plugins-cli.md) or the [npm package](../plugins/plugins-npm.md), and convert the
+specification with `wirespec convert <format>`:
+
+```bash
+wirespec convert OpenAPIV3 -i ./openapi.json -o ./wirespec -l Wirespec
+```
+
+The CLI reads the JSON formats from a file with a `.json` extension, so save an Avro schema (`.avsc`) as `.json` first.
+
+The paths of an OpenAPI document become endpoints and its schemas become types. Where
+Wirespec has no syntax for something in the document, the converter keeps it in an
+[annotation](../converters/converters.md#annotations), so converting back to OpenAPI keeps it. GraphQL converts
+without loss. OpenAPI, AsyncAPI and Avro can lose information, so review the result before you commit it.
+
+From here on you change the `.ws` files instead of the original specification, and generate code from them like in
+the [frontend](./frontend.mdx) and [backend](./backend.mdx) guides. Consumers that still need OpenAPI get it
+[generated from the contract](./api-design.mdx#publish-the-contract-as-openapi).
+
+## Generate code from the specification
+
+To keep the original specification, convert it in your build every time and generate code from the result in one go:
+
+<Tabs groupId="build-tool">
+  <TabItem value="gradle" label="Gradle">
+
+```kotlin title="build.gradle.kts"
+import community.flock.wirespec.plugin.Format
+import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
+
+plugins {
+    id("community.flock.wirespec.plugin.gradle") version "{{WIRESPEC_VERSION}}"
+}
+
+val wirespecConvert = tasks.register<ConvertWirespecTask>("wirespec-convert") {
+    input = layout.projectDirectory.file("src/main/openapi/openapi.json")
+    output = layout.buildDirectory.dir("generated/wirespec")
+    format = Format.OpenAPIV3
+    packageName = "com.example.petstore"
+    language = Language.Kotlin
+}
+
+sourceSets.main {
+    java.srcDir(wirespecConvert.flatMap { it.output })
+}
+```
+
+  </TabItem>
+  <TabItem value="maven" label="Maven">
+
+```xml title="pom.xml"
+<plugin>
+    <groupId>community.flock.wirespec.plugin.maven</groupId>
+    <artifactId>wirespec-maven-plugin</artifactId>
+    <version>{{WIRESPEC_VERSION}}</version>
+    <executions>
+        <execution>
+            <goals>
+                <goal>convert</goal>
+            </goals>
+            <configuration>
+                <input>${project.basedir}/src/main/openapi/openapi.json</input>
+                <output>${project.build.directory}/generated-sources/wirespec</output>
+                <format>OpenAPIV3</format>
+                <packageName>com.example.petstore</packageName>
+                <language>Kotlin</language>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+
+```bash
+wirespec convert OpenAPIV3 -i ./openapi.json -o ./src/gen -l TypeScript --shared
+```
+
+  </TabItem>
+</Tabs>
+
+The generated code is the same as for a Wirespec contract, so you use it as described in the
+[frontend](./frontend.mdx#call-the-api) and [backend](./backend.mdx#implement-the-endpoints) guides.
+
+## Next steps
+
+- [Converters](../converters/converters.md): how every format maps to Wirespec, and the annotations that keep what
+  Wirespec has no syntax for.
+- [Gradle](../plugins/plugins-gradle.md#convertwirespectask) and [Maven](../plugins/plugins-maven.md#convert)
+  plugins: all options, such as a pre-processor that changes the specification before it is converted.
+- [Language](../language/language.mdx): read and write the converted contract.
