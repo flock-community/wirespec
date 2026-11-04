@@ -48,6 +48,13 @@ rpc CompleteTodo {
 @GraphQLMutation
 rpc ClearTodos {} -> Unit
 
+type SearchResult = Todo | User
+
+@GraphQLQuery
+rpc Search {
+  text: String
+} -> SearchResult[]
+
 @GraphQLSubscription
 rpc TodoAdded {} -> Todo
 

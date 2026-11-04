@@ -20,11 +20,14 @@ import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import kotlinx.coroutines.runBlocking
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient as JavaGraphQLClient
+import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLRequests as JavaRequests
+import community.flock.wirespec.integration.graphql.java.generated.graphql.Select as JavaSelect
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority as JavaPriority
 import community.flock.wirespec.integration.graphql.java.generated.model.Todo as JavaTodo
@@ -32,6 +35,9 @@ import community.flock.wirespec.integration.graphql.java.generated.model.TodoErr
 import community.flock.wirespec.integration.graphql.java.generated.model.User as JavaUser
 import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteTodo as JavaCompleteTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient as KotlinGraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLRequests as KotlinRequests
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoClient as KotlinQueryTodoClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.Select as KotlinSelect
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo as KotlinNewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority as KotlinPriority
@@ -137,6 +143,47 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `Kotlin query builder writes the request with the selected fields`() {
+        val request = KotlinRequests.queryTodo(KotlinID("1"), KotlinSelect.todo().id().title().owner(KotlinSelect.user().name()))
+
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id title owner { name } } }", request.query)
+        assertEquals(KotlinID("1"), request.variables.id)
+    }
+
+    @Test
+    fun `Kotlin query builder selects the members of a union`() {
+        val request = KotlinRequests.search("milk", KotlinSelect.searchResult().onTodo(KotlinSelect.todo().title()).onUser(KotlinSelect.user().name()))
+
+        assertEquals(
+            "query Search(\$text: String!) { result: search(text: \$text) { __typename ... on Todo { title } ... on User { name } } }",
+            request.query,
+        )
+    }
+
+    @Test
+    fun `Kotlin query builder takes no selection for a result without fields`() {
+        assertEquals("mutation ClearTodos { result: clearTodos }", KotlinRequests.clearTodos().query)
+    }
+
+    @Test
+    fun `Kotlin client sends a request written with the query builder`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":{"id":"1","title":"Groceries","done":false,"owner":{"name":"Ann"}}}}""")
+        val request = KotlinRequests.queryTodo(KotlinID("1"), KotlinSelect.todo().id().title())
+
+        server.transport(KotlinWirespec.RawRequest("POST", listOf("graphql"), emptyMap(), emptyMap(), KotlinSerialization(objectMapper).serializeBody(request, typeOf<KotlinQueryTodoClient.GraphQLRequest>())))
+
+        assertEquals(mapOf("query" to request.query, "variables" to mapOf("id" to "1")), server.json())
+    }
+
+    @Test
+    fun `Java query builder writes the request with the selected fields`() {
+        val request = JavaRequests.todos(Optional.of(true), JavaSelect.todo().id().owner(JavaSelect.user().name()))
+
+        assertEquals("query Todos(\$done: Boolean) { result: todos(done: \$done) { id owner { name } } }", request.query())
+        assertEquals(Optional.of(true), request.variables().done())
+    }
+
+    @Test
     fun `Only rpcs marked as a query or a mutation get a client`() {
         listOf("TodoAddedClient", "CountTodosClient").forEach { client ->
             assertFailsWith<ClassNotFoundException> {
@@ -144,7 +191,7 @@ class GraphQLClientExtensionTest {
             }
         }
         assertEquals(
-            listOf("QueryTodo", "Todos", "AddTodo", "CompleteTodo", "ClearTodos").map { "$it.Service" },
+            listOf("QueryTodo", "Todos", "AddTodo", "CompleteTodo", "ClearTodos", "Search").map { "$it.Service" },
             KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
         )
     }

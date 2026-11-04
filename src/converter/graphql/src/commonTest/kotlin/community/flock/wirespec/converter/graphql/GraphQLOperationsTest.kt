@@ -183,6 +183,30 @@ class GraphQLOperationsTest {
         )
     }
 
+    @Test
+    fun opensTheDocumentWhereTheSelectionGoes() {
+        val definitions = """
+            |type Todo {
+            |  id: ID!
+            |  comments(first: Int!): [String!]
+            |}
+            |
+            |type Query {
+            |  todo(id: ID!): Todo
+            |  count: Int!
+            |}
+        """.trimMargin().fromGraphQL()
+        val operations = GraphQLOperations(definitions)
+        val rpcs = definitions.filterIsInstance<Rpc>().associateBy { it.identifier.value }
+        val todo = definitions.filterIsInstance<community.flock.wirespec.compiler.core.parse.ast.Type>().single { it.identifier.value == "Todo" }
+
+        operations.open(rpcs.getValue("QueryTodo"), "result") shouldBe "query QueryTodo(\$id: ID!) { result: todo(id: \$id)"
+        operations.document(rpcs.getValue("QueryTodo"), "result") shouldBe "query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id }" + GraphQLOperations.CLOSE
+        operations.composite(rpcs.getValue("QueryTodo").result) shouldBe todo
+        operations.composite(rpcs.getValue("Count").result) shouldBe null
+        todo.shape.value.filterIsInstance<community.flock.wirespec.compiler.core.parse.ast.Field>().map { operations.isSelectable(it) } shouldBe listOf(true, false)
+    }
+
     private fun String.fromGraphQL(): List<Definition> = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
         .let { WirespecEmitter().emit(it, noLogger).single().result }
         .parsed()

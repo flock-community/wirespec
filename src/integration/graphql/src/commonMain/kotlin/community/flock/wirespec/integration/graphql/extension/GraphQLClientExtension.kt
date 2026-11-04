@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.Function
 import community.flock.wirespec.compiler.core.ir.FunctionCall
+import community.flock.wirespec.compiler.core.ir.HasName
 import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.Import
 import community.flock.wirespec.compiler.core.ir.Interface
@@ -64,7 +65,7 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  */
 public class GraphQLClientExtension(
     private val packageName: PackageName,
-    language: FileExtension,
+    private val language: FileExtension,
 ) : IrExtension {
 
     private val dialect: Dialect? = when (language) {
@@ -89,16 +90,37 @@ public class GraphQLClientExtension(
             val operations = GraphQLOperations(definitions)
             definitions.filterIsInstance<Rpc>()
                 .filter { rpc -> rpc.annotations.any { it.name in OPERATIONS } }
-                .mapNotNull { rpc -> operations.document(rpc, RESULT)?.let { Operation(rpc, it, ir.serviceOf(rpc)) } }
+                .mapNotNull { rpc ->
+                    operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, ir.serviceOf(rpc)) }
+                }
                 .takeIf { it.isNotEmpty() }
-                ?.let { ir + Client(dialect, it).files() }
+                ?.let { ir + Client(dialect, it).files() + QueryBuilder(dialect, GraphQLQueryBuilder(operations, language), it).files() }
         }
         ?: ir
 
-    private class Operation(val rpc: Rpc, val document: String, val service: Service) {
+    private class Operation(val rpc: Rpc, val document: String, val open: String, val service: Service) {
         val name: String = service.rpc.name.pascalCase()
         val client: String = "${name}Client"
+
+        /** Each variable keeps the name of the argument it is passed as, and takes the parameter of the `Service` function. */
+        val variables: List<Pair<Field, Parameter>> = rpc.shape.fields
+            .zip(service.function.parameters)
+            .map { (field, parameter) -> Field(Name(listOf(field.identifier.value)), parameter.type) to parameter }
     }
+
+    /** The `Select` entry points, a selection per type and the `GraphQLRequests` that take them. */
+    private inner class QueryBuilder(private val dialect: Dialect, private val builder: GraphQLQueryBuilder, private val operations: List<Operation>) {
+
+        private val results = operations.map { it.rpc.result }
+
+        fun files(): List<LanguageFile> = builder.selections(results).map { it.inFile(dialect, emptyList()) } +
+            listOfNotNull(builder.select(results).takeIf { it.elements.isNotEmpty() }?.inFile(dialect, emptyList())) +
+            builder.requests(operations.map { GraphQLQueryBuilder.Request(it.service.function, it.open, it.rpc.result, it.client, it.variables.map { (field, parameter) -> field.name to parameter }) })
+                .inFile(dialect, operations.flatMap { it.service.imports })
+    }
+
+    private fun HasName.inFile(dialect: Dialect, imports: List<Import>): LanguageFile = LanguageFile(name, (dialect.imports + imports).distinct() + this)
+        .placeInPackage(packageName, GRAPHQL)
 
     /** The `Service` interface the emitter wrote for an rpc, with its parameters named as that language names them. */
     private class Service(val rpc: Namespace, val function: Function, val imports: List<Import>)
@@ -139,14 +161,9 @@ public class GraphQLClientExtension(
         )
 
         private fun Operation.requestArguments(): Map<Name, Expression> = mapOf(Name.of("query") to Literal(document, Type.String)) +
-            variables().takeIf { it.isNotEmpty() }
+            variables.takeIf { it.isNotEmpty() }
                 ?.let { variables -> mapOf(Name.of("variables") to ConstructorStatement(Type.Custom(VARIABLES), variables.associate { (field, parameter) -> field.name to VariableReference(parameter.name) })) }
                 .orEmpty()
-
-        /** Each variable keeps the name of the argument it is passed as, and takes the parameter of the `Service` function. */
-        private fun Operation.variables(): List<Pair<Field, Parameter>> = rpc.shape.fields
-            .zip(service.function.parameters)
-            .map { (field, parameter) -> Field(Name(listOf(field.identifier.value)), parameter.type) to parameter }
 
         private fun rawRequest(): ConstructorStatement = ConstructorStatement(
             type = Type.Custom("Wirespec.RawRequest"),
@@ -180,8 +197,8 @@ public class GraphQLClientExtension(
         private fun Operation.returnType(): Type = rpc.error?.let { Type.Custom("$name.Response") } ?: rpc.result.convert()
 
         private fun Operation.envelopes(): List<Struct> = listOfNotNull(
-            nested(REQUEST, listOf(Field(Name.of("query"), Type.String)) + listOfNotNull(Field(Name.of("variables"), Type.Custom(VARIABLES)).takeIf { variables().isNotEmpty() })),
-            variables().takeIf { it.isNotEmpty() }?.let { variables -> nested(VARIABLES, variables.map { it.first }) },
+            nested(REQUEST, listOf(Field(Name.of("query"), Type.String)) + listOfNotNull(Field(Name.of("variables"), Type.Custom(VARIABLES)).takeIf { variables.isNotEmpty() })),
+            variables.takeIf { it.isNotEmpty() }?.let { variables -> nested(VARIABLES, variables.map { it.first }) },
             nested(
                 RESPONSE,
                 listOf(
@@ -237,8 +254,7 @@ public class GraphQLClientExtension(
         // A record nested in a Java record is only public and static when it says so.
         private fun nested(name: String, fields: List<Field>): Struct = Struct(name = Name.of(name), fields = fields, visibility = Visibility.PUBLIC)
 
-        private fun Struct.inFile(imports: List<Import>): LanguageFile = LanguageFile(name, (dialect.imports + imports).distinct() + this)
-            .placeInPackage(packageName, GRAPHQL)
+        private fun Struct.inFile(imports: List<Import>): LanguageFile = inFile(dialect, imports)
     }
 
     private enum class Dialect {

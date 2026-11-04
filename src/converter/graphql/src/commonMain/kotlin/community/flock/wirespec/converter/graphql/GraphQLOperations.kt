@@ -39,13 +39,25 @@ public class GraphQLOperations(definitions: List<Definition>) {
         .associateBy { it.identifier.value }
 
     /** The document that selects the result of [rpc] under [alias]; null for a subscription, which is no request and response. */
-    public fun document(rpc: Rpc, alias: String): String? = schema.operation(rpc)
+    public fun document(rpc: Rpc, alias: String): String? = open(rpc, alias)
+        ?.let { "$it${rpc.result.selection(Trail(rpc.identifier.value))}$CLOSE" }
+
+    /**
+     * The document of [rpc] up to where the selection of its result goes, for a caller that selects the fields itself:
+     * the document is this text, a space and the selection between braces, and [CLOSE]. Null for a subscription.
+     */
+    public fun open(rpc: Rpc, alias: String): String? = schema.operation(rpc)
         .takeUnless { it == Operation.SUBSCRIPTION }
         ?.let { operation ->
             val field = schema.fieldDefinition(rpc)
-            "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} " +
-                "{ $alias: ${field.name}${field.arguments.passed()}${rpc.result.selection(Trail(rpc.identifier.value))} }"
+            "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { $alias: ${field.name}${field.arguments.passed()}"
         }
+
+    /** Whether [field] can be selected without passing it an argument. */
+    public fun isSelectable(field: Field): Boolean = schema.fieldDefinition(field).arguments.none { it.type is TypeRef.NonNull && it.defaultValue == null }
+
+    /** The name of [definition] in the GraphQL schema, which an inline fragment names. */
+    public fun graphQLName(definition: Definition): String = schema.graphQLName(definition.identifier.value)
 
     private fun List<InputValueDefinition>.variables(): String = takeIf { it.isNotEmpty() }
         ?.joinToString(", ", "(", ")") { "$${it.name}: ${it.type.print()}${it.defaultValue?.let { value -> " = ${value.print()}" }.orEmpty()}" }
@@ -55,14 +67,13 @@ public class GraphQLOperations(definitions: List<Definition>) {
         ?.joinToString(", ", "(", ")") { "${it.name}: $${it.name}" }
         .orEmpty()
 
-    private fun Reference.selection(trail: Trail): String = when (val model = composite()) {
+    private fun Reference.selection(trail: Trail): String = when (val model = composite(this)) {
         is Type -> model.selection(trail.enter(model))
         is Union -> model.selection(trail.enter(model))
         else -> ""
     }
 
     private fun Type.selection(trail: Trail): String = when {
-        annotations.any { it.name == GraphQLAnnotations.ENUM } -> ""
         annotations.any { it.name == GraphQLAnnotations.UNION } -> listOf(TYPENAME).block()
         else -> shape.fields.mapNotNull { it.selection(trail) }.ifEmpty { listOf(TYPENAME) }.block()
     }
@@ -86,19 +97,20 @@ public class GraphQLOperations(definitions: List<Definition>) {
 
     private fun Field.unselectable(trail: Trail): String? = when {
         reference.selected().any { it in trail.types } -> "refers back to a type it is selected in"
-        schema.fieldDefinition(this).arguments.any { it.type is TypeRef.NonNull && it.defaultValue == null } -> "takes a required argument"
+        !isSelectable(this) -> "takes a required argument"
         else -> null
     }
 
-    /** The type or union a reference selects fields of, through any list; null for a scalar or enum. */
-    private fun Reference.composite(): Definition? = when (this) {
-        is Reference.Iterable -> reference.composite()
-        is Reference.Custom -> models[value]?.takeIf { it is Type || it is Union }
+    /** The type or union whose fields [reference] selects, through any list; null for a scalar or an enum. */
+    public fun composite(reference: Reference): Definition? = when (reference) {
+        is Reference.Iterable -> composite(reference.reference)
+        is Reference.Custom -> models[reference.value]
+            ?.takeIf { it is Union || (it is Type && it.annotations.none { annotation -> annotation.name == GraphQLAnnotations.ENUM }) }
         is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> null
     }
 
     /** The types whose fields selecting this reference selects right away: a type, or a union and its members. */
-    private fun Reference.selected(): List<String> = when (val model = composite()) {
+    private fun Reference.selected(): List<String> = when (val model = composite(this)) {
         is Union -> listOf(model.identifier.value) + model.entries.mapNotNull { (it as? Reference.Custom)?.value }
         null -> emptyList()
         else -> listOf(model.identifier.value)
@@ -115,7 +127,10 @@ public class GraphQLOperations(definitions: List<Definition>) {
         fun field(name: String): Trail = copy(fields = fields + name)
     }
 
-    private companion object {
-        const val TYPENAME = "__typename"
+    public companion object {
+        /** What closes a document after the selection of its result. */
+        public const val CLOSE: String = " }"
+
+        private const val TYPENAME = "__typename"
     }
 }
