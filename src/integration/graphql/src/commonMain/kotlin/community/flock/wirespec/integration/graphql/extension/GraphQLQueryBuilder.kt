@@ -10,11 +10,10 @@ import community.flock.wirespec.compiler.core.ir.Function
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.Name
-import community.flock.wirespec.compiler.core.ir.Namespace
-import community.flock.wirespec.compiler.core.ir.NamespaceBuilder
 import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.ReturnStatement
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.StructBuilder
 import community.flock.wirespec.compiler.core.ir.Type
@@ -40,7 +39,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * Builds, in the IR DSL, the query builder that lets a caller pick the fields of a result on `this`:
  *
  * ```kotlin
- * val request = GraphQLRequests.queryTodo(ID("1")) {
+ * val request = QueryTodo.graphQL.request(ID("1")) {
  *     id()
  *     owner { name() }
  * }
@@ -49,12 +48,16 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * Every type and union a request can return gets a `<Type>Selection` that collects the selected fields as GraphQL text.
  * Each field of a type is a method that adds the field and returns the selection, so Java chains them in a lambda:
  * `t -> t.id().owner(o -> o.name())`. A field of a type or union takes a block that selects its fields, and a union has
- * an `on<Member>` block per member. `GraphQLRequests` runs a block on a new selection and puts it in the operation of an
- * rpc, with the parameters as its variables.
+ * an `on<Member>` block per member. The builder of each rpc, `<Rpc>GraphQL`, runs a block on a new selection and puts it
+ * in the operation of the rpc, with the parameters as its variables. The rpc reaches it as `QueryTodo.graphQL`: an
+ * extension property in Kotlin and a static method in Java.
  */
 internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: FileExtension) {
 
-    class Request(val function: Function, val open: String, val result: Reference, val client: String, val variables: List<Pair<Name, Parameter>>)
+    /** An rpc: its `Service` function, its document up to the selection, its result and its variables. */
+    class Request(val rpc: String, val function: Function, val open: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
+        val builder: String = builder(rpc)
+    }
 
     /** The selection of every type and union that [results] return, through all their fields. */
     fun selections(results: List<Reference>): List<Struct> = reachable(results).map { model ->
@@ -133,36 +136,66 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     val dslMarkerDefinition: RawElement? = RawElement("@DslMarker\nannotation class $DSL_MARKER").takeIf { language == FileExtension.Kotlin }
 
-    /** `GraphQLRequests.queryTodo(id) { ... }` writes the request of an rpc with the fields of its result that the block selects. */
-    fun requests(requests: List<Request>): Namespace = NamespaceBuilder(REQUESTS).apply {
-        requests.forEach { request ->
-            val selection = operations.composite(request.result)
-            function(Name(listOf(request.function.name.camelCase()))) {
-                request.function.parameters.forEach { arg(it.name, it.type) }
-                selection?.let { arg(SELECTION, it.block()) }
-                returnType(type("${request.client}.$GRAPHQL_REQUEST"))
-                returns(
-                    construct(type("${request.client}.$GRAPHQL_REQUEST")) {
-                        arg(
-                            "query",
-                            selection
-                                ?.let { concat(Literal("${request.open} ", Type.String), it.selected(), Literal(GraphQLOperations.CLOSE, Type.String)) }
-                                ?: Literal(request.open + GraphQLOperations.CLOSE, Type.String),
-                        )
-                        request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
-                            arg(
-                                "variables",
-                                ConstructorStatement(
-                                    Type.Custom("${request.client}.$GRAPHQL_VARIABLES"),
-                                    variables.associate { (name, parameter) -> name to VariableReference(parameter.name) },
-                                ),
-                            )
-                        }
-                    },
-                )
+    /**
+     * `QueryTodoGraphQL.request(id) { ... }` writes the request of an rpc with the fields of its result that the block
+     * selects, as a `GraphQLRequest` with the query and its `GraphQLVariables`. It has no fields, so it is an `object` in
+     * Kotlin and a record without components in Java.
+     */
+    fun builder(request: Request): Struct = struct(request.builder) {
+        val selection = operations.composite(request.result)
+        function(REQUEST) {
+            visibility(Visibility.PUBLIC)
+            request.function.parameters.forEach { arg(it.name, it.type) }
+            selection?.let { arg(SELECTION, it.block()) }
+            returnType(type(GRAPHQL_REQUEST))
+            returns(
+                construct(type(GRAPHQL_REQUEST)) {
+                    arg(
+                        "query",
+                        selection
+                            ?.let { concat(Literal("${request.open} ", Type.String), it.selected(), Literal(GraphQLOperations.CLOSE, Type.String)) }
+                            ?: Literal(request.open + GraphQLOperations.CLOSE, Type.String),
+                    )
+                    request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
+                        arg("variables", ConstructorStatement(Type.Custom(GRAPHQL_VARIABLES), variables.associate { (field, parameter) -> field.name to VariableReference(parameter.name) }))
+                    }
+                },
+            )
+        }
+        // A record nested in a Java record is only public and static when it says so.
+        struct(GRAPHQL_REQUEST) {
+            visibility(Visibility.PUBLIC)
+            field("query", Type.String)
+            if (request.variables.isNotEmpty()) field("variables", type(GRAPHQL_VARIABLES))
+        }
+        request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
+            struct(GRAPHQL_VARIABLES) {
+                visibility(Visibility.PUBLIC)
+                variables.forEach { (field, _) -> field(field.name, field.type) }
             }
         }
-    }.build()
+    }
+
+    /** `QueryTodo.graphQL` in Kotlin: an extension property on the rpc object, next to the builder. */
+    fun accessor(request: Request): Field? = takeIf { language == FileExtension.Kotlin }?.let {
+        Field(
+            name = ACCESSOR,
+            type = Type.Custom(request.builder),
+            receiver = Type.Custom(request.rpc),
+            getter = ConstructorStatement(Type.Custom(request.builder)),
+        )
+    }
+
+    /** `QueryTodo.graphQL()` in Java: a static method on the rpc interface. */
+    fun staticAccessor(request: Request): Function? = takeIf { language == FileExtension.Java }?.let {
+        Function(
+            name = ACCESSOR,
+            parameters = emptyList(),
+            returnType = Type.Custom(request.builder),
+            body = listOf(ReturnStatement(ConstructorStatement(Type.Custom(request.builder)))),
+            isStatic = true,
+        )
+    }
 
     /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */
     private fun StructBuilder.method(model: Definition, name: String, text: String, nested: Definition? = null) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
@@ -223,13 +256,16 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     }
 
     companion object {
-        const val REQUESTS = "GraphQLRequests"
+        fun builder(rpc: String): String = "${rpc}GraphQL"
+
         const val DSL_MARKER = "GraphQLDsl"
         const val GRAPHQL_REQUEST = "GraphQLRequest"
         const val GRAPHQL_VARIABLES = "GraphQLVariables"
 
         private val FIELDS = Name(listOf("graphQLFields"))
         private val SELECTION = Name.of("selection")
+        val REQUEST = Name(listOf("request"))
+        private val ACCESSOR = Name(listOf("graphQL"))
         private val TO_GRAPHQL = Name(listOf("toGraphQL"))
         private val APPEND = Name(listOf("append"))
         private val APPLY = Name(listOf("apply"))
