@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.NullableOf
 import community.flock.wirespec.compiler.core.ir.Parameter
+import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
 import community.flock.wirespec.compiler.core.ir.ReturnStatement
 import community.flock.wirespec.compiler.core.ir.Statement
@@ -108,18 +109,18 @@ public class GraphQLClientExtension(
             .map { (field, parameter) -> Field(Name(listOf(field.identifier.value)), parameter.type) to parameter }
     }
 
-    /** The `Select` entry points, a selection per type and the `GraphQLRequests` that take them. */
+    /** A selection per type and the `GraphQLRequests` that take them. */
     private inner class QueryBuilder(private val dialect: Dialect, private val builder: GraphQLQueryBuilder, private val operations: List<Operation>) {
 
         private val results = operations.map { it.rpc.result }
 
-        fun files(): List<LanguageFile> = builder.selections(results).map { it.inFile(dialect, emptyList()) } +
-            listOfNotNull(builder.select(results).takeIf { it.elements.isNotEmpty() }?.inFile(dialect, emptyList())) +
+        fun files(): List<LanguageFile> = builder.selections(results).map { it.inFile(dialect, emptyList(), listOfNotNull(builder.dslMarker)) } +
+            listOfNotNull(builder.dslMarkerDefinition?.let { LanguageFile(Name.of(GraphQLQueryBuilder.DSL_MARKER), listOf(it)).placeInPackage(packageName, GRAPHQL) }) +
             builder.requests(operations.map { GraphQLQueryBuilder.Request(it.service.function, it.open, it.rpc.result, it.client, it.variables.map { (field, parameter) -> field.name to parameter }) })
                 .inFile(dialect, operations.flatMap { it.service.imports })
     }
 
-    private fun HasName.inFile(dialect: Dialect, imports: List<Import>): LanguageFile = LanguageFile(name, (dialect.imports + imports).distinct() + this)
+    private fun HasName.inFile(dialect: Dialect, imports: List<Import>, annotations: List<RawElement> = emptyList()): LanguageFile = LanguageFile(name, (dialect.imports + imports).distinct() + annotations + this)
         .placeInPackage(packageName, GRAPHQL)
 
     /** The `Service` interface the emitter wrote for an rpc, with its parameters named as that language names them. */

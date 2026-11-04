@@ -27,7 +27,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient as JavaGraphQLClient
 import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLRequests as JavaRequests
-import community.flock.wirespec.integration.graphql.java.generated.graphql.Select as JavaSelect
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority as JavaPriority
 import community.flock.wirespec.integration.graphql.java.generated.model.Todo as JavaTodo
@@ -37,7 +36,6 @@ import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteT
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient as KotlinGraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLRequests as KotlinRequests
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoClient as KotlinQueryTodoClient
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.Select as KotlinSelect
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo as KotlinNewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority as KotlinPriority
@@ -144,7 +142,13 @@ class GraphQLClientExtensionTest {
 
     @Test
     fun `Kotlin query builder writes the request with the selected fields`() {
-        val request = KotlinRequests.queryTodo(KotlinID("1"), KotlinSelect.todo().id().title().owner(KotlinSelect.user().name()))
+        val request = KotlinRequests.queryTodo(KotlinID("1")) {
+            id()
+            title()
+            owner {
+                name()
+            }
+        }
 
         assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id title owner { name } } }", request.query)
         assertEquals(KotlinID("1"), request.variables.id)
@@ -152,7 +156,10 @@ class GraphQLClientExtensionTest {
 
     @Test
     fun `Kotlin query builder selects the members of a union`() {
-        val request = KotlinRequests.search("milk", KotlinSelect.searchResult().onTodo(KotlinSelect.todo().title()).onUser(KotlinSelect.user().name()))
+        val request = KotlinRequests.search("milk") {
+            onTodo { title() }
+            onUser { name() }
+        }
 
         assertEquals(
             "query Search(\$text: String!) { result: search(text: \$text) { __typename ... on Todo { title } ... on User { name } } }",
@@ -168,7 +175,10 @@ class GraphQLClientExtensionTest {
     @Test
     fun `Kotlin client sends a request written with the query builder`() = runBlocking {
         val server = KotlinServer("""{"data":{"result":{"id":"1","title":"Groceries","done":false,"owner":{"name":"Ann"}}}}""")
-        val request = KotlinRequests.queryTodo(KotlinID("1"), KotlinSelect.todo().id().title())
+        val request = KotlinRequests.queryTodo(KotlinID("1")) {
+            id()
+            title()
+        }
 
         server.transport(KotlinWirespec.RawRequest("POST", listOf("graphql"), emptyMap(), emptyMap(), KotlinSerialization(objectMapper).serializeBody(request, typeOf<KotlinQueryTodoClient.GraphQLRequest>())))
 
@@ -177,7 +187,7 @@ class GraphQLClientExtensionTest {
 
     @Test
     fun `Java query builder writes the request with the selected fields`() {
-        val request = JavaRequests.todos(Optional.of(true), JavaSelect.todo().id().owner(JavaSelect.user().name()))
+        val request = JavaRequests.todos(Optional.of(true)) { todo -> todo.id().owner { user -> user.name() } }
 
         assertEquals("query Todos(\$done: Boolean) { result: todos(done: \$done) { id owner { name } } }", request.query())
         assertEquals(Optional.of(true), request.variables().done())

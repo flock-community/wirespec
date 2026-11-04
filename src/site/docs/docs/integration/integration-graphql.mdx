@@ -111,46 +111,49 @@ left out. Configure the serialization to leave out null values to use the defaul
 ## Query builder
 
 The clients select every field of a result. To pick the fields yourself, the extension also generates a query
-builder:
-
-- `Select` starts an empty selection of every type and union that a query or mutation can return.
-- `<Type>Selection` has a method per field. A field of a type takes the selection of that type, and a union has an
-  `on<Member>` method per member. Every method returns a new selection, so a selection can be shared and reused.
-- `GraphQLRequests` has a function per rpc that takes its parameters and a selection of its result. It returns the
-  `GraphQLRequest` of that rpc: the `query` and its typed `variables`.
+builder: `GraphQLRequests` has a function per rpc that takes its parameters and a block that selects the fields of its
+result. In the block you call the fields on `this`, a field of a type opens a block of its own, and a union has an
+`on<Member>` block per member. It returns the `GraphQLRequest` of that rpc: the `query` and its typed `variables`.
 
 <Tabs>
   <TabItem value="kotlin" label="Kotlin">
     ```kotlin
-    val request = GraphQLRequests.queryTodo(
-        ID("1"),
-        Select.todo().id().title().owner(Select.user().name()),
-    )
+    val request = GraphQLRequests.queryTodo(ID("1")) {
+        id()
+        title()
+        owner {
+            name()
+        }
+    }
 
     request.query
     // query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
 
-    val search = GraphQLRequests.search(
-        "milk",
-        Select.searchResult().onTodo(Select.todo().title()).onUser(Select.user().name()),
-    )
+    val search = GraphQLRequests.search("milk") {
+        onTodo { title() }
+        onUser { name() }
+    }
     ```
+
+    The selections carry a `@DslMarker`, so a block only reaches its own fields: `owner { title() }` does not compile.
   </TabItem>
   <TabItem value="java" label="Java">
     ```java
-    var request = GraphQLRequests.queryTodo(
-        new ID("1"),
-        Select.todo().id().title().owner(Select.user().name())
-    );
+    var request = GraphQLRequests.queryTodo(new ID("1"), todo -> todo
+        .id()
+        .title()
+        .owner(owner -> owner.name()));
 
     request.query();
     // query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
     ```
+
+    Every field returns the selection, so the fields chain in the lambda.
   </TabItem>
 </Tabs>
 
-The builder is written with the language-neutral IR DSL and only concatenates strings, so it is the same plain code
-in every language it is generated for. Because the selection is up to you, the response no longer matches the model
+The builder is written with the IR DSL and only uses the standard library, so the generated code stays
+dependency-free. Because the selection is up to you, the response no longer matches the model
 classes: send the request with the `Wirespec.Serialization` and `Wirespec.Transportation` of your choice, and read
 the `data.result` of the response into a type of your own or a JSON tree.
 

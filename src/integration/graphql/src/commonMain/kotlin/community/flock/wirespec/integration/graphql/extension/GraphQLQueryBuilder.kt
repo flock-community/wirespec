@@ -12,6 +12,8 @@ import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.NamespaceBuilder
 import community.flock.wirespec.compiler.core.ir.Parameter
+import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.RawExpression
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.StructBuilder
 import community.flock.wirespec.compiler.core.ir.Type
@@ -33,17 +35,20 @@ import community.flock.wirespec.converter.graphql.GraphQLOperations
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 
 /**
- * Builds, in the IR DSL, the query builder that lets a caller pick the fields of a result:
+ * Builds, in the IR DSL, the query builder that lets a caller pick the fields of a result on `this`:
  *
  * ```kotlin
- * val request = GraphQLRequests.queryTodo(ID("1"), Select.todo().id().title().owner(Select.user().name()))
+ * val request = GraphQLRequests.queryTodo(ID("1")) {
+ *     id()
+ *     owner { name() }
+ * }
  * ```
  *
- * Every type and union a request can return gets an immutable `<Type>Selection` that holds the selected fields as
- * GraphQL text. Each field of a type is a method that returns a copy with the field added; a field of a type or union
- * takes the selection of that type, and a union has an `on<Member>` method per member. `Select` starts an empty
- * selection of every type, and `GraphQLRequests` puts a selection in the operation of an rpc, with the parameters as
- * its variables. Only strings are concatenated, so every generator renders the same builder.
+ * Every type and union a request can return gets a `<Type>Selection` that collects the selected fields as GraphQL text.
+ * Each field of a type is a method that adds the field and returns the selection, so Java chains them in a lambda:
+ * `t -> t.id().owner(o -> o.name())`. A field of a type or union takes a block that selects its fields, and a union has
+ * an `on<Member>` block per member. `GraphQLRequests` runs a block on a new selection and puts it in the operation of an
+ * rpc, with the parameters as its variables.
  */
 internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: FileExtension) {
 
@@ -52,17 +57,15 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     /** The selection of every type and union that [results] return, through all their fields. */
     fun selections(results: List<Reference>): List<Struct> = reachable(results).map { model ->
         struct(model.selection()) {
-            field(FIELDS, Type.String)
+            field(FIELDS, Type.Custom(STRING_BUILDER))
             when (model) {
                 is Union -> model.entries.mapNotNull { operations.composite(it) as? TypeDefinition }.forEach { member ->
-                    val name = Name.of(member.identifier.value).pascalCase()
-                    method(model, "on$name", concat(appended(" ... on ${operations.graphQLName(member)} "), toGraphQL()), member)
+                    method(model, "on${Name.of(member.identifier.value).pascalCase()}", " ... on ${operations.graphQLName(member)} ", member)
                 }
                 is TypeDefinition -> model.shape.fields.filter { operations.isSelectable(it) }.forEach { field ->
-                    val name = field.identifier.value
                     when (val nested = operations.composite(field.reference)) {
-                        null -> method(model, name, appended(" $name"))
-                        else -> method(model, name, concat(appended(" $name "), toGraphQL()), nested)
+                        null -> method(model, field.identifier.value, " ${field.identifier.value}")
+                        else -> method(model, field.identifier.value, " ${field.identifier.value} ", nested)
                     }
                 }
                 is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> Unit
@@ -75,30 +78,28 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         }
     }
 
-    /** `Select.todo()` starts an empty `TodoSelection`. */
-    fun select(results: List<Reference>): Namespace = NamespaceBuilder(SELECT).apply {
-        reachable(results).forEach { model ->
-            function(Name(listOf(Name.of(model.identifier.value).camelCase().sanitized()))) {
-                returnType(type(model.selection()))
-                returns(construct(type(model.selection())) { arg(FIELDS, Literal("", Type.String)) })
-            }
-        }
-    }.build()
+    /**
+     * Kotlin resolves a call in a block against every enclosing receiver, so `owner { title() }` would select the
+     * `title` of the todo. A `@DslMarker` on the selections limits a block to its own selection.
+     */
+    val dslMarker: RawElement? = RawElement("@$DSL_MARKER").takeIf { language == FileExtension.Kotlin }
 
-    /** `GraphQLRequests.queryTodo(id, selection)` writes the request of an rpc with the fields of its result that the selection picks. */
+    val dslMarkerDefinition: RawElement? = RawElement("@DslMarker\nannotation class $DSL_MARKER").takeIf { language == FileExtension.Kotlin }
+
+    /** `GraphQLRequests.queryTodo(id) { ... }` writes the request of an rpc with the fields of its result that the block selects. */
     fun requests(requests: List<Request>): Namespace = NamespaceBuilder(REQUESTS).apply {
         requests.forEach { request ->
             val selection = operations.composite(request.result)
             function(Name(listOf(request.function.name.camelCase()))) {
                 request.function.parameters.forEach { arg(it.name, it.type) }
-                selection?.let { arg(SELECTION, type(it.selection())) }
+                selection?.let { arg(SELECTION, it.block()) }
                 returnType(type("${request.client}.$GRAPHQL_REQUEST"))
                 returns(
                     construct(type("${request.client}.$GRAPHQL_REQUEST")) {
                         arg(
                             "query",
                             selection
-                                ?.let { concat(Literal("${request.open} ", Type.String), toGraphQL(), Literal(GraphQLOperations.CLOSE, Type.String)) }
+                                ?.let { concat(Literal("${request.open} ", Type.String), it.selected(), Literal(GraphQLOperations.CLOSE, Type.String)) }
                                 ?: Literal(request.open + GraphQLOperations.CLOSE, Type.String),
                         )
                         request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
@@ -116,17 +117,41 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         }
     }.build()
 
-    private fun StructBuilder.method(model: Definition, name: String, value: Expression, nested: Definition? = null) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
+    /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */
+    private fun StructBuilder.method(model: Definition, name: String, text: String, nested: Definition? = null) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
         visibility(Visibility.PUBLIC)
-        nested?.let { arg(SELECTION, type(it.selection())) }
+        nested?.let { arg(SELECTION, it.block()) }
         returnType(type(model.selection()))
-        returns(construct(type(model.selection())) { arg(FIELDS, value) })
+        val appended = FunctionCall(receiver = FieldCall(field = FIELDS), name = APPEND, arguments = mapOf(VALUE to Literal(text, Type.String)))
+        nested
+            ?.let { functionCall(APPEND.value(), receiver = appended) { arg(VALUE, it.selected()) } }
+            ?: functionCall(APPEND.value(), receiver = FieldCall(field = FIELDS)) { arg(VALUE, Literal(text, Type.String)) }
+        returns(RawExpression("this"))
     }
 
-    private fun appended(text: String): Expression = concat(FieldCall(field = FIELDS), Literal(text, Type.String))
+    /** The block that selects the fields of a type: on `this` in Kotlin, a function of the selection in Java. */
+    private fun Definition.block(): Type = Type.Custom(selection()).let { selection ->
+        when (language) {
+            FileExtension.Kotlin -> Type.Function(parameterTypes = emptyList(), returnType = Type.Unit, receiver = selection)
+            else -> Type.Function(parameterTypes = listOf(selection), returnType = selection)
+        }
+    }
 
-    /** The fields of the `selection` parameter, between braces. */
-    private fun toGraphQL(): Expression = FunctionCall(receiver = VariableReference(SELECTION), name = TO_GRAPHQL)
+    /** Runs the `selection` block on a new selection of this type, and gives its fields between braces. */
+    private fun Definition.selected(): Expression = ConstructorStatement(Type.Custom(selection()), mapOf(FIELDS to newStringBuilder()))
+        .let { empty ->
+            when (language) {
+                FileExtension.Kotlin -> FunctionCall(receiver = empty, name = APPLY, arguments = mapOf(Name.of("block") to VariableReference(SELECTION)))
+                else -> FunctionCall(receiver = VariableReference(SELECTION), name = APPLY, arguments = mapOf(Name.of("t") to empty))
+            }
+        }
+        .let { FunctionCall(receiver = it, name = TO_GRAPHQL) }
+
+    // An IR constructor call without arguments has no parentheses in Kotlin.
+    private fun newStringBuilder(): Expression = when (language) {
+        FileExtension.Kotlin -> FunctionCall(name = Name(listOf(STRING_BUILDER)))
+        else -> ConstructorStatement(Type.Custom(STRING_BUILDER))
+    }
 
     private fun concat(vararg parts: Expression): Expression = parts.reduce { left, right -> BinaryOp(left, BinaryOp.Operator.PLUS, right) }
 
@@ -149,13 +174,17 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     }
 
     companion object {
-        const val SELECT = "Select"
         const val REQUESTS = "GraphQLRequests"
+        const val DSL_MARKER = "GraphQLDsl"
         const val GRAPHQL_REQUEST = "GraphQLRequest"
         const val GRAPHQL_VARIABLES = "GraphQLVariables"
 
         private val FIELDS = Name(listOf("graphQLFields"))
         private val SELECTION = Name.of("selection")
         private val TO_GRAPHQL = Name(listOf("toGraphQL"))
+        private val APPEND = Name(listOf("append"))
+        private val APPLY = Name(listOf("apply"))
+        private val VALUE = Name.of("value")
+        private const val STRING_BUILDER = "StringBuilder"
     }
 }
