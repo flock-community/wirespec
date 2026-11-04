@@ -58,9 +58,11 @@ internal class EndpointReflection private constructor(
 
         private val responseVariantRegex = Regex("Response(\\d{3})")
 
-        private fun pickEmitterConstructor(cls: Class<*>, excludeParam: String, label: String): Constructor<*> {
+        // The emitter gives each class a constructor taking its components and one taking flat values;
+        // [isComponent] recognises a parameter only the former has.
+        private fun pickEmitterConstructor(cls: Class<*>, label: String, isComponent: (Parameter) -> Boolean): Constructor<*> {
             val ctor = cls.declaredConstructors
-                .filter { c -> c.parameters.none { it.name == excludeParam } }
+                .filter { c -> c.parameters.none(isComponent) }
                 .minByOrNull { it.parameterCount }
                 ?: cls.declaredConstructors.minByOrNull { it.parameterCount }
                 ?: error("$label: no constructors found.")
@@ -79,7 +81,9 @@ internal class EndpointReflection private constructor(
             ?.let { (parameterizedType as? ParameterizedType)?.actualTypeArguments?.firstOrNull() as? Class<*> }
 
         private fun introspectVariant(variantClass: Class<*>): ResponseVariantReflection {
-            val ctor = pickEmitterConstructor(variantClass, excludeParam = "status", label = variantClass.simpleName ?: variantClass.name)
+            val ctor = pickEmitterConstructor(variantClass, label = variantClass.simpleName ?: variantClass.name) {
+                Wirespec.Response.Headers::class.java.isAssignableFrom(it.type)
+            }
             val bodyParam = ctor.parameters.firstOrNull { it.name == "body" }
             return ResponseVariantReflection(
                 constructor = ctor,
@@ -106,7 +110,7 @@ internal class EndpointReflection private constructor(
                 .firstOrNull { it.name == "fromResponse" || it.name == "fromRawResponse" }
                 ?: error("${cls.simpleName}: no fromResponse/fromRawResponse method found.")
 
-            val requestConstructor = pickEmitterConstructor(requestClass, excludeParam = "method", label = "${cls.simpleName}.Request")
+            val requestConstructor = pickEmitterConstructor(requestClass, label = "${cls.simpleName}.Request") { it.name == "method" }
             val paramNames = requestConstructor.parameters.map { it.name!! }
             val bodyParam = requestConstructor.parameters.firstOrNull { it.name == "body" }
 

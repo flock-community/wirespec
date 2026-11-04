@@ -264,6 +264,8 @@ public object ScalaGenerator :
         val pascal = name.pascalCase()
         val implStr = interfaces.map { it.emitTypeAnnotation() }.distinct().joinNonEmpty(" with ", " extends ")
         val typeParamsStr = typeParameters.joinNonEmpty(", ", "[", "]") { it.type.emitGenerics() }
+        val members = elements.filterIsInstance<Field>()
+        val memberProperties = members.joinToString("") { "${it.emitMember(it.initializer, indent + 1)}\n" }
         val nestedContent = elements.joinToString("") { it.emit(indent + 1, isStatic = true, parents = parents + this) }
         val customConstructors = constructors.joinToString("") { it.emitScala(fields, indent + 1) }
         val closingBrace = "}".indentCode(indent)
@@ -279,11 +281,8 @@ public object ScalaGenerator :
                 }
             }
             val assignments = primary.body.filterIsInstance<Assignment>().associateBy { it.name.camelCase() }
-            val fieldProperties = fields.joinToString("\n") { field ->
-                val overridePrefix = "override ".takeIf { _ -> field.isOverride }.orEmpty()
-                val valueStr = assignments[field.name.value()]?.let { " = ${it.value.emit()}" }.orEmpty()
-                "${overridePrefix}val ${field.name.value().sanitize()}: ${field.type.emitTypeAnnotation()}$valueStr".indentCode(indent + 1)
-            }
+            val values = members.map { it to it.initializer } + fields.map { it to assignments[it.name.value()]?.value }
+            val fieldProperties = values.joinToString("\n") { (field, value) -> field.emitMember(value, indent + 1) }
             val bodyContent = listOf(fieldProperties, nestedContent).filter { it.isNotEmpty() }.joinToString("\n")
             return if (bodyContent.isEmpty()) {
                 "object $pascal$implStr\n\n".indentCode(indent)
@@ -293,10 +292,11 @@ public object ScalaGenerator :
         }
 
         if (fields.isEmpty() && constructors.isEmpty()) {
-            return if (nestedContent.isEmpty()) {
+            val objectContent = memberProperties + nestedContent
+            return if (objectContent.isEmpty()) {
                 "object $pascal$implStr\n\n".indentCode(indent)
             } else {
-                "object $pascal$implStr {\n$nestedContent$closingBrace\n\n".indentCode(indent)
+                "object $pascal$implStr {\n$objectContent$closingBrace\n\n".indentCode(indent)
             }
         }
 
@@ -308,12 +308,18 @@ public object ScalaGenerator :
                 "${overridePrefix}val ${it.name.value().sanitize()}: ${it.type.emitTypeAnnotation()}".indentCode(indent + 1)
             }
         }
-        val hasBody = customConstructors.isNotEmpty() || nestedContent.isNotEmpty()
-        return if (hasBody) {
-            "case class $pascal$typeParamsStr$paramsStr$implStr {\n$customConstructors$nestedContent$closingBrace\n\n".indentCode(indent)
+        val bodyContent = memberProperties + customConstructors + nestedContent
+        return if (bodyContent.isNotEmpty()) {
+            "case class $pascal$typeParamsStr$paramsStr$implStr {\n$bodyContent$closingBrace\n\n".indentCode(indent)
         } else {
             "case class $pascal$typeParamsStr$paramsStr$implStr\n\n".indentCode(indent)
         }
+    }
+
+    private fun Field.emitMember(value: Expression?, indent: Int): String {
+        val overridePrefix = "override ".takeIf { isOverride }.orEmpty()
+        val valueStr = value?.let { " = ${it.emit()}" }.orEmpty()
+        return "${overridePrefix}val ${name.value().sanitize()}: ${type.emitTypeAnnotation()}$valueStr".indentCode(indent)
     }
 
     private fun Constructor.emitScala(structFields: List<Field>, indent: Int): String {
