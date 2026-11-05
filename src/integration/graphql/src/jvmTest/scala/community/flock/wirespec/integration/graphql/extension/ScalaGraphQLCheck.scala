@@ -1,8 +1,8 @@
 package community.flock.wirespec.integration.graphql.extension
 
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoClient, GraphQLClient, QueryTodoClient, TodoResult, UserResult}
-import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Priority, Todo, TodoError, User}
-import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoClient, GraphQLClient, QueryTodoClient, SearchClient, SearchResultResult, TodoResult, UserResult}
+import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
+import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo, Search}
 import community.flock.wirespec.scala.Wirespec
 
 import scala.reflect.ClassTag
@@ -36,6 +36,26 @@ object ScalaGraphQLCheck {
     val result = GraphQLClient(serialization, transportation).completeTodo(ID("3"))
 
     check(result == CompleteTodo.Error(TodoError("Unknown todo")), s"unexpected $result")
+  }
+
+  def readsAUnion(): String = {
+    val results: List[SearchResult] = List(Note("Milk"), Tag("home"))
+    val serialization = Recording(SearchClient.GraphQLResponse(Some(SearchClient.GraphQLData(Some(results))), None))
+
+    val result = GraphQLClient(serialization, transportation).search("milk")
+
+    check(result == results, s"unexpected $result")
+    serialization.query
+  }
+
+  def readsAUnionSelection(): String = {
+    val expected = List(SearchResultResult(Some("Note"), Some("Milk"), None))
+    val serialization = Recording(SearchClient.GraphQLSelectedResponse(Some(SearchClient.GraphQLSelectedData(Some(expected))), None))
+
+    val result = GraphQLClient(serialization, transportation).search("milk", result => result.onNote(note => note.text()).onTag(tag => tag.name()))
+
+    check(result == expected, s"unexpected $result")
+    serialization.query
   }
 
   def buildsAQuery(): String = QueryTodo.graphQL.request(ID("1"), todo => todo.id().owner(owner => owner.name())).query

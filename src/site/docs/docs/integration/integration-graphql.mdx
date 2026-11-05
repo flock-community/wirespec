@@ -501,5 +501,3 @@ left out. Configure the serialization to leave out null values to use the defaul
 - A partial result cannot tell a field that was not selected from a field that is `null`: both read as empty.
 - A typed call returns a union as the Wirespec union of its models, which the serialization has to read by
   `__typename`. A partial result has no such need: it is a single type with the fields of every member.
-- In Scala, a contract with a union does not compile yet, whether or not you use this extension: the Scala emitter writes
-  the members of a union in other files than the union, which Scala does not allow for a sealed trait.

@@ -71,6 +71,8 @@ public open class ScalaEmitter(
     // singleton object reference (`GetTodos.Request`) from an empty case class (`Foo()`).
     // Scala objects can't be `apply`d but empty Wirespec.Shape case classes require parens —
     // the IR uses the same `ConstructorStatement(type, emptyMap())` for both.
+    override fun arrange(files: List<LanguageFile>): List<LanguageFile> = files.withSealedHierarchiesTogether()
+
     override fun beforeGenerate(allFiles: List<LanguageFile>) {
         ScalaGenerator.setGlobalObjectNames(allFiles)
     }

@@ -18,7 +18,7 @@ fun main(args: Array<String>) = codegen(args) {
     emit("kotlin", ast) {
         KotlinEmitter(it, EmitShared(false)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Kotlin)))
     }
-    emit("scala", wirespec("todo.ws")) {
+    emit("scala", ast) {
         ScalaEmitter(it, EmitShared(false)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Scala)))
     }
 }

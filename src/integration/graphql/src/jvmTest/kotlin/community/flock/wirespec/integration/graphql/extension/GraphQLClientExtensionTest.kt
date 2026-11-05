@@ -261,6 +261,12 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `Scala client reads a union, whose members share its file`() {
+        assertEquals("query Search(\$text: String!) { result: search(text: \$text) { __typename ... on Note { text } ... on Tag { name } } }", scalaCheck("readsAUnion"))
+        assertEquals("query Search(\$text: String!) { result: search(text: \$text) { __typename ... on Note { text } ... on Tag { name } } }", scalaCheck("readsAUnionSelection"))
+    }
+
+    @Test
     fun `Scala query builder is reached from the rpc object`() {
         assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id owner { name } } }", scalaCheck("buildsAQuery"))
     }

@@ -1,4 +1,3 @@
-// The Scala emitter cannot compile a union whose members live in other files, so Scala is generated without this one.
 type Note {
   text: String
 }
