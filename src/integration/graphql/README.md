@@ -1,6 +1,6 @@
 # GraphQL client integration
 
-Ships the `GraphQLClientExtension`, an IR extension that generates a typed Java or Kotlin GraphQL client for the
+Ships the `GraphQLClientExtension`, an IR extension that generates a typed Kotlin, Java or Scala GraphQL client for the
 rpcs marked `@GraphQLQuery` or `@GraphQLMutation`, such as the rpcs the GraphQL converter writes for a schema. The generated
 client is dependency-free: it sends the operation through `Wirespec.Transportation` and `Wirespec.Serialization`.
 

@@ -9,200 +9,16 @@ import TabItem from "@theme/TabItem";
 The `graphql` integration ships an [IR extension](../plugins/plugins.md#ir-extensions) that generates a typed GraphQL
 client from the [rpcs](../language/rpc.mdx) of a contract. Together with the [GraphQL converter](../converters/graphql.md),
 which turns every field of `Query` and `Mutation` into an rpc, it gives you a client for a GraphQL API from its schema.
-It works for the **Java** and **Kotlin** targets.
+It works for the **Kotlin**, **Java** and **Scala** targets.
 
-## What it does
+The client comes in two flavours, and you can mix them:
 
-Every rpc marked `@GraphQLQuery` or `@GraphQLMutation`, the annotations the [GraphQL converter](../converters/graphql.md)
-puts on the fields of `Query` and `Mutation`, becomes a GraphQL operation. Any other rpc gets no client: a subscription,
-and an rpc without a GraphQL annotation, so a contract can mix GraphQL operations with rpcs served another way. For each
-operation the extension adds, in the `graphql` package:
+- **Typed calls** select every field of a result and return the models: `client.queryTodo(id)` returns a `Todo`.
+- **Selections** let you pick the fields with a query builder and return a partial result:
+  `client.queryTodo(id) { title() }` returns a `TodoResult` with only `title` filled.
 
-- `<Rpc>Client`, which implements the `Service` of the rpc. It posts the GraphQL document of the rpc to `/graphql` with
-  the parameters as its variables, and reads the result from the response.
-- `GraphQLClient`, which implements every `Service` at once by delegating to those clients.
-- `GraphQLError`, the error of a GraphQL response, with its `message`, `locations`, `path` and `extensions`.
-
-The document is written at build time, so the generated code needs no GraphQL library: it sends the request through the
-same `Wirespec.Transportation` and `Wirespec.Serialization` as the endpoint clients. For example, this schema:
-
-```graphql
-type Todo {
-  id: ID!
-  title: String!
-  owner: User!
-}
-
-type User {
-  name: String!
-}
-
-type Query {
-  todo(id: ID!): Todo
-}
-```
-
-converts to an rpc `QueryTodo`, whose client sends
-
-```graphql
-query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
-```
-
-and can be called like this:
-
-<Tabs>
-  <TabItem value="kotlin" label="Kotlin">
-    ```kotlin
-    val client = GraphQLClient(serialization, transportation)
-
-    val todo: Todo? = client.queryTodo(ID("1"))
-    ```
-  </TabItem>
-  <TabItem value="java" label="Java">
-    ```java
-    GraphQLClient client = new GraphQLClient(serialization, transportation);
-
-    Optional<Todo> todo = client.queryTodo(new ID("1")).join();
-    ```
-  </TabItem>
-</Tabs>
-
-### The query
-
-- Every parameter of the rpc is a variable, typed and defaulted as the argument of the field it is passed to.
-- The field is aliased as `result`, so the client reads it under the same name whatever the field is called.
-- The query selects every field of the result, all the way down. A union or interface selects `__typename` and an
-  inline fragment for each member, so the serialization can tell the members apart by `__typename`.
-- GraphQL selects a finite set of fields, so a field that refers back to a type it is selected in, such as
-  `User.todos` inside `Todo.owner`, or a field that takes a required argument, cannot be selected. Such a field is left
-  out when it is nullable. When it is not, the build fails with a message that names the field.
-
-### The response
-
-A GraphQL response carries errors next to its data:
-
-- An rpc without an error type throws an `IllegalStateException` that lists the `GraphQLError`s.
-- An rpc with an error type, such as `rpc CompleteTodo { id: ID } -> Todo ! TodoError`, returns the first error, read
-  as that type, as its `Error`, and the result as its `Result`.
-- A required result that the response leaves out throws an `IllegalStateException`; a nullable one is `null` (or
-  `Optional.empty()` in Java).
-
-The response holds fields that the models do not have, such as `__typename` and the `locations` of an error, so
-configure the serialization to ignore unknown properties. With Jackson:
-
-```kotlin
-val serialization = WirespecSerialization(
-    ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-)
-```
-
-The request goes to the path `/graphql` of the transportation. To call a GraphQL API at another path, rewrite the path in
-the transportation:
-
-```kotlin
-val transportation = Wirespec.Transportation { request -> http.transport(request.copy(path = listOf("api", "graphql"))) }
-```
-
-:::note
-Nullable variables are sent as `null`, and GraphQL only falls back to the default of an argument when its variable is
-left out. Configure the serialization to leave out null values to use the defaults.
-:::
-
-## Query builder
-
-The clients select every field of a result. To pick the fields yourself, the extension also generates a query
-builder for every rpc: `<Rpc>GraphQL`, in the `graphql` package. The rpc reaches it as `graphQL`, an extension property
-of the rpc object in Kotlin and a static field of the rpc interface in Java. Its `request` function takes the
-parameters of the rpc and a block that selects the fields of its result. In the block you call the fields on `this`, a
-field of a type opens a block of its own, and a union has an `on<Member>` block per member. It returns the
-`GraphQLRequest` of the rpc: the `query` and its typed `variables`.
-
-<Tabs>
-  <TabItem value="kotlin" label="Kotlin">
-    ```kotlin
-    import community.flock.wirespec.generated.graphql.graphQL
-
-    val request = QueryTodo.graphQL.request(ID("1")) {
-        id()
-        title()
-        owner {
-            name()
-        }
-    }
-
-    request.query
-    // query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
-
-    val search = Search.graphQL.request("milk") {
-        onTodo { title() }
-        onUser { name() }
-    }
-    ```
-
-    The selections carry a `@DslMarker`, so a block only reaches its own fields: `owner { title() }` does not compile.
-  </TabItem>
-  <TabItem value="java" label="Java">
-    ```java
-    var request = QueryTodo.graphQL.request(new ID("1"), todo -> todo
-        .id()
-        .title()
-        .owner(owner -> owner.name()));
-
-    request.query();
-    // query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
-    ```
-
-    Every field returns the selection, so the fields chain in the lambda.
-  </TabItem>
-</Tabs>
-
-The builder is written with the IR DSL and only uses the standard library, so the generated code stays
-dependency-free.
-
-### Partial results
-
-A response to a selection only holds the fields you selected, so it cannot be read into the models, whose fields are
-required. Every type and union that a query or mutation returns therefore also gets a `<Type>Result`: the same fields,
-all nullable, with a field of a type or union read as its own result. A union result has `__typename` and the fields of
-all its members; a field that members declare with different types is left out, because GraphQL cannot select it in
-both.
-
-The clients take a selection too. Next to `queryTodo(id)`, which returns the full `Todo`, there is `queryTodo(id) { ... }`,
-which sends the request that the builder writes and returns a `TodoResult`. The fields you selected are filled, the
-others are `null` (or `Optional.empty()` in Java):
-
-<Tabs>
-  <TabItem value="kotlin" label="Kotlin">
-    ```kotlin
-    val todo: TodoResult? = client.queryTodo(ID("1")) {
-        title()
-        owner { name() }
-    }
-
-    todo?.title       // "Groceries"
-    todo?.owner?.name // "Ann"
-    todo?.done        // null, not selected
-
-    val results: List<SearchResultResult> = client.search("milk") {
-        onTodo { title() }
-        onUser { name() }
-    }
-    results.map { it.__typename } // ["Todo", "User"]
-    ```
-  </TabItem>
-  <TabItem value="java" label="Java">
-    ```java
-    Optional<TodoResult> todo = client.queryTodo(new ID("1"), t -> t
-        .title()
-        .owner(owner -> owner.name())).join();
-
-    todo.flatMap(TodoResult::title); // Optional["Groceries"]
-    ```
-  </TabItem>
-</Tabs>
-
-A call with a selection fails with an `IllegalStateException` on GraphQL errors, also for an rpc with an error type:
-its `Result` and `Error` hold the full models.
+The GraphQL documents are written at build time, so the generated code needs no GraphQL library. It sends requests
+through the same `Wirespec.Transportation` and `Wirespec.Serialization` as the endpoint clients.
 
 ## Setup
 
@@ -220,7 +36,7 @@ Maven and by class in Gradle. Convert the schema to Wirespec first, or write the
         input = layout.projectDirectory.dir("src/main/wirespec")
         output = layout.buildDirectory.dir("generated")
         packageName = "community.flock.wirespec.generated"
-        // Works for Java and Kotlin
+        // Works for Kotlin, Java and Scala
         language = Language.Kotlin
         extensionClasses = listOf(GraphQLClientExtension::class.java)
     }
@@ -241,8 +57,8 @@ Maven and by class in Gradle. Convert the schema to Wirespec first, or write the
                 <configuration>
                     <input>${project.basedir}/src/main/wirespec</input>
                     <output>${project.build.directory}/generated-sources</output>
-                    <!-- Works for Java and Kotlin -->
-                    <language>Kotlin</language>
+                    <!-- Works for Kotlin, Java and Scala -->
+                    <language>Java</language>
                     <extensionClasses>
                         <extensionClass>GraphQLClient</extensionClass>
                     </extensionClasses>
@@ -255,7 +71,7 @@ Maven and by class in Gradle. Convert the schema to Wirespec first, or write the
   <TabItem value="cli" label="CLI">
     ```shell
     # Converts the schema and generates the client in one go
-    wirespec convert -i ./schema.graphql -o ./build/generated -l Kotlin -e GraphQLClient GraphQL
+    wirespec convert -i ./schema.graphql -o ./build/generated -l Scala -e GraphQLClient GraphQL
     ```
   </TabItem>
 </Tabs>
@@ -266,12 +82,424 @@ Make sure to use the latest version, found here:
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 :::
 
+## The example
+
+The examples on this page use this schema:
+
+```graphql
+type Todo {
+  id: ID!
+  title: String!
+  done: Boolean!
+  owner: User!
+}
+
+type User {
+  name: String!
+}
+
+input NewTodo {
+  title: String!
+}
+
+type TodoError {
+  message: String!
+}
+
+type Query {
+  todo(id: ID!): Todo
+  todos(done: Boolean): [Todo!]!
+}
+
+type Mutation {
+  addTodo(input: NewTodo!): Todo!
+  clearTodos: Boolean
+}
+```
+
+The converter turns every field of `Query` and `Mutation` into an rpc. Only rpcs marked `@GraphQLQuery` or
+`@GraphQLMutation` get a client: a subscription and an rpc without a GraphQL annotation are left out, so a contract can
+mix GraphQL operations with rpcs served another way. One rpc below is written by hand with an
+[error type](../language/rpc.mdx#errors), to show how the client returns GraphQL errors as values:
+
+```wirespec
+@GraphQLQuery
+@GraphQLName("todo")
+rpc QueryTodo { id: ID } -> Todo?
+
+@GraphQLQuery
+rpc Todos { done: Boolean? } -> Todo[]
+
+@GraphQLMutation
+rpc AddTodo { input: NewTodo } -> Todo
+
+@GraphQLMutation
+rpc CompleteTodo { id: ID } -> Todo ! TodoError
+
+@GraphQLMutation
+rpc ClearTodos {} -> Unit
+```
+
+An rpc you write yourself needs `@GraphQLName` when the GraphQL field is not named after the rpc, as with
+`@GraphQLName("todo")` on `QueryTodo`.
+
+## Creating a client
+
+`GraphQLClient` implements the `Service` of every operation at once. It takes a `Wirespec.Serialization` that reads and
+writes JSON, and a `Wirespec.Transportation` that sends the request. The request goes to the path `/graphql`.
+
+<Tabs>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    import com.fasterxml.jackson.databind.DeserializationFeature
+    import com.fasterxml.jackson.databind.ObjectMapper
+    import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+    import community.flock.wirespec.generated.graphql.GraphQLClient
+    import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
+    import community.flock.wirespec.integration.jvm.transport.HttpTransportation
+
+    val serialization = WirespecSerialization(
+        ObjectMapper()
+            .registerKotlinModule()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false),
+    )
+
+    val client = GraphQLClient(serialization, HttpTransportation("https://api.example.com"))
+    ```
+
+    `WirespecSerialization` comes from the [Jackson](./integration-jackson.mdx) integration and `HttpTransportation`, on
+    the JDK `HttpClient`, from the `jvm` integration.
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    import com.fasterxml.jackson.databind.DeserializationFeature;
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+    import community.flock.wirespec.generated.graphql.GraphQLClient;
+    import community.flock.wirespec.integration.jackson.v2.java.WirespecSerialization;
+    import community.flock.wirespec.java.Wirespec;
+    import java.net.URI;
+    import java.net.http.HttpClient;
+    import java.net.http.HttpRequest;
+    import java.net.http.HttpResponse;
+    import java.util.Optional;
+
+    var serialization = new WirespecSerialization(
+        new ObjectMapper()
+            .registerModule(new Jdk8Module())
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false));
+
+    var http = HttpClient.newHttpClient();
+    Wirespec.Transportation transportation = request -> http
+        .sendAsync(
+            HttpRequest.newBuilder(URI.create("https://api.example.com/" + String.join("/", request.path())))
+                .method(request.method(), HttpRequest.BodyPublishers.ofByteArray(request.body().orElse(new byte[0])))
+                .header("Content-Type", "application/json")
+                .build(),
+            HttpResponse.BodyHandlers.ofByteArray())
+        .thenApply(response -> new Wirespec.RawResponse(response.statusCode(), response.headers().map(), Optional.of(response.body())));
+
+    var client = new GraphQLClient(serialization, transportation);
+    ```
+
+    `WirespecSerialization` comes from the [Jackson](./integration-jackson.mdx) integration. The `Jdk8Module` reads the
+    `Optional` fields of the models.
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    import community.flock.wirespec.generated.graphql.GraphQLClient
+    import community.flock.wirespec.scala.Wirespec
+    import java.net.URI
+    import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+
+    val http = HttpClient.newHttpClient()
+    val transportation: Wirespec.Transportation = request => {
+      val response = http.send(
+        HttpRequest.newBuilder(URI.create("https://api.example.com/" + request.path.mkString("/")))
+          .method(request.method, HttpRequest.BodyPublishers.ofByteArray(request.body.getOrElse(Array.emptyByteArray)))
+          .header("Content-Type", "application/json")
+          .build(),
+        HttpResponse.BodyHandlers.ofByteArray())
+      Wirespec.RawResponse(response.statusCode, Map.empty, Some(response.body))
+    }
+
+    val client = GraphQLClient(serialization, transportation)
+    ```
+
+    Wirespec ships no Scala serialization: implement `Wirespec.Serialization` with the JSON library of your choice, for
+    example on `jackson-module-scala`, reading the `Option` fields of the case classes.
+  </TabItem>
+</Tabs>
+
+The response holds fields that the models do not have, such as `__typename` and the `locations` of an error, so the
+serialization must ignore unknown properties.
+
+## Calling operations
+
+Every operation is a function of the client, named after the rpc, that takes the parameters of the rpc and returns its
+result. Kotlin calls suspend, Java calls return a `CompletableFuture`, and Scala calls block.
+
+<Tabs>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val todo: Todo? = client.queryTodo(ID("1"))
+
+    val open: List<Todo> = client.todos(done = false)
+
+    val added: Todo = client.addTodo(NewTodo(title = "Groceries"))
+
+    client.clearTodos()
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    Optional<Todo> todo = client.queryTodo(new ID("1")).join();
+
+    List<Todo> open = client.todos(Optional.of(false)).join();
+
+    Todo added = client.addTodo(new NewTodo("Groceries")).join();
+
+    client.clearTodos().join();
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    val todo: Option[Todo] = client.queryTodo(ID("1"))
+
+    val open: List[Todo] = client.todos(Some(false))
+
+    val added: Todo = client.addTodo(NewTodo("Groceries"))
+
+    client.clearTodos()
+    ```
+  </TabItem>
+</Tabs>
+
+Each operation also has a client of its own, `<Rpc>Client`, which implements the `Service` of that one rpc. Use it to
+depend on just that operation, or to fake it in a test:
+
+```kotlin
+val queryTodo: QueryTodo.Service = QueryTodoClient(serialization, transportation)
+```
+
+### Errors
+
+A GraphQL response carries errors next to its data.
+
+- An rpc **without an error type** throws an `IllegalStateException` that lists the `GraphQLError`s, with their
+  `message`, `locations`, `path` and `extensions`.
+- An rpc **with an error type** returns the first error, read as that type, as its `Error`, and the result as its
+  `Result`:
+
+<Tabs>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    when (val response = client.completeTodo(ID("1"))) {
+        is CompleteTodo.Result -> println("Done: ${response.value.title}")
+        is CompleteTodo.Error -> println("Failed: ${response.value.message}")
+    }
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    var response = client.completeTodo(new ID("1")).join();
+    if (response instanceof CompleteTodo.Result result) {
+        System.out.println("Done: " + result.value().title());
+    } else if (response instanceof CompleteTodo.Error error) {
+        System.out.println("Failed: " + error.value().message());
+    }
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    client.completeTodo(ID("1")) match {
+      case CompleteTodo.Result(todo) => println(s"Done: ${todo.title}")
+      case CompleteTodo.Error(error) => println(s"Failed: ${error.message}")
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+A required result that the response leaves out also throws an `IllegalStateException`; a nullable one is `null` in
+Kotlin, `Optional.empty()` in Java and `None` in Scala.
+
+## Selecting fields
+
+A typed call selects every field of its result:
+
+```graphql
+query QueryTodo($id: ID!) { result: todo(id: $id) { id title done owner { name } } }
+```
+
+To pick the fields yourself, pass a selection. The fields you select are filled, the others are empty, so the call
+returns a **partial result**: `TodoResult` instead of `Todo`, with every field nullable.
+
+<Tabs>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val todo: TodoResult? = client.queryTodo(ID("1")) {
+        title()
+        owner {
+            name()
+        }
+    }
+
+    todo?.title       // "Groceries"
+    todo?.owner?.name // "Ann"
+    todo?.done        // null: not selected
+    ```
+
+    In the block you call the fields on `this`. The selections carry a `@DslMarker`, so a block only reaches its own
+    fields: `owner { title() }` does not compile.
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    Optional<TodoResult> todo = client.queryTodo(new ID("1"), t -> t
+        .title()
+        .owner(owner -> owner.name())).join();
+
+    todo.flatMap(TodoResult::title);                            // Optional["Groceries"]
+    todo.flatMap(TodoResult::owner).flatMap(UserResult::name);  // Optional["Ann"]
+    todo.flatMap(TodoResult::done);                             // Optional.empty: not selected
+    ```
+
+    Every field returns the selection, so the fields chain in the lambda.
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    val todo: Option[TodoResult] = client.queryTodo(ID("1"), t => t
+      .title()
+      .owner(owner => owner.name()))
+
+    todo.flatMap(_.title)                 // Some("Groceries")
+    todo.flatMap(_.owner).flatMap(_.name) // Some("Ann")
+    todo.flatMap(_.done)                  // None: not selected
+    ```
+
+    Every field returns the selection, so the fields chain in the function.
+  </TabItem>
+</Tabs>
+
+That sends
+
+```graphql
+query QueryTodo($id: ID!) { result: todo(id: $id) { title owner { name } } }
+```
+
+A field of a type takes a selection of that type. A union has an `on<Member>` selection per member, and its result has
+`__typename` and the fields of all its members. For a schema with `union SearchResult = Todo | User` and a query
+`search(text: String!): [SearchResult!]!`:
+
+```kotlin
+val results: List<SearchResultResult> = client.search("milk") {
+    onTodo { title() }
+    onUser { name() }
+}
+
+results.map { it.__typename } // ["Todo", "User"]
+```
+
+A call with a selection throws an `IllegalStateException` on GraphQL errors, also for an rpc with an error type: its
+`Result` and `Error` hold the full models.
+
+### Writing the request yourself
+
+The query builder behind a selection is reachable from the rpc as `graphQL`. Its `request` function writes the
+`GraphQLRequest` of the rpc, the `query` and its typed `variables`, without sending it, for a transport of your own:
+
+<Tabs>
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    import community.flock.wirespec.generated.graphql.graphQL
+
+    val request = QueryTodo.graphQL.request(ID("1")) {
+        title()
+    }
+
+    request.query     // query QueryTodo($id: ID!) { result: todo(id: $id) { title } }
+    request.variables // GraphQLVariables(id = ID("1"))
+    ```
+
+    `graphQL` is an extension property of the rpc object, in the `graphql` package.
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    var request = QueryTodo.graphQL.request(new ID("1"), todo -> todo.title());
+
+    request.query();     // query QueryTodo($id: ID!) { result: todo(id: $id) { title } }
+    request.variables(); // GraphQLVariables[id=1]
+    ```
+
+    `graphQL` is a static field of the rpc interface.
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    val request = QueryTodo.graphQL.request(ID("1"), todo => todo.title())
+
+    request.query     // query QueryTodo($id: ID!) { result: todo(id: $id) { title } }
+    request.variables // GraphQLVariables(1)
+    ```
+
+    `graphQL` is a member of the rpc object.
+  </TabItem>
+</Tabs>
+
+## What is generated
+
+Everything lands in the `graphql` package, next to `model` and `rpc`. For the example:
+
+| Generated                     | What it is                                                                                     |
+|-------------------------------|------------------------------------------------------------------------------------------------|
+| `GraphQLClient`               | Implements the `Service` of every operation, with and without a selection                      |
+| `QueryTodoClient`, ...        | The client of one operation                                                                    |
+| `QueryTodoGraphQL`, ...       | The query builder of one operation, with its `GraphQLRequest` and `GraphQLVariables`           |
+| `QueryTodo.graphQL`           | The builder, reached from the rpc                                                              |
+| `TodoSelection`, ...          | The fields you can select of a type or union                                                   |
+| `TodoResult`, ...             | The partial result of a type or union                                                          |
+| `GraphQLError`                | An error of a response, for an rpc without an error type of its own                            |
+
+The shapes follow the language:
+
+| Language | Builder                       | `graphQL` on the rpc          | A selection of a field                    | Envelope types                |
+|----------|-------------------------------|-------------------------------|-------------------------------------------|-------------------------------|
+| Kotlin   | `object`                      | Extension property            | `UserSelection.() -> Unit`, on `this`     | Nested in the client          |
+| Java     | Record without components     | Static field                  | `Function<UserSelection, UserSelection>`  | Nested records in the client  |
+| Scala    | `object`                      | `val` of the rpc object       | `UserSelection => UserSelection`          | Companion object of the client |
+
+The builder and the clients only use the standard library of the language, so the generated code stays
+dependency-free.
+
+## The query
+
+- Every parameter of the rpc is a variable, typed and defaulted as the argument of the field it is passed to.
+- The field is aliased as `result`, so the client reads it under the same name whatever the field is called.
+- A typed call selects every field of the result, all the way down. A union or interface selects `__typename` and an
+  inline fragment for each member, so the serialization can tell the members apart by `__typename`.
+- GraphQL selects a finite set of fields, so a typed call cannot select a field that refers back to a type it is
+  selected in, such as `User.todos` inside `Todo.owner`, or a field that takes a required argument. Such a field is
+  left out when it is nullable. When it is not, the build fails with a message that names the field; use a selection
+  for that operation instead.
+
+## Configuration
+
+The request goes to the path `/graphql` of the transportation. To call a GraphQL API at another path, rewrite the path in
+the transportation:
+
+```kotlin
+val transportation = Wirespec.Transportation { request -> http.transport(request.copy(path = listOf("api", "graphql"))) }
+```
+
+:::note
+Nullable variables are sent as `null`, and GraphQL only falls back to the default of an argument when its variable is
+left out. Configure the serialization to leave out null values to use the defaults.
+:::
+
 ## Limitations
 
 - Subscriptions get no client, because they are not a single request and response.
-- An rpc you write yourself needs `@GraphQLQuery` or `@GraphQLMutation` to get a client. Mark it with `@GraphQLName`
-  when the field it calls is not named after the rpc, such as `@GraphQLName("todo")` on `rpc QueryTodo`.
-- Arguments of nested fields are not passed: a field that requires one is left out or fails the build, as described
-  in [The query](#the-query).
-- A [partial result](#partial-results) cannot tell a field that was not selected from a field that is `null`: both
-  read as `null`.
+- Arguments of nested fields are not passed: a field that requires one cannot be selected.
+- A partial result cannot tell a field that was not selected from a field that is `null`: both read as empty.
+- A typed call returns a union as the Wirespec union of its models, which the serialization has to read by
+  `__typename`. A partial result has no such need: it is a single type with the fields of every member.
+- In Scala, a contract with a union does not compile yet, whether or not you use this extension: the Scala emitter writes
+  the members of a union in other files than the union, which Scala does not allow for a sealed trait.

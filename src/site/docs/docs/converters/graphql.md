@@ -379,7 +379,7 @@ from. Any other Wirespec gets the closest GraphQL counterpart:
 ## GraphQL client
 
 The rpcs the converter writes describe the operations of the schema, so the [GraphQL client](../integration/integration-graphql.mdx)
-extension can generate a typed Java or Kotlin client that calls them.
+extension can generate a typed Kotlin, Java or Scala client that calls them.
 
 ## Limitations
 
