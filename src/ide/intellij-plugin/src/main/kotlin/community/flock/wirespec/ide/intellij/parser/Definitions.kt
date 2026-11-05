@@ -22,6 +22,9 @@ import community.flock.wirespec.ide.intellij.parser.Parser.EnumDef
 import community.flock.wirespec.ide.intellij.parser.Parser.RpcDef
 import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 
+// One instance only: every IElementType constructed is registered globally and never released.
+private val FILE = IFileElementType(Language)
+
 public class ParserDefinition : ParserDefinition {
     override fun createLexer(project: Project): Lexer = Lexer()
 
@@ -31,7 +34,7 @@ public class ParserDefinition : ParserDefinition {
 
     override fun createParser(project: Project): Parser = Parser()
 
-    override fun getFileNodeType(): IFileElementType = IFileElementType(Language)
+    override fun getFileNodeType(): IFileElementType = FILE
 
     override fun createFile(viewProvider: FileViewProvider): File = File(viewProvider)
 
