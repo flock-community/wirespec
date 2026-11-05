@@ -20,9 +20,22 @@ type NewTodo {
   priority: Priority?
 }
 
+type Note {
+  text: String
+}
+
+type Tag {
+  name: String
+}
+
+type SearchResult = Note | Tag
+
 type TodoError {
   message: String
 }
+
+@GraphQLBuiltIn
+type ID = String
 
 @GraphQLQuery
 @GraphQLName("todo")
@@ -34,6 +47,11 @@ rpc QueryTodo {
 rpc Todos {
   done: Boolean?
 } -> Todo[]
+
+@GraphQLQuery
+rpc Search {
+  text: String
+} -> SearchResult[]
 
 @GraphQLMutation
 rpc AddTodo {
@@ -52,6 +70,3 @@ rpc ClearTodos {} -> Unit
 rpc TodoAdded {} -> Todo
 
 rpc CountTodos {} -> Integer
-
-@GraphQLBuiltIn
-type ID = String

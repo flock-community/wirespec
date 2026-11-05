@@ -6,6 +6,12 @@ slug: /integration/wiremock
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
+:::caution[Experimental]
+**Languages:** Java, Kotlin
+
+This integration is experimental: its API, generated code and options may still change between releases.
+:::
+
 The WireMock integration lets you stub Wirespec endpoints in tests with **typed** responses. Instead of hand-writing
 URL patterns and JSON bodies, you pass a generated endpoint and a typed `Response` instance — the integration derives
 the HTTP method, URL pattern, status code, and serialized body for you.

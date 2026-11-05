@@ -279,7 +279,7 @@ class GraphQLClientExtensionTest {
             }
         }
         assertEquals(
-            listOf("QueryTodo", "Todos", "AddTodo", "CompleteTodo", "ClearTodos", "Search").map { "$it.Service" },
+            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos").map { "$it.Service" },
             KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
         )
     }

@@ -65,6 +65,8 @@ kotlin {
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
+                // The docs examples send requests with its HttpTransportation.
+                implementation(project(":src:integration:jvm"))
                 implementation(libs.bundles.jackson2)
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlin.junit)

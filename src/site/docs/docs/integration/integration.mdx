@@ -8,3 +8,19 @@ Wirespec has integrations with major frameworks, including Spring for enterprise
 kotlinx.serialization for JSON processing, Avro for data serialization and schema management, WireMock for type-safe
 HTTP stubbing in tests, and Kotest for property-based scenario tests driven by your contract. For the JVM languages it can
 also add builders to the generated models, and a typed GraphQL client for the rpcs of a GraphQL schema.
+
+## Overview
+
+| Integration                                                      | What it does                                                       | Languages           | Status       |
+|------------------------------------------------------------------|--------------------------------------------------------------------|---------------------|--------------|
+| [Avro](./integration-avro.mdx)                                   | Avro schemas and converters next to the models                     | Java, Kotlin        | Experimental |
+| [Builders](./integration-builders.mdx)                           | An immutable builder for every model                               | Java, Kotlin, Scala | Stable       |
+| [GraphQL client](./integration-graphql.mdx)                      | A typed GraphQL client and query builder for the rpcs              | Java, Kotlin, Scala | Experimental |
+| [Jackson](./integration-jackson.mdx)                             | A Jackson module and annotations for the models                    | Java, Kotlin        | Stable       |
+| [Kotest](./integration-kotest.mdx)                               | A Kotest scenario DSL for the models, endpoints, channels and rpcs | Kotlin              | Stable       |
+| [kotlinx.serialization](./integration-kotlinx-serialization.mdx) | `@Serializable` and `@SerialName` on the models                    | Kotlin              | Stable       |
+| [Spring](./integration-spring.mdx)                               | Controllers and a web client for the endpoints                     | Java, Kotlin        | Stable       |
+| [WireMock](./integration-wiremock.mdx)                           | Typed WireMock stubs for the endpoints                             | Java, Kotlin        | Experimental |
+
+Every integration page starts with the languages it applies to and its status. An **experimental** integration is ready
+to try, but its API, generated code and options may still change between releases.

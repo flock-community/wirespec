@@ -14,6 +14,8 @@ import path from "node:path";
  *     package: community.flock.todo   # optional
  *     shared: true             # optional, also emit the shared Wirespec file
  *     ignoreDefaults: true     # optional
+ *     extensions: [GraphQLClient]   # optional, the --extension of the CLI
+ *     examples: ../examples    # optional, relative to the page: where `example` blocks look for their file
  *
  * A code block picks what to show, and may override any of the settings above:
  *
@@ -23,6 +25,9 @@ import path from "node:path";
  *   ```kotlin wirespec file=model/Todo.kt     one generated file, matched on the end of its path
  *   ```json wirespec select=components.schemas.Todo   part of a generated JSON file
  *   ```text wirespec error                    the error the compiler reports
+ *   ```kotlin wirespec example=Examples.kt#calls   the lines of a file under `examples` between
+ *                                             `// region calls` and `// endregion calls`, dedented; a region that occurs
+ *                                             more than once, such as imports and code, is shown in parts
  */
 
 type Settings = {
@@ -31,6 +36,8 @@ type Settings = {
   package?: string;
   shared?: boolean;
   ignoreDefaults?: boolean;
+  extensions?: string[];
+  examples?: string;
 };
 
 type Code = { type: "code"; lang?: string; meta?: string; value: string };
@@ -59,6 +66,7 @@ const settingsOf = (meta: Map<string, string>, page: Settings): Settings => ({
   ...(meta.has("package") && { package: meta.get("package") }),
   ...(meta.has("shared") && { shared: meta.get("shared") === "true" }),
   ...(meta.has("ignoreDefaults") && { ignoreDefaults: meta.get("ignoreDefaults") === "true" }),
+  ...(meta.has("extensions") && { extensions: meta.get("extensions")?.split(",") }),
 });
 
 const argumentsOf = (source: string, output: string, settings: Settings): string[] => [
@@ -72,6 +80,7 @@ const argumentsOf = (source: string, output: string, settings: Settings): string
   ...(settings.package ? ["-p", settings.package] : []),
   ...(settings.shared ? ["--shared"] : []),
   ...(settings.ignoreDefaults ? ["--ignore-defaults"] : []),
+  ...(settings.extensions ?? []).flatMap((extension) => ["-e", extension]),
 ];
 
 const filesIn = (dir: string, root = dir): [string, string][] =>
@@ -185,6 +194,35 @@ const renderTree = (tree: Tree, indent = ""): string[] => {
   });
 };
 
+const dedent = (lines: string[]): string => {
+  const indent = Math.min(...lines.filter((line) => line.trim()).map((line) => line.length - line.trimStart().length));
+  return lines.map((line) => line.slice(indent)).join("\n").trim();
+};
+
+// The parts of a file between `// region <name>` and `// endregion <name>`, without the markers of other regions.
+const regionOf = (content: string, region: string, where: string): string => {
+  const { parts } = content.split("\n").reduce<{ parts: string[][]; open: boolean }>(
+    ({ parts, open }, line) => {
+      const marker = line.trim();
+      if (marker === `// region ${region}`) return { parts: [...parts, []], open: true };
+      if (marker === `// endregion ${region}`) return { parts, open: false };
+      if (!open || /^\/\/ (end)?region /.test(marker)) return { parts, open };
+      return { parts: [...parts.slice(0, -1), [...parts[parts.length - 1], line]], open };
+    },
+    { parts: [], open: false },
+  );
+  if (parts.length === 0) throw new Error(`${where}: no region '${region}'`);
+  return parts.map(dedent).join("\n\n");
+};
+
+const example = (reference: string, examples: string | undefined, where: string): string => {
+  if (!examples) throw new Error(`${where}: no wirespec examples directory in the front matter`);
+  const [name, region] = reference.split("#");
+  const matches = filesIn(examples).filter(([file]) => path.basename(file) === name);
+  if (matches.length !== 1) throw new Error(`${where}: ${matches.length} files named '${name}' in ${examples}`);
+  return regionOf(matches[0][1], region, `${where} ${matches[0][0]}`);
+};
+
 const render = (code: Code, meta: Map<string, string>, settings: Settings, source: string, where: string): Code => {
   const name = path.basename(source);
   if (meta.has("source")) return { ...code, meta: `title="${name}"`, value: readFileSync(source, "utf8").trimEnd() };
@@ -213,6 +251,11 @@ const transform = (node: Node, file: File): Node => {
       const page = file.data.frontMatter?.wirespec ?? {};
       const settings = settingsOf(meta, page);
       const where = `${file.path} (\`\`\`${node.lang ?? ""} ${node.meta})`;
+      const reference = meta.get("example");
+      if (reference) {
+        const examples = settings.examples && path.resolve(path.dirname(file.path), settings.examples);
+        return { ...(node as Code), meta: "", value: example(reference, examples, where) };
+      }
       if (!settings.source) throw new Error(`${where}: no wirespec source in the front matter`);
       const source = path.resolve(path.dirname(file.path), settings.source);
       return render(node as Code, meta, settings, source, where);
