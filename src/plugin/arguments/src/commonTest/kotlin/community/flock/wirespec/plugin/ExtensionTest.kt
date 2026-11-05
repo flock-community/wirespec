@@ -33,7 +33,7 @@ class ExtensionTest {
             .filterValues { it.isNotEmpty() } shouldBe mapOf(
             FileExtension.Java to listOf(Extension.Avro, Extension.GraphQLClient, Extension.Jackson, Extension.JvmBuilder, Extension.SpringMappingAnnotations, Extension.SpringNativeHints),
             FileExtension.Kotlin to Extension.entries,
-            FileExtension.Scala to listOf(Extension.JvmBuilder),
+            FileExtension.Scala to listOf(Extension.GraphQLClient, Extension.JvmBuilder),
         )
     }
 

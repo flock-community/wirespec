@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 
 public enum class Extension(private val type: KClass<out IrExtension>, private val languages: Set<FileExtension>) {
     Avro(AvroExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
-    GraphQLClient(GraphQLClientExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
+    GraphQLClient(GraphQLClientExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala)),
     Jackson(JacksonExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
     JvmBuilder(JvmBuilderExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala)),
     KotestDsl(KotestDslExtension::class, setOf(FileExtension.Kotlin)),

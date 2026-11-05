@@ -164,12 +164,12 @@ class GraphQLClientExtensionTest {
     @Test
     fun `Kotlin query builder selects the members of a union`() {
         val request = KotlinSearch.graphQL.request("milk") {
-            onTodo { title() }
-            onUser { name() }
+            onNote { text() }
+            onTag { name() }
         }
 
         assertEquals(
-            "query Search(\$text: String!) { result: search(text: \$text) { __typename ... on Todo { title } ... on User { name } } }",
+            "query Search(\$text: String!) { result: search(text: \$text) { __typename ... on Note { text } ... on Tag { name } } }",
             request.query,
         )
     }
@@ -215,14 +215,14 @@ class GraphQLClientExtensionTest {
 
     @Test
     fun `Kotlin client reads a union into the partial result with its typename`() = runBlocking {
-        val server = KotlinServer("""{"data":{"result":[{"__typename":"User","name":"Ann"},{"__typename":"Todo","title":"Milk"}]}}""")
+        val server = KotlinServer("""{"data":{"result":[{"__typename":"Tag","name":"home"},{"__typename":"Note","text":"Milk"}]}}""")
 
         val results = server.client().search("a") {
-            onTodo { title() }
-            onUser { name() }
+            onNote { text() }
+            onTag { name() }
         }
 
-        assertEquals(listOf("User" to "Ann", "Todo" to "Milk"), results.map { it.__typename to (it.name ?: it.title) })
+        assertEquals(listOf("Tag" to "home", "Note" to "Milk"), results.map { it.__typename to (it.name ?: it.text) })
     }
 
     @Test
@@ -243,6 +243,26 @@ class GraphQLClientExtensionTest {
             listOf(JavaTodoResult(Optional.of(JavaID("1")), Optional.empty(), Optional.empty(), Optional.empty(), Optional.of(JavaUserResult(Optional.of("Ann"))))),
             todos,
         )
+    }
+
+    @Test
+    fun `Scala client posts the query and reads the full result`() {
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id title done priority owner { name } } }", scalaCheck("queriesTheFullResult"))
+    }
+
+    @Test
+    fun `Scala client reads the selected fields into the partial result`() {
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { title owner { name } } }", scalaCheck("readsTheSelectedFields"))
+    }
+
+    @Test
+    fun `Scala client returns the first error of an rpc with an error type`() {
+        scalaCheck("returnsTheTypedError")
+    }
+
+    @Test
+    fun `Scala query builder is reached from the rpc object`() {
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id owner { name } } }", scalaCheck("buildsAQuery"))
     }
 
     @Test
@@ -270,6 +290,9 @@ class GraphQLClientExtensionTest {
             emitter.applyExtensions(nonEmptyListOf(GraphQLClientExtension(emitter.packageName, FileExtension.TypeScript))).emit(ast, noLogger).toList(),
         )
     }
+
+    // Scala compiles after the Kotlin tests, so the Scala side is reached reflectively.
+    private fun scalaCheck(name: String): Any? = Class.forName("community.flock.wirespec.integration.graphql.extension.ScalaGraphQLCheck").getMethod(name).invoke(null)
 
     private inner class KotlinServer(private val response: String) : KotlinWirespec.Transportation {
         lateinit var request: KotlinWirespec.RawRequest

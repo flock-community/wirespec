@@ -1,8 +1,8 @@
 package community.flock.wirespec.integration.graphql.extension
 
-import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.ir.BinaryOp
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
+import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
@@ -20,6 +20,7 @@ import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.Visibility
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
+import community.flock.wirespec.compiler.core.ir.generator.ScalaGenerator
 import community.flock.wirespec.compiler.core.ir.struct
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -51,7 +52,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * in the operation of the rpc, with the parameters as its variables. The rpc reaches it as `QueryTodo.graphQL`: an
  * extension property in Kotlin and a static field in Java.
  */
-internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: FileExtension) {
+internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: Language) {
+
+    enum class Language { Kotlin, Java, Scala }
 
     /** An rpc: its `Service` function, its document up to the selection, its result and its variables. */
     class Request(val rpc: String, val function: Function, val open: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
@@ -131,9 +134,9 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
      * Kotlin resolves a call in a block against every enclosing receiver, so `owner { title() }` would select the
      * `title` of the todo. A `@DslMarker` on the selections limits a block to its own selection.
      */
-    val dslMarker: RawElement? = RawElement("@$DSL_MARKER").takeIf { language == FileExtension.Kotlin }
+    val dslMarker: RawElement? = RawElement("@$DSL_MARKER").takeIf { language == Language.Kotlin }
 
-    val dslMarkerDefinition: RawElement? = RawElement("@DslMarker\nannotation class $DSL_MARKER").takeIf { language == FileExtension.Kotlin }
+    val dslMarkerDefinition: RawElement? = RawElement("@DslMarker\nannotation class $DSL_MARKER").takeIf { language == Language.Kotlin }
 
     /**
      * `QueryTodoGraphQL.request(id) { ... }` writes the request of an rpc with the fields of its result that the block
@@ -176,7 +179,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     }
 
     /** `QueryTodo.graphQL` in Kotlin: an extension property on the rpc object, next to the builder. */
-    fun accessor(request: Request): Field? = takeIf { language == FileExtension.Kotlin }?.let {
+    fun accessor(request: Request): Field? = takeIf { language == Language.Kotlin }?.let {
         Field(
             name = ACCESSOR,
             type = Type.Custom(request.builder),
@@ -185,9 +188,14 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         )
     }
 
-    /** `QueryTodo.graphQL` in Java: a static field of the rpc interface. */
-    fun staticAccessor(request: Request): Field? = takeIf { language == FileExtension.Java }?.let {
-        Field(name = ACCESSOR, type = Type.Custom(request.builder), initializer = ConstructorStatement(Type.Custom(request.builder)))
+    /**
+     * `QueryTodo.graphQL` in Java and Scala: a member of the rpc. Java makes a field of an interface a static constant.
+     * Scala names the type of an object `.type`, which the generator only knows for the objects of its own file.
+     */
+    fun staticAccessor(request: Request): Element? = when (language) {
+        Language.Kotlin -> null
+        Language.Java -> Field(name = ACCESSOR, type = Type.Custom(request.builder), initializer = ConstructorStatement(Type.Custom(request.builder)))
+        Language.Scala -> RawElement("val ${ACCESSOR.value()}: ${request.builder}.type = ${request.builder}")
     }
 
     /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */
@@ -202,11 +210,11 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         returns(RawExpression("this"))
     }
 
-    /** The block that selects the fields of a type: on `this` in Kotlin, a function of the selection in Java. */
+    /** The block that selects the fields of a type: on `this` in Kotlin, a function of the selection in Java and Scala. */
     private fun Definition.block(): Type = Type.Custom(selection()).let { selection ->
         when (language) {
-            FileExtension.Kotlin -> Type.Function(parameterTypes = emptyList(), returnType = Type.Unit, receiver = selection)
-            else -> Type.Function(parameterTypes = listOf(selection), returnType = selection)
+            Language.Kotlin -> Type.Function(parameterTypes = emptyList(), returnType = Type.Unit, receiver = selection)
+            Language.Java, Language.Scala -> Type.Function(parameterTypes = listOf(selection), returnType = selection)
         }
     }
 
@@ -214,16 +222,16 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     private fun Definition.selected(): Expression = ConstructorStatement(Type.Custom(selection()), mapOf(FIELDS to newStringBuilder()))
         .let { empty ->
             when (language) {
-                FileExtension.Kotlin -> FunctionCall(receiver = empty, name = APPLY, arguments = mapOf(Name.of("block") to VariableReference(SELECTION)))
-                else -> FunctionCall(receiver = VariableReference(SELECTION), name = APPLY, arguments = mapOf(Name.of("t") to empty))
+                Language.Kotlin -> FunctionCall(receiver = empty, name = APPLY, arguments = mapOf(Name.of("block") to VariableReference(SELECTION)))
+                Language.Java, Language.Scala -> FunctionCall(receiver = VariableReference(SELECTION), name = APPLY, arguments = mapOf(Name.of("t") to empty))
             }
         }
         .let { FunctionCall(receiver = it, name = TO_GRAPHQL) }
 
     // An IR constructor call without arguments has no parentheses in Kotlin.
     private fun newStringBuilder(): Expression = when (language) {
-        FileExtension.Kotlin -> FunctionCall(name = Name(listOf(STRING_BUILDER)))
-        else -> ConstructorStatement(Type.Custom(STRING_BUILDER))
+        Language.Kotlin -> FunctionCall(name = Name(listOf(STRING_BUILDER)))
+        Language.Java, Language.Scala -> ConstructorStatement(Type.Custom(STRING_BUILDER))
     }
 
     private fun concat(vararg parts: Expression): Expression = parts.reduce { left, right -> BinaryOp(left, BinaryOp.Operator.PLUS, right) }
@@ -242,10 +250,11 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     private fun Definition.result(): String = "${Name.of(identifier.value).pascalCase()}Result"
 
-    /** Java has no escape for a keyword; Kotlin backticks it. */
+    /** Java has no escape for a keyword; Kotlin backticks it itself, and Scala needs the backticks written. */
     private fun String.sanitized(): String = when (language) {
-        FileExtension.Java -> if (this in JavaGenerator.reservedKeywords) "_$this" else this
-        else -> this
+        Language.Kotlin -> this
+        Language.Java -> if (this in JavaGenerator.reservedKeywords) "_$this" else this
+        Language.Scala -> if (this in ScalaGenerator.reservedKeywords) "`$this`" else this
     }
 
     companion object {
@@ -258,7 +267,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         private val FIELDS = Name(listOf("graphQLFields"))
         private val SELECTION = Name.of("selection")
         val REQUEST = Name(listOf("request"))
-        private val ACCESSOR = Name(listOf("graphQL"))
+        val ACCESSOR = Name(listOf("graphQL"))
         private val TO_GRAPHQL = Name(listOf("toGraphQL"))
         private val APPEND = Name(listOf("append"))
         private val APPLY = Name(listOf("apply"))
