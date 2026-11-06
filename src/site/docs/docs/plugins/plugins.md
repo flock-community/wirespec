@@ -23,8 +23,8 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 - **ignore defaults:** A flag to leave field default values out of the emitted code. Required to compile a spec with
   [defaults](../language/types.mdx#default-values) to a language that does not support them yet. See
   [Default values](#default-values).
-- **sync handlers:** A flag to emit endpoint handlers and rpc services as synchronous functions. See
-  [Synchronous handlers](#synchronous-handlers).
+- **sync:** A flag to emit endpoint handlers, channels and rpc services as synchronous functions. See
+  [Synchronous code](#synchronous-code).
 
 [Playground compile](http://playground.wirespec.io/compile)
 
@@ -98,12 +98,12 @@ fails on them.
 | Maven  | fails the build, with the error as the failure message                                                                                                                                                                                 |
 | npm    | is the same as the CLI for `wirespec` scripts and `cli()`. The programmatic `parse` result reports invalid defaults, but the AST it returns does not carry defaults yet, so `emit` generates code without them and never fails on them |
 
-## Synchronous handlers
+## Synchronous code
 
 By default the server side is asynchronous: the function of an endpoint `Handler` and an rpc `Service` is a `suspend`
 function in Kotlin, returns a `CompletableFuture` in Java, a `Promise` in TypeScript and is an `async def` in Python.
-The sync handlers flag (`--sync-handlers` for the CLI, `syncHandlers` in the Gradle and Maven plugins) emits them as
-plain functions instead.
+The sync flag (`--sync` for the CLI, `sync` in the Gradle and Maven plugins) emits them as plain functions instead.
+It covers the `Sender` and `Listener` of a channel too, which are already synchronous.
 
 Use it when the handler depends on state bound to the thread that received the request. Spring MVC with JPA or JDBC is
 the typical case: the transaction and the security context live in a `ThreadLocal`, and a coroutine can resume on

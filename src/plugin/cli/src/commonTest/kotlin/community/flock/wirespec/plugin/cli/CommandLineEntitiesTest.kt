@@ -3,7 +3,7 @@ package community.flock.wirespec.plugin.cli
 import com.github.ajalt.clikt.core.main
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
-import community.flock.wirespec.compiler.core.ir.extension.SyncHandlersExtension
+import community.flock.wirespec.compiler.core.ir.extension.SyncExtension
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenAPIV2
@@ -35,7 +35,7 @@ class CommandLineEntitiesTest {
                     Options.Shared -> null
                     Options.Strict -> null
                     Options.IgnoreDefaults -> null
-                    Options.SyncHandlers -> null
+                    Options.Sync -> null
                 },
             )
         }.toTypedArray()
@@ -59,20 +59,20 @@ class CommandLineEntitiesTest {
     }
 
     @Test
-    fun testSyncHandlersAddsTheSyncHandlersExtension() {
+    fun testSyncAddsTheSyncExtension() {
         WirespecCli(
             noopCompiler {
-                it.emitter.shouldBeInstanceOf<IrEmitter>().extensions.filterIsInstance<SyncHandlersExtension>().shouldHaveSize(1)
+                it.emitter.shouldBeInstanceOf<IrEmitter>().extensions.filterIsInstance<SyncExtension>().shouldHaveSize(1)
             },
             noopConverter {},
-        ).main(arrayOf("compile", "-i", "src/commonTest/resources/wirespec", "-l", "Kotlin", "--sync-handlers"))
+        ).main(arrayOf("compile", "-i", "src/commonTest/resources/wirespec", "-l", "Kotlin", "--sync"))
     }
 
     @Test
     fun testHandlersStayAsynchronousByDefault() {
         WirespecCli(
             noopCompiler {
-                it.emitter.shouldBeInstanceOf<IrEmitter>().extensions.filterIsInstance<SyncHandlersExtension>().shouldBeEmpty()
+                it.emitter.shouldBeInstanceOf<IrEmitter>().extensions.filterIsInstance<SyncExtension>().shouldBeEmpty()
             },
             noopConverter {},
         ).main(arrayOf("compile", "-i", "src/commonTest/resources/wirespec", "-l", "Kotlin"))

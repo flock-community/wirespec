@@ -22,7 +22,7 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.ir.extension.SyncHandlersExtension
+import community.flock.wirespec.compiler.core.ir.extension.SyncExtension
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
@@ -61,7 +61,7 @@ internal enum class Options(vararg val flags: String) {
     Shared("--shared"),
     Strict("--strict"),
     IgnoreDefaults("--ignore-defaults"),
-    SyncHandlers("--sync-handlers"),
+    Sync("--sync"),
 }
 
 internal class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -82,7 +82,7 @@ private abstract class CommonOptions : CliktCommand() {
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
     val ignoreDefaults by option(*Options.IgnoreDefaults.flags, help = "Leave field default values out of the emitted code").flag()
-    val syncHandlers by option(*Options.SyncHandlers.flags, help = "Emit endpoint handlers and rpc services as synchronous functions").flag()
+    val sync by option(*Options.Sync.flags, help = "Emit endpoint handlers, channels and rpc services as synchronous functions").flag()
     val extensions by option(*Options.Extension.flags, help = "Extension, applied to the languages it supports")
         .choice(choices = Extension.toMap(), ignoreCase = true)
         .multiple()
@@ -131,7 +131,7 @@ private class Compile(
             }
         }
 
-        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions, syncHandlers)
+        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions, sync)
 
         val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
@@ -172,7 +172,7 @@ private class Convert(
                 .also { logger.info("Found 1 file to process: $inputPath") }
         }
 
-        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions, syncHandlers)
+        val emitter = language.toEmitter(PackageName(packageName), EmitShared(shared), extensions, sync)
         val directory = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         ConverterArguments(
             format = format,
@@ -191,8 +191,8 @@ private class Convert(
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
 
-private fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared, extensions: List<Extension>, syncHandlers: Boolean) = toEmitter(packageName, emitShared)
-    .let { it.withExtensions(listOfNotNull(SyncHandlersExtension(it.extension).takeIf { syncHandlers }) + extensions.toIrExtensions(packageName, it.extension)) }
+private fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared, extensions: List<Extension>, sync: Boolean) = toEmitter(packageName, emitShared)
+    .let { it.withExtensions(listOfNotNull(SyncExtension(it.extension).takeIf { sync }) + extensions.toIrExtensions(packageName, it.extension)) }
 
 private fun NullableOption<Language, Language>.single(default: Language) = transformAll(defaultForHelp = "$default") { languages ->
     when (languages.size) {

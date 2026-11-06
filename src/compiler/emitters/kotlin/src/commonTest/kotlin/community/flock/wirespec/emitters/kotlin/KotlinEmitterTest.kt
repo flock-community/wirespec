@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.ir.extension.SyncHandlersExtension
+import community.flock.wirespec.compiler.core.ir.extension.SyncExtension
 import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -129,20 +129,20 @@ class KotlinEmitterTest {
     }
 
     @Test
-    fun syncHandlersEmitTheHandlerWithoutSuspend() {
+    fun syncEmitsTheHandlerWithoutSuspend() {
         val kotlin = EmitterFixtures.compileMinimalEndpointTest
             .replace("suspend fun getTodos(request: Request)", "fun getTodos(request: Request)")
 
-        CompileMinimalEndpointTest.compiler { KotlinEmitter().applyExtensions(nonEmptyListOf(SyncHandlersExtension(FileExtension.Kotlin))) } shouldBeRight kotlin
+        CompileMinimalEndpointTest.compiler { KotlinEmitter().applyExtensions(nonEmptyListOf(SyncExtension(FileExtension.Kotlin))) } shouldBeRight kotlin
     }
 
     @Test
-    fun syncHandlersEmitTheRpcServiceWithoutSuspend() {
+    fun syncEmitsTheRpcServiceWithoutSuspend() {
         val kotlin = EmitterFixtures.compileRpcTest
             .replace("suspend fun getUser(", "fun getUser(")
             .replace("suspend fun ping(", "fun ping(")
 
-        CompileRpcTest.compiler { KotlinEmitter().applyExtensions(nonEmptyListOf(SyncHandlersExtension(FileExtension.Kotlin))) } shouldBeRight kotlin
+        CompileRpcTest.compiler { KotlinEmitter().applyExtensions(nonEmptyListOf(SyncExtension(FileExtension.Kotlin))) } shouldBeRight kotlin
     }
 
     @Test
