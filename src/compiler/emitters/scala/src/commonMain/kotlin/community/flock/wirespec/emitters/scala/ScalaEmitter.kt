@@ -44,6 +44,7 @@ import community.flock.wirespec.compiler.core.ir.struct
 import community.flock.wirespec.compiler.core.ir.transform
 import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.ir.emit.placeInPackage
 import community.flock.wirespec.compiler.core.ir.emit.prependImports
 import community.flock.wirespec.compiler.core.ir.generator.Generator
@@ -67,12 +68,12 @@ public open class ScalaEmitter(
 
     override val extension: FileExtension = FileExtension.Scala
 
+    override val extensions: List<IrExtension> get() = super.extensions + SealedHierarchies
+
     // Pre-scan all generated files so cross-file constructor expressions can distinguish a
     // singleton object reference (`GetTodos.Request`) from an empty case class (`Foo()`).
     // Scala objects can't be `apply`d but empty Wirespec.Shape case classes require parens —
     // the IR uses the same `ConstructorStatement(type, emptyMap())` for both.
-    override fun arrange(files: List<LanguageFile>): List<LanguageFile> = files.withSealedHierarchiesTogether()
-
     override fun beforeGenerate(allFiles: List<LanguageFile>) {
         ScalaGenerator.setGlobalObjectNames(allFiles)
     }

@@ -1,10 +1,12 @@
 package community.flock.wirespec.emitters.scala
 
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.Enum
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.File
 import community.flock.wirespec.compiler.core.ir.Function
+import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.Import
 import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Main
@@ -13,14 +15,26 @@ import community.flock.wirespec.compiler.core.ir.Package
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.Union
+import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.parse.ast.AST
 
 /**
  * Scala only lets a type extend a `sealed trait` in the file that declares it, so every union shares a file with its
  * members: the file of the union takes in the files of its members, with their imports and companions. A type in two
  * unions, or a union in a union, brings all of them into one file. The members stay in their package, so references
  * to them do not change.
+ *
+ * The Scala emitter applies it right after the [community.flock.wirespec.compiler.core.ir.extension.ValidateExtension],
+ * so the extensions registered on it see a union and its members in one file.
  */
-internal fun List<File>.withSealedHierarchiesTogether(): List<File> {
+internal object SealedHierarchies : IrExtension {
+    override fun extend(ir: IR, ast: AST): IR = ir.partition { it is File }
+        .let { (files, rest) -> files.filterIsInstance<File>().withSealedHierarchiesTogether() + rest }
+        .toNonEmptyListOrNull()
+        ?: ir
+}
+
+private fun List<File>.withSealedHierarchiesTogether(): List<File> {
     val declarations: Map<Pair<String?, String>, Int> = withIndex()
         .flatMap { (index, file) -> file.declaredNames().map { (file.packagePath() to it) to index } }
         .distinctBy { it.first }

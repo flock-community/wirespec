@@ -55,15 +55,11 @@ public interface IrEmitter : Emitter {
         val transformedFiles = extensions
             .fold(allFiles) { ir, extension -> extension.extend(ir, ast) }
             .filterIsInstance<File>()
-            .let(::arrange)
         beforeGenerate(transformedFiles)
 
         return transformedFiles.map { it.toEmitted() }.toNonEmptyListOrNull()
             ?: error("Extensions must leave at least one File in the IR")
     }
-
-    /** Hook for emitters whose language constrains which declarations share a file: regroups the files after every extension ran. */
-    public fun arrange(files: List<File>): List<File> = files
 
     /** Hook for emitters that need to inspect the full set of files before per-file generation. */
     public fun beforeGenerate(allFiles: List<File>): Unit = Unit

@@ -90,6 +90,11 @@ class JvmBuilderExtensionTest {
     }
 
     @Test
+    fun `Scala builder builds the members of a union, which share its file`() {
+        scalaCheck("buildsUnionMembers")
+    }
+
+    @Test
     fun `Scala builder fails on a missing required field`() {
         assertEquals("Todo.name is required", scalaCheck("missingRequiredFieldMessage"))
     }
