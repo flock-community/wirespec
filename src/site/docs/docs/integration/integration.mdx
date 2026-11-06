@@ -4,6 +4,8 @@ slug: /integration
 sidebar_position: 2
 ---
 
+import { Languages } from "@site/src/components/Languages";
+
 Wirespec has integrations with major frameworks, including Spring for enterprise application development, Jackson and
 kotlinx.serialization for JSON processing, Avro for data serialization and schema management, WireMock for type-safe
 HTTP stubbing in tests, and Kotest for property-based scenario tests driven by your contract. For the JVM languages it can
@@ -11,16 +13,16 @@ also add builders to the generated models, and a typed GraphQL client for the rp
 
 ## Overview
 
-| Integration                                                      | What it does                                                       | Languages           | Status       |
-|------------------------------------------------------------------|--------------------------------------------------------------------|---------------------|--------------|
-| [Avro](./integration-avro.mdx)                                   | Avro schemas and converters next to the models                     | Java, Kotlin        | Experimental |
-| [Builders](./integration-builders.mdx)                           | An immutable builder for every model                               | Java, Kotlin, Scala |              |
-| [GraphQL client](./integration-graphql.mdx)                      | A typed GraphQL client and query builder for the rpcs              | Java, Kotlin, Scala | Experimental |
-| [Jackson](./integration-jackson.mdx)                             | A Jackson module and annotations for the models                    | Java, Kotlin        |              |
-| [Kotest](./integration-kotest.mdx)                               | A Kotest scenario DSL for the models, endpoints, channels and rpcs | Kotlin              |              |
-| [kotlinx.serialization](./integration-kotlinx-serialization.mdx) | `@Serializable` and `@SerialName` on the models                    | Kotlin              |              |
-| [Spring](./integration-spring.mdx)                               | Controllers and a web client for the endpoints                     | Java, Kotlin        |              |
-| [WireMock](./integration-wiremock.mdx)                           | Typed WireMock stubs for the endpoints                             | Java, Kotlin        | Experimental |
+| Integration                                                      | What it does                                                       | Languages                                             | Status       |
+|------------------------------------------------------------------|--------------------------------------------------------------------|-------------------------------------------------------|--------------|
+| [Avro](./integration-avro.mdx)                                   | Avro schemas and converters next to the models                     | <Languages languages={["Java", "Kotlin"]} />          | Experimental |
+| [Builders](./integration-builders.mdx)                           | An immutable builder for every model                               | <Languages languages={["Java", "Kotlin", "Scala"]} /> |              |
+| [GraphQL client](./integration-graphql.mdx)                      | A typed GraphQL client and query builder for the rpcs              | <Languages languages={["Java", "Kotlin", "Scala"]} /> | Experimental |
+| [Jackson](./integration-jackson.mdx)                             | A Jackson module and annotations for the models                    | <Languages languages={["Java", "Kotlin"]} />          |              |
+| [Kotest](./integration-kotest.mdx)                               | A Kotest scenario DSL for the models, endpoints, channels and rpcs | <Languages languages={["Kotlin"]} />                  |              |
+| [kotlinx.serialization](./integration-kotlinx-serialization.mdx) | `@Serializable` and `@SerialName` on the models                    | <Languages languages={["Kotlin"]} />                  |              |
+| [Spring](./integration-spring.mdx)                               | Controllers and a web client for the endpoints                     | <Languages languages={["Java", "Kotlin"]} />          |              |
+| [WireMock](./integration-wiremock.mdx)                           | Typed WireMock stubs for the endpoints                             | <Languages languages={["Java", "Kotlin"]} />          | Experimental |
 
 Every integration page starts with the languages it applies to. An integration marked **experimental** is ready to try,
 but its API, generated code and options may still change between releases.
