@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.extension.SyncHandlersExtension
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.Extension
 import community.flock.wirespec.plugin.Language
@@ -73,6 +74,11 @@ public abstract class BaseWirespecTask : DefaultTask() {
     @get:Option(option = "ignoreDefaults", description = "leave field default values out of the emitted code")
     public abstract val ignoreDefaults: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    @get:Option(option = "syncHandlers", description = "emit endpoint handlers and rpc services as synchronous functions")
+    public abstract val syncHandlers: Property<Boolean>
+
     @Internal
     public val wirespecLogger: Logger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)
@@ -98,7 +104,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
 
     protected fun emitter(): Emitter = language.get()
         .toEmitter(packageNameValue(), sharedValue())
-        .let { it.withExtensions(extensionInstances(it.extension)) }
+        .let { it.withExtensions(listOfNotNull(SyncHandlersExtension(it.extension).takeIf { syncHandlers.getOrElse(false) }) + extensionInstances(it.extension)) }
 
     protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
         emittedList.forEach { emitted ->

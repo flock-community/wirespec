@@ -99,6 +99,7 @@ The compile mojo supports the following parameters:
 - **packageName**: Package name for the generated code. Default is 'generated'.
 - **strict**: Whether to invoke strict mode during compilation. Default is 'true'.
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
+- **syncHandlers**: Whether to emit endpoint handlers and rpc services as synchronous functions, see [Synchronous handlers](./plugins.md#synchronous-handlers). Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
 - **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, when the emitter is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `GraphQLClient`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
 

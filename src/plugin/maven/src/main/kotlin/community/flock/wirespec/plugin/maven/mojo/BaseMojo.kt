@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.extension.SyncHandlersExtension
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.plugin.Extension
@@ -101,6 +102,13 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var ignoreDefaults: Boolean = false
 
     /**
+     * Specifies whether to emit endpoint handlers and rpc services as synchronous functions instead of `suspend`
+     * functions, `CompletableFuture`s or promises. Default 'false'.
+     */
+    @Parameter
+    protected var syncHandlers: Boolean = false
+
+    /**
      * Source directory. Default 'null'.
      */
     @Parameter
@@ -140,7 +148,7 @@ public abstract class BaseMojo : AbstractMojo() {
     protected val emitter: Emitter
         get() = language
             .toEmitter(PackageName(packageName), EmitShared(shared))
-            .let { it.withExtensions(extensionInstances(it.extension)) }
+            .let { it.withExtensions(listOfNotNull(SyncHandlersExtension(it.extension).takeIf { syncHandlers }) + extensionInstances(it.extension)) }
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements

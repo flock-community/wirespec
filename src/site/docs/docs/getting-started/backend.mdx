@@ -207,7 +207,10 @@ class TodoController : GetTodos.Handler, GetTodo.Handler, CreateTodo.Handler {
 }
 ```
 
-The handlers are `suspend` functions. Spring MVC runs them when `kotlinx-coroutines-reactor` is on the classpath.
+The handlers are `suspend` functions. Spring MVC runs them when `kotlinx-coroutines-reactor` is on the classpath. A
+coroutine can resume on another thread, where a JPA or JDBC transaction and the security context are not available.
+When the handlers need them, generate plain functions with the
+[sync handlers](../plugins/plugins.md#synchronous-handlers) flag and drop the `suspend` modifier.
 
   </TabItem>
   <TabItem value="java" label="Java">

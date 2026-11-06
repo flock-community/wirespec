@@ -23,6 +23,8 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 - **ignore defaults:** A flag to leave field default values out of the emitted code. Required to compile a spec with
   [defaults](../language/types.mdx#default-values) to a language that does not support them yet. See
   [Default values](#default-values).
+- **sync handlers:** A flag to emit endpoint handlers and rpc services as synchronous functions. See
+  [Synchronous handlers](#synchronous-handlers).
 
 [Playground compile](http://playground.wirespec.io/compile)
 
@@ -95,6 +97,24 @@ fails on them.
 | Gradle | fails the task, with the error as the failure message                                                                                                                                                                                  |
 | Maven  | fails the build, with the error as the failure message                                                                                                                                                                                 |
 | npm    | is the same as the CLI for `wirespec` scripts and `cli()`. The programmatic `parse` result reports invalid defaults, but the AST it returns does not carry defaults yet, so `emit` generates code without them and never fails on them |
+
+## Synchronous handlers
+
+By default the server side is asynchronous: the function of an endpoint `Handler` and an rpc `Service` is a `suspend`
+function in Kotlin, returns a `CompletableFuture` in Java, a `Promise` in TypeScript and is an `async def` in Python.
+The sync handlers flag (`--sync-handlers` for the CLI, `syncHandlers` in the Gradle and Maven plugins) emits them as
+plain functions instead.
+
+Use it when the handler depends on state bound to the thread that received the request. Spring MVC with JPA or JDBC is
+the typical case: the transaction and the security context live in a `ThreadLocal`, and a coroutine can resume on
+another thread, where neither is available. A JDBC transaction cannot move along with the coroutine, so run the
+handlers synchronously, for example on virtual threads. With WebFlux and R2DBC the context travels with the reactive
+stream, and the default `suspend` handlers work fine.
+
+The flag only changes the server side. The `Call` interfaces, the generated clients and `Transportation` stay
+asynchronous, so a synchronous handler can still call other services in parallel, outside the transaction, from a
+coroutine scope it opens itself. Scala handlers already abstract over their effect type and Rust keeps its handlers
+as they are, so the flag does not change those languages.
 
 ## IR extensions
 

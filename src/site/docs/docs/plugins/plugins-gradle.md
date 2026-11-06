@@ -104,6 +104,7 @@ This task compiles Wirespec definitions to one target language. Register a task 
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
+- `syncHandlers`: Property&lt;Boolean&gt; - Emit endpoint handlers and rpc services as synchronous functions, see [Synchronous handlers](./plugins.md#synchronous-handlers) (default: false)
 
 ### ConvertWirespecTask
 
@@ -121,6 +122,7 @@ This task converts from JSON or Avro to other formats.
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
+- `syncHandlers`: Property&lt;Boolean&gt; - Emit endpoint handlers and rpc services as synchronous functions, see [Synchronous handlers](./plugins.md#synchronous-handlers) (default: false)
 
 ## Default values
 
