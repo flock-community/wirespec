@@ -52,7 +52,7 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * val todo: Todo? = client.queryTodo(id = ID("1"))
  * ```
  *
- * Each rpc gets a `<Rpc>Client` in the `graphql` package that implements the rpc's `Service`. It posts the GraphQL
+ * Each rpc gets a `<Rpc>GraphQLClient` in the `graphql` package that implements the rpc's `Service`. It posts the GraphQL
  * document of the rpc to `/graphql`, with the parameters as its variables, through the `Wirespec.Transportation` and
  * `Wirespec.Serialization` it is given, and reads the result from the response. [GraphQLOperations] writes the document
  * at build time, so the generated code needs no GraphQL library. `GraphQLClient` implements every `Service` at once by
@@ -101,7 +101,7 @@ public class GraphQLClientExtension(
 
     private class Operation(val rpc: Rpc, val document: String, val open: String, val service: Service) {
         val name: String = service.rpc.name.pascalCase()
-        val client: String = "${name}Client"
+        val client: String = "${name}GraphQLClient"
 
         /** Each variable keeps the name of the argument it is passed as, and takes the parameter of the `Service` function. */
         val variables: List<Pair<Field, Parameter>> = rpc.shape.fields

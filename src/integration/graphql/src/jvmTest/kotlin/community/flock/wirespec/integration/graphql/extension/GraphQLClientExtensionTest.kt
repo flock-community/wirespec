@@ -225,7 +225,7 @@ class GraphQLClientExtensionTest {
 
     @Test
     fun `Only rpcs marked as a query or a mutation get a client`() {
-        listOf("TodoAddedClient", "CountTodosClient").forEach { client ->
+        listOf("TodoAddedGraphQLClient", "CountTodosGraphQLClient").forEach { client ->
             assertFailsWith<ClassNotFoundException> {
                 Class.forName("community.flock.wirespec.integration.graphql.kotlin.generated.graphql.$client")
             }

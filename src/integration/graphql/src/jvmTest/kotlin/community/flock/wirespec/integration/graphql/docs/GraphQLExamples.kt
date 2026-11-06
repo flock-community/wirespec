@@ -13,7 +13,7 @@ import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerializat
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchResultResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.TodoResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID
@@ -41,7 +41,7 @@ object GraphQLExamples {
 
     fun operationClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation): QueryTodo.Service {
         // region operation-client
-        val queryTodo: QueryTodo.Service = QueryTodoClient(serialization, transportation)
+        val queryTodo: QueryTodo.Service = QueryTodoGraphQLClient(serialization, transportation)
         // endregion operation-client
         return queryTodo
     }

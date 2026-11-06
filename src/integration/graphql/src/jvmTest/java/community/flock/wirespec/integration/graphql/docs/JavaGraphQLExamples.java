@@ -15,7 +15,7 @@ import java.net.http.HttpResponse;
 import java.util.Optional;
 // endregion create-client
 import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient;
-import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoClient;
+import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQLClient;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchResultResult;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodoResult;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.UserResult;
@@ -56,7 +56,7 @@ public final class JavaGraphQLExamples {
 
     public static QueryTodo.Service operationClient(Wirespec.Serialization serialization, Wirespec.Transportation transportation) {
         // region operation-client
-        QueryTodo.Service queryTodo = new QueryTodoClient(serialization, transportation);
+        QueryTodo.Service queryTodo = new QueryTodoGraphQLClient(serialization, transportation);
         // endregion operation-client
         return queryTodo;
     }

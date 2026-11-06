@@ -166,7 +166,7 @@ writes JSON, and a `Wirespec.Transportation` that sends the request to the path 
 The response holds fields that the models do not have, such as `__typename` and the `locations` of an error, so the
 serialization must ignore unknown properties.
 
-Each operation also has a client of its own, `<Rpc>Client`, which implements the `Service` of that one rpc. Use it to
+Each operation also has a client of its own, `<Rpc>GraphQLClient`, which implements the `Service` of that one rpc. Use it to
 depend on just that operation, or to fake it in a test:
 
 <Tabs groupId="language">
@@ -295,14 +295,14 @@ A call with a selection throws an `IllegalStateException` on GraphQL errors, als
 
 Everything lands in the `graphql` package, next to `model` and `rpc`:
 
-| Generated                 | What it is                                                                           |
-|---------------------------|--------------------------------------------------------------------------------------|
-| `GraphQLClient`           | Implements the `Service` of every operation, with and without a selection            |
-| `QueryTodoClient`, ...    | The client of one operation                                                          |
-| `QueryTodoGraphQL`, ...   | The query builder of one operation, with its `GraphQLRequest` and `GraphQLVariables` |
-| `TodoSelection`, ...      | The fields you can select of a type or union                                         |
-| `TodoResult`, ...         | The partial result of a type or union                                                |
-| `GraphQLError`            | An error of a response, for an rpc without an error type of its own                  |
+| Generated                     | What it is                                                                           |
+|-------------------------------|--------------------------------------------------------------------------------------|
+| `GraphQLClient`               | Implements the `Service` of every operation, with and without a selection            |
+| `QueryTodoGraphQLClient`, ... | The client of one operation                                                          |
+| `QueryTodoGraphQL`, ...       | The query builder of one operation, with its `GraphQLRequest` and `GraphQLVariables` |
+| `TodoSelection`, ...          | The fields you can select of a type or union                                         |
+| `TodoResult`, ...             | The partial result of a type or union                                                |
+| `GraphQLError`                | An error of a response, for an rpc without an error type of its own                  |
 
 The shapes follow the language:
 
@@ -319,15 +319,15 @@ the overload with a selection asks the builder for it.
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
-    ```kotlin wirespec file=graphql/QueryTodoClient.kt language=Kotlin
+    ```kotlin wirespec file=graphql/QueryTodoGraphQLClient.kt language=Kotlin
     ```
   </TabItem>
   <TabItem value="java" label="Java">
-    ```java wirespec file=graphql/QueryTodoClient.java language=Java
+    ```java wirespec file=graphql/QueryTodoGraphQLClient.java language=Java
     ```
   </TabItem>
   <TabItem value="scala" label="Scala">
-    ```scala wirespec file=graphql/QueryTodoClient.scala language=Scala
+    ```scala wirespec file=graphql/QueryTodoGraphQLClient.scala language=Scala
     ```
   </TabItem>
 </Tabs>

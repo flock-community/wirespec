@@ -7,7 +7,7 @@ import community.flock.wirespec.scala.Wirespec
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{GraphQLClient, QueryTodoClient, SearchResultResult, TodoResult}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{GraphQLClient, QueryTodoGraphQLClient, SearchResultResult, TodoResult}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
 
@@ -33,7 +33,7 @@ object ScalaGraphQLExamples {
 
   def operationClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation): QueryTodo.Service = {
     // region operation-client
-    val queryTodo: QueryTodo.Service = QueryTodoClient(serialization, transportation)
+    val queryTodo: QueryTodo.Service = QueryTodoGraphQLClient(serialization, transportation)
     // endregion operation-client
     queryTodo
   }
