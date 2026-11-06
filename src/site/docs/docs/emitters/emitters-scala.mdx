@@ -48,10 +48,7 @@ The fields map to Scala types as follows:
 `validate()` returns the paths of the values that are not valid. Only refined values and constrained fields, such as
 `String(/^[A-Z]+$/g)`, can be invalid, so `Todo` checks `id`. Values in lists, dicts and nullables are checked at any
 depth and reported as `tags[1]` or `labels[home]`, and a type that contains another type passes on its errors with the
-field name as a prefix:
-
-```scala wirespec file=model/TodoCreated.scala
-```
+field name as a prefix, as `TodoCreated` does in the [union](#union) below.
 
 ## Refined
 
@@ -72,12 +69,14 @@ which is also what `toString()` returns:
 
 ## Union
 
-A union becomes a `sealed trait`:
+A union becomes a `sealed trait`, and every member of the union extends it, as `TodoCreated` does with
+`extends Wirespec.Shape with TodoEvent`. Scala only lets a type extend a sealed trait in the file that declares it, so
+the members are written to the file of the union, in the same package:
 
 ```scala wirespec file=model/TodoEvent.scala
 ```
 
-Every member of the union extends it, as `TodoCreated` above does with `extends Wirespec.Shape with TodoEvent`.
+A type that is a member of more than one union brings those unions into one file.
 
 ## Endpoint
 

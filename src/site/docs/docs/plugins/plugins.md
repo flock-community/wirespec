@@ -121,6 +121,7 @@ that name replaces the fully qualified class name; in Gradle you reference the c
 | Name                       | Languages           | Effect                                                                                                                                 |
 |----------------------------|---------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 | `Avro`                     | Java, Kotlin        | Adds an Avro schema and converter next to every model — see [Avro](../integration/integration-avro.mdx)                                |
+| `GraphQLClient`            | Java, Kotlin, Scala | Adds a typed GraphQL client for every `@GraphQLQuery` and `@GraphQLMutation` rpc — see [GraphQL client](../integration/integration-graphql.mdx) |
 | `Jackson`                  | Java, Kotlin        | Adds Jackson annotations to every model — see [Jackson](../integration/integration-jackson.mdx)                                       |
 | `JvmBuilder`               | Java, Kotlin, Scala | Adds an immutable `Builder` with `builder()` and `toBuilder()` to every model — see [Builders](../integration/integration-builders.mdx) |
 | `KotestDsl`                | Kotlin              | Adds a Kotest scenario DSL for every model, endpoint, channel and rpc — see [Kotest](../integration/integration-kotest.mdx)            |

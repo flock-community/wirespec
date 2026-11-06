@@ -5,6 +5,13 @@ slug: /integration/wiremock
 
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
+import { Languages } from "@site/src/components/Languages";
+
+:::caution[Experimental]
+<Languages languages={["Java", "Kotlin"]} />
+
+This integration is experimental: its API, generated code and options may still change between releases.
+:::
 
 The WireMock integration lets you stub Wirespec endpoints in tests with **typed** responses. Instead of hand-writing
 URL patterns and JSON bodies, you pass a generated endpoint and a typed `Response` instance — the integration derives

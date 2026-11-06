@@ -1,0 +1,415 @@
+---
+title: GraphQL client
+slug: /integration/graphql
+wirespec:
+  source: ../../../../integration/graphql/src/jvmCodegen/resources/wirespec/todo.ws
+  package: community.flock.todo
+  extensions: [GraphQLClient]
+  examples: ../../../../integration/graphql/src/jvmTest
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import { Languages } from "@site/src/components/Languages";
+
+:::caution[Experimental]
+<Languages languages={["Java", "Kotlin", "Scala"]} />
+
+This integration is experimental: its API, generated code and options may still change between releases.
+:::
+
+The `graphql` integration ships an [IR extension](../plugins/plugins.md#ir-extensions) that generates a typed GraphQL
+client from the [rpcs](../language/rpc.mdx) of a contract. Together with the [GraphQL converter](../converters/graphql.md),
+which turns every field of `Query` and `Mutation` into an rpc, it gives you a client for a GraphQL API from its schema.
+
+The client comes in two flavours, and you can mix them:
+
+- **Typed calls** select every field of a result and return the models: `client.queryTodo(id)` returns a `Todo`.
+- **Selections** let you pick the fields and return a partial result: `client.queryTodo(id) { title() }` returns a
+  `TodoResult` with only `title` filled.
+
+The GraphQL documents are written at build time, so the generated code needs no GraphQL library and only uses the
+standard library of the language. It sends requests through the same `Wirespec.Transportation` and
+`Wirespec.Serialization` as the endpoint clients.
+
+Every example on this page is compiled and tested with the integration, and the generated code is the output of the
+extension for the contract below.
+
+## Setup
+
+The extension is bundled with every Wirespec plugin as `GraphQLClient`. Register it with `extensionClasses`, by name in
+Maven and by class in Gradle. Convert the schema to Wirespec first, or write the rpcs yourself.
+
+<Tabs groupId="build">
+  <TabItem value="gradle" label="Gradle">
+    ```gradle title="build.gradle.kts"
+    import community.flock.wirespec.integration.graphql.extension.GraphQLClientExtension
+    import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+    import community.flock.wirespec.plugin.Language
+
+    tasks.register<CompileWirespecTask>("wirespec-compile") {
+        input = layout.projectDirectory.dir("src/main/wirespec")
+        output = layout.buildDirectory.dir("generated")
+        packageName = "community.flock.todo"
+        // Language.Kotlin, Language.Java or Language.Scala
+        language = Language.Kotlin
+        extensionClasses = listOf(GraphQLClientExtension::class.java)
+    }
+    ```
+  </TabItem>
+  <TabItem value="maven" label="Maven">
+    ```xml title="pom.xml"
+    <plugin>
+        <groupId>community.flock.wirespec.plugin.maven</groupId>
+        <artifactId>wirespec-maven-plugin</artifactId>
+        <version>{{WIRESPEC_VERSION}}</version>
+        <executions>
+            <execution>
+                <id>generate</id>
+                <goals>
+                    <goal>compile</goal>
+                </goals>
+                <configuration>
+                    <input>${project.basedir}/src/main/wirespec</input>
+                    <output>${project.build.directory}/generated-sources</output>
+                    <packageName>community.flock.todo</packageName>
+                    <!-- Kotlin, Java or Scala -->
+                    <language>Java</language>
+                    <extensionClasses>
+                        <extensionClass>GraphQLClient</extensionClass>
+                    </extensionClasses>
+                </configuration>
+            </execution>
+        </executions>
+    </plugin>
+    ```
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+    ```shell
+    # From a GraphQL schema: convert it and generate the client in one go
+    wirespec convert -i ./schema.graphql -o ./build/generated -l Scala -e GraphQLClient GraphQL
+
+    # From Wirespec
+    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Kotlin -e GraphQLClient
+    ```
+  </TabItem>
+</Tabs>
+
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
+
+## The contract
+
+The examples use this contract. Its rpcs are written the way the [GraphQL converter](../converters/graphql.md) writes the
+fields of `Query`, `Mutation` and `Subscription`. Two are written by hand: `CompleteTodo` has an
+[error type](../language/rpc.mdx#errors), to show how the client returns GraphQL errors as values, and `CountTodos` has
+no GraphQL annotation.
+
+```wirespec wirespec source
+```
+
+Only rpcs marked `@GraphQLQuery` or `@GraphQLMutation` get a client. `TodoAdded`, a subscription, and `CountTodos`,
+without a GraphQL annotation, are left out, so a contract can mix GraphQL operations with rpcs served another way. An rpc
+you write yourself needs `@GraphQLName` when the GraphQL field is not named after the rpc, as with `@GraphQLName("todo")`
+on `QueryTodo`.
+
+Next to the `model` and `rpc` files, the extension writes the `graphql` package:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```text wirespec tree language=Kotlin
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```text wirespec tree language=Java
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```text wirespec tree language=Scala
+    ```
+  </TabItem>
+</Tabs>
+
+## Creating a client
+
+`GraphQLClient` implements the `Service` of every operation at once. It takes a `Wirespec.Serialization` that reads and
+writes JSON, and a `Wirespec.Transportation` that sends the request to the path `/graphql`.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#create-client
+    ```
+
+    `WirespecSerialization` comes from the [Jackson](./integration-jackson.mdx) integration
+    (`community.flock.wirespec.integration:jackson`), and `HttpTransportation`, on the JDK `HttpClient`, from the `jvm`
+    integration (`community.flock.wirespec.integration:jvm`).
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#create-client
+    ```
+
+    `WirespecSerialization` comes from the [Jackson](./integration-jackson.mdx) integration
+    (`community.flock.wirespec.integration:jackson`). The `Jdk8Module` reads the `Optional` fields of the models.
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#create-client
+    ```
+
+    Wirespec ships no Scala serialization, so pass a `Wirespec.Serialization` of your own, for example on
+    `jackson-module-scala`, that reads the `Option` fields of the case classes.
+  </TabItem>
+</Tabs>
+
+The response holds fields that the models do not have, such as `__typename` and the `locations` of an error, so the
+serialization must ignore unknown properties.
+
+Each operation also has a client of its own, `<Rpc>GraphQLClient`, which implements the `Service` of that one rpc. Use it to
+depend on just that operation, or to fake it in a test:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#operation-client
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#operation-client
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#operation-client
+    ```
+  </TabItem>
+</Tabs>
+
+## Calling operations
+
+Every operation is a function of the client, named after the rpc, that takes the parameters of the rpc and returns its
+result. Kotlin calls suspend, Java calls return a `CompletableFuture`, and Scala calls block.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#calls
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#calls
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#calls
+    ```
+  </TabItem>
+</Tabs>
+
+They send the query of the rpc, which selects every field of the result, all the way down:
+
+```graphql
+query QueryTodo($id: ID!) { result: todo(id: $id) { id title done priority owner { name } } }
+```
+
+### Errors
+
+A GraphQL response carries errors next to its data.
+
+- An rpc **without an error type** throws an `IllegalStateException` that lists the `GraphQLError`s, with their
+  `message`, `locations`, `path` and `extensions`.
+- An rpc **with an error type**, such as `CompleteTodo`, returns the first error, read as that type, as its `Error`, and
+  the result as its `Result`:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#errors
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#errors
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#errors
+    ```
+  </TabItem>
+</Tabs>
+
+A required result that the response leaves out also throws an `IllegalStateException`; a nullable one is `null` in
+Kotlin, `Optional.empty()` in Java and `None` in Scala.
+
+## Selecting fields
+
+To pick the fields yourself, pass a selection. The fields you select are filled and the others are empty, so the call
+returns a **partial result**: `TodoResult` instead of `Todo`, with every field nullable.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#selection
+    ```
+
+    In the block you call the fields on `this`. The selections carry a `@DslMarker`, so a block only reaches its own
+    fields: `owner { title() }` does not compile.
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#selection
+    ```
+
+    Every field returns the selection, so the fields chain in the lambda.
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#selection
+    ```
+
+    Every field returns the selection, so the fields chain in the function.
+  </TabItem>
+</Tabs>
+
+That sends
+
+```graphql
+query QueryTodo($id: ID!) { result: todo(id: $id) { title owner { name } } }
+```
+
+A field of a type takes a selection of that type. A union has an `on<Member>` selection per member, and its result has
+`__typename` and the fields of all its members:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#union
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#union
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#union
+    ```
+  </TabItem>
+</Tabs>
+
+A call with a selection throws an `IllegalStateException` on GraphQL errors, also for an rpc with an error type: its
+`Result` and `Error` hold the full models.
+
+## Generated code
+
+Everything lands in the `graphql` package, next to `model` and `rpc`:
+
+| Generated                     | What it is                                                                           |
+|-------------------------------|--------------------------------------------------------------------------------------|
+| `GraphQLClient`               | Implements the `Service` of every operation, with and without a selection            |
+| `QueryTodoGraphQLClient`, ... | The client of one operation                                                          |
+| `QueryTodoGraphQL`, ...       | The query builder of one operation, with its `GraphQLRequest` and `GraphQLVariables` |
+| `TodoSelection`, ...          | The fields you can select of a type or union                                         |
+| `TodoResult`, ...             | The partial result of a type or union                                                |
+| `GraphQLError`                | An error of a response, for an rpc without an error type of its own                  |
+
+The shapes follow the language:
+
+| Language | Builder                   | A selection of a field                   | Envelope types                 |
+|----------|---------------------------|------------------------------------------|--------------------------------|
+| Kotlin   | `object`                  | `UserSelection.() -> Unit`, on `this`    | Nested in the client           |
+| Java     | Record without components | `Function<UserSelection, UserSelection>` | Nested records in the client   |
+| Scala    | `object`                  | `UserSelection => UserSelection`         | Companion object of the client |
+
+### The client
+
+The client of an operation builds the request, sends it and reads the result. The full query is written at build time;
+the overload with a selection asks the builder for it.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec file=graphql/QueryTodoGraphQLClient.kt language=Kotlin
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec file=graphql/QueryTodoGraphQLClient.java language=Java
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec file=graphql/QueryTodoGraphQLClient.scala language=Scala
+    ```
+  </TabItem>
+</Tabs>
+
+### The query builder
+
+The builder of an operation puts a selection in its query, with the parameters as its variables. The client calls it
+for a call with a selection; you don't call it yourself.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec file=graphql/QueryTodoGraphQL.kt language=Kotlin
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec file=graphql/QueryTodoGraphQL.java language=Java
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec file=graphql/QueryTodoGraphQL.scala language=Scala
+    ```
+  </TabItem>
+</Tabs>
+
+### Selections and results
+
+A selection collects the selected fields as GraphQL text and returns itself from every field. A partial result has the
+same fields as the model, all nullable:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec file=graphql/TodoSelection.kt language=Kotlin
+    ```
+
+    ```kotlin wirespec file=graphql/TodoResult.kt language=Kotlin
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec file=graphql/TodoSelection.java language=Java
+    ```
+
+    ```java wirespec file=graphql/TodoResult.java language=Java
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec file=graphql/TodoSelection.scala language=Scala
+    ```
+
+    ```scala wirespec file=graphql/TodoResult.scala language=Scala
+    ```
+  </TabItem>
+</Tabs>
+
+## The query
+
+- Every parameter of the rpc is a variable, typed and defaulted as the argument of the field it is passed to.
+- The field is aliased as `result`, so the client reads it under the same name whatever the field is called.
+- A typed call selects every field of the result, all the way down. A union or interface selects `__typename` and an
+  inline fragment for each member, so the serialization can tell the members apart by `__typename`.
+- GraphQL selects a finite set of fields, so a typed call cannot select a field that refers back to a type it is
+  selected in, such as `User.todos` inside `Todo.owner`, or a field that takes a required argument. Such a field is
+  left out when it is nullable. When it is not, the build fails with a message that names the field; use a selection
+  for that operation instead.
+
+## Configuration
+
+The request goes to the path `/graphql` of the transportation. To call a GraphQL API at another path, rewrite the path in
+the transportation:
+
+```kotlin wirespec example=GraphQLExamples.kt#path
+```
+
+:::note
+Nullable variables are sent as `null`, and GraphQL only falls back to the default of an argument when its variable is
+left out. Configure the serialization to leave out null values to use the defaults.
+:::
+
+## Limitations
+
+- Subscriptions get no client, because they are not a single request and response.
+- Arguments of nested fields are not passed: a field that requires one cannot be selected.
+- A partial result cannot tell a field that was not selected from a field that is `null`: both read as empty.
+- A typed call returns a union as the Wirespec union of its models, which the serialization has to read by
+  `__typename`. A partial result has no such need: it is a single type with the fields of every member.
+- Scala has no serialization in Wirespec, so a Scala client needs one of your own.

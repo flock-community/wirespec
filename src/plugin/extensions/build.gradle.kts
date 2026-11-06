@@ -20,6 +20,7 @@ val integrationExtensionSources = tasks.register<Sync>("syncIntegrationExtension
     description = "Collects the IR extension sources of the integration modules."
     from(layout.projectDirectory.dir("../../integration")) {
         include("avro/src/commonMain/kotlin/**/extension/*.kt")
+        include("graphql/src/commonMain/kotlin/**/extension/*.kt")
         include("jackson/src/commonMain/kotlin/**/extension/*.kt")
         include("jvm/src/jvmMain/kotlin/**/extension/JvmBuilderExtension.kt")
         include("kotest/src/commonMain/kotlin/**/extension/KotestDslExtension.kt")
@@ -54,6 +55,7 @@ kotlin {
             dependencies {
                 api(project(":src:compiler:core"))
                 implementation(project(":src:converter:avro"))
+                implementation(project(":src:converter:graphql"))
                 implementation(libs.kotlinx.serialization)
             }
         }

@@ -29,3 +29,5 @@ type Archive {
 }
 
 type Empty {}
+
+type Entry = Todo | Archive

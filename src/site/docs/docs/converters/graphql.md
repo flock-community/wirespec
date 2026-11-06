@@ -376,6 +376,11 @@ from. Any other Wirespec gets the closest GraphQL counterpart:
   dictionaries become a `JSON` scalar, and `Unit` becomes `Boolean`.
 - Endpoints and channels are left out, because GraphQL has nothing like them.
 
+## GraphQL client
+
+The rpcs the converter writes describe the operations of the schema, so the [GraphQL client](../integration/integration-graphql.mdx)
+extension can generate a typed Kotlin, Java or Scala client that calls them.
+
 ## Limitations
 
 - **Formatting**: `#` comments, commas and the optional leading `&` and `|` separators are insignificant in GraphQL and
