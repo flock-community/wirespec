@@ -67,6 +67,7 @@ Options:
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
+  --sync                                                                      Emit endpoint handlers, channels and rpc services as synchronous functions
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
@@ -90,6 +91,7 @@ Options:
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
+  --sync                                                                      Emit endpoint handlers, channels and rpc services as synchronous functions
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports

@@ -297,7 +297,8 @@ Two things to note in the output above:
 
 The service function is asynchronous wherever the target language has a native notion of it: `suspend` in Kotlin,
 `CompletableFuture` in Java, `Promise` in TypeScript, `async def` in Python and `async fn` in Rust. Scala emits a plain
-method returning the response.
+method returning the response. The [sync](../plugins/plugins.md#synchronous-code) flag makes the service
+function synchronous in Kotlin, Java, TypeScript and Python.
 
 ## Limitations
 

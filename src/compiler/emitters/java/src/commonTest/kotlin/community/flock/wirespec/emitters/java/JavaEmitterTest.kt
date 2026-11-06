@@ -5,6 +5,9 @@ import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.ir.extension.SyncExtension
+import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -86,6 +89,23 @@ class JavaEmitterTest {
     @Test
     fun compileMinimalEndpointTest() {
         CompileMinimalEndpointTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileMinimalEndpointTest
+    }
+
+    @Test
+    fun syncEmitsTheHandlerWithoutCompletableFuture() {
+        val java = EmitterFixtures.compileMinimalEndpointTest
+            .replace("java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request)", "Response<?> getTodos(Request request)")
+
+        CompileMinimalEndpointTest.compiler { JavaEmitter().applyExtensions(nonEmptyListOf(SyncExtension(FileExtension.Java))) } shouldBeRight java
+    }
+
+    @Test
+    fun syncEmitsTheRpcServiceWithoutCompletableFuture() {
+        val java = EmitterFixtures.compileRpcTest
+            .replace("java.util.concurrent.CompletableFuture<Response> getUser(", "Response getUser(")
+            .replace("java.util.concurrent.CompletableFuture<String> ping(", "String ping(")
+
+        CompileRpcTest.compiler { JavaEmitter().applyExtensions(nonEmptyListOf(SyncExtension(FileExtension.Java))) } shouldBeRight java
     }
 
     @Test
