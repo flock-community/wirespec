@@ -2,7 +2,7 @@ package community.flock.wirespec.integration.graphql.extension
 
 import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoClient, GraphQLClient, QueryTodoClient, SearchClient, SearchResultResult, TodoResult, UserResult}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
-import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo, Search}
+import community.flock.wirespec.integration.graphql.scala.generated.rpc.CompleteTodo
 import community.flock.wirespec.scala.Wirespec
 
 import scala.reflect.ClassTag
@@ -57,8 +57,6 @@ object ScalaGraphQLCheck {
     check(result == expected, s"unexpected $result")
     serialization.query
   }
-
-  def buildsAQuery(): String = QueryTodo.graphQL.request(ID("1"), todo => todo.id().owner(owner => owner.name())).query
 
   private val transportation: Wirespec.Transportation = _ => Wirespec.RawResponse(200, Map.empty, Some(Array.emptyByteArray))
 

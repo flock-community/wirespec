@@ -21,7 +21,6 @@ import community.flock.wirespec.compiler.core.ir.LiteralMap
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.NullableOf
-import community.flock.wirespec.compiler.core.ir.Package
 import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
@@ -96,7 +95,7 @@ public class GraphQLClientExtension(
                     operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, ir.serviceOf(rpc)) }
                 }
                 .takeIf { it.isNotEmpty() }
-                ?.let { GraphQLQueryBuilder(operations, dialect.language).let { builder -> ir.withStaticAccessors(builder, it) + Client(dialect, builder, it).files() + QueryBuilder(dialect, builder, it).files() } }
+                ?.let { GraphQLQueryBuilder(operations, dialect.language).let { builder -> ir + Client(dialect, builder, it).files() + QueryBuilder(dialect, builder, it).files() } }
         }
         ?: ir
 
@@ -115,28 +114,6 @@ public class GraphQLClientExtension(
         val variablesType: String = "$builderType.${GraphQLQueryBuilder.GRAPHQL_VARIABLES}"
     }
 
-    /** Java and Scala reach the builder of an rpc through a member of the rpc, which imports it from the `graphql` package. */
-    private fun IR.withStaticAccessors(builder: GraphQLQueryBuilder, operations: List<Operation>): IR = map { element ->
-        (element as? LanguageFile)
-            ?.let { file ->
-                operations.filter { it.service.rpc in file.elements }
-                    .mapNotNull { operation -> builder.staticAccessor(operation.request)?.let { operation to it } }
-                    .takeIf { it.isNotEmpty() }
-                    ?.let { accessors ->
-                        file.copy(
-                            elements = file.elements.flatMap { child ->
-                                when (child) {
-                                    is Package -> listOf(child) + accessors.map { (operation) -> import("${packageName.value}.$GRAPHQL", operation.builderType) }
-                                    is Namespace -> listOf(accessors.find { (operation) -> operation.service.rpc == child }?.let { (_, accessor) -> child.copy(elements = child.elements + accessor) } ?: child)
-                                    else -> listOf(child)
-                                }
-                            },
-                        )
-                    }
-            }
-            ?: element
-    }
-
     /** A selection and a partial result per type, and the builder of every rpc that takes them. */
     private inner class QueryBuilder(private val dialect: Dialect, private val builder: GraphQLQueryBuilder, private val operations: List<Operation>) {
 
@@ -149,8 +126,7 @@ public class GraphQLClientExtension(
                 LanguageFile(
                     Name.of(operation.builderType),
                     (dialect.imports + operation.service.imports + import("${packageName.value}.rpc", operation.name)).distinct() +
-                        builder.builder(operation.request) +
-                        listOfNotNull(builder.accessor(operation.request)),
+                        builder.builder(operation.request),
                 ).placeInPackage(packageName, GRAPHQL)
             }
     }
@@ -208,7 +184,7 @@ public class GraphQLClientExtension(
                     Assignment(
                         Name.of("request"),
                         FunctionCall(
-                            receiver = RawExpression("$name.${GraphQLQueryBuilder.ACCESSOR.value()}"),
+                            receiver = dialect.builder(builderType),
                             name = GraphQLQueryBuilder.REQUEST,
                             arguments = (service.function.parameters.map { it.name } + SELECTION).associateWith { VariableReference(it) },
                         ),
@@ -361,6 +337,8 @@ public class GraphQLClientExtension(
 
             override fun type(name: String): Expression = TypeDescriptor(Type.Custom(name))
 
+            override fun builder(name: String): Expression = RawExpression(name)
+
             override fun transport(read: Name, isUnit: Boolean): Expression = RawExpression("${read.value()}(transportation.transport(rawRequest))")
 
             override fun fromRawResponse(operation: Operation): List<Statement> = listOfNotNull(
@@ -398,6 +376,8 @@ public class GraphQLClientExtension(
             override val imports = listOf(import("$DEFAULT_SHARED_PACKAGE_STRING.java", "Wirespec"))
 
             override fun type(name: String): Expression = RawExpression("Wirespec.getType($name.class, null)")
+
+            override fun builder(name: String): Expression = ConstructorStatement(Type.Custom(name))
 
             override fun transport(read: Name, isUnit: Boolean): Expression = RawExpression(
                 when {
@@ -447,6 +427,8 @@ public class GraphQLClientExtension(
 
             override fun type(name: String): Expression = TypeDescriptor(Type.Custom(name))
 
+            override fun builder(name: String): Expression = RawExpression(name)
+
             override fun transport(read: Name, isUnit: Boolean): Expression = RawExpression("${read.value()}(transportation.transport(rawRequest))")
 
             override fun fromRawResponse(operation: Operation): List<Statement> = listOfNotNull(
@@ -487,6 +469,9 @@ public class GraphQLClientExtension(
 
         /** The runtime type of an envelope, as `Wirespec.Serialization` takes it. */
         abstract fun type(name: String): Expression
+
+        /** The builder of an rpc: an `object` in Kotlin and Scala, a record without components in Java. */
+        abstract fun builder(name: String): Expression
 
         /** Sends `rawRequest` and reads the response with the function named [read]. */
         abstract fun transport(read: Name, isUnit: Boolean): Expression

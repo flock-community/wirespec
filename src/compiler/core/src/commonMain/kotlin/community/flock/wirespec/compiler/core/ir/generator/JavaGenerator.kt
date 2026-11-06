@@ -109,13 +109,8 @@ public object JavaGenerator :
             "public class $fileName {\n$staticContent  public static void main(String[] args) {\n$content  }\n}\n"
         }
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
-        // A field of a struct is emitted inline within its parameter list via Struct.emit. In an interface a field
-        // with an initializer is a constant, which Java makes public, static and final.
-        is Field ->
-            initializer
-                ?.takeIf { parents.lastOrNull() is Namespace || parents.lastOrNull() is Interface }
-                ?.let { "${type.emitGenerics()} ${name.value().sanitize()} = ${it.emit()};\n".indentCode(indent) }
-                .orEmpty()
+        // A field has no standalone rendering; it is emitted inline within its enclosing Struct parameter list via Struct.emit.
+        is Field -> ""
         is RawElement -> code.indentCode(indent)
     }
 

@@ -16,7 +16,6 @@ import java.util.Optional;
 // endregion create-client
 import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoClient;
-import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchResultResult;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodoResult;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.UserResult;
@@ -112,15 +111,5 @@ public final class JavaGraphQLExamples {
         List<Optional<String>> kinds = results.stream().map(SearchResultResult::__typename).toList(); // "Note" or "Tag"
         // endregion union
         return kinds;
-    }
-
-    public static QueryTodoGraphQL.GraphQLRequest request() {
-        // region request
-        var request = QueryTodo.graphQL.request(new ID("1"), todo -> todo.title());
-
-        String query = request.query(); // query QueryTodo($id: ID!) { result: todo(id: $id) { title } }
-        ID id = request.variables().id();
-        // endregion request
-        return query.isEmpty() || !id.equals(new ID("1")) ? null : request;
     }
 }

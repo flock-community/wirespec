@@ -14,10 +14,8 @@ import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoClient
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchResultResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.TodoResult
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.graphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority
@@ -97,18 +95,6 @@ object GraphQLExamples {
         val kinds: List<String?> = results.map { it.__typename } // "Note" or "Tag"
         // endregion union
         return kinds
-    }
-
-    fun request(): QueryTodoGraphQL.GraphQLRequest {
-        // region request
-        val request = QueryTodo.graphQL.request(ID("1")) {
-            title()
-        }
-
-        val query: String = request.query // query QueryTodo($id: ID!) { result: todo(id: $id) { title } }
-        val id: ID = request.variables.id
-        // endregion request
-        return request.takeIf { query.isNotEmpty() && id == ID("1") } ?: error("Unexpected request")
     }
 
     fun path(http: HttpTransportation): Wirespec.Transportation {

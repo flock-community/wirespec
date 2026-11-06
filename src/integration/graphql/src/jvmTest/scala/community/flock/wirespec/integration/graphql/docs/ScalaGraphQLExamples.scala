@@ -7,7 +7,7 @@ import community.flock.wirespec.scala.Wirespec
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{GraphQLClient, QueryTodoClient, QueryTodoGraphQL, SearchResultResult, TodoResult}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{GraphQLClient, QueryTodoClient, SearchResultResult, TodoResult}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
 
@@ -83,15 +83,5 @@ object ScalaGraphQLExamples {
     val kinds: List[Option[String]] = results.map(_.__typename) // "Note" or "Tag"
     // endregion union
     kinds
-  }
-
-  def request(): QueryTodoGraphQL.GraphQLRequest = {
-    // region request
-    val request = QueryTodo.graphQL.request(ID("1"), todo => todo.title())
-
-    val query: String = request.query // query QueryTodo($id: ID!) { result: todo(id: $id) { title } }
-    val id: ID = request.variables.id
-    // endregion request
-    if (query.isEmpty || id != ID("1")) throw new IllegalStateException("Unexpected request") else request
   }
 }

@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.graphql.extension
 
 import community.flock.wirespec.compiler.core.ir.BinaryOp
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
-import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
@@ -39,7 +38,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * Builds, in the IR DSL, the query builder that lets a caller pick the fields of a result on `this`:
  *
  * ```kotlin
- * val request = QueryTodo.graphQL.request(ID("1")) {
+ * val request = QueryTodoGraphQL.request(ID("1")) {
  *     id()
  *     owner { name() }
  * }
@@ -49,8 +48,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * Each field of a type is a method that adds the field and returns the selection, so Java chains them in a lambda:
  * `t -> t.id().owner(o -> o.name())`. A field of a type or union takes a block that selects its fields, and a union has
  * an `on<Member>` block per member. The builder of each rpc, `<Rpc>GraphQL`, runs a block on a new selection and puts it
- * in the operation of the rpc, with the parameters as its variables. The rpc reaches it as `QueryTodo.graphQL`: an
- * extension property in Kotlin and a static field in Java.
+ * in the operation of the rpc, with the parameters as its variables. The clients send it for a call that takes a block.
  */
 internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: Language) {
 
@@ -178,26 +176,6 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         }
     }
 
-    /** `QueryTodo.graphQL` in Kotlin: an extension property on the rpc object, next to the builder. */
-    fun accessor(request: Request): Field? = takeIf { language == Language.Kotlin }?.let {
-        Field(
-            name = ACCESSOR,
-            type = Type.Custom(request.builder),
-            receiver = Type.Custom(request.rpc),
-            getter = ConstructorStatement(Type.Custom(request.builder)),
-        )
-    }
-
-    /**
-     * `QueryTodo.graphQL` in Java and Scala: a member of the rpc. Java makes a field of an interface a static constant.
-     * Scala names the type of an object `.type`, which the generator only knows for the objects of its own file.
-     */
-    fun staticAccessor(request: Request): Element? = when (language) {
-        Language.Kotlin -> null
-        Language.Java -> Field(name = ACCESSOR, type = Type.Custom(request.builder), initializer = ConstructorStatement(Type.Custom(request.builder)))
-        Language.Scala -> RawElement("val ${ACCESSOR.value()}: ${request.builder}.type = ${request.builder}")
-    }
-
     /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */
     private fun StructBuilder.method(model: Definition, name: String, text: String, nested: Definition? = null) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
         visibility(Visibility.PUBLIC)
@@ -267,7 +245,6 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         private val FIELDS = Name(listOf("graphQLFields"))
         private val SELECTION = Name.of("selection")
         val REQUEST = Name(listOf("request"))
-        val ACCESSOR = Name(listOf("graphQL"))
         private val TO_GRAPHQL = Name(listOf("toGraphQL"))
         private val APPEND = Name(listOf("append"))
         private val APPLY = Name(listOf("apply"))
