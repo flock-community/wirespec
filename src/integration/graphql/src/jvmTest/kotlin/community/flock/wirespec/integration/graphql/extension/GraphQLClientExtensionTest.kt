@@ -24,18 +24,19 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
-import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient as JavaGraphQLClient
-import community.flock.wirespec.integration.graphql.java.generated.graphql.TodoResult as JavaTodoResult
-import community.flock.wirespec.integration.graphql.java.generated.graphql.UserResult as JavaUserResult
+import kotlin.test.assertTrue
+import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient as JavaGraphQLClient
+import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.TodoResult as JavaTodoResult
+import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.UserResult as JavaUserResult
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority as JavaPriority
 import community.flock.wirespec.integration.graphql.java.generated.model.Todo as JavaTodo
 import community.flock.wirespec.integration.graphql.java.generated.model.TodoError as JavaTodoError
 import community.flock.wirespec.integration.graphql.java.generated.model.User as JavaUser
 import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteTodo as JavaCompleteTodo
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient as KotlinGraphQLClient
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.TodoResult as KotlinTodoResult
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.UserResult as KotlinUserResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient as KotlinGraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.TodoResult as KotlinTodoResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.UserResult as KotlinUserResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo as KotlinNewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority as KotlinPriority
@@ -225,7 +226,7 @@ class GraphQLClientExtensionTest {
 
     @Test
     fun `Only rpcs marked as a query or a mutation get a client`() {
-        listOf("TodoAddedGraphQLClient", "CountTodosGraphQLClient").forEach { client ->
+        listOf("TodoAddedGraphQL", "CountTodosGraphQL").forEach { client ->
             assertFailsWith<ClassNotFoundException> {
                 Class.forName("community.flock.wirespec.integration.graphql.kotlin.generated.graphql.$client")
             }
@@ -234,6 +235,39 @@ class GraphQLClientExtensionTest {
             listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos").map { "$it.Service" },
             KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
         )
+    }
+
+    @Test
+    fun `Each rpc gets one file, and the GraphQLClient that bundles them sits next to the endpoint Client`() {
+        val ast = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(
+            nonEmptyListOf(
+                ModuleContent(
+                    FileUri(""),
+                    """
+                    type Todo { id: String, owner: User }
+                    type User { name: String }
+                    @GraphQLQuery
+                    rpc GetTodo { id: String } -> Todo
+                    @GraphQLQuery
+                    rpc ListTodos {} -> Todo[]
+                    endpoint GetUser GET /users -> { 200 -> User }
+                    """.trimIndent(),
+                ),
+            ),
+        ).getOrNull()!!
+        val emitter = KotlinEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false))
+
+        val files = emitter.applyExtensions(nonEmptyListOf(GraphQLClientExtension(emitter.packageName, FileExtension.Kotlin))).emit(ast, noLogger)
+            .associate { it.file.removePrefix("community/flock/wirespec/generated/") to it.result }
+
+        assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
+        assertEquals(setOf("Client.kt", "GraphQLClient.kt"), files.keys.filterNot { "/" in it }.toSet())
+        listOf("data class GraphQLClient(", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
+            .forEach { assertTrue(it in files.getValue("graphql/GetTodoGraphQL.kt"), "GetTodoGraphQL.kt misses $it") }
+        listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(")
+            .forEach { assertTrue(it in files.getValue("GraphQLClient.kt"), "GraphQLClient.kt misses $it") }
     }
 
     @Test

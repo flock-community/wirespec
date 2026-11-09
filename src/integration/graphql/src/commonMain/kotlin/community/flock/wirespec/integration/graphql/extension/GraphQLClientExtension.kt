@@ -11,7 +11,6 @@ import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.Function
 import community.flock.wirespec.compiler.core.ir.FunctionCall
-import community.flock.wirespec.compiler.core.ir.HasName
 import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.Import
 import community.flock.wirespec.compiler.core.ir.Interface
@@ -21,8 +20,8 @@ import community.flock.wirespec.compiler.core.ir.LiteralMap
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.NullableOf
+import community.flock.wirespec.compiler.core.ir.Package
 import community.flock.wirespec.compiler.core.ir.Parameter
-import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
 import community.flock.wirespec.compiler.core.ir.ReturnStatement
 import community.flock.wirespec.compiler.core.ir.Statement
@@ -35,6 +34,8 @@ import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.emit.placeInPackage
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.ir.import
+import community.flock.wirespec.compiler.core.ir.transformChildren
+import community.flock.wirespec.compiler.core.ir.transformer
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
@@ -52,11 +53,13 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * val todo: Todo? = client.queryTodo(id = ID("1"))
  * ```
  *
- * Each rpc gets a `<Rpc>GraphQLClient` in the `graphql` package that implements the rpc's `Service`. It posts the GraphQL
- * document of the rpc to `/graphql`, with the parameters as its variables, through the `Wirespec.Transportation` and
- * `Wirespec.Serialization` it is given, and reads the result from the response. [GraphQLOperations] writes the document
- * at build time, so the generated code needs no GraphQL library. `GraphQLClient` implements every `Service` at once by
- * delegating to those clients.
+ * Each rpc gets one file in the `graphql` package, `<Rpc>GraphQL`, that bundles everything the rpc needs: its query
+ * builder, a `GraphQLClient` that implements the rpc's `Service`, the envelopes of its response, and the selection and
+ * partial result of every type its result reaches. The client posts the GraphQL document of the rpc to `/graphql`, with
+ * the parameters as its variables, through the `Wirespec.Transportation` and `Wirespec.Serialization` it is given, and
+ * reads the result from the response. [GraphQLOperations] writes the document at build time, so the generated code needs
+ * no GraphQL library. A `GraphQLClient` in the root package, next to the `Client` of the endpoints, implements every
+ * `Service` at once by delegating to those clients.
  *
  * The response carries errors next to its data. An rpc with an error type returns the first error, read as that type,
  * as its `Error`; an rpc without one fails with an [IllegalStateException] listing the [GRAPHQL_ERROR]s. A union in the
@@ -95,13 +98,12 @@ public class GraphQLClientExtension(
                     operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, ir.serviceOf(rpc)) }
                 }
                 .takeIf { it.isNotEmpty() }
-                ?.let { GraphQLQueryBuilder(operations, dialect.language).let { builder -> ir + Client(dialect, builder, it).files() + QueryBuilder(dialect, builder, it).files() } }
+                ?.let { ir + Client(dialect, GraphQLQueryBuilder(operations, dialect.language), it).files() }
         }
         ?: ir
 
     private class Operation(val rpc: Rpc, val document: String, val open: String, val service: Service) {
         val name: String = service.rpc.name.pascalCase()
-        val client: String = "${name}GraphQLClient"
 
         /** Each variable keeps the name of the argument it is passed as, and takes the parameter of the `Service` function. */
         val variables: List<Pair<Field, Parameter>> = rpc.shape.fields
@@ -110,29 +112,10 @@ public class GraphQLClientExtension(
 
         val request: GraphQLQueryBuilder.Request = GraphQLQueryBuilder.Request(name, service.function, open, rpc.result, variables)
         val builderType: String = request.builder
+        val client: String = "$builderType.$GRAPHQL_CLIENT"
         val requestType: String = "$builderType.${GraphQLQueryBuilder.GRAPHQL_REQUEST}"
         val variablesType: String = "$builderType.${GraphQLQueryBuilder.GRAPHQL_VARIABLES}"
     }
-
-    /** A selection and a partial result per type, and the builder of every rpc that takes them. */
-    private inner class QueryBuilder(private val dialect: Dialect, private val builder: GraphQLQueryBuilder, private val operations: List<Operation>) {
-
-        private val results = operations.map { it.rpc.result }
-
-        fun files(): List<LanguageFile> = builder.selections(results).map { it.inFile(dialect, emptyList(), listOfNotNull(builder.dslMarker)) } +
-            builder.results(results).map { result -> result.struct.inFile(dialect, result.models.map { import("${packageName.value}.model", it) }) } +
-            listOfNotNull(builder.dslMarkerDefinition?.let { LanguageFile(Name.of(GraphQLQueryBuilder.DSL_MARKER), listOf(it)).placeInPackage(packageName, GRAPHQL) }) +
-            operations.map { operation ->
-                LanguageFile(
-                    Name.of(operation.builderType),
-                    (dialect.imports + operation.service.imports + import("${packageName.value}.rpc", operation.name)).distinct() +
-                        builder.builder(operation.request),
-                ).placeInPackage(packageName, GRAPHQL)
-            }
-    }
-
-    private fun HasName.inFile(dialect: Dialect, imports: List<Import>, annotations: List<RawElement> = emptyList()): LanguageFile = LanguageFile(name, (dialect.imports + imports).distinct() + annotations + this)
-        .placeInPackage(packageName, GRAPHQL)
 
     /** The `Service` interface the emitter wrote for an rpc, with its parameters named as that language names them. */
     private class Service(val rpc: Namespace, val function: Function, val imports: List<Import>)
@@ -152,15 +135,33 @@ public class GraphQLClientExtension(
 
     private inner class Client(private val dialect: Dialect, private val builder: GraphQLQueryBuilder, private val operations: List<Operation>) {
 
-        fun files(): List<LanguageFile> = operations.map { it.file() } +
-            listOfNotNull(errorFile().takeIf { operations.any { it.rpc.error == null } }) +
-            graphQLClientFile()
+        fun files(): List<LanguageFile> = operations.map { it.file() } + graphQLClientFile()
 
-        private fun Operation.file(): LanguageFile = struct(
-            name = client,
+        /** The builder of the rpc, with its client, envelopes, errors, selections and partial results nested in it. */
+        private fun Operation.file(): LanguageFile = builder.results(listOf(rpc.result)).let { results ->
+            builder.builder(request)
+                .let { it.copy(elements = it.elements + client() + envelopes() + selectedEnvelopes() + errors() + selections() + results.map { result -> result.struct }) }
+                .let(::listOf)
+                .inFile(
+                    Name.of(builderType),
+                    service.imports + import("${packageName.value}.rpc", name) + results.flatMap { it.models }.map { import("${packageName.value}.model", it) },
+                )
+        }
+
+        private fun Operation.client(): Struct = struct(
+            name = GRAPHQL_CLIENT,
             interfaces = listOf(Type.Custom("$name.Service")),
             elements = listOf(call(), fromRawResponse()) + listOfNotNull(selectedCall(), selectedFromRawResponse()),
-        ).withNested(envelopes() + selectedEnvelopes()).inFile(Name.of(client), service.imports + import("${packageName.value}.rpc", name))
+        )
+
+        /** In Kotlin, the `@DslMarker` that limits a block to its own selection, and every selection marked with it. */
+        private fun Operation.selections(): List<Element> = listOfNotNull(builder.dslMarkerDefinition) +
+            builder.selections(listOf(rpc.result)).flatMap { listOfNotNull(builder.dslMarker, it) }
+
+        /** The selections and partial results nested in the file of this rpc, which other files name through its builder. */
+        private fun Operation.nestedTypes(): Set<String> = listOf(rpc.result).let { results ->
+            (builder.selections(results).map { it.name } + builder.results(results).map { it.struct.name }).map { it.pascalCase() }.toSet()
+        }
 
         private fun Operation.call(): Function = service.function.copy(
             returnType = returnType(),
@@ -271,27 +272,46 @@ public class GraphQLClientExtension(
             is Reference.Any, is Reference.Custom, is Reference.Dict, is Reference.Iterable, is Reference.Primitive -> copy(isNullable = false).convert()
         }
 
-        private fun errorFile(): LanguageFile = struct(
-            name = GRAPHQL_ERROR,
-            fields = listOf(
-                Field(Name.of("message"), Type.String),
-                Field(Name.of("locations"), Type.Nullable(Type.Array(Type.Custom("$GRAPHQL_ERROR.Location")))),
-                Field(Name.of("path"), Type.Nullable(Type.Array(Type.Any))),
-                Field(Name.of("extensions"), Type.Nullable(Type.Dict(Type.String, Type.Any))),
-            ),
-            elements = emptyList(),
-        ).withNested(listOf(nested("Location", listOf(Field(Name.of("line"), Type.Integer()), Field(Name.of("column"), Type.Integer()))))).inFile(Name.of(GRAPHQL_ERROR), emptyList())
+        /** The errors of a response, for an rpc without an error type of its own. */
+        private fun Operation.errors(): List<Element> = when (rpc.error) {
+            null -> struct(
+                name = GRAPHQL_ERROR,
+                fields = listOf(
+                    Field(Name.of("message"), Type.String),
+                    Field(Name.of("locations"), Type.Nullable(Type.Array(Type.Custom("$GRAPHQL_ERROR.Location")))),
+                    Field(Name.of("path"), Type.Nullable(Type.Array(Type.Any))),
+                    Field(Name.of("extensions"), Type.Nullable(Type.Dict(Type.String, Type.Any))),
+                ),
+                elements = emptyList(),
+            ).withNested(listOf(nested("Location", listOf(Field(Name.of("line"), Type.Integer()), Field(Name.of("column"), Type.Integer())))))
+            else -> emptyList()
+        }
 
         private fun graphQLClientFile(): LanguageFile = struct(
             name = GRAPHQL_CLIENT,
             interfaces = operations.map { Type.Custom("${it.name}.Service") },
             elements = operations.flatMap { operation ->
                 listOfNotNull(
-                    operation.service.function.copy(returnType = operation.returnType(), isOverride = true).delegating(operation),
-                    operation.selectedCall()?.delegating(operation),
-                )
+                    operation.service.function.copy(returnType = operation.returnType(), isOverride = true),
+                    operation.selectedCall()?.qualifiedIn(operation),
+                ).map { it.delegating(operation) }
             },
-        ).inFile(operations.flatMap { it.service.imports + import("${packageName.value}.rpc", it.name) })
+        ).let(::listOf).inRootFile(
+            Name.of(GRAPHQL_CLIENT),
+            operations.flatMap { it.service.imports + import("${packageName.value}.rpc", it.name) + import("${packageName.value}.$GRAPHQL", it.builderType) },
+        )
+
+        /** Names the selections and partial results of [operation] through the builder they are nested in. */
+        private fun Function.qualifiedIn(operation: Operation): Function = operation.nestedTypes().let { nested ->
+            transformer {
+                type { type, transformer ->
+                    (type as? Type.Custom)
+                        ?.takeIf { it.name.pascalCase() in nested }
+                        ?.let { Type.Custom("${operation.builderType}.${it.name.pascalCase()}") }
+                        ?: type.transformChildren(transformer)
+                }
+            }.transformElement(this) as Function
+        }
 
         /** Calls the same function on the client of [operation]. */
         private fun Function.delegating(operation: Operation): Function = copy(
@@ -309,17 +329,12 @@ public class GraphQLClientExtension(
             ),
         )
 
-        private fun struct(name: String, fields: List<Field> = CLIENT_FIELDS, interfaces: List<Type.Custom> = emptyList(), elements: List<Element>): Struct = Struct(name = Name.of(name), fields = fields, interfaces = interfaces, elements = elements)
-
         // A record nested in a Java record is only public and static when it says so.
+        private fun struct(name: String, fields: List<Field> = CLIENT_FIELDS, interfaces: List<Type.Custom> = emptyList(), elements: List<Element>): Struct = Struct(name = Name.of(name), fields = fields, interfaces = interfaces, elements = elements, visibility = Visibility.PUBLIC)
+
         private fun nested(name: String, fields: List<Field>): Struct = Struct(name = Name.of(name), fields = fields, visibility = Visibility.PUBLIC)
 
-        private fun Struct.inFile(imports: List<Import>): LanguageFile = inFile(dialect, imports)
-
-        /**
-         * Nests [nested] in this struct. A case class nested in a Scala case class belongs to an instance, so Scala puts
-         * them in its companion object, and its own code names them through that object.
-         */
+        /** Nests [nested] in this struct. A case class nested in a Scala case class belongs to an instance, so Scala puts them in its companion object. */
         private fun Struct.withNested(nested: List<Struct>): List<Element> = when (dialect) {
             Dialect.Scala -> listOf(this, Namespace(name, nested))
             Dialect.Kotlin, Dialect.Java -> listOf(copy(elements = elements + nested))
@@ -327,6 +342,12 @@ public class GraphQLClientExtension(
 
         private fun List<Element>.inFile(name: Name, imports: List<Import>): LanguageFile = LanguageFile(name, (dialect.imports + imports).distinct() + this)
             .placeInPackage(packageName, GRAPHQL)
+
+        /** In the root package, where the emitter puts the `Client` of the endpoints. */
+        private fun List<Element>.inRootFile(name: Name, imports: List<Import>): LanguageFile = LanguageFile(
+            Name.of(packageName.toDir() + name.pascalCase()),
+            listOf(Package(packageName.value)) + (dialect.imports + imports).distinct() + this,
+        )
     }
 
     private enum class Dialect {
@@ -419,7 +440,7 @@ public class GraphQLClientExtension(
             }
         },
 
-        /** Scala calls are not async, and the envelopes live in the companion object of the client. */
+        /** Scala calls are not async. */
         Scala {
             override val language = GraphQLQueryBuilder.Language.Scala
 
@@ -432,7 +453,7 @@ public class GraphQLClientExtension(
             override fun transport(read: Name, isUnit: Boolean): Expression = RawExpression("${read.value()}(transportation.transport(rawRequest))")
 
             override fun fromRawResponse(operation: Operation): List<Statement> = listOfNotNull(
-                read(operation, RESPONSE),
+                read(RESPONSE),
                 failOnErrors().takeIf { operation.rpc.error == null },
                 ReturnStatement(
                     when (operation.rpc.error) {
@@ -442,16 +463,14 @@ public class GraphQLClientExtension(
                 ),
             )
 
-            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOf(read(operation, SELECTED_RESPONSE), failOnErrors(), ReturnStatement(RawExpression(result(operation.rpc))))
+            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOf(read(SELECTED_RESPONSE), failOnErrors(), ReturnStatement(RawExpression(result(operation.rpc))))
 
-            private fun read(operation: Operation, response: String): Statement = "${operation.client}.$response".let { type ->
-                Assignment(
-                    Name.of("response"),
-                    RawExpression(
-                        "serialization.deserializeBody[$type](rawResponse.body.getOrElse(throw new IllegalStateException(\"GraphQL response without a body, status \" + rawResponse.statusCode)), scala.reflect.classTag[$type])",
-                    ),
-                )
-            }
+            private fun read(response: String): Statement = Assignment(
+                Name.of("response"),
+                RawExpression(
+                    "serialization.deserializeBody[$response](rawResponse.body.getOrElse(throw new IllegalStateException(\"GraphQL response without a body, status \" + rawResponse.statusCode)), scala.reflect.classTag[$response])",
+                ),
+            )
 
             private fun failOnErrors(): Statement = RawExpression("response.errors.filter(_.nonEmpty).foreach(errors => throw new IllegalStateException(\"GraphQL request failed: \" + errors))")
 

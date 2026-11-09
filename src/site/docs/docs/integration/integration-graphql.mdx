@@ -116,7 +116,8 @@ without a GraphQL annotation, are left out, so a contract can mix GraphQL operat
 you write yourself needs `@GraphQLName` when the GraphQL field is not named after the rpc, as with `@GraphQLName("todo")`
 on `QueryTodo`.
 
-Next to the `model` and `rpc` files, the extension writes the `graphql` package:
+Next to the `model` and `rpc` files, the extension writes the `graphql` package, with one file per operation, and a
+`GraphQLClient` in the root package that bundles them, just like the `Client` of the endpoints:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -135,7 +136,8 @@ Next to the `model` and `rpc` files, the extension writes the `graphql` package:
 
 ## Creating a client
 
-`GraphQLClient` implements the `Service` of every operation at once. It takes a `Wirespec.Serialization` that reads and
+`GraphQLClient`, in the root package next to the `Client` of the endpoints, implements the `Service` of every operation
+at once. It takes a `Wirespec.Serialization` that reads and
 writes JSON, and a `Wirespec.Transportation` that sends the request to the path `/graphql`.
 
 <Tabs groupId="language">
@@ -166,8 +168,8 @@ writes JSON, and a `Wirespec.Transportation` that sends the request to the path 
 The response holds fields that the models do not have, such as `__typename` and the `locations` of an error, so the
 serialization must ignore unknown properties.
 
-Each operation also has a client of its own, `<Rpc>GraphQLClient`, which implements the `Service` of that one rpc. Use it to
-depend on just that operation, or to fake it in a test:
+Each operation also has a client of its own, `<Rpc>GraphQL.GraphQLClient`, which implements the `Service` of that one rpc.
+Use it to depend on just that operation, or to fake it in a test:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -240,7 +242,7 @@ Kotlin, `Optional.empty()` in Java and `None` in Scala.
 ## Selecting fields
 
 To pick the fields yourself, pass a selection. The fields you select are filled and the others are empty, so the call
-returns a **partial result**: `TodoResult` instead of `Todo`, with every field nullable.
+returns a **partial result**: `QueryTodoGraphQL.TodoResult` instead of `Todo`, with every field nullable.
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -293,49 +295,33 @@ A call with a selection throws an `IllegalStateException` on GraphQL errors, als
 
 ## Generated code
 
-Everything lands in the `graphql` package, next to `model` and `rpc`:
+Each operation gets a single file in the `graphql` package, next to `model` and `rpc`, that holds everything the
+operation needs. The `GraphQLClient` that bundles them sits in the root package, like the `Client` of the endpoints:
 
-| Generated                     | What it is                                                                           |
-|-------------------------------|--------------------------------------------------------------------------------------|
-| `GraphQLClient`               | Implements the `Service` of every operation, with and without a selection            |
-| `QueryTodoGraphQLClient`, ... | The client of one operation                                                          |
-| `QueryTodoGraphQL`, ...       | The query builder of one operation, with its `GraphQLRequest` and `GraphQLVariables` |
-| `TodoSelection`, ...          | The fields you can select of a type or union                                         |
-| `TodoResult`, ...             | The partial result of a type or union                                                |
-| `GraphQLError`                | An error of a response, for an rpc without an error type of its own                  |
+| Generated                                | What it is                                                                 |
+|------------------------------------------|----------------------------------------------------------------------------|
+| `GraphQLClient` (root package)           | Implements the `Service` of every operation, with and without a selection  |
+| `QueryTodoGraphQL`, ...                  | The file of one operation; its builder puts a selection in the query       |
+| `QueryTodoGraphQL.GraphQLClient`         | The client of the operation                                                |
+| `QueryTodoGraphQL.GraphQLRequest`, ...   | The request, its variables and the envelopes of the response               |
+| `QueryTodoGraphQL.TodoSelection`, ...    | The fields you can select of a type or union the result reaches            |
+| `QueryTodoGraphQL.TodoResult`, ...       | The partial result of a type or union the result reaches                   |
+| `QueryTodoGraphQL.GraphQLError`          | An error of a response, for an rpc without an error type of its own        |
+
+A type that several operations return has a selection and a partial result in each of their files, so an operation's
+file stands on its own: `QueryTodoGraphQL.TodoResult` and `TodosGraphQL.TodoResult` are different types.
 
 The shapes follow the language:
 
-| Language | Builder                   | A selection of a field                   | Envelope types                 |
-|----------|---------------------------|------------------------------------------|--------------------------------|
-| Kotlin   | `object`                  | `UserSelection.() -> Unit`, on `this`    | Nested in the client           |
-| Java     | Record without components | `Function<UserSelection, UserSelection>` | Nested records in the client   |
-| Scala    | `object`                  | `UserSelection => UserSelection`         | Companion object of the client |
-
-### The client
+| Language | Operation file            | A selection of a field                   | Nested types              |
+|----------|---------------------------|------------------------------------------|---------------------------|
+| Kotlin   | `object`                  | `UserSelection.() -> Unit`, on `this`    | Data classes              |
+| Java     | Record without components | `Function<UserSelection, UserSelection>` | Public static records     |
+| Scala    | `object`                  | `UserSelection => UserSelection`         | Case classes              |
 
 The client of an operation builds the request, sends it and reads the result. The full query is written at build time;
-the overload with a selection asks the builder for it.
-
-<Tabs groupId="language">
-  <TabItem value="kotlin" label="Kotlin">
-    ```kotlin wirespec file=graphql/QueryTodoGraphQLClient.kt language=Kotlin
-    ```
-  </TabItem>
-  <TabItem value="java" label="Java">
-    ```java wirespec file=graphql/QueryTodoGraphQLClient.java language=Java
-    ```
-  </TabItem>
-  <TabItem value="scala" label="Scala">
-    ```scala wirespec file=graphql/QueryTodoGraphQLClient.scala language=Scala
-    ```
-  </TabItem>
-</Tabs>
-
-### The query builder
-
-The builder of an operation puts a selection in its query, with the parameters as its variables. The client calls it
-for a call with a selection; you don't call it yourself.
+the overload with a selection asks the builder of the operation for it. A selection collects the selected fields as
+GraphQL text and returns itself from every field. A partial result has the same fields as the model, all nullable:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -348,35 +334,6 @@ for a call with a selection; you don't call it yourself.
   </TabItem>
   <TabItem value="scala" label="Scala">
     ```scala wirespec file=graphql/QueryTodoGraphQL.scala language=Scala
-    ```
-  </TabItem>
-</Tabs>
-
-### Selections and results
-
-A selection collects the selected fields as GraphQL text and returns itself from every field. A partial result has the
-same fields as the model, all nullable:
-
-<Tabs groupId="language">
-  <TabItem value="kotlin" label="Kotlin">
-    ```kotlin wirespec file=graphql/TodoSelection.kt language=Kotlin
-    ```
-
-    ```kotlin wirespec file=graphql/TodoResult.kt language=Kotlin
-    ```
-  </TabItem>
-  <TabItem value="java" label="Java">
-    ```java wirespec file=graphql/TodoSelection.java language=Java
-    ```
-
-    ```java wirespec file=graphql/TodoResult.java language=Java
-    ```
-  </TabItem>
-  <TabItem value="scala" label="Scala">
-    ```scala wirespec file=graphql/TodoSelection.scala language=Scala
-    ```
-
-    ```scala wirespec file=graphql/TodoResult.scala language=Scala
     ```
   </TabItem>
 </Tabs>

@@ -12,10 +12,9 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQLClient
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchResultResult
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.TodoResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority
@@ -41,7 +40,7 @@ object GraphQLExamples {
 
     fun operationClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation): QueryTodo.Service {
         // region operation-client
-        val queryTodo: QueryTodo.Service = QueryTodoGraphQLClient(serialization, transportation)
+        val queryTodo: QueryTodo.Service = QueryTodoGraphQL.GraphQLClient(serialization, transportation)
         // endregion operation-client
         return queryTodo
     }
@@ -71,7 +70,7 @@ object GraphQLExamples {
 
     suspend fun selection(client: GraphQLClient): List<Any?> {
         // region selection
-        val todo: TodoResult? = client.queryTodo(ID("1")) {
+        val todo: QueryTodoGraphQL.TodoResult? = client.queryTodo(ID("1")) {
             title()
             owner {
                 name()
@@ -87,7 +86,7 @@ object GraphQLExamples {
 
     suspend fun union(client: GraphQLClient): List<String?> {
         // region union
-        val results: List<SearchResultResult> = client.search("milk") {
+        val results: List<SearchGraphQL.SearchResultResult> = client.search("milk") {
             onNote { text() }
             onTag { name() }
         }

@@ -14,11 +14,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 // endregion create-client
-import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient;
-import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQLClient;
-import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchResultResult;
-import community.flock.wirespec.integration.graphql.java.generated.graphql.TodoResult;
-import community.flock.wirespec.integration.graphql.java.generated.graphql.UserResult;
+import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient;
+import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL;
+import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.model.ID;
 import community.flock.wirespec.integration.graphql.java.generated.model.NewTodo;
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority;
@@ -56,7 +54,7 @@ public final class JavaGraphQLExamples {
 
     public static QueryTodo.Service operationClient(Wirespec.Serialization serialization, Wirespec.Transportation transportation) {
         // region operation-client
-        QueryTodo.Service queryTodo = new QueryTodoGraphQLClient(serialization, transportation);
+        QueryTodo.Service queryTodo = new QueryTodoGraphQL.GraphQLClient(serialization, transportation);
         // endregion operation-client
         return queryTodo;
     }
@@ -91,24 +89,24 @@ public final class JavaGraphQLExamples {
 
     public static List<Object> selection(GraphQLClient client) {
         // region selection
-        Optional<TodoResult> todo = client.queryTodo(new ID("1"), t -> t
+        Optional<QueryTodoGraphQL.TodoResult> todo = client.queryTodo(new ID("1"), t -> t
             .title()
             .owner(owner -> owner.name())).join();
 
-        Optional<String> title = todo.flatMap(TodoResult::title);
-        Optional<String> owner = todo.flatMap(TodoResult::owner).flatMap(UserResult::name);
-        Optional<Boolean> done = todo.flatMap(TodoResult::done); // empty: not selected
+        Optional<String> title = todo.flatMap(QueryTodoGraphQL.TodoResult::title);
+        Optional<String> owner = todo.flatMap(QueryTodoGraphQL.TodoResult::owner).flatMap(QueryTodoGraphQL.UserResult::name);
+        Optional<Boolean> done = todo.flatMap(QueryTodoGraphQL.TodoResult::done); // empty: not selected
         // endregion selection
         return List.of(title, owner, done);
     }
 
     public static List<Optional<String>> union(GraphQLClient client) {
         // region union
-        List<SearchResultResult> results = client.search("milk", result -> result
+        List<SearchGraphQL.SearchResultResult> results = client.search("milk", result -> result
             .onNote(note -> note.text())
             .onTag(tag -> tag.name())).join();
 
-        List<Optional<String>> kinds = results.stream().map(SearchResultResult::__typename).toList(); // "Note" or "Tag"
+        List<Optional<String>> kinds = results.stream().map(SearchGraphQL.SearchResultResult::__typename).toList(); // "Note" or "Tag"
         // endregion union
         return kinds;
     }

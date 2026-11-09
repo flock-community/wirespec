@@ -7,7 +7,8 @@ import community.flock.wirespec.scala.Wirespec
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{GraphQLClient, QueryTodoGraphQLClient, SearchResultResult, TodoResult}
+import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
 
@@ -33,7 +34,7 @@ object ScalaGraphQLExamples {
 
   def operationClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation): QueryTodo.Service = {
     // region operation-client
-    val queryTodo: QueryTodo.Service = QueryTodoGraphQLClient(serialization, transportation)
+    val queryTodo: QueryTodo.Service = QueryTodoGraphQL.GraphQLClient(serialization, transportation)
     // endregion operation-client
     queryTodo
   }
@@ -63,7 +64,7 @@ object ScalaGraphQLExamples {
 
   def selection(client: GraphQLClient): List[Any] = {
     // region selection
-    val todo: Option[TodoResult] = client.queryTodo(ID("1"), t => t
+    val todo: Option[QueryTodoGraphQL.TodoResult] = client.queryTodo(ID("1"), t => t
       .title()
       .owner(owner => owner.name()))
 
@@ -76,7 +77,7 @@ object ScalaGraphQLExamples {
 
   def union(client: GraphQLClient): List[Option[String]] = {
     // region union
-    val results: List[SearchResultResult] = client.search("milk", result => result
+    val results: List[SearchGraphQL.SearchResultResult] = client.search("milk", result => result
       .onNote(note => note.text())
       .onTag(tag => tag.name()))
 

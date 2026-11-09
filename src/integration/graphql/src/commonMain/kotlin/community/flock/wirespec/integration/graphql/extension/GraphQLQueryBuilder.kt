@@ -49,6 +49,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * `t -> t.id().owner(o -> o.name())`. A field of a type or union takes a block that selects its fields, and a union has
  * an `on<Member>` block per member. The builder of each rpc, `<Rpc>GraphQL`, runs a block on a new selection and puts it
  * in the operation of the rpc, with the parameters as its variables. The clients send it for a call that takes a block.
+ * The selections and results of an rpc are nested in its builder, so its file holds everything the rpc needs.
  */
 internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: Language) {
 
@@ -62,6 +63,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     /** The selection of every type and union that [results] return, through all their fields. */
     fun selections(results: List<Reference>): List<Struct> = reachable(results).map { model ->
         struct(model.selection()) {
+            visibility(Visibility.PUBLIC)
             field(FIELDS, Type.Custom(STRING_BUILDER))
             when (model) {
                 is Union -> model.entries.mapNotNull { operations.composite(it) as? TypeDefinition }.forEach { member ->
@@ -94,7 +96,11 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     fun results(results: List<Reference>): List<Result> = reachable(results).map { model ->
         model.resultFields().let { fields ->
             Result(
-                struct = Struct(name = Name.of(model.result()), fields = fields.map { (name, reference) -> Field(Name(listOf(name)), Type.Nullable(resultType(reference.copy(isNullable = false)))) }),
+                struct = Struct(
+                    name = Name.of(model.result()),
+                    fields = fields.map { (name, reference) -> Field(Name(listOf(name)), Type.Nullable(resultType(reference.copy(isNullable = false)))) },
+                    visibility = Visibility.PUBLIC,
+                ),
                 models = fields.mapNotNull { (_, reference) -> reference.model() }.distinct(),
             )
         }
