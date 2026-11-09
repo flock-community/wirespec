@@ -1,5 +1,6 @@
 import React, { JSX } from "react";
 import Layout from "@theme/Layout";
+import MDXContent from "@theme/MDXContent";
 import type { Props } from "@theme/BlogPostPage";
 import styles from "./blogDetail.module.css";
 
@@ -26,7 +27,9 @@ export default function BlogPostPage(props: Props): JSX.Element {
         )}
 
         <section className={styles.content}>
-          <BlogPostContent />
+          <MDXContent>
+            <BlogPostContent />
+          </MDXContent>
         </section>
       </main>
     </Layout>

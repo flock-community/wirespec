@@ -1,0 +1,385 @@
+---
+title: "A typed GraphQL client, straight from your schema"
+slug: /graphql-client
+description: Wirespec now generates a typed, dependency-free GraphQL client for Kotlin, Java and Scala from a GraphQL schema. Call operations like functions, pick fields with a type-safe selection, and get errors back as values.
+authors: [wilmveel]
+tags: [graphql, kotlin, java, scala, client]
+image: /img/blog/graphql-client.png
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import { Languages } from "@site/src/components/Languages";
+import {
+  Stats,
+  Pipeline,
+  Features,
+  Feature,
+  Steps,
+  Step,
+  Versus,
+  Side,
+  FileTree,
+} from "@site/src/components/GraphQLClientPost";
+
+Calling a GraphQL API from the JVM usually takes three things: a runtime library, query strings you write by hand,
+and a code generator that wants both the schema and every operation you plan to send. With the new **`GraphQLClient`**
+extension, Wirespec needs only the schema. You get a **typed client for Kotlin, Java and Scala**, and it runs on the
+standard library alone.
+
+<!-- truncate -->
+
+<Stats
+  stats={[
+    { value: "3", label: "target languages: Kotlin, Java and Scala" },
+    { value: "0", label: "GraphQL libraries needed at runtime" },
+    { value: "1", label: "self-contained file per operation" },
+  ]}
+/>
+
+## From schema to client
+
+Wirespec already [converts GraphQL schemas](/docs/converters/graphql): every field of `Query` and `Mutation` becomes an
+[`rpc`](/docs/language/rpc). The new [IR extension](/docs/plugins#ir-extensions) picks up those rpcs and writes
+a client for them.
+
+<Pipeline />
+
+Take this schema:
+
+```graphql title="schema.graphql"
+type Query {
+  todo(id: ID!): Todo
+  todos(done: Boolean): [Todo!]!
+  search(text: String!): [SearchResult!]!
+}
+
+type Mutation {
+  addTodo(input: NewTodo!): Todo!
+}
+
+type Todo { id: ID! title: String! done: Boolean! priority: Priority owner: User! }
+type User { name: String! }
+input NewTodo { title: String! priority: Priority }
+enum Priority { LOW MEDIUM HIGH }
+type Note { text: String! }
+type Tag  { name: String! }
+union SearchResult = Note | Tag
+```
+
+The converter turns every root field into an annotated `rpc`. `todo` becomes `QueryTodo` because the name `Todo` is
+already taken, and `@GraphQLName` remembers the original field name:
+
+```wirespec title="todo.ws"
+@GraphQLQuery
+@GraphQLName("todo")
+rpc QueryTodo {
+  id: ID
+} -> Todo?
+
+@GraphQLQuery
+rpc Todos {
+  done: Boolean?
+} -> Todo[]
+
+@GraphQLMutation
+rpc AddTodo {
+  input: NewTodo
+} -> Todo
+```
+
+The extension adds a `graphql` package next to `model` and `rpc`, with **one file per operation**, and a
+`GraphQLClient` in the root package that bundles them all, just like the `Client` of your endpoints:
+
+<FileTree
+  entries={[
+    {
+      name: "community/flock/todo/",
+      children: [
+        { name: "GraphQLClient.kt", fresh: true, note: "implements every operation" },
+        {
+          name: "graphql/",
+          fresh: true,
+          note: "one file per operation",
+          children: [
+            { name: "AddTodoGraphQL.kt", fresh: true },
+            { name: "QueryTodoGraphQL.kt", fresh: true },
+            { name: "SearchGraphQL.kt", fresh: true },
+            { name: "TodosGraphQL.kt", fresh: true },
+          ],
+        },
+        { name: "model/", note: "Todo, User, NewTodo, Priority, …", children: [] },
+        { name: "rpc/", note: "the Service of every rpc", children: [] },
+      ],
+    },
+  ]}
+/>
+
+## What you get
+
+<Features>
+  <Feature icon="typed" title="Typed calls">
+    Every operation is a function with the parameters of the rpc. It returns the models: `queryTodo(id)` gives you a `Todo`.
+  </Feature>
+  <Feature icon="select" title="Pick your fields">
+    Pass a selection and get back exactly the fields you asked for. The compiler checks every one of them.
+  </Feature>
+  <Feature icon="errors" title="Errors as values">
+    Give an rpc an error type and GraphQL errors come back as a value you can match on, not as an exception.
+  </Feature>
+  <Feature icon="zero" title="Dependency-free">
+    The documents are written at build time. The generated code needs only the standard library of your language.
+  </Feature>
+</Features>
+
+## Two ways to call
+
+The client comes in two flavours, and you can mix them freely, even for the same operation.
+
+<Versus>
+  <Side label="Flavour 1" title="Typed call">
+    Selects every field of the result, all the way down, and returns the full model.
+
+    ```kotlin
+    val todo: Todo? = client.queryTodo(ID("1"))
+    ```
+  </Side>
+  <Side label="Flavour 2" title="Selection" accent>
+    Selects only the fields you name and returns a partial result.
+
+    ```kotlin
+    val todo = client.queryTodo(ID("1")) {
+        title()
+    }
+    ```
+  </Side>
+</Versus>
+
+### Typed calls
+
+Every operation is a function on the client. Kotlin calls suspend, Java calls return a `CompletableFuture`, and Scala
+calls block:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val todo: Todo? = client.queryTodo(ID("1"))
+
+    val open: List<Todo> = client.todos(done = false)
+
+    val added: Todo = client.addTodo(NewTodo(title = "Groceries", priority = Priority.HIGH))
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    Optional<Todo> todo = client.queryTodo(new ID("1")).join();
+
+    List<Todo> open = client.todos(Optional.of(false)).join();
+
+    Todo added = client.addTodo(new NewTodo("Groceries", Optional.of(Priority.HIGH))).join();
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    val todo: Option[Todo] = client.queryTodo(ID("1"))
+
+    val open: List[Todo] = client.todos(Some(false))
+
+    val added: Todo = client.addTodo(NewTodo("Groceries", Some(Priority.HIGH)))
+    ```
+  </TabItem>
+</Tabs>
+
+Behind the scenes, `queryTodo` sends a query that was written when you built your project:
+
+```graphql
+query QueryTodo($id: ID!) { result: todo(id: $id) { id title done priority owner { name } } }
+```
+
+### Selections
+
+Most screens don't need every field. Pass a selection, and the client sends only what you picked:
+
+<Steps>
+  <Step title="You write a selection">
+    ```kotlin
+    val todo: QueryTodoGraphQL.TodoResult? = client.queryTodo(ID("1")) {
+        title()
+        owner {
+            name()
+        }
+    }
+    ```
+  </Step>
+  <Step title="Wirespec sends exactly those fields">
+    ```graphql
+    query QueryTodo($id: ID!) { result: todo(id: $id) { title owner { name } } }
+    ```
+  </Step>
+  <Step title="You get a partial result back">
+    ```kotlin
+    todo?.title       // "Groceries"
+    todo?.owner?.name // "Ada"
+    todo?.done        // null: not selected
+    ```
+  </Step>
+</Steps>
+
+The selection is type-safe all the way down. In Kotlin it is a DSL with a `@DslMarker`, so a nested block only reaches
+its own fields: `owner { title() }` does not compile. In Java and Scala every field returns the selection, so the
+fields chain:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val todo: QueryTodoGraphQL.TodoResult? = client.queryTodo(ID("1")) {
+        title()
+        owner { name() }
+    }
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    Optional<QueryTodoGraphQL.TodoResult> todo = client.queryTodo(new ID("1"), t -> t
+        .title()
+        .owner(owner -> owner.name())).join();
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    val todo: Option[QueryTodoGraphQL.TodoResult] = client.queryTodo(ID("1"), t => t
+      .title()
+      .owner(owner => owner.name()))
+    ```
+  </TabItem>
+</Tabs>
+
+Unions work too. A union has one `on<Member>` selection per member, and its result tells you what came back through
+`__typename`:
+
+```kotlin
+val results: List<SearchGraphQL.SearchResultResult> = client.search("milk") {
+    onNote { text() }
+    onTag { name() }
+}
+
+results.map { it.__typename } // "Note" or "Tag"
+```
+
+## Errors are values
+
+A GraphQL response carries errors next to its data. By default the client throws an `IllegalStateException` that lists
+every `GraphQLError` with its `message`, `locations`, `path` and `extensions`. But when you give an rpc an
+[error type](/docs/language/rpc#errors), the first error comes back as a **value**:
+
+```wirespec
+@GraphQLMutation
+rpc CompleteTodo {
+  id: ID
+} -> Todo ! TodoError
+```
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val message = when (val response = client.completeTodo(ID("1"))) {
+        is CompleteTodo.Result -> "Done: ${response.value.title}"
+        is CompleteTodo.Error -> "Failed: ${response.value.message}"
+    }
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    var response = client.completeTodo(new ID("1")).join();
+    String message;
+    if (response instanceof CompleteTodo.Result result) {
+        message = "Done: " + result.value().title();
+    } else if (response instanceof CompleteTodo.Error error) {
+        message = "Failed: " + error.value().message();
+    } else {
+        throw new IllegalStateException("Unknown response " + response);
+    }
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala
+    val message = client.completeTodo(ID("1")) match {
+      case CompleteTodo.Result(todo) => s"Done: ${todo.title}"
+      case CompleteTodo.Error(error) => s"Failed: ${error.message}"
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## No GraphQL library required
+
+All GraphQL documents are written **at build time**. There is no query parser, no reflection and no GraphQL runtime
+on your classpath. The client sends its requests through the same `Wirespec.Transportation` and
+`Wirespec.Serialization` that your endpoint clients already use, so you can plug in any HTTP client and any JSON
+library:
+
+```kotlin
+val serialization = WirespecSerialization(
+    ObjectMapper()
+        .registerKotlinModule()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false),
+)
+
+val client = GraphQLClient(serialization, HttpTransportation("https://api.example.com"))
+```
+
+Need only one operation, or want to fake one in a test? Every operation has a client of its own that implements the
+`Service` of just that rpc:
+
+```kotlin
+val queryTodo: QueryTodo.Service = QueryTodoGraphQL.GraphQLClient(serialization, transportation)
+```
+
+## Try it
+
+The extension ships with every Wirespec plugin as `GraphQLClient`. Convert and generate in one go with the CLI, or
+register it in your build:
+
+<Tabs groupId="build">
+  <TabItem value="cli" label="CLI">
+    ```shell
+    wirespec convert -i ./schema.graphql -o ./build/generated -l Kotlin -e GraphQLClient GraphQL
+    ```
+  </TabItem>
+  <TabItem value="gradle" label="Gradle">
+    ```kotlin title="build.gradle.kts"
+    tasks.register<CompileWirespecTask>("wirespec-compile") {
+        input = layout.projectDirectory.dir("src/main/wirespec")
+        output = layout.buildDirectory.dir("generated")
+        packageName = "community.flock.todo"
+        language = Language.Kotlin
+        extensionClasses = listOf(GraphQLClientExtension::class.java)
+    }
+    ```
+  </TabItem>
+  <TabItem value="maven" label="Maven">
+    ```xml title="pom.xml"
+    <configuration>
+        <input>${project.basedir}/src/main/wirespec</input>
+        <output>${project.build.directory}/generated-sources</output>
+        <packageName>community.flock.todo</packageName>
+        <language>Java</language>
+        <extensionClasses>
+            <extensionClass>GraphQLClient</extensionClass>
+        </extensionClasses>
+    </configuration>
+    ```
+  </TabItem>
+</Tabs>
+
+:::caution[Experimental]
+<Languages languages={["Java", "Kotlin", "Scala"]} />
+
+The GraphQL client is experimental: its API, generated code and options may still change between releases.
+Subscriptions get no client yet, and arguments of nested fields are not passed. Wirespec ships no Scala serialization,
+so a Scala client needs a `Wirespec.Serialization` of your own.
+:::
+
+The [GraphQL client documentation](/docs/integration/graphql) covers everything in depth: the full generated code for
+every language, how the queries are built, and how to configure the endpoint path. Give it a spin, and let us know what
+you think on [GitHub](https://github.com/flock-community/wirespec/issues)!
