@@ -189,6 +189,7 @@ const config: Config = {
         "bash",
         "properties",
         "gradle",
+        "scala",
       ],
     },
     algolia: {
