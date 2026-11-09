@@ -96,6 +96,7 @@ public fun Type.transformChildren(transformer: Transformer): Type = when (this) 
     is Type.Function -> copy(
         parameterTypes = parameterTypes.map { transformer.transformType(it) },
         returnType = transformer.transformType(returnType),
+        receiver = receiver?.let { transformer.transformType(it) },
     )
 
     is Type.Integer, is Type.Number, Type.Any, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard, Type.Reflect, is Type.IntegerLiteral, is Type.StringLiteral -> this

@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.graphql.extension
 
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQLClient, GraphQLClient, QueryTodoGraphQLClient, SearchGraphQLClient, SearchResultResult, TodoResult, UserResult}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, GraphQLClient, QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.CompleteTodo
 import community.flock.wirespec.scala.Wirespec
@@ -12,7 +12,7 @@ object ScalaGraphQLCheck {
 
   def queriesTheFullResult(): String = {
     val todo = Todo(ID("1"), "Groceries", false, Some(Priority.HIGH), User("Ann"))
-    val serialization = Recording(QueryTodoGraphQLClient.GraphQLResponse(Some(QueryTodoGraphQLClient.GraphQLData(Some(todo))), None))
+    val serialization = Recording(QueryTodoGraphQL.GraphQLResponse(Some(QueryTodoGraphQL.GraphQLData(Some(todo))), None))
 
     val result = GraphQLClient(serialization, transportation).queryTodo(ID("1"))
 
@@ -21,8 +21,8 @@ object ScalaGraphQLCheck {
   }
 
   def readsTheSelectedFields(): String = {
-    val expected = TodoResult(None, Some("Groceries"), None, None, Some(UserResult(Some("Ann"))))
-    val serialization = Recording(QueryTodoGraphQLClient.GraphQLSelectedResponse(Some(QueryTodoGraphQLClient.GraphQLSelectedData(Some(expected))), None))
+    val expected = QueryTodoGraphQL.TodoResult(None, Some("Groceries"), None, None, Some(QueryTodoGraphQL.UserResult(Some("Ann"))))
+    val serialization = Recording(QueryTodoGraphQL.GraphQLSelectedResponse(Some(QueryTodoGraphQL.GraphQLSelectedData(Some(expected))), None))
 
     val result = GraphQLClient(serialization, transportation).queryTodo(ID("1"), todo => todo.title().owner(owner => owner.name()))
 
@@ -31,7 +31,7 @@ object ScalaGraphQLCheck {
   }
 
   def returnsTheTypedError(): Unit = {
-    val serialization = Recording(CompleteTodoGraphQLClient.GraphQLResponse(None, Some(List(TodoError("Unknown todo")))))
+    val serialization = Recording(CompleteTodoGraphQL.GraphQLResponse(None, Some(List(TodoError("Unknown todo")))))
 
     val result = GraphQLClient(serialization, transportation).completeTodo(ID("3"))
 
@@ -40,7 +40,7 @@ object ScalaGraphQLCheck {
 
   def readsAUnion(): String = {
     val results: List[SearchResult] = List(Note("Milk"), Tag("home"))
-    val serialization = Recording(SearchGraphQLClient.GraphQLResponse(Some(SearchGraphQLClient.GraphQLData(Some(results))), None))
+    val serialization = Recording(SearchGraphQL.GraphQLResponse(Some(SearchGraphQL.GraphQLData(Some(results))), None))
 
     val result = GraphQLClient(serialization, transportation).search("milk")
 
@@ -49,8 +49,8 @@ object ScalaGraphQLCheck {
   }
 
   def readsAUnionSelection(): String = {
-    val expected = List(SearchResultResult(Some("Note"), Some("Milk"), None))
-    val serialization = Recording(SearchGraphQLClient.GraphQLSelectedResponse(Some(SearchGraphQLClient.GraphQLSelectedData(Some(expected))), None))
+    val expected = List(SearchGraphQL.SearchResultResult(Some("Note"), Some("Milk"), None))
+    val serialization = Recording(SearchGraphQL.GraphQLSelectedResponse(Some(SearchGraphQL.GraphQLSelectedData(Some(expected))), None))
 
     val result = GraphQLClient(serialization, transportation).search("milk", result => result.onNote(note => note.text()).onTag(tag => tag.name()))
 
