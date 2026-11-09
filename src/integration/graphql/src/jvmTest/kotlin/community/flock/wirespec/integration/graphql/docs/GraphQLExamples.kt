@@ -12,7 +12,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID

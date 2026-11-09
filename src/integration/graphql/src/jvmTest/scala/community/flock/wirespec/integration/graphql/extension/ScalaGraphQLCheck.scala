@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.graphql.extension
 
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, GraphQLClient, QueryTodoGraphQL, SearchGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.CompleteTodo
 import community.flock.wirespec.scala.Wirespec

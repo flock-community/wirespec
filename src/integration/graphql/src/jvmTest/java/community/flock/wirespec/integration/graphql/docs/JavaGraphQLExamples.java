@@ -14,7 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 // endregion create-client
-import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLClient;
+import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.model.ID;

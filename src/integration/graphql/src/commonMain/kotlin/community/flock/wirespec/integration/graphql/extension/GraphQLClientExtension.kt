@@ -20,6 +20,7 @@ import community.flock.wirespec.compiler.core.ir.LiteralMap
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.NullableOf
+import community.flock.wirespec.compiler.core.ir.Package
 import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.RawExpression
 import community.flock.wirespec.compiler.core.ir.ReturnStatement
@@ -57,7 +58,8 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * partial result of every type its result reaches. The client posts the GraphQL document of the rpc to `/graphql`, with
  * the parameters as its variables, through the `Wirespec.Transportation` and `Wirespec.Serialization` it is given, and
  * reads the result from the response. [GraphQLOperations] writes the document at build time, so the generated code needs
- * no GraphQL library. A top-level `GraphQLClient` implements every `Service` at once by delegating to those clients.
+ * no GraphQL library. A `GraphQLClient` in the root package, next to the `Client` of the endpoints, implements every
+ * `Service` at once by delegating to those clients.
  *
  * The response carries errors next to its data. An rpc with an error type returns the first error, read as that type,
  * as its `Error`; an rpc without one fails with an [IllegalStateException] listing the [GRAPHQL_ERROR]s. A union in the
@@ -294,7 +296,10 @@ public class GraphQLClientExtension(
                     operation.selectedCall()?.qualifiedIn(operation),
                 ).map { it.delegating(operation) }
             },
-        ).let(::listOf).inFile(Name.of(GRAPHQL_CLIENT), operations.flatMap { it.service.imports + import("${packageName.value}.rpc", it.name) })
+        ).let(::listOf).inRootFile(
+            Name.of(GRAPHQL_CLIENT),
+            operations.flatMap { it.service.imports + import("${packageName.value}.rpc", it.name) + import("${packageName.value}.$GRAPHQL", it.builderType) },
+        )
 
         /** Names the selections and partial results of [operation] through the builder they are nested in. */
         private fun Function.qualifiedIn(operation: Operation): Function = operation.nestedTypes().let { nested ->
@@ -337,6 +342,12 @@ public class GraphQLClientExtension(
 
         private fun List<Element>.inFile(name: Name, imports: List<Import>): LanguageFile = LanguageFile(name, (dialect.imports + imports).distinct() + this)
             .placeInPackage(packageName, GRAPHQL)
+
+        /** In the root package, where the emitter puts the `Client` of the endpoints. */
+        private fun List<Element>.inRootFile(name: Name, imports: List<Import>): LanguageFile = LanguageFile(
+            Name.of(packageName.toDir() + name.pascalCase()),
+            listOf(Package(packageName.value)) + (dialect.imports + imports).distinct() + this,
+        )
     }
 
     private enum class Dialect {

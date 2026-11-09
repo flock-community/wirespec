@@ -116,8 +116,8 @@ without a GraphQL annotation, are left out, so a contract can mix GraphQL operat
 you write yourself needs `@GraphQLName` when the GraphQL field is not named after the rpc, as with `@GraphQLName("todo")`
 on `QueryTodo`.
 
-Next to the `model` and `rpc` files, the extension writes the `graphql` package, with one file per operation and the
-`GraphQLClient` that bundles them:
+Next to the `model` and `rpc` files, the extension writes the `graphql` package, with one file per operation, and a
+`GraphQLClient` in the root package that bundles them, just like the `Client` of the endpoints:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -136,7 +136,8 @@ Next to the `model` and `rpc` files, the extension writes the `graphql` package,
 
 ## Creating a client
 
-`GraphQLClient` implements the `Service` of every operation at once. It takes a `Wirespec.Serialization` that reads and
+`GraphQLClient`, in the root package next to the `Client` of the endpoints, implements the `Service` of every operation
+at once. It takes a `Wirespec.Serialization` that reads and
 writes JSON, and a `Wirespec.Transportation` that sends the request to the path `/graphql`.
 
 <Tabs groupId="language">
@@ -294,12 +295,12 @@ A call with a selection throws an `IllegalStateException` on GraphQL errors, als
 
 ## Generated code
 
-Everything lands in the `graphql` package, next to `model` and `rpc`. Each operation gets a single file,
-`<Rpc>GraphQL`, that holds everything the operation needs:
+Each operation gets a single file in the `graphql` package, next to `model` and `rpc`, that holds everything the
+operation needs. The `GraphQLClient` that bundles them sits in the root package, like the `Client` of the endpoints:
 
 | Generated                                | What it is                                                                 |
 |------------------------------------------|----------------------------------------------------------------------------|
-| `GraphQLClient`                          | Implements the `Service` of every operation, with and without a selection  |
+| `GraphQLClient` (root package)           | Implements the `Service` of every operation, with and without a selection  |
 | `QueryTodoGraphQL`, ...                  | The file of one operation; its builder puts a selection in the query       |
 | `QueryTodoGraphQL.GraphQLClient`         | The client of the operation                                                |
 | `QueryTodoGraphQL.GraphQLRequest`, ...   | The request, its variables and the envelopes of the response               |

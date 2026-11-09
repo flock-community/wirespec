@@ -7,7 +7,8 @@ import community.flock.wirespec.scala.Wirespec
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{GraphQLClient, QueryTodoGraphQL, SearchGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
 
