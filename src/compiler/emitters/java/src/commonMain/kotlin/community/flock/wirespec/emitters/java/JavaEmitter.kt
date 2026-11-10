@@ -22,8 +22,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
+import community.flock.wirespec.compiler.core.ir.converter.convertGraphQLClient
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.Package
@@ -80,16 +82,17 @@ public open class JavaEmitter(
             import("java.util", "Map"),
         )
 
-        val clientServer = convertClientServer()
-            .map {
-                it.toGetterAccessors { name ->
-                    when (name.value()) {
-                        "client" -> Name.of("getClient")
-                        "server" -> Name.of("getServer")
-                        else -> null
-                    }
-                }
+        val getters = { name: Name ->
+            when (name.value()) {
+                "client" -> Name.of("getClient")
+                "server" -> Name.of("getServer")
+                else -> null
             }
+        }
+
+        // A record implements a field of the GraphQL messages with its accessor, so those keep their fields.
+        val clientServer = convertClientServer().map { it.toGetterAccessors(getters) }
+            .plus(convertGraphQLClient().map { if (it is Interface && it.fields.isEmpty()) it.toGetterAccessors(getters) else it })
             .plus(
                 raw(
                     """

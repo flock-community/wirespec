@@ -85,4 +85,26 @@ object ScalaGraphQLExamples {
     // endregion union
     kinds
   }
+  // region abstract-client
+
+  class AbstractClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) {
+    def send[Req <: Wirespec.GraphQLRequest, Res <: Wirespec.GraphQLResponse[?, ?]](api: Wirespec.GraphQLClient[Req, Res], request: Req): Res = {
+      val edge = api.client(serialization)
+      edge.from(transportation.transport(edge.to(request)))
+    }
+  }
+  // endregion abstract-client
+
+  def abstractCalls(client: AbstractClient): List[Any] = {
+    // region abstract-calls
+    val response: QueryTodoGraphQL.Response = client.send(QueryTodoGraphQL.Api, QueryTodoGraphQL.request(ID("1")))
+    val todo: Option[Todo] = response.data
+    val errors: Option[List[QueryTodoGraphQL.GraphQLError]] = response.errors
+
+    val selected: Option[QueryTodoGraphQL.TodoResult] = client
+      .send(QueryTodoGraphQL.SelectedApi, QueryTodoGraphQL.request(ID("1"), todo => todo.title()))
+      .data
+    // endregion abstract-calls
+    List(todo, errors, selected)
+  }
 }
