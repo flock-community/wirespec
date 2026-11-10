@@ -116,7 +116,7 @@ public final class JavaGraphQLExamples {
     // region abstract-client
 
     public record AbstractClient(Wirespec.Serialization serialization, Wirespec.Transportation transportation) {
-        public <Req, Res> CompletableFuture<Res> send(Wirespec.GraphQLClient<Req, Res> api, Req request) {
+        public <Req extends Wirespec.GraphQLRequest, Res extends Wirespec.GraphQLResponse<?, ?>> CompletableFuture<Res> send(Wirespec.GraphQLClient<Req, Res> api, Req request) {
             var edge = api.getClient(serialization);
             return transportation.transport(edge.to(request)).thenApply(edge::from);
         }
@@ -125,12 +125,15 @@ public final class JavaGraphQLExamples {
 
     public static List<Object> abstractCalls(AbstractClient client) {
         // region abstract-calls
-        Optional<Todo> todo = client.send(new QueryTodoGraphQL.Api(), new QueryTodoGraphQL().request(new ID("1"))).join();
+        QueryTodoGraphQL.Response response = client.send(new QueryTodoGraphQL.Api(), new QueryTodoGraphQL().request(new ID("1"))).join();
+        Optional<Todo> todo = response.data();
+        Optional<List<QueryTodoGraphQL.GraphQLError>> errors = response.errors();
 
-        Optional<QueryTodoGraphQL.TodoResult> selected = client.send(
-            new QueryTodoGraphQL.SelectedApi(),
-            new QueryTodoGraphQL().request(new ID("1"), t -> t.title())).join();
+        Optional<QueryTodoGraphQL.TodoResult> selected = client
+            .send(new QueryTodoGraphQL.SelectedApi(), new QueryTodoGraphQL().request(new ID("1"), t -> t.title()))
+            .join()
+            .data();
         // endregion abstract-calls
-        return List.of(todo, selected);
+        return List.of(todo, errors, selected);
     }
 }

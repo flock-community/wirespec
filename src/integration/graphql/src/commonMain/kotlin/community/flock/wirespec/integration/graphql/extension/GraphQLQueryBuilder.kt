@@ -170,7 +170,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         // A record nested in a Java record is only public and static when it says so.
         struct(GRAPHQL_REQUEST) {
             visibility(Visibility.PUBLIC)
-            field("query", Type.String)
+            implements(Type.Custom("Wirespec.GraphQLRequest"))
+            field("query", Type.String, isOverride = true)
             if (request.variables.isNotEmpty()) field("variables", type(GRAPHQL_VARIABLES))
         }
         request.variables.takeIf { it.isNotEmpty() }?.let { variables ->

@@ -77,7 +77,7 @@ object ScalaGraphQLCheck {
     val result = ScalaGraphQLExamples.AbstractClient(serialization, transportation)
       .send(QueryTodoGraphQL.SelectedApi, QueryTodoGraphQL.request(ID("1"), todo => todo.title()))
 
-    check(result == Some(expected), s"unexpected $result")
+    check(result == QueryTodoGraphQL.SelectedResponse(Some(expected), None), s"unexpected $result")
     serialization.query
   }
 

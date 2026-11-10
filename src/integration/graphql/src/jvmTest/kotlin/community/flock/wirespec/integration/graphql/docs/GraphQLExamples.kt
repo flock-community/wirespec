@@ -102,20 +102,21 @@ object GraphQLExamples {
         private val serialization: Wirespec.Serialization,
         private val transportation: Wirespec.Transportation,
     ) {
-        suspend fun <Req : Any, Res> send(api: Wirespec.GraphQLClient<Req, Res>, request: Req): Res = api.client(serialization).run { from(transportation.transport(to(request))) }
+        suspend fun <Req : Wirespec.GraphQLRequest, Res : Wirespec.GraphQLResponse<*, *>> send(api: Wirespec.GraphQLClient<Req, Res>, request: Req): Res = api.client(serialization).run { from(transportation.transport(to(request))) }
     }
     // endregion abstract-client
 
     suspend fun abstractCalls(client: AbstractClient): List<Any?> {
         // region abstract-calls
-        val todo: Todo? = client.send(QueryTodoGraphQL.Api, QueryTodoGraphQL.request(ID("1")))
+        val response: QueryTodoGraphQL.Response = client.send(QueryTodoGraphQL.Api, QueryTodoGraphQL.request(ID("1")))
+        val todo: Todo? = response.data
+        val errors: List<QueryTodoGraphQL.GraphQLError>? = response.errors
 
-        val selected: QueryTodoGraphQL.TodoResult? = client.send(
-            QueryTodoGraphQL.SelectedApi,
-            QueryTodoGraphQL.request(ID("1")) { title() },
-        )
+        val selected: QueryTodoGraphQL.TodoResult? = client
+            .send(QueryTodoGraphQL.SelectedApi, QueryTodoGraphQL.request(ID("1")) { title() })
+            .data
         // endregion abstract-calls
-        return listOf(todo, selected)
+        return listOf(todo, errors, selected)
     }
 
     fun path(http: HttpTransportation): Wirespec.Transportation {

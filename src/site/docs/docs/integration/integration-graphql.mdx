@@ -299,9 +299,10 @@ The generated clients send every operation the same way. To send them your way, 
 or retry in one place, write one client for all operations, just like with the `Wirespec.Client` of an endpoint.
 
 Each operation has an `Api`, a `Wirespec.GraphQLClient<Req, Res>`. For a serialization it gives a
-`Wirespec.GraphQLClientEdge<Req, Res>` that writes a `GraphQLRequest` as the `Wirespec.RawRequest` to send, and reads
-the result from the `Wirespec.RawResponse`. Both interfaces are part of the shared `Wirespec` file, next to the `Client`
-and `ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQLClient` therefore sends any operation:
+`Wirespec.GraphQLClientEdge<Req, Res>` that writes the `GraphQLRequest` of the operation, a `Wirespec.GraphQLRequest`,
+as the `Wirespec.RawRequest` to send, and reads the `Wirespec.RawResponse` as the `Response` of the operation, a
+`Wirespec.GraphQLResponse`. These interfaces are part of the shared `Wirespec` file, next to the `Client` and
+`ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQLClient` therefore sends any operation:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -319,8 +320,9 @@ and `ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQLClie
 </Tabs>
 
 The builder of the operation writes the request: `request(...)` with the parameters of the rpc selects every field, and
-takes a selection to pick them. Send a request with a selection through the `SelectedApi`, which reads the partial
-result:
+takes a selection to pick them. The `Response` holds the `data` of the result, without the fields GraphQL nests it in,
+next to the `errors`. Send a request with a selection through the `SelectedApi`, whose `SelectedResponse` holds the
+partial result:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -337,7 +339,10 @@ result:
   </TabItem>
 </Tabs>
 
-The edges read errors like the generated clients do, which send through them as well.
+An edge does not fail on GraphQL errors: it returns them next to the data, and leaves it to your client what to do with
+them. The `errors` are `GraphQLError`s, or the [error type](#errors) of an rpc that has one. The `data` is empty when
+the response has none, also for a result that is required, and a `Boolean` for an rpc without a result. The generated
+clients send through the same edges, and then fail on errors or return them as described [above](#errors).
 
 ## Generated code
 
@@ -350,6 +355,7 @@ operation needs. The `GraphQLClient` that bundles them sits in the root package,
 | `QueryTodoGraphQL`, ...                  | The file of one operation; its builder puts a selection in the query       |
 | `QueryTodoGraphQL.GraphQLClient`         | The client of the operation                                                |
 | `QueryTodoGraphQL.Api`, `.ClientEdge`    | What a [client of your own](#a-client-of-your-own) sends the operation with |
+| `QueryTodoGraphQL.Response`              | What the edge reads: the data of the result and the errors                 |
 | `QueryTodoGraphQL.SelectedApi`, ...      | The same for a request with a selection, which reads the partial result    |
 | `QueryTodoGraphQL.GraphQLRequest`, ...   | The request, its variables and the envelopes of the response               |
 | `QueryTodoGraphQL.TodoSelection`, ...    | The fields you can select of a type or union the result reaches            |
@@ -367,8 +373,8 @@ The shapes follow the language:
 | Java     | Record without components | `Function<UserSelection, UserSelection>` | Public static records     |
 | Scala    | `object`                  | `UserSelection => UserSelection`         | Case classes              |
 
-The client of an operation asks the builder for the request, and sends it and reads the result through the edge of the
-operation. The full query is written at build time; the overload with a selection puts the selected fields in it. A selection collects the selected fields as
+The client of an operation asks the builder for the request, sends it through the edge of the operation, and takes the
+result from the response of the edge. The full query is written at build time; the overload with a selection puts the selected fields in it. A selection collects the selected fields as
 GraphQL text and returns itself from every field. A partial result has the same fields as the model, all nullable:
 
 <Tabs groupId="language">

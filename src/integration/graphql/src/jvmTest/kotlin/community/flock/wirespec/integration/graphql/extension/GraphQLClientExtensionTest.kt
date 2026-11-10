@@ -302,9 +302,9 @@ class GraphQLClientExtensionTest {
         val server = KotlinServer("""{"data":{"result":{"id":"1","title":"Groceries","done":false,"priority":null,"owner":{"name":"Ann"}}}}""")
         val client = GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), server)
 
-        val todo = client.send(KotlinQueryTodoGraphQL.Api, KotlinQueryTodoGraphQL.request(KotlinID("1")))
+        val response = client.send(KotlinQueryTodoGraphQL.Api, KotlinQueryTodoGraphQL.request(KotlinID("1")))
 
-        assertEquals(KotlinTodo(KotlinID("1"), "Groceries", false, null, KotlinUser("Ann")), todo)
+        assertEquals(KotlinQueryTodoGraphQL.Response(KotlinTodo(KotlinID("1"), "Groceries", false, null, KotlinUser("Ann")), null), response)
         assertEquals(listOf("graphql"), server.request.path)
         assertEquals(
             mapOf(
@@ -316,25 +316,34 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Kotlin api reads a selection, an error type and a result without data`() = runBlocking {
+    fun `Kotlin api reads a selection and a result without data`() = runBlocking {
         val server = KotlinServer("""{"data":{"result":{"title":"Groceries"}}}""")
         val client = GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), server)
 
         assertEquals(
-            KotlinTodoResult(null, "Groceries", null, null, null),
+            KotlinQueryTodoGraphQL.SelectedResponse(KotlinTodoResult(null, "Groceries", null, null, null), null),
             client.send(KotlinQueryTodoGraphQL.SelectedApi, KotlinQueryTodoGraphQL.request(KotlinID("1")) { title() }),
         )
         assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { title } }", server.json()["query"])
         assertEquals(
-            KotlinCompleteTodo.Error(KotlinTodoError("Unknown todo")),
-            GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), KotlinServer("""{"errors":[{"message":"Unknown todo"}]}"""))
-                .send(KotlinCompleteTodoGraphQL.Api, KotlinCompleteTodoGraphQL.request(KotlinID("3"))),
-        )
-        assertEquals(
-            Unit,
+            KotlinClearTodosGraphQL.Response(true, null),
             GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), KotlinServer("""{"data":{"result":true}}"""))
                 .send(KotlinClearTodosGraphQL.Api, KotlinClearTodosGraphQL.request()),
         )
+    }
+
+    @Test
+    fun `Kotlin api returns the errors next to the data instead of failing`() = runBlocking {
+        val errors = """{"data":null,"errors":[{"message":"Unknown todo"}]}"""
+
+        val response = GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), KotlinServer(errors))
+            .send(KotlinQueryTodoGraphQL.Api, KotlinQueryTodoGraphQL.request(KotlinID("3")))
+        val typed = GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), KotlinServer(errors))
+            .send(KotlinCompleteTodoGraphQL.Api, KotlinCompleteTodoGraphQL.request(KotlinID("3")))
+
+        assertNull(response.data)
+        assertEquals(listOf("Unknown todo"), response.errors?.map { it.message })
+        assertEquals(KotlinCompleteTodoGraphQL.Response(null, listOf(KotlinTodoError("Unknown todo"))), typed)
     }
 
     @Test
@@ -342,14 +351,17 @@ class GraphQLClientExtensionTest {
         val server = JavaServer("""{"data":{"result":{"title":"Groceries"}}}""")
         val client = JavaGraphQLExamples.AbstractClient(JavaSerialization(objectMapper), server)
 
-        val todo = client.send(JavaQueryTodoGraphQL.SelectedApi(), JavaQueryTodoGraphQL().request(JavaID("1")) { it.title() }).join()
+        val response = client.send(JavaQueryTodoGraphQL.SelectedApi(), JavaQueryTodoGraphQL().request(JavaID("1")) { it.title() }).join()
 
-        assertEquals(Optional.of("Groceries"), todo.flatMap { it.title() })
+        assertEquals(Optional.of("Groceries"), response.data().flatMap { it.title() })
+        assertEquals(Optional.empty(), response.errors())
         assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { title } }", server.json()["query"])
-        assertNull(
+        assertEquals(
+            Optional.of(true),
             JavaGraphQLExamples.AbstractClient(JavaSerialization(objectMapper), JavaServer("""{"data":{"result":true}}"""))
                 .send(JavaClearTodosGraphQL.Api(), JavaClearTodosGraphQL().request())
-                .join(),
+                .join()
+                .data(),
         )
     }
 
@@ -398,7 +410,7 @@ class GraphQLClientExtensionTest {
 
         assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
         assertEquals(setOf("Client.kt", "GraphQLClient.kt"), files.keys.filterNot { "/" in it }.toSet())
-        listOf("data class GraphQLClient(", "object Api : Wirespec.GraphQLClient<", "data class ClientEdge(", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
+        listOf("data class GraphQLClient(", "object Api : Wirespec.GraphQLClient<", "data class ClientEdge(", ") : Wirespec.GraphQLResponse<Todo, GraphQLError>", ") : Wirespec.GraphQLRequest", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
             .forEach { assertTrue(it in files.getValue("graphql/GetTodoGraphQL.kt"), "GetTodoGraphQL.kt misses $it") }
         listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(")
             .forEach { assertTrue(it in files.getValue("GraphQLClient.kt"), "GraphQLClient.kt misses $it") }
