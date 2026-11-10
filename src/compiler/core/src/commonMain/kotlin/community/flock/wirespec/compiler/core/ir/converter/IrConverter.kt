@@ -16,7 +16,6 @@ import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.LiteralList
 import community.flock.wirespec.compiler.core.ir.LiteralMap
 import community.flock.wirespec.compiler.core.ir.Name
-import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.NullCheck
 import community.flock.wirespec.compiler.core.ir.NullLiteral
 import community.flock.wirespec.compiler.core.ir.NullableEmpty
@@ -347,31 +346,26 @@ public fun convertClientServer(): List<Element> = listOf(
         }
     },
     // A GraphQL request is no Request and its result no Response, so the GraphQL client extension has edges of its own.
-    Namespace(
-        name = Name.of("GraphQL"),
-        elements = listOf(
-            `interface`("ClientEdge") {
-                typeParam(type("Req"))
-                typeParam(type("Res"), Type.Nullable(Type.Any))
-                function("to") {
-                    returnType(type("RawRequest"))
-                    arg("request", type("Req"))
-                }
-                function("from") {
-                    returnType(type("Res"))
-                    arg("response", type("RawResponse"))
-                }
-            },
-            `interface`("Client") {
-                typeParam(type("Req"))
-                typeParam(type("Res"), Type.Nullable(Type.Any))
-                function("client") {
-                    returnType(type("ClientEdge", type("Req"), type("Res")))
-                    arg("serialization", type("Serialization"))
-                }
-            },
-        ),
-    ),
+    `interface`("GraphQLClientEdge") {
+        typeParam(type("Req"))
+        typeParam(type("Res"), Type.Nullable(Type.Any))
+        function("to") {
+            returnType(type("RawRequest"))
+            arg("request", type("Req"))
+        }
+        function("from") {
+            returnType(type("Res"))
+            arg("response", type("RawResponse"))
+        }
+    },
+    `interface`("GraphQLClient") {
+        typeParam(type("Req"))
+        typeParam(type("Res"), Type.Nullable(Type.Any))
+        function("client") {
+            returnType(type("GraphQLClientEdge", type("Req"), type("Res")))
+            arg("serialization", type("Serialization"))
+        }
+    },
 )
 
 internal fun Identifier.toName(): Name = when (this) {

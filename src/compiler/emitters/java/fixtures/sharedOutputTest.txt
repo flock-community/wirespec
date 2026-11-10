@@ -196,14 +196,12 @@ public interface Wirespec {
     public String getMethod();
     public ServerEdge<Req, Res> getServer(Serialization serialization);
   }
-  public interface GraphQL {
-    public interface ClientEdge<Req, Res> {
-      public RawRequest to(Req request);
-      public Res from(RawResponse response);
-    }
-    public interface Client<Req, Res> {
-      public ClientEdge<Req, Res> getClient(Serialization serialization);
-    }
+  public interface GraphQLClientEdge<Req, Res> {
+    public RawRequest to(Req request);
+    public Res from(RawResponse response);
+  }
+  public interface GraphQLClient<Req, Res> {
+    public GraphQLClientEdge<Req, Res> getClient(Serialization serialization);
   }
   public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
     if(rawType != null) {

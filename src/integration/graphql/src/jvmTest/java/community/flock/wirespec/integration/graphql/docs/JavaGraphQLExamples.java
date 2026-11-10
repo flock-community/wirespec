@@ -116,7 +116,7 @@ public final class JavaGraphQLExamples {
     // region abstract-client
 
     public record AbstractClient(Wirespec.Serialization serialization, Wirespec.Transportation transportation) {
-        public <Req, Res> CompletableFuture<Res> send(Wirespec.GraphQL.Client<Req, Res> api, Req request) {
+        public <Req, Res> CompletableFuture<Res> send(Wirespec.GraphQLClient<Req, Res> api, Req request) {
             var edge = api.getClient(serialization);
             return transportation.transport(edge.to(request)).thenApply(edge::from);
         }

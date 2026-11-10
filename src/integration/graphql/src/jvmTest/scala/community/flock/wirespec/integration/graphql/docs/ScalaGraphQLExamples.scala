@@ -88,7 +88,7 @@ object ScalaGraphQLExamples {
   // region abstract-client
 
   class AbstractClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) {
-    def send[Req, Res](api: Wirespec.GraphQL.Client[Req, Res], request: Req): Res = {
+    def send[Req, Res](api: Wirespec.GraphQLClient[Req, Res], request: Req): Res = {
       val edge = api.client(serialization)
       edge.from(transportation.transport(edge.to(request)))
     }

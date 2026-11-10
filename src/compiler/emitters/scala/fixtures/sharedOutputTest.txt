@@ -173,13 +173,11 @@ object Wirespec {
       def pathSegments: List[PathSegment]
       def server(serialization: Serialization): ServerEdge[Req, Res]
   }
-  object GraphQL {
-      trait ClientEdge[Req, Res] {
-            def to(request: Req): RawRequest
-            def from(response: RawResponse): Res
-      }
-      trait Client[Req, Res] {
-            def client(serialization: Serialization): ClientEdge[Req, Res]
-      }
+  trait GraphQLClientEdge[Req, Res] {
+      def to(request: Req): RawRequest
+      def from(response: RawResponse): Res
+  }
+  trait GraphQLClient[Req, Res] {
+      def client(serialization: Serialization): GraphQLClientEdge[Req, Res]
   }
 }

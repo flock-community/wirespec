@@ -61,8 +61,8 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * no GraphQL library. A `GraphQLClient` in the root package, next to the `Client` of the endpoints, implements every
  * `Service` at once by delegating to those clients.
  *
- * To send the rpcs through a client of your own, each rpc also has an `Api`, a `Wirespec.GraphQL.Client` that gives
- * the `Wirespec.GraphQL.ClientEdge` of the rpc for a serialization, as `Wirespec.Client` does for an endpoint. The edge writes a
+ * To send the rpcs through a client of your own, each rpc also has an `Api`, a `Wirespec.GraphQLClient` that gives
+ * the `Wirespec.GraphQLClientEdge` of the rpc for a serialization, as `Wirespec.Client` does for an endpoint. The edge writes a
  * request as the raw request to send and reads the result from the raw response; the generated clients send through it.
  * An rpc with fields to select has a `SelectedApi` too, which reads the partial result.
  *
@@ -176,7 +176,7 @@ public class GraphQLClientExtension(
         private fun Operation.edge(name: String, result: Type, read: List<Statement>): Struct = struct(
             name = name,
             fields = listOf(CLIENT_FIELDS.first()),
-            interfaces = listOf(Type.Custom("$GRAPHQL_TYPES.$CLIENT_EDGE", listOf(Type.Custom(requestType), result))),
+            interfaces = listOf(Type.Custom(WIRESPEC_CLIENT_EDGE, listOf(Type.Custom(requestType), result))),
             elements = listOf(
                 Function(
                     name = TO,
@@ -196,11 +196,11 @@ public class GraphQLClientExtension(
         )
 
         /** What a client of your own takes to send the rpc: it gives the edge named [edge] for a serialization. */
-        private fun Operation.api(name: String, edge: String, result: Type): Struct = Type.Custom("$GRAPHQL_TYPES.$CLIENT_EDGE", listOf(Type.Custom(requestType), result)).let { edgeType ->
+        private fun Operation.api(name: String, edge: String, result: Type): Struct = Type.Custom(WIRESPEC_CLIENT_EDGE, listOf(Type.Custom(requestType), result)).let { edgeType ->
             struct(
                 name = name,
                 fields = emptyList(),
-                interfaces = listOf(Type.Custom("$GRAPHQL_TYPES.$CLIENT", edgeType.generics)),
+                interfaces = listOf(Type.Custom(WIRESPEC_CLIENT, edgeType.generics)),
                 elements = listOf(
                     Function(
                         name = dialect.client,
@@ -448,7 +448,7 @@ public class GraphQLClientExtension(
 
             override val client = Name.of("getClient")
 
-            /** A function of `Wirespec.GraphQL.ClientEdge` has to return a value, so a `Unit` result is a `Void` that is null. */
+            /** A function of `Wirespec.GraphQLClientEdge` has to return a value, so a `Unit` result is a `Void` that is null. */
             override fun result(type: Type): Type = if (type == Type.Unit) Type.Custom("Void") else type
 
             override fun fromRawResponse(operation: Operation): List<Statement> = listOfNotNull(
@@ -540,7 +540,7 @@ public class GraphQLClientExtension(
         /** The builder of an rpc: an `object` in Kotlin and Scala, a record without components in Java. */
         abstract fun builder(name: String): Expression
 
-        /** The function of `Wirespec.GraphQL.Client` that gives the edge, named as the emitter names it. */
+        /** The function of `Wirespec.GraphQLClient` that gives the edge, named as the emitter names it. */
         open val client: Name = Name.of("client")
 
         /** Sends `rawRequest` and reads the response with `edge`. */
@@ -574,8 +574,8 @@ public class GraphQLClientExtension(
 
         private val SERIALIZATION = Name.of("serialization")
         private val TRANSPORTATION = Name.of("transportation")
-        private const val GRAPHQL_TYPES = "Wirespec.GraphQL"
-        private const val CLIENT = "Client"
+        private const val WIRESPEC_CLIENT = "Wirespec.GraphQLClient"
+        private const val WIRESPEC_CLIENT_EDGE = "Wirespec.GraphQLClientEdge"
         private const val CLIENT_EDGE = "ClientEdge"
         private const val SELECTED_CLIENT_EDGE = "SelectedClientEdge"
         private const val API = "Api"

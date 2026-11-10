@@ -298,10 +298,10 @@ A call with a selection throws an `IllegalStateException` on GraphQL errors, als
 The generated clients send every operation the same way. To send them your way, for instance to add a header, log
 or retry in one place, write one client for all operations, just like with the `Wirespec.Client` of an endpoint.
 
-Each operation has an `Api`, a `Wirespec.GraphQL.Client<Req, Res>`. For a serialization it gives a
-`Wirespec.GraphQL.ClientEdge<Req, Res>` that writes a `GraphQLRequest` as the `Wirespec.RawRequest` to send, and reads
+Each operation has an `Api`, a `Wirespec.GraphQLClient<Req, Res>`. For a serialization it gives a
+`Wirespec.GraphQLClientEdge<Req, Res>` that writes a `GraphQLRequest` as the `Wirespec.RawRequest` to send, and reads
 the result from the `Wirespec.RawResponse`. Both interfaces are part of the shared `Wirespec` file, next to the `Client`
-and `ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQL.Client` therefore sends any operation:
+and `ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQLClient` therefore sends any operation:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">

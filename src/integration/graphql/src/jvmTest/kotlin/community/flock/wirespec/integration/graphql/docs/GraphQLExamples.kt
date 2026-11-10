@@ -102,7 +102,7 @@ object GraphQLExamples {
         private val serialization: Wirespec.Serialization,
         private val transportation: Wirespec.Transportation,
     ) {
-        suspend fun <Req : Any, Res> send(api: Wirespec.GraphQL.Client<Req, Res>, request: Req): Res = api.client(serialization).run { from(transportation.transport(to(request))) }
+        suspend fun <Req : Any, Res> send(api: Wirespec.GraphQLClient<Req, Res>, request: Req): Res = api.client(serialization).run { from(transportation.transport(to(request))) }
     }
     // endregion abstract-client
 
