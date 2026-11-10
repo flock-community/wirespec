@@ -55,8 +55,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     enum class Language { Kotlin, Java, Scala }
 
-    /** An rpc: its `Service` function, its document up to the selection, its result and its variables. */
-    class Request(val rpc: String, val function: Function, val open: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
+    /** An rpc: its `Service` function, its document, the document up to the selection, its result and its variables. */
+    class Request(val rpc: String, val function: Function, val document: String, val open: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
         val builder: String = builder(rpc)
     }
 
@@ -143,44 +143,47 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     val dslMarkerDefinition: RawElement? = RawElement("@DslMarker\nannotation class $DSL_MARKER").takeIf { language == Language.Kotlin }
 
     /**
-     * `QueryTodoGraphQL.request(id) { ... }` writes the request of an rpc with the fields of its result that the block
-     * selects, as a `GraphQLRequest` with the query and its `GraphQLVariables`. It has no fields, so it is an `object` in
-     * Kotlin and a record without components in Java.
+     * `QueryTodoGraphQL.request(id)` writes the request of an rpc that selects every field of its result, as a
+     * `GraphQLRequest` with the query and its `GraphQLVariables`. For a result with fields,
+     * `QueryTodoGraphQL.request(id) { ... }` writes a `GraphQLSelectedRequest` with the fields that the block selects.
+     * The builder has no fields, so it is an `object` in Kotlin and a record without components in Java.
      */
     fun builder(request: Request): Struct = struct(request.builder) {
-        val selection = operations.composite(request.result)
         function(REQUEST) {
             visibility(Visibility.PUBLIC)
             request.function.parameters.forEach { arg(it.name, it.type) }
-            selection?.let { arg(SELECTION, it.block()) }
             returnType(type(GRAPHQL_REQUEST))
-            returns(
-                construct(type(GRAPHQL_REQUEST)) {
-                    arg(
-                        "query",
-                        selection
-                            ?.let { concat(Literal("${request.open} ", Type.String), it.selected(), Literal(GraphQLOperations.CLOSE, Type.String)) }
-                            ?: Literal(request.open + GraphQLOperations.CLOSE, Type.String),
-                    )
-                    request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
-                        arg("variables", ConstructorStatement(Type.Custom(GRAPHQL_VARIABLES), variables.associate { (field, parameter) -> field.name to VariableReference(parameter.name) }))
-                    }
-                },
-            )
+            returns(request.instance(GRAPHQL_REQUEST, Literal(request.document, Type.String)))
         }
-        // A record nested in a Java record is only public and static when it says so.
-        struct(GRAPHQL_REQUEST) {
-            visibility(Visibility.PUBLIC)
-            field("query", Type.String)
-            if (request.variables.isNotEmpty()) field("variables", type(GRAPHQL_VARIABLES))
+        operations.composite(request.result)?.let { selection ->
+            function(REQUEST) {
+                visibility(Visibility.PUBLIC)
+                request.function.parameters.forEach { arg(it.name, it.type) }
+                arg(SELECTION, selection.block())
+                returnType(type(GRAPHQL_SELECTED_REQUEST))
+                returns(
+                    request.instance(
+                        GRAPHQL_SELECTED_REQUEST,
+                        concat(Literal("${request.open} ", Type.String), selection.selected(), Literal(GraphQLOperations.CLOSE, Type.String)),
+                    ),
+                )
+            }
         }
         request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
+            // A record nested in a Java record is only public and static when it says so.
             struct(GRAPHQL_VARIABLES) {
                 visibility(Visibility.PUBLIC)
                 variables.forEach { (field, _) -> field(field.name, field.type) }
             }
         }
     }
+
+    private fun Request.instance(name: String, query: Expression): Expression = ConstructorStatement(
+        Type.Custom(name),
+        mapOf(QUERY to query) + variables.takeIf { it.isNotEmpty() }
+            ?.let { variables -> mapOf(VARIABLES to ConstructorStatement(Type.Custom(GRAPHQL_VARIABLES), variables.associate { (field, parameter) -> field.name to VariableReference(parameter.name) })) }
+            .orEmpty(),
+    )
 
     /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */
     private fun StructBuilder.method(model: Definition, name: String, text: String, nested: Definition? = null) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
@@ -246,10 +249,13 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
         const val DSL_MARKER = "GraphQLDsl"
         const val GRAPHQL_REQUEST = "GraphQLRequest"
+        const val GRAPHQL_SELECTED_REQUEST = "GraphQLSelectedRequest"
         const val GRAPHQL_VARIABLES = "GraphQLVariables"
 
         private val FIELDS = Name(listOf("graphQLFields"))
         private val SELECTION = Name.of("selection")
+        val QUERY = Name.of("query")
+        val VARIABLES = Name.of("variables")
         val REQUEST = Name(listOf("request"))
         private val TO_GRAPHQL = Name(listOf("toGraphQL"))
         private val APPEND = Name(listOf("append"))

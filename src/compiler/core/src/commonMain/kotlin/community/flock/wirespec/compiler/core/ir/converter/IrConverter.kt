@@ -27,6 +27,7 @@ import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.file
 import community.flock.wirespec.compiler.core.ir.`interface`
+import community.flock.wirespec.compiler.core.ir.struct
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
@@ -344,6 +345,57 @@ public fun convertClientServer(): List<Element> = listOf(
             returnType(type("ServerEdge", type("Req"), type("Res")))
             arg("serialization", type("Serialization"))
         }
+    },
+)
+
+/**
+ * The GraphQL counterpart of [convertClientServer], which the GraphQL client extension implements. A request only holds
+ * its query and variables; the `api` of its operation turns it into a raw request and reads the result of the rpc from
+ * the raw response, so a [GraphQLClient] sends any operation it is given the `api` of.
+ */
+public fun convertGraphQL(): List<Element> = listOf(
+    `interface`("GraphQLRequest") {
+        field("query", Type.String)
+    },
+    `interface`("GraphQLClientEdge") {
+        typeParam(type("Req"), type("GraphQLRequest"))
+        // Res is unbounded (`Any?`) so an operation can read a nullable result.
+        typeParam(type("Res"), Type.Nullable(Type.Any))
+        function("to") {
+            returnType(type("RawRequest"))
+            arg("request", type("Req"))
+        }
+        function("from") {
+            returnType(type("Res"))
+            arg("response", type("RawResponse"))
+        }
+    },
+    `interface`("GraphQLApi") {
+        typeParam(type("Req"), type("GraphQLRequest"))
+        typeParam(type("Res"), Type.Nullable(Type.Any))
+        function("client") {
+            returnType(type("GraphQLClientEdge", type("Req"), type("Res")))
+            arg("serialization", type("Serialization"))
+        }
+    },
+    `interface`("GraphQLClient") {
+        asyncFunction("send") {
+            typeParam(type("Req"), type("GraphQLRequest"))
+            typeParam(type("Res"), Type.Nullable(Type.Any))
+            returnType(type("Res"))
+            arg("api", type("GraphQLApi", type("Req"), type("Res")))
+            arg("request", type("Req"))
+        }
+    },
+    struct("GraphQLError") {
+        field("message", Type.String)
+        field("locations", list(type("GraphQLLocation")).nullable())
+        field("path", list(Type.Any).nullable())
+        field("extensions", dict(Type.String, Type.Any).nullable())
+    },
+    struct("GraphQLLocation") {
+        field("line", integer)
+        field("column", integer)
     },
 )
 

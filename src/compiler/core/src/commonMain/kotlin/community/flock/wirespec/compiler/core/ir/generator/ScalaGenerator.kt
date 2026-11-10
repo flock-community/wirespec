@@ -105,6 +105,8 @@ public object ScalaGenerator :
         return emitFile(file)
     }
 
+    public fun generateType(type: Type): String = type.emitGenerics()
+
     private fun collectObjectNames(elements: List<Element>, prefix: String = ""): Set<String> {
         val names = mutableSetOf<String>()
         for (element in elements) {

@@ -15,6 +15,7 @@ import java.net.http.HttpResponse;
 import java.util.Optional;
 // endregion create-client
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient;
+import community.flock.wirespec.integration.graphql.java.generated.graphql.CompleteTodoGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.model.ID;
@@ -109,5 +110,17 @@ public final class JavaGraphQLExamples {
         List<Optional<String>> kinds = results.stream().map(SearchGraphQL.SearchResultResult::__typename).toList(); // "Note" or "Tag"
         // endregion union
         return kinds;
+    }
+
+    public static List<Object> requests(Wirespec.GraphQLClient client) {
+        // region requests
+        Optional<Todo> todo = client.send(QueryTodoGraphQL.api, new QueryTodoGraphQL().request(new ID("1"))).join();
+
+        CompleteTodo.Response response = client.send(CompleteTodoGraphQL.api, new CompleteTodoGraphQL().request(new ID("1"))).join();
+
+        Optional<QueryTodoGraphQL.TodoResult> selected =
+            client.send(QueryTodoGraphQL.selectedApi, new QueryTodoGraphQL().request(new ID("1"), t -> t.title())).join();
+        // endregion requests
+        return List.of(todo, response, selected);
     }
 }

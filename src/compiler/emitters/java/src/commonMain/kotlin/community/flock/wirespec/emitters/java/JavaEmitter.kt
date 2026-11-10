@@ -22,8 +22,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
+import community.flock.wirespec.compiler.core.ir.converter.convertGraphQL
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.Package
@@ -90,6 +92,15 @@ public open class JavaEmitter(
                     }
                 }
             }
+            // Record components satisfy the GraphQL request, so its query stays an accessor without a `get`.
+            .plus(
+                convertGraphQL().map {
+                    when {
+                        it is Interface && it.name == Name.of("GraphQLApi") -> it.toGetterAccessors { name -> Name.of("getClient").takeIf { name.value() == "client" } }
+                        else -> it
+                    }
+                },
+            )
             .plus(
                 raw(
                     """

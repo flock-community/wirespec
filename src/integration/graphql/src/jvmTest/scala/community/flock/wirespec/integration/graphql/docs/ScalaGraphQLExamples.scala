@@ -8,7 +8,7 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
 
@@ -84,5 +84,17 @@ object ScalaGraphQLExamples {
     val kinds: List[Option[String]] = results.map(_.__typename) // "Note" or "Tag"
     // endregion union
     kinds
+  }
+
+  def requests(client: Wirespec.GraphQLClient): List[Any] = {
+    // region requests
+    val todo: Option[Todo] = client.send(QueryTodoGraphQL.api, QueryTodoGraphQL.request(ID("1")))
+
+    val response: CompleteTodo.Response = client.send(CompleteTodoGraphQL.api, CompleteTodoGraphQL.request(ID("1")))
+
+    val selected: Option[QueryTodoGraphQL.TodoResult] =
+      client.send(QueryTodoGraphQL.selectedApi, QueryTodoGraphQL.request(ID("1"), todo => todo.title()))
+    // endregion requests
+    List(todo, response, selected)
   }
 }

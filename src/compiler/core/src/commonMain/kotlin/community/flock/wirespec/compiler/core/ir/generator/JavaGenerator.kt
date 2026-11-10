@@ -85,6 +85,8 @@ public object JavaGenerator :
         else -> emitFile(File(Name.of(""), listOf(element)))
     }
 
+    public fun generateType(type: Type): String = type.emitGenerics()
+
     private fun emitFile(file: File): String = compactSections(
         file.elements.filterIsInstance<Package>().joinToString("") { it.emit(0) },
         file.elements.filterIsInstance<Import>().joinToString("") { it.emit(0) },

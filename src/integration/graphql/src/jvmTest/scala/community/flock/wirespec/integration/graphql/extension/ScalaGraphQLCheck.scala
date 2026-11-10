@@ -31,6 +31,19 @@ object ScalaGraphQLCheck {
     serialization.query
   }
 
+  def sendsARequest(): String = {
+    val expected = QueryTodoGraphQL.TodoResult(None, Some("Groceries"), None, None, Some(QueryTodoGraphQL.UserResult(Some("Ann"))))
+    val serialization = Recording(QueryTodoGraphQL.GraphQLSelectedResponse(Some(QueryTodoGraphQL.GraphQLSelectedData(Some(expected))), None))
+    val client: Wirespec.GraphQLClient = GraphQLClient(serialization, transportation)
+
+    val request = QueryTodoGraphQL.request(ID("1"), todo => todo.title().owner(owner => owner.name()))
+    val result: Option[QueryTodoGraphQL.TodoResult] = client.send(QueryTodoGraphQL.selectedApi, request)
+
+    check(result == Some(expected), s"unexpected $result")
+    check(serialization.query == request.query, s"sent ${serialization.query}")
+    serialization.query
+  }
+
   def returnsTheTypedError(): Unit = {
     val serialization = Recording(CompleteTodoGraphQL.GraphQLResponse(None, Some(List(TodoError("Unknown todo")))))
 
