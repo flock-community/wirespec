@@ -131,6 +131,40 @@ internal class WirespecToGraphQL(private val definitions: List<Definition>) {
 
     fun fieldDefinition(rpc: Rpc): FieldDefinition = rpc.toFieldDefinition()
 
+    /** The type an rpc is a field of: a root operation type, or a type that a field of one leads to. */
+    fun parentType(rpc: Rpc): String = rpc.rootType().first
+
+    /** The root type of an operation: the one `@GraphQLSchema` names, or else the default. */
+    fun rootType(operation: Operation): String = definitions
+        .firstNotNullOfOrNull { definition -> definition.annotations.firstOrNull { it.name == SCHEMA }?.single(operation.keyword) }
+        ?: operation.defaultTypeName
+
+    /**
+     * The fields that lead from the root type of its operation to the type [rpc] is a field of, which is none for a field
+     * of the root type itself; null when no fields lead there.
+     */
+    fun path(rpc: Rpc): List<String>? = rootType(operation(rpc)).let { root ->
+        parentType(rpc).let { parent ->
+            when (graphQLName(parent)) {
+                root -> emptyList()
+                else -> generateSequence((rpcs.keys.map { it.first } + types.keys).filter { graphQLName(it) == root }.associateWith { emptyList<String>() }) { found ->
+                    found.flatMap { (type, path) -> type.namespaces().map { (field, namespace) -> namespace to path + field } }
+                        .filterNot { (namespace, _) -> namespace in found }
+                        .takeIf { it.isNotEmpty() }
+                        ?.let { found + it.reversed() }
+                }.last()[parent]
+            }
+        }
+    }
+
+    /** The fields of a type that return one object and take no required argument, with the type each returns. */
+    private fun String.namespaces(): List<Pair<String, String>> = (
+        rpcs.filterKeys { it.first == this }.values.flatten().map { it.toFieldDefinition() to it.result } +
+            types[this]?.shape?.fields.orEmpty().map { it.toFieldDefinition() to it.reference }
+        )
+        .filter { (field, _) -> field.arguments.none { it.type is TypeRef.NonNull && it.defaultValue == null } }
+        .mapNotNull { (field, reference) -> (reference as? Reference.Custom)?.let { field.name to it.value } }
+
     fun fieldDefinition(field: Field): FieldDefinition = field.toFieldDefinition()
 
     fun convert(): Document = Document(

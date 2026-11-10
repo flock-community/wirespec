@@ -95,22 +95,28 @@ public class GraphQLClientExtension(
             definitions.filterIsInstance<Rpc>()
                 .filter { rpc -> rpc.annotations.any { it.name in OPERATIONS } }
                 .mapNotNull { rpc ->
-                    operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, ir.serviceOf(rpc)) }
+                    operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, operations.close(rpc), operations.path(rpc), ir.serviceOf(rpc)) }
                 }
                 .takeIf { it.isNotEmpty() }
                 ?.let { ir + Client(dialect, GraphQLQueryBuilder(operations, dialect.language), it).files() }
         }
         ?: ir
 
-    private class Operation(val rpc: Rpc, val document: String, val open: String, val service: Service) {
+    private class Operation(val rpc: Rpc, val document: String, val open: String, close: String, path: List<String>, val service: Service) {
         val name: String = service.rpc.name.pascalCase()
+
+        /** The fields the response nests the result in: those that lead to the type the rpc is a field of, and its alias. */
+        val fields: List<String> = path + RESULT
+
+        /** The envelopes of the data of a response, named [data]: one for each of the [fields]. */
+        fun dataEnvelopes(data: String): List<String> = fields.dropLast(1).runningFold(data) { envelope, field -> envelope + Name.of(field).pascalCase() }
 
         /** Each variable keeps the name of the argument it is passed as, and takes the parameter of the `Service` function. */
         val variables: List<Pair<Field, Parameter>> = rpc.shape.fields
             .zip(service.function.parameters)
             .map { (field, parameter) -> Field(Name(listOf(field.identifier.value)), parameter.type) to parameter }
 
-        val request: GraphQLQueryBuilder.Request = GraphQLQueryBuilder.Request(name, service.function, open, rpc.result, variables)
+        val request: GraphQLQueryBuilder.Request = GraphQLQueryBuilder.Request(name, service.function, open, close, rpc.result, variables)
         val builderType: String = request.builder
         val client: String = "$builderType.$GRAPHQL_CLIENT"
         val requestType: String = "$builderType.${GraphQLQueryBuilder.GRAPHQL_REQUEST}"
@@ -215,8 +221,7 @@ public class GraphQLClientExtension(
                         Field(Name.of("errors"), Type.Nullable(Type.Array(rpc.error?.convert() ?: Type.Custom(GRAPHQL_ERROR)))),
                     ),
                 ),
-                nested(SELECTED_DATA, listOf(Field(Name.of(RESULT), builder.resultType(rpc.result.copy(isNullable = true))))),
-            )
+            ) + data(SELECTED_DATA, builder.resultType(rpc.result.copy(isNullable = true)))
         }.orEmpty()
 
         private fun Operation.requestArguments(): Map<Name, Expression> = mapOf(Name.of("query") to Literal(document, Type.String)) +
@@ -255,7 +260,7 @@ public class GraphQLClientExtension(
 
         private fun Operation.returnType(): Type = rpc.error?.let { Type.Custom("$name.Response") } ?: rpc.result.convert()
 
-        private fun Operation.envelopes(): List<Struct> = listOfNotNull(
+        private fun Operation.envelopes(): List<Struct> = listOf(
             nested(
                 RESPONSE,
                 listOf(
@@ -263,8 +268,14 @@ public class GraphQLClientExtension(
                     Field(Name.of("errors"), Type.Nullable(Type.Array(rpc.error?.convert() ?: Type.Custom(GRAPHQL_ERROR)))),
                 ),
             ),
-            nested(DATA, listOf(Field(Name.of(RESULT), Type.Nullable(rpc.result.dataType())))),
-        )
+        ) + data(DATA, Type.Nullable(rpc.result.dataType()))
+
+        /** The data of a response, named [name]: an envelope for each field the [result] is nested in. */
+        private fun Operation.data(name: String, result: Type): List<Struct> = dataEnvelopes(name).let { envelopes ->
+            envelopes.zip(fields).mapIndexed { index, (envelope, field) ->
+                nested(envelope, listOf(Field(Name(listOf(field)), envelopes.getOrNull(index + 1)?.let { Type.Nullable(Type.Custom(it)) } ?: result)))
+            }
+        }
 
         /** GraphQL has no void, so a field without a result returns a Boolean. */
         private fun Reference.dataType(): Type = when (this) {
@@ -367,13 +378,13 @@ public class GraphQLClientExtension(
                 failOnErrors().takeIf { operation.rpc.error == null },
                 ReturnStatement(
                     when (operation.rpc.error) {
-                        null -> RawExpression(result(operation.rpc))
-                        else -> RawExpression("response.errors?.firstOrNull()?.let { ${operation.name}.Error(value = it) } ?: ${operation.name}.Result(value = ${result(operation.rpc)})")
+                        null -> RawExpression(operation.result())
+                        else -> RawExpression("response.errors?.firstOrNull()?.let { ${operation.name}.Error(value = it) } ?: ${operation.name}.Result(value = ${operation.result()})")
                     },
                 ),
             )
 
-            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOf(read(SELECTED_RESPONSE), failOnErrors(), ReturnStatement(RawExpression(result(operation.rpc))))
+            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOf(read(SELECTED_RESPONSE), failOnErrors(), ReturnStatement(RawExpression(operation.result())))
 
             private fun read(response: String): Statement = Assignment(
                 Name.of("response"),
@@ -384,10 +395,10 @@ public class GraphQLClientExtension(
 
             private fun failOnErrors(): Statement = RawExpression("response.errors?.takeIf { it.isNotEmpty() }?.let { error(\"GraphQL request failed: \" + it) }")
 
-            private fun result(rpc: Rpc): String = when {
+            private fun Operation.result(): String = when {
                 rpc.result is Reference.Unit -> "Unit"
-                rpc.result.isNullable -> "response.data?.$RESULT"
-                else -> "response.data?.$RESULT ?: error(\"${rpc.noData()}\")"
+                rpc.result.isNullable -> "response.data${fields.joinToString("") { "?.$it" }}"
+                else -> "response.data${fields.joinToString("") { "?.$it" }} ?: error(\"${rpc.noData()}\")"
             }
         },
 
@@ -411,17 +422,17 @@ public class GraphQLClientExtension(
                 read(RESPONSE),
                 failOnErrors().takeIf { operation.rpc.error == null },
                 when (operation.rpc.error) {
-                    null -> result(operation.rpc)?.let { ReturnStatement(RawExpression(it)) }
+                    null -> operation.result()?.let { ReturnStatement(RawExpression(it)) }
                     else -> ReturnStatement(
                         RawExpression(
                             "response.errors().flatMap(errors -> errors.stream().findFirst()).<${operation.name}.Response>map(${operation.name}.Error::new)" +
-                                ".orElseGet(() -> new ${operation.name}.Result(${result(operation.rpc) ?: "null"}))",
+                                ".orElseGet(() -> new ${operation.name}.Result(${operation.result() ?: "null"}))",
                         ),
                     )
                 },
             )
 
-            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOfNotNull(read(SELECTED_RESPONSE), failOnErrors(), result(operation.rpc, SELECTED_DATA)?.let { ReturnStatement(RawExpression(it)) })
+            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOfNotNull(read(SELECTED_RESPONSE), failOnErrors(), operation.result(SELECTED_DATA)?.let { ReturnStatement(RawExpression(it)) })
 
             private fun read(response: String): Statement = Assignment(
                 Name.of("response"),
@@ -433,10 +444,12 @@ public class GraphQLClientExtension(
             private fun failOnErrors(): Statement = RawExpression("response.errors().filter(errors -> !errors.isEmpty()).ifPresent(errors -> { throw new IllegalStateException(\"GraphQL request failed: \" + errors); })")
 
             /** Null for a Unit result, whose `fromRawResponse` is void. */
-            private fun result(rpc: Rpc, data: String = DATA): String? = when {
-                rpc.result is Reference.Unit -> null
-                rpc.result.isNullable -> "response.data().flatMap($data::$RESULT)"
-                else -> "response.data().flatMap($data::$RESULT).orElseThrow(() -> new IllegalStateException(\"${rpc.noData()}\"))"
+            private fun Operation.result(data: String = DATA): String? = "response.data()${dataEnvelopes(data).zip(fields).joinToString("") { (envelope, field) -> ".flatMap($envelope::$field)" }}".let { read ->
+                when {
+                    rpc.result is Reference.Unit -> null
+                    rpc.result.isNullable -> read
+                    else -> "$read.orElseThrow(() -> new IllegalStateException(\"${rpc.noData()}\"))"
+                }
             }
         },
 
@@ -457,13 +470,13 @@ public class GraphQLClientExtension(
                 failOnErrors().takeIf { operation.rpc.error == null },
                 ReturnStatement(
                     when (operation.rpc.error) {
-                        null -> RawExpression(result(operation.rpc))
-                        else -> RawExpression("response.errors.flatMap(_.headOption).map(${operation.name}.Error(_)).getOrElse(${operation.name}.Result(${result(operation.rpc)}))")
+                        null -> RawExpression(operation.result())
+                        else -> RawExpression("response.errors.flatMap(_.headOption).map(${operation.name}.Error(_)).getOrElse(${operation.name}.Result(${operation.result()}))")
                     },
                 ),
             )
 
-            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOf(read(SELECTED_RESPONSE), failOnErrors(), ReturnStatement(RawExpression(result(operation.rpc))))
+            override fun fromSelectedRawResponse(operation: Operation): List<Statement> = listOf(read(SELECTED_RESPONSE), failOnErrors(), ReturnStatement(RawExpression(operation.result())))
 
             private fun read(response: String): Statement = Assignment(
                 Name.of("response"),
@@ -474,10 +487,12 @@ public class GraphQLClientExtension(
 
             private fun failOnErrors(): Statement = RawExpression("response.errors.filter(_.nonEmpty).foreach(errors => throw new IllegalStateException(\"GraphQL request failed: \" + errors))")
 
-            private fun result(rpc: Rpc): String = when {
-                rpc.result is Reference.Unit -> "()"
-                rpc.result.isNullable -> "response.data.flatMap(_.$RESULT)"
-                else -> "response.data.flatMap(_.$RESULT).getOrElse(throw new IllegalStateException(\"${rpc.noData()}\"))"
+            private fun Operation.result(): String = "response.data${fields.joinToString("") { ".flatMap(_.$it)" }}".let { read ->
+                when {
+                    rpc.result is Reference.Unit -> "()"
+                    rpc.result.isNullable -> read
+                    else -> "$read.getOrElse(throw new IllegalStateException(\"${rpc.noData()}\"))"
+                }
             }
         },
         ;

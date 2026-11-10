@@ -55,8 +55,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     enum class Language { Kotlin, Java, Scala }
 
-    /** An rpc: its `Service` function, its document up to the selection, its result and its variables. */
-    class Request(val rpc: String, val function: Function, val open: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
+    /** An rpc: its `Service` function, its document up to the selection and after it, its result and its variables. */
+    class Request(val rpc: String, val function: Function, val open: String, val close: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
         val builder: String = builder(rpc)
     }
 
@@ -159,8 +159,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
                     arg(
                         "query",
                         selection
-                            ?.let { concat(Literal("${request.open} ", Type.String), it.selected(), Literal(GraphQLOperations.CLOSE, Type.String)) }
-                            ?: Literal(request.open + GraphQLOperations.CLOSE, Type.String),
+                            ?.let { concat(Literal("${request.open} ", Type.String), it.selected(), Literal(request.close, Type.String)) }
+                            ?: Literal(request.open + request.close, Type.String),
                     )
                     request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
                         arg("variables", ConstructorStatement(Type.Custom(GRAPHQL_VARIABLES), variables.associate { (field, parameter) -> field.name to VariableReference(parameter.name) }))

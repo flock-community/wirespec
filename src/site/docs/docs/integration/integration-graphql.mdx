@@ -349,6 +349,43 @@ GraphQL text and returns itself from every field. A partial result has the same 
   left out when it is nullable. When it is not, the build fails with a message that names the field; use a selection
   for that operation instead.
 
+### Namespace types
+
+A schema can group its operations in a type that a field of `Query` or `Mutation` returns:
+
+```graphql
+type Query {
+  notifications: NotificationsQuery!
+}
+
+type NotificationsQuery {
+  inbox(limit: Int!): [Notification!]!
+}
+```
+
+An rpc is a field of such a type when its annotation names the type, and a field of the root type returns it:
+
+```wirespec
+type NotificationsQuery {}
+
+@GraphQLQuery
+rpc Notifications {} -> NotificationsQuery
+
+@GraphQLQuery("NotificationsQuery")
+rpc Inbox {
+  limit: Integer32
+} -> Notification[]
+```
+
+The query of `Inbox` nests its field in the field that leads to the type, and the client reads the result from there:
+
+```graphql
+query Inbox($limit: Int!) { notifications { result: inbox(limit: $limit) { id text } } }
+```
+
+The fields that lead to the type take no arguments, and can pass through several types. The build fails when no field
+leads from the root type to the type an rpc names.
+
 ## Configuration
 
 The request goes to the path `/graphql` of the transportation. To call a GraphQL API at another path, rewrite the path in

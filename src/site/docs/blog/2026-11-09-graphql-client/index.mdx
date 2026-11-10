@@ -335,6 +335,31 @@ Need only one operation, or want to fake one in a test? Every operation has a cl
 val queryTodo: QueryTodo.Service = QueryTodoGraphQL.GraphQLClient(serialization, transportation)
 ```
 
+## Operations behind a namespace
+
+Many schemas group their operations in a type that a field of `Query` returns, like `Query.notifications { inbox }`.
+Name that type in the annotation of an rpc, and the client nests the query in the field that leads there:
+
+```wirespec
+type NotificationsQuery {}
+
+@GraphQLQuery
+rpc Notifications {} -> NotificationsQuery
+
+@GraphQLQuery("NotificationsQuery")
+rpc Inbox {
+  limit: Integer32
+} -> Notification[]
+```
+
+```graphql
+query Inbox($limit: Int!) { notifications { result: inbox(limit: $limit) { id text } } }
+```
+
+`client.inbox(limit = 50)` still returns a plain `List<Notification>`: the client unwraps the namespace for you. For
+now you write these rpcs yourself, as the converter keeps a namespace type as a `type` with fields. The
+[documentation](/docs/integration/graphql#namespace-types) has the details.
+
 ## Try it
 
 The extension ships with every Wirespec plugin as `GraphQLClient`. Convert and generate in one go with the CLI, or

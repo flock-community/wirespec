@@ -66,6 +66,8 @@ rpc AddTodo {
 - The `rpc` is named after the field (`addTodo` becomes `AddTodo`). When that name is taken, for example by `type Todo`
   for a field `todo`, it gets the root type as prefix (`QueryTodo`) and `@GraphQLName("todo")` keeps the field name.
 - A root type with another name than the default is named in the annotation: `@GraphQLQuery("QueryRoot")`.
+- An rpc you write yourself can name another type than the root type, which makes it a field of that type. The
+  [GraphQL client](../integration/integration-graphql.mdx#namespace-types) nests its query in the fields that lead there.
 - The rpcs of an `extend type Query` block are marked `@GraphQLQuery(extend: "1")`, the next block `"2"`, and so on.
 
 The root type is rebuilt from its rpcs and needs no Wirespec definition of its own. It only gets one, an empty `type`
