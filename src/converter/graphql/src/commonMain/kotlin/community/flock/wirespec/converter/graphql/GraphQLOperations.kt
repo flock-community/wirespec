@@ -22,6 +22,9 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
  * ```
  *
+ * An rpc that names another type than the root operation type, `@GraphQLQuery("NotificationsQuery")`, is a field of that
+ * type, so its document nests it in the fields that lead there: `query Inbox { notifications { result: inbox { id } } }`.
+ *
  * Every parameter of the rpc is a variable, typed and defaulted as the field argument it is passed to. The field is
  * aliased, so a client reads it under the same name whatever the field is called, and selects every field of its result,
  * all the way down. A union or interface selects `__typename` and one inline fragment for each member.
@@ -40,18 +43,33 @@ public class GraphQLOperations(definitions: List<Definition>) {
 
     /** The document that selects the result of [rpc] under [alias]; null for a subscription, which is no request and response. */
     public fun document(rpc: Rpc, alias: String): String? = open(rpc, alias)
-        ?.let { "$it${rpc.result.selection(Trail(rpc.identifier.value))}$CLOSE" }
+        ?.let { "$it${rpc.result.selection(Trail(rpc.identifier.value))}${close(rpc)}" }
 
     /**
      * The document of [rpc] up to where the selection of its result goes, for a caller that selects the fields itself:
-     * the document is this text, a space and the selection between braces, and [CLOSE]. Null for a subscription.
+     * the document is this text, a space and the selection between braces, and [close]. Null for a subscription.
      */
     public fun open(rpc: Rpc, alias: String): String? = schema.operation(rpc)
         .takeUnless { it == Operation.SUBSCRIPTION }
         ?.let { operation ->
             val field = schema.fieldDefinition(rpc)
-            "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { $alias: ${field.name}${field.arguments.passed()}"
+            "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { ${path(rpc).joinToString("") { "$it { " }}$alias: ${field.name}${field.arguments.passed()}"
         }
+
+    /** What closes the document of [rpc] after the selection of its result. */
+    public fun close(rpc: Rpc): String = " }".repeat(path(rpc).size + 1)
+
+    /**
+     * The fields that lead from the root operation type to the type [rpc] is a field of, which its document nests the
+     * field in and its response nests the result in: `notifications` for a field of the `NotificationsQuery` that
+     * `Query.notifications` returns. None for a field of the root operation type itself.
+     */
+    public fun path(rpc: Rpc): List<String> = checkNotNull(schema.path(rpc)) {
+        schema.rootType(schema.operation(rpc)).let { root ->
+            "Cannot write a GraphQL query for rpc ${rpc.identifier.value}: it is a field of ${schema.parentType(rpc)}, but no field leads from $root to that type. " +
+                "Give $root a field that returns it, like `rpc Namespace {} -> ${schema.parentType(rpc)}`."
+        }
+    }
 
     /** Whether [field] can be selected without passing it an argument. */
     public fun isSelectable(field: Field): Boolean = schema.fieldDefinition(field).arguments.none { it.type is TypeRef.NonNull && it.defaultValue == null }
@@ -127,10 +145,7 @@ public class GraphQLOperations(definitions: List<Definition>) {
         fun field(name: String): Trail = copy(fields = fields + name)
     }
 
-    public companion object {
-        /** What closes a document after the selection of its result. */
-        public const val CLOSE: String = " }"
-
-        private const val TYPENAME = "__typename"
+    private companion object {
+        const val TYPENAME = "__typename"
     }
 }

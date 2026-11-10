@@ -1,7 +1,7 @@
 package community.flock.wirespec.integration.graphql.extension
 
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, QueryTodoGraphQL, SearchGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, InboxCountGraphQL, QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.CompleteTodo
 import community.flock.wirespec.scala.Wirespec
@@ -56,6 +56,16 @@ object ScalaGraphQLCheck {
     val result = GraphQLClient(serialization, transportation).search("milk", result => result.onNote(note => note.text()).onTag(tag => tag.name()))
 
     check(result == expected, s"unexpected $result")
+    serialization.query
+  }
+
+  def readsFromANamespace(): String = {
+    val data = InboxCountGraphQL.GraphQLData(Some(InboxCountGraphQL.GraphQLDataNotifications(Some(3))))
+    val serialization = Recording(InboxCountGraphQL.GraphQLResponse(Some(data), None))
+
+    val result = GraphQLClient(serialization, transportation).inboxCount()
+
+    check(result == 3, s"unexpected $result")
     serialization.query
   }
 

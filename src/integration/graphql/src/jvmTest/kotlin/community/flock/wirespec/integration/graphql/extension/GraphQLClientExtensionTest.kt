@@ -29,16 +29,19 @@ import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.TodoResult as JavaTodoResult
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.UserResult as JavaUserResult
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
+import community.flock.wirespec.integration.graphql.java.generated.model.Notification as JavaNotification
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority as JavaPriority
 import community.flock.wirespec.integration.graphql.java.generated.model.Todo as JavaTodo
 import community.flock.wirespec.integration.graphql.java.generated.model.TodoError as JavaTodoError
 import community.flock.wirespec.integration.graphql.java.generated.model.User as JavaUser
 import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteTodo as JavaCompleteTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient as KotlinGraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.InboxGraphQL.NotificationResult as KotlinNotificationResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.TodoResult as KotlinTodoResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.UserResult as KotlinUserResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo as KotlinNewTodo
+import community.flock.wirespec.integration.graphql.kotlin.generated.model.Notification as KotlinNotification
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority as KotlinPriority
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Todo as KotlinTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.TodoError as KotlinTodoError
@@ -191,6 +194,69 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `Kotlin client nests a field of a namespace type in the field that leads to it`() = runBlocking {
+        val server = KotlinServer("""{"data":{"notifications":{"result":[{"id":"1","text":"Hello"}]}}}""")
+
+        val inbox = server.client().inbox(10, "nl")
+
+        assertEquals(listOf(KotlinNotification("1", "Hello")), inbox)
+        assertEquals(
+            mapOf(
+                "query" to "query Inbox(\$limit: Int!, \$locale: String) { notifications { result: inbox(limit: \$limit, locale: \$locale) { id text } } }",
+                "variables" to mapOf("limit" to 10, "locale" to "nl"),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `Kotlin client reads a scalar and a mutation from a namespace type`() = runBlocking {
+        val count = KotlinServer("""{"data":{"notifications":{"result":3}}}""")
+        val markRead = KotlinServer("""{"data":{"notifications":{"result":true}}}""")
+
+        assertEquals(3, count.client().inboxCount())
+        markRead.client().markRead("1")
+
+        assertEquals("query InboxCount { notifications { result: inboxCount } }", count.json()["query"])
+        assertEquals("mutation MarkRead(\$id: String!) { notifications { result: markRead(id: \$id) } }", markRead.json()["query"])
+    }
+
+    @Test
+    fun `Kotlin client selects the fields of a result in a namespace type`() = runBlocking {
+        val server = KotlinServer("""{"data":{"notifications":{"result":[{"text":"Hello"}]}}}""")
+
+        val inbox = server.client().inbox(10, null) { text() }
+
+        assertEquals(listOf(KotlinNotificationResult(id = null, text = "Hello")), inbox)
+        assertEquals("query Inbox(\$limit: Int!, \$locale: String) { notifications { result: inbox(limit: \$limit, locale: \$locale) { text } } }", server.json()["query"])
+    }
+
+    @Test
+    fun `Kotlin client fails on a namespace without data`() {
+        val error = assertFailsWith<IllegalStateException> {
+            runBlocking { KotlinServer("""{"data":{"notifications":null}}""").client().inboxCount() }
+        }
+        assertEquals("GraphQL response without data for InboxCount", error.message)
+    }
+
+    @Test
+    fun `Java client nests a field of a namespace type in the field that leads to it`() {
+        val server = JavaServer("""{"data":{"notifications":{"result":[{"id":"1","text":"Hello"}]}}}""")
+
+        val inbox = server.client().inbox(10, Optional.empty()).join()
+        val selected = server.client().inbox(10, Optional.empty()) { it.text() }.join()
+
+        assertEquals(listOf(JavaNotification("1", "Hello")), inbox)
+        assertEquals(listOf(Optional.of("Hello")), selected.map { it.text() })
+        assertEquals("query Inbox(\$limit: Int!, \$locale: String) { notifications { result: inbox(limit: \$limit, locale: \$locale) { text } } }", server.json()["query"])
+    }
+
+    @Test
+    fun `Scala client nests a field of a namespace type in the field that leads to it`() {
+        assertEquals("query InboxCount { notifications { result: inboxCount } }", scalaCheck("readsFromANamespace"))
+    }
+
+    @Test
     fun `Java client reads the selected fields into the partial result`() {
         val server = JavaServer("""{"data":{"result":[{"id":"1","owner":{"name":"Ann"}}]}}""")
 
@@ -232,7 +298,7 @@ class GraphQLClientExtensionTest {
             }
         }
         assertEquals(
-            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos").map { "$it.Service" },
+            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos", "Notifications", "Inbox", "InboxCount", "MutateNotifications", "MarkRead").map { "$it.Service" },
             KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
         )
     }
