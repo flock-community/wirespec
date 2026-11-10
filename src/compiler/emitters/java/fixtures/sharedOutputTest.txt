@@ -196,20 +196,6 @@ public interface Wirespec {
     public String getMethod();
     public ServerEdge<Req, Res> getServer(Serialization serialization);
   }
-  public interface GraphQLRequest {
-    String query();
-  }
-  public interface GraphQLResponse<T, E> {
-    java.util.Optional<T> data();
-    java.util.Optional<java.util.List<E>> errors();
-  }
-  public interface GraphQLClientEdge<Req extends GraphQLRequest, Res extends GraphQLResponse<?, ?>> {
-    public RawRequest to(Req request);
-    public Res from(RawResponse response);
-  }
-  public interface GraphQLClient<Req extends GraphQLRequest, Res extends GraphQLResponse<?, ?>> {
-    public GraphQLClientEdge<Req, Res> getClient(Serialization serialization);
-  }
   public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
     if(rawType != null) {
       return new ParameterizedType() {

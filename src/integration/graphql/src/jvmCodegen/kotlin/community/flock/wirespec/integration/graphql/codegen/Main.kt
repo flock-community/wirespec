@@ -10,15 +10,16 @@ import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.scala.ScalaEmitter
 import community.flock.wirespec.integration.graphql.extension.GraphQLClientExtension
 
+// The extension adds its types to the shared Wirespec file, so the generated one stands in for that of the runtime library.
 fun main(args: Array<String>) = codegen(args) {
     val ast = wirespec()
     emit("java", ast) {
-        JavaEmitter(it, EmitShared(false)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Java)))
+        JavaEmitter(it, EmitShared(true)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Java)))
     }
     emit("kotlin", ast) {
-        KotlinEmitter(it, EmitShared(false)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Kotlin)))
+        KotlinEmitter(it, EmitShared(true)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Kotlin)))
     }
     emit("scala", ast) {
-        ScalaEmitter(it, EmitShared(false)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Scala)))
+        ScalaEmitter(it, EmitShared(true)).applyExtensions(nonEmptyListOf(GraphQLClientExtension(it, FileExtension.Scala)))
     }
 }
