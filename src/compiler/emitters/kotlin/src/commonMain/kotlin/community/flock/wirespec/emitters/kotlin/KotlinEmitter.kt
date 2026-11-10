@@ -26,7 +26,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
-import community.flock.wirespec.compiler.core.ir.converter.convertGraphQLClient
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Element
@@ -134,7 +133,7 @@ public open class KotlinEmitter(
 
         val packageName = PackageName("$DEFAULT_SHARED_PACKAGE_STRING.kotlin")
 
-        val clientServer = convertClientServer() + convertGraphQLClient()
+        val clientServer = convertClientServer()
 
         val wirespecShared = packageName.convert()
             .transform {

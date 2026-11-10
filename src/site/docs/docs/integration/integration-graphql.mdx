@@ -5,6 +5,7 @@ wirespec:
   source: ../../../../integration/graphql/src/jvmCodegen/resources/wirespec/todo.ws
   package: community.flock.todo
   extensions: [GraphQLClient]
+  shared: true
   examples: ../../../../integration/graphql/src/jvmTest
 ---
 
@@ -87,13 +88,20 @@ Maven and by class in Gradle. Convert the schema to Wirespec first, or write the
   <TabItem value="cli" label="CLI">
     ```shell
     # From a GraphQL schema: convert it and generate the client in one go
-    wirespec convert -i ./schema.graphql -o ./build/generated -l Scala -e GraphQLClient GraphQL
+    wirespec convert -i ./schema.graphql -o ./build/generated -l Scala -e GraphQLClient --shared GraphQL
 
     # From Wirespec
-    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Kotlin -e GraphQLClient
+    wirespec compile -i ./src/main/wirespec -o ./build/generated -l Kotlin -e GraphQLClient --shared
     ```
   </TabItem>
 </Tabs>
+
+:::warning[Emit the shared file]
+The extension adds the types of its clients, such as `Wirespec.GraphQLClient`, to the shared `Wirespec` file it is
+generated with. Keep `shared` on, the default in Gradle and Maven and `--shared` in the CLI: the `Wirespec` of the
+`community.flock.wirespec.integration:wirespec` library does not have these types, so the generated clients do not
+compile against it.
+:::
 
 :::info
 Make sure to use the latest version, found here:
@@ -301,8 +309,8 @@ or retry in one place, write one client for all operations, just like with the `
 Each operation has an `Api`, a `Wirespec.GraphQLClient<Req, Res>`. For a serialization it gives a
 `Wirespec.GraphQLClientEdge<Req, Res>` that writes the `GraphQLRequest` of the operation, a `Wirespec.GraphQLRequest`,
 as the `Wirespec.RawRequest` to send, and reads the `Wirespec.RawResponse` as the `Response` of the operation, a
-`Wirespec.GraphQLResponse`. These interfaces are part of the shared `Wirespec` file, next to the `Client` and
-`ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQLClient` therefore sends any operation:
+`Wirespec.GraphQLResponse`. The extension adds these four interfaces to the shared `Wirespec` file, next to the `Client`
+and `ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQLClient` therefore sends any operation:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">

@@ -26,7 +26,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
-import community.flock.wirespec.compiler.core.ir.converter.convertGraphQLClient
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Element
@@ -133,7 +132,7 @@ public open class ScalaEmitter(
             } else {
                 element
             }
-        } + convertGraphQLClient()
+        }
 
         val wirespecShared = packageName.convert()
             .transform {

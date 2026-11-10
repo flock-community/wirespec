@@ -347,42 +347,6 @@ public fun convertClientServer(): List<Element> = listOf(
     },
 )
 
-/**
- * The client side of a GraphQL operation, which the GraphQL client extension implements for each rpc. A GraphQL
- * request is no `Request` and its response no `Response`, so they have messages and edges of their own.
- */
-public fun convertGraphQLClient(): List<Element> = listOf(
-    `interface`("GraphQLRequest") {
-        field("query", Type.String)
-    },
-    `interface`("GraphQLResponse") {
-        typeParam(type("T"))
-        typeParam(type("E"))
-        field("data", Type.Nullable(type("T")))
-        field("errors", Type.Nullable(Type.Array(type("E"))))
-    },
-    `interface`("GraphQLClientEdge") {
-        typeParam(type("Req"), type("GraphQLRequest"))
-        typeParam(type("Res"), type("GraphQLResponse", Type.Wildcard, Type.Wildcard))
-        function("to") {
-            returnType(type("RawRequest"))
-            arg("request", type("Req"))
-        }
-        function("from") {
-            returnType(type("Res"))
-            arg("response", type("RawResponse"))
-        }
-    },
-    `interface`("GraphQLClient") {
-        typeParam(type("Req"), type("GraphQLRequest"))
-        typeParam(type("Res"), type("GraphQLResponse", Type.Wildcard, Type.Wildcard))
-        function("client") {
-            returnType(type("GraphQLClientEdge", type("Req"), type("Res")))
-            arg("serialization", type("Serialization"))
-        }
-    },
-)
-
 internal fun Identifier.toName(): Name = when (this) {
     is FieldIdentifier -> {
         // Tokenize into runs of separators (dashes, dots, spaces) and runs of non-separators,

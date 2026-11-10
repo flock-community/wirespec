@@ -417,6 +417,28 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `The types of the client edges are added to the shared Wirespec file, and only by the extension`() {
+        val ast = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), "type Todo { id: String }\n@GraphQLQuery\nrpc GetTodo { id: String } -> Todo"))).getOrNull()!!
+        val types = listOf(
+            "public interface GraphQLRequest {",
+            "public interface GraphQLResponse<T: Any, E: Any> {",
+            "public interface GraphQLClientEdge<Req: GraphQLRequest, Res: GraphQLResponse<*, *>> {",
+            "public fun interface GraphQLClient<Req: GraphQLRequest, Res: GraphQLResponse<*, *>> {",
+        )
+
+        fun emit(shared: Boolean, extended: Boolean): Map<String, String> = KotlinEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(shared))
+            .let { if (extended) it.applyExtensions(nonEmptyListOf(GraphQLClientExtension(it.packageName, FileExtension.Kotlin))) else it }
+            .emit(ast, noLogger)
+            .associate { it.file to it.result }
+
+        types.forEach { assertTrue(it in emit(shared = true, extended = true).getValue("Wirespec.kt"), "Wirespec.kt misses $it") }
+        types.forEach { assertTrue(it !in emit(shared = true, extended = false).getValue("Wirespec.kt"), "Wirespec.kt has $it") }
+        assertTrue(emit(shared = false, extended = true).values.none { "interface GraphQLClientEdge" in it })
+    }
+
+    @Test
     fun `Other languages are left untouched`() {
         val ast = object : ParseContext, NoLogger {
             override val spec = WirespecSpec

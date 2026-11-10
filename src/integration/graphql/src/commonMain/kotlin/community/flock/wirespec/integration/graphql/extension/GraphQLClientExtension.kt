@@ -28,6 +28,7 @@ import community.flock.wirespec.compiler.core.ir.Statement
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.Type
 import community.flock.wirespec.compiler.core.ir.TypeDescriptor
+import community.flock.wirespec.compiler.core.ir.TypeParameter
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.Visibility
 import community.flock.wirespec.compiler.core.ir.converter.convert
@@ -68,6 +69,9 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * generated clients send through it. An rpc with fields to select has a `SelectedApi` too, which reads the partial
  * result.
  *
+ * Those four `Wirespec` types are added to the shared file by this extension, so register it on an emitter that emits
+ * the shared file: the `Wirespec` of the runtime library does not have them.
+ *
  * The response carries errors next to its data. An rpc with an error type returns the first error, read as that type,
  * as its `Error`; an rpc without one fails with an [IllegalStateException] listing the [GRAPHQL_ERROR]s. A union in the
  * result is selected with `__typename`, which the serialization reads to pick the member.
@@ -105,9 +109,23 @@ public class GraphQLClientExtension(
                     operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, operations.close(rpc), operations.path(rpc), ir.serviceOf(rpc)) }
                 }
                 .takeIf { it.isNotEmpty() }
-                ?.let { ir + Client(dialect, GraphQLQueryBuilder(operations, dialect.language), it).files() }
+                ?.let { ir.withGraphQLTypes(dialect) + Client(dialect, GraphQLQueryBuilder(operations, dialect.language), it).files() }
         }
         ?: ir
+
+    /**
+     * Adds the types the rpcs share to the `Wirespec` object of the shared file, next to the `Client` and `ClientEdge` of
+     * the endpoints. Only the shared file of this run gets them: the generated code does not compile against a `Wirespec`
+     * from elsewhere, such as the runtime library, so emit the shared file along with it.
+     */
+    private fun IR.withGraphQLTypes(dialect: Dialect): IR = map { element ->
+        (element as? LanguageFile)
+            ?.takeIf { file -> file.elements.any { it.isWirespec() } }
+            ?.let { file -> file.copy(elements = file.elements.map { if (it is Namespace && it.isWirespec()) it.copy(elements = it.elements + dialect.graphQLTypes()) else it }) }
+            ?: element
+    }
+
+    private fun Element.isWirespec(): Boolean = this is Namespace && name == Name.of(WIRESPEC)
 
     private class Operation(val rpc: Rpc, document: String, open: String, close: String, path: List<String>, val service: Service) {
         val name: String = service.rpc.name.pascalCase()
@@ -434,6 +452,8 @@ public class GraphQLClientExtension(
 
             override val imports = listOf(import("$DEFAULT_SHARED_PACKAGE_STRING.kotlin", "Wirespec"), import("kotlin.reflect", "typeOf"))
 
+            override val visibility = Visibility.PUBLIC
+
             override fun type(name: String): Expression = TypeDescriptor(Type.Custom(name))
 
             override fun builder(name: String): Expression = RawExpression(name)
@@ -569,6 +589,55 @@ public class GraphQLClientExtension(
 
         abstract val language: GraphQLQueryBuilder.Language
 
+        /** Kotlin compiles the shared file in explicit API mode, so there its declarations spell their visibility out. */
+        open val visibility: Visibility? = null
+
+        /**
+         * What the client side of every rpc has in common. A GraphQL request is no `Wirespec.Request` and its response
+         * no `Wirespec.Response`, so they have messages and edges of their own.
+         */
+        fun graphQLTypes(): List<Interface> = listOf(
+            Interface(
+                name = Name.of(GraphQLQueryBuilder.GRAPHQL_REQUEST),
+                elements = emptyList(),
+                fields = listOf(Field(Name.of("query"), Type.String, visibility = visibility)),
+                visibility = visibility,
+            ),
+            Interface(
+                name = Name.of(GRAPHQL_RESPONSE),
+                elements = emptyList(),
+                typeParameters = listOf(TypeParameter(DATA_TYPE), TypeParameter(ERROR_TYPE)),
+                fields = listOf(
+                    Field(Name.of("data"), Type.Nullable(DATA_TYPE), visibility = visibility),
+                    Field(Name.of("errors"), Type.Nullable(Type.Array(ERROR_TYPE)), visibility = visibility),
+                ),
+                visibility = visibility,
+            ),
+            Interface(
+                name = Name.of(GRAPHQL_CLIENT_EDGE),
+                typeParameters = MESSAGES,
+                elements = listOf(
+                    Function(name = TO, parameters = listOf(Parameter(REQUEST, REQ)), returnType = Type.Custom("RawRequest"), body = emptyList(), visibility = visibility),
+                    Function(name = FROM, parameters = listOf(Parameter(RESPONSE_NAME, Type.Custom("RawResponse"))), returnType = RES, body = emptyList(), visibility = visibility),
+                ),
+                visibility = visibility,
+            ),
+            Interface(
+                name = Name.of(GRAPHQL_CLIENT),
+                typeParameters = MESSAGES,
+                elements = listOf(
+                    Function(
+                        name = client,
+                        parameters = listOf(Parameter(SERIALIZATION, Type.Custom("Serialization"))),
+                        returnType = Type.Custom(GRAPHQL_CLIENT_EDGE, listOf(REQ, RES)),
+                        body = emptyList(),
+                        visibility = visibility,
+                    ),
+                ),
+                visibility = visibility,
+            ),
+        )
+
         abstract val imports: List<Import>
 
         /** The function of `Wirespec.GraphQLClient` that gives the edge, named as the emitter names it. */
@@ -615,9 +684,20 @@ public class GraphQLClientExtension(
 
         private val SERIALIZATION = Name.of("serialization")
         private val TRANSPORTATION = Name.of("transportation")
-        private const val WIRESPEC_CLIENT = "Wirespec.GraphQLClient"
-        private const val WIRESPEC_CLIENT_EDGE = "Wirespec.GraphQLClientEdge"
-        private const val WIRESPEC_RESPONSE = "Wirespec.GraphQLResponse"
+        private const val WIRESPEC = "Wirespec"
+        private const val GRAPHQL_RESPONSE = "GraphQLResponse"
+        private const val GRAPHQL_CLIENT_EDGE = "GraphQLClientEdge"
+        private const val WIRESPEC_CLIENT = "$WIRESPEC.$GRAPHQL_CLIENT"
+        private const val WIRESPEC_CLIENT_EDGE = "$WIRESPEC.$GRAPHQL_CLIENT_EDGE"
+        private const val WIRESPEC_RESPONSE = "$WIRESPEC.$GRAPHQL_RESPONSE"
+        private val DATA_TYPE = Type.Custom("T")
+        private val ERROR_TYPE = Type.Custom("E")
+        private val REQ = Type.Custom("Req")
+        private val RES = Type.Custom("Res")
+        private val MESSAGES = listOf(
+            TypeParameter(REQ, listOf(Type.Custom(GraphQLQueryBuilder.GRAPHQL_REQUEST))),
+            TypeParameter(RES, listOf(Type.Custom(GRAPHQL_RESPONSE, listOf(Type.Wildcard, Type.Wildcard)))),
+        )
         private const val TYPED_RESPONSE = "Response"
         private const val TYPED_SELECTED_RESPONSE = "SelectedResponse"
         private val FROM_RESPONSE = Name.of("fromResponse")
