@@ -293,6 +293,51 @@ A field of a type takes a selection of that type. A union has an `on<Member>` se
 A call with a selection throws an `IllegalStateException` on GraphQL errors, also for an rpc with an error type: its
 `Result` and `Error` hold the full models.
 
+## A client of your own
+
+The generated clients send every operation the same way. To send them your way, for instance to add a header, log
+or retry in one place, write one client for all operations, just like with the `Wirespec.Client` of an endpoint.
+
+Each operation has an `Api`, a `GraphQL.Client<Req, Res>`. For a serialization it gives a `GraphQL.ClientEdge<Req, Res>`
+that writes a `GraphQLRequest` as the `Wirespec.RawRequest` to send, and reads the result from the
+`Wirespec.RawResponse`. A client that takes any `GraphQL.Client` therefore sends any operation:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#abstract-client
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#abstract-client
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#abstract-client
+    ```
+  </TabItem>
+</Tabs>
+
+The builder of the operation writes the request: `request(...)` with the parameters of the rpc selects every field, and
+takes a selection to pick them. Send a request with a selection through the `SelectedApi`, which reads the partial
+result:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#abstract-calls
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#abstract-calls
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#abstract-calls
+    ```
+  </TabItem>
+</Tabs>
+
+The edges read errors like the generated clients do, which send through them as well.
+
 ## Generated code
 
 Each operation gets a single file in the `graphql` package, next to `model` and `rpc`, that holds everything the
@@ -303,6 +348,9 @@ operation needs. The `GraphQLClient` that bundles them sits in the root package,
 | `GraphQLClient` (root package)           | Implements the `Service` of every operation, with and without a selection  |
 | `QueryTodoGraphQL`, ...                  | The file of one operation; its builder puts a selection in the query       |
 | `QueryTodoGraphQL.GraphQLClient`         | The client of the operation                                                |
+| `QueryTodoGraphQL.Api`, `.ClientEdge`    | What a [client of your own](#a-client-of-your-own) sends the operation with |
+| `QueryTodoGraphQL.SelectedApi`, ...      | The same for a request with a selection, which reads the partial result    |
+| `GraphQL` (`graphql` package)            | The `Client` and `ClientEdge` that the `Api` and edges of all operations share |
 | `QueryTodoGraphQL.GraphQLRequest`, ...   | The request, its variables and the envelopes of the response               |
 | `QueryTodoGraphQL.TodoSelection`, ...    | The fields you can select of a type or union the result reaches            |
 | `QueryTodoGraphQL.TodoResult`, ...       | The partial result of a type or union the result reaches                   |
@@ -319,8 +367,8 @@ The shapes follow the language:
 | Java     | Record without components | `Function<UserSelection, UserSelection>` | Public static records     |
 | Scala    | `object`                  | `UserSelection => UserSelection`         | Case classes              |
 
-The client of an operation builds the request, sends it and reads the result. The full query is written at build time;
-the overload with a selection asks the builder of the operation for it. A selection collects the selected fields as
+The client of an operation asks the builder for the request, and sends it and reads the result through the edge of the
+operation. The full query is written at build time; the overload with a selection puts the selected fields in it. A selection collects the selected fields as
 GraphQL text and returns itself from every field. A partial result has the same fields as the model, all nullable:
 
 <Tabs groupId="language">

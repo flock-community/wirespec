@@ -14,6 +14,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 // endregion create-client
+// region abstract-client
+import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQL;
+import java.util.concurrent.CompletableFuture;
+// endregion abstract-client
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchGraphQL;
@@ -109,5 +113,25 @@ public final class JavaGraphQLExamples {
         List<Optional<String>> kinds = results.stream().map(SearchGraphQL.SearchResultResult::__typename).toList(); // "Note" or "Tag"
         // endregion union
         return kinds;
+    }
+    // region abstract-client
+
+    public record AbstractClient(Wirespec.Serialization serialization, Wirespec.Transportation transportation) {
+        public <Req, Res> CompletableFuture<Res> send(GraphQL.Client<Req, Res> api, Req request) {
+            var edge = api.client(serialization);
+            return transportation.transport(edge.to(request)).thenApply(edge::from);
+        }
+    }
+    // endregion abstract-client
+
+    public static List<Object> abstractCalls(AbstractClient client) {
+        // region abstract-calls
+        Optional<Todo> todo = client.send(new QueryTodoGraphQL.Api(), new QueryTodoGraphQL().request(new ID("1"))).join();
+
+        Optional<QueryTodoGraphQL.TodoResult> selected = client.send(
+            new QueryTodoGraphQL.SelectedApi(),
+            new QueryTodoGraphQL().request(new ID("1"), t -> t.title())).join();
+        // endregion abstract-calls
+        return List.of(todo, selected);
     }
 }

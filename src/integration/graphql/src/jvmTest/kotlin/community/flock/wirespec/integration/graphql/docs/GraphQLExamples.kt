@@ -12,6 +12,9 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
+// region abstract-client
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQL
+// endregion abstract-client
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL
@@ -94,6 +97,28 @@ object GraphQLExamples {
         val kinds: List<String?> = results.map { it.__typename } // "Note" or "Tag"
         // endregion union
         return kinds
+    }
+
+    // region abstract-client
+
+    class AbstractClient(
+        private val serialization: Wirespec.Serialization,
+        private val transportation: Wirespec.Transportation,
+    ) {
+        suspend fun <Req : Any, Res> send(api: GraphQL.Client<Req, Res>, request: Req): Res = api.client(serialization).run { from(transportation.transport(to(request))) }
+    }
+    // endregion abstract-client
+
+    suspend fun abstractCalls(client: AbstractClient): List<Any?> {
+        // region abstract-calls
+        val todo: Todo? = client.send(QueryTodoGraphQL.Api, QueryTodoGraphQL.request(ID("1")))
+
+        val selected: QueryTodoGraphQL.TodoResult? = client.send(
+            QueryTodoGraphQL.SelectedApi,
+            QueryTodoGraphQL.request(ID("1")) { title() },
+        )
+        // endregion abstract-calls
+        return listOf(todo, selected)
     }
 
     fun path(http: HttpTransportation): Wirespec.Transportation {

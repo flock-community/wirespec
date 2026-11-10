@@ -17,6 +17,8 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.integration.graphql.docs.GraphQLExamples
+import community.flock.wirespec.integration.graphql.docs.JavaGraphQLExamples
 import kotlinx.coroutines.runBlocking
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -26,6 +28,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient as JavaGraphQLClient
+import community.flock.wirespec.integration.graphql.java.generated.graphql.ClearTodosGraphQL as JavaClearTodosGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL as JavaQueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.TodoResult as JavaTodoResult
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.UserResult as JavaUserResult
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
@@ -36,7 +40,10 @@ import community.flock.wirespec.integration.graphql.java.generated.model.TodoErr
 import community.flock.wirespec.integration.graphql.java.generated.model.User as JavaUser
 import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteTodo as JavaCompleteTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient as KotlinGraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.ClearTodosGraphQL as KotlinClearTodosGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.CompleteTodoGraphQL as KotlinCompleteTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.InboxGraphQL.NotificationResult as KotlinNotificationResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL as KotlinQueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.TodoResult as KotlinTodoResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.UserResult as KotlinUserResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
@@ -291,6 +298,67 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `Kotlin api sends an operation through a client of your own`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":{"id":"1","title":"Groceries","done":false,"priority":null,"owner":{"name":"Ann"}}}}""")
+        val client = GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), server)
+
+        val todo = client.send(KotlinQueryTodoGraphQL.Api, KotlinQueryTodoGraphQL.request(KotlinID("1")))
+
+        assertEquals(KotlinTodo(KotlinID("1"), "Groceries", false, null, KotlinUser("Ann")), todo)
+        assertEquals(listOf("graphql"), server.request.path)
+        assertEquals(
+            mapOf(
+                "query" to "query QueryTodo(\$id: ID!) { result: todo(id: \$id) { id title done priority owner { name } } }",
+                "variables" to mapOf("id" to "1"),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `Kotlin api reads a selection, an error type and a result without data`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":{"title":"Groceries"}}}""")
+        val client = GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), server)
+
+        assertEquals(
+            KotlinTodoResult(null, "Groceries", null, null, null),
+            client.send(KotlinQueryTodoGraphQL.SelectedApi, KotlinQueryTodoGraphQL.request(KotlinID("1")) { title() }),
+        )
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { title } }", server.json()["query"])
+        assertEquals(
+            KotlinCompleteTodo.Error(KotlinTodoError("Unknown todo")),
+            GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), KotlinServer("""{"errors":[{"message":"Unknown todo"}]}"""))
+                .send(KotlinCompleteTodoGraphQL.Api, KotlinCompleteTodoGraphQL.request(KotlinID("3"))),
+        )
+        assertEquals(
+            Unit,
+            GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), KotlinServer("""{"data":{"result":true}}"""))
+                .send(KotlinClearTodosGraphQL.Api, KotlinClearTodosGraphQL.request()),
+        )
+    }
+
+    @Test
+    fun `Java api sends an operation through a client of your own`() {
+        val server = JavaServer("""{"data":{"result":{"title":"Groceries"}}}""")
+        val client = JavaGraphQLExamples.AbstractClient(JavaSerialization(objectMapper), server)
+
+        val todo = client.send(JavaQueryTodoGraphQL.SelectedApi(), JavaQueryTodoGraphQL().request(JavaID("1")) { it.title() }).join()
+
+        assertEquals(Optional.of("Groceries"), todo.flatMap { it.title() })
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { title } }", server.json()["query"])
+        assertNull(
+            JavaGraphQLExamples.AbstractClient(JavaSerialization(objectMapper), JavaServer("""{"data":{"result":true}}"""))
+                .send(JavaClearTodosGraphQL.Api(), JavaClearTodosGraphQL().request())
+                .join(),
+        )
+    }
+
+    @Test
+    fun `Scala api sends an operation through a client of your own`() {
+        assertEquals("query QueryTodo(\$id: ID!) { result: todo(id: \$id) { title } }", scalaCheck("sendsThroughAClientOfYourOwn"))
+    }
+
+    @Test
     fun `Only rpcs marked as a query or a mutation get a client`() {
         listOf("TodoAddedGraphQL", "CountTodosGraphQL").forEach { client ->
             assertFailsWith<ClassNotFoundException> {
@@ -328,9 +396,9 @@ class GraphQLClientExtensionTest {
         val files = emitter.applyExtensions(nonEmptyListOf(GraphQLClientExtension(emitter.packageName, FileExtension.Kotlin))).emit(ast, noLogger)
             .associate { it.file.removePrefix("community/flock/wirespec/generated/") to it.result }
 
-        assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
+        assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt", "graphql/GraphQL.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
         assertEquals(setOf("Client.kt", "GraphQLClient.kt"), files.keys.filterNot { "/" in it }.toSet())
-        listOf("data class GraphQLClient(", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
+        listOf("data class GraphQLClient(", "object Api : GraphQL.Client<", "data class ClientEdge(", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
             .forEach { assertTrue(it in files.getValue("graphql/GetTodoGraphQL.kt"), "GetTodoGraphQL.kt misses $it") }
         listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(")
             .forEach { assertTrue(it in files.getValue("GraphQLClient.kt"), "GraphQLClient.kt misses $it") }

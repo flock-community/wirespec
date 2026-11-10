@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.graphql.extension
 
+import community.flock.wirespec.integration.graphql.docs.ScalaGraphQLExamples
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, InboxCountGraphQL, QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
@@ -66,6 +67,17 @@ object ScalaGraphQLCheck {
     val result = GraphQLClient(serialization, transportation).inboxCount()
 
     check(result == 3, s"unexpected $result")
+    serialization.query
+  }
+
+  def sendsThroughAClientOfYourOwn(): String = {
+    val expected = QueryTodoGraphQL.TodoResult(None, Some("Groceries"), None, None, None)
+    val serialization = Recording(QueryTodoGraphQL.GraphQLSelectedResponse(Some(QueryTodoGraphQL.GraphQLSelectedData(Some(expected))), None))
+
+    val result = ScalaGraphQLExamples.AbstractClient(serialization, transportation)
+      .send(QueryTodoGraphQL.SelectedApi, QueryTodoGraphQL.request(ID("1"), todo => todo.title()))
+
+    check(result == Some(expected), s"unexpected $result")
     serialization.query
   }
 

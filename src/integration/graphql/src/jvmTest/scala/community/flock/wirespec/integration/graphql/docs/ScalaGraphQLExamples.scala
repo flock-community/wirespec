@@ -7,6 +7,9 @@ import community.flock.wirespec.scala.Wirespec
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
+// region abstract-client
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.GraphQL
+// endregion abstract-client
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
@@ -84,5 +87,25 @@ object ScalaGraphQLExamples {
     val kinds: List[Option[String]] = results.map(_.__typename) // "Note" or "Tag"
     // endregion union
     kinds
+  }
+  // region abstract-client
+
+  class AbstractClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) {
+    def send[Req, Res](api: GraphQL.Client[Req, Res], request: Req): Res = {
+      val edge = api.client(serialization)
+      edge.from(transportation.transport(edge.to(request)))
+    }
+  }
+  // endregion abstract-client
+
+  def abstractCalls(client: AbstractClient): List[Any] = {
+    // region abstract-calls
+    val todo: Option[Todo] = client.send(QueryTodoGraphQL.Api, QueryTodoGraphQL.request(ID("1")))
+
+    val selected: Option[QueryTodoGraphQL.TodoResult] = client.send(
+      QueryTodoGraphQL.SelectedApi,
+      QueryTodoGraphQL.request(ID("1"), todo => todo.title()))
+    // endregion abstract-calls
+    List(todo, selected)
   }
 }
