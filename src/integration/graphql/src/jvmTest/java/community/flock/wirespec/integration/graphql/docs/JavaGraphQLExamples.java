@@ -15,7 +15,6 @@ import java.net.http.HttpResponse;
 import java.util.Optional;
 // endregion create-client
 // region abstract-client
-import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQL;
 import java.util.concurrent.CompletableFuture;
 // endregion abstract-client
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient;
@@ -117,8 +116,8 @@ public final class JavaGraphQLExamples {
     // region abstract-client
 
     public record AbstractClient(Wirespec.Serialization serialization, Wirespec.Transportation transportation) {
-        public <Req, Res> CompletableFuture<Res> send(GraphQL.Client<Req, Res> api, Req request) {
-            var edge = api.client(serialization);
+        public <Req, Res> CompletableFuture<Res> send(Wirespec.GraphQL.Client<Req, Res> api, Req request) {
+            var edge = api.getClient(serialization);
             return transportation.transport(edge.to(request)).thenApply(edge::from);
         }
     }

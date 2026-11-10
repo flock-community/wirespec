@@ -12,9 +12,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
-// region abstract-client
-import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQL
-// endregion abstract-client
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL
@@ -105,7 +102,7 @@ object GraphQLExamples {
         private val serialization: Wirespec.Serialization,
         private val transportation: Wirespec.Transportation,
     ) {
-        suspend fun <Req : Any, Res> send(api: GraphQL.Client<Req, Res>, request: Req): Res = api.client(serialization).run { from(transportation.transport(to(request))) }
+        suspend fun <Req : Any, Res> send(api: Wirespec.GraphQL.Client<Req, Res>, request: Req): Res = api.client(serialization).run { from(transportation.transport(to(request))) }
     }
     // endregion abstract-client
 

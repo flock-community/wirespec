@@ -7,9 +7,6 @@ import community.flock.wirespec.scala.Wirespec
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
-// region abstract-client
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.GraphQL
-// endregion abstract-client
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
@@ -91,7 +88,7 @@ object ScalaGraphQLExamples {
   // region abstract-client
 
   class AbstractClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) {
-    def send[Req, Res](api: GraphQL.Client[Req, Res], request: Req): Res = {
+    def send[Req, Res](api: Wirespec.GraphQL.Client[Req, Res], request: Req): Res = {
       val edge = api.client(serialization)
       edge.from(transportation.transport(edge.to(request)))
     }

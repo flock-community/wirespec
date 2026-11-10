@@ -298,9 +298,10 @@ A call with a selection throws an `IllegalStateException` on GraphQL errors, als
 The generated clients send every operation the same way. To send them your way, for instance to add a header, log
 or retry in one place, write one client for all operations, just like with the `Wirespec.Client` of an endpoint.
 
-Each operation has an `Api`, a `GraphQL.Client<Req, Res>`. For a serialization it gives a `GraphQL.ClientEdge<Req, Res>`
-that writes a `GraphQLRequest` as the `Wirespec.RawRequest` to send, and reads the result from the
-`Wirespec.RawResponse`. A client that takes any `GraphQL.Client` therefore sends any operation:
+Each operation has an `Api`, a `Wirespec.GraphQL.Client<Req, Res>`. For a serialization it gives a
+`Wirespec.GraphQL.ClientEdge<Req, Res>` that writes a `GraphQLRequest` as the `Wirespec.RawRequest` to send, and reads
+the result from the `Wirespec.RawResponse`. Both interfaces are part of the shared `Wirespec` file, next to the `Client`
+and `ClientEdge` of the endpoints. A client that takes any `Wirespec.GraphQL.Client` therefore sends any operation:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -350,7 +351,6 @@ operation needs. The `GraphQLClient` that bundles them sits in the root package,
 | `QueryTodoGraphQL.GraphQLClient`         | The client of the operation                                                |
 | `QueryTodoGraphQL.Api`, `.ClientEdge`    | What a [client of your own](#a-client-of-your-own) sends the operation with |
 | `QueryTodoGraphQL.SelectedApi`, ...      | The same for a request with a selection, which reads the partial result    |
-| `GraphQL` (`graphql` package)            | The `Client` and `ClientEdge` that the `Api` and edges of all operations share |
 | `QueryTodoGraphQL.GraphQLRequest`, ...   | The request, its variables and the envelopes of the response               |
 | `QueryTodoGraphQL.TodoSelection`, ...    | The fields you can select of a type or union the result reaches            |
 | `QueryTodoGraphQL.TodoResult`, ...       | The partial result of a type or union the result reaches                   |
