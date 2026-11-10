@@ -114,12 +114,13 @@ public final class JavaGraphQLExamples {
 
     public static List<Object> requests(Wirespec.GraphQLClient client) {
         // region requests
-        Wirespec.GraphQLRequest<Optional<QueryTodoGraphQL.TodoResult>> request =
-            new QueryTodoGraphQL().request(new ID("1"), t -> t.title());
+        Optional<Todo> todo = client.send(QueryTodoGraphQL.api, new QueryTodoGraphQL().request(new ID("1"))).join();
 
-        Optional<QueryTodoGraphQL.TodoResult> todo = client.send(request).join();
-        CompleteTodo.Response response = client.send(new CompleteTodoGraphQL().request(new ID("1"))).join();
+        CompleteTodo.Response response = client.send(CompleteTodoGraphQL.api, new CompleteTodoGraphQL().request(new ID("1"))).join();
+
+        Optional<QueryTodoGraphQL.TodoResult> selected =
+            client.send(QueryTodoGraphQL.selectedApi, new QueryTodoGraphQL().request(new ID("1"), t -> t.title())).join();
         // endregion requests
-        return List.of(todo, response);
+        return List.of(todo, response, selected);
     }
 }

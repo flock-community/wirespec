@@ -36,8 +36,8 @@ object ScalaGraphQLCheck {
     val serialization = Recording(QueryTodoGraphQL.GraphQLSelectedResponse(Some(QueryTodoGraphQL.GraphQLSelectedData(Some(expected))), None))
     val client: Wirespec.GraphQLClient = GraphQLClient(serialization, transportation)
 
-    val request: Wirespec.GraphQLRequest[Option[QueryTodoGraphQL.TodoResult]] = QueryTodoGraphQL.request(ID("1"), todo => todo.title().owner(owner => owner.name()))
-    val result = client.send(request)
+    val request = QueryTodoGraphQL.request(ID("1"), todo => todo.title().owner(owner => owner.name()))
+    val result: Option[QueryTodoGraphQL.TodoResult] = client.send(QueryTodoGraphQL.selectedApi, request)
 
     check(result == Some(expected), s"unexpected $result")
     check(serialization.query == request.query, s"sent ${serialization.query}")

@@ -88,12 +88,13 @@ object ScalaGraphQLExamples {
 
   def requests(client: Wirespec.GraphQLClient): List[Any] = {
     // region requests
-    val request: Wirespec.GraphQLRequest[Option[QueryTodoGraphQL.TodoResult]] =
-      QueryTodoGraphQL.request(ID("1"), todo => todo.title())
+    val todo: Option[Todo] = client.send(QueryTodoGraphQL.api, QueryTodoGraphQL.request(ID("1")))
 
-    val todo: Option[QueryTodoGraphQL.TodoResult] = client.send(request)
-    val response: CompleteTodo.Response = client.send(CompleteTodoGraphQL.request(ID("1")))
+    val response: CompleteTodo.Response = client.send(CompleteTodoGraphQL.api, CompleteTodoGraphQL.request(ID("1")))
+
+    val selected: Option[QueryTodoGraphQL.TodoResult] =
+      client.send(QueryTodoGraphQL.selectedApi, QueryTodoGraphQL.request(ID("1"), todo => todo.title()))
     // endregion requests
-    List(todo, response)
+    List(todo, response, selected)
   }
 }

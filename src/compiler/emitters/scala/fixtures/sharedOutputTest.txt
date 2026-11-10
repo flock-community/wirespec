@@ -173,12 +173,27 @@ object Wirespec {
       def pathSegments: List[PathSegment]
       def server(serialization: Serialization): ServerEdge[Req, Res]
   }
-  trait GraphQLRequest[T] {
+  trait GraphQLRequest {
       def query: String
-      def toRawRequest(serialization: Serializer): RawRequest
-      def fromRawResponse(serialization: Deserializer, response: RawResponse): T
+  }
+  trait GraphQLClientEdge[Req <: GraphQLRequest, Res] {
+      def to(request: Req): RawRequest
+      def from(response: RawResponse): Res
+  }
+  trait GraphQLApi[Req <: GraphQLRequest, Res] {
+      def client(serialization: Serialization): GraphQLClientEdge[Req, Res]
   }
   trait GraphQLClient {
-      def send[T](request: GraphQLRequest[T]): T
+      def send[Req <: GraphQLRequest, Res](api: GraphQLApi[Req, Res], request: Req): Res
   }
+  case class GraphQLError(
+      val message: String,
+      val locations: Option[List[GraphQLLocation]],
+      val path: Option[List[Any]],
+      val extensions: Option[Map[String, Any]]
+    )
+  case class GraphQLLocation(
+      val line: Int,
+      val column: Int
+    )
 }

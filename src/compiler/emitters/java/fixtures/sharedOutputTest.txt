@@ -196,14 +196,31 @@ public interface Wirespec {
     public String getMethod();
     public ServerEdge<Req, Res> getServer(Serialization serialization);
   }
-  public interface GraphQLRequest<T> {
+  public interface GraphQLRequest {
     String query();
-    public RawRequest toRawRequest(Serializer serialization);
-    public T fromRawResponse(Deserializer serialization, RawResponse response);
+  }
+  public interface GraphQLClientEdge<Req extends GraphQLRequest, Res> {
+    public RawRequest to(Req request);
+    public Res from(RawResponse response);
+  }
+  public interface GraphQLApi<Req extends GraphQLRequest, Res> {
+    public GraphQLClientEdge<Req, Res> getClient(Serialization serialization);
   }
   public interface GraphQLClient {
-    public <T> java.util.concurrent.CompletableFuture<T> send(GraphQLRequest<T> request);
+    public <Req extends GraphQLRequest, Res> java.util.concurrent.CompletableFuture<Res> send(GraphQLApi<Req, Res> api, Req request);
   }
+  public static record GraphQLError (
+    String message,
+    java.util.Optional<java.util.List<GraphQLLocation>> locations,
+    java.util.Optional<java.util.List<Object>> path,
+    java.util.Optional<java.util.Map<String, Object>> extensions
+  ) {
+  };
+  public static record GraphQLLocation (
+    Integer line,
+    Integer column
+  ) {
+  };
   public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
     if(rawType != null) {
       return new ParameterizedType() {

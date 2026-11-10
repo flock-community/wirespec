@@ -99,14 +99,13 @@ object GraphQLExamples {
 
     suspend fun requests(client: Wirespec.GraphQLClient): List<Any?> {
         // region requests
-        val request: Wirespec.GraphQLRequest<QueryTodoGraphQL.TodoResult?> = QueryTodoGraphQL.request(ID("1")) {
-            title()
-        }
+        val todo: Todo? = client.send(QueryTodoGraphQL.api, QueryTodoGraphQL.request(ID("1")))
 
-        val todo: QueryTodoGraphQL.TodoResult? = client.send(request)
-        val response: CompleteTodo.Response = client.send(CompleteTodoGraphQL.request(ID("1")))
+        val response: CompleteTodo.Response = client.send(CompleteTodoGraphQL.api, CompleteTodoGraphQL.request(ID("1")))
+
+        val selected: QueryTodoGraphQL.TodoResult? = client.send(QueryTodoGraphQL.selectedApi, QueryTodoGraphQL.request(ID("1")) { title() })
         // endregion requests
-        return listOf(todo, response)
+        return listOf(todo, response, selected)
     }
 
     fun path(http: HttpTransportation): Wirespec.Transportation {

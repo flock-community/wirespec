@@ -216,7 +216,7 @@ query QueryTodo($id: ID!) { result: todo(id: $id) { id title done priority owner
 
 A GraphQL response carries errors next to its data.
 
-- An rpc **without an error type** throws an `IllegalStateException` that lists the `GraphQLError`s, with their
+- An rpc **without an error type** throws an `IllegalStateException` that lists the `Wirespec.GraphQLError`s, with their
   `message`, `locations`, `path` and `extensions`.
 - An rpc **with an error type**, such as `CompleteTodo`, returns the first error, read as that type, as its `Error`, and
   the result as its `Result`:
@@ -295,26 +295,38 @@ A call with a selection throws an `IllegalStateException` on GraphQL errors, als
 
 ## Sending requests
 
-Every request an operation can send implements `Wirespec.GraphQLRequest<T>`, where `T` is what it reads: it has its
-`query`, writes itself as a `Wirespec.RawRequest` and reads its result from a `Wirespec.RawResponse`. The builder of an
-operation writes them, `QueryTodoGraphQL.request(id)` for every field and `QueryTodoGraphQL.request(id) { ... }` for a
-selection. Because a request knows how to read its own response, a `Wirespec.GraphQLClient` sends any of them:
+The shared `Wirespec` holds the GraphQL counterparts of the endpoint interfaces, so you can send any operation through
+one generic client:
 
 ```kotlin
-interface GraphQLRequest<T> {
-    val query: String
-    fun toRawRequest(serialization: Serializer): RawRequest
-    fun fromRawResponse(serialization: Deserializer, response: RawResponse): T
+interface GraphQLRequest { val query: String }
+
+interface GraphQLClientEdge<Req : GraphQLRequest, Res> {
+    fun to(request: Req): RawRequest
+    fun from(response: RawResponse): Res
+}
+
+interface GraphQLApi<Req : GraphQLRequest, Res> {
+    fun client(serialization: Serialization): GraphQLClientEdge<Req, Res>
 }
 
 interface GraphQLClient {
-    suspend fun <T> send(request: GraphQLRequest<T>): T
+    suspend fun <Req : GraphQLRequest, Res> send(api: GraphQLApi<Req, Res>, request: Req): Res
 }
+
+data class GraphQLError(val message: String, val locations: List<GraphQLLocation>?, val path: List<Any>?, val extensions: Map<String, Any>?)
+data class GraphQLLocation(val line: Int, val column: Int)
 ```
 
-Both live in the shared `Wirespec`, next to the endpoint interfaces. The generated `GraphQLClient` implements
-`Wirespec.GraphQLClient`, and so can a client of your own, such as one on the HTTP client of a framework. Code that sends
-requests depends on the interfaces only, and leaves serialization and transportation to the client it is given:
+Like an endpoint, an operation keeps its requests as plain data and turns them into raw requests and back in its own
+`toRawRequest` and `fromRawResponse`, which its `api` wraps as a `Wirespec.GraphQLApi`. The result is the result of the
+rpc: the model, or the `Result` and `Error` of an rpc with an error type. A selection has its own request and
+`selectedApi`, which read the partial result. `Wirespec.GraphQLError` is the error of a response for an rpc without an
+error type of its own.
+
+The generated `GraphQLClient` implements `Wirespec.GraphQLClient`, and so can a client of your own, such as one on the
+HTTP client of a framework. Code that sends requests depends on the interfaces only, and leaves serialization and
+transportation to the client it is given:
 
 <Tabs groupId="language">
   <TabItem value="kotlin" label="Kotlin">
@@ -341,12 +353,13 @@ operation needs. The `GraphQLClient` that bundles them sits in the root package,
 | `GraphQLClient` (root package)           | Implements `Wirespec.GraphQLClient` and the `Service` of every operation   |
 | `QueryTodoGraphQL`, ...                  | The file of one operation; its builder puts a selection in the query       |
 | `QueryTodoGraphQL.GraphQLClient`         | The client of the operation                                                |
-| `QueryTodoGraphQL.GraphQLRequest`        | The request of every field, a `Wirespec.GraphQLRequest` of the result      |
-| `QueryTodoGraphQL.GraphQLSelectedRequest`| The request of a selection, a `Wirespec.GraphQLRequest` of the partial result |
+| `QueryTodoGraphQL.GraphQLRequest`        | The request of every field, a `Wirespec.GraphQLRequest`                    |
+| `QueryTodoGraphQL.GraphQLSelectedRequest`| The request of a selection, a `Wirespec.GraphQLRequest`                    |
+| `QueryTodoGraphQL.toRawRequest`, ...     | Write a request and read the result, like the functions of an endpoint     |
+| `QueryTodoGraphQL.api`, `selectedApi`    | The `Wirespec.GraphQLApi` of each request, which a `GraphQLClient` sends   |
 | `QueryTodoGraphQL.GraphQLVariables`, ... | The variables of the requests and the envelopes of the response            |
 | `QueryTodoGraphQL.TodoSelection`, ...    | The fields you can select of a type or union the result reaches            |
 | `QueryTodoGraphQL.TodoResult`, ...       | The partial result of a type or union the result reaches                   |
-| `QueryTodoGraphQL.GraphQLError`          | An error of a response, for an rpc without an error type of its own        |
 
 A type that several operations return has a selection and a partial result in each of their files, so an operation's
 file stands on its own: `QueryTodoGraphQL.TodoResult` and `TodosGraphQL.TodoResult` are different types.
@@ -359,8 +372,8 @@ The shapes follow the language:
 | Java     | Record without components | `Function<UserSelection, UserSelection>` | Public static records     |
 | Scala    | `object`                  | `UserSelection => UserSelection`         | Case classes              |
 
-The client of an operation asks the builder of the operation for the request, sends it and lets the request read the
-result. The full query is written at build time; a selection puts its fields in the query. A selection collects the selected fields as
+The client of an operation asks the builder of the operation for the request, writes it with `toRawRequest`, sends it
+and reads the result with `fromRawResponse`, like the client of an endpoint. The full query is written at build time; a selection puts its fields in the query. A selection collects the selected fields as
 GraphQL text and returns itself from every field. A partial result has the same fields as the model, all nullable:
 
 <Tabs groupId="language">

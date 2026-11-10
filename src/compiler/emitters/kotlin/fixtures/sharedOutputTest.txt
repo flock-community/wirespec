@@ -160,12 +160,27 @@ public object Wirespec {
       public val method: String
       public fun server(serialization: Serialization): ServerEdge<Req, Res>
   }
-  public interface GraphQLRequest<T: Any?> {
+  public interface GraphQLRequest {
       public val query: String
-      public fun toRawRequest(serialization: Serializer): RawRequest
-      public fun fromRawResponse(serialization: Deserializer, response: RawResponse): T
+  }
+  public interface GraphQLClientEdge<Req: GraphQLRequest, Res: Any?> {
+      public fun to(request: Req): RawRequest
+      public fun from(response: RawResponse): Res
+  }
+  public fun interface GraphQLApi<Req: GraphQLRequest, Res: Any?> {
+      public fun client(serialization: Serialization): GraphQLClientEdge<Req, Res>
   }
   public interface GraphQLClient {
-      public suspend fun <T: Any?> send(request: GraphQLRequest<T>): T
+      public suspend fun <Req: GraphQLRequest, Res: Any?> send(api: GraphQLApi<Req, Res>, request: Req): Res
   }
+  public data class GraphQLError(
+      val message: String,
+      val locations: List<GraphQLLocation>?,
+      val path: List<Any>?,
+      val extensions: Map<String, Any>?
+    )
+  public data class GraphQLLocation(
+      val line: Int,
+      val column: Int
+    )
 }
