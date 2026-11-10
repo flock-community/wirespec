@@ -13,6 +13,7 @@ import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerializat
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.CompleteTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID
@@ -94,6 +95,18 @@ object GraphQLExamples {
         val kinds: List<String?> = results.map { it.__typename } // "Note" or "Tag"
         // endregion union
         return kinds
+    }
+
+    suspend fun requests(client: Wirespec.GraphQLClient): List<Any?> {
+        // region requests
+        val request: Wirespec.GraphQLRequest<QueryTodoGraphQL.TodoResult?> = QueryTodoGraphQL.request(ID("1")) {
+            title()
+        }
+
+        val todo: QueryTodoGraphQL.TodoResult? = client.send(request)
+        val response: CompleteTodo.Response = client.send(CompleteTodoGraphQL.request(ID("1")))
+        // endregion requests
+        return listOf(todo, response)
     }
 
     fun path(http: HttpTransportation): Wirespec.Transportation {

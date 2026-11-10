@@ -160,4 +160,12 @@ public object Wirespec {
       public val method: String
       public fun server(serialization: Serialization): ServerEdge<Req, Res>
   }
+  public interface GraphQLRequest<T: Any?> {
+      public val query: String
+      public fun toRawRequest(serialization: Serializer): RawRequest
+      public fun fromRawResponse(serialization: Deserializer, response: RawResponse): T
+  }
+  public interface GraphQLClient {
+      public suspend fun <T: Any?> send(request: GraphQLRequest<T>): T
+  }
 }

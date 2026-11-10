@@ -347,6 +347,34 @@ public fun convertClientServer(): List<Element> = listOf(
     },
 )
 
+/**
+ * The contract of a GraphQL client, which the GraphQL client extension implements. A request reads its own response,
+ * so a [GraphQLClient] sends any of them without knowing the operation.
+ */
+public fun convertGraphQL(): List<Element> = listOf(
+    `interface`("GraphQLRequest") {
+        // T is unbounded (`Any?`) so a request can read a nullable result.
+        typeParam(type("T"), Type.Nullable(Type.Any))
+        field("query", Type.String)
+        function(Name("to", "Raw", "Request")) {
+            returnType(type("RawRequest"))
+            arg("serialization", type("Serializer"))
+        }
+        function(Name("from", "Raw", "Response")) {
+            returnType(type("T"))
+            arg("serialization", type("Deserializer"))
+            arg("response", type("RawResponse"))
+        }
+    },
+    `interface`("GraphQLClient") {
+        asyncFunction("send") {
+            typeParam(type("T"), Type.Nullable(Type.Any))
+            returnType(type("T"))
+            arg("request", type("GraphQLRequest", type("T")))
+        }
+    },
+)
+
 internal fun Identifier.toName(): Name = when (this) {
     is FieldIdentifier -> {
         // Tokenize into runs of separators (dashes, dots, spaces) and runs of non-separators,

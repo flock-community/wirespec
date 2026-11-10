@@ -293,6 +293,44 @@ A field of a type takes a selection of that type. A union has an `on<Member>` se
 A call with a selection throws an `IllegalStateException` on GraphQL errors, also for an rpc with an error type: its
 `Result` and `Error` hold the full models.
 
+## Sending requests
+
+Every request an operation can send implements `Wirespec.GraphQLRequest<T>`, where `T` is what it reads: it has its
+`query`, writes itself as a `Wirespec.RawRequest` and reads its result from a `Wirespec.RawResponse`. The builder of an
+operation writes them, `QueryTodoGraphQL.request(id)` for every field and `QueryTodoGraphQL.request(id) { ... }` for a
+selection. Because a request knows how to read its own response, a `Wirespec.GraphQLClient` sends any of them:
+
+```kotlin
+interface GraphQLRequest<T> {
+    val query: String
+    fun toRawRequest(serialization: Serializer): RawRequest
+    fun fromRawResponse(serialization: Deserializer, response: RawResponse): T
+}
+
+interface GraphQLClient {
+    suspend fun <T> send(request: GraphQLRequest<T>): T
+}
+```
+
+Both live in the shared `Wirespec`, next to the endpoint interfaces. The generated `GraphQLClient` implements
+`Wirespec.GraphQLClient`, and so can a client of your own, such as one on the HTTP client of a framework. Code that sends
+requests depends on the interfaces only, and leaves serialization and transportation to the client it is given:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#requests
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#requests
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#requests
+    ```
+  </TabItem>
+</Tabs>
+
 ## Generated code
 
 Each operation gets a single file in the `graphql` package, next to `model` and `rpc`, that holds everything the
@@ -300,10 +338,12 @@ operation needs. The `GraphQLClient` that bundles them sits in the root package,
 
 | Generated                                | What it is                                                                 |
 |------------------------------------------|----------------------------------------------------------------------------|
-| `GraphQLClient` (root package)           | Implements the `Service` of every operation, with and without a selection  |
+| `GraphQLClient` (root package)           | Implements `Wirespec.GraphQLClient` and the `Service` of every operation   |
 | `QueryTodoGraphQL`, ...                  | The file of one operation; its builder puts a selection in the query       |
 | `QueryTodoGraphQL.GraphQLClient`         | The client of the operation                                                |
-| `QueryTodoGraphQL.GraphQLRequest`, ...   | The request, its variables and the envelopes of the response               |
+| `QueryTodoGraphQL.GraphQLRequest`        | The request of every field, a `Wirespec.GraphQLRequest` of the result      |
+| `QueryTodoGraphQL.GraphQLSelectedRequest`| The request of a selection, a `Wirespec.GraphQLRequest` of the partial result |
+| `QueryTodoGraphQL.GraphQLVariables`, ... | The variables of the requests and the envelopes of the response            |
 | `QueryTodoGraphQL.TodoSelection`, ...    | The fields you can select of a type or union the result reaches            |
 | `QueryTodoGraphQL.TodoResult`, ...       | The partial result of a type or union the result reaches                   |
 | `QueryTodoGraphQL.GraphQLError`          | An error of a response, for an rpc without an error type of its own        |
@@ -319,8 +359,8 @@ The shapes follow the language:
 | Java     | Record without components | `Function<UserSelection, UserSelection>` | Public static records     |
 | Scala    | `object`                  | `UserSelection => UserSelection`         | Case classes              |
 
-The client of an operation builds the request, sends it and reads the result. The full query is written at build time;
-the overload with a selection asks the builder of the operation for it. A selection collects the selected fields as
+The client of an operation asks the builder of the operation for the request, sends it and lets the request read the
+result. The full query is written at build time; a selection puts its fields in the query. A selection collects the selected fields as
 GraphQL text and returns itself from every field. A partial result has the same fields as the model, all nullable:
 
 <Tabs groupId="language">

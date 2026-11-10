@@ -173,4 +173,12 @@ object Wirespec {
       def pathSegments: List[PathSegment]
       def server(serialization: Serialization): ServerEdge[Req, Res]
   }
+  trait GraphQLRequest[T] {
+      def query: String
+      def toRawRequest(serialization: Serializer): RawRequest
+      def fromRawResponse(serialization: Deserializer, response: RawResponse): T
+  }
+  trait GraphQLClient {
+      def send[T](request: GraphQLRequest[T]): T
+  }
 }

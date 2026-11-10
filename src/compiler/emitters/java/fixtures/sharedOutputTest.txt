@@ -196,6 +196,14 @@ public interface Wirespec {
     public String getMethod();
     public ServerEdge<Req, Res> getServer(Serialization serialization);
   }
+  public interface GraphQLRequest<T> {
+    String query();
+    public RawRequest toRawRequest(Serializer serialization);
+    public T fromRawResponse(Deserializer serialization, RawResponse response);
+  }
+  public interface GraphQLClient {
+    public <T> java.util.concurrent.CompletableFuture<T> send(GraphQLRequest<T> request);
+  }
   public static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
     if(rawType != null) {
       return new ParameterizedType() {

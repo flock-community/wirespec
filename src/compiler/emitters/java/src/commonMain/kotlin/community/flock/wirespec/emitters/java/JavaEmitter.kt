@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertClientServer
+import community.flock.wirespec.compiler.core.ir.converter.convertGraphQL
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
 import community.flock.wirespec.compiler.core.ir.File
 import community.flock.wirespec.compiler.core.ir.Name
@@ -90,6 +91,8 @@ public open class JavaEmitter(
                     }
                 }
             }
+            // Record components satisfy the GraphQL request, so its fields stay accessors without a `get`.
+            .plus(convertGraphQL())
             .plus(
                 raw(
                     """
