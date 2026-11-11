@@ -28,10 +28,13 @@ import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
+import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
 
 class KotlinEmitterTest {
@@ -126,6 +129,23 @@ class KotlinEmitterTest {
         val kotlin = EmitterFixtures.compileMinimalEndpointTest
 
         CompileMinimalEndpointTest.compiler { KotlinEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun clientReferencesTheEndpointByItsDeclaredName() {
+        val kotlin = compile(
+            """
+            |endpoint ToggleIRoas POST /items/{id: Integer}/iroas ?{active: Boolean} -> {
+            |  200 -> Unit
+            |}
+            """.trimMargin(),
+        ).invoke { KotlinEmitter() }.shouldBeRight()
+
+        kotlin shouldContain "object ToggleIRoas : Wirespec.Endpoint"
+        kotlin shouldContain "import community.flock.wirespec.generated.endpoint.ToggleIRoas\n"
+        kotlin shouldContain "import community.flock.wirespec.generated.client.ToggleIRoasClient\n"
+        kotlin shouldContain "data class ToggleIRoasClient("
+        kotlin shouldNotContain "ToggleIROas"
     }
 
     @Test

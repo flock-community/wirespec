@@ -56,6 +56,11 @@ class NameTest {
     }
 
     @Test
+    fun testOfSplitsSingleCapitalBeforeWord() {
+        assertEquals(listOf("Toggle", "I", "Roas"), Name.of("ToggleIRoas").parts)
+    }
+
+    @Test
     fun testOfSplitsUnderscoreClass() {
         assertEquals(listOf("_", "class"), Name.of("_class").parts)
     }
@@ -154,6 +159,11 @@ class NameTest {
     @Test
     fun testPascalCaseSimple() {
         assertEquals("Simple", Name.of("simple").pascalCase())
+    }
+
+    @Test
+    fun testPascalCaseSingleCapitalBeforeWord() {
+        assertEquals("ToggleIRoas", Name.of("ToggleIRoas").pascalCase())
     }
 
     @Test
