@@ -24,6 +24,14 @@ object ScalaGraphQLServerCheck {
 
   def answersAMutation(): String = handle("""mutation { clearTodos completeTodo(id: "404") { id } }""", Map.empty)
 
+  def givesTheSelection(): String = {
+    val selections = List.newBuilder[GraphQLServer.Selection]
+    val serialization = Fake(GraphQLServer.Request("""{ first: todo(id: "1") { title ... on Todo { owner { name } } } }""", None, None))
+    new GraphQLServer(serialization, (selection: GraphQLServer.Selection) => { selections += selection; Service })
+      .handle(Wirespec.RawRequest("POST", List("graphql"), Map.empty, Map.empty, Some(Array.emptyByteArray)))
+    selections.result().toString
+  }
+
   private def handle(query: String, variables: Map[String, Any]): String = {
     val serialization = Fake(GraphQLServer.Request(query, None, Some(variables)))
     new GraphQLServer(serialization, Service).handle(Wirespec.RawRequest("POST", List("graphql"), Map.empty, Map.empty, Some(Array.emptyByteArray)))

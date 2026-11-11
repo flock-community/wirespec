@@ -49,6 +49,27 @@ The server reads the document of the request, so it answers what the client asks
   is, which is where the generated client reads it.
 - A document that cannot be read, or that asks for a field that does not exist, is answered with `errors` and no `data`.
 
+### The selected fields
+
+To see which fields a query selects, give the server a function instead of a service. The server calls it for every
+field that is an rpc, with the `GraphQLServer.Selection` of that field, and calls the `Service` it returns:
+
+```kotlin
+class TodoService(private val selection: GraphQLServer.Selection) : GraphQLServer.Service {
+    // Only load the owners when the query asks for them.
+    override suspend fun todos(done: Boolean?): List<Todo> = repository.all(done, withOwner = "owner" in selection)
+    // ...
+}
+
+val server = GraphQLServer(serialization) { selection -> TodoService(selection) }
+```
+
+A `Selection` is the field as the query asks for it: its `name`, its `alias`, its `arguments` with the variables filled
+in, and the `fields` selected of its result, each a `Selection` again. `"owner" in selection` tells whether a field is
+selected and `selection["owner"]` gives its selection (`contains` and `get` in Java and Scala). Fragments are already
+followed and `@skip` and `@include` applied. The fields of a union are those of all its members, whatever the type
+condition they are selected under.
+
 The parser and the execution are part of the generated `GraphQLServer`, so it needs no GraphQL library. The
 `Wirespec.Serialization` reads the arguments and writes the response as a map of any values, so it has to support
 those: `WirespecSerialization` of the Jackson integration does.

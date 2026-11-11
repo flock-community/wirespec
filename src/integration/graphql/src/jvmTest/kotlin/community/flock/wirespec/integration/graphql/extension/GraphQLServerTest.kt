@@ -206,6 +206,57 @@ class GraphQLServerTest {
     }
 
     @Test
+    fun `Kotlin server gives the service the selection of the field it answers`() {
+        val selections = mutableListOf<KotlinGraphQLServer.Selection>()
+        val server = KotlinGraphQLServer(KotlinSerialization(objectMapper)) { selection -> KotlinService().also { selections.add(selection) } }
+        val query = """
+            query (${'$'}id: ID!) {
+              first: todo(id: ${'$'}id) { ...Summary owner { name } }
+              notifications { inboxCount }
+            }
+            fragment Summary on Todo { title done @skip(if: true) }
+        """
+
+        runBlocking { server.handle(KotlinWirespec.RawRequest("POST", listOf("graphql"), emptyMap(), emptyMap(), body(query, mapOf("id" to "1"), null))) }
+
+        fun selection(name: String, vararg fields: KotlinGraphQLServer.Selection) = KotlinGraphQLServer.Selection(name, null, emptyMap(), fields.toList())
+        assertEquals(
+            listOf(
+                KotlinGraphQLServer.Selection("todo", "first", mapOf("id" to "1"), listOf(selection("title"), selection("owner", selection("name")))),
+                selection("notifications", selection("inboxCount")),
+                selection("inboxCount"),
+            ),
+            selections,
+        )
+        assertEquals(listOf(true, false), listOf("owner" in selections.first(), "done" in selections.first()))
+        assertEquals(listOf("name"), selections.first()["owner"]?.fields?.map { it.name })
+    }
+
+    @Test
+    fun `Java server gives the service the selection of the field it answers`() {
+        val selections = mutableListOf<JavaGraphQLServer.Selection>()
+        val server = JavaGraphQLServer(JavaSerialization(objectMapper), java.util.function.Function<JavaGraphQLServer.Selection, JavaGraphQLServer.Service> { JavaService().also { _ -> selections.add(it) } })
+
+        server.handle(JavaWirespec.RawRequest("POST", listOf("graphql"), emptyMap(), emptyMap(), Optional.of(body("""{ first: todo(id: "1") { title ... on Todo { owner { name } } } }""", null, null)))).join()
+
+        assertEquals(
+            listOf(
+                JavaGraphQLServer.Selection(
+                    "todo",
+                    Optional.of("first"),
+                    mapOf("id" to "1"),
+                    listOf(
+                        JavaGraphQLServer.Selection("title", Optional.empty(), emptyMap(), emptyList()),
+                        JavaGraphQLServer.Selection("owner", Optional.empty(), emptyMap(), listOf(JavaGraphQLServer.Selection("name", Optional.empty(), emptyMap(), emptyList()))),
+                    ),
+                ),
+            ),
+            selections,
+        )
+        assertEquals(listOf(true, false), listOf(selections.first().contains("owner"), selections.first().contains("done")))
+    }
+
+    @Test
     fun `Kotlin server rejects a request it cannot execute`() {
         assertEquals(mapOf("errors" to listOf(mapOf("message" to "Cannot query field unknown on type Query"))), kotlin("{ unknown }"))
         assertEquals(mapOf("errors" to listOf(mapOf("message" to "Syntax error in the GraphQL document at 15: Expected a name"))), kotlin("{ todo(id: 1) {"))
@@ -270,6 +321,7 @@ class GraphQLServerTest {
             "ListMap(data -> ListMap(clearTodos -> true, completeTodo -> None), errors -> List(TodoError(Unknown todo 404)))",
             scalaCheck("answersAMutation"),
         )
+        assertEquals("List(Selection(todo,Some(first),Map(id -> 1),List(Selection(title,None,Map(),List()), Selection(owner,None,Map(),List(Selection(name,None,Map(),List()))))))", scalaCheck("givesTheSelection"))
     }
 
     private fun Any?.at(vararg path: String): Any? = path.fold(this) { value, key -> (value as Map<*, *>)[key] }

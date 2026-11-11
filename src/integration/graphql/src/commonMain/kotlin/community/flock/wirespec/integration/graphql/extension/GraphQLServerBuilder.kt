@@ -38,7 +38,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  *
  * A client writes its own document, so the server reads it when the request comes in: it parses the query, calls the
  * `Service` of each field that is an rpc with the arguments of the field, and answers with the fields the query selects
- * of each result. The parser and the execution are part of the generated file, so it needs no GraphQL library. They are
+ * of each result. A server that is given a function of the `Selection` asks it for the `Service` of each call, so an
+ * implementation sees which fields the query selects of its result. The parser and the execution are part of the generated file, so it needs no GraphQL library. They are
  * written as source text, one for each language: the IR has no loops or mutable state to write a parser with.
  *
  * The arguments of a field are read as the `GraphQLVariables` of the rpc, and the values of the response are written, by
@@ -178,8 +179,10 @@ internal class GraphQLServerBuilder(
             |
             |public class GraphQLServer(
             |  private val serialization: Wirespec.Serialization,
-            |  private val service: Service,
+            |  private val service: (Selection) -> Service,
             |) {
+            |  public constructor(serialization: Wirespec.Serialization, service: Service) : this(serialization, { service })
+            |
             |  public interface Service : ${schema.served.joinToString(", ") { "${it.namespace()}.Service" }}
             |
             |  public data class Request(
@@ -187,6 +190,17 @@ internal class GraphQLServerBuilder(
             |    val operationName: String?,
             |    val variables: Map<String, Any?>?,
             |  )
+            |
+            |  public data class Selection(
+            |    val name: String,
+            |    val alias: String?,
+            |    val arguments: Map<String, Any?>,
+            |    val fields: List<Selection>,
+            |  ) {
+            |    public operator fun get(name: String): Selection? = fields.find { it.name == name }
+            |
+            |    public operator fun contains(name: String): Boolean = fields.any { it.name == name }
+            |  }
             |
             |${schema.served.filter { it.hasDefaults }.map { "private val ${it.defaults()}: Map<String, Any?> = Parser(${it.document.literal()}).document().operations.first().defaults" }.indented(2)}
             |
@@ -227,7 +241,7 @@ internal class GraphQLServerBuilder(
 
         private fun Selectable.render(): String = when (val union = definition as? Union) {
             null -> listOf(
-                "${if (definition == null) "" else "private "}suspend fun $function(${definition?.let { "value: ${it.model()}, " }.orEmpty()}selections: List<Selection>, path: List<Any>): Map<String, Any?> =",
+                "${if (definition == null) "" else "private "}suspend fun $function(${definition?.let { "value: ${it.model()}, " }.orEmpty()}selections: List<Node>, path: List<Any>): Map<String, Any?> =",
                 "  fields(selections, setOf(${conditions.literals()})).associate { field ->",
                 "    field.key to when (field.field) {",
                 "      \"__typename\" -> ${graphQLName.literal()}",
@@ -238,7 +252,7 @@ internal class GraphQLServerBuilder(
             )
             else -> union.members().let { (members, exhaustive) ->
                 listOf(
-                    "private suspend fun $function(value: ${union.model()}, selections: List<Selection>, path: List<Any>): Map<String, Any?> = when (value) {",
+                    "private suspend fun $function(value: ${union.model()}, selections: List<Node>, path: List<Any>): Map<String, Any?> = when (value) {",
                     members.map { "is ${it.model()} -> ${it.function()}(value, selections, path)" }.indented(2),
                     if (exhaustive && members.isNotEmpty()) "" else "  else -> throw IllegalArgumentException(\"Cannot select the fields of a \" + value::class.simpleName)",
                     "}",
@@ -249,7 +263,7 @@ internal class GraphQLServerBuilder(
         private fun Served.case(): String = listOfNotNull(
             "${field.literal()} -> rpc(field, path) {",
             "  val arguments = arguments<${variablesType()}>(field, ${if (hasDefaults) defaults() else "emptyMap()"}, typeOf<${variablesType()}>())".takeIf { variables.isNotEmpty() },
-            "service.${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}" }})".let { call ->
+            "service(selected(field)).${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}" }})".let { call ->
                 when {
                     rpc.error != null -> listOf(
                         "when (val response = $call) {",
@@ -300,14 +314,28 @@ internal class GraphQLServerBuilder(
             |
             |  public record Request(String query, Optional<String> operationName, Optional<Map<String, Object>> variables) {}
             |
+            |  public record Selection(String name, Optional<String> alias, Map<String, Object> arguments, List<Selection> fields) {
+            |    public Optional<Selection> get(String name) {
+            |      return fields.stream().filter(field -> field.name().equals(name)).findFirst();
+            |    }
+            |
+            |    public boolean contains(String name) {
+            |      return get(name).isPresent();
+            |    }
+            |  }
+            |
             |${schema.served.filter { it.hasDefaults }.map { "private static final Map<String, Object> ${it.defaults()} = new Parser(${it.document.literal()}).document().operations().get(0).defaults();" }.indented(2)}
             |
             |  private final Wirespec.Serialization serialization;
-            |  private final Service service;
+            |  private final Function<Selection, Service> service;
             |
-            |  public GraphQLServer(Wirespec.Serialization serialization, Service service) {
+            |  public GraphQLServer(Wirespec.Serialization serialization, Function<Selection, Service> service) {
             |    this.serialization = serialization;
             |    this.service = service;
+            |  }
+            |
+            |  public GraphQLServer(Wirespec.Serialization serialization, Service service) {
+            |    this(serialization, selection -> service);
             |  }
             |
             |  public CompletableFuture<Wirespec.RawResponse> handle(Wirespec.RawRequest request) {
@@ -356,7 +384,7 @@ internal class GraphQLServerBuilder(
 
         private fun Selectable.render(): String = when (val union = definition as? Union) {
             null -> listOf(
-                "CompletableFuture<Object> $function(${definition?.let { "${it.model()} value, " }.orEmpty()}List<Selection> selections, List<Object> path) {",
+                "CompletableFuture<Object> $function(${definition?.let { "${it.model()} value, " }.orEmpty()}List<Node> selections, List<Object> path) {",
                 "  return object(fields(selections, Set.of(${conditions.literals()})), field -> switch (field.field()) {",
                 "    case \"__typename\" -> done(${graphQLName.literal()});",
                 (members.map { "case ${it.name.literal()} -> ${it.reference.project("value.${it.accessor}()")};" } + rpcs.map { it.case() }).indented(4),
@@ -365,7 +393,7 @@ internal class GraphQLServerBuilder(
                 "}",
             )
             else -> listOf(
-                "CompletableFuture<Object> $function(${union.model()} value, List<Selection> selections, List<Object> path) {",
+                "CompletableFuture<Object> $function(${union.model()} value, List<Node> selections, List<Object> path) {",
                 union.members().first.map { "if (value instanceof ${it.model()} member) return ${it.function()}(member, selections, path);" }.indented(2),
                 "  throw new IllegalArgumentException(\"Cannot select the fields of a \" + value.getClass().getSimpleName());",
                 "}",
@@ -375,7 +403,7 @@ internal class GraphQLServerBuilder(
         private fun Served.case(): String = listOfNotNull(
             "case ${field.literal()} -> rpc(field, path, () -> {",
             "  var arguments = arguments(field, ${if (hasDefaults) defaults() else "Map.of()"}, ${variablesType()}.class);".takeIf { variables.isNotEmpty() },
-            "service.${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}()" }})".let { call ->
+            "service.apply(selected(field)).${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}()" }})".let { call ->
                 when {
                     rpc.error != null -> listOf(
                         "return $call.thenCompose(response -> {",
@@ -417,8 +445,10 @@ internal class GraphQLServerBuilder(
             |import scala.collection.immutable.ListMap
             |import scala.collection.mutable
             |
-            |class GraphQLServer(serialization: Wirespec.Serialization, service: GraphQLServer.Service) {
+            |class GraphQLServer(serialization: Wirespec.Serialization, service: GraphQLServer.Selection => GraphQLServer.Service) {
             |  import GraphQLServer._
+            |
+            |  def this(serialization: Wirespec.Serialization, service: GraphQLServer.Service) = this(serialization, (_: GraphQLServer.Selection) => service)
             |
             |  def handle(request: Wirespec.RawRequest): Wirespec.RawResponse = {
             |    val errors = mutable.ListBuffer.empty[Any]
@@ -452,25 +482,31 @@ internal class GraphQLServerBuilder(
             |
             |  case class Request(query: String, operationName: Option[String], variables: Option[Map[String, Any]])
             |
+            |  case class Selection(name: String, alias: Option[String], arguments: Map[String, Any], fields: List[Selection]) {
+            |    def get(name: String): Option[Selection] = fields.find(_.name == name)
+            |
+            |    def contains(name: String): Boolean = get(name).isDefined
+            |  }
+            |
             |${schema.served.filter { it.hasDefaults }.map { "private lazy val ${it.defaults()}: Map[String, Any] = new Parser(${it.document.literal()}).document().operations.head.defaults" }.indented(2)}
             |
         """.trimMargin() + SCALA_RUNTIME
 
         private fun Selectable.render(): String = when (val union = definition as? Union) {
             null -> listOf(
-                "def $function(${definition?.let { "value: ${it.model()}, " }.orEmpty()}selections: List[Selection], path: List[Any]): Map[String, Any] =",
-                "  ListMap.from(fields(selections, Set(${conditions.literals()})).map { field =>",
-                "    val selected: Any = field.field.orNull match {",
+                "def $function(${definition?.let { "value: ${it.model()}, " }.orEmpty()}selections: List[Node], path: List[Any]): Map[String, Any] =",
+                "  ListMap.from(fields(selections, Some(Set(${conditions.literals()}))).map { field =>",
+                "    val resolved: Any = field.field.orNull match {",
                 "      case \"__typename\" => ${graphQLName.literal()}",
                 (members.map { "case ${it.name.literal()} => ${it.reference.project("value.${it.accessor}")}" } + rpcs.map { it.case() }).indented(6),
                 "      case _ => throw new IllegalArgumentException(\"${unknown(graphQLName)}\")",
                 "    }",
-                "    field.key -> selected",
+                "    field.key -> resolved",
                 "  })",
             )
             else -> union.members().let { (members, exhaustive) ->
                 listOf(
-                    "def $function(value: ${union.model()}, selections: List[Selection], path: List[Any]): Map[String, Any] = value match {",
+                    "def $function(value: ${union.model()}, selections: List[Node], path: List[Any]): Map[String, Any] = value match {",
                     members.map { "case member: ${it.model()} => ${it.function()}(member, selections, path)" }.indented(2),
                     if (exhaustive && members.isNotEmpty()) "" else "  case other => throw new IllegalArgumentException(\"Cannot select the fields of a \" + other.getClass.getSimpleName)",
                     "}",
@@ -481,7 +517,7 @@ internal class GraphQLServerBuilder(
         private fun Served.case(): String = listOfNotNull(
             "case ${field.literal()} => rpc(field, path) {",
             "  val arguments = this.arguments[${variablesType()}](field, ${if (hasDefaults) defaults() else "Map.empty"}, scala.reflect.classTag[${variablesType()}])".takeIf { variables.isNotEmpty() },
-            "service.${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}" }})".let { call ->
+            "service(selected(field)).${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}" }})".let { call ->
                 when {
                     rpc.error != null -> listOf(
                         "$call match {",
@@ -528,7 +564,7 @@ internal class GraphQLServerBuilder(
         // The texts below are the generated sources as they are, so they hold no `$`: a variable starts with `$`.
 
         val KOTLIN_RUNTIME = """
-            |    private suspend fun rpc(field: Selection, path: List<Any>, call: suspend () -> Any?): Any? = try {
+            |    private suspend fun rpc(field: Node, path: List<Any>, call: suspend () -> Any?): Any? = try {
             |      call()
             |    } catch (e: kotlin.coroutines.cancellation.CancellationException) {
             |      throw e
@@ -537,10 +573,13 @@ internal class GraphQLServerBuilder(
             |      null
             |    }
             |
-            |    private fun <T : Any> arguments(field: Selection, defaults: Map<String, Any?>, type: KType): T =
+            |    private fun <T : Any> arguments(field: Node, defaults: Map<String, Any?>, type: KType): T =
             |      serialization.deserializeBody(serialization.serializeBody(defaults + resolve(field.arguments), typeOf<Map<String, Any?>>()), type)
             |
-            |    private fun fields(selections: List<Selection>, types: Set<String>, spread: Set<String> = emptySet()): List<Selection> = selections
+            |    private fun selected(field: Node): Selection =
+            |      Selection(field.field.orEmpty(), field.alias, resolve(field.arguments), fields(field.selections, null).map { selected(it) })
+            |
+            |    private fun fields(selections: List<Node>, types: Set<String>?, spread: Set<String> = emptySet()): List<Node> = selections
             |      .filter { resolve(it.directives["skip"]?.get("if")) != true && resolve(it.directives["include"]?.get("if")) != false }
             |      .flatMap { selection ->
             |        when {
@@ -552,10 +591,10 @@ internal class GraphQLServerBuilder(
             |      }
             |      .groupBy { it.key }
             |      .values
-            |      .map { same -> same.first().let { if (same.size == 1) it else Selection(it.field, null, null, it.alias, it.arguments, it.directives, same.flatMap { field -> field.selections }) } }
+            |      .map { same -> same.first().let { if (same.size == 1) it else Node(it.field, null, null, it.alias, it.arguments, it.directives, same.flatMap { field -> field.selections }) } }
             |
-            |    private fun fragment(fragment: Selection, types: Set<String>, spread: Set<String>): List<Selection> =
-            |      if (fragment.type == null || fragment.type in types) fields(fragment.selections, types, spread) else emptyList()
+            |    private fun fragment(fragment: Node, types: Set<String>?, spread: Set<String>): List<Node> =
+            |      if (fragment.type == null || types == null || fragment.type in types) fields(fragment.selections, types, spread) else emptyList()
             |
             |    private fun resolve(values: Map<String, Any?>): Map<String, Any?> = values
             |      .filterValues { it !is Variable || it.name in variables }
@@ -572,21 +611,21 @@ internal class GraphQLServerBuilder(
             |
             |  private class Variable(val name: String)
             |
-            |  private class Selection(
+            |  private class Node(
             |    val field: String?,
             |    val fragment: String?,
             |    val type: String?,
             |    val alias: String?,
             |    val arguments: Map<String, Any?>,
             |    val directives: Map<String, Map<String, Any?>>,
-            |    val selections: List<Selection>,
+            |    val selections: List<Node>,
             |  ) {
             |    val key: String = alias ?: field.orEmpty()
             |  }
             |
-            |  private class Operation(val type: String, val name: String?, val defaults: Map<String, Any?>, val selections: List<Selection>)
+            |  private class Operation(val type: String, val name: String?, val defaults: Map<String, Any?>, val selections: List<Node>)
             |
-            |  private class Document(val operations: List<Operation>, val fragments: Map<String, Selection>) {
+            |  private class Document(val operations: List<Operation>, val fragments: Map<String, Node>) {
             |    fun operation(name: String?): Operation = when (name) {
             |      null -> operations.singleOrNull() ?: throw IllegalArgumentException("Expected one operation, or an operationName that picks one")
             |      else -> operations.find { it.name == name } ?: throw IllegalArgumentException("Unknown operation " + name)
@@ -598,7 +637,7 @@ internal class GraphQLServerBuilder(
             |
             |    fun document(): Document {
             |      val operations = mutableListOf<Operation>()
-            |      val fragments = mutableMapOf<String, Selection>()
+            |      val fragments = mutableMapOf<String, Node>()
             |      while (!end()) {
             |        if (peek("{")) {
             |          operations.add(Operation("query", null, emptyMap(), selections()))
@@ -608,7 +647,7 @@ internal class GraphQLServerBuilder(
             |              val fragment = name()
             |              if (name() != "on") throw error("Expected on")
             |              val type = name()
-            |              fragments[fragment] = Selection(null, null, type, null, emptyMap(), directives(), selections())
+            |              fragments[fragment] = Node(null, null, type, null, emptyMap(), directives(), selections())
             |            }
             |            "query", "mutation", "subscription" -> {
             |              val name = if (peek("(") || peek("@") || peek("{")) null else name()
@@ -648,24 +687,24 @@ internal class GraphQLServerBuilder(
             |      take("!")
             |    }
             |
-            |    private fun selections(): List<Selection> {
-            |      val selections = mutableListOf<Selection>()
+            |    private fun selections(): List<Node> {
+            |      val selections = mutableListOf<Node>()
             |      expect("{")
             |      while (!take("}")) selections.add(selection())
             |      return selections
             |    }
             |
-            |    private fun selection(): Selection {
+            |    private fun selection(): Node {
             |      if (take("...")) {
-            |        if (peek("{") || peek("@")) return Selection(null, null, null, null, emptyMap(), directives(), selections())
+            |        if (peek("{") || peek("@")) return Node(null, null, null, null, emptyMap(), directives(), selections())
             |        val name = name()
-            |        if (name != "on") return Selection(null, name, null, null, emptyMap(), directives(), emptyList())
+            |        if (name != "on") return Node(null, name, null, null, emptyMap(), directives(), emptyList())
             |        val type = name()
-            |        return Selection(null, null, type, null, emptyMap(), directives(), selections())
+            |        return Node(null, null, type, null, emptyMap(), directives(), selections())
             |      }
             |      val name = name()
             |      val field = if (take(":")) name() else name
-            |      return Selection(field, null, null, name.takeIf { it != field }, arguments(), directives(), if (peek("{")) selections() else emptyList())
+            |      return Node(field, null, null, name.takeIf { it != field }, arguments(), directives(), if (peek("{")) selections() else emptyList())
             |    }
             |
             |    private fun arguments(): Map<String, Any?> {
@@ -802,7 +841,7 @@ internal class GraphQLServerBuilder(
         """.trimMargin()
 
         val JAVA_RUNTIME = """
-            |    private CompletableFuture<Object> rpc(Selection field, List<Object> path, Supplier<CompletableFuture<Object>> call) {
+            |    private CompletableFuture<Object> rpc(Node field, List<Object> path, Supplier<CompletableFuture<Object>> call) {
             |      CompletableFuture<Object> result;
             |      try {
             |        result = call.get();
@@ -820,15 +859,15 @@ internal class GraphQLServerBuilder(
             |      });
             |    }
             |
-            |    private <T> T arguments(Selection field, Map<String, Object> defaults, Class<T> type) {
+            |    private <T> T arguments(Node field, Map<String, Object> defaults, Class<T> type) {
             |      Map<String, Object> arguments = new LinkedHashMap<>(defaults);
             |      arguments.putAll(resolve(field.arguments()));
             |      return serialization.deserializeBody(serialization.serializeBody(arguments, Wirespec.getType(Map.class, null)), Wirespec.getType(type, null));
             |    }
             |
-            |    private CompletableFuture<Object> object(List<Selection> fields, Function<Selection, CompletableFuture<Object>> resolve) {
+            |    private CompletableFuture<Object> object(List<Node> fields, Function<Node, CompletableFuture<Object>> resolve) {
             |      CompletableFuture<Map<String, Object>> result = CompletableFuture.completedFuture(new LinkedHashMap<>());
-            |      for (Selection field : fields) {
+            |      for (Node field : fields) {
             |        result = result.thenCompose(object -> resolve.apply(field).thenApply(value -> {
             |          object.put(field.key(), value);
             |          return object;
@@ -852,41 +891,45 @@ internal class GraphQLServerBuilder(
             |      return CompletableFuture.completedFuture(value);
             |    }
             |
-            |    private List<Object> path(List<Object> path, Selection field) {
+            |    private List<Object> path(List<Object> path, Node field) {
             |      List<Object> extended = new ArrayList<>(path);
             |      extended.add(field.key());
             |      return extended;
             |    }
             |
-            |    private List<Selection> fields(List<Selection> selections, Set<String> types) {
-            |      Map<String, Selection> fields = new LinkedHashMap<>();
+            |    private Selection selected(Node field) {
+            |      return new Selection(field.field(), Optional.ofNullable(field.alias()), resolve(field.arguments()), fields(field.selections(), null).stream().map(this::selected).toList());
+            |    }
+            |
+            |    private List<Node> fields(List<Node> selections, Set<String> types) {
+            |      Map<String, Node> fields = new LinkedHashMap<>();
             |      collect(selections, types, Set.of(), fields);
             |      return new ArrayList<>(fields.values());
             |    }
             |
-            |    private void collect(List<Selection> selections, Set<String> types, Set<String> spread, Map<String, Selection> fields) {
-            |      for (Selection selection : selections) {
+            |    private void collect(List<Node> selections, Set<String> types, Set<String> spread, Map<String, Node> fields) {
+            |      for (Node selection : selections) {
             |        if (Boolean.TRUE.equals(directive(selection, "skip")) || Boolean.FALSE.equals(directive(selection, "include"))) continue;
             |        if (selection.field() != null) {
             |          fields.merge(selection.key(), selection, (first, second) -> {
-            |            List<Selection> merged = new ArrayList<>(first.selections());
+            |            List<Node> merged = new ArrayList<>(first.selections());
             |            merged.addAll(second.selections());
-            |            return new Selection(first.field(), null, null, first.alias(), first.arguments(), first.directives(), merged);
+            |            return new Node(first.field(), null, null, first.alias(), first.arguments(), first.directives(), merged);
             |          });
             |        } else if (selection.fragment() == null) {
-            |          if (selection.type() == null || types.contains(selection.type())) collect(selection.selections(), types, spread, fields);
+            |          if (selection.type() == null || types == null || types.contains(selection.type())) collect(selection.selections(), types, spread, fields);
             |        } else {
-            |          Selection fragment = document.fragments().get(selection.fragment());
+            |          Node fragment = document.fragments().get(selection.fragment());
             |          if (fragment == null) throw new IllegalArgumentException("Unknown fragment " + selection.fragment());
             |          if (spread.contains(selection.fragment())) throw new IllegalArgumentException("Fragment " + selection.fragment() + " spreads itself");
             |          Set<String> spreading = new java.util.HashSet<>(spread);
             |          spreading.add(selection.fragment());
-            |          if (types.contains(fragment.type())) collect(fragment.selections(), types, spreading, fields);
+            |          if (types == null || types.contains(fragment.type())) collect(fragment.selections(), types, spreading, fields);
             |        }
             |      }
             |    }
             |
-            |    private Object directive(Selection selection, String name) {
+            |    private Object directive(Node selection, String name) {
             |      Map<String, Object> arguments = selection.directives().get(name);
             |      return arguments == null ? null : resolve(arguments.get("if"));
             |    }
@@ -913,15 +956,15 @@ internal class GraphQLServerBuilder(
             |
             |  private record Variable(String name) {}
             |
-            |  private record Selection(String field, String fragment, String type, String alias, Map<String, Object> arguments, Map<String, Map<String, Object>> directives, List<Selection> selections) {
+            |  private record Node(String field, String fragment, String type, String alias, Map<String, Object> arguments, Map<String, Map<String, Object>> directives, List<Node> selections) {
             |    String key() {
             |      return alias != null ? alias : field;
             |    }
             |  }
             |
-            |  private record Operation(String type, String name, Map<String, Object> defaults, List<Selection> selections) {}
+            |  private record Operation(String type, String name, Map<String, Object> defaults, List<Node> selections) {}
             |
-            |  private record Document(List<Operation> operations, Map<String, Selection> fragments) {
+            |  private record Document(List<Operation> operations, Map<String, Node> fragments) {
             |    Operation operation(String name) {
             |      if (name == null && operations.size() == 1) return operations.get(0);
             |      if (name == null) throw new IllegalArgumentException("Expected one operation, or an operationName that picks one");
@@ -940,7 +983,7 @@ internal class GraphQLServerBuilder(
             |
             |    Document document() {
             |      List<Operation> operations = new ArrayList<>();
-            |      Map<String, Selection> fragments = new LinkedHashMap<>();
+            |      Map<String, Node> fragments = new LinkedHashMap<>();
             |      while (!end()) {
             |        if (peek("{")) {
             |          operations.add(new Operation("query", null, Map.of(), selections()));
@@ -952,7 +995,7 @@ internal class GraphQLServerBuilder(
             |            String fragment = name();
             |            if (!name().equals("on")) throw error("Expected on");
             |            String type = name();
-            |            fragments.put(fragment, new Selection(null, null, type, null, Map.of(), directives(), selections()));
+            |            fragments.put(fragment, new Node(null, null, type, null, Map.of(), directives(), selections()));
             |          }
             |          case "query", "mutation", "subscription" -> {
             |            String name = peek("(") || peek("@") || peek("{") ? null : name();
@@ -991,24 +1034,24 @@ internal class GraphQLServerBuilder(
             |      take("!");
             |    }
             |
-            |    private List<Selection> selections() {
-            |      List<Selection> selections = new ArrayList<>();
+            |    private List<Node> selections() {
+            |      List<Node> selections = new ArrayList<>();
             |      expect("{");
             |      while (!take("}")) selections.add(selection());
             |      return selections;
             |    }
             |
-            |    private Selection selection() {
+            |    private Node selection() {
             |      if (take("...")) {
-            |        if (peek("{") || peek("@")) return new Selection(null, null, null, null, Map.of(), directives(), selections());
+            |        if (peek("{") || peek("@")) return new Node(null, null, null, null, Map.of(), directives(), selections());
             |        String name = name();
-            |        if (!name.equals("on")) return new Selection(null, name, null, null, Map.of(), directives(), List.of());
+            |        if (!name.equals("on")) return new Node(null, name, null, null, Map.of(), directives(), List.of());
             |        String type = name();
-            |        return new Selection(null, null, type, null, Map.of(), directives(), selections());
+            |        return new Node(null, null, type, null, Map.of(), directives(), selections());
             |      }
             |      String name = name();
             |      String field = take(":") ? name() : name;
-            |      return new Selection(field, null, null, name.equals(field) ? null : name, arguments(), directives(), peek("{") ? selections() : List.of());
+            |      return new Node(field, null, null, name.equals(field) ? null : name, arguments(), directives(), peek("{") ? selections() : List.of());
             |    }
             |
             |    private Map<String, Object> arguments() {
@@ -1163,16 +1206,19 @@ internal class GraphQLServerBuilder(
         """.trimMargin()
 
         val SCALA_EXECUTION = """
-            |    private def rpc(field: Selection, path: List[Any])(call: => Any): Any = try call catch {
+            |    private def rpc(field: Node, path: List[Any])(call: => Any): Any = try call catch {
             |      case scala.util.control.NonFatal(e) =>
             |        errors += Map("message" -> Option(e.getMessage).getOrElse(e.toString), "path" -> (path :+ field.key))
             |        None
             |    }
             |
-            |    private def arguments[T](field: Selection, defaults: Map[String, Any], `type`: scala.reflect.ClassTag[?]): T =
+            |    private def arguments[T](field: Node, defaults: Map[String, Any], `type`: scala.reflect.ClassTag[?]): T =
             |      serialization.deserializeBody[T](serialization.serializeBody(defaults ++ resolveAll(field.arguments), scala.reflect.classTag[Map[String, Any]]), `type`)
             |
-            |    private def fields(selections: List[Selection], types: Set[String], spread: Set[String] = Set.empty): List[Selection] = {
+            |    private def selected(field: Node): Selection =
+            |      Selection(field.field.getOrElse(""), field.alias, resolveAll(field.arguments), fields(field.selections, None).map(selected))
+            |
+            |    private def fields(selections: List[Node], types: Option[Set[String]], spread: Set[String] = Set.empty): List[Node] = {
             |      val collected = selections
             |        .filter(selection => !directive(selection, "skip").contains(true) && !directive(selection, "include").contains(false))
             |        .flatMap { selection =>
@@ -1189,10 +1235,10 @@ internal class GraphQLServerBuilder(
             |      }
             |    }
             |
-            |    private def fragment(fragment: Selection, types: Set[String], spread: Set[String]): List[Selection] =
-            |      if (fragment.`type`.forall(types.contains)) fields(fragment.selections, types, spread) else Nil
+            |    private def fragment(fragment: Node, types: Option[Set[String]], spread: Set[String]): List[Node] =
+            |      if (fragment.`type`.forall(condition => types.forall(_.contains(condition)))) fields(fragment.selections, types, spread) else Nil
             |
-            |    private def directive(selection: Selection, name: String): Option[Any] =
+            |    private def directive(selection: Node, name: String): Option[Any] =
             |      selection.directives.get(name).flatMap(_.get("if")).map(resolve)
             |
             |    private def resolveAll(values: Map[String, Any]): Map[String, Any] = values.collect {
@@ -1211,21 +1257,21 @@ internal class GraphQLServerBuilder(
         val SCALA_RUNTIME = """
             |  private case class Variable(name: String)
             |
-            |  private case class Selection(
+            |  private case class Node(
             |    field: Option[String],
             |    fragment: Option[String],
             |    `type`: Option[String],
             |    alias: Option[String],
             |    arguments: Map[String, Any],
             |    directives: Map[String, Map[String, Any]],
-            |    selections: List[Selection],
+            |    selections: List[Node],
             |  ) {
             |    def key: String = alias.orElse(field).getOrElse("")
             |  }
             |
-            |  private case class Operation(`type`: String, name: Option[String], defaults: Map[String, Any], selections: List[Selection])
+            |  private case class Operation(`type`: String, name: Option[String], defaults: Map[String, Any], selections: List[Node])
             |
-            |  private case class Document(operations: List[Operation], fragments: Map[String, Selection]) {
+            |  private case class Document(operations: List[Operation], fragments: Map[String, Node]) {
             |    def operation(name: Option[String]): Operation = name match {
             |      case None if operations.size == 1 => operations.head
             |      case None => throw new IllegalArgumentException("Expected one operation, or an operationName that picks one")
@@ -1238,7 +1284,7 @@ internal class GraphQLServerBuilder(
             |
             |    def document(): Document = {
             |      val operations = List.newBuilder[Operation]
-            |      val fragments = Map.newBuilder[String, Selection]
+            |      val fragments = Map.newBuilder[String, Node]
             |      while (!end()) {
             |        if (peek("{")) {
             |          operations += Operation("query", None, Map.empty, selections())
@@ -1248,7 +1294,7 @@ internal class GraphQLServerBuilder(
             |              val fragment = name()
             |              if (name() != "on") throw error("Expected on")
             |              val condition = name()
-            |              fragments += fragment -> Selection(None, None, Some(condition), None, Map.empty, directives(), selections())
+            |              fragments += fragment -> Node(None, None, Some(condition), None, Map.empty, directives(), selections())
             |            case keyword @ ("query" | "mutation" | "subscription") =>
             |              val operation = if (peek("(") || peek("@") || peek("{")) None else Some(name())
             |              val variables = defaults()
@@ -1286,26 +1332,26 @@ internal class GraphQLServerBuilder(
             |      take("!")
             |    }
             |
-            |    private def selections(): List[Selection] = {
-            |      val selections = List.newBuilder[Selection]
+            |    private def selections(): List[Node] = {
+            |      val selections = List.newBuilder[Node]
             |      expect("{")
             |      while (!take("}")) selections += selection()
             |      selections.result()
             |    }
             |
-            |    private def selection(): Selection =
+            |    private def selection(): Node =
             |      if (take("...")) {
-            |        if (peek("{") || peek("@")) Selection(None, None, None, None, Map.empty, directives(), selections())
+            |        if (peek("{") || peek("@")) Node(None, None, None, None, Map.empty, directives(), selections())
             |        else name() match {
             |          case "on" =>
             |            val condition = name()
-            |            Selection(None, None, Some(condition), None, Map.empty, directives(), selections())
-            |          case fragment => Selection(None, Some(fragment), None, None, Map.empty, directives(), Nil)
+            |            Node(None, None, Some(condition), None, Map.empty, directives(), selections())
+            |          case fragment => Node(None, Some(fragment), None, None, Map.empty, directives(), Nil)
             |        }
             |      } else {
             |        val first = name()
             |        val field = if (take(":")) name() else first
-            |        Selection(Some(field), None, None, Some(first).filter(_ != field), arguments(), directives(), if (peek("{")) selections() else Nil)
+            |        Node(Some(field), None, None, Some(first).filter(_ != field), arguments(), directives(), if (peek("{")) selections() else Nil)
             |      }
             |
             |    private def arguments(): Map[String, Any] = {
