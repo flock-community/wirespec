@@ -202,6 +202,9 @@ public sealed interface GraphQLOperation {
 
     public companion object {
         public fun parse(document: Wirespec.GraphQL.Document, operationName: String?, context: Wirespec.GraphQL.Context): GraphQLOperation
+
+        /** Parses the text and binds it in one go; throws a `Wirespec.GraphQL.Failure` with the errors. */
+        public fun parse(body: Wirespec.GraphQL.Body, serialization: Wirespec.Serialization): GraphQLOperation
     }
 }
 
@@ -336,6 +339,313 @@ post("/graphql") { respond(server.handle(call.toRawRequest())) }
 
 The `Wirespec.GraphQLServer` and `Wirespec.GraphQLServerEdge` interfaces mirror their client counterparts, so the
 Spring integration can later register a `GraphQLServer` bean the way it registers endpoint handlers.
+
+## Examples: using the request
+
+All examples use the `todo.ws` contract and the Kotlin output.
+
+### Building a request on the client
+
+The DSL is unchanged, but what it returns can now be inspected:
+
+```kotlin
+val request: QueryTodoGraphQL.Request = QueryTodoGraphQL.request(ID("1")) {
+    title()
+    owner { name() }
+}
+
+request.arguments.id          // ID("1")
+request.alias                 // "result"
+request.selection.title       // true
+request.selection.done        // false
+request.selection.owner       // UserSelection(fields = [Name()])
+request.selection.fields      // [Title(), Owner(selection = UserSelection(...))]
+
+request.toGraphQL()
+// query QueryTodo($id: ID!) { result: todo(id: $id) { title owner { name } } }
+
+// Without a block the request selects everything
+QueryTodoGraphQL.request(ID("1")).selection == TodoSelection.ALL   // true
+```
+
+Because the request is a value, it can also be built without the DSL, compared and reused:
+
+```kotlin
+val summary = TodoSelection(listOf(TodoSelection.Field.Id(), TodoSelection.Field.Title()))
+
+val first = QueryTodoGraphQL.Request(arguments = QueryTodoGraphQL.Arguments(ID("1")), selection = summary)
+val second = first.copy(arguments = QueryTodoGraphQL.Arguments(ID("2")))
+
+check(first.selection == second.selection)
+```
+
+### A handler that only fetches what is selected
+
+The look-ahead accessors decide what to load. Here the owner is only fetched when the query asks for it:
+
+```kotlin
+val queryTodo = QueryTodoGraphQL.Handler { request ->
+    val selection = request.selection
+    val todo = todoRepository.find(request.arguments.id)
+
+    QueryTodoGraphQL.SelectedResponse(
+        data = todo?.let {
+            QueryTodoGraphQL.TodoResult(
+                id = it.id.takeIf { selection.id },
+                title = it.title.takeIf { selection.title },
+                done = it.done.takeIf { selection.done },
+                priority = it.priority.takeIf { selection.priority },
+                owner = selection.owner?.let { owner -> owner.project(userRepository.find(it.ownerId)) },
+            )
+        },
+        errors = null,
+    )
+}
+```
+
+Setting an unselected field anyway is harmless: the response is written from the selection, so it never contains a field
+the query did not ask for.
+
+For a list, the selection is the same for every element, so it also avoids N+1 lookups:
+
+```kotlin
+val todos = TodosGraphQL.Handler { request ->
+    val todos = todoRepository.findAll(done = request.arguments.done)
+    val owners = request.selection.owner
+        ?.let { userRepository.findAll(todos.map { it.ownerId }.distinct()) }   // one query, or none at all
+        .orEmpty()
+
+    TodosGraphQL.SelectedResponse(
+        data = todos.map { todo ->
+            TodosGraphQL.TodoResult(
+                id = todo.id,
+                title = todo.title,
+                done = todo.done,
+                priority = todo.priority,
+                owner = request.selection.owner?.let { it.project(owners.getValue(todo.ownerId)) },
+            )
+        },
+        errors = null,
+    )
+}
+```
+
+### Matching on the selected fields
+
+`Field` is sealed, so a `when` over it is exhaustive: when the schema gets a new field, this stops compiling until the
+new field is mapped.
+
+```kotlin
+fun TodoSelection.columns(): Set<String> = fields.flatMap { field ->
+    when (field) {
+        is TodoSelection.Field.Typename -> emptyList()
+        is TodoSelection.Field.Id -> listOf("id")
+        is TodoSelection.Field.Title -> listOf("title")
+        is TodoSelection.Field.Done -> listOf("done")
+        is TodoSelection.Field.Priority -> listOf("priority")
+        is TodoSelection.Field.Owner -> listOf("owner_id")
+    }
+}.toSet() + "id"
+
+// SELECT id, title, owner_id FROM todo WHERE id = ?
+val sql = "SELECT ${request.selection.columns().joinToString()} FROM todo WHERE id = ?"
+```
+
+### Unions
+
+A union selection has a selection per member, which is `null` when the query has no fragment for it:
+
+```kotlin
+val search = SearchGraphQL.Handler { request ->
+    val notes = request.selection.onNote?.let { noteRepository.search(request.arguments.text) }.orEmpty()
+    val tags = request.selection.onTag?.let { tagRepository.search(request.arguments.text) }.orEmpty()
+
+    SearchGraphQL.SelectedResponse(
+        data = (notes + tags).map(request.selection::project),   // writes __typename and the fields of the member
+        errors = null,
+    )
+}
+```
+
+### Mutations and input objects
+
+An input object argument arrives as the model, already deserialized and validated:
+
+```kotlin
+val addTodo = AddTodoGraphQL.Handler { request ->
+    val input: NewTodo = request.arguments.input
+    val created = todoRepository.insert(title = input.title, priority = input.priority)
+    AddTodoGraphQL.SelectedResponse(data = request.selection.project(created), errors = null)
+}
+```
+
+### Serving an rpc from its `Service`
+
+When over-fetching is fine, the plain rpc `Service` is enough, and no GraphQL code is needed:
+
+```kotlin
+val todoService = object : QueryTodo.Service, Todos.Service {
+    override suspend fun queryTodo(id: ID): Todo? = todoRepository.find(id)?.toModel()
+    override suspend fun todos(done: Boolean?): List<Todo> = todoRepository.findAll(done).map { it.toModel() }
+}
+
+val queryTodo = QueryTodoGraphQL.Handler.of(todoService)
+val todos = TodosGraphQL.Handler.of(todoService)
+```
+
+### Authorisation on the selection
+
+The handler sees the whole query tree up front, so it can refuse part of it before doing any work:
+
+```kotlin
+val queryTodo = QueryTodoGraphQL.Handler { request ->
+    when {
+        request.selection.owner != null && !currentUser().isAdmin -> QueryTodoGraphQL.SelectedResponse(
+            data = null,
+            errors = listOf(QueryTodoGraphQL.GraphQLError(message = "Not allowed to read the owner", locations = null, path = listOf(request.alias, "owner"), extensions = null)),
+        )
+        else -> QueryTodoGraphQL.Handler.of(todoService).queryTodo(request)
+    }
+}
+```
+
+### Parsing a document on the server
+
+The server does this inside `handle`, but the typed operation can also be used directly, for logging, rate limiting or
+a custom executor. Aliases, fragments and directives are already resolved:
+
+```kotlin
+val body = Wirespec.GraphQL.Body(
+    query = """
+        query Overview(${'$'}withOwner: Boolean!) {
+          first: todo(id: "1") { ...Summary }
+          second: todo(id: "2") { heading: title owner @include(if: ${'$'}withOwner) { name } }
+          todos(done: false) { id }
+        }
+        fragment Summary on Todo { id title }
+    """,
+    operationName = "Overview",
+    variables = mapOf("withOwner" to false),
+)
+
+val operation = GraphQLOperation.parse(body, serialization) as GraphQLOperation.Query
+
+operation.fields == listOf(
+    QueryTodoGraphQL.Request(
+        alias = "first",
+        arguments = QueryTodoGraphQL.Arguments(ID("1")),
+        selection = TodoSelection(listOf(TodoSelection.Field.Id(), TodoSelection.Field.Title())),
+    ),
+    QueryTodoGraphQL.Request(
+        alias = "second",
+        arguments = QueryTodoGraphQL.Arguments(ID("2")),
+        selection = TodoSelection(listOf(TodoSelection.Field.Title(alias = "heading"))),   // owner skipped
+    ),
+    TodosGraphQL.Request(
+        alias = "todos",
+        arguments = TodosGraphQL.Arguments(done = false),
+        selection = TodoSelection(listOf(TodoSelection.Field.Id())),
+    ),
+)
+```
+
+Dispatching it is an exhaustive `when` over the root fields, which is what the generated server does:
+
+```kotlin
+suspend fun GraphQLHandler.execute(field: QueryField): Any = when (field) {
+    is QueryTodoGraphQL.Request -> queryTodo(field)
+    is TodosGraphQL.Request -> todos(field)
+    is SearchGraphQL.Request -> search(field)
+    is NotificationsGraphQL.Request -> notifications(field)
+    is QueryTypename -> "Query"
+}
+
+val log = operation.fields.joinToString { field ->
+    when (field) {
+        is QueryTodoGraphQL.Request -> "todo(${field.arguments.id.value})"
+        is TodosGraphQL.Request -> "todos"
+        is SearchGraphQL.Request -> "search(${field.arguments.text})"
+        is NotificationsGraphQL.Request -> "notifications"
+        is QueryTypename -> "__typename"
+    }
+}
+```
+
+A document that does not fit the schema fails with every error, with its location:
+
+```kotlin
+val failure = runCatching { GraphQLOperation.parse(Wirespec.GraphQL.Body("{ todo { titel } }", null, null), serialization) }
+    .exceptionOrNull() as Wirespec.GraphQL.Failure
+
+failure.errors.map { it.message }
+// [Field "todo" argument "id" of type "ID!" is required, but it was not provided.,
+//  Cannot query field "titel" on type "Todo".]
+```
+
+### Serving it over HTTP
+
+`GraphQLServer` only speaks `Wirespec.RawRequest`/`RawResponse`, so it fits any HTTP stack. With Ktor:
+
+```kotlin
+// GraphQLHandler extends the Handler of every rpc, so the handlers above can be delegated to
+// (the remaining rpcs, such as CompleteTodo and the notifications, are left out for brevity).
+val handler = object : GraphQLHandler,
+    QueryTodoGraphQL.Handler by queryTodo,
+    TodosGraphQL.Handler by todos,
+    SearchGraphQL.Handler by search,
+    AddTodoGraphQL.Handler by addTodo {}
+
+val server = GraphQLServer(serialization = WirespecSerialization(), handler = handler)
+
+routing {
+    post("/graphql") {
+        val response = server.handle(
+            Wirespec.RawRequest(
+                method = "POST",
+                path = listOf("graphql"),
+                queries = emptyMap(),
+                headers = call.request.headers.toMap(),
+                body = call.receive<ByteArray>(),
+            ),
+        )
+        call.respondBytes(response.body ?: ByteArray(0), ContentType.Application.Json, HttpStatusCode.fromValue(response.statusCode))
+    }
+}
+```
+
+### Testing
+
+A handler is a plain function, so a test builds the request with the client DSL and calls it, without HTTP or JSON:
+
+```kotlin
+@Test
+fun `loads the owner only when it is selected`() = runTest {
+    val response = queryTodo.queryTodo(QueryTodoGraphQL.request(ID("1")) { title() })
+
+    assertEquals(QueryTodoGraphQL.TodoResult(id = null, title = "Write the design", done = null, priority = null, owner = null), response.data)
+    assertEquals(0, userRepository.lookups)   // a counting fake
+}
+```
+
+The generated client runs against the generated server in memory, through a `Transportation` that calls the server:
+
+```kotlin
+val client = GraphQLClient(serialization) { rawRequest -> server.handle(rawRequest) }
+
+val todo: QueryTodoGraphQL.TodoResult? = client.queryTodo(ID("1")) { title(); owner { name() } }
+```
+
+And the printer and the parser agree, for any request:
+
+```kotlin
+@Test
+fun `a request survives printing and parsing`() {
+    val request = QueryTodoGraphQL.request(ID("1")) { id(); owner { name() } }
+    val body = Wirespec.GraphQL.Body(query = request.toGraphQL(), operationName = null, variables = mapOf("id" to "1"))
+
+    assertEquals(listOf(request), (GraphQLOperation.parse(body, serialization) as GraphQLOperation.Query).fields)
+}
+```
 
 ## The shared runtime
 
