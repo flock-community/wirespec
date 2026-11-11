@@ -69,6 +69,14 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * generated clients send through it. An rpc with fields to select has a `SelectedApi` too, which reads the partial
  * result.
  *
+ * The other side is the `GraphQLServer`, next to the `GraphQLClient` in the root package, that [GraphQLServerBuilder]
+ * writes: it answers a GraphQL request with an implementation of its `Service`, which is the `Service` of every rpc.
+ *
+ * ```kotlin
+ * val server = GraphQLServer(serialization, service)
+ * val response: Wirespec.RawResponse = server.handle(request)
+ * ```
+ *
  * Those four `Wirespec` types are added to the shared file by this extension, so register it on an emitter that emits
  * the shared file: the `Wirespec` of the runtime library does not have them.
  *
@@ -109,7 +117,11 @@ public class GraphQLClientExtension(
                     operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, operations.close(rpc), operations.path(rpc), ir.serviceOf(rpc)) }
                 }
                 .takeIf { it.isNotEmpty() }
-                ?.let { ir.withGraphQLTypes(dialect) + Client(dialect, GraphQLQueryBuilder(operations, dialect.language), it).files() }
+                ?.let {
+                    ir.withGraphQLTypes(dialect) +
+                        Client(dialect, GraphQLQueryBuilder(operations, dialect.language), it).files() +
+                        GraphQLServerBuilder(packageName, operations, definitions, ir, dialect.language).file(it.map { operation -> operation.served }, dialect.imports)
+                }
         }
         ?: ir
 
@@ -145,6 +157,9 @@ public class GraphQLClientExtension(
         val builderType: String = request.builder
         val client: String = "$builderType.$GRAPHQL_CLIENT"
         val requestType: String = "$builderType.${GraphQLQueryBuilder.GRAPHQL_REQUEST}"
+
+        /** What the server needs of the rpc to answer a request for it. */
+        val served: GraphQLServerBuilder.Served = GraphQLServerBuilder.Served(rpc, name, service.function, variables.map { (field, _) -> field.name }, open, close, path, RESULT)
     }
 
     /** The `Service` interface the emitter wrote for an rpc, with its parameters named as that language names them. */

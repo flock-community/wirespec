@@ -378,13 +378,13 @@ class GraphQLClientExtensionTest {
             }
         }
         assertEquals(
-            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos", "Notifications", "Inbox", "InboxCount", "MutateNotifications", "MarkRead").map { "$it.Service" },
+            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos", "Notifications", "Inbox", "InboxCount", "Latest", "MutateNotifications", "MarkRead").map { "$it.Service" },
             KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
         )
     }
 
     @Test
-    fun `Each rpc gets one file, and the GraphQLClient that bundles them sits next to the endpoint Client`() {
+    fun `Each rpc gets one file, and the GraphQLClient and GraphQLServer that bundle them sit next to the endpoint Client`() {
         val ast = object : ParseContext, NoLogger {
             override val spec = WirespecSpec
         }.parse(
@@ -409,11 +409,13 @@ class GraphQLClientExtensionTest {
             .associate { it.file.removePrefix("community/flock/wirespec/generated/") to it.result }
 
         assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
-        assertEquals(setOf("Client.kt", "GraphQLClient.kt"), files.keys.filterNot { "/" in it }.toSet())
+        assertEquals(setOf("Client.kt", "GraphQLClient.kt", "GraphQLServer.kt"), files.keys.filterNot { "/" in it }.toSet())
         listOf("data class GraphQLClient(", "object Api : Wirespec.GraphQLClient<", "data class ClientEdge(", ") : Wirespec.GraphQLResponse<Todo, GraphQLError>", ") : Wirespec.GraphQLRequest", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
             .forEach { assertTrue(it in files.getValue("graphql/GetTodoGraphQL.kt"), "GetTodoGraphQL.kt misses $it") }
         listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(")
             .forEach { assertTrue(it in files.getValue("GraphQLClient.kt"), "GraphQLClient.kt misses $it") }
+        listOf("package community.flock.wirespec.generated\n", "public class GraphQLServer(", "rpc.GetTodo.Service, community.flock.wirespec.generated.rpc.ListTodos.Service", "\"getTodo\" -> rpc(field, path) {", "\"listTodos\" -> rpc(field, path) {")
+            .forEach { assertTrue(it in files.getValue("GraphQLServer.kt"), "GraphQLServer.kt misses $it") }
     }
 
     @Test
