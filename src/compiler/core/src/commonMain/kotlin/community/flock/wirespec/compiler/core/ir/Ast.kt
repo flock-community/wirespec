@@ -48,7 +48,7 @@ public data class Name(val parts: List<String>) {
     override fun toString(): String = camelCase()
 
     public companion object {
-        private val SPLIT_PATTERN = Regex("[A-Z]{2,}(?=[A-Z][a-z])|[A-Z]?[a-z0-9]+|[A-Z]+|[^a-zA-Z0-9]+")
+        private val SPLIT_PATTERN = Regex("[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z0-9]+|[A-Z]+|[^a-zA-Z0-9]+")
         public fun of(value: String): Name = Name(SPLIT_PATTERN.findAll(value).map { it.value }.toList())
     }
 }
