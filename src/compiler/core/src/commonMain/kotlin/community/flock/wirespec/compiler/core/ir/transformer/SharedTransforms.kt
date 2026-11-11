@@ -1,12 +1,15 @@
 package community.flock.wirespec.compiler.core.ir.transformer
 
+import community.flock.wirespec.compiler.core.ir.Assignment
 import community.flock.wirespec.compiler.core.ir.Constructor
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.EnumReference
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.Function
+import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.ir.transform
 import community.flock.wirespec.compiler.core.ir.withLabelField
 import community.flock.wirespec.compiler.core.parse.ast.Channel
@@ -19,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
+import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 
 public fun Struct.markMembersAsOverride(): Struct = copy(
     fields = fields.map { f -> if (f is Field) f.copy(isOverride = true) else f },
@@ -36,6 +40,28 @@ public fun <E : Element> E.ensureEmptyStructHasConstructor(): E = transform {
         }
     }
 }
+
+/**
+ * The IR types a response's `status` as the literal of its status code. A language without
+ * literal types widens that to an integer, so as a constructor parameter it would accept any status;
+ * this turns it into a member fixed to its status code instead.
+ */
+public fun <E : Element> E.pinResponseStatus(): E = transform {
+    matchingElements { struct: Struct ->
+        struct.fieldList()
+            .firstNotNullOfOrNull { field -> (field.type as? LanguageType.IntegerLiteral)?.let { field to it.value } }
+            ?.let { (status, code) -> struct.pin(status, Literal(code, LanguageType.Integer())) }
+            ?: struct
+    }
+}
+
+private fun Struct.pin(field: Field, value: Literal): Struct = copy(
+    fields = fields - field,
+    constructors = constructors.map { constructor ->
+        constructor.copy(body = constructor.body.filterNot { it is Assignment && it.name == field.name })
+    },
+    elements = listOf(field.copy(initializer = value)) + elements,
+)
 
 public fun <E : Element> E.injectEnumLabelField(
     sanitizeEntry: (String) -> String,

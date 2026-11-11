@@ -41,33 +41,33 @@ object PutTodo extends Wirespec.Endpoint {
   sealed trait ResponseError extends Response[Error]
   object Response200Headers extends Wirespec.Response.Headers
   case class Response200(
-      override val status: Int,
       override val headers: Response200Headers.type,
       override val body: TodoDto
     ) extends Response2XX[TodoDto] with ResponseTodoDto {
-      def this(body: TodoDto) = this(200, Response200Headers, body)
+      override val status: Int = 200
+      def this(body: TodoDto) = this(Response200Headers, body)
     }
   case class Response201Headers(
       val token: Token,
       val refreshToken: Option[Token]
     ) extends Wirespec.Response.Headers
   case class Response201(
-      override val status: Int,
       override val headers: Response201Headers,
       override val body: TodoDto
     ) extends Response2XX[TodoDto] with ResponseTodoDto {
-      def this(token: Token, refreshToken: Option[Token], body: TodoDto) = this(201, Response201Headers(
+      override val status: Int = 201
+      def this(token: Token, refreshToken: Option[Token], body: TodoDto) = this(Response201Headers(
         token = token,
         refreshToken = refreshToken
       ), body)
     }
   object Response500Headers extends Wirespec.Response.Headers
   case class Response500(
-      override val status: Int,
       override val headers: Response500Headers.type,
       override val body: Error
     ) extends Response5XX[Error] with ResponseError {
-      def this(body: Error) = this(500, Response500Headers, body)
+      override val status: Int = 500
+      def this(body: Error) = this(Response500Headers, body)
     }
   trait Handler[F[_]] extends Wirespec.Handler {
       def putTodo(request: Request): F[Response[?]]

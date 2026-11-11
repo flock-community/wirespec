@@ -41,6 +41,7 @@ import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
 import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
 import community.flock.wirespec.compiler.core.ir.transformer.injectEnumLabelField
+import community.flock.wirespec.compiler.core.ir.transformer.pinResponseStatus
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.toGetterAccessors
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
@@ -188,6 +189,7 @@ public open class JavaEmitter(
         .injectApi(endpoint)
         .transformTypeDescriptors()
         .sanitizeNames(sanitizationConfig)
+        .pinResponseStatus()
         .prependImports(endpoint.buildModelImports(packageName).takeIf { it.isNotEmpty() })
 
     override fun emit(channel: Channel): File {
