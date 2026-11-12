@@ -12,10 +12,9 @@ class CommandLineOptionsTest :
             projectDir.resolve("settings.gradle.kts").writeText("")
             projectDir.resolve("build.gradle.kts").writeText(
                 """
-            import community.flock.wirespec.plugin.gradle.CompileWirespecClasspathTask
             import community.flock.wirespec.plugin.gradle.CompileWirespecTask
-            import community.flock.wirespec.plugin.gradle.ConvertWirespecClasspathTask
             import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
+            import community.flock.wirespec.plugin.gradle.ExtractWirespecTask
 
             plugins {
                 id("community.flock.wirespec.plugin.gradle")
@@ -23,8 +22,7 @@ class CommandLineOptionsTest :
 
             tasks.register<CompileWirespecTask>("compileWirespec")
             tasks.register<ConvertWirespecTask>("convertWirespec")
-            tasks.register<CompileWirespecClasspathTask>("compileWirespecClasspath")
-            tasks.register<ConvertWirespecClasspathTask>("convertWirespecClasspath")
+            tasks.register<ExtractWirespecTask>("extractWirespec")
                 """.trimIndent(),
             )
 
@@ -32,7 +30,7 @@ class CommandLineOptionsTest :
             GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withPluginClasspath()
-                .withArguments("--dry-run", "compileWirespec", "convertWirespec", "compileWirespecClasspath", "convertWirespecClasspath", "compileWirespec")
+                .withArguments("--dry-run", "compileWirespec", "convertWirespec", "extractWirespec", "compileWirespec")
                 .build()
         }
     })

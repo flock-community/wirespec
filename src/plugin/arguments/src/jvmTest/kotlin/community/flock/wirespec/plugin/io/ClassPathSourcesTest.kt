@@ -1,6 +1,5 @@
 package community.flock.wirespec.plugin.io
 
-import community.flock.wirespec.plugin.io.Source.Type.JSON
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -70,8 +69,7 @@ class ClassPathSourcesTest {
     @Test
     fun readsOneFileOfAnyType() {
         listOf(jar(), directory()).forEach { entry ->
-            ClassPath("openapi/petstore.json").readSource<JSON>(listOf(entry)) shouldBe
-                Source(Name("petstore"), files.getValue("openapi/petstore.json"))
+            ClassPath("openapi/petstore.json").readFile(listOf(entry)) shouldBe files.getValue("openapi/petstore.json")
         }
     }
 
@@ -80,7 +78,7 @@ class ClassPathSourcesTest {
         val classpath = listOf(jar(), directory())
         ClassPath("com/example/missing").wirespecSources(classpath).shouldBeEmpty()
         ClassPath("com/example/api/config/Missing.ws").wirespecSources(classpath).shouldBeEmpty()
-        ClassPath("openapi").readSource<JSON>(classpath).shouldBeNull()
-        ClassPath("openapi/petstore.json").readSource<JSON>(emptyList()).shouldBeNull()
+        ClassPath("openapi").readFile(classpath).shouldBeNull()
+        ClassPath("openapi/petstore.json").readFile(emptyList()).shouldBeNull()
     }
 }

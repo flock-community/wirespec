@@ -12,3 +12,5 @@ internal class JSONFileError : SpecificFile(FileExtension.JSON)
 internal class WirespecFileError : SpecificFile(FileExtension.Wirespec)
 
 internal class NotOnClasspath(path: ClassPath) : RuntimeException("Could not find $path on the classpath of the task.")
+
+internal class SameFileName(name: String, path: ClassPath) : RuntimeException("Found more than one $name at $path on the classpath of the task.")

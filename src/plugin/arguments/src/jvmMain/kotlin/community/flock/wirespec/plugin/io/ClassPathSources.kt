@@ -11,10 +11,8 @@ private val wirespecExtension = ".${FileExtension.Wirespec.value}"
 /**
  * Reads the file at this path from the first [classpath] entry, a directory or a jar, that holds it.
  */
-public fun <E : Source.Type> ClassPath.readSource(classpath: Collection<File>): Source<E>? = value.trim('/').let { path ->
-    classpath.absoluteEntries()
-        .firstNotNullOfOrNull { it.readEntry(path) }
-        ?.let { Source(Name(path.substringAfterLast('/').substringBefore('.')), it) }
+public fun ClassPath.readFile(classpath: Collection<File>): String? = value.trim('/').let { path ->
+    classpath.absoluteEntries().firstNotNullOfOrNull { it.readEntry(path) }
 }
 
 /**
@@ -22,7 +20,9 @@ public fun <E : Source.Type> ClassPath.readSource(classpath: Collection<File>): 
  * folder across all [classpath] entries. A folder without a slash is also tried as a package name: `com.example.api`.
  */
 public fun ClassPath.wirespecSources(classpath: Collection<File>): List<Source<Wirespec>> = when {
-    value.endsWith(wirespecExtension) -> listOfNotNull(readSource<Wirespec>(classpath))
+    value.endsWith(wirespecExtension) -> listOfNotNull(
+        readFile(classpath)?.let { Source(Name(value.trim('/').substringAfterLast('/').removeSuffix(wirespecExtension)), it) },
+    )
     else -> value.trim('/').let { folder ->
         classpath.absoluteEntries().let { entries ->
             entries.wirespecSourcesIn(folder)
