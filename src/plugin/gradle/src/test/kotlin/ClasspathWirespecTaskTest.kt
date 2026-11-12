@@ -15,7 +15,7 @@ import java.nio.file.Files
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 
-class ExtractWirespecTaskTest :
+class ClasspathWirespecTaskTest :
     FunSpec({
 
         fun project(buildScript: String): File = Files.createTempDirectory("wirespec-plugin").toFile().apply {
@@ -26,7 +26,7 @@ class ExtractWirespecTaskTest :
                 import community.flock.wirespec.plugin.Language
                 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
                 import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
-                import community.flock.wirespec.plugin.gradle.ExtractWirespecTask
+                import community.flock.wirespec.plugin.gradle.ClasspathWirespecTask
 
                 plugins {
                     id("community.flock.wirespec.plugin.gradle")
@@ -60,14 +60,14 @@ class ExtractWirespecTaskTest :
         test("the Wirespec files beneath a folder on the classpath are the input of a compile task") {
             val projectDir = project(
                 """
-                val extractWirespec = tasks.register<ExtractWirespecTask>("extractWirespec") {
+                val classpathWirespec = tasks.register<ClasspathWirespecTask>("classpathWirespec") {
                     classpathInput = "com.example.api"
                     classpath.from(specs)
                     output = layout.buildDirectory.dir("extracted")
                 }
 
                 tasks.register<CompileWirespecTask>("wirespec") {
-                    input = extractWirespec.flatMap { it.output }
+                    input = classpathWirespec.flatMap { it.output }
                     output = layout.buildDirectory.dir("out")
                     language = Language.Kotlin
                     shared = false
@@ -81,15 +81,15 @@ class ExtractWirespecTaskTest :
             )
             projectDir.writeJar(specs)
 
-            projectDir.run("wirespec").build().task(":extractWirespec")?.outcome shouldBe TaskOutcome.SUCCESS
+            projectDir.run("wirespec").build().task(":classpathWirespec")?.outcome shouldBe TaskOutcome.SUCCESS
             projectDir.fileNames("build/extracted") shouldContainExactlyInAnyOrder listOf("Pet.ws", "Owner.ws")
             projectDir.fileNames("build/out") shouldContainAll listOf("Pet.kt", "Owner.kt")
             projectDir.fileNames("build/out") shouldNotContain "Ignored.kt"
 
-            projectDir.run("wirespec").build().task(":extractWirespec")?.outcome shouldBe TaskOutcome.UP_TO_DATE
+            projectDir.run("wirespec").build().task(":classpathWirespec")?.outcome shouldBe TaskOutcome.UP_TO_DATE
 
             projectDir.writeJar(specs - "com/example/api/nested/Owner.ws" + ("com/example/api/Store.ws" to "type Store { name: String }"))
-            projectDir.run("wirespec").build().task(":extractWirespec")?.outcome shouldBe TaskOutcome.SUCCESS
+            projectDir.run("wirespec").build().task(":classpathWirespec")?.outcome shouldBe TaskOutcome.SUCCESS
             projectDir.fileNames("build/extracted") shouldContainExactlyInAnyOrder listOf("Pet.ws", "Store.ws")
             projectDir.fileNames("build/out") shouldContain "Store.kt"
         }
@@ -97,14 +97,14 @@ class ExtractWirespecTaskTest :
         test("a file on the classpath is the input of a convert task") {
             val projectDir = project(
                 """
-                val extractOpenApi = tasks.register<ExtractWirespecTask>("extractOpenApi") {
+                val classpathOpenApi = tasks.register<ClasspathWirespecTask>("classpathOpenApi") {
                     classpathInput = "openapi/api.json"
                     classpath.from(specs)
                     output = layout.buildDirectory.dir("extracted")
                 }
 
                 tasks.register<ConvertWirespecTask>("convertWirespec") {
-                    input = extractOpenApi.flatMap { it.outputFile }
+                    input = classpathOpenApi.flatMap { it.outputFile }
                     output = layout.buildDirectory.dir("out")
                     format = Format.OpenAPIV3
                     language = Language.Wirespec
@@ -131,7 +131,7 @@ class ExtractWirespecTaskTest :
             )
 
             // ConvertWirespecTask needs a preProcessor, a lambda that the configuration cache cannot restore.
-            projectDir.run("convertWirespec", configurationCache = false).build().task(":extractOpenApi")?.outcome shouldBe TaskOutcome.SUCCESS
+            projectDir.run("convertWirespec", configurationCache = false).build().task(":classpathOpenApi")?.outcome shouldBe TaskOutcome.SUCCESS
 
             val output = projectDir.resolve("build/out").walk().filter { it.isFile }.joinToString("\n") { it.readText() }
             output shouldContain "NewName"
@@ -141,7 +141,7 @@ class ExtractWirespecTaskTest :
         test("the task fails when the classpathInput is not on its classpath") {
             val projectDir = project(
                 """
-                tasks.register<ExtractWirespecTask>("extractWirespec") {
+                tasks.register<ClasspathWirespecTask>("classpathWirespec") {
                     classpathInput = "com/example/missing"
                     classpath.from(specs)
                     output = layout.buildDirectory.dir("extracted")
@@ -150,14 +150,14 @@ class ExtractWirespecTaskTest :
             )
             projectDir.writeJar(mapOf("com/example/api/Pet.ws" to "type Pet { name: String }"))
 
-            projectDir.run("extractWirespec").buildAndFail()
+            projectDir.run("classpathWirespec").buildAndFail()
                 .output shouldContain "Could not find com/example/missing on the classpath of the task."
         }
 
         test("the task fails when a folder holds two Wirespec files with the same name") {
             val projectDir = project(
                 """
-                tasks.register<ExtractWirespecTask>("extractWirespec") {
+                tasks.register<ClasspathWirespecTask>("classpathWirespec") {
                     classpathInput = "com/example/api"
                     classpath.from(specs)
                     output = layout.buildDirectory.dir("extracted")
@@ -171,7 +171,7 @@ class ExtractWirespecTaskTest :
                 ),
             )
 
-            projectDir.run("extractWirespec").buildAndFail()
+            projectDir.run("classpathWirespec").buildAndFail()
                 .output shouldContain "Found more than one Pet.ws at com/example/api on the classpath of the task."
         }
     })

@@ -89,7 +89,7 @@ import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 ## Task Types
 
 The Wirespec Gradle plugin provides two main task types, `CompileWirespecTask` and `ConvertWirespecTask`, and
-`ExtractWirespecTask` to take their input from the classpath.
+`ClasspathWirespecTask` to take their input from the classpath.
 
 ### CompileWirespecTask
 
@@ -125,7 +125,7 @@ This task converts from JSON or Avro to other formats.
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
 - `sync`: Property&lt;Boolean&gt; - Emit endpoint handlers, channels and rpc services as synchronous functions, see [Synchronous code](./plugins.md#synchronous-code) (default: false)
 
-### ExtractWirespecTask
+### ClasspathWirespecTask
 
 This task copies files from the classpath to a directory, to use as the input of a `CompileWirespecTask` or a
 `ConvertWirespecTask`, see [Wirespec files from the classpath](#wirespec-files-from-the-classpath).
@@ -191,7 +191,7 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
 ## Wirespec files from the classpath
 
 To compile Wirespec files from a jar, for example a specification that the team owning the API publishes as an
-artifact, register an `ExtractWirespecTask` and use its result as the `input` of a `CompileWirespecTask`. The task looks
+artifact, register a `ClasspathWirespecTask` and use its result as the `input` of a `CompileWirespecTask`. The task looks
 up its `classpathInput` in the jars and directories of its `classpath`, and copies what it finds to its `output`
 directory. Like in the [Maven plugin](./plugins-maven.md#wirespec-files-from-the-classpath), the `classpathInput` is
 one file or a folder:
@@ -205,7 +205,7 @@ one file or a folder:
 ```kotlin title="build.gradle.kts"
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
-import community.flock.wirespec.plugin.gradle.ExtractWirespecTask
+import community.flock.wirespec.plugin.gradle.ClasspathWirespecTask
 
 val wirespecSpecs = configurations.create("wirespecSpecs")
 
@@ -213,14 +213,14 @@ dependencies {
     wirespecSpecs("com.example:api-specs:1.0.0")
 }
 
-val extractWirespec = tasks.register<ExtractWirespecTask>("extractWirespec") {
+val classpathWirespec = tasks.register<ClasspathWirespecTask>("classpathWirespec") {
     classpathInput = "com/example/api"
     classpath.from(wirespecSpecs)
     output = layout.buildDirectory.dir("wirespec-specs")
 }
 
 tasks.register<CompileWirespecTask>("wirespec-api") {
-    input = extractWirespec.flatMap { it.output }
+    input = classpathWirespec.flatMap { it.output }
     output = layout.buildDirectory.dir("generated")
     packageName = "com.example.api"
     language = Language.Kotlin
@@ -233,16 +233,16 @@ A `ConvertWirespecTask` takes one file: set the `classpathInput` to that file an
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
-import community.flock.wirespec.plugin.gradle.ExtractWirespecTask
+import community.flock.wirespec.plugin.gradle.ClasspathWirespecTask
 
-val extractOpenApi = tasks.register<ExtractWirespecTask>("extractOpenApi") {
+val classpathOpenApi = tasks.register<ClasspathWirespecTask>("classpathOpenApi") {
     classpathInput = "openapi/petstore.json"
     classpath.from(wirespecSpecs)
     output = layout.buildDirectory.dir("openapi-specs")
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
-    input = extractOpenApi.flatMap { it.outputFile }
+    input = classpathOpenApi.flatMap { it.outputFile }
     output = layout.buildDirectory.dir("generated")
     format = Format.OpenAPIV3
     language = Language.Kotlin
@@ -250,10 +250,10 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
 }
 ```
 
-Gradle runs the `ExtractWirespecTask` first, because the `input` comes from its result. To look in the dependencies of
+Gradle runs the `ClasspathWirespecTask` first, because the `input` comes from its result. To look in the dependencies of
 your project instead, as the Maven plugin does, use its compile classpath:
 `classpath.from(configurations.compileClasspath)`.
 
 The task fails when the `classpathInput` is not on its `classpath`. Gradle tracks the contents of the `classpath`, so
-the task runs again when a jar changes. Give every `ExtractWirespecTask` an `output` directory of its own: the task
+the task runs again when a jar changes. Give every `ClasspathWirespecTask` an `output` directory of its own: the task
 replaces its contents.

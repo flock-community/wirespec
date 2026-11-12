@@ -20,7 +20,7 @@ import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
 @DisableCachingByDefault(because = "Copying files is not worth caching")
-public abstract class ExtractWirespecTask : DefaultTask() {
+public abstract class ClasspathWirespecTask : DefaultTask() {
 
     @get:Input
     @get:Option(option = "classpathInput", description = "file or folder on the classpath")
