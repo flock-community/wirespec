@@ -41,11 +41,7 @@ public class WirespecResponseBodyAdvice(
                 val rawResponse = toResponse.invoke(instance, wirespecSerialization, body) as Wirespec.RawResponse
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
                 response.headers.putAll(rawResponse.headers)
-                if (rawResponse.body == null) {
-                    Unit
-                } else {
-                    rawResponse.body?.let { RawJsonBody(it) }
-                }
+                rawResponse.body?.let { RawJsonBody(it) }
             }
             else -> body
         }
