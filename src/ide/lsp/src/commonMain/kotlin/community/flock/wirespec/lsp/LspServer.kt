@@ -24,9 +24,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 
-internal class LspServer(private val transport: Transport) {
+internal class LspServer(private val transport: Transport, sourceFiles: SourceFiles = SystemSourceFiles) {
 
-    private val documents = DocumentStore()
+    private val documents = DocumentStore(sourceFiles)
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
@@ -87,7 +87,7 @@ internal class LspServer(private val transport: Transport) {
                 if (doc == null) {
                     respond(id, JsonNull)
                 } else {
-                    respond(id, LanguageService.definition(doc, params.position))
+                    respond(id, LanguageService.definition(documents.moduleOf(doc), params.position))
                 }
             }
 
@@ -107,7 +107,7 @@ internal class LspServer(private val transport: Transport) {
                     return
                 }
                 val doc = documents[params.textDocument.uri]
-                val edit: WorkspaceEdit? = doc?.let { LanguageService.rename(it, params.position, params.newName) }
+                val edit: WorkspaceEdit? = doc?.let { LanguageService.rename(documents.moduleOf(it), params.position, params.newName) }
                 if (edit == null) respond(id, JsonNull) else respond(id, edit)
             }
 
@@ -126,7 +126,7 @@ internal class LspServer(private val transport: Transport) {
                     version = params.textDocument.version,
                     text = params.textDocument.text,
                 )
-                publishDiagnostics(doc)
+                publishDiagnosticsAround(doc)
             }
             "textDocument/didChange" -> {
                 val params = decodeOrNull<DidChangeTextDocumentParams>(message.params) ?: return
@@ -137,18 +137,24 @@ internal class LspServer(private val transport: Transport) {
                     version = params.textDocument.version ?: 0,
                     text = newText,
                 ) ?: documents.open(params.textDocument.uri, params.textDocument.version ?: 0, newText)
-                publishDiagnostics(doc)
+                publishDiagnosticsAround(doc)
             }
             "textDocument/didClose" -> {
                 val params = decodeOrNull<DidCloseTextDocumentParams>(message.params) ?: return
-                documents.close(params.textDocument.uri)
+                documents.close(params.textDocument.uri)?.let { documents.openIn(it.directoryUri) }?.forEach(::publishDiagnostics)
             }
+            "workspace/didChangeWatchedFiles" -> documents.all().forEach(::publishDiagnostics)
             else -> { /* ignore unknown notifications */ }
         }
     }
 
+    /** A change to [doc] can fix or break the documents that share its directory, so those are checked again too. */
+    private fun publishDiagnosticsAround(doc: Document) {
+        (listOf(doc) + documents.openIn(doc.directoryUri)).distinctBy { it.uri }.forEach(::publishDiagnostics)
+    }
+
     private fun publishDiagnostics(doc: Document) {
-        val diagnostics = LanguageService.diagnose(doc)
+        val diagnostics = LanguageService.diagnose(documents.moduleOf(doc))
         val params = PublishDiagnosticsParams(uri = doc.uri, diagnostics = diagnostics)
         sendNotification("textDocument/publishDiagnostics", json.encodeToJsonElement(params))
     }

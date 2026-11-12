@@ -14,10 +14,12 @@ The server speaks JSON-RPC 2.0 over either:
 
 ## Capabilities
 
-- `textDocument/publishDiagnostics` — surfaces parser errors as squiggles, and warns on a `part` that no `...Part` in the document spreads.
+A document is checked together with the other `.ws` files in its directory, the same way the compiler takes a directory as one input: a type or part defined in a sibling file resolves. Siblings are read from disk, except for the ones open in the editor, whose unsaved content wins.
+
+- `textDocument/publishDiagnostics` — surfaces parser errors as squiggles, and warns on a `part` that no `...Part` in the directory spreads. Refreshed for the open documents of a directory when one of them changes, and for all open documents on `workspace/didChangeWatchedFiles`.
 - `textDocument/semanticTokens/full` — colorizes keywords, types, identifiers, HTTP methods, and the `...` spread operator.
-- `textDocument/definition` — for a type or part identifier, returns every occurrence in the same document, spreads included.
-- `textDocument/rename` — renames a type or part identifier and every reference to it, spreads included.
+- `textDocument/definition` — for a type or part identifier, returns every occurrence in the directory, spreads included.
+- `textDocument/rename` — renames a type or part identifier and every reference to it in the directory, spreads included.
 
 ## Build
 

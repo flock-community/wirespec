@@ -50,6 +50,15 @@ type Todo {
 }
 """
 
+    const val NAME = """type Name = String(/^[a-zA-Z]{1,50}$/g)
+"""
+
+    /** Refers to `Name`, which only [NAME] defines. */
+    const val PERSON = """type Person {
+  firstname: Name
+}
+"""
+
     /** A broken document — missing type after `name:`. Used to verify diagnostic reporting. */
     const val BROKEN = """type Person {
   name:
