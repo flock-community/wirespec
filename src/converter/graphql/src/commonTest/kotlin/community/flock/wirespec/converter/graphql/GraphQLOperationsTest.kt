@@ -77,6 +77,29 @@ class GraphQLOperationsTest {
     }
 
     @Test
+    fun writesAnRpcAsAFieldNextToOthers() {
+        """
+            |type Todo {
+            |  id: ID!
+            |}
+            |
+            |type Query {
+            |  todos(first: Int = 10, done: Boolean): [Todo!]!
+            |  count: Int!
+            |}
+        """.trimMargin().fromGraphQL().let { definitions ->
+            val operations = GraphQLOperations(definitions)
+            val rpcs = definitions.filterIsInstance<Rpc>().associateBy { it.identifier.value }
+
+            operations.field(rpcs.getValue("Todos"), "todos") { "todos_$it" } shouldBe "todos: todos(first: \$todos_first, done: \$todos_done)"
+            operations.variables(rpcs.getValue("Todos")) { "todos_$it" } shouldBe listOf("\$todos_first: Int = 10", "\$todos_done: Boolean")
+            operations.field(rpcs.getValue("Count"), "count") shouldBe "count: count"
+            operations.variables(rpcs.getValue("Count")) shouldBe emptyList()
+            operations.parent(rpcs.getValue("Count")) shouldBe "Query"
+        }
+    }
+
+    @Test
     fun selectsTheMembersOfUnionsAndInterfaces() {
         """
             |interface Node {
@@ -265,6 +288,12 @@ class GraphQLOperationsTest {
         operations.path(rpcs.getValue("Unread")) shouldBe listOf("notifications", "inbox")
         operations.open(rpcs.getValue("Unread"), "result") shouldBe "query Unread { notifications { inbox { result: unread"
         operations.close(rpcs.getValue("Unread")) shouldBe " } } }"
+        rpcs.mapValues { (_, rpc) -> operations.parent(rpc) }.filterKeys { it in setOf("Notifications", "Inbox", "Unread", "MarkRead") } shouldBe mapOf(
+            "Notifications" to "Query",
+            "Inbox" to "NotificationsQuery",
+            "Unread" to "InboxQuery",
+            "MarkRead" to "NotificationsMutation",
+        )
     }
 
     @Test

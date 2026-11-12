@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.Function
+import community.flock.wirespec.compiler.core.ir.FunctionBuilder
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.Name
@@ -50,10 +51,34 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  * an `on<Member>` block per member. The builder of each rpc, `<Rpc>GraphQL`, runs a block on a new selection and puts it
  * in the operation of the rpc, with the parameters as its variables. The clients send it for a call that takes a block.
  * The selections and results of an rpc are nested in its builder, so its file holds everything the rpc needs.
+ *
+ * With a [batch], it builds the request that selects several rpcs at once instead:
+ *
+ * ```kotlin
+ * val request = GraphQLQuery.request {
+ *     queryTodo(ID("1")) { title() }
+ *     todos(done = false) { id() }
+ * }
+ * ```
+ *
+ * There the rpcs are the fields of a `Selection` of the root operation type, and of the selection of the type they are
+ * a field of. Each takes the parameters of its rpc, which it adds to the variables that all selections of a request
+ * share, and is aliased to the name of its rpc, which is the field of the `Result` it is read into.
  */
-internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: Language) {
+internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: Language, private val batch: Batch? = null) {
 
     enum class Language { Kotlin, Java, Scala }
+
+    /**
+     * An rpc as a field next to others: its `Service` function, the [alias] it is selected under, its [text] in a
+     * selection, the [declarations] of its variables, each after a comma, and the variable each parameter is passed as.
+     */
+    class OperationField(val function: Function, val alias: String, val result: Reference, val text: String, val declarations: String, val variables: List<Pair<String, Parameter>>)
+
+    /** The rpcs of a root operation type: those that are a field of it, and the others by the type they are a field of. */
+    class Batch(val name: String, val keyword: String, val root: List<OperationField>, val nested: Map<String, List<OperationField>>) {
+        val results: List<Reference> = root.map { it.result }
+    }
 
     /** An rpc: its `Service` function, its document, also up to the selection and after it, its result and its variables. */
     class Request(val rpc: String, val function: Function, val document: String, val open: String, val close: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
@@ -62,9 +87,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     /** The selection of every type and union that [results] return, through all their fields. */
     fun selections(results: List<Reference>): List<Struct> = reachable(results).map { model ->
-        struct(model.selection()) {
-            visibility(Visibility.PUBLIC)
-            field(FIELDS, Type.Custom(STRING_BUILDER))
+        selection(model.selection(), if (model is Union) "{ $TYPENAME" else "{") {
             when (model) {
                 is Union -> model.entries.mapNotNull { operations.composite(it) as? TypeDefinition }.forEach { member ->
                     method(model, "on${Name.of(member.identifier.value).pascalCase()}", " ... on ${operations.graphQLName(member)} ", member)
@@ -77,13 +100,30 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
                 }
                 is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> Unit
             }
-            function(TO_GRAPHQL) {
-                visibility(Visibility.PUBLIC)
-                returnType(Type.String)
-                returns(concat(Literal(if (model is Union) "{ $TYPENAME" else "{", Type.String), FieldCall(field = FIELDS), Literal(" }", Type.String)))
-            }
+            model.operationFields().forEach { method(model.selection(), it) }
         }
     }
+
+    /** The selection of the root operation type of the [batch], whose fields are its rpcs. */
+    fun rootSelection(batch: Batch): Struct = selection(ROOT_SELECTION, "{") { batch.root.forEach { method(ROOT_SELECTION, it) } }
+
+    /** A selection collects its fields as text, and in a [batch] shares the variables of the request with the others. */
+    private fun selection(name: String, open: String, methods: StructBuilder.() -> Unit): Struct = struct(name) {
+        visibility(Visibility.PUBLIC)
+        field(FIELDS, Type.Custom(STRING_BUILDER))
+        batch?.let {
+            field(DECLARATIONS, Type.Custom(STRING_BUILDER))
+            field(VARIABLES, variablesType)
+        }
+        methods()
+        function(TO_GRAPHQL) {
+            visibility(Visibility.PUBLIC)
+            returnType(Type.String)
+            returns(concat(Literal(open, Type.String), FieldCall(field = FIELDS), Literal(" }", Type.String)))
+        }
+    }
+
+    private fun Definition.operationFields(): List<OperationField> = batch?.nested?.get(identifier.value).orEmpty()
 
     /** A partial result: its struct, and the models its fields refer to, which its file imports. */
     class Result(val struct: Struct, val models: List<String>)
@@ -93,24 +133,29 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
      * selected is null. A field of a type or union is its result, and a union has `__typename` and the fields of all its
      * members, but for a field that members declare with different types, which GraphQL cannot select in both.
      */
-    fun results(results: List<Reference>): List<Result> = reachable(results).map { model ->
-        model.resultFields().let { fields ->
-            Result(
-                struct = Struct(
-                    name = Name.of(model.result()),
-                    fields = fields.map { (name, reference) -> Field(Name(listOf(name)), Type.Nullable(resultType(reference.copy(isNullable = false)))) },
-                    visibility = Visibility.PUBLIC,
-                ),
-                models = fields.mapNotNull { (_, reference) -> reference.model() }.distinct(),
-            )
-        }
-    }
+    fun results(results: List<Reference>): List<Result> = reachable(results).map { model -> result(model.result(), model.resultFields()) }
 
-    /** The type a [reference] reads as in a partial result: a type or union is its result, through any list. */
+    /** The result of the root operation type of the [batch]: the result of each of its rpcs, under the name of the rpc. */
+    fun rootResult(batch: Batch): Result = result(ROOT_RESULT, batch.root.map { it.alias to it.result })
+
+    private fun result(name: String, fields: List<Pair<String, Reference>>): Result = Result(
+        struct = Struct(
+            name = Name.of(name),
+            fields = fields.map { (field, reference) -> Field(Name(listOf(field)), Type.Nullable(resultType(reference.copy(isNullable = false)))) },
+            visibility = Visibility.PUBLIC,
+        ),
+        models = fields.mapNotNull { (_, reference) -> reference.model() }.distinct(),
+    )
+
+    /**
+     * The type a [reference] reads as in a partial result: a type or union is its result, through any list. GraphQL has
+     * no void, so an rpc without a result reads as a Boolean.
+     */
     fun resultType(reference: Reference): Type = when (reference) {
         is Reference.Iterable -> Type.Array(resultType(reference.reference))
         is Reference.Custom -> operations.composite(reference)?.let { Type.Custom(it.result()) } ?: reference.copy(isNullable = false).convert()
-        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> reference.copy(isNullable = false).convert()
+        is Reference.Unit -> Type.Boolean
+        is Reference.Any, is Reference.Dict, is Reference.Primitive -> reference.copy(isNullable = false).convert()
     }.let { if (reference.isNullable) Type.Nullable(it) else it }
 
     private fun Definition.resultFields(): List<Pair<String, Reference>> = when (this) {
@@ -120,7 +165,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
                 .groupBy({ it.first }, { it.second })
                 .filterValues { references -> references.distinct().size == 1 }
                 .map { (name, references) -> name to references.first() }
-        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.map { it.identifier.value to it.reference }
+        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.map { it.identifier.value to it.reference } +
+            operationFields().map { it.alias to it.result }
         is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> emptyList()
     }
 
@@ -133,6 +179,9 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     /** The block that selects the fields of the result of [reference], or null for a scalar or enum. */
     fun block(reference: Reference): Type? = operations.composite(reference)?.block()
+
+    /** The block that selects the rpcs of a [Batch]. */
+    val rootBlock: Type get() = block(ROOT_SELECTION)
 
     /**
      * Kotlin resolves a call in a block against every enclosing receiver, so `owner { title() }` would select the
@@ -182,28 +231,87 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         }
     }
 
+    /**
+     * `GraphQLQuery.request { ... }` writes the request of the rpcs that the block selects, with the variables they
+     * were passed. A variable is declared by the rpc that takes it, so the request declares those of its own rpcs only.
+     */
+    fun builder(batch: Batch): Struct = struct(batch.name) {
+        function(REQUEST) {
+            visibility(Visibility.PUBLIC)
+            arg(SELECTION, rootBlock)
+            returnType(type(GRAPHQL_REQUEST))
+            assign(DECLARATIONS.value(), newStringBuilder())
+            assign(VARIABLES.value(), newVariables())
+            assign(FIELDS.value(), selected(ROOT_SELECTION, VariableReference(DECLARATIONS), VariableReference(VARIABLES)))
+            returns(
+                construct(type(GRAPHQL_REQUEST)) {
+                    arg("query", concat(Literal(batch.keyword, Type.String), declared(), Literal(" ", Type.String), VariableReference(FIELDS)))
+                    arg("variables", VariableReference(VARIABLES))
+                },
+            )
+        }
+        struct(GRAPHQL_REQUEST) {
+            visibility(Visibility.PUBLIC)
+            implements(Type.Custom("Wirespec.GraphQLRequest"))
+            field("query", Type.String, isOverride = true)
+            field("variables", variablesType)
+        }
+    }
+
     /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */
     private fun StructBuilder.method(model: Definition, name: String, text: String, nested: Definition? = null) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
         visibility(Visibility.PUBLIC)
         nested?.let { arg(SELECTION, it.block()) }
         returnType(type(model.selection()))
+        select(text, nested)
+        returns(RawExpression("this"))
+    }
+
+    /** Selects the rpc of [field] in the selection named [selection]: declares its variables, sets them and adds the field. */
+    private fun StructBuilder.method(selection: String, field: OperationField) = function(Name(listOf(field.function.name.camelCase()))) {
+        val nested = operations.composite(field.result)
+        visibility(Visibility.PUBLIC)
+        field.function.parameters.forEach { arg(it.name, it.type) }
+        nested?.let { arg(SELECTION, it.block()) }
+        returnType(type(selection))
+        field.variables.takeIf { it.isNotEmpty() }?.let { variables ->
+            functionCall(APPEND.value(), receiver = FieldCall(field = DECLARATIONS)) { arg(VALUE, Literal(field.declarations, Type.String)) }
+            variables.forEach { (variable, parameter) ->
+                functionCall("put", receiver = FieldCall(field = VARIABLES)) {
+                    arg("key", Literal(variable, Type.String))
+                    arg(VALUE, VariableReference(parameter.name))
+                }
+            }
+        }
+        select(if (nested == null) " ${field.text}" else " ${field.text} ", nested)
+        returns(RawExpression("this"))
+    }
+
+    private fun FunctionBuilder.select(text: String, nested: Definition?) {
         val appended = FunctionCall(receiver = FieldCall(field = FIELDS), name = APPEND, arguments = mapOf(VALUE to Literal(text, Type.String)))
         nested
             ?.let { functionCall(APPEND.value(), receiver = appended) { arg(VALUE, it.selected()) } }
             ?: functionCall(APPEND.value(), receiver = FieldCall(field = FIELDS)) { arg(VALUE, Literal(text, Type.String)) }
-        returns(RawExpression("this"))
     }
 
     /** The block that selects the fields of a type: on `this` in Kotlin, a function of the selection in Java and Scala. */
-    private fun Definition.block(): Type = Type.Custom(selection()).let { selection ->
+    private fun Definition.block(): Type = block(selection())
+
+    private fun block(selection: String): Type = Type.Custom(selection).let {
         when (language) {
-            Language.Kotlin -> Type.Function(parameterTypes = emptyList(), returnType = Type.Unit, receiver = selection)
-            Language.Java, Language.Scala -> Type.Function(parameterTypes = listOf(selection), returnType = selection)
+            Language.Kotlin -> Type.Function(parameterTypes = emptyList(), returnType = Type.Unit, receiver = it)
+            Language.Java, Language.Scala -> Type.Function(parameterTypes = listOf(it), returnType = it)
         }
     }
 
     /** Runs the `selection` block on a new selection of this type, and gives its fields between braces. */
-    private fun Definition.selected(): Expression = ConstructorStatement(Type.Custom(selection()), mapOf(FIELDS to newStringBuilder()))
+    private fun Definition.selected(): Expression = selected(selection(), FieldCall(field = DECLARATIONS), FieldCall(field = VARIABLES))
+
+    /** In a [batch], the new selection adds to the [declarations] and [variables] of the request. */
+    private fun selected(selection: String, declarations: Expression, variables: Expression): Expression = ConstructorStatement(
+        Type.Custom(selection),
+        mapOf(FIELDS to newStringBuilder()) + batch?.let { mapOf(DECLARATIONS to declarations, VARIABLES to variables) }.orEmpty(),
+    )
         .let { empty ->
             when (language) {
                 Language.Kotlin -> FunctionCall(receiver = empty, name = APPLY, arguments = mapOf(Name.of("block") to VariableReference(SELECTION)))
@@ -218,6 +326,26 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         Language.Java, Language.Scala -> ConstructorStatement(Type.Custom(STRING_BUILDER))
     }
 
+    /** The values of the variables by name, which holds those of the selected rpcs only, so it is a map and no struct. */
+    private val variablesType: Type = when (language) {
+        Language.Kotlin -> Type.Custom("MutableMap", listOf(Type.String, Type.Nullable(Type.Any)))
+        Language.Java -> Type.Custom("java.util.Map", listOf(Type.String, Type.Any))
+        Language.Scala -> Type.Custom("scala.collection.mutable.Map", listOf(Type.String, Type.Any))
+    }
+
+    private fun newVariables(): Expression = when (language) {
+        Language.Kotlin -> RawExpression("LinkedHashMap<String, Any?>()")
+        Language.Java -> RawExpression("new java.util.LinkedHashMap<String, Object>()")
+        Language.Scala -> RawExpression("scala.collection.mutable.LinkedHashMap[String, Any]()")
+    }
+
+    /** The declarations between parentheses, without the comma before the first, or nothing: GraphQL takes no empty list. */
+    private fun declared(): Expression = when (language) {
+        Language.Kotlin -> RawExpression("(if (graphQLDeclarations.isEmpty()) \"\" else \"(\" + graphQLDeclarations.substring(2) + \")\")")
+        Language.Java -> RawExpression("(graphQLDeclarations.length() == 0 ? \"\" : \"(\" + graphQLDeclarations.substring(2) + \")\")")
+        Language.Scala -> RawExpression("(if (graphQLDeclarations.isEmpty) \"\" else \"(\" + graphQLDeclarations.substring(2) + \")\")")
+    }
+
     private fun concat(vararg parts: Expression): Expression = parts.reduce { left, right -> BinaryOp(left, BinaryOp.Operator.PLUS, right) }
 
     private fun reachable(results: List<Reference>): List<Definition> = generateSequence(results.mapNotNull { operations.composite(it) }.distinct()) { found ->
@@ -226,7 +354,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     private fun Definition.nested(): List<Definition> = when (this) {
         is Union -> entries.mapNotNull { operations.composite(it) }
-        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.mapNotNull { operations.composite(it.reference) }
+        is TypeDefinition -> (shape.fields.filter { operations.isSelectable(it) }.map { it.reference } + operationFields().map { it.result })
+            .mapNotNull { operations.composite(it) }
         is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> emptyList()
     }
 
@@ -248,7 +377,12 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         const val GRAPHQL_REQUEST = "GraphQLRequest"
         const val GRAPHQL_VARIABLES = "GraphQLVariables"
 
+        const val ROOT_SELECTION = "Selection"
+        const val ROOT_RESULT = "Result"
+
         private val FIELDS = Name(listOf("graphQLFields"))
+        private val DECLARATIONS = Name(listOf("graphQLDeclarations"))
+        private val VARIABLES = Name(listOf("graphQLVariables"))
         private val SELECTION = Name.of("selection")
         val REQUEST = Name(listOf("request"))
         private val TO_GRAPHQL = Name(listOf("toGraphQL"))

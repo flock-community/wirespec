@@ -13,6 +13,8 @@ import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerializat
 import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 // endregion create-client
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLMutation
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLQuery
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID
@@ -96,6 +98,33 @@ object GraphQLExamples {
         return kinds
     }
 
+    suspend fun several(client: GraphQLClient): List<Any?> {
+        // region several
+        val result: GraphQLQuery.Result = client.query {
+            queryTodo(ID("1")) { title() }
+            todos(done = false) { id() }
+        }
+
+        val title: String? = result.queryTodo?.title
+        val open: List<ID?>? = result.todos?.map { it.id }
+        val found: List<GraphQLQuery.SearchResultResult>? = result.search // null: not selected
+        // endregion several
+        return listOf(title, open, found)
+    }
+
+    suspend fun severalMutations(client: GraphQLClient): List<Any?> {
+        // region several-mutations
+        val result: GraphQLMutation.Result = client.mutation {
+            addTodo(NewTodo(title = "Groceries", priority = null)) { id() }
+            clearTodos()
+        }
+
+        val added: ID? = result.addTodo?.id
+        val cleared: Boolean? = result.clearTodos
+        // endregion several-mutations
+        return listOf(added, cleared)
+    }
+
     // region abstract-client
 
     class AbstractClient(
@@ -117,6 +146,19 @@ object GraphQLExamples {
             .data
         // endregion abstract-calls
         return listOf(todo, errors, selected)
+    }
+
+    suspend fun abstractSeveral(client: AbstractClient): GraphQLQuery.Response {
+        // region abstract-several
+        val response: GraphQLQuery.Response = client.send(
+            GraphQLQuery.Api,
+            GraphQLQuery.request {
+                queryTodo(ID("1")) { title() }
+                todos(done = false) { id() }
+            },
+        )
+        // endregion abstract-several
+        return response
     }
 
     fun path(http: HttpTransportation): Wirespec.Transportation {

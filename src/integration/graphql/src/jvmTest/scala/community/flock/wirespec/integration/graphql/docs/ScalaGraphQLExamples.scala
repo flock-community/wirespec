@@ -8,7 +8,7 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{GraphQLMutation, GraphQLQuery, QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
 
@@ -85,6 +85,31 @@ object ScalaGraphQLExamples {
     // endregion union
     kinds
   }
+
+  def several(client: GraphQLClient): List[Any] = {
+    // region several
+    val result: GraphQLQuery.Result = client.query(query => query
+      .queryTodo(ID("1"), todo => todo.title())
+      .todos(Some(false), todo => todo.id()))
+
+    val title: Option[String] = result.queryTodo.flatMap(_.title)
+    val open: Option[List[Option[ID]]] = result.todos.map(_.map(_.id))
+    val found: Option[List[GraphQLQuery.SearchResultResult]] = result.search // None: not selected
+    // endregion several
+    List(title, open, found)
+  }
+
+  def severalMutations(client: GraphQLClient): List[Any] = {
+    // region several-mutations
+    val result: GraphQLMutation.Result = client.mutation(mutation => mutation
+      .addTodo(NewTodo("Groceries", None), todo => todo.id())
+      .clearTodos())
+
+    val added: Option[ID] = result.addTodo.flatMap(_.id)
+    val cleared: Option[Boolean] = result.clearTodos
+    // endregion several-mutations
+    List(added, cleared)
+  }
   // region abstract-client
 
   class AbstractClient(serialization: Wirespec.Serialization, transportation: Wirespec.Transportation) {
@@ -106,5 +131,14 @@ object ScalaGraphQLExamples {
       .data
     // endregion abstract-calls
     List(todo, errors, selected)
+  }
+
+  def abstractSeveral(client: AbstractClient): GraphQLQuery.Response = {
+    // region abstract-several
+    val response: GraphQLQuery.Response = client.send(GraphQLQuery.Api, GraphQLQuery.request(query => query
+      .queryTodo(ID("1"), todo => todo.title())
+      .todos(Some(false), todo => todo.id())))
+    // endregion abstract-several
+    response
   }
 }

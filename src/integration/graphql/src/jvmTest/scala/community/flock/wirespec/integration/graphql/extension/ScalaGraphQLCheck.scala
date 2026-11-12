@@ -2,7 +2,7 @@ package community.flock.wirespec.integration.graphql.extension
 
 import community.flock.wirespec.integration.graphql.docs.ScalaGraphQLExamples
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, InboxCountGraphQL, QueryTodoGraphQL, SearchGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, GraphQLQuery, InboxCountGraphQL, QueryTodoGraphQL, SearchGraphQL}
 import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.CompleteTodo
 import community.flock.wirespec.scala.Wirespec
@@ -81,6 +81,20 @@ object ScalaGraphQLCheck {
     serialization.query
   }
 
+  def sendsSeveralQueriesInOneRequest(): String = {
+    val notifications = GraphQLQuery.NotificationsQueryResult(None, Some(3))
+    val expected = GraphQLQuery.Result(Some(GraphQLQuery.TodoResult(None, Some("Groceries"), None, None, None)), None, None, Some(notifications))
+    val serialization = Recording(GraphQLQuery.Response(Some(expected), None))
+
+    val result = GraphQLClient(serialization, transportation).query(query => query
+      .queryTodo(ID("1"), todo => todo.title())
+      .notifications(notifications => notifications.inboxCount()))
+
+    check(result == expected, s"unexpected $result")
+    check(serialization.variables == Map("queryTodo_id" -> ID("1")), s"unexpected ${serialization.variables}")
+    serialization.query
+  }
+
   private val transportation: Wirespec.Transportation = _ => Wirespec.RawResponse(200, Map.empty, Some(Array.emptyByteArray))
 
   // Keeps the request it is given and answers with a response that is already read, so no JSON library is needed.
@@ -88,6 +102,8 @@ object ScalaGraphQLCheck {
     private var sent: Any = null
 
     def query: String = sent.asInstanceOf[Product].productElement(0).asInstanceOf[String]
+
+    def variables: Any = sent.asInstanceOf[Product].productElement(1)
 
     def serializeBody[T](t: T, `type`: ClassTag[?]): Array[Byte] = {
       sent = t
