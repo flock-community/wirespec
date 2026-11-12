@@ -21,11 +21,12 @@ class LspServerTest {
 
     private lateinit var transport: TestTransport
     private lateinit var server: LspServer
+    private val filesOnDisk = mutableMapOf<String, Map<String, String>>()
 
     @BeforeTest
     fun setup() {
         transport = TestTransport()
-        server = LspServer(transport)
+        server = LspServer(transport) { directoryUri -> filesOnDisk[directoryUri].orEmpty() }
         server.start()
     }
 
@@ -290,6 +291,95 @@ class LspServerTest {
         assertNotEquals(0, diagnostics.size, "expected diagnostics after didChange to broken content")
     }
 
+    @Test
+    fun `a type defined in a sibling file on disk resolves`() {
+        filesOnDisk[DIRECTORY] = mapOf("name.ws" to Fixtures.NAME, "person.ws" to "stale content on disk {")
+        initialize()
+        openDocument(PERSON_URI, Fixtures.PERSON)
+
+        assertEquals(JsonArray(emptyList()), diagnosticsOf(PERSON_URI))
+    }
+
+    @Test
+    fun `a type that no file in the directory defines is still an error`() {
+        initialize()
+        openDocument(PERSON_URI, Fixtures.PERSON)
+
+        assertEquals(1, diagnosticsOf(PERSON_URI).size)
+    }
+
+    @Test
+    fun `an error in a sibling file is not reported on the open document`() {
+        filesOnDisk[DIRECTORY] = mapOf("name.ws" to Fixtures.NAME, "broken.ws" to Fixtures.BROKEN)
+        initialize()
+        openDocument(PERSON_URI, Fixtures.PERSON)
+
+        assertEquals(JsonArray(emptyList()), diagnosticsOf(PERSON_URI))
+    }
+
+    @Test
+    fun `an open sibling wins over its copy on disk and refreshes the documents around it`() {
+        filesOnDisk[DIRECTORY] = mapOf("name.ws" to "type Other = String")
+        initialize()
+        openDocument(PERSON_URI, Fixtures.PERSON)
+        assertEquals(1, diagnosticsOf(PERSON_URI).size)
+
+        openDocument(NAME_URI, Fixtures.NAME)
+
+        assertEquals(JsonArray(emptyList()), diagnosticsOf(PERSON_URI))
+        assertEquals(JsonArray(emptyList()), diagnosticsOf(NAME_URI))
+    }
+
+    @Test
+    fun `a part spread in a sibling file is not unused`() {
+        filesOnDisk[DIRECTORY] = mapOf("todo.ws" to "type Todo {\n  ...Audited,\n  ...Unused\n}\n")
+        initialize()
+        openDocument("$DIRECTORY/parts.ws", "part Audited {\n  createdAt: String\n}\n\npart Unused {\n  note: String\n}\n")
+
+        assertEquals(JsonArray(emptyList()), diagnosticsOf("$DIRECTORY/parts.ws"))
+    }
+
+    @Test
+    fun `go-to-definition and rename reach into sibling files`() {
+        filesOnDisk[DIRECTORY] = mapOf("name.ws" to Fixtures.NAME)
+        initialize()
+        openDocument(PERSON_URI, Fixtures.PERSON)
+        // `  firstname: Name` — cursor on `Name`.
+        val position = buildJsonObject {
+            put("textDocument", buildJsonObject { put("uri", PERSON_URI) })
+            put(
+                "position",
+                buildJsonObject {
+                    put("line", 1)
+                    put("character", 14)
+                },
+            )
+        }
+
+        val locations = transport.request("textDocument/definition", position)["result"]!!.jsonArray
+        assertEquals(
+            listOf(PERSON_URI, NAME_URI),
+            locations.map { it.jsonObject["uri"]!!.jsonPrimitive.content },
+        )
+
+        val changes = transport
+            .request("textDocument/rename", JsonObject(position + ("newName" to JsonPrimitive("FullName"))))["result"]!!
+            .jsonObject["changes"]!!.jsonObject
+        assertEquals(setOf(PERSON_URI, NAME_URI), changes.keys)
+    }
+
+    @Test
+    fun `a file uri maps to the path of its directory`() {
+        assertEquals("/home/me/my specs", "file:///home/me/my%20specs".fileUriToPath())
+        assertEquals("c:/specs", "file:///c%3A/specs".fileUriToPath())
+        assertEquals("caf\u00e9 1.ws", "caf\u00e9 1.ws".encodeUriComponent().also { assertEquals("caf%C3%A9%201.ws", it) }.decodeUriComponent())
+    }
+
+    private fun diagnosticsOf(uri: String): JsonArray = transport
+        .notificationsOf("textDocument/publishDiagnostics")
+        .last { it["params"]!!.jsonObject["uri"]!!.jsonPrimitive.content == uri }["params"]!!
+        .jsonObject["diagnostics"]!!.jsonArray
+
     private fun initialize() {
         transport.request("initialize", buildJsonObject { put("processId", JsonNull) })
         transport.notify("initialized", buildJsonObject {})
@@ -330,5 +420,8 @@ class LspServerTest {
 
     companion object {
         private const val URI = "file:///example.ws"
+        private const val DIRECTORY = "file:///specs"
+        private const val PERSON_URI = "$DIRECTORY/person.ws"
+        private const val NAME_URI = "$DIRECTORY/name.ws"
     }
 }

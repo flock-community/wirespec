@@ -27,6 +27,9 @@ export const activate = (context: ExtensionContext) => {
         language: "wirespec",
       }
     ],
+    // A Wirespec file is checked together with the other files in its directory, so the server
+    // needs to hear about changes to files that are not open in an editor.
+    synchronize: { fileEvents: vscode.workspace.createFileSystemWatcher("**/*.ws") },
   };
 
   client = new LanguageClient("wirespec-extension-id", "WirespecChecker", serverOptions, clientOptions);

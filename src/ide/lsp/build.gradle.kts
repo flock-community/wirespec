@@ -38,6 +38,7 @@ kotlin {
                 api(libs.kotlin.stdlib)
                 api(libs.arrow.core)
                 api(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.io.core)
                 api(project(":src:compiler:core"))
             }
         }

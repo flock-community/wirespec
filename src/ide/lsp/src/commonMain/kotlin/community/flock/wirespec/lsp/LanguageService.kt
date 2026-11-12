@@ -1,6 +1,6 @@
 package community.flock.wirespec.lsp
 
-import arrow.core.nonEmptyListOf
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
@@ -37,25 +37,35 @@ internal object LanguageService {
 
     private val parseContext = object : ParseContext, NoLogger {}
 
-    fun diagnose(document: Document): List<Diagnostic> = parseContext
-        .parse(nonEmptyListOf(ModuleContent(FileUri(document.uri), document.text)))
-        .fold(
-            ifLeft = { errors -> errors.map { it.toDiagnostic(document) } },
-            ifRight = { emptyList() },
-        ) + unusedPartWarnings(document)
+    /**
+     * Diagnoses the first document of [module]. The others only supply the definitions it may
+     * refer to, so their own errors are left out. A validation error names no file, so it is
+     * reported on every document of the module.
+     */
+    fun diagnose(module: NonEmptyList<Document>): List<Diagnostic> = module.head.let { document ->
+        parseContext
+            .parse(module.map { ModuleContent(FileUri(it.uri), it.text) })
+            .fold(
+                ifLeft = { errors ->
+                    errors
+                        .filter { it.fileUri.value.isEmpty() || it.fileUri.value == document.uri }
+                        .map { it.toDiagnostic(document) }
+                },
+                ifRight = { emptyList() },
+            ) + unusedPartWarnings(module)
+    }
 
     /**
-     * Warns on every part that no `...Part` in [document] spreads. Works on tokens rather than the
-     * AST, because validation flattens spreads away and the AST carries no positions to point at.
+     * Warns on every part of the first document that no `...Part` in [module] spreads. Works on
+     * tokens rather than the AST, because validation flattens spreads away and the AST carries no
+     * positions to point at.
      */
-    private fun unusedPartWarnings(document: Document): List<Diagnostic> = WirespecSpec
-        .tokenize(document.text)
-        .zipWithNext()
-        .run {
-            namesAfter<Ellipsis>().map { it.value }.toSet().let { spread ->
-                namesAfter<PartDefinition>().filterNot { it.value in spread }
-            }
-        }
+    private fun unusedPartWarnings(module: NonEmptyList<Document>): List<Diagnostic> = module
+        .toList()
+        .flatMap { it.tokenPairs().namesAfter<Ellipsis>() }
+        .map { it.value }
+        .toSet()
+        .let { spread -> module.head.tokenPairs().namesAfter<PartDefinition>().filterNot { it.value in spread } }
         .mapNotNull { it.toLspToken() }
         .map { name ->
             Diagnostic(
@@ -65,6 +75,8 @@ internal object LanguageService {
                 source = "wirespec",
             )
         }
+
+    private fun Document.tokenPairs(): List<Pair<Token, Token>> = WirespecSpec.tokenize(text).zipWithNext()
 
     private inline fun <reified T : TokenType> List<Pair<Token, Token>>.namesAfter(): List<Token> = this
         .filter { (first, second) -> first.type is T && second.type is TypeIdentifier }
@@ -92,40 +104,44 @@ internal object LanguageService {
         return SemanticTokens(data)
     }
 
-    fun definition(document: Document, position: Position): List<Location> {
-        val hit = tokenAt(document, position) ?: return emptyList()
-        if (hit.kind != TokenKind.USER_TYPE) return emptyList()
-        return tokenize(document)
-            .filter { it.kind == TokenKind.USER_TYPE && it.value == hit.value }
-            .map { Location(uri = document.uri, range = it.range) }
-    }
+    fun definition(module: NonEmptyList<Document>, position: Position): List<Location> = userTypeAt(module.head, position)
+        ?.let { hit ->
+            module.toList().flatMap { document -> document.occurrencesOf(hit.value).map { Location(uri = document.uri, range = it.range) } }
+        }
+        .orEmpty()
 
     /**
      * Returns the range of the identifier at [position] if it can be renamed, or null otherwise.
      * Only user-defined type names (PascalCase identifiers introduced by `type` / `enum` / `endpoint`
      * / `channel` / `part`) are renameable.
      */
-    fun prepareRename(document: Document, position: Position): Range? {
-        val hit = tokenAt(document, position) ?: return null
-        return if (hit.kind == TokenKind.USER_TYPE) hit.range else null
-    }
+    fun prepareRename(document: Document, position: Position): Range? = userTypeAt(document, position)?.range
 
     /**
      * Returns a [WorkspaceEdit] that renames every occurrence of the user-defined type identifier
-     * at [position] to [newName] within [document]. Returns null when the position is not on a
-     * renameable token or when [newName] is not a valid Wirespec PascalCase identifier.
+     * at [position] in the first document of [module] to [newName], across the whole module.
+     * Returns null when the position is not on a renameable token or when [newName] is not a valid
+     * Wirespec PascalCase identifier.
      */
-    fun rename(document: Document, position: Position, newName: String): WorkspaceEdit? {
-        if (!isValidPascalCaseIdentifier(newName)) return null
-        val hit = tokenAt(document, position) ?: return null
-        if (hit.kind != TokenKind.USER_TYPE) return null
-        if (newName == hit.value) return WorkspaceEdit(emptyMap())
-        val edits = tokenize(document)
-            .filter { it.kind == TokenKind.USER_TYPE && it.value == hit.value }
-            .map { TextEdit(range = it.range, newText = newName) }
-        if (edits.isEmpty()) return null
-        return WorkspaceEdit(changes = mapOf(document.uri to edits))
-    }
+    fun rename(module: NonEmptyList<Document>, position: Position, newName: String): WorkspaceEdit? = newName
+        .takeIf(::isValidPascalCaseIdentifier)
+        ?.let { userTypeAt(module.head, position) }
+        ?.let { hit ->
+            if (newName == hit.value) {
+                WorkspaceEdit(emptyMap())
+            } else {
+                module
+                    .associate { document -> document.uri to document.occurrencesOf(hit.value).map { TextEdit(range = it.range, newText = newName) } }
+                    .filterValues { it.isNotEmpty() }
+                    .let(::WorkspaceEdit)
+            }
+        }
+
+    private fun Document.occurrencesOf(name: String): List<LspToken> = tokenize(this)
+        .filter { it.kind == TokenKind.USER_TYPE && it.value == name }
+
+    private fun userTypeAt(document: Document, position: Position): LspToken? = tokenAt(document, position)
+        ?.takeIf { it.kind == TokenKind.USER_TYPE }
 
     private fun tokenAt(document: Document, position: Position): LspToken? = tokenize(document).firstOrNull { t ->
         t.line == position.line && position.character >= t.character && position.character <= t.character + t.length
