@@ -85,7 +85,7 @@ The compile mojo is already shown in the installation section above. Here's a mo
 
 The compile mojo supports the following parameters:
 
-- **input** (required): Specifies the input files or directories. Multiple paths can be provided, separated by commas. Files can also be loaded from the classpath using the 'classpath:' prefix (e.g., 'classpath:wirespec/petstore.ws').
+- **input** (required): Specifies the input files or directories. Multiple paths can be provided, separated by commas. Files can also be loaded from the classpath using the 'classpath:' prefix (e.g., 'classpath:wirespec/petstore.ws'), see [Wirespec files from the classpath](#wirespec-files-from-the-classpath).
 - **output** (required): Specifies the output directory where generated code will be placed.
 - **language** (required): The target language to compile to. An execution compiles to one language: add an execution
   per language to generate several. Supported languages are:
@@ -102,6 +102,96 @@ The compile mojo supports the following parameters:
 - **sync**: Whether to emit endpoint handlers, channels and rpc services as synchronous functions, see [Synchronous code](./plugins.md#synchronous-code). Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
 - **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, when the emitter is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `GraphQLClient`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
+
+### Wirespec files from the classpath
+
+Start `input` with `classpath:` to compile Wirespec files from a jar instead of from your project, for example a
+specification that the team owning the API publishes as an artifact. The input is either one file or a folder.
+
+#### One file
+
+When the path ends with `.ws`, the plugin compiles that one file. It is looked up on the classpath of the plugin, so add
+the artifact that holds it as a `<dependency>` of the plugin:
+
+```xml
+<plugin>
+    <groupId>community.flock.wirespec.plugin.maven</groupId>
+    <artifactId>wirespec-maven-plugin</artifactId>
+    <version>{{WIRESPEC_VERSION}}</version>
+    <dependencies>
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>petstore-spec</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+    <executions>
+        <execution>
+            <id>petstore</id>
+            <goals>
+                <goal>compile</goal>
+            </goals>
+            <configuration>
+                <input>classpath:wirespec/petstore.ws</input>
+                <output>${project.build.directory}/generated-sources/wirespec</output>
+                <language>Java</language>
+                <packageName>com.example.petstore</packageName>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+#### A folder
+
+Any other path is a folder: the plugin compiles every `.ws` file in it and in its subfolders. The folder is looked up on
+the compile classpath of your project, so in its `compile` and `provided` dependencies, and in the dependencies of the
+plugin. A folder spread over several jars is compiled as a whole. Write the folder with slashes, `classpath:com/example/api`,
+or as a package name, `classpath:com.example.api`:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>api-specs</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+</dependencies>
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>community.flock.wirespec.plugin.maven</groupId>
+            <artifactId>wirespec-maven-plugin</artifactId>
+            <version>{{WIRESPEC_VERSION}}</version>
+            <executions>
+                <execution>
+                    <id>api</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <input>classpath:com/example/api</input>
+                        <output>${project.build.directory}/generated-sources/wirespec</output>
+                        <language>Java</language>
+                        <packageName>com.example.api</packageName>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+The build fails when the file or the folder is not on the classpath, or when the folder holds no `.ws` files.
+
+:::note
+
+The `compile` goal runs in the `generate-sources` phase, before Maven copies `src/main/resources` to `target/classes`.
+The Wirespec files in the resources of your own project are not on the classpath yet: set `input` to their directory,
+such as `${project.basedir}/src/main/resources/wirespec`.
+
+:::
 
 ### Default values
 
@@ -233,6 +323,10 @@ In addition to the common parameters (input, output, language), the convert mojo
   - `OpenAPIV2`: OpenAPI Specification version 2.0 (formerly Swagger)
   - `OpenAPIV3`: OpenAPI Specification version 3.0
   - `Avro`: Apache Avro schema format
+
+The `input` of the `convert` goal is one file, which can also come from the classpath: `classpath:openapi/petstore.json`
+is looked up on the classpath of the plugin, like [one Wirespec file](#one-file). Add the artifact that holds it as a
+`<dependency>` of the plugin.
 
 ### Running the Convert Goal
 

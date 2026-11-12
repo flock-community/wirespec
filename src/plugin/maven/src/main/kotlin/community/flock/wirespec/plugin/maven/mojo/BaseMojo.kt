@@ -24,6 +24,7 @@ import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.Source.Type.Wirespec
+import community.flock.wirespec.plugin.io.wirespecSources
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
@@ -36,7 +37,6 @@ import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import java.io.File
 import java.net.URLClassLoader
-import java.util.jar.JarFile
 
 public abstract class BaseMojo : AbstractMojo() {
 
@@ -207,51 +207,11 @@ public abstract class BaseMojo : AbstractMojo() {
         val classpathEntries = project.compileClasspathElements
             .map { File(it as String) }
             .plus(pluginArtifacts.mapNotNull { it.file })
-        val sources = readWirespecSourcesFromClasspathFolder(value, classpathEntries, extension)
+        val sources = wirespecSources(classpathEntries)
 
         logger.info("Found ${sources.size} wirespec file(s) from classpath folder: $value")
         return sources.toNonEmptySetOrNull() ?: error("No wirespec files found in classpath folder: $value")
     }
 
     protected fun handleError(string: String): Nothing = throw RuntimeException(string)
-}
-
-internal fun readWirespecSourcesFromClasspathFolder(
-    value: String,
-    classpathEntries: List<File>,
-    extension: String = ".${FileExtension.Wirespec.value}",
-): List<Source<Wirespec>> {
-    val folder = value.trim('/')
-    val entries = classpathEntries
-        .map { it.absoluteFile }
-        .distinctBy { it.path }
-
-    fun read(resourceFolder: String) = entries.flatMap { entry ->
-        when {
-            entry.isDirectory -> entry.resolve(resourceFolder)
-                .takeIf { it.isDirectory }
-                ?.walkTopDown()
-                ?.filter { it.isFile && it.name.endsWith(extension) }
-                ?.map { Source<Wirespec>(Name(it.name.removeSuffix(extension)), it.readText(Charsets.UTF_8)) }
-                ?.toList()
-                .orEmpty()
-
-            entry.isFile && entry.extension.equals("jar", ignoreCase = true) -> JarFile(entry).use { jarFile ->
-                val prefix = "$resourceFolder/"
-                jarFile.entries().asSequence()
-                    .filter { !it.isDirectory && it.name.startsWith(prefix) && it.name.endsWith(extension) }
-                    .map { jarEntry ->
-                        val name = jarEntry.name.substringAfterLast('/').removeSuffix(extension)
-                        val content = jarFile.getInputStream(jarEntry).bufferedReader(Charsets.UTF_8).use { it.readText() }
-                        Source<Wirespec>(Name(name), content)
-                    }
-                    .toList()
-            }
-
-            else -> emptyList()
-        }
-    }.distinct()
-
-    val sources = read(folder)
-    return if (sources.isNotEmpty() || '/' in folder) sources else read(folder.replace('.', '/'))
 }
