@@ -28,6 +28,8 @@ The client comes in two flavours, and you can mix them:
 - **Typed calls** select every field of a result and return the models: `client.queryTodo(id)` returns a `Todo`.
 - **Selections** let you pick the fields and return a partial result: `client.queryTodo(id) { title() }` returns a
   `TodoResult` with only `title` filled.
+- **Several operations** go in one request: `client.query { queryTodo(id) { title() }; todos(done) { id() } }` returns
+  a `Result` with the partial result of each.
 
 The GraphQL documents are written at build time, so the generated code needs no GraphQL library and only uses the
 standard library of the language. It sends requests through the same `Wirespec.Transportation` and
@@ -301,6 +303,80 @@ A field of a type takes a selection of that type. A union has an `on<Member>` se
 A call with a selection throws an `IllegalStateException` on GraphQL errors, also for an rpc with an error type: its
 `Result` and `Error` hold the full models.
 
+## Several operations in one request
+
+GraphQL takes several fields of `Query`, or of `Mutation`, in one operation. `query` and `mutation` on the client do
+that: in their selection every operation is a function that takes the parameters of the rpc and, for a result with
+fields, the selection of those fields. The call sends one request and returns one **partial result**, with the result of
+each operation under the name of its rpc, and empty for an operation you did not select.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#several
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#several
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#several
+    ```
+  </TabItem>
+</Tabs>
+
+That sends
+
+```graphql
+query($queryTodo_id: ID!, $todos_done: Boolean) { queryTodo: todo(id: $queryTodo_id) { title } todos: todos(done: $todos_done) { id } }
+```
+
+with the variables `{"queryTodo_id": "1", "todos_done": false}`. Every operation is aliased to the name of its rpc, and
+its variables carry that name, so they do not clash. The request declares the variables of the operations you select
+and no others.
+
+`mutation` does the same for the mutations, which the server runs one after the other, in the order you select them. An
+rpc without a result reads as a `Boolean`:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#several-mutations
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#several-mutations
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#several-mutations
+    ```
+  </TabItem>
+</Tabs>
+
+The rpcs of a [namespace type](#namespace-types) are fields of the selection of that type, so they nest in the
+operation that returns it. In Kotlin:
+
+```kotlin
+val result = client.query {
+    notifications {
+        inbox(limit = 10, locale = null) { text() }
+        inboxCount()
+    }
+}
+val count: Int? = result.notifications?.inboxCount
+```
+
+```graphql
+query($inbox_limit: Int!, $inbox_locale: String) { notifications: notifications { inbox: inbox(limit: $inbox_limit, locale: $inbox_locale) { text } inboxCount: inboxCount } }
+```
+
+Like a call with a selection, `query` and `mutation` throw an `IllegalStateException` on GraphQL errors, also when part
+of the data is there. To read the data next to the errors, send the request through
+[a client of your own](#a-client-of-your-own).
+
+The selections and partial results live in `GraphQLQuery` and `GraphQLMutation`, in the `graphql` package. A root type
+gets one when at least one rpc is a field of it.
+
 ## A client of your own
 
 The generated clients send every operation the same way. To send them your way, for instance to add a header, log
@@ -347,6 +423,25 @@ partial result:
   </TabItem>
 </Tabs>
 
+A request of [several operations](#several-operations-in-one-request) goes the same way, through the `Api` of
+`GraphQLQuery` or `GraphQLMutation`. Its `Response` holds the partial result of the operations that succeeded next to
+the errors of those that failed:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#abstract-several
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#abstract-several
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#abstract-several
+    ```
+  </TabItem>
+</Tabs>
+
 An edge does not fail on GraphQL errors: it returns them next to the data, and leaves it to your client what to do with
 them. The `errors` are `GraphQLError`s, or the [error type](#errors) of an rpc that has one. The `data` is empty when
 the response has none, also for a result that is required, and a `Boolean` for an rpc without a result. The generated
@@ -369,6 +464,9 @@ operation needs. The `GraphQLClient` that bundles them sits in the root package,
 | `QueryTodoGraphQL.TodoSelection`, ...    | The fields you can select of a type or union the result reaches            |
 | `QueryTodoGraphQL.TodoResult`, ...       | The partial result of a type or union the result reaches                   |
 | `QueryTodoGraphQL.GraphQLError`          | An error of a response, for an rpc without an error type of its own        |
+| `GraphQLQuery`, `GraphQLMutation`        | The file of a request of [several operations](#several-operations-in-one-request) |
+| `GraphQLQuery.Selection`, `.Result`      | The operations you can select of the root type, and their partial results  |
+| `GraphQLQuery.GraphQLClient`, `.Api`, ...| What sends that request, as for one operation                              |
 
 A type that several operations return has a selection and a partial result in each of their files, so an operation's
 file stands on its own: `QueryTodoGraphQL.TodoResult` and `TodosGraphQL.TodoResult` are different types.
@@ -465,6 +563,9 @@ left out. Configure the serialization to leave out null values to use the defaul
 
 - Subscriptions get no client, because they are not a single request and response.
 - Arguments of nested fields are not passed: a field that requires one cannot be selected.
+- A request of several operations selects each operation once, as its result is read under the name of its rpc. Its
+  variables are a map by name, which holds those of the selected operations only, so the serialization writes each
+  value by its runtime type. An operation with fields always takes a selection there.
 - A partial result cannot tell a field that was not selected from a field that is `null`: both read as empty.
 - A typed call returns a union as the Wirespec union of its models, which the serialization has to read by
   `__typename`. A partial result has no such need: it is a single type with the fields of every member.

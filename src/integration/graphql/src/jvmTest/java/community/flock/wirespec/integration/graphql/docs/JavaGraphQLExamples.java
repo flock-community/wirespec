@@ -18,6 +18,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 // endregion abstract-client
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient;
+import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLMutation;
+import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLQuery;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.model.ID;
@@ -113,6 +115,31 @@ public final class JavaGraphQLExamples {
         // endregion union
         return kinds;
     }
+
+    public static List<Object> several(GraphQLClient client) {
+        // region several
+        GraphQLQuery.Result result = client.query(query -> query
+            .queryTodo(new ID("1"), todo -> todo.title())
+            .todos(Optional.of(false), todo -> todo.id())).join();
+
+        Optional<String> title = result.queryTodo().flatMap(GraphQLQuery.TodoResult::title);
+        Optional<List<Optional<ID>>> open = result.todos().map(todos -> todos.stream().map(GraphQLQuery.TodoResult::id).toList());
+        Optional<List<GraphQLQuery.SearchResultResult>> found = result.search(); // empty: not selected
+        // endregion several
+        return List.of(title, open, found);
+    }
+
+    public static List<Object> severalMutations(GraphQLClient client) {
+        // region several-mutations
+        GraphQLMutation.Result result = client.mutation(mutation -> mutation
+            .addTodo(new NewTodo("Groceries", Optional.empty()), todo -> todo.id())
+            .clearTodos()).join();
+
+        Optional<ID> added = result.addTodo().flatMap(GraphQLMutation.TodoResult::id);
+        Optional<Boolean> cleared = result.clearTodos();
+        // endregion several-mutations
+        return List.of(added, cleared);
+    }
     // region abstract-client
 
     public record AbstractClient(Wirespec.Serialization serialization, Wirespec.Transportation transportation) {
@@ -135,5 +162,14 @@ public final class JavaGraphQLExamples {
             .data();
         // endregion abstract-calls
         return List.of(todo, errors, selected);
+    }
+
+    public static GraphQLQuery.Response abstractSeveral(AbstractClient client) {
+        // region abstract-several
+        GraphQLQuery.Response response = client.send(new GraphQLQuery.Api(), new GraphQLQuery().request(query -> query
+            .queryTodo(new ID("1"), todo -> todo.title())
+            .todos(Optional.of(false), todo -> todo.id()))).join();
+        // endregion abstract-several
+        return response;
     }
 }

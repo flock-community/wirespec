@@ -29,6 +29,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient as JavaGraphQLClient
 import community.flock.wirespec.integration.graphql.java.generated.graphql.ClearTodosGraphQL as JavaClearTodosGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.GraphQLQuery as JavaGraphQLQuery
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL as JavaQueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.TodoResult as JavaTodoResult
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.UserResult as JavaUserResult
@@ -42,6 +43,8 @@ import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteT
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient as KotlinGraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.ClearTodosGraphQL as KotlinClearTodosGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.CompleteTodoGraphQL as KotlinCompleteTodoGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLMutation as KotlinGraphQLMutation
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.GraphQLQuery as KotlinGraphQLQuery
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.InboxGraphQL.NotificationResult as KotlinNotificationResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL as KotlinQueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.TodoResult as KotlinTodoResult
@@ -264,6 +267,123 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `Kotlin client sends several queries in one request and reads each result`() = runBlocking {
+        val server = KotlinServer("""{"data":{"queryTodo":{"title":"Groceries"},"todos":[{"id":"1"},{"id":"2"}]}}""")
+
+        val result = server.client().query {
+            queryTodo(KotlinID("1")) { title() }
+            todos(false) { id() }
+        }
+
+        assertEquals("Groceries", result.queryTodo?.title)
+        assertEquals(listOf(KotlinID("1"), KotlinID("2")), result.todos?.map { it.id })
+        assertNull(result.search)
+        assertEquals(
+            mapOf(
+                "query" to "query(\$queryTodo_id: ID!, \$todos_done: Boolean) { queryTodo: todo(id: \$queryTodo_id) { title } todos: todos(done: \$todos_done) { id } }",
+                "variables" to mapOf("queryTodo_id" to "1", "todos_done" to false),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `Kotlin client selects the rpcs of a namespace type inside the field that leads to it`() = runBlocking {
+        val server = KotlinServer("""{"data":{"notifications":{"inbox":[{"text":"Hello"}],"inboxCount":3}}}""")
+
+        val result = server.client().query {
+            notifications {
+                inbox(10, null) { text() }
+                inboxCount()
+            }
+        }
+
+        assertEquals(
+            KotlinGraphQLQuery.NotificationsQueryResult(inbox = listOf(KotlinGraphQLQuery.NotificationResult(id = null, text = "Hello")), inboxCount = 3),
+            result.notifications,
+        )
+        assertEquals(
+            mapOf(
+                "query" to "query(\$inbox_limit: Int!, \$inbox_locale: String) { notifications: notifications { inbox: inbox(limit: \$inbox_limit, locale: \$inbox_locale) { text } inboxCount: inboxCount } }",
+                "variables" to mapOf("inbox_limit" to 10, "inbox_locale" to null),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `Kotlin client sends several mutations in one request, also without variables or a result`() = runBlocking {
+        val server = KotlinServer("""{"data":{"addTodo":{"id":"2"},"clearTodos":true}}""")
+
+        val result = server.client().mutation {
+            addTodo(KotlinNewTodo("Laundry", KotlinPriority.LOW)) { id() }
+            clearTodos()
+        }
+
+        assertEquals(KotlinGraphQLMutation.TodoResult(id = KotlinID("2"), title = null, done = null, priority = null, owner = null), result.addTodo)
+        assertEquals(true, result.clearTodos)
+        assertEquals(
+            mapOf(
+                "query" to "mutation(\$addTodo_input: NewTodo!) { addTodo: addTodo(input: \$addTodo_input) { id } clearTodos: clearTodos }",
+                "variables" to mapOf("addTodo_input" to mapOf("title" to "Laundry", "priority" to "LOW")),
+            ),
+            server.json(),
+        )
+        assertEquals(
+            mapOf("query" to "mutation { clearTodos: clearTodos }", "variables" to emptyMap<String, Any?>()),
+            KotlinServer("""{"data":{"clearTodos":true}}""").also { it.client().mutation { clearTodos() } }.json(),
+        )
+    }
+
+    @Test
+    fun `Kotlin client fails a request of several rpcs on GraphQL errors and on missing data`() {
+        val failed = assertFailsWith<IllegalStateException> {
+            runBlocking { KotlinServer("""{"data":{"queryTodo":null},"errors":[{"message":"Not allowed"}]}""").client().query { queryTodo(KotlinID("1")) { id() } } }
+        }
+        val empty = assertFailsWith<IllegalStateException> {
+            runBlocking { KotlinServer("""{"data":null}""").client().query { queryTodo(KotlinID("1")) { id() } } }
+        }
+        assertEquals("GraphQL request failed: [GraphQLError(message=Not allowed, locations=null, path=null, extensions=null)]", failed.message)
+        assertEquals("GraphQL response without data", empty.message)
+    }
+
+    @Test
+    fun `Kotlin api sends several rpcs through a client of your own and returns the errors next to the data`() = runBlocking {
+        val server = KotlinServer("""{"data":{"queryTodo":{"title":"Groceries"},"todos":null},"errors":[{"message":"Not allowed","path":["todos"]}]}""")
+
+        val response = GraphQLExamples.abstractSeveral(GraphQLExamples.AbstractClient(KotlinSerialization(objectMapper), server))
+
+        assertEquals("Groceries", response.data?.queryTodo?.title)
+        assertEquals(listOf("Not allowed"), response.errors?.map { it.message })
+    }
+
+    @Test
+    fun `Java client sends several queries in one request and reads each result`() {
+        val server = JavaServer("""{"data":{"queryTodo":{"title":"Groceries"},"todos":[{"id":"1"}]}}""")
+
+        val result: JavaGraphQLQuery.Result = server.client().query { query -> query.queryTodo(JavaID("1")) { it.title() }.todos(Optional.empty()) { it.id() } }.join()
+
+        assertEquals(Optional.of("Groceries"), result.queryTodo().flatMap { it.title() })
+        assertEquals(listOf(Optional.of(JavaID("1"))), result.todos().get().map { it.id() })
+        assertEquals(Optional.empty(), result.search())
+        assertEquals(
+            mapOf(
+                "query" to "query(\$queryTodo_id: ID!, \$todos_done: Boolean) { queryTodo: todo(id: \$queryTodo_id) { title } todos: todos(done: \$todos_done) { id } }",
+                "variables" to mapOf("queryTodo_id" to "1", "todos_done" to null),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `Scala client sends several queries in one request and reads each result`() {
+        assertEquals(
+            "query(\$queryTodo_id: ID!) { queryTodo: todo(id: \$queryTodo_id) { title } notifications: notifications { inboxCount: inboxCount } }",
+            scalaCheck("sendsSeveralQueriesInOneRequest"),
+        )
+    }
+
+    @Test
     fun `Java client reads the selected fields into the partial result`() {
         val server = JavaServer("""{"data":{"result":[{"id":"1","owner":{"name":"Ann"}}]}}""")
 
@@ -408,11 +528,13 @@ class GraphQLClientExtensionTest {
         val files = emitter.applyExtensions(nonEmptyListOf(GraphQLClientExtension(emitter.packageName, FileExtension.Kotlin))).emit(ast, noLogger)
             .associate { it.file.removePrefix("community/flock/wirespec/generated/") to it.result }
 
-        assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
+        assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt", "graphql/GraphQLQuery.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
         assertEquals(setOf("Client.kt", "GraphQLClient.kt"), files.keys.filterNot { "/" in it }.toSet())
         listOf("data class GraphQLClient(", "object Api : Wirespec.GraphQLClient<", "data class ClientEdge(", ") : Wirespec.GraphQLResponse<Todo, GraphQLError>", ") : Wirespec.GraphQLRequest", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
             .forEach { assertTrue(it in files.getValue("graphql/GetTodoGraphQL.kt"), "GetTodoGraphQL.kt misses $it") }
-        listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(")
+        listOf("fun request(selection: Selection.() -> Unit): GraphQLRequest", "fun getTodo(id: String, selection: TodoSelection.() -> Unit): Selection", "data class Result(", ") : Wirespec.GraphQLResponse<Result, GraphQLError>")
+            .forEach { assertTrue(it in files.getValue("graphql/GraphQLQuery.kt"), "GraphQLQuery.kt misses $it") }
+        listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(", "fun query(selection: GraphQLQuery.Selection.() -> Unit): GraphQLQuery.Result")
             .forEach { assertTrue(it in files.getValue("GraphQLClient.kt"), "GraphQLClient.kt misses $it") }
     }
 

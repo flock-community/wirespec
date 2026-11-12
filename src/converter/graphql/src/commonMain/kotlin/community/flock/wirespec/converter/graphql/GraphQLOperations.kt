@@ -9,7 +9,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
-import community.flock.wirespec.converter.graphql.GraphQLModel.InputValueDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Operation
 import community.flock.wirespec.converter.graphql.GraphQLModel.TypeRef
 import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
@@ -52,9 +51,23 @@ public class GraphQLOperations(definitions: List<Definition>) {
     public fun open(rpc: Rpc, alias: String): String? = schema.operation(rpc)
         .takeUnless { it == Operation.SUBSCRIPTION }
         ?.let { operation ->
-            val field = schema.fieldDefinition(rpc)
-            "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { ${path(rpc).joinToString("") { "$it { " }}$alias: ${field.name}${field.arguments.passed()}"
+            "${operation.keyword} ${rpc.identifier.value}${variables(rpc).takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")").orEmpty()} { ${path(rpc).joinToString("") { "$it { " }}${field(rpc, alias)}"
         }
+
+    /**
+     * The field of [rpc] as a selection of the type it is a field of writes it, under [alias]. Each argument is passed
+     * the variable that [variable] names for it, so several rpcs fit in one document without their variables clashing.
+     */
+    public fun field(rpc: Rpc, alias: String, variable: (String) -> String = { it }): String = schema.fieldDefinition(rpc).let { field ->
+        "$alias: ${field.name}${field.arguments.takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") { "${it.name}: $${variable(it.name)}" }.orEmpty()}"
+    }
+
+    /** The variables that [field] passes to [rpc], as an operation declares them: typed and defaulted as the arguments. */
+    public fun variables(rpc: Rpc, variable: (String) -> String = { it }): List<String> = schema.fieldDefinition(rpc).arguments
+        .map { "$${variable(it.name)}: ${it.type.print()}${it.defaultValue?.let { value -> " = ${value.print()}" }.orEmpty()}" }
+
+    /** The type [rpc] is a field of: a root operation type when its [path] is empty, or else the type its path leads to. */
+    public fun parent(rpc: Rpc): String = schema.parentType(rpc)
 
     /** What closes the document of [rpc] after the selection of its result. */
     public fun close(rpc: Rpc): String = " }".repeat(path(rpc).size + 1)
@@ -76,14 +89,6 @@ public class GraphQLOperations(definitions: List<Definition>) {
 
     /** The name of [definition] in the GraphQL schema, which an inline fragment names. */
     public fun graphQLName(definition: Definition): String = schema.graphQLName(definition.identifier.value)
-
-    private fun List<InputValueDefinition>.variables(): String = takeIf { it.isNotEmpty() }
-        ?.joinToString(", ", "(", ")") { "$${it.name}: ${it.type.print()}${it.defaultValue?.let { value -> " = ${value.print()}" }.orEmpty()}" }
-        .orEmpty()
-
-    private fun List<InputValueDefinition>.passed(): String = takeIf { it.isNotEmpty() }
-        ?.joinToString(", ", "(", ")") { "${it.name}: $${it.name}" }
-        .orEmpty()
 
     private fun Reference.selection(trail: Trail): String = when (val model = composite(this)) {
         is Type -> model.selection(trail.enter(model))
