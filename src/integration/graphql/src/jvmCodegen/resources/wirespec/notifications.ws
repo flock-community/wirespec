@@ -19,6 +19,12 @@ rpc Inbox {
 @GraphQLQuery("NotificationsQuery")
 rpc InboxCount {} -> Integer32
 
+@GraphQLQuery("NotificationsQuery")
+rpc Latest {
+  @GraphQLDefault("2")
+  size: Integer32
+} -> Notification[]
+
 @GraphQLMutation
 @GraphQLName("notifications")
 rpc MutateNotifications {} -> NotificationsMutation
