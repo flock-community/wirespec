@@ -174,3 +174,39 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
     extensionClasses = listOf(KotlinxSerializationExtension::class.java)
 }
 ```
+
+## Wirespec files from a dependency
+
+The Gradle tasks read their `input` from disk: unlike the [Maven plugin](./plugins-maven.md#wirespec-files-from-the-classpath),
+they do not accept a `classpath:` input. To compile Wirespec files that ship in a jar, unpack them with a `Sync` task and
+use its destination as the `input`. A `CompileWirespecTask` reads the `.ws` files at the top of its input directory, so
+`eachFile` flattens the subfolders:
+
+```kotlin title="build.gradle.kts"
+import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+
+val wirespecSpecs = configurations.create("wirespecSpecs")
+
+dependencies {
+    wirespecSpecs("com.example:api-specs:1.0.0")
+}
+
+val unpackWirespecSpecs = tasks.register<Sync>("unpackWirespecSpecs") {
+    from({ wirespecSpecs.map { zipTree(it) } }) {
+        include("com/example/api/**/*.ws")
+        eachFile { path = name }
+    }
+    includeEmptyDirs = false
+    into(layout.buildDirectory.dir("wirespec-specs"))
+}
+
+tasks.register<CompileWirespecTask>("wirespec-api") {
+    input.fileProvider(unpackWirespecSpecs.map { it.destinationDir })
+    output = layout.buildDirectory.dir("generated")
+    packageName = "com.example.api"
+    language = Language.Kotlin
+}
+```
+
+The input is derived from the `Sync` task, so Gradle unpacks the jar before it compiles the Wirespec files.
