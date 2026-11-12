@@ -14,9 +14,9 @@ All plugins support two core operations: Compile and Convert.
 
 The `Compile` operation transforms Wirespec source code into emitted output files. It accepts the following inputs:
 
-- **input:** Path to the input Wirespec file or directory. The Maven plugin can also read them from the classpath, see
-  [Wirespec files from the classpath](./plugins-maven.md#wirespec-files-from-the-classpath). For Gradle, see
-  [Wirespec files from a dependency](./plugins-gradle.md#wirespec-files-from-a-dependency).
+- **input:** Path to the input Wirespec file or directory. The Maven and Gradle plugins can also read them from the
+  classpath, see [Maven](./plugins-maven.md#wirespec-files-from-the-classpath) and
+  [Gradle](./plugins-gradle.md#wirespec-files-from-the-classpath).
 - **output:** Path to the output directory where the generated code will be placed.
 - **language:** The target language for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`). A run generates one language: run the plugin once per language to generate several.
 - **package name:** The package name for the generated code.

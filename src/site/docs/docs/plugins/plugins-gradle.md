@@ -96,7 +96,9 @@ This task compiles Wirespec definitions to one target language. Register a task 
 
 **Properties:**
 
-- `input`: DirectoryProperty - The input directory containing Wirespec files
+- `input`: DirectoryProperty - The input directory containing Wirespec files. Set it or `classpathInput`
+- `classpathInput`: Property&lt;String&gt; - A Wirespec file or folder on the `classpath` to compile instead of `input`, see [Wirespec files from the classpath](#wirespec-files-from-the-classpath)
+- `classpath`: ConfigurableFileCollection - The jars and directories in which `classpathInput` is looked up
 - `output`: DirectoryProperty - The output directory for generated code
 - `language`: Property&lt;Language&gt; - The target language (Java, Kotlin, TypeScript, Python, Rust, Scala, Wirespec, OpenAPIV2, OpenAPIV3, Avro)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
@@ -112,7 +114,9 @@ This task converts from JSON or Avro to other formats.
 
 **Properties:**
 
-- `input`: RegularFileProperty - The input file (JSON or Avro)
+- `input`: RegularFileProperty - The input file (JSON or Avro). Set it or `classpathInput`
+- `classpathInput`: Property&lt;String&gt; - A file on the `classpath` to convert instead of `input`, see [Wirespec files from the classpath](#wirespec-files-from-the-classpath)
+- `classpath`: ConfigurableFileCollection - The jars and directories in which `classpathInput` is looked up
 - `output`: DirectoryProperty - The output directory for generated code
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro, GraphQL, AsyncAPI)
 - `language`: Property&lt;Language&gt; - The target language, see `CompileWirespecTask`
@@ -175,12 +179,16 @@ tasks.register<CompileWirespecTask>("wirespec-compile") {
 }
 ```
 
-## Wirespec files from a dependency
+## Wirespec files from the classpath
 
-The Gradle tasks read their `input` from disk: unlike the [Maven plugin](./plugins-maven.md#wirespec-files-from-the-classpath),
-they do not accept a `classpath:` input. To compile Wirespec files that ship in a jar, unpack them with a `Sync` task and
-use its destination as the `input`. A `CompileWirespecTask` reads the `.ws` files at the top of its input directory, so
-`eachFile` flattens the subfolders:
+Set `classpathInput` instead of `input` to compile Wirespec files from a jar, for example a specification that the team
+owning the API publishes as an artifact. The task looks it up in the jars and directories of its `classpath`. Like in the
+[Maven plugin](./plugins-maven.md#wirespec-files-from-the-classpath), `classpathInput` is one file or a folder:
+
+- A path that ends with `.ws` is one file, such as `wirespec/petstore.ws`.
+- Any other path is a folder: the task compiles every `.ws` file in it and in its subfolders, across all the jars and
+  directories of the `classpath`. Write the folder with slashes, `com/example/api`, or as a package name,
+  `com.example.api`.
 
 ```kotlin title="build.gradle.kts"
 import community.flock.wirespec.plugin.Language
@@ -192,21 +200,19 @@ dependencies {
     wirespecSpecs("com.example:api-specs:1.0.0")
 }
 
-val unpackWirespecSpecs = tasks.register<Sync>("unpackWirespecSpecs") {
-    from({ wirespecSpecs.map { zipTree(it) } }) {
-        include("com/example/api/**/*.ws")
-        eachFile { path = name }
-    }
-    includeEmptyDirs = false
-    into(layout.buildDirectory.dir("wirespec-specs"))
-}
-
 tasks.register<CompileWirespecTask>("wirespec-api") {
-    input.fileProvider(unpackWirespecSpecs.map { it.destinationDir })
+    classpathInput = "com/example/api"
+    classpath.from(wirespecSpecs)
     output = layout.buildDirectory.dir("generated")
     packageName = "com.example.api"
     language = Language.Kotlin
 }
 ```
 
-The input is derived from the `Sync` task, so Gradle unpacks the jar before it compiles the Wirespec files.
+To look in the dependencies of your project instead, as the Maven plugin does, use its compile classpath:
+`classpath.from(configurations.compileClasspath)`.
+
+A `ConvertWirespecTask` takes one file from the classpath, such as `classpathInput = "openapi/petstore.json"`.
+
+A task fails when it has both an `input` and a `classpathInput` or neither, and when the `classpathInput` is not on its
+`classpath`. Gradle tracks the contents of the `classpath`, so the task runs again when a jar changes.

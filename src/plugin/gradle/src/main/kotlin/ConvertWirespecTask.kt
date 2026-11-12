@@ -11,14 +11,15 @@ import community.flock.wirespec.plugin.io.DirectoryPath
 import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.Source.Type.JSON
-import community.flock.wirespec.plugin.io.getFullPath
 import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
+import community.flock.wirespec.plugin.io.readSource
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -29,6 +30,7 @@ import org.gradle.work.DisableCachingByDefault
 public abstract class ConvertWirespecTask : BaseWirespecTask() {
 
     @get:InputFile
+    @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:Option(option = "input", description = "input directory")
     public abstract val input: RegularFileProperty
@@ -43,12 +45,14 @@ public abstract class ConvertWirespecTask : BaseWirespecTask() {
     @TaskAction
     public fun convert() {
         val preProcessorFunction = preProcessor.getOrElse { it }
-        val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
+        val inputPath = inputPath(input.orNull?.asFile)
         val outputPath = output.get().asFile.absolutePath
         val testOutputPath = testOutput.orNull?.asFile?.absolutePath
         val sources: Source<JSON> = when (inputPath) {
-            null -> throw IsNotAFileOrDirectory(null)
-            is ClassPath -> inputPath.readFromClasspath(preProcessorFunction)
+            is ClassPath -> inputPath.readSource<JSON>(classpath.files)
+                ?.map(preProcessorFunction)
+                ?.also { logger.info("Found 1 file to process on the classpath: $inputPath") }
+                ?: throw NotOnClasspath(inputPath)
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
                 FileExtension.JSON -> Source<JSON>(inputPath.name, preProcessorFunction(inputPath.read()))
