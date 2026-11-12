@@ -414,7 +414,7 @@ class GraphQLClientExtensionTest {
             .forEach { assertTrue(it in files.getValue("graphql/GetTodoGraphQL.kt"), "GetTodoGraphQL.kt misses $it") }
         listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(")
             .forEach { assertTrue(it in files.getValue("GraphQLClient.kt"), "GraphQLClient.kt misses $it") }
-        listOf("package community.flock.wirespec.generated\n", "public class GraphQLServer(", "rpc.GetTodo.Service, community.flock.wirespec.generated.rpc.ListTodos.Service", "\"getTodo\" -> rpc(field, path) {", "\"listTodos\" -> rpc(field, path) {")
+        listOf("package community.flock.wirespec.generated\n", "public class GraphQLServer(", "public suspend fun getTodo(request: Request<community.flock.wirespec.generated.graphql.GetTodoGraphQL.GraphQLVariables>): community.flock.wirespec.generated.model.Todo", "public suspend fun listTodos(request: Request<Unit>): List<community.flock.wirespec.generated.model.Todo>", "\"getTodo\" -> rpc(field, path) {", "\"listTodos\" -> rpc(field, path) {")
             .forEach { assertTrue(it in files.getValue("GraphQLServer.kt"), "GraphQLServer.kt misses $it") }
     }
 

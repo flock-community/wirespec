@@ -13,6 +13,14 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient as JavaGraphQLClient
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLServer as JavaGraphQLServer
+import community.flock.wirespec.integration.graphql.java.generated.graphql.AddTodoGraphQL as JavaAddTodoGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.CompleteTodoGraphQL as JavaCompleteTodoGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.InboxGraphQL as JavaInboxGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.LatestGraphQL as JavaLatestGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.MarkReadGraphQL as JavaMarkReadGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL as JavaQueryTodoGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchGraphQL as JavaSearchGraphQL
+import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL as JavaTodosGraphQL
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
 import community.flock.wirespec.integration.graphql.java.generated.model.NewTodo as JavaNewTodo
 import community.flock.wirespec.integration.graphql.java.generated.model.Note as JavaNote
@@ -28,8 +36,16 @@ import community.flock.wirespec.integration.graphql.java.generated.model.User as
 import community.flock.wirespec.integration.graphql.java.generated.rpc.CompleteTodo as JavaCompleteTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient as KotlinGraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLServer as KotlinGraphQLServer
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.AddTodoGraphQL as KotlinAddTodoGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.CompleteTodoGraphQL as KotlinCompleteTodoGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.InboxGraphQL as KotlinInboxGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.LatestGraphQL as KotlinLatestGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.MarkReadGraphQL as KotlinMarkReadGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL as KotlinQueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.TodoResult as KotlinTodoResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.UserResult as KotlinUserResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL as KotlinSearchGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.TodosGraphQL as KotlinTodosGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo as KotlinNewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Note as KotlinNote
@@ -55,14 +71,14 @@ class GraphQLServerTest {
         .registerModule(Jdk8Module())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-    private val kotlinServer = KotlinGraphQLServer(KotlinSerialization(objectMapper), KotlinService())
+    private val kotlinServer = KotlinGraphQLServer(KotlinSerialization(objectMapper), KotlinHandler())
     private val kotlinClient = KotlinGraphQLClient(KotlinSerialization(objectMapper)) { kotlinServer.handle(it) }
 
-    private val javaServer = JavaGraphQLServer(JavaSerialization(objectMapper), JavaService())
+    private val javaServer = JavaGraphQLServer(JavaSerialization(objectMapper), JavaHandler())
     private val javaClient = JavaGraphQLClient(JavaSerialization(objectMapper)) { javaServer.handle(it) }
 
     @Test
-    fun `Kotlin server answers the generated client with the result of the service`() = runBlocking {
+    fun `Kotlin server answers the generated client with the result of the handler`() = runBlocking {
         assertEquals(KotlinTodo(KotlinID("1"), "Groceries", false, KotlinPriority.HIGH, KotlinUser("Ann")), kotlinClient.queryTodo(KotlinID("1")))
         assertNull(kotlinClient.queryTodo(KotlinID("404")))
         assertEquals(listOf("Laundry"), kotlinClient.todos(true).map { it.title })
@@ -87,7 +103,7 @@ class GraphQLServerTest {
     }
 
     @Test
-    fun `Kotlin server returns the error of an rpc with an error type, and the failure of a service`() {
+    fun `Kotlin server returns the error of an rpc with an error type, and the failure of a handler`() {
         runBlocking {
             assertEquals(KotlinCompleteTodo.Result(KotlinTodo(KotlinID("1"), "Groceries", true, KotlinPriority.HIGH, KotlinUser("Ann"))), kotlinClient.completeTodo(KotlinID("1")))
             assertEquals(KotlinCompleteTodo.Error(KotlinTodoError("Unknown todo 404")), kotlinClient.completeTodo(KotlinID("404")))
@@ -206,9 +222,9 @@ class GraphQLServerTest {
     }
 
     @Test
-    fun `Kotlin server gives the service the selection of the field it answers`() {
+    fun `Kotlin server gives the handler the arguments and the selection of the field it answers`() {
         val selections = mutableListOf<KotlinGraphQLServer.Selection>()
-        val server = KotlinGraphQLServer(KotlinSerialization(objectMapper)) { selection -> KotlinService().also { selections.add(selection) } }
+        val server = KotlinGraphQLServer(KotlinSerialization(objectMapper), KotlinHandler(selections))
         val query = """
             query (${'$'}id: ID!) {
               first: todo(id: ${'$'}id) { ...Summary owner { name } }
@@ -233,9 +249,9 @@ class GraphQLServerTest {
     }
 
     @Test
-    fun `Java server gives the service the selection of the field it answers`() {
+    fun `Java server gives the handler the arguments and the selection of the field it answers`() {
         val selections = mutableListOf<JavaGraphQLServer.Selection>()
-        val server = JavaGraphQLServer(JavaSerialization(objectMapper), java.util.function.Function<JavaGraphQLServer.Selection, JavaGraphQLServer.Service> { JavaService().also { _ -> selections.add(it) } })
+        val server = JavaGraphQLServer(JavaSerialization(objectMapper), JavaHandler(selections))
 
         server.handle(JavaWirespec.RawRequest("POST", listOf("graphql"), emptyMap(), emptyMap(), Optional.of(body("""{ first: todo(id: "1") { title ... on Todo { owner { name } } } }""", null, null)))).join()
 
@@ -269,7 +285,7 @@ class GraphQLServerTest {
     }
 
     @Test
-    fun `Java server answers the generated client with the result of the service`() {
+    fun `Java server answers the generated client with the result of the handler`() {
         assertEquals(Optional.of(JavaTodo(JavaID("1"), "Groceries", false, Optional.of(JavaPriority.HIGH), JavaUser("Ann"))), javaClient.queryTodo(JavaID("1")).join())
         assertEquals(Optional.empty(), javaClient.queryTodo(JavaID("404")).join())
         assertEquals(listOf("Laundry"), javaClient.todos(Optional.of(true)).join().map { it.title() })
@@ -311,7 +327,7 @@ class GraphQLServerTest {
     }
 
     @Test
-    fun `Scala server answers a query and a mutation with the result of the service`() {
+    fun `Scala server answers a query and a mutation with the result of the handler`() {
         assertEquals(
             "ListMap(data -> ListMap(first -> Some(ListMap(name -> Groceries, owner -> ListMap(name -> Ann))), search -> List(ListMap(__typename -> Note, text -> milk), ListMap(__typename -> Tag)), failing -> None), " +
                 "errors -> List(Map(message -> Search is down, path -> List(failing))))",
@@ -342,71 +358,80 @@ class GraphQLServerTest {
     private fun body(query: String, variables: Map<String, Any?>?, operationName: String?): ByteArray = objectMapper
         .writeValueAsBytes(listOfNotNull("query" to query.trimIndent(), variables?.let { "variables" to it }, operationName?.let { "operationName" to it }).toMap())
 
-    private class KotlinService : KotlinGraphQLServer.Service {
+    private class KotlinHandler(private val selections: MutableList<KotlinGraphQLServer.Selection> = mutableListOf()) : KotlinGraphQLServer.Handler {
         private val todos = listOf(
             KotlinTodo(KotlinID("1"), "Groceries", false, KotlinPriority.HIGH, KotlinUser("Ann")),
             KotlinTodo(KotlinID("2"), "Laundry", true, null, KotlinUser("Bob")),
         )
 
-        override suspend fun queryTodo(id: KotlinID): KotlinTodo? = todos.find { it.id == id }
+        override suspend fun queryTodo(request: KotlinGraphQLServer.Request<KotlinQueryTodoGraphQL.GraphQLVariables>): KotlinTodo? = todos.find { it.id == request.arguments.id }
+            .also { selections.add(request.selection) }
 
-        override suspend fun todos(done: Boolean?): List<KotlinTodo> = todos.filter { done == null || it.done == done }
+        override suspend fun todos(request: KotlinGraphQLServer.Request<KotlinTodosGraphQL.GraphQLVariables>): List<KotlinTodo> = request.arguments.done.let { done -> todos.filter { done == null || it.done == done } }
 
-        override suspend fun search(text: String): List<KotlinSearchResult> = if (text == "boom") error("Search is down") else listOf(KotlinNote(text), KotlinTag("home"))
+        override suspend fun search(request: KotlinGraphQLServer.Request<KotlinSearchGraphQL.GraphQLVariables>): List<KotlinSearchResult> = request.arguments.text
+            .let { if (it == "boom") error("Search is down") else listOf(KotlinNote(it), KotlinTag("home")) }
 
-        override suspend fun addTodo(input: KotlinNewTodo): KotlinTodo = KotlinTodo(KotlinID("3"), input.title, false, input.priority, KotlinUser("Ann"))
+        override suspend fun addTodo(request: KotlinGraphQLServer.Request<KotlinAddTodoGraphQL.GraphQLVariables>): KotlinTodo = request.arguments.input
+            .let { KotlinTodo(KotlinID("3"), it.title, false, it.priority, KotlinUser("Ann")) }
 
-        override suspend fun completeTodo(id: KotlinID): KotlinCompleteTodo.Response = todos.find { it.id == id }
+        override suspend fun completeTodo(request: KotlinGraphQLServer.Request<KotlinCompleteTodoGraphQL.GraphQLVariables>): KotlinCompleteTodo.Response = todos.find { it.id == request.arguments.id }
             ?.let { KotlinCompleteTodo.Result(it.copy(done = true)) }
-            ?: KotlinCompleteTodo.Error(KotlinTodoError("Unknown todo ${id.value}"))
+            ?: KotlinCompleteTodo.Error(KotlinTodoError("Unknown todo ${request.arguments.id.value}"))
 
-        override suspend fun clearTodos() = Unit
+        override suspend fun clearTodos(request: KotlinGraphQLServer.Request<Unit>) = Unit
 
-        override suspend fun notifications(): KotlinNotificationsQuery = KotlinNotificationsQuery
+        override suspend fun notifications(request: KotlinGraphQLServer.Request<Unit>): KotlinNotificationsQuery = KotlinNotificationsQuery.also { selections.add(request.selection) }
 
-        override suspend fun inbox(limit: Int, locale: String?): List<KotlinNotification> = (1..limit).map { KotlinNotification("$it", "Hello (${locale ?: "en"})") }
+        override suspend fun inbox(request: KotlinGraphQLServer.Request<KotlinInboxGraphQL.GraphQLVariables>): List<KotlinNotification> = notifications(request.arguments.limit, request.arguments.locale ?: "en")
 
-        override suspend fun inboxCount(): Int = 3
+        override suspend fun inboxCount(request: KotlinGraphQLServer.Request<Unit>): Int = 3.also { selections.add(request.selection) }
 
-        override suspend fun latest(size: Int): List<KotlinNotification> = inbox(size, "latest")
+        override suspend fun latest(request: KotlinGraphQLServer.Request<KotlinLatestGraphQL.GraphQLVariables>): List<KotlinNotification> = notifications(request.arguments.size, "latest")
 
-        override suspend fun mutateNotifications(): KotlinNotificationsMutation = KotlinNotificationsMutation
+        override suspend fun mutateNotifications(request: KotlinGraphQLServer.Request<Unit>): KotlinNotificationsMutation = KotlinNotificationsMutation
 
-        override suspend fun markRead(id: String) = Unit
+        override suspend fun markRead(request: KotlinGraphQLServer.Request<KotlinMarkReadGraphQL.GraphQLVariables>) = Unit
+
+        private fun notifications(count: Int, locale: String): List<KotlinNotification> = (1..count).map { KotlinNotification("$it", "Hello ($locale)") }
     }
 
-    private class JavaService : JavaGraphQLServer.Service {
+    private class JavaHandler(private val selections: MutableList<JavaGraphQLServer.Selection> = mutableListOf()) : JavaGraphQLServer.Handler {
         private val todos = listOf(
             JavaTodo(JavaID("1"), "Groceries", false, Optional.of(JavaPriority.HIGH), JavaUser("Ann")),
             JavaTodo(JavaID("2"), "Laundry", true, Optional.empty(), JavaUser("Bob")),
         )
 
-        override fun queryTodo(id: JavaID): CompletableFuture<Optional<JavaTodo>> = done(Optional.ofNullable(todos.find { it.id() == id }))
+        override fun queryTodo(request: JavaGraphQLServer.Request<JavaQueryTodoGraphQL.GraphQLVariables>): CompletableFuture<Optional<JavaTodo>> = done(Optional.ofNullable(todos.find { it.id() == request.arguments().id() }))
+            .also { selections.add(request.selection()) }
 
-        override fun todos(done: Optional<Boolean>): CompletableFuture<List<JavaTodo>> = done(todos.filter { done.isEmpty || it.done() == done.get() })
+        override fun todos(request: JavaGraphQLServer.Request<JavaTodosGraphQL.GraphQLVariables>): CompletableFuture<List<JavaTodo>> = request.arguments().done().let { done -> done(todos.filter { done.isEmpty || it.done() == done.get() }) }
 
-        override fun search(text: String): CompletableFuture<List<JavaSearchResult>> = when (text) {
+        override fun search(request: JavaGraphQLServer.Request<JavaSearchGraphQL.GraphQLVariables>): CompletableFuture<List<JavaSearchResult>> = when (val text = request.arguments().text()) {
             "boom" -> CompletableFuture.failedFuture(IllegalStateException("Search is down"))
             else -> CompletableFuture.supplyAsync { listOf(JavaNote(text), JavaTag("home")) }
         }
 
-        override fun addTodo(input: JavaNewTodo): CompletableFuture<JavaTodo> = done(JavaTodo(JavaID("3"), input.title(), false, input.priority(), JavaUser("Ann")))
+        override fun addTodo(request: JavaGraphQLServer.Request<JavaAddTodoGraphQL.GraphQLVariables>): CompletableFuture<JavaTodo> = request.arguments().input()
+            .let { done(JavaTodo(JavaID("3"), it.title(), false, it.priority(), JavaUser("Ann"))) }
 
-        override fun completeTodo(id: JavaID): CompletableFuture<JavaCompleteTodo.Response> = done(JavaCompleteTodo.Error(JavaTodoError("Unknown todo ${id.value()}")))
+        override fun completeTodo(request: JavaGraphQLServer.Request<JavaCompleteTodoGraphQL.GraphQLVariables>): CompletableFuture<JavaCompleteTodo.Response> = done(JavaCompleteTodo.Error(JavaTodoError("Unknown todo ${request.arguments().id().value()}")))
 
-        override fun clearTodos(): CompletableFuture<Void> = CompletableFuture.completedFuture(null)
+        override fun clearTodos(request: JavaGraphQLServer.Request<Void>): CompletableFuture<Void> = CompletableFuture.completedFuture(null)
 
-        override fun notifications(): CompletableFuture<JavaNotificationsQuery> = done(JavaNotificationsQuery())
+        override fun notifications(request: JavaGraphQLServer.Request<Void>): CompletableFuture<JavaNotificationsQuery> = done(JavaNotificationsQuery())
 
-        override fun inbox(limit: Int, locale: Optional<String>): CompletableFuture<List<JavaNotification>> = done((1..limit).map { JavaNotification("$it", "Hello (${locale.orElse("en")})") })
+        override fun inbox(request: JavaGraphQLServer.Request<JavaInboxGraphQL.GraphQLVariables>): CompletableFuture<List<JavaNotification>> = notifications(request.arguments().limit(), request.arguments().locale().orElse("en"))
 
-        override fun inboxCount(): CompletableFuture<Int> = done(3)
+        override fun inboxCount(request: JavaGraphQLServer.Request<Void>): CompletableFuture<Int> = done(3)
 
-        override fun latest(size: Int): CompletableFuture<List<JavaNotification>> = inbox(size, Optional.of("latest"))
+        override fun latest(request: JavaGraphQLServer.Request<JavaLatestGraphQL.GraphQLVariables>): CompletableFuture<List<JavaNotification>> = notifications(request.arguments().size(), "latest")
 
-        override fun mutateNotifications(): CompletableFuture<JavaNotificationsMutation> = done(JavaNotificationsMutation())
+        override fun mutateNotifications(request: JavaGraphQLServer.Request<Void>): CompletableFuture<JavaNotificationsMutation> = done(JavaNotificationsMutation())
 
-        override fun markRead(id: String): CompletableFuture<Void> = CompletableFuture.completedFuture(null)
+        override fun markRead(request: JavaGraphQLServer.Request<JavaMarkReadGraphQL.GraphQLVariables>): CompletableFuture<Void> = CompletableFuture.completedFuture(null)
+
+        private fun notifications(count: Int, locale: String): CompletableFuture<List<JavaNotification>> = done((1..count).map { JavaNotification("$it", "Hello ($locale)") })
 
         private fun <T> done(value: T): CompletableFuture<T> = CompletableFuture.completedFuture(value)
     }

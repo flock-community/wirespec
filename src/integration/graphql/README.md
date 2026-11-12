@@ -12,63 +12,56 @@ The extension is bundled with every Wirespec plugin as `GraphQLClient`. See the
 
 ## Server
 
-Every rpc has a `Service` with one function, which the client implements by sending the operation. To serve the
-operations, implement those functions yourself and hand them to the `GraphQLServer` the extension writes in the root
-package, next to the `GraphQLClient`. `GraphQLServer.Service` is the `Service` of every operation at once:
+To serve the operations, implement the `Handler` of the `GraphQLServer` the extension writes in the root package, next
+to the `GraphQLClient`. It has one function for each rpc, which takes a `Request` and returns the result of the rpc:
 
 ```kotlin
-class TodoService : GraphQLServer.Service {
-    override suspend fun queryTodo(id: ID): Todo? = repository.find(id)
-    override suspend fun todos(done: Boolean?): List<Todo> = repository.all(done)
-    override suspend fun addTodo(input: NewTodo): Todo = repository.add(input)
+class TodoHandler : GraphQLServer.Handler {
+    override suspend fun queryTodo(request: GraphQLServer.Request<QueryTodoGraphQL.GraphQLVariables>): Todo? =
+        repository.find(request.arguments.id)
+
+    // Only load the owners when the query asks for them.
+    override suspend fun todos(request: GraphQLServer.Request<TodosGraphQL.GraphQLVariables>): List<Todo> =
+        repository.all(request.arguments.done, withOwner = "owner" in request.selection)
+
+    override suspend fun clearTodos(request: GraphQLServer.Request<Unit>) = repository.clear()
     // ... one function for each rpc
 }
 
-val server = GraphQLServer(serialization, TodoService())
+val server = GraphQLServer(serialization, TodoHandler())
 
 // Route `POST /graphql` of your HTTP server here.
 val response: Wirespec.RawResponse = server.handle(request)
 ```
 
+A `Request` bundles what the query asks of the field:
+
+- `arguments`: the arguments of the field, typed as the `GraphQLVariables` of the rpc, with a property for each
+  parameter. An rpc without parameters has none: `Unit` in Kotlin and Scala, `Void` in Java.
+- `selection`: the field as the query asks for it, a `GraphQLServer.Selection`. It has the `name` of the field, its
+  `alias`, its `arguments` as they were sent with the variables filled in, and the `fields` selected of its result, each
+  a `Selection` again. `"owner" in selection` tells whether a field is selected and `selection["owner"]` gives its
+  selection (`contains` and `get` in Java and Scala). Fragments are already followed and `@skip` and `@include`
+  applied. The fields of a union are those of all its members, whatever the type condition they are selected under.
+
 `handle` takes the request of any GraphQL client as a `Wirespec.RawRequest`, with `{"query", "operationName",
 "variables"}` as its JSON body, and gives the response to send back: status 200 and `{"data", "errors"}`. It suspends in
-Kotlin, returns a `CompletableFuture` in Java and blocks in Scala, like the functions of the `Service`.
+Kotlin, returns a `CompletableFuture` in Java and blocks in Scala, like the functions of the `Handler`.
 
 The server reads the document of the request, so it answers what the client asks for:
 
-- It calls the `Service` of each field that is an rpc, with the arguments of the field read as the parameters of the
-  rpc. An argument is a literal or a variable; one that is left out gets the default of the variable or of the schema.
+- It calls the function of each field that is an rpc. An argument is a literal or a variable; one that is left out gets
+  the default of the variable or of the schema.
 - It answers with the fields the query selects of each result, under their aliases, through named fragments, inline
   fragments with a type condition, `@skip` and `@include`. `__typename` is the name of the type, also for the member of
   a union.
 - The fields of a mutation run one after the other.
 - An rpc of a namespace type, `@GraphQLQuery("NotificationsQuery")`, is served as a field of that type, inside the
   field that returns it.
-- A `Service` that throws makes its field `null` and adds an error with the message of the exception and the path of
+- A function that throws makes its field `null` and adds an error with the message of the exception and the path of
   the field; the other fields are still answered. The `Error` of an rpc with an error type is written to `errors` as it
   is, which is where the generated client reads it.
 - A document that cannot be read, or that asks for a field that does not exist, is answered with `errors` and no `data`.
-
-### The selected fields
-
-To see which fields a query selects, give the server a function instead of a service. The server calls it for every
-field that is an rpc, with the `GraphQLServer.Selection` of that field, and calls the `Service` it returns:
-
-```kotlin
-class TodoService(private val selection: GraphQLServer.Selection) : GraphQLServer.Service {
-    // Only load the owners when the query asks for them.
-    override suspend fun todos(done: Boolean?): List<Todo> = repository.all(done, withOwner = "owner" in selection)
-    // ...
-}
-
-val server = GraphQLServer(serialization) { selection -> TodoService(selection) }
-```
-
-A `Selection` is the field as the query asks for it: its `name`, its `alias`, its `arguments` with the variables filled
-in, and the `fields` selected of its result, each a `Selection` again. `"owner" in selection` tells whether a field is
-selected and `selection["owner"]` gives its selection (`contains` and `get` in Java and Scala). Fragments are already
-followed and `@skip` and `@include` applied. The fields of a union are those of all its members, whatever the type
-condition they are selected under.
 
 The parser and the execution are part of the generated `GraphQLServer`, so it needs no GraphQL library. The
 `Wirespec.Serialization` reads the arguments and writes the response as a map of any values, so it has to support

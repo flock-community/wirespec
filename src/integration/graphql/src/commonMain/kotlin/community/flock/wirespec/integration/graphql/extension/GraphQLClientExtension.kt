@@ -70,10 +70,11 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * result.
  *
  * The other side is the `GraphQLServer`, next to the `GraphQLClient` in the root package, that [GraphQLServerBuilder]
- * writes: it answers a GraphQL request with an implementation of its `Service`, which is the `Service` of every rpc.
+ * writes: it answers a GraphQL request with an implementation of its `Handler`, which has a function for every rpc that
+ * takes the arguments and the selection of the field as one `Request`.
  *
  * ```kotlin
- * val server = GraphQLServer(serialization, service)
+ * val server = GraphQLServer(serialization, handler)
  * val response: Wirespec.RawResponse = server.handle(request)
  * ```
  *

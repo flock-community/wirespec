@@ -5,13 +5,19 @@ import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.Function
 import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.Import
+import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Package
+import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Type
+import community.flock.wirespec.compiler.core.ir.Visibility
 import community.flock.wirespec.compiler.core.ir.generator.JavaGenerator
 import community.flock.wirespec.compiler.core.ir.generator.KotlinGenerator
 import community.flock.wirespec.compiler.core.ir.generator.ScalaGenerator
+import community.flock.wirespec.compiler.core.ir.transformChildren
+import community.flock.wirespec.compiler.core.ir.transformer
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -29,21 +35,22 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 
 /**
- * Writes the `GraphQLServer` that answers a GraphQL request with the `Service` of every rpc:
+ * Writes the `GraphQLServer` that answers a GraphQL request with a `Handler`, which has a function for every rpc:
  *
  * ```kotlin
- * val server = GraphQLServer(serialization, service)
+ * val server = GraphQLServer(serialization, handler)
  * val response: Wirespec.RawResponse = server.handle(request)
  * ```
  *
  * A client writes its own document, so the server reads it when the request comes in: it parses the query, calls the
- * `Service` of each field that is an rpc with the arguments of the field, and answers with the fields the query selects
- * of each result. A server that is given a function of the `Selection` asks it for the `Service` of each call, so an
- * implementation sees which fields the query selects of its result. The parser and the execution are part of the generated file, so it needs no GraphQL library. They are
- * written as source text, one for each language: the IR has no loops or mutable state to write a parser with.
+ * function of each field that is an rpc, and answers with the fields the query selects of each result. A function takes
+ * a `Request` that bundles the arguments of the field, read as the `GraphQLVariables` of the rpc, with the `Selection`
+ * of the field, so an implementation sees which fields the query selects of its result. The parser and the execution
+ * are part of the generated file, so it needs no GraphQL library. They are written as source text, one for each
+ * language: the IR has no loops or mutable state to write a parser with.
  *
- * The arguments of a field are read as the `GraphQLVariables` of the rpc, and the values of the response are written, by
- * the `Wirespec.Serialization` the server is given, which therefore has to read and write a map of any values.
+ * The arguments are read and the values of the response are written by the `Wirespec.Serialization` the server is
+ * given, which therefore has to read and write a map of any values.
  */
 internal class GraphQLServerBuilder(
     private val packageName: PackageName,
@@ -53,7 +60,7 @@ internal class GraphQLServerBuilder(
     private val language: GraphQLQueryBuilder.Language,
 ) {
 
-    /** An rpc the server answers: its `Service` function, the variables of its document and the document without a selection. */
+    /** An rpc the server answers: the function of its `Service`, the variables of its document and the document without a selection. */
     class Served(val rpc: Rpc, val name: String, val function: Function, val variables: List<Name>, open: String, close: String, val path: List<String>, alias: String) {
         val keyword: String = open.substringBefore(' ')
 
@@ -145,6 +152,51 @@ internal class GraphQLServerBuilder(
 
     private fun Served.call(): String = function.name.camelCase().sanitized()
 
+    /** The arguments of the rpc in its `Request`: its `GraphQLVariables`, or nothing for an rpc without parameters. */
+    private fun Served.argumentsType(): Type.Custom = Type.Custom(
+        when {
+            variables.isNotEmpty() -> variablesType()
+            language == GraphQLQueryBuilder.Language.Java -> "Void"
+            else -> "Unit"
+        },
+    )
+
+    /** The function of the `Handler` that answers the rpc: that of its `Service`, with the `Request` as its one parameter. */
+    private fun Served.handler(): Function = function.copy(
+        name = Name(listOf(function.name.camelCase())),
+        parameters = listOf(Parameter(Name.of(REQUEST), Type.Custom(REQUEST_TYPE, listOf(argumentsType())))),
+        returnType = rpc.error?.let { Type.Custom("${namespace()}.Response") } ?: function.returnType?.qualified(),
+        isOverride = false,
+        visibility = Visibility.PUBLIC.takeIf { language == GraphQLQueryBuilder.Language.Kotlin },
+    )
+
+    /** The file names no model, so a type of the generated file cannot hide one: a model is written with its package. */
+    private fun Type.qualified(): Type = transformer {
+        type { type, transformer ->
+            (type as? Type.Custom)
+                ?.takeIf { it.generics.isEmpty() && it.name.pascalCase() in models }
+                ?.let { Type.Custom("${packageName.value}.$MODEL.${it.name.pascalCase()}") }
+                ?: type.transformChildren(transformer)
+        }
+    }.transformType(this)
+
+    private val models: Set<String> = definitions
+        .filter { it is TypeDefinition || it is Union || it is Enum || it is Refined }
+        .map { it.identifier.value.pascal() }
+        .toSet()
+
+    private fun handler(served: List<Served>): String = Interface(
+        name = Name.of(HANDLER),
+        elements = served.map { it.handler() },
+        visibility = Visibility.PUBLIC.takeIf { language == GraphQLQueryBuilder.Language.Kotlin },
+    ).let {
+        when (language) {
+            GraphQLQueryBuilder.Language.Kotlin -> KotlinGenerator.generate(it)
+            GraphQLQueryBuilder.Language.Java -> JavaGenerator.generate(it)
+            GraphQLQueryBuilder.Language.Scala -> ScalaGenerator.generate(it)
+        }
+    }.trim().prependIndent("  ")
+
     private fun Served.defaults(): String = "${Name.of(name).camelCase()}Defaults"
 
     /** The members of a union a query selects the fields of, with whether those are all its members. */
@@ -179,13 +231,16 @@ internal class GraphQLServerBuilder(
             |
             |public class GraphQLServer(
             |  private val serialization: Wirespec.Serialization,
-            |  private val service: (Selection) -> Service,
+            |  private val handler: Handler,
             |) {
-            |  public constructor(serialization: Wirespec.Serialization, service: Service) : this(serialization, { service })
+            |${handler(schema.served)}
             |
-            |  public interface Service : ${schema.served.joinToString(", ") { "${it.namespace()}.Service" }}
+            |  public data class Request<A>(
+            |    val arguments: A,
+            |    val selection: Selection,
+            |  )
             |
-            |  public data class Request(
+            |  public data class Body(
             |    val query: String,
             |    val operationName: String?,
             |    val variables: Map<String, Any?>?,
@@ -207,7 +262,7 @@ internal class GraphQLServerBuilder(
             |  public suspend fun handle(request: Wirespec.RawRequest): Wirespec.RawResponse {
             |    val errors = mutableListOf<Any>()
             |    val data = try {
-            |      val body = serialization.deserializeBody<Request>(requireNotNull(request.body) { "GraphQL request without a body" }, typeOf<Request>())
+            |      val body = serialization.deserializeBody<Body>(requireNotNull(request.body) { "GraphQL request without a body" }, typeOf<Body>())
             |      val document = Parser(body.query).document()
             |      val operation = document.operation(body.operationName)
             |      val execution = Execution(document, operation.defaults + body.variables.orEmpty(), errors)
@@ -263,7 +318,7 @@ internal class GraphQLServerBuilder(
         private fun Served.case(): String = listOfNotNull(
             "${field.literal()} -> rpc(field, path) {",
             "  val arguments = arguments<${variablesType()}>(field, ${if (hasDefaults) defaults() else "emptyMap()"}, typeOf<${variablesType()}>())".takeIf { variables.isNotEmpty() },
-            "service(selected(field)).${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}" }})".let { call ->
+            "handler.${call()}(Request(${if (variables.isEmpty()) "Unit" else "arguments"}, selected(field)))".let { call ->
                 when {
                     rpc.error != null -> listOf(
                         "when (val response = $call) {",
@@ -310,9 +365,11 @@ internal class GraphQLServerBuilder(
             |import java.util.function.Supplier;
             |
             |public class GraphQLServer {
-            |  public interface Service extends ${schema.served.joinToString(", ") { "${it.namespace()}.Service" }} {}
+            |${handler(schema.served)}
             |
-            |  public record Request(String query, Optional<String> operationName, Optional<Map<String, Object>> variables) {}
+            |  public record Request<A>(A arguments, Selection selection) {}
+            |
+            |  public record Body(String query, Optional<String> operationName, Optional<Map<String, Object>> variables) {}
             |
             |  public record Selection(String name, Optional<String> alias, Map<String, Object> arguments, List<Selection> fields) {
             |    public Optional<Selection> get(String name) {
@@ -327,22 +384,18 @@ internal class GraphQLServerBuilder(
             |${schema.served.filter { it.hasDefaults }.map { "private static final Map<String, Object> ${it.defaults()} = new Parser(${it.document.literal()}).document().operations().get(0).defaults();" }.indented(2)}
             |
             |  private final Wirespec.Serialization serialization;
-            |  private final Function<Selection, Service> service;
+            |  private final Handler handler;
             |
-            |  public GraphQLServer(Wirespec.Serialization serialization, Function<Selection, Service> service) {
+            |  public GraphQLServer(Wirespec.Serialization serialization, Handler handler) {
             |    this.serialization = serialization;
-            |    this.service = service;
-            |  }
-            |
-            |  public GraphQLServer(Wirespec.Serialization serialization, Service service) {
-            |    this(serialization, selection -> service);
+            |    this.handler = handler;
             |  }
             |
             |  public CompletableFuture<Wirespec.RawResponse> handle(Wirespec.RawRequest request) {
             |    List<Object> errors = Collections.synchronizedList(new ArrayList<>());
             |    CompletableFuture<Object> data;
             |    try {
-            |      Request body = serialization.deserializeBody(request.body().orElseThrow(() -> new IllegalArgumentException("GraphQL request without a body")), Wirespec.getType(Request.class, null));
+            |      Body body = serialization.deserializeBody(request.body().orElseThrow(() -> new IllegalArgumentException("GraphQL request without a body")), Wirespec.getType(Body.class, null));
             |      if (body.query() == null) throw new IllegalArgumentException("GraphQL request without a query");
             |      Document document = new Parser(body.query()).document();
             |      Operation operation = document.operation(body.operationName() == null ? null : body.operationName().orElse(null));
@@ -403,7 +456,7 @@ internal class GraphQLServerBuilder(
         private fun Served.case(): String = listOfNotNull(
             "case ${field.literal()} -> rpc(field, path, () -> {",
             "  var arguments = arguments(field, ${if (hasDefaults) defaults() else "Map.of()"}, ${variablesType()}.class);".takeIf { variables.isNotEmpty() },
-            "service.apply(selected(field)).${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}()" }})".let { call ->
+            "handler.${call()}(new Request<>(${if (variables.isEmpty()) "null" else "arguments"}, selected(field)))".let { call ->
                 when {
                     rpc.error != null -> listOf(
                         "return $call.thenCompose(response -> {",
@@ -445,15 +498,13 @@ internal class GraphQLServerBuilder(
             |import scala.collection.immutable.ListMap
             |import scala.collection.mutable
             |
-            |class GraphQLServer(serialization: Wirespec.Serialization, service: GraphQLServer.Selection => GraphQLServer.Service) {
+            |class GraphQLServer(serialization: Wirespec.Serialization, handler: GraphQLServer.Handler) {
             |  import GraphQLServer._
-            |
-            |  def this(serialization: Wirespec.Serialization, service: GraphQLServer.Service) = this(serialization, (_: GraphQLServer.Selection) => service)
             |
             |  def handle(request: Wirespec.RawRequest): Wirespec.RawResponse = {
             |    val errors = mutable.ListBuffer.empty[Any]
             |    val data: Option[Map[String, Any]] = try {
-            |      val body = serialization.deserializeBody[Request](request.body.getOrElse(throw new IllegalArgumentException("GraphQL request without a body")), scala.reflect.classTag[Request])
+            |      val body = serialization.deserializeBody[Body](request.body.getOrElse(throw new IllegalArgumentException("GraphQL request without a body")), scala.reflect.classTag[Body])
             |      val document = new Parser(body.query).document()
             |      val operation = document.operation(body.operationName)
             |      val execution = new Execution(document, operation.defaults ++ body.variables.getOrElse(Map.empty), errors)
@@ -478,9 +529,11 @@ internal class GraphQLServerBuilder(
             |}
             |
             |object GraphQLServer {
-            |  trait Service extends ${schema.served.joinToString(" with ") { "${it.namespace()}.Service" }}
+            |${handler(schema.served)}
             |
-            |  case class Request(query: String, operationName: Option[String], variables: Option[Map[String, Any]])
+            |  case class Request[A](arguments: A, selection: Selection)
+            |
+            |  case class Body(query: String, operationName: Option[String], variables: Option[Map[String, Any]])
             |
             |  case class Selection(name: String, alias: Option[String], arguments: Map[String, Any], fields: List[Selection]) {
             |    def get(name: String): Option[Selection] = fields.find(_.name == name)
@@ -517,7 +570,7 @@ internal class GraphQLServerBuilder(
         private fun Served.case(): String = listOfNotNull(
             "case ${field.literal()} => rpc(field, path) {",
             "  val arguments = this.arguments[${variablesType()}](field, ${if (hasDefaults) defaults() else "Map.empty"}, scala.reflect.classTag[${variablesType()}])".takeIf { variables.isNotEmpty() },
-            "service(selected(field)).${call()}(${variables.joinToString(", ") { "arguments.${it.value().sanitized()}" }})".let { call ->
+            "handler.${call()}(Request(${if (variables.isEmpty()) "()" else "arguments"}, selected(field)))".let { call ->
                 when {
                     rpc.error != null -> listOf(
                         "$call match {",
@@ -554,6 +607,9 @@ internal class GraphQLServerBuilder(
 
     private companion object {
         const val SERVER = "GraphQLServer"
+        const val HANDLER = "Handler"
+        const val REQUEST = "request"
+        const val REQUEST_TYPE = "Request"
         const val MODEL = "model"
         const val SCHEMA = "GraphQLSchema"
         const val DEFAULT = "default"
