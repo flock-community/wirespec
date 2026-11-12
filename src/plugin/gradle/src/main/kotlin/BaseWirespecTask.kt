@@ -16,19 +16,16 @@ import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.FilePath
-import community.flock.wirespec.plugin.io.FullPath
-import community.flock.wirespec.plugin.io.getFullPath
-import community.flock.wirespec.plugin.io.or
+import community.flock.wirespec.plugin.io.Name
+import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.toEmitter
 import community.flock.wirespec.plugin.toIrExtension
 import community.flock.wirespec.plugin.withExtensions
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -39,14 +36,6 @@ import java.io.File
 
 @DisableCachingByDefault(because = "Abstract base class of the Wirespec tasks")
 public abstract class BaseWirespecTask : DefaultTask() {
-
-    @get:Input
-    @get:Optional
-    @get:Option(option = "classpathInput", description = "input file or folder on the classpath")
-    public abstract val classpathInput: Property<String>
-
-    @get:Classpath
-    public abstract val classpath: ConfigurableFileCollection
 
     @get:OutputDirectory
     @get:Option(option = "output", description = "output directory")
@@ -124,10 +113,15 @@ public abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    protected fun inputPath(input: File?): FullPath = when {
-        input != null && classpathInput.isPresent -> throw InputAndClasspathInput()
-        input != null -> getFullPath(input.absolutePath).or(::handleError) ?: throw IsNotAFileOrDirectory(input.absolutePath)
-        else -> classpathInput.orNull?.let(::ClassPath) ?: throw NoInput()
+    public inline fun <reified E : Source.Type> ClassPath.readFromClasspath(preProcess: ((String) -> String)): Source<E> {
+        val file = File(value)
+        val classLoader = javaClass.classLoader
+        val inputStream = classLoader
+            .getResourceAsStream(value) ?: error("Could not find file: $value on the classpath.")
+        val content = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val name = file.name.split(".").first()
+        logger.info("Found 1 file from classpath: $file")
+        return Source(name = Name(name), content = preProcess(content))
     }
 
     protected fun handleError(string: String): Nothing = throw RuntimeException(string)

@@ -11,8 +11,4 @@ internal sealed class SpecificFile(extension: FileExtension) : RuntimeException(
 internal class JSONFileError : SpecificFile(FileExtension.JSON)
 internal class WirespecFileError : SpecificFile(FileExtension.Wirespec)
 
-internal class NoInput : RuntimeException("Set the input or the classpathInput.")
-
-internal class InputAndClasspathInput : RuntimeException("Set the input or the classpathInput, not both.")
-
 internal class NotOnClasspath(path: ClassPath) : RuntimeException("Could not find $path on the classpath of the task.")

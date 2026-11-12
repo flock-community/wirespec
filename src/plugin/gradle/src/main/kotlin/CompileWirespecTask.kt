@@ -1,7 +1,6 @@
 package community.flock.wirespec.plugin.gradle
 
 import arrow.core.nonEmptySetOf
-import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.compile
@@ -10,13 +9,13 @@ import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.DirectoryPath
 import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Source
+import community.flock.wirespec.plugin.io.getFullPath
 import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -27,21 +26,18 @@ import org.gradle.work.DisableCachingByDefault
 public abstract class CompileWirespecTask : BaseWirespecTask() {
 
     @get:InputDirectory
-    @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:Option(option = "input", description = "input directory")
     public abstract val input: DirectoryProperty
 
     @TaskAction
     public fun action() {
-        val inputPath = inputPath(input.orNull?.asFile)
+        val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
         val outputPath = output.get().asFile.absolutePath
         val testOutputPath = testOutput.orNull?.asFile?.absolutePath
         val sources = when (inputPath) {
-            is ClassPath -> inputPath.wirespecSources(classpath.files)
-                .also { logger.info("Found ${it.size} wirespec file(s) to process on the classpath: $inputPath") }
-                .toNonEmptySetOrNull()
-                ?: throw NotOnClasspath(inputPath)
+            null -> throw IsNotAFileOrDirectory(null)
+            is ClassPath -> nonEmptySetOf(inputPath.readFromClasspath { it })
             is DirectoryPath -> Directory(inputPath).wirespecSources(wirespecLogger).or(::handleError)
             is FilePath -> when (inputPath.extension) {
                 FileExtension.Wirespec -> nonEmptySetOf<Source<Source.Type.Wirespec>>(Source(inputPath.name, inputPath.read()))
