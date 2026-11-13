@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.exceptions.MisplacedHeaderAnnotati
 import community.flock.wirespec.compiler.core.exceptions.MissingEmptyLineAfterHeaderException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
@@ -91,7 +92,7 @@ private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException,
 
 private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, List<Annotation.Parameter>> = either {
     when (token.type) {
-        is LeftBracket -> {
+        is LeftBracket, is Brackets -> {
             val arr = parseArray().bind()
             listOf(Annotation.Parameter("default", Annotation.Value.Array(arr)))
         }
@@ -124,7 +125,7 @@ private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, 
 
 private fun TokenProvider.parseAnnotationValue(): Either<WirespecException, Annotation.Value> = either {
     when (token.type) {
-        is LeftBracket -> {
+        is LeftBracket, is Brackets -> {
             val arr = parseArray().bind()
             Annotation.Value.Array(arr)
         }
@@ -161,18 +162,24 @@ private fun TokenProvider.parseDict(): Either<WirespecException, List<Annotation
     params
 }
 
+/** The tokenizer reads `[]` as one token, the suffix of a type such as `String[]`: here it is an empty array. */
 private fun TokenProvider.parseArray(): Either<WirespecException, List<Annotation.Value.Single>> = either {
-    expect<LeftBracket>().bind()
-    val items = mutableListOf<Annotation.Value.Single>()
-    while (token.type != RightBracket) {
-        val v = when (token.type) {
-            LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
-            else -> Annotation.Value.Single(token.value)
+    when (token.type) {
+        is Brackets -> emptyList<Annotation.Value.Single>().also { eatToken().bind() }
+        else -> {
+            expect<LeftBracket>().bind()
+            val items = mutableListOf<Annotation.Value.Single>()
+            while (token.type != RightBracket) {
+                val v = when (token.type) {
+                    LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
+                    else -> Annotation.Value.Single(token.value)
+                }
+                items.add(v)
+                eatToken().bind()
+                if (token.type is Comma) eatToken().bind()
+            }
+            expect<RightBracket>().bind()
+            items
         }
-        items.add(v)
-        eatToken().bind()
-        if (token.type is Comma) eatToken().bind()
     }
-    expect<RightBracket>().bind()
-    items
 }
