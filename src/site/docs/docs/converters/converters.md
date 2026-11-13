@@ -19,3 +19,6 @@ Where Wirespec has no syntax for something in a document, the converter keeps it
 back when Wirespec is converted into that format. Each converter lists its annotations:
 [OpenAPI](openapi.md#annotations), [GraphQL](graphql.md#annotations) and [AsyncAPI](asyncapi.md#annotations). The Avro
 converter has none.
+
+What belongs to the document as a whole, such as the servers and security schemes of an OpenAPI document, is kept in
+[`@spec:` annotations](../language/language.mdx#the-file-header) at the top of the converted file.

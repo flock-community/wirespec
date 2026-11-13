@@ -67,6 +67,8 @@ class StringFormatTest {
         // language=ws
         // A component schema of a primitive type is written where it is used.
         """
+        |@spec:OpenAPIInfo(title: "Orders", version: "1.0.0")
+        |
         |type Order {
         |  id: String(uuid),
         |  placedOn: String(date),
