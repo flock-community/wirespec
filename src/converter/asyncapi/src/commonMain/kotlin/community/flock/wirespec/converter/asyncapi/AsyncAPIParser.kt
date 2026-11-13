@@ -101,15 +101,15 @@ private class AsyncAPIConverter(private val document: JsonObject) {
 
     /**
      * The parts of the document that have a dedicated `@spec:` annotation, when they have the shape it holds: the info,
-     * its tags (in the document itself in AsyncAPI 2), the servers and the security schemes. Anything else stays in
-     * `@spec:AsyncAPIDocument` or `@spec:AsyncAPIComponents`, so nothing is lost.
+     * its tags (in the document itself in AsyncAPI 2) when their names are unique, the servers and the security schemes.
+     * Anything else stays in `@spec:AsyncAPIDocument` or `@spec:AsyncAPIComponents`, so nothing is lost.
      */
     private val info: JsonObject? = document.obj("info")
 
     private val tags: JsonArray? = (if (majorVersion == 2) document else info)
         ?.get("tags")
         ?.let { it as? JsonArray }
-        ?.takeIf { tags -> tags.isNotEmpty() && tags.all { (it as? JsonObject)?.string("name") != null } }
+        ?.takeIf { tags -> tags.mapNotNull { (it as? JsonObject)?.string("name") }.let { names -> names.isNotEmpty() && names.size == tags.size && names.distinct() == names } }
 
     private val servers: JsonObject? = document.obj("servers")?.takeIf { servers -> servers.isNotEmpty() && servers.values.all { it is JsonObject } }
 

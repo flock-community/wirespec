@@ -235,7 +235,7 @@ class OpenAPIV3SpecAnnotationsTest {
             """
             |@spec:OpenAPIInfo(title: "Order API", version: "1.0.0")
             |@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", bearerFormat: "JWT")
-            |@spec:OpenAPISecurity("bearerAuth")
+            |@spec:OpenAPISecurity(["bearerAuth"])
             |@spec:OpenAPIServer("https://api.example.com", description: "Prod")
             |@spec:OpenAPITag("Customers", description: "Customers")
             |
@@ -245,14 +245,14 @@ class OpenAPIV3SpecAnnotationsTest {
         errors("a.ws" to first, "b.ws" to second) shouldBe listOf(
             "@spec:OpenAPIInfo is declared 2 times, in a.ws and b.ws: a spec has one",
             "@spec:OpenAPISecurity is declared in a.ws and b.ws: the default security comes from one file, so that no file can add an alternative that weakens it",
-            "Security scheme \"bearerAuth\" is declared differently in a.ws and b.ws",
-            "Server \"https://api.example.com\" is declared differently in a.ws and b.ws",
-            "Tag \"Customers\" is declared differently in a.ws and b.ws",
+            "The security scheme \"bearerAuth\" is declared 2 times, in a.ws and b.ws: a spec declares each security scheme once",
+            "The server \"https://api.example.com\" is declared 2 times, in a.ws and b.ws: a spec declares each server once",
+            "The tag \"Customers\" is declared 2 times, in a.ws and b.ws: a spec declares each tag once",
         )
     }
 
     @Test
-    fun theSameSpecAnnotationInSeveralFilesIsFine() {
+    fun theSameSpecAnnotationTwiceIsAnError() {
         val first =
             // language=ws
             """
@@ -269,8 +269,33 @@ class OpenAPIV3SpecAnnotationsTest {
             |type Order { id: String }
             """.trimMargin()
 
-        compile("a.ws" to first, "b.ws" to second).shouldBeRight { it.joinToString { e -> e.message } }
-            .at("servers") shouldEqualJson """[{ "url": "https://api.example.com" }, { "url": "https://sandbox.example.com" }]"""
+        errors("a.ws" to first, "b.ws" to second) shouldBe listOf(
+            "@spec:OpenAPISecurityScheme(\"bearerAuth\") is declared 2 times, in a.ws and b.ws: a spec annotation is unique",
+            "@spec:OpenAPIServer(\"https://api.example.com\") is declared 2 times, in a.ws and b.ws: a spec annotation is unique",
+        )
+    }
+
+    @Test
+    fun serversAndTagsFromSeveralFilesAreCollected() {
+        val first =
+            // language=ws
+            """
+            |@spec:OpenAPIServer("https://api.example.com")
+            |@spec:OpenAPITag("Customers")
+            """.trimMargin()
+        val second =
+            // language=ws
+            """
+            |@spec:OpenAPIServer("https://sandbox.example.com")
+            |@spec:OpenAPITag("Orders")
+            |
+            |type Order { id: String }
+            """.trimMargin()
+
+        compile("a.ws" to first, "b.ws" to second).shouldBeRight { it.joinToString { e -> e.message } }.run {
+            at("servers") shouldEqualJson """[{ "url": "https://api.example.com" }, { "url": "https://sandbox.example.com" }]"""
+            at("tags") shouldEqualJson """[{ "name": "Customers" }, { "name": "Orders" }]"""
+        }
     }
 
     @Test

@@ -883,7 +883,7 @@ private fun SchemaOrReferenceOrBoolean?.exists() = when (this) {
     null -> false
 }
 
-/** The metadata of the document, as the `@spec:` annotations that the OpenAPI emitters read. */
+/** The metadata of the document, as the `@spec:` annotations that the OpenAPI emitters read, each once as spec annotations are unique. */
 internal fun OpenAPIV3Model.specAnnotations(): List<Annotation> = listOf(
     info.description.toDescriptionAnnotationList(),
     listOf(infoAnnotation(info.title, info.version, info.termsOfService, info.contact, info.license)),
@@ -891,7 +891,7 @@ internal fun OpenAPIV3Model.specAnnotations(): List<Annotation> = listOf(
     components?.securitySchemes.orEmpty().mapNotNull { (name, scheme) -> scheme.toSecuritySchemeInfo(name)?.toAnnotation() },
     security.orEmpty().map { it.toAnnotation() },
     tags.orEmpty().map { tagAnnotation(it.name, it.description) },
-).flatten()
+).flatten().distinct()
 
 private fun OpenAPIV3Model.servers(): List<ServerInfo> = when (this) {
     is OpenAPIV30Model -> servers

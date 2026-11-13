@@ -196,4 +196,28 @@ class ParseHeaderTest {
 
         parse("api.ws" to api).shouldBeLeft().map { it.message } shouldBe nonEmptyListOf("AST should not be empty")
     }
+
+    @Test
+    fun aSpecAnnotationIsUnique() {
+        val api =
+            // language=ws
+            """
+            |@spec:Server("https://api.example.com")
+            |@spec:Server("https://api.example.com")
+            |@spec:Info(title: "Customer API")
+            """.trimMargin()
+        val customers =
+            // language=ws
+            """
+            |@spec:Info(title: "Customer API")
+            |@spec:Server("https://sandbox.example.com")
+            |
+            |type Customer { id: String }
+            """.trimMargin()
+
+        parse("api.ws" to api, "customers.ws" to customers).shouldBeLeft().map { it.message } shouldBe nonEmptyListOf(
+            "@spec:Server(\"https://api.example.com\") is declared 2 times, in api.ws: a spec annotation is unique",
+            "@spec:Info is declared 2 times, in api.ws and customers.ws: a spec annotation is unique",
+        )
+    }
 }

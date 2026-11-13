@@ -656,7 +656,7 @@ private fun SchemaOrReferenceOrBoolean?.exists() = when (this) {
     null -> false
 }
 
-/** The metadata of the document, as the `@spec:` annotations that the OpenAPI emitters read. */
+/** The metadata of the document, as the `@spec:` annotations that the OpenAPI emitters read, each once as spec annotations are unique. */
 internal fun OpenAPIV2Model.specAnnotations(): List<Annotation> = listOf(
     info.description.toDescriptionAnnotationList(),
     listOf(infoAnnotation(info.title, info.version, info.termsOfService, info.contact, info.license)),
@@ -664,7 +664,7 @@ internal fun OpenAPIV2Model.specAnnotations(): List<Annotation> = listOf(
     securityDefinitions.orEmpty().mapNotNull { (name, scheme) -> (scheme as? OpenAPIV20SecurityScheme)?.toSecuritySchemeInfo(name)?.toAnnotation() },
     security.orEmpty().map { it.toAnnotation() },
     tags.orEmpty().map { tagAnnotation(it.name, it.description) },
-).flatten()
+).flatten().distinct()
 
 /** A server per scheme; without schemes the host and base path alone, as Swagger 2 then uses the scheme of the document. */
 private fun OpenAPIV2Model.servers(): List<ServerInfo> = listOfNotNull(host, basePath)

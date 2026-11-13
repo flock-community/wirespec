@@ -176,7 +176,7 @@ channel TodoUpdates -> Todo
 The files of a specification together make one document, so the `@spec:` annotations of all of them count, in the order
 of the files. A document has one `@spec:AsyncAPIDocument`, `@spec:AsyncAPIComponents`, `@spec:AsyncAPIInfo` and
 `@spec:Description`, and each server, security scheme, tag, component message and operation once, by its key:
-declaring one in two files is an error. So is any of these annotations on a definition, such as `@AsyncAPIDocument` or
+declaring one twice, in one file or in two, is an error, as for every [spec annotation](../language/language.mdx#the-file-header). So is any of these annotations on a definition, such as `@AsyncAPIDocument` or
 `@AsyncAPIComponents` where Wirespec converted by earlier versions has them, and `@file:AsyncAPI…` annotations: an
 AsyncAPI document has no metadata per file.
 

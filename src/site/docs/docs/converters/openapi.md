@@ -259,17 +259,18 @@ Only `oauth2` and `openIdConnect` schemes have scopes.
 
 ### Several files
 
-Spec annotations may come from any number of files. Files are read in the order of their paths, and their spec
-annotations combine like this:
+Spec annotations may come from any number of files, and like every spec annotation they are
+[unique](../language/language.mdx#the-file-header): the same one twice is an error. Files are read in the order of their
+paths, and their spec annotations combine like this:
 
 | Annotation                    | Across files                                                              |
 |-------------------------------|---------------------------------------------------------------------------|
 | `@spec:Description`           | once in the whole spec                                                    |
 | `@spec:OpenAPIInfo`           | once in the whole spec                                                    |
-| `@spec:OpenAPIServer`         | all servers, in file order; a repeated URL must be identical              |
-| `@spec:OpenAPISecurityScheme` | merged by name; the same name twice must be identical                     |
+| `@spec:OpenAPIServer`         | all servers, in file order; each URL once                                 |
+| `@spec:OpenAPISecurityScheme` | all security schemes; each name once                                      |
 | `@spec:OpenAPISecurity`       | from one file only; repeated in that file, any one requirement is enough  |
-| `@spec:OpenAPITag`            | merged by name, in file order; the same name twice must be identical      |
+| `@spec:OpenAPITag`            | all tags, in file order; each name once                                   |
 
 The default security comes from one file, so that no file can add an alternative that weakens the security of every
 endpoint. Keep the servers in one file as well: the first server is the default base URL of most code generators.
@@ -283,7 +284,7 @@ or the files involved when:
 - a requirement gives scopes for a scheme that is not `oauth2` or `openIdConnect`;
 - a security scheme has no `type`, an unknown one, or misses what its type needs: `scheme` for `http`, `name` and `in`
   for `apiKey`, `flows` for `oauth2`, `openIdConnectUrl` for `openIdConnect`;
-- the spec annotations of several files disagree, as listed above;
+- a spec annotation, or a server URL, security scheme or tag name, is declared more than once, as listed above;
 - an annotation has the wrong target: `@OpenAPIInfo` or `@OpenAPISecurityScheme` without `spec:`,
   `@spec:OpenAPINoSecurity`, `@spec:OpenAPILink`, or any `@file:OpenAPI…`;
 - a server has no URL, a server variable no default, or a tag no name;

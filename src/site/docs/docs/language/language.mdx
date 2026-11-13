@@ -119,11 +119,12 @@ type Customer {
 - A `@spec:` or `@file:` annotation anywhere else is an error.
 - A file may hold nothing but a header with `@spec:` annotations, so the annotations of the whole specification can
   have a file of their own. Such a file cannot hold `@file:` annotations: they describe the definitions in the file.
+- Spec annotations are unique: the same `@spec:` annotation twice, in one file or in two, is an error.
 
 The files of a directory are read in the order of their paths, so the spec annotations of several files come in the
-same order on every machine. What it means to declare a spec annotation in more than one file is up to the emitter
-that reads it: the [OpenAPI emitters](../converters/openapi.md#metadata-of-the-document), for example, merge servers and
-tags but accept the default security from one file only.
+same order on every machine. An emitter that reads spec annotations decides what else counts as the same: the
+[OpenAPI emitters](../converters/openapi.md#several-files), for example, collect the servers and tags of all files but
+accept each server URL and tag name once, and the default security from one file only.
 
 An emitter or [IR extension](../plugins/plugins.md#ir-extensions) finds the spec annotations on the root of the AST,
 each with the file it is written in, and the file annotations on each module.

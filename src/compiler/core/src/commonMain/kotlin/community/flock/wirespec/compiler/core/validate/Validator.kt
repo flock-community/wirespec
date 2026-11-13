@@ -11,6 +11,7 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateRpcError
+import community.flock.wirespec.compiler.core.exceptions.DuplicateSpecAnnotationError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.InvalidEnumDefaultError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
@@ -43,7 +44,8 @@ public object Validator {
                 validateChannels(resolved),
                 validateRpcs(resolved),
                 validateEnumDefaults(resolved),
-            ) { a, _, _, _, _, _ -> a }
+                validateSpecAnnotations(resolved),
+            ) { a, _, _, _, _, _, _ -> a }
         }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
@@ -113,6 +115,15 @@ public object Validator {
                         ?.let { InvalidEnumDefaultError(field.identifier.value, it.value, field.reference) }
                 }
         }
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
+
+    /** A spec annotation is unique: the same one twice, in one file or in two, is an error. */
+    private fun validateSpecAnnotations(ast: AST): EitherNel<WirespecException, AST> = ast.annotations
+        .groupBy { it.annotation }
+        .filterValues { it.size > 1 }
+        .map { (annotation, declared) -> DuplicateSpecAnnotationError(annotation, declared.map { it.fileUri }) }
         .toNonEmptyListOrNull()
         ?.left()
         ?: ast.right()

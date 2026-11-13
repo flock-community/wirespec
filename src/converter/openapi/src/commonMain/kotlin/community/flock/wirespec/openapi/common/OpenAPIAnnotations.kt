@@ -194,9 +194,9 @@ private fun List<SpecAnnotation>.specProblems(): List<EmitterException> = listOf
     filter { it.annotation.name == OpenAPIAnnotations.SECURITY }.map { it.fileUri }.distinct().takeIf { it.size > 1 }?.let { files ->
         EmitterException(files.first(), "@spec:${OpenAPIAnnotations.SECURITY} is declared in ${files.joinToString(" and ") { it.value }}: the default security comes from one file, so that no file can add an alternative that weakens it")
     }.let { listOfNotNull(it) },
-    conflicts(OpenAPIAnnotations.SECURITY_SCHEME, "Security scheme") { it.positionalString() },
-    conflicts(OpenAPIAnnotations.SERVER, "Server") { it.positionalString() },
-    conflicts(OpenAPIAnnotations.TAG, "Tag") { it.positionalString() },
+    declaredTwice(OpenAPIAnnotations.SECURITY_SCHEME, "security scheme"),
+    declaredTwice(OpenAPIAnnotations.SERVER, "server"),
+    declaredTwice(OpenAPIAnnotations.TAG, "tag"),
     filter { it.annotation.name == OpenAPIAnnotations.SECURITY_SCHEME }.mapNotNull { declared ->
         declared.annotation.schemeProblem()?.let { problem ->
             EmitterException(declared.fileUri, "@spec:${OpenAPIAnnotations.SECURITY_SCHEME}${declared.annotation.positionalString()?.let { "(\"$it\")" }.orEmpty()} in ${declared.fileUri.value} $problem")
@@ -205,14 +205,13 @@ private fun List<SpecAnnotation>.specProblems(): List<EmitterException> = listOf
     flatMap { declared -> declared.annotation.serverOrTagProblems().map { EmitterException(declared.fileUri, "@spec:$it in ${declared.fileUri.value}") } },
 ).flatten()
 
-/** Annotations with the same key must say the same thing, wherever they are declared. */
-private fun List<SpecAnnotation>.conflicts(name: String, label: String, key: (Annotation) -> String?): List<EmitterException> = filter { it.annotation.name == name }
-    .groupBy { key(it.annotation) }
+/** Spec annotations are unique, and so is what they declare by name: a server by its URL, a scheme or tag by its name. */
+private fun List<SpecAnnotation>.declaredTwice(name: String, label: String): List<EmitterException> = filter { it.annotation.name == name }
+    .groupBy { it.annotation.positionalString() }
     .filterKeys { it != null }
-    .mapNotNull { (key, declared) ->
-        declared.takeIf { it.map(SpecAnnotation::annotation).distinct().size > 1 }?.let {
-            EmitterException(it.first().fileUri, "$label \"$key\" is declared differently in ${it.files()}")
-        }
+    .filterValues { it.size > 1 }
+    .map { (key, declared) ->
+        EmitterException(declared.last().fileUri, "The $label \"$key\" is declared ${declared.size} times, in ${declared.files()}: a spec declares each $label once")
     }
 
 private fun List<SpecAnnotation>.files(): String = map { it.fileUri.value }.distinct().joinToString(" and ")
