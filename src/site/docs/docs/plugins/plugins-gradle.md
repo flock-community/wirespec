@@ -106,6 +106,8 @@ This task compiles Wirespec definitions to one target language. Register a task 
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
 - `sync`: Property&lt;Boolean&gt; - Emit endpoint handlers, channels and rpc services as synchronous functions, see [Synchronous code](./plugins.md#synchronous-code) (default: false)
+- `openApiTitle`: Property&lt;String&gt; - The title of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`
+- `openApiVersion`: Property&lt;String&gt; - The version of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`, such as `project.version.toString()`
 
 ### ConvertWirespecTask
 
@@ -124,6 +126,8 @@ This task converts from JSON or Avro to other formats.
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 - `ignoreDefaults`: Property&lt;Boolean&gt; - Leave field default values out of the emitted code (default: false)
 - `sync`: Property&lt;Boolean&gt; - Emit endpoint handlers, channels and rpc services as synchronous functions, see [Synchronous code](./plugins.md#synchronous-code) (default: false)
+- `openApiTitle`: Property&lt;String&gt; - The title of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`
+- `openApiVersion`: Property&lt;String&gt; - The version of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`, such as `project.version.toString()`
 
 ### ClasspathWirespecTask
 

@@ -109,6 +109,19 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var sync: Boolean = false
 
     /**
+     * Specifies the title of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`. Default 'null'.
+     */
+    @Parameter
+    protected var openApiTitle: String? = null
+
+    /**
+     * Specifies the version of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`, such as
+     * `${project.version}`. Default 'null'.
+     */
+    @Parameter
+    protected var openApiVersion: String? = null
+
+    /**
      * Source directory. Default 'null'.
      */
     @Parameter
@@ -147,7 +160,7 @@ public abstract class BaseMojo : AbstractMojo() {
 
     protected val emitter: Emitter
         get() = language
-            .toEmitter(PackageName(packageName), EmitShared(shared))
+            .toEmitter(PackageName(packageName), EmitShared(shared), openApiTitle, openApiVersion)
             .let { it.withExtensions(listOfNotNull(SyncExtension(it.extension).takeIf { sync }) + extensionInstances(it.extension)) }
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {

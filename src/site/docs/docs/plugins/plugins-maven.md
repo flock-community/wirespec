@@ -101,6 +101,8 @@ The compile mojo supports the following parameters:
 - **ignoreDefaults**: Whether to leave field default values out of the emitted code. Default is 'false'.
 - **sync**: Whether to emit endpoint handlers, channels and rpc services as synchronous functions, see [Synchronous code](./plugins.md#synchronous-code). Default is 'false'.
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
+- **openApiTitle**: The title of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`. See [Metadata of the document](../converters/openapi.md#metadata-of-the-document).
+- **openApiVersion**: The version of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`, such as `${project.version}`.
 - **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, when the emitter is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `GraphQLClient`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
 
 ### Wirespec files from the classpath

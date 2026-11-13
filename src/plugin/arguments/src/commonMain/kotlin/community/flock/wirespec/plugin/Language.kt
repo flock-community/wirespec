@@ -33,7 +33,13 @@ public enum class Language {
     }
 }
 
-public fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared): Emitter = when (this) {
+/** [openApiTitle] and [openApiVersion] win over the title and version in `@spec:OpenAPIInfo` of an OpenAPI document. */
+public fun Language.toEmitter(
+    packageName: PackageName,
+    emitShared: EmitShared,
+    openApiTitle: String? = null,
+    openApiVersion: String? = null,
+): Emitter = when (this) {
     Language.Java -> JavaEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinEmitter(packageName, emitShared)
     Language.Python -> PythonEmitter(packageName, emitShared)
@@ -41,7 +47,7 @@ public fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared):
     Language.Scala -> ScalaEmitter(packageName, emitShared)
     Language.TypeScript -> TypeScriptEmitter()
     Language.Wirespec -> WirespecEmitter()
-    Language.OpenAPIV2 -> OpenAPIV2Emitter
-    Language.OpenAPIV3 -> OpenAPIV3Emitter
+    Language.OpenAPIV2 -> OpenAPIV2Emitter.withOptions(OpenAPIV2Emitter.Options(openApiTitle, openApiVersion))
+    Language.OpenAPIV3 -> OpenAPIV3Emitter.withOptions(OpenAPIV3Emitter.Options(openApiTitle, openApiVersion))
     Language.Avro -> AvroJsonEmitter
 }

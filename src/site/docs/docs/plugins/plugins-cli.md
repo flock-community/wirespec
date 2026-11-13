@@ -68,6 +68,8 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   --sync                                                                      Emit endpoint handlers, channels and rpc services as synchronous functions
+  --openapi-title=<text>                                                      The title of an OpenAPI document, instead of the one in @spec:OpenAPIInfo
+  --openapi-version=<text>                                                    The version of an OpenAPI document, instead of the one in @spec:OpenAPIInfo
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
@@ -92,6 +94,8 @@ Options:
   --strict                                                                    Strict mode
   --ignore-defaults                                                           Leave field default values out of the emitted code
   --sync                                                                      Emit endpoint handlers, channels and rpc services as synchronous functions
+  --openapi-title=<text>                                                      The title of an OpenAPI document, instead of the one in @spec:OpenAPIInfo
+  --openapi-version=<text>                                                    The version of an OpenAPI document, instead of the one in @spec:OpenAPIInfo
   -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports

@@ -16,11 +16,15 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 
 - **input:** Path to the input Wirespec file or directory. The Maven and Gradle plugins can also read them from the
   classpath, see [Maven](./plugins-maven.md#wirespec-files-from-the-classpath) and
-  [Gradle](./plugins-gradle.md#wirespec-files-from-the-classpath).
+  [Gradle](./plugins-gradle.md#wirespec-files-from-the-classpath). The files of a directory are compiled in the order
+  of their paths, so the output is the same on every machine.
 - **output:** Path to the output directory where the generated code will be placed.
 - **language:** The target language for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`). A run generates one language: run the plugin once per language to generate several.
 - **package name:** The package name for the generated code.
 - **share:** A flag to indicate whether shared code should be emitted.
+- **OpenAPI title and version:** The title and version of an OpenAPI document, instead of the ones in
+  `@spec:OpenAPIInfo`, so a build can stamp its own version on the document. See
+  [Metadata of the document](../converters/openapi.md#metadata-of-the-document).
 - **strict:** A flag to enable strict mode during compilation.
 - **ignore defaults:** A flag to leave field default values out of the emitted code. Required to compile a spec with
   [defaults](../language/types.mdx#default-values) to a language that does not support them yet. See

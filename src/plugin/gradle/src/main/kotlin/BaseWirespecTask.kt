@@ -79,6 +79,16 @@ public abstract class BaseWirespecTask : DefaultTask() {
     @get:Option(option = "sync", description = "emit endpoint handlers, channels and rpc services as synchronous functions")
     public abstract val sync: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    @get:Option(option = "openApiTitle", description = "the title of an OpenAPI document, instead of the one in @spec:OpenAPIInfo")
+    public abstract val openApiTitle: Property<String>
+
+    @get:Input
+    @get:Optional
+    @get:Option(option = "openApiVersion", description = "the version of an OpenAPI document, instead of the one in @spec:OpenAPIInfo")
+    public abstract val openApiVersion: Property<String>
+
     @Internal
     public val wirespecLogger: Logger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)
@@ -103,7 +113,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun emitter(): Emitter = language.get()
-        .toEmitter(packageNameValue(), sharedValue())
+        .toEmitter(packageNameValue(), sharedValue(), openApiTitle.orNull, openApiVersion.orNull)
         .let { it.withExtensions(listOfNotNull(SyncExtension(it.extension).takeIf { sync.getOrElse(false) }) + extensionInstances(it.extension)) }
 
     protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
