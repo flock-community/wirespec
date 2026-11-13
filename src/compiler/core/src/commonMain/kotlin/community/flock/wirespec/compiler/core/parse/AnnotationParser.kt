@@ -2,10 +2,16 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import arrow.core.raise.either
+import arrow.core.raise.ensure
+import community.flock.wirespec.compiler.core.exceptions.MisplacedHeaderAnnotationException
+import community.flock.wirespec.compiler.core.exceptions.MissingEmptyLineAfterHeaderException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
+import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.FileAnnotation
+import community.flock.wirespec.compiler.core.tokenize.HeaderAnnotation
 import community.flock.wirespec.compiler.core.tokenize.LeftBracket
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
@@ -13,7 +19,13 @@ import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
+import community.flock.wirespec.compiler.core.tokenize.SpecAnnotation
+import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
+
+/** The `@spec:` and `@file:` annotations at the top of a file. */
+internal data class Header(val spec: List<Annotation>, val file: List<Annotation>)
 
 internal object AnnotationParser {
     fun TokenProvider.parseAnnotations(): Either<WirespecException, List<Annotation>> = either {
@@ -23,10 +35,35 @@ internal object AnnotationParser {
             }
         }
     }
+
+    /** Reads the file header, which an empty line separates from whatever follows it. */
+    fun TokenProvider.parseHeader(): Either<WirespecException, Header> = either {
+        buildList { while (token.type is HeaderAnnotation) add(token.type to parseAnnotation().bind()) }
+            .also { if (it.isNotEmpty()) ensureEmptyLineAfterHeader().bind() }
+            .let { Header(spec = it.annotationsOf<SpecAnnotation>(), file = it.annotationsOf<FileAnnotation>()) }
+    }
+
+    /** Reads a header annotation outside the header and raises, so parsing goes on after it. */
+    fun TokenProvider.misplacedHeaderAnnotation(): Either<WirespecException, Nothing> = either {
+        val annotation = token
+        parseAnnotation().bind()
+        raise(MisplacedHeaderAnnotationException(fileUri, annotation.value, annotation.coordinates))
+    }
 }
 
+private inline fun <reified T : HeaderAnnotation> List<Pair<TokenType, Annotation>>.annotationsOf(): List<Annotation> = filter { (type) -> type is T }.map { (_, annotation) -> annotation }
+
+private fun TokenProvider.ensureEmptyLineAfterHeader(): Either<WirespecException, Unit> = either {
+    ensure(token.type is EndOfProgram || token.startLine() - (previous?.coordinates?.line ?: 0) > 1) {
+        MissingEmptyLineAfterHeaderException(fileUri, token.coordinates)
+    }
+}
+
+/** A token's coordinates are where it ends, and a comment can span several lines. */
+private fun Token.startLine(): Int = coordinates.line - value.count { it == '\n' }
+
 private fun TokenProvider.parseAnnotation() = either {
-    val name = token.value.drop(1).also { eatToken().bind() }
+    val name = token.value.drop(1).substringAfter(':').also { eatToken().bind() }
     val parameters = when (token.type) {
         is LeftParenthesis -> {
             eatToken().bind() // consume (

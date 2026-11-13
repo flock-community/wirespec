@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileAnyTest
@@ -72,13 +73,27 @@ class WirespecRoundTripTest {
             |}
         """.trimMargin().shouldRoundTrip()
     }
+
+    @Test
+    fun theFileHeaderSurvivesARoundTrip() {
+        """
+            |@spec:OpenAPIServer("https://api.example.com/v2", description: "Production")
+            |@file:Owner("customers")
+            |@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", flows: { implicit: { scopes: { "users:read": "Read users" } } })
+            |
+            |@OpenAPITag("Customers")
+            |endpoint GetCustomer GET /customers/{id: String} -> {
+            |  200 -> Unit
+            |}
+        """.trimMargin().shouldRoundTrip()
+    }
 }
 
 private fun String.shouldRoundTrip() {
     val before = parse(this).orFail { "source did not parse: $it\n\n$this" }
     val emitted = WirespecEmitter().emit(before, noLogger).joinToString("\n") { it.result }
     val after = parse(emitted).orFail { "emitted source did not parse: $it\n\n--- emitted ---\n$emitted" }
-    if (after.statements() != before.statements()) {
+    if (after.statements() != before.statements() || after.header() != before.header()) {
         fail(
             "round trip changed the AST\n--- source ---\n$this\n--- emitted ---\n$emitted\n" +
                 "--- before ---\n${before.statements().joinToString("\n")}\n--- after ---\n${after.statements().joinToString("\n")}",
@@ -92,6 +107,8 @@ private fun EitherNel<WirespecException, AST>.orFail(message: (String) -> String
 )
 
 private fun AST.statements(): List<Definition> = modules.flatMap(Module::statements)
+
+private fun AST.header(): Pair<List<Annotation>, List<Annotation>> = annotations.map { it.annotation } to modules.toList().flatMap(Module::annotations)
 
 private fun parse(source: String) = object : ParseContext, NoLogger {
     override val spec = WirespecSpec

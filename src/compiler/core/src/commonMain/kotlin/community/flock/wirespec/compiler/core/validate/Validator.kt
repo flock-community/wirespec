@@ -22,7 +22,6 @@ import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
-import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -48,7 +47,7 @@ public object Validator {
         }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
-        .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
+        .map { module -> runValidateOptions(options)(module.statements).map { module.copy(statements = it) } }
         .let { either { it.bindAll() } }
         .map { ast.copy(modules = it) }
 

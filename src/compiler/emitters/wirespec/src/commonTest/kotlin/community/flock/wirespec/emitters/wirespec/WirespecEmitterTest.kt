@@ -386,4 +386,26 @@ class WirespecEmitterTest {
 
         compile(wirespec)({ WirespecEmitter() }) shouldBeRight wirespec
     }
+
+    @Test
+    fun compileFileHeaderTest() {
+        val wirespec = """
+            |@spec:OpenAPIInfo(title: "Customer API", version: "2.3.0")
+            |@file:Owner("customers")
+            |
+            |type Customer {
+            |  id: String
+            |}
+        """.trimMargin()
+
+        compile(wirespec).invoke { WirespecEmitter() } shouldBeRight """
+            |@spec:OpenAPIInfo(title: "Customer API", version: "2.3.0")
+            |@file:Owner("customers")
+            |
+            |type Customer {
+            |  id: String
+            |}
+            |
+        """.trimMargin()
+    }
 }

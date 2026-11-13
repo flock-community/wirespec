@@ -80,3 +80,24 @@ internal sealed class NullTokenException(fileUri: FileUri, message: String, coor
     )
 
 internal class NextException(fileUri: FileUri, coordinates: Token.Coordinates) : NullTokenException(fileUri, "Next Token", coordinates)
+
+internal class MisplacedHeaderAnnotationException(fileUri: FileUri, annotation: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "$annotation belongs in the file header: @spec: and @file: annotations come first in a file, before any definition or comment",
+    )
+
+internal class MissingEmptyLineAfterHeaderException(fileUri: FileUri, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "Leave an empty line between the file header and what follows it",
+    )
+
+internal class FileAnnotationWithoutDefinitionException(fileUri: FileUri, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A file with only a header can hold @spec: annotations, but no @file: annotations: they describe the definitions in the file",
+    )
