@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.SpecInfo
 import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.ir.extension.SyncExtension
@@ -81,13 +82,13 @@ public abstract class BaseWirespecTask : DefaultTask() {
 
     @get:Input
     @get:Optional
-    @get:Option(option = "openApiTitle", description = "the title of an OpenAPI document, instead of the one in @spec:OpenAPIInfo")
-    public abstract val openApiTitle: Property<String>
+    @get:Option(option = "specTitle", description = "the title of the spec, instead of the one it declares: for OpenAPI and AsyncAPI")
+    public abstract val specTitle: Property<String>
 
     @get:Input
     @get:Optional
-    @get:Option(option = "openApiVersion", description = "the version of an OpenAPI document, instead of the one in @spec:OpenAPIInfo")
-    public abstract val openApiVersion: Property<String>
+    @get:Option(option = "specVersion", description = "the version of the spec, instead of the one it declares: for OpenAPI and AsyncAPI")
+    public abstract val specVersion: Property<String>
 
     @Internal
     public val wirespecLogger: Logger = object : Logger(Level.INFO) {
@@ -113,7 +114,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun emitter(): Emitter = language.get()
-        .toEmitter(packageNameValue(), sharedValue(), openApiTitle.orNull, openApiVersion.orNull)
+        .toEmitter(packageNameValue(), sharedValue(), SpecInfo(specTitle.orNull, specVersion.orNull))
         .let { it.withExtensions(listOfNotNull(SyncExtension(it.extension).takeIf { sync.getOrElse(false) }) + extensionInstances(it.extension)) }
 
     protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->

@@ -3,6 +3,9 @@ package community.flock.wirespec.plugin
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.SpecInfo
+import community.flock.wirespec.compiler.core.emit.withSpecInfo
+import community.flock.wirespec.converter.asyncapi.AsyncAPIEmitter
 import community.flock.wirespec.converter.avro.AvroJsonEmitter
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
@@ -25,6 +28,7 @@ public enum class Language {
     OpenAPIV2,
     OpenAPIV3,
     Avro,
+    AsyncAPI,
     ;
 
     public companion object {
@@ -33,12 +37,11 @@ public enum class Language {
     }
 }
 
-/** [openApiTitle] and [openApiVersion] win over the title and version in `@spec:OpenAPIInfo` of an OpenAPI document. */
+/** [specInfo] sets the title and version of the languages that write a document with one: OpenAPI and AsyncAPI. */
 public fun Language.toEmitter(
     packageName: PackageName,
     emitShared: EmitShared,
-    openApiTitle: String? = null,
-    openApiVersion: String? = null,
+    specInfo: SpecInfo = SpecInfo(),
 ): Emitter = when (this) {
     Language.Java -> JavaEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinEmitter(packageName, emitShared)
@@ -47,7 +50,8 @@ public fun Language.toEmitter(
     Language.Scala -> ScalaEmitter(packageName, emitShared)
     Language.TypeScript -> TypeScriptEmitter()
     Language.Wirespec -> WirespecEmitter()
-    Language.OpenAPIV2 -> OpenAPIV2Emitter.withOptions(OpenAPIV2Emitter.Options(openApiTitle, openApiVersion))
-    Language.OpenAPIV3 -> OpenAPIV3Emitter.withOptions(OpenAPIV3Emitter.Options(openApiTitle, openApiVersion))
+    Language.OpenAPIV2 -> OpenAPIV2Emitter
+    Language.OpenAPIV3 -> OpenAPIV3Emitter
     Language.Avro -> AvroJsonEmitter
-}
+    Language.AsyncAPI -> AsyncAPIEmitter
+}.withSpecInfo(specInfo)

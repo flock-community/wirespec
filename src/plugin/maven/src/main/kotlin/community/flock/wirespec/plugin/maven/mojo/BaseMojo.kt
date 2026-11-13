@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.SpecInfo
 import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
@@ -109,17 +110,18 @@ public abstract class BaseMojo : AbstractMojo() {
     protected var sync: Boolean = false
 
     /**
-     * Specifies the title of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`. Default 'null'.
+     * Specifies the title of the spec, instead of the one it declares. Used by the languages that write a document with
+     * a title: OpenAPIV2, OpenAPIV3 and AsyncAPI. Default 'null'.
      */
     @Parameter
-    protected var openApiTitle: String? = null
+    protected var specTitle: String? = null
 
     /**
-     * Specifies the version of an OpenAPI document, instead of the one in `@spec:OpenAPIInfo`, such as
-     * `${project.version}`. Default 'null'.
+     * Specifies the version of the spec, instead of the one it declares, such as `${project.version}`. Used by the
+     * languages that write a document with a version: OpenAPIV2, OpenAPIV3 and AsyncAPI. Default 'null'.
      */
     @Parameter
-    protected var openApiVersion: String? = null
+    protected var specVersion: String? = null
 
     /**
      * Source directory. Default 'null'.
@@ -160,7 +162,7 @@ public abstract class BaseMojo : AbstractMojo() {
 
     protected val emitter: Emitter
         get() = language
-            .toEmitter(PackageName(packageName), EmitShared(shared), openApiTitle, openApiVersion)
+            .toEmitter(PackageName(packageName), EmitShared(shared), SpecInfo(specTitle, specVersion))
             .let { it.withExtensions(listOfNotNull(SyncExtension(it.extension).takeIf { sync }) + extensionInstances(it.extension)) }
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {

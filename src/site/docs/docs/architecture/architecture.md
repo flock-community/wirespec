@@ -42,6 +42,8 @@ The result is a flattened `List<Emitted>` ready to write to disk.
 
 Before an emitter runs, `emit` asks it what keeps it from emitting the AST: `Emitter.validate` returns a list of `EmitterException`s, empty by default. The OpenAPI emitters use it to reject annotations they cannot write, such as a security requirement that names a scheme the spec does not declare, so the compile fails with a message instead of producing a document that misleads the tools reading it.
 
+An emitter that writes a document with a title and version, such as OpenAPI or AsyncAPI, implements `SpecInfoEmitter`. Its `withSpecInfo` takes a `SpecInfo`, the title and version a build sets instead of the ones the spec declares, and the plugins apply it to whatever emitter they create: `Emitter.withSpecInfo` leaves the emitters that write neither as they are.
+
 ## Emitter style
 
 All built-in language emitters satisfy the same `Emitter` contract — same input AST, same `List<Emitted>` output — and run an internal **Convert → Transform → Generate** pipeline. The AST is converted into Wirespec's language-neutral IR, per-language transforms reshape the IR for the target's idioms, and a generator walks the transformed IR to produce the source string. Example: `PythonEmitter` in `src/compiler/emitters/python/.../PythonEmitter.kt`. See **[IR Model](./architecture-ir.md)** for the details of this internal pipeline. (The `WirespecEmitter`, which prints Wirespec source itself, still walks the AST directly.)

@@ -24,6 +24,24 @@ public interface Emitter : HasExtension {
     public fun validate(ast: AST): List<EmitterException> = emptyList()
 }
 
+/** The title and version a build gives the spec, such as the version of the project, instead of the ones the spec declares. */
+public data class SpecInfo(
+    val title: String? = null,
+    val version: String? = null,
+)
+
+/** An emitter that writes a document with a title and version, such as OpenAPI or AsyncAPI, so a build can set them. */
+public interface SpecInfoEmitter : Emitter {
+    /** This emitter, writing the title and version of [info] where they are set. */
+    public fun withSpecInfo(info: SpecInfo): Emitter
+}
+
+/** Emitters that write no title and version, such as the language emitters, have nothing to set and stay as they are. */
+public fun Emitter.withSpecInfo(info: SpecInfo): Emitter = when (this) {
+    is SpecInfoEmitter -> withSpecInfo(info)
+    else -> this
+}
+
 public fun AST.ensureValidFor(emitters: Iterable<Emitter>): EitherNel<WirespecException, AST> = emitters
     .flatMap { it.validate(this) }
     .toNonEmptyListOrNull()

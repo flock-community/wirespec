@@ -7,8 +7,12 @@ import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.SpecInfo
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.test.parse
 import community.flock.wirespec.compiler.utils.NoLogger
+import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.json.shouldEqualJson
@@ -320,13 +324,10 @@ class OpenAPIV3SpecAnnotationsTest {
     @Test
     fun theBuildCanSetTheTitleAndVersion() {
         val source = "@spec:OpenAPIInfo(title: \"Customer API\", version: \"2.3.0\")\n\ntype Customer { id: String }"
-        val ast = community.flock.wirespec.compiler.test.parse(source).shouldBeRight()
+        val ast = parse(source).shouldBeRight()
 
-        listOf(
-            OpenAPIV3Emitter.withOptions(OpenAPIV3Emitter.Options(version = "2.4.0-SNAPSHOT")),
-            community.flock.wirespec.openapi.v2.OpenAPIV2Emitter.withOptions(community.flock.wirespec.openapi.v2.OpenAPIV2Emitter.Options(version = "2.4.0-SNAPSHOT")),
-        ).forEach { emitter ->
-            Json.parseToJsonElement(emitter.emit(ast, community.flock.wirespec.compiler.utils.noLogger).single().result)
+        listOf(OpenAPIV3Emitter, OpenAPIV2Emitter).map { it.withSpecInfo(SpecInfo(version = "2.4.0-SNAPSHOT")) }.forEach { emitter ->
+            Json.parseToJsonElement(emitter.emit(ast, noLogger).single().result)
                 .at("info") shouldEqualJson """{ "title": "Customer API", "version": "2.4.0-SNAPSHOT" }"""
         }
     }

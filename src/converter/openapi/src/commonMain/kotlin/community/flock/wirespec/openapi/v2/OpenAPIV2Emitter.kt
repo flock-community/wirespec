@@ -22,6 +22,8 @@ import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.SpecInfo
+import community.flock.wirespec.compiler.core.emit.SpecInfoEmitter
 import community.flock.wirespec.compiler.core.exceptions.EmitterException
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -52,13 +54,7 @@ import community.flock.wirespec.openapi.common.toSpecMetadata
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
-public object OpenAPIV2Emitter : Emitter {
-
-    /** A title and version that win over the ones in `@spec:OpenAPIInfo`, such as the version of the build. */
-    public data class Options(
-        val title: String? = null,
-        val version: String? = null,
-    )
+public object OpenAPIV2Emitter : SpecInfoEmitter {
 
     override val extension: FileExtension = FileExtension.JSON
 
@@ -67,38 +63,38 @@ public object OpenAPIV2Emitter : Emitter {
     override fun emit(
         ast: AST,
         logger: Logger,
-    ): NonEmptyList<Emitted> = emit(ast, null, logger)
+    ): NonEmptyList<Emitted> = emit(ast, SpecInfo(), logger)
 
-    /** This emitter, writing the title and version of [options] when they are set. */
-    public fun withOptions(options: Options): Emitter = object : Emitter by this {
-        override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, options, logger)
+    override fun withSpecInfo(info: SpecInfo): Emitter = object : SpecInfoEmitter by this {
+        override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, info, logger)
     }
 
-    private fun emit(ast: AST, options: Options?, logger: Logger): NonEmptyList<Emitted> = Emitted(
+    private fun emit(ast: AST, info: SpecInfo, logger: Logger): NonEmptyList<Emitted> = Emitted(
         "OpenAPI.${extension.value}",
-        json.encodeToString(emitSwaggerObject(ast, logger, options)),
+        json.encodeToString(emitSwaggerObject(ast, logger, info)),
     ).let { nonEmptyListOf(it) }
 
     override fun validate(ast: AST): List<EmitterException> = ast.openAPIProblems()
 
     /** The document for every module of [ast], with the metadata of its `@spec:` annotations. */
-    public fun emitSwaggerObject(ast: AST, logger: Logger, options: Options? = null): OpenAPIV2Model = ast.modules
+    /** [info] sets the title and version instead of `@spec:OpenAPIInfo`. */
+    public fun emitSwaggerObject(ast: AST, logger: Logger, info: SpecInfo = SpecInfo()): OpenAPIV2Model = ast.modules
         .flatMap { module ->
             logger.info("Combining Nodes from ${module.fileUri.value} ")
             module.statements
         }
-        .let { emitSwaggerObject(it, ast.annotations.toSpecMetadata(), options, logger) }
+        .let { emitSwaggerObject(it, ast.annotations.toSpecMetadata(), info, logger) }
 
-    public fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = emitSwaggerObject(statements, emptyList<SpecAnnotation>().toSpecMetadata(), null, logger)
+    public fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = emitSwaggerObject(statements, emptyList<SpecAnnotation>().toSpecMetadata(), SpecInfo(), logger)
 
-    private fun emitSwaggerObject(statements: Statements, spec: SpecMetadata, options: Options?, logger: Logger): OpenAPIV2Model = spec.securitySchemes
+    private fun emitSwaggerObject(statements: Statements, spec: SpecMetadata, info: SpecInfo, logger: Logger): OpenAPIV2Model = spec.securitySchemes
         .associate { it.name to it.emit(logger) }
         .let { schemes ->
             val unsupported = schemes.filterValues { it == null }.keys
             spec.servers.emit(logger).let { server ->
                 OpenAPIV20Model(
                     swagger = "2.0",
-                    info = spec.toInfo(title = options?.title, version = options?.version),
+                    info = spec.toInfo(title = info.title, version = info.version),
                     host = server?.host,
                     basePath = server?.basePath,
                     schemes = server?.schemes,

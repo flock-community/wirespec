@@ -2,6 +2,7 @@ package community.flock.wirespec.converter.asyncapi
 
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.emit.SpecInfo
 import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.compiler.test.parse
 import community.flock.wirespec.compiler.utils.noLogger
@@ -10,6 +11,8 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 
 class AsyncAPIEmitterTest {
@@ -228,6 +231,28 @@ class AsyncAPIEmitterTest {
     @Test
     fun acceptsWirespecThatDoesNotComeFromAsyncAPI() {
         AsyncAPIEmitter.validate(parse(wirespec).shouldBeRight()) shouldBe emptyList()
+    }
+
+    @Test
+    fun theBuildSetsTheTitleAndVersionOfTheDocument() {
+        val converted =
+            // language=ws
+            """
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0", description: "Everything that happens to a todo" })
+            |
+            |type Todo { id: String }
+            """.trimMargin()
+
+        listOf(
+            converted to """{ "title": "Todo events", "version": "1.1.0-SNAPSHOT", "description": "Everything that happens to a todo" }""",
+            wirespec to """{ "title": "Wirespec", "version": "1.1.0-SNAPSHOT" }""",
+        ).forEach { (source, info) ->
+            AsyncAPIEmitter.withSpecInfo(SpecInfo(version = "1.1.0-SNAPSHOT"))
+                .emit(parse(source).shouldBeRight(), noLogger)
+                .single()
+                .result
+                .let { Json.parseToJsonElement(it).jsonObject.getValue("info").toString() } shouldEqualJson info
+        }
     }
 
     private fun String.toAsyncAPI(): String = AsyncAPIEmitter.emit(parse(this).shouldBeRight(), noLogger).single().result

@@ -5,6 +5,8 @@ import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.SpecInfo
+import community.flock.wirespec.compiler.core.emit.SpecInfoEmitter
 import community.flock.wirespec.compiler.core.exceptions.EmitterException
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
@@ -44,7 +46,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * the type of the channel, and a `send` operation, unless annotations say otherwise. Types, enums, unions and refined
  * types become schemas. Endpoints and rpcs have no AsyncAPI counterpart and are left out.
  */
-public object AsyncAPIEmitter : Emitter {
+public object AsyncAPIEmitter : SpecInfoEmitter {
 
     override val extension: FileExtension = FileExtension.JSON
 
@@ -55,10 +57,16 @@ public object AsyncAPIEmitter : Emitter {
     /** The annotations that only the document as a whole has, so only the file header holds them. */
     private val documentOnly = setOf(DOCUMENT, COMPONENTS)
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, SpecInfo(), logger)
+
+    override fun withSpecInfo(info: SpecInfo): Emitter = object : SpecInfoEmitter by this {
+        override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, info, logger)
+    }
+
+    private fun emit(ast: AST, info: SpecInfo, logger: Logger): NonEmptyList<Emitted> = ast.modules
         .onEach { logger.info("Emitting AsyncAPI from ${it.fileUri.value}") }
         .flatMap { it.statements }
-        .let { WirespecToAsyncAPI(ast.annotations.map(SpecAnnotation::annotation), it).document() }
+        .let { WirespecToAsyncAPI(ast.annotations.map(SpecAnnotation::annotation), it, info).document() }
         .let { nonEmptyListOf(Emitted("asyncapi.${extension.value}", json.encodeToString(JsonObject.serializer(), it))) }
 
     override fun validate(ast: AST): List<EmitterException> = ast.misplacedDocumentAnnotations() + ast.annotations.declaredTwice()
@@ -96,7 +104,7 @@ public object AsyncAPIEmitter : Emitter {
     }
 }
 
-private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions: List<Definition>) {
+private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions: List<Definition>, private val info: SpecInfo) {
 
     private val document: Annotation? = spec.find(DOCUMENT)
 
@@ -115,7 +123,13 @@ private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions
 
     private val channels = definitions.filterIsInstance<Channel>()
 
-    private val root: JsonObject = document?.fields() ?: DEFAULT_DOCUMENT
+    private val root: JsonObject = (document?.fields() ?: DEFAULT_DOCUMENT).withInfo()
+
+    /** The title and version of the build replace the ones of the document, each where it is set. */
+    private fun JsonObject.withInfo(): JsonObject = listOfNotNull(info.title?.let { "title" to JsonPrimitive(it) }, info.version?.let { "version" to JsonPrimitive(it) })
+        .takeIf { it.isNotEmpty() }
+        ?.let { JsonObject(this + ("info" to JsonObject((this["info"] as? JsonObject).orEmpty() + it))) }
+        ?: this
 
     private val majorVersion = if ((root["asyncapi"] as? JsonPrimitive)?.content?.startsWith("2.") == true) 2 else 3
 

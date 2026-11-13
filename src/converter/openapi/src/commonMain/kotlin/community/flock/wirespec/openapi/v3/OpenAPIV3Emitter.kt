@@ -37,6 +37,8 @@ import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.SpecInfo
+import community.flock.wirespec.compiler.core.emit.SpecInfoEmitter
 import community.flock.wirespec.compiler.core.exceptions.EmitterException
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -70,8 +72,8 @@ import community.flock.wirespec.openapi.common.toSpecMetadata
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
-public object OpenAPIV3Emitter : Emitter {
-    /** A title and version that win over the ones in `@spec:OpenAPIInfo`, such as the version of the build. */
+public object OpenAPIV3Emitter : SpecInfoEmitter {
+    /** A title and version that win over the ones in `@spec:OpenAPIInfo`. */
     public data class Options(
         val title: String? = null,
         val version: String? = null,
@@ -86,9 +88,8 @@ public object OpenAPIV3Emitter : Emitter {
         logger: Logger,
     ): NonEmptyList<Emitted> = emit(ast, null, logger)
 
-    /** This emitter, writing the title and version of [options] when they are set. */
-    public fun withOptions(options: Options): Emitter = object : Emitter by this {
-        override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, options, logger)
+    override fun withSpecInfo(info: SpecInfo): Emitter = object : SpecInfoEmitter by this {
+        override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, Options(title = info.title, version = info.version), logger)
     }
 
     private fun emit(ast: AST, options: Options?, logger: Logger): NonEmptyList<Emitted> = Emitted(

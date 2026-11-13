@@ -223,6 +223,10 @@ channel TodoUpdates -> Todo
   description.
 - Endpoints and rpcs are left out, because AsyncAPI has nothing like them.
 
+The CLI, Maven and Gradle plugins write AsyncAPI with the language `AsyncAPI`. A build can set the `info.title` and
+`info.version` of the document, of a converted document as well as of any other, for example to stamp its own version
+on it: see [the title and version of the spec](../plugins/plugins.md#the-title-and-version-of-the-spec).
+
 ## Limitations
 
 - **JSON only**: documents written in YAML have to be converted to JSON first.

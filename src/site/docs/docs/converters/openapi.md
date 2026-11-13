@@ -206,9 +206,7 @@ the description, which is a `@spec:Description`:
 ```
 
 Without it, the title is `Wirespec` and the version `0.0.0`. A build can set the title and version instead, for example
-to stamp its own version on the document: `--openapi-title` and `--openapi-version` for the
-[CLI](../plugins/plugins-cli.md), `openApiTitle` and `openApiVersion` for [Maven](../plugins/plugins-maven.md) and
-[Gradle](../plugins/plugins-gradle.md).
+to stamp its own version on the document, see [the title and version of the spec](../plugins/plugins.md#the-title-and-version-of-the-spec).
 
 ### Servers
 
