@@ -26,9 +26,14 @@ import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.Action
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.CHANNEL
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.COMPONENTS
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.DOCUMENT
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.INFO
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.INLINE
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.MESSAGE
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.NAME
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.SECURITY_SCHEME
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.SECURITY_SCHEMES_POINTER
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.SERVER
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.TAG
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.annotation
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.parameter
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.toAnnotationValue
@@ -94,6 +99,22 @@ private class AsyncAPIConverter(private val document: JsonObject) {
 
     private val components: JsonObject? = document["components"] as? JsonObject
 
+    /**
+     * The parts of the document that have a dedicated `@spec:` annotation, when they have the shape it holds: the info,
+     * its tags (in the document itself in AsyncAPI 2), the servers and the security schemes. Anything else stays in
+     * `@spec:AsyncAPIDocument` or `@spec:AsyncAPIComponents`, so nothing is lost.
+     */
+    private val info: JsonObject? = document.obj("info")
+
+    private val tags: JsonArray? = (if (majorVersion == 2) document else info)
+        ?.get("tags")
+        ?.let { it as? JsonArray }
+        ?.takeIf { tags -> tags.isNotEmpty() && tags.all { (it as? JsonObject)?.string("name") != null } }
+
+    private val servers: JsonObject? = document.obj("servers")?.takeIf { servers -> servers.isNotEmpty() && servers.values.all { it is JsonObject } }
+
+    private val securitySchemes: JsonObject? = components?.obj("securitySchemes")?.takeIf { schemes -> schemes.isNotEmpty() && schemes.values.all { it is JsonObject } }
+
     private val schemas: Map<String, JsonElement> = components?.obj("schemas").orEmpty()
 
     /** The defined component schemas convert to a definition and claim their names first, so they keep them. */
@@ -138,11 +159,38 @@ private class AsyncAPIConverter(private val document: JsonObject) {
         )
     }
 
-    /** What belongs to the document as a whole: the document, its components, the component messages and the operations on no channel. */
+    /**
+     * What belongs to the document as a whole: the document, its description, info, tags and servers, its components and
+     * security schemes, the component messages and the operations on no channel.
+     */
     private fun documentAnnotations(messages: List<ConvertedMessage>, operations: List<Pair<String, JsonObject>>): List<Annotation> = listOf(annotation(DOCUMENT, parameters = document.documentFields().toParameters())) +
+        info?.description().toDescription() +
+        listOfNotNull(info?.let { annotation(INFO, parameters = JsonObject(it.without("description" to { value -> value.isString() }, "tags" to { majorVersion == 3 && tags != null })).toParameters()) }) +
+        tags.orEmpty().map { tag -> (tag as JsonObject).let { annotation(TAG, it.string("name"), JsonObject(it - "name").toParameters()) } } +
+        servers.orEmpty().map { (key, server) -> annotation(SERVER, key, JsonObject((server as JsonObject).mapValues { (field, value) -> if (field == "security") value.toSchemeNames() else value }).toParameters()) } +
         listOfNotNull(components?.componentFields()?.let { annotation(COMPONENTS, parameters = it.toParameters()) }) +
+        securitySchemes.orEmpty().map { (key, scheme) -> annotation(SECURITY_SCHEME, key, (scheme as JsonObject).toParameters()) } +
         messages.map { it.annotation } +
         operations.map { (key, operation) -> operation.toAnnotation(key, channelPointer = null) }
+
+    /** Security that names declared schemes without scopes is written as their names, `security: ["saslScram"]`, and any other as it is. */
+    private fun JsonElement.toSchemeNames(): JsonElement = (this as? JsonArray)
+        ?.let { requirements ->
+            requirements.mapNotNull { (it as? JsonObject)?.schemeName() }
+                .takeIf { names -> names.size == requirements.size && names.all { it in components?.obj("securitySchemes").orEmpty() } }
+        }
+        ?.let { names -> JsonArray(names.map { JsonPrimitive(it) }) }
+        ?: this
+
+    /** The scheme a requirement names: in AsyncAPI 2 a scheme without scopes, in AsyncAPI 3 a reference to a component security scheme. */
+    private fun JsonObject.schemeName(): String? = when (majorVersion) {
+        2 -> entries.singleOrNull()?.takeIf { (_, scopes) -> scopes is JsonArray && scopes.isEmpty() }?.key
+        else -> ref()
+            ?.takeIf { size == 1 && it.startsWith(SECURITY_SCHEMES_POINTER) }
+            ?.removePrefix(SECURITY_SCHEMES_POINTER)
+            ?.takeIf { '/' !in it }
+            ?.unescapePointer()
+    }
 
     /** The fields of the document besides the channels, operations and components that Wirespec holds itself. */
     private fun JsonObject.documentFields(): JsonObject = JsonObject(
@@ -151,6 +199,9 @@ private class AsyncAPIConverter(private val document: JsonObject) {
                 "channels" -> value.isNonEmptyObject()
                 "operations" -> majorVersion == 3 && value.isNonEmptyObject()
                 "components" -> value is JsonObject
+                "info" -> info != null
+                "servers" -> servers != null
+                "tags" -> majorVersion == 2 && tags != null
                 else -> false
             }
         },
@@ -164,6 +215,7 @@ private class AsyncAPIConverter(private val document: JsonObject) {
                     .takeIf { it.isNotEmpty() || value.isEmpty() }
                     ?.let { key to it }
                 key == "messages" && value.isNonEmptyObject() -> null
+                key == "securitySchemes" && securitySchemes != null -> null
                 else -> key to value
             }
         }.toMap(),

@@ -255,6 +255,110 @@ class AsyncAPIEmitterTest {
         }
     }
 
+    @Test
+    fun writesTheInfoServersSecuritySchemesAndTagsOfTheSpec() {
+        val source =
+            // language=ws
+            """
+            |@spec:Description("Everything that happens to a todo")
+            |@spec:AsyncAPIInfo(title: "Todo events", version: "1.0.0", contact: { name: "Team", email: "team@example.com" })
+            |@spec:AsyncAPIServer("production", host: "broker.example.com:9092", protocol: "kafka", description: "Production", security: ["saslScram"])
+            |@spec:AsyncAPISecurityScheme("saslScram", type: "scramSha256", description: "SASL/SCRAM")
+            |@spec:AsyncAPITag("todos", description: "Todo events")
+            |
+            |type Todo { id: String }
+            |
+            |channel TodoUpdates -> Todo
+            """.trimMargin()
+
+        val document = Json.parseToJsonElement(source.toAsyncAPI()).jsonObject
+
+        document.getValue("info").toString() shouldEqualJson """
+            {
+              "title": "Todo events",
+              "version": "1.0.0",
+              "contact": { "name": "Team", "email": "team@example.com" },
+              "description": "Everything that happens to a todo",
+              "tags": [{ "name": "todos", "description": "Todo events" }]
+            }
+        """
+        document.getValue("servers").toString() shouldEqualJson """
+            {
+              "production": {
+                "host": "broker.example.com:9092",
+                "protocol": "kafka",
+                "description": "Production",
+                "security": [{ "$REF": "#/components/securitySchemes/saslScram" }]
+              }
+            }
+        """
+        document.getValue("components").jsonObject.getValue("securitySchemes").toString() shouldEqualJson """
+            { "saslScram": { "type": "scramSha256", "description": "SASL/SCRAM" } }
+        """
+        AsyncAPIEmitter.withSpecInfo(SpecInfo(version = "1.1.0")).emit(parse(source).shouldBeRight(), noLogger).single().result
+            .let { Json.parseToJsonElement(it).jsonObject.getValue("info").jsonObject.getValue("version").toString() } shouldBe "\"1.1.0\""
+    }
+
+    @Test
+    fun writesTheSpecAnnotationsInTheShapeOfAsyncAPI2() {
+        val source =
+            // language=ws
+            """
+            |@spec:AsyncAPIDocument(asyncapi: "2.6.0")
+            |@spec:AsyncAPIInfo(title: "Todo events", version: "1.0.0")
+            |@spec:AsyncAPIServer("production", url: "broker.example.com:9092", protocol: "kafka", security: ["saslScram"])
+            |@spec:AsyncAPISecurityScheme("saslScram", type: "scramSha256")
+            |@spec:AsyncAPITag("todos")
+            |
+            |type Todo { id: String }
+            """.trimMargin()
+
+        val document = Json.parseToJsonElement(source.toAsyncAPI()).jsonObject
+
+        document.getValue("info").toString() shouldEqualJson """{ "title": "Todo events", "version": "1.0.0" }"""
+        document.getValue("tags").toString() shouldEqualJson """[{ "name": "todos" }]"""
+        document.getValue("servers").toString() shouldEqualJson """
+            { "production": { "url": "broker.example.com:9092", "protocol": "kafka", "security": [{ "saslScram": [] }] } }
+        """
+    }
+
+    @Test
+    fun rejectsSpecAnnotationsThatConflictOrPointNowhere() {
+        val first =
+            // language=ws
+            """
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" }, servers: { production: { host: "a", protocol: "kafka" } })
+            |@spec:AsyncAPIComponents(securitySchemes: { saslScram: { type: "scramSha256" } })
+            |@spec:AsyncAPIInfo(title: "Todo events", version: "1.0.0")
+            |@spec:AsyncAPIServer("production", host: "b", protocol: "kafka", security: ["oauth"])
+            |@spec:AsyncAPISecurityScheme("saslScram", type: "scramSha512")
+            |@spec:AsyncAPITag(description: "No name")
+            |@file:AsyncAPIServer("local", host: "localhost", protocol: "kafka")
+            |
+            |@AsyncAPIServer("staging", host: "c", protocol: "kafka")
+            |channel TodoUpdates -> String
+            """.trimMargin()
+        val second =
+            // language=ws
+            """
+            |@spec:AsyncAPIInfo(title: "Other", version: "2.0.0")
+            |
+            |type Todo { id: String }
+            """.trimMargin()
+
+        AsyncAPIEmitter.validate(parse(first, second).shouldBeRight()).map { it.message } shouldBe listOf(
+            "@AsyncAPIServer on TodoUpdates describes the whole AsyncAPI document, so it belongs in the file header: write it as @spec:AsyncAPIServer",
+            "@file:AsyncAPIServer in test0.ws: an AsyncAPI document has no metadata per file, so write @spec:AsyncAPIServer",
+            "@spec:AsyncAPIInfo is declared 2 times (in test0.ws, test1.ws), but the AsyncAPI document can only have one",
+            "@spec:AsyncAPITag in test0.ws has no name",
+            "The info of the document is declared in @spec:AsyncAPIInfo and in @spec:AsyncAPIDocument (test0.ws)",
+            "The server \"production\" is declared in @spec:AsyncAPIServer and in the servers of @spec:AsyncAPIDocument (test0.ws)",
+            "The security scheme \"saslScram\" is declared in @spec:AsyncAPISecurityScheme and in the securitySchemes of @spec:AsyncAPIComponents (test0.ws)",
+            "The info of the document is declared in @spec:AsyncAPIInfo and in @spec:AsyncAPIDocument (test1.ws)",
+            "@spec:AsyncAPIServer(\"production\") in test0.ws names the security scheme oauth, which no @spec:AsyncAPISecurityScheme declares",
+        )
+    }
+
     private fun String.toAsyncAPI(): String = AsyncAPIEmitter.emit(parse(this).shouldBeRight(), noLogger).single().result
 
     private companion object {

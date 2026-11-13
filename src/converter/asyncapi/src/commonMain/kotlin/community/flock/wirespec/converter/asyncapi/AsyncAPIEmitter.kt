@@ -22,9 +22,14 @@ import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.CHANNEL
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.COMPONENTS
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.DESCRIPTION
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.DOCUMENT
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.INFO
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.INLINE
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.MESSAGE
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.NAME
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.SECURITY_SCHEME
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.SECURITY_SCHEMES_POINTER
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.SERVER
+import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.TAG
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.fields
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.find
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.has
@@ -55,7 +60,10 @@ public object AsyncAPIEmitter : SpecInfoEmitter {
     private val json = Json { prettyPrint = true }
 
     /** The annotations that only the document as a whole has, so only the file header holds them. */
-    private val documentOnly = setOf(DOCUMENT, COMPONENTS)
+    private val documentOnly = setOf(DOCUMENT, COMPONENTS, INFO, SERVER, SECURITY_SCHEME, TAG)
+
+    /** The spec annotations whose positional value is the key of what they declare. */
+    private val keyed = setOf(SERVER, SECURITY_SCHEME, TAG)
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, SpecInfo(), logger)
 
@@ -69,7 +77,55 @@ public object AsyncAPIEmitter : SpecInfoEmitter {
         .let { WirespecToAsyncAPI(ast.annotations.map(SpecAnnotation::annotation), it, info).document() }
         .let { nonEmptyListOf(Emitted("asyncapi.${extension.value}", json.encodeToString(JsonObject.serializer(), it))) }
 
-    override fun validate(ast: AST): List<EmitterException> = ast.misplacedDocumentAnnotations() + ast.annotations.declaredTwice()
+    override fun validate(ast: AST): List<EmitterException> = ast.misplacedDocumentAnnotations() +
+        ast.fileAnnotations() +
+        ast.annotations.declaredTwice() +
+        ast.annotations.withoutKey() +
+        ast.annotations.declaredInTheDocumentToo() +
+        ast.annotations.undeclaredSecuritySchemes()
+
+    private fun AST.fileAnnotations(): List<EmitterException> = modules.toList().flatMap { module ->
+        module.annotations.filter { it.name.startsWith("AsyncAPI") }.map {
+            EmitterException(module.fileUri, "@file:${it.name} in ${module.fileUri.value}: an AsyncAPI document has no metadata per file, so write @spec:${it.name}")
+        }
+    }
+
+    private fun List<SpecAnnotation>.withoutKey(): List<EmitterException> = filter { it.annotation.name in keyed && it.annotation.value() == null }
+        .map { EmitterException(it.fileUri, "@spec:${it.annotation.name} in ${it.fileUri.value} has no name") }
+
+    /** What a dedicated annotation declares cannot be in `@spec:AsyncAPIDocument` or `@spec:AsyncAPIComponents` as well. */
+    private fun List<SpecAnnotation>.declaredInTheDocumentToo(): List<EmitterException> = map { it.annotation }.let { spec ->
+        val document = spec.find(DOCUMENT)?.fields().orEmpty()
+        val components = spec.find(COMPONENTS)?.fields().orEmpty()
+        mapNotNull { declared ->
+            when (declared.annotation.name) {
+                INFO -> "The info of the document is declared in @spec:$INFO and in @spec:$DOCUMENT".takeIf { "info" in document }
+                SERVER -> declared.annotation.value()
+                    ?.takeIf { (document["servers"] as? JsonObject)?.containsKey(it) == true }
+                    ?.let { "The server \"$it\" is declared in @spec:$SERVER and in the servers of @spec:$DOCUMENT" }
+                SECURITY_SCHEME -> declared.annotation.value()
+                    ?.takeIf { (components["securitySchemes"] as? JsonObject)?.containsKey(it) == true }
+                    ?.let { "The security scheme \"$it\" is declared in @spec:$SECURITY_SCHEME and in the securitySchemes of @spec:$COMPONENTS" }
+                else -> null
+            }?.let { EmitterException(declared.fileUri, "$it (${declared.fileUri.value})") }
+        }
+    }
+
+    /** A server names the security schemes it needs in `security: [...]`, and the spec has to declare them. */
+    private fun List<SpecAnnotation>.undeclaredSecuritySchemes(): List<EmitterException> = map { it.annotation }.let { spec ->
+        val declared = spec.named(SECURITY_SCHEME).mapNotNull { it.value() } + (spec.find(COMPONENTS)?.fields()?.get("securitySchemes") as? JsonObject)?.keys.orEmpty()
+        filter { it.annotation.name == SERVER }.flatMap { server ->
+            (server.annotation.fields()["security"] as? JsonArray).orEmpty()
+                .mapNotNull { (it as? JsonPrimitive)?.takeIf { name -> name.isString }?.content }
+                .filterNot { it in declared }
+                .map {
+                    EmitterException(
+                        server.fileUri,
+                        "@spec:$SERVER(\"${server.annotation.value()}\") in ${server.fileUri.value} names the security scheme $it, which no @spec:$SECURITY_SCHEME declares",
+                    )
+                }
+        }
+    }
 
     private fun AST.misplacedDocumentAnnotations(): List<EmitterException> = modules.toList()
         .flatMap { module -> module.statements.map { module.fileUri to it } }
@@ -95,9 +151,15 @@ public object AsyncAPIEmitter : SpecInfoEmitter {
             )
         }
 
-    /** What a `@spec:` annotation declares that an AsyncAPI document has only one of: the document, its components, or a component message or operation by key. */
+    /**
+     * What a `@spec:` annotation declares that an AsyncAPI document has only one of: the document, its components, info
+     * and description, or a server, security scheme, tag, component message or operation by key.
+     */
     private fun Annotation.declaration(): String? = when {
-        name in documentOnly -> "@spec:$name"
+        name in setOf(DOCUMENT, COMPONENTS, INFO, DESCRIPTION) -> "@spec:$name"
+        name == SERVER -> value()?.let { "The server \"$it\"" }
+        name == SECURITY_SCHEME -> value()?.let { "The security scheme \"$it\"" }
+        name == TAG -> value()?.let { "The tag \"$it\"" }
         name == MESSAGE -> value()?.let { "The component message \"$it\"" }
         Action.entries.any { it.annotationName == name } -> value()?.let { "The operation \"$it\"" }
         else -> null
@@ -123,15 +185,58 @@ private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions
 
     private val channels = definitions.filterIsInstance<Channel>()
 
-    private val root: JsonObject = (document?.fields() ?: DEFAULT_DOCUMENT).withInfo()
+    private val base: JsonObject = document?.fields() ?: DEFAULT_DOCUMENT
+
+    private val majorVersion = if ((base["asyncapi"] as? JsonPrimitive)?.content?.startsWith("2.") == true) 2 else 3
+
+    private val root: JsonObject = base.withSpecAnnotations().withInfo()
+
+    /** The info, the servers and, in AsyncAPI 2, the tags of the document, with what their `@spec:` annotations add. */
+    private fun JsonObject.withSpecAnnotations(): JsonObject = JsonObject(
+        this + jsonObjectOf(
+            "info" to (this["info"] as? JsonObject).withInfoAnnotations(),
+            "servers" to (this["servers"] as? JsonObject).withServers(),
+            "tags" to (this["tags"] as? JsonArray).withTags()?.takeIf { majorVersion == 2 },
+        ),
+    )
+
+    /** The fields of `@spec:AsyncAPIInfo`, the `@spec:Description` and, in AsyncAPI 3, the `@spec:AsyncAPITag`s. */
+    private fun JsonObject?.withInfoAnnotations(): JsonObject? = listOfNotNull(
+        spec.find(INFO)?.fields(),
+        spec.single(DESCRIPTION)?.let { jsonObjectOf("description" to JsonPrimitive(it)) },
+        (this?.get("tags") as? JsonArray).withTags()?.takeIf { majorVersion == 3 }?.let { jsonObjectOf("tags" to it) },
+    ).takeIf { it.isNotEmpty() }?.fold(JsonObject(orEmpty())) { info, fields -> JsonObject(info + fields) }
+
+    private fun JsonArray?.withTags(): JsonArray? = spec.named(TAG)
+        .mapNotNull { tag -> tag.value()?.let { JsonObject(mapOf("name" to JsonPrimitive(it)) + tag.fields()) } }
+        .takeIf { it.isNotEmpty() }
+        ?.let { JsonArray(orEmpty() + it) }
+
+    private fun JsonObject?.withServers(): JsonObject? = spec.named(SERVER)
+        .mapNotNull { server -> server.value()?.let { it to JsonObject(server.fields().mapValues { (field, value) -> if (field == "security") value.toSecurity() else value }) } }
+        .takeIf { it.isNotEmpty() }
+        ?.let { JsonObject(orEmpty() + it) }
+
+    /** `security: ["saslScram"]` names security schemes: a reference to each in AsyncAPI 3, a requirement without scopes in AsyncAPI 2. */
+    private fun JsonElement.toSecurity(): JsonElement = (this as? JsonArray)
+        ?.takeIf { names -> names.all { it is JsonPrimitive && it.isString } }
+        ?.let { names ->
+            JsonArray(
+                names.map { (it as JsonPrimitive).content }.map { name ->
+                    when (majorVersion) {
+                        2 -> jsonObjectOf(name to JsonArray(emptyList()))
+                        else -> ref("$SECURITY_SCHEMES_POINTER${name.escapePointer()}")
+                    }
+                },
+            )
+        }
+        ?: this
 
     /** The title and version of the build replace the ones of the document, each where it is set. */
     private fun JsonObject.withInfo(): JsonObject = listOfNotNull(info.title?.let { "title" to JsonPrimitive(it) }, info.version?.let { "version" to JsonPrimitive(it) })
         .takeIf { it.isNotEmpty() }
         ?.let { JsonObject(this + ("info" to JsonObject((this["info"] as? JsonObject).orEmpty() + it))) }
         ?: this
-
-    private val majorVersion = if ((root["asyncapi"] as? JsonPrimitive)?.content?.startsWith("2.") == true) 2 else 3
 
     fun document(): JsonObject = JsonObject(
         root + jsonObjectOf(
@@ -223,17 +328,19 @@ private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions
 
     private fun components(): JsonObject? {
         val fields = spec.find(COMPONENTS)?.fields()
+        val securitySchemes = spec.named(SECURITY_SCHEME).mapNotNull { scheme -> scheme.value()?.let { it to scheme.fields() } }.toMap()
         val schemas = componentModels.associate { componentKeys.getValue(it.identifier.value) to with(writer) { it.schema() } }
         val messages = spec.named(MESSAGE).mapNotNull { message -> message.value()?.let { it to message.toMessage() } }.toMap() +
             channels.takeUnless { fromAsyncAPI }.orEmpty().filterNot { it.annotations.has(MESSAGE) }.associate { channel ->
                 channel.defaultMessageKey() to jsonObjectOf("name" to JsonPrimitive(channel.defaultMessageKey()), "payload" to with(writer) { channel.reference.schema() })
             }
         return when {
-            fields == null && schemas.isEmpty() && messages.isEmpty() -> null
+            fields == null && schemas.isEmpty() && messages.isEmpty() && securitySchemes.isEmpty() -> null
             else -> JsonObject(
                 fields.orEmpty() + jsonObjectOf(
                     "schemas" to schemas.takeIf { it.isNotEmpty() }?.let { JsonObject(((fields?.get("schemas") as? JsonObject).orEmpty()) + it) },
                     "messages" to messages.toJsonObjectOrNull(),
+                    "securitySchemes" to securitySchemes.takeIf { it.isNotEmpty() }?.let { JsonObject(((fields?.get("securitySchemes") as? JsonObject).orEmpty()) + it) },
                 ),
             )
         }

@@ -52,7 +52,8 @@ message carries a union of their payloads, named `<Channel>Message`.
 converts to
 
 ```wirespec
-@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" })
+@spec:AsyncAPIDocument(asyncapi: "3.0.0")
+@spec:AsyncAPIInfo(title: "Todo events", version: "1.0.0")
 @spec:AsyncAPIComponents
 
 @Description("Every change to a todo")
@@ -141,8 +142,13 @@ kept in `@AsyncAPIComponents`. A schema that refers to it carries the Wirespec t
 | Annotation                                                          | On                            | Carries                                                                        |
 |---------------------------------------------------------------------|-------------------------------|--------------------------------------------------------------------------------|
 | `@Description("...")`                                               | channels, definitions, fields | the description of a channel, schema or property                               |
-| `@AsyncAPIDocument(asyncapi: "3.0.0", info: {...}, servers: {...})` | `@spec:`                      | the fields of the document besides its channels, operations and components     |
-| `@AsyncAPIComponents(securitySchemes: {...}, ...)`                  | `@spec:`                      | the components besides the schemas and messages Wirespec holds itself          |
+| `@Description("...")`                                               | `@spec:`                      | the description of the document, `info.description`                            |
+| `@AsyncAPIInfo(title: "...", version: "...")`                       | `@spec:`                      | the rest of `info` (see [Info, servers, security and tags](#info-servers-security-and-tags)) |
+| `@AsyncAPIServer("production", host: "...", protocol: "kafka")`     | `@spec:`                      | a server, by its key                                                           |
+| `@AsyncAPISecurityScheme("saslScram", type: "scramSha256")`         | `@spec:`                      | a security scheme in `components.securitySchemes`, by its key                  |
+| `@AsyncAPITag("todo", description: "...")`                          | `@spec:`                      | a tag of the document                                                          |
+| `@AsyncAPIDocument(asyncapi: "3.0.0", id: "...")`                   | `@spec:`                      | the fields of the document besides the ones the annotations above hold         |
+| `@AsyncAPIComponents(parameters: {...}, ...)`                       | `@spec:`                      | the components besides the schemas, messages and security schemes             |
 | `@AsyncAPIChannel(address: "...", bindings: {...})`                 | channels                      | the fields of the channel besides its description and messages                 |
 | `@AsyncAPIMessage("key", name: "...", payload: "Todo")`             | channels, `@spec:`            | a message of the channel, or of `components.messages`                          |
 | `@AsyncAPISend("id", ...)`, `@AsyncAPIReceive("id", ...)`           | channels, `@spec:`            | an operation: `send` or `subscribe`, `receive` or `publish`                    |
@@ -160,23 +166,93 @@ written in the file header: the annotations at the top of a file, followed by an
 specification instead of one definition.
 
 ```wirespec
-@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" })
+@spec:AsyncAPIDocument(asyncapi: "3.0.0")
+@spec:AsyncAPIInfo(title: "Todo events", version: "1.0.0")
 @spec:AsyncAPIMessage("TodoUpdated", payload: "Todo")
 
 channel TodoUpdates -> Todo
 ```
 
 The files of a specification together make one document, so the `@spec:` annotations of all of them count, in the order
-of the files. A document has one `@spec:AsyncAPIDocument` and one `@spec:AsyncAPIComponents`, and each component message
-and operation once, by its key: declaring one in two files is an error. So is `@AsyncAPIDocument` or
-`@AsyncAPIComponents` on a definition, which is where Wirespec converted by earlier versions has them.
+of the files. A document has one `@spec:AsyncAPIDocument`, `@spec:AsyncAPIComponents`, `@spec:AsyncAPIInfo` and
+`@spec:Description`, and each server, security scheme, tag, component message and operation once, by its key:
+declaring one in two files is an error. So is any of these annotations on a definition, such as `@AsyncAPIDocument` or
+`@AsyncAPIComponents` where Wirespec converted by earlier versions has them, and `@file:AsyncAPI…` annotations: an
+AsyncAPI document has no metadata per file.
+
+### Info, servers, security and tags
+
+The info, servers, security schemes and tags of a document each have an annotation of their own, so they read as what
+they are instead of as fields of `@spec:AsyncAPIDocument`:
+
+```wirespec
+@spec:AsyncAPIDocument(asyncapi: "3.0.0", defaultContentType: "application/json")
+@spec:Description("Everything that happens to todos")
+@spec:AsyncAPIInfo(title: "Todo events", version: "1.0.0", contact: { name: "Todo team", email: "todo@example.com" })
+@spec:AsyncAPITag("todo", description: "Todo events")
+@spec:AsyncAPIServer("production", host: "broker.example.com:9092", protocol: "kafka", security: ["saslScram"])
+@spec:AsyncAPISecurityScheme("saslScram", type: "scramSha256", description: "SASL/SCRAM")
+
+channel TodoUpdates -> Todo
+```
+
+writes, besides the channel, its operation and the schemas:
+
+```json
+{
+  "asyncapi": "3.0.0",
+  "defaultContentType": "application/json",
+  "info": {
+    "title": "Todo events",
+    "version": "1.0.0",
+    "contact": { "name": "Todo team", "email": "todo@example.com" },
+    "description": "Everything that happens to todos",
+    "tags": [{ "name": "todo", "description": "Todo events" }]
+  },
+  "servers": {
+    "production": {
+      "host": "broker.example.com:9092",
+      "protocol": "kafka",
+      "security": [{ "$ref": "#/components/securitySchemes/saslScram" }]
+    }
+  },
+  "components": {
+    "securitySchemes": { "saslScram": { "type": "scramSha256", "description": "SASL/SCRAM" } }
+  }
+}
+```
+
+- `@spec:Description` is the description of the document, as it is for the [OpenAPI emitters](openapi.md#info).
+- `@spec:AsyncAPIInfo` takes the other fields of the [Info Object](https://www.asyncapi.com/docs/reference/specification/v3.0.0#infoObject),
+  such as `title`, `version`, `termsOfService`, `contact`, `license` and `externalDocs`.
+- `@spec:AsyncAPITag` takes the name of the tag first, then its other fields. The tags go in `info.tags` in AsyncAPI 3
+  and in the document itself in AsyncAPI 2.
+- `@spec:AsyncAPIServer` takes the key of the server first, then the fields of the
+  [Server Object](https://www.asyncapi.com/docs/reference/specification/v3.0.0#serverObject): `host`, `protocol`,
+  `pathname` and so on in AsyncAPI 3, `url` and `protocol` in AsyncAPI 2. Its `security` names the security schemes the
+  server needs, `security: ["saslScram"]`, which are written as a reference to each scheme in AsyncAPI 3 and as a
+  requirement without scopes in AsyncAPI 2. Security that is more than that, such as a requirement with scopes, is
+  written as it is.
+- `@spec:AsyncAPISecurityScheme` takes the key of the security scheme first, then the fields of the
+  [Security Scheme Object](https://www.asyncapi.com/docs/reference/specification/v3.0.0#securitySchemeObject).
+
+A server that names a security scheme no `@spec:AsyncAPISecurityScheme` or `@spec:AsyncAPIComponents` declares is an
+error, and so is declaring the same info, server or security scheme in one of these annotations and in
+`@spec:AsyncAPIDocument` or `@spec:AsyncAPIComponents` as well. A build can set the title and version instead of the
+ones in `@spec:AsyncAPIInfo`, see [the title and version of the spec](../plugins/plugins.md#the-title-and-version-of-the-spec).
+
+Converting a document writes these annotations wherever the document has their shape: an `info` object, tags with a
+name, and servers and security schemes that are objects. Anything else stays in `@spec:AsyncAPIDocument` or
+`@spec:AsyncAPIComponents`, so the conversion stays lossless.
 
 ### Parameters
 
 The named parameters of an annotation are the fields of the AsyncAPI object it holds:
 
-- `@AsyncAPIDocument`, `@AsyncAPIComponents` and `@AsyncAPIChannel` take the fields of the document, its components
-  and the channel.
+- `@AsyncAPIDocument`, `@AsyncAPIComponents`, `@AsyncAPIInfo` and `@AsyncAPIChannel` take the fields of the document,
+  its components, its info and the channel.
+- `@AsyncAPIServer`, `@AsyncAPISecurityScheme` and `@AsyncAPITag` take the key of the server or security scheme, or
+  the name of the tag, first, then its other fields.
 - `@AsyncAPIMessage` takes the key of the message first, then the fields of the message. Its `payload` and `headers`
   name a Wirespec type, such as `payload: "Todo"` or `payload: "Todo[]"`, or hold the schema itself.
 - `@AsyncAPISend` and `@AsyncAPIReceive` take the key of the operation first, or its `operationId` in AsyncAPI 2, then
@@ -218,7 +294,8 @@ channel TodoUpdates -> Todo
 ```
 
 - `@spec:AsyncAPIComponents`, `@spec:AsyncAPIMessage` and the operation annotations in the file header add to the
-  components and operations of the document.
+  components and operations of the document, and `@spec:Description`, `@spec:AsyncAPIInfo`, `@spec:AsyncAPIServer`,
+  `@spec:AsyncAPISecurityScheme` and `@spec:AsyncAPITag` to its info, servers, security schemes and tags.
 - Types, enums, unions and refined types become `components.schemas`. A comment or `@Description` becomes the
   description.
 - Endpoints and rpcs are left out, because AsyncAPI has nothing like them.

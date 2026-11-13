@@ -45,7 +45,8 @@ class AsyncAPIParserTest {
     @Test
     fun convertsTodoToWirespec() {
         loadResource("todo.json").toWirespec() shouldBe """
-            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" }, defaultContentType: "application/json")
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", defaultContentType: "application/json")
+            |@spec:AsyncAPIInfo(title: "Todo events", version: "1.0.0")
             |@spec:AsyncAPIComponents
             |@spec:AsyncAPIMessage("TodoUpdated", name: "TodoUpdated", payload: "Todo")
             |@spec:AsyncAPIMessage("TodoCreated", payload: "Todo")
@@ -129,7 +130,8 @@ class AsyncAPIParserTest {
               }
             }
         """.toWirespec() shouldBe """
-            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Shapes", version: "1.0.0" })
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0")
+            |@spec:AsyncAPIInfo(title: "Shapes", version: "1.0.0")
             |@spec:AsyncAPIComponents
             |
             |type Shape = Circle | Square
@@ -188,7 +190,8 @@ class AsyncAPIParserTest {
         """
 
         document.toWirespec() shouldBe """
-            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Orders", version: "1.0.0" })
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0")
+            |@spec:AsyncAPIInfo(title: "Orders", version: "1.0.0")
             |@spec:AsyncAPIComponents
             |
             |type OrderId = String(uuid)
@@ -216,7 +219,12 @@ class AsyncAPIParserTest {
 
         converted.annotations.map { it.fileUri.value to it.annotation.name } shouldBe listOf(
             "asyncapi.json" to "AsyncAPIDocument",
+            "asyncapi.json" to "Description",
+            "asyncapi.json" to "AsyncAPIInfo",
+            "asyncapi.json" to "AsyncAPITag",
+            "asyncapi.json" to "AsyncAPIServer",
             "asyncapi.json" to "AsyncAPIComponents",
+            "asyncapi.json" to "AsyncAPISecurityScheme",
             "asyncapi.json" to "AsyncAPIMessage",
             "asyncapi.json" to "AsyncAPIMessage",
             "asyncapi.json" to "AsyncAPIMessage",

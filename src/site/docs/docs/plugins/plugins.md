@@ -125,8 +125,8 @@ as they are, so the flag does not change those languages.
 
 The languages that write a document with a title and a version, `OpenAPIV2`, `OpenAPIV3` and `AsyncAPI`, take them from
 the spec: from [`@spec:OpenAPIInfo`](../converters/openapi.md#info) and
-[`@spec:AsyncAPIDocument`](../converters/asyncapi.md#the-document), or `Wirespec` and `0.0.0` when the spec declares
-none. A build can set them instead, each on its own, for example to stamp the version of the project on the document:
+[`@spec:AsyncAPIInfo`](../converters/asyncapi.md#info-servers-security-and-tags), or `Wirespec` and `0.0.0` when the
+spec declares none. A build can set them instead, each on its own, for example to stamp the version of the project on the document:
 
 | Plugin | Title          | Version          |
 |--------|----------------|------------------|
