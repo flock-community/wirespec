@@ -39,7 +39,14 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
         super<LanguageEmitter>.emit(ast, logger)
-            .let { e -> Emitted("wirespec.${extension.value}", e.map {it.result }.joinToString("\n")).nel() }
+            .let { e -> Emitted("wirespec.${extension.value}", ast.emitHeader() + e.map {it.result }.joinToString("\n")).nel() }
+
+    /** The spec and file annotations of every module, at the top of the one file this emitter writes. */
+    private fun AST.emitHeader(): String =
+        (annotations.map { it.annotation.emit("spec") } + modules.toList().flatMap { it.annotations }.map { it.emit("file") })
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString("\n", postfix = "\n\n")
+            .orEmpty()
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
         super<LanguageEmitter>.emit(definition, module, logger).let { emitted -> emitted.copy(result = definition.emitMetaData() + emitted.result) }

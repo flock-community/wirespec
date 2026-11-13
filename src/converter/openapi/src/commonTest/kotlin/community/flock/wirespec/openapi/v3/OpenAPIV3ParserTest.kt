@@ -432,7 +432,10 @@ class OpenAPIV3ParserTest {
 
         val expectedEndpoint = Endpoint(
             comment = null,
-            annotations = "Returns a map of status codes to quantities".toDescriptionAnnotationList(),
+            annotations = "Returns a map of status codes to quantities".toDescriptionAnnotationList() + listOf(
+                Annotation("OpenAPITag", listOf(Annotation.Parameter("default", Annotation.Value.Single("store")))),
+                Annotation("OpenAPISecurity", listOf(Annotation.Parameter("default", Annotation.Value.Single("api_key")))),
+            ),
             identifier = DefinitionIdentifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
@@ -1608,7 +1611,7 @@ class OpenAPIV3ParserTest {
         val created = createUser.responses.single { it.status == "201" }
 
         val expectedGetLink = Annotation(
-            name = "Link",
+            name = "OpenAPILink",
             parameters = listOf(
                 Annotation.Parameter("default", Annotation.Value.Single("GetUser")),
                 Annotation.Parameter("operationId", Annotation.Value.Single("GetUserById")),
@@ -1622,7 +1625,7 @@ class OpenAPIV3ParserTest {
             ),
         )
         val expectedDeleteLink = Annotation(
-            name = "Link",
+            name = "OpenAPILink",
             parameters = listOf(
                 Annotation.Parameter("default", Annotation.Value.Single("DeleteUser")),
                 Annotation.Parameter("operationId", Annotation.Value.Single("DeleteUser")),

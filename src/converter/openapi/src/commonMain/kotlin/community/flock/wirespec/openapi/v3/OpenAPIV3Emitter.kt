@@ -2,7 +2,6 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.InfoObject
 import community.flock.kotlinx.openapi.bindings.MediaType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Components
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Header
@@ -12,6 +11,8 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV30LinkOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Links
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30MediaType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Model
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30OAuthFlow
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30OAuthFlows
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Operation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30ParameterLocation
@@ -22,16 +23,23 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV30Response
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Schema
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30SchemaOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30SchemaOrReferenceOrBoolean
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SecurityScheme
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SecuritySchemeType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30SingleType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30TypeDefinition
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.Ref
+import community.flock.kotlinx.openapi.bindings.Server
+import community.flock.kotlinx.openapi.bindings.ServerVariableObject
 import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.SpecInfo
+import community.flock.wirespec.compiler.core.emit.SpecInfoEmitter
+import community.flock.wirespec.compiler.core.exceptions.EmitterException
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -39,25 +47,36 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.common.LinkInfo
+import community.flock.wirespec.openapi.common.OAuthFlowInfo
+import community.flock.wirespec.openapi.common.SecuritySchemeInfo
+import community.flock.wirespec.openapi.common.ServerInfo
+import community.flock.wirespec.openapi.common.SpecMetadata
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.emitPattern
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.findLinks
 import community.flock.wirespec.openapi.common.json
+import community.flock.wirespec.openapi.common.openAPIProblems
+import community.flock.wirespec.openapi.common.securityRequirements
+import community.flock.wirespec.openapi.common.servers
+import community.flock.wirespec.openapi.common.tags
 import community.flock.wirespec.openapi.common.toSchemaDefault
+import community.flock.wirespec.openapi.common.toSpecMetadata
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
-public object OpenAPIV3Emitter : Emitter {
+public object OpenAPIV3Emitter : SpecInfoEmitter {
+    /** A title and version that win over the ones in `@spec:OpenAPIInfo`. */
     public data class Options(
-        val title: String,
-        val version: String,
+        val title: String? = null,
+        val version: String? = null,
     )
 
     override val extension: FileExtension = FileExtension.JSON
@@ -67,30 +86,40 @@ public object OpenAPIV3Emitter : Emitter {
     override fun emit(
         ast: AST,
         logger: Logger,
-    ): NonEmptyList<Emitted> = ast.modules
+    ): NonEmptyList<Emitted> = emit(ast, null, logger)
+
+    override fun withSpecInfo(info: SpecInfo): Emitter = object : SpecInfoEmitter by this {
+        override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, Options(title = info.title, version = info.version), logger)
+    }
+
+    private fun emit(ast: AST, options: Options?, logger: Logger): NonEmptyList<Emitted> = Emitted(
+        "OpenAPI.${extension.value}",
+        json.encodeToString(emitOpenAPIObject(ast, options, logger)),
+    ).let { nonEmptyListOf(it) }
+
+    override fun validate(ast: AST): List<EmitterException> = ast.openAPIProblems()
+
+    /** The document for every module of [ast], with the metadata of its `@spec:` annotations. */
+    public fun emitOpenAPIObject(ast: AST, options: Options? = null, logger: Logger): OpenAPIV3Model = ast.modules
         .flatMap { module ->
             logger.info("Combining Nodes from ${module.fileUri.value} ")
             module.statements
         }
-        .let {
-            Emitted(
-                "OpenAPI.${extension.value}",
-                json.encodeToString(emitOpenAPIObject(it, null, logger)),
-            )
-        }
-        .let { nonEmptyListOf(it) }
+        .let { emitOpenAPIObject(it, ast.annotations.toSpecMetadata(), options, logger) }
 
-    public fun emitOpenAPIObject(statements: Statements, options: Options? = null, logger: Logger): OpenAPIV3Model = OpenAPIV30Model(
+    public fun emitOpenAPIObject(statements: Statements, options: Options? = null, logger: Logger): OpenAPIV3Model = emitOpenAPIObject(statements, emptyList<SpecAnnotation>().toSpecMetadata(), options, logger)
+
+    private fun emitOpenAPIObject(statements: Statements, spec: SpecMetadata, options: Options?, logger: Logger): OpenAPIV3Model = OpenAPIV30Model(
         openapi = "3.0.0",
-        info = InfoObject(
-            title = options?.title ?: "Wirespec",
-            version = options?.version ?: "0.0.0",
-        ),
+        info = spec.toInfo(title = options?.title, version = options?.version),
+        servers = spec.servers.map { it.emit() }.ifEmpty { null },
+        security = spec.security,
+        tags = spec.tags.ifEmpty { null },
         paths = statements.emitPaths(logger),
-        components = statements.emitComponents(logger),
+        components = statements.emitComponents(spec.securitySchemes, logger),
     )
 
-    private fun Statements.emitComponents(logger: Logger) = filterIsInstance<Model>()
+    private fun Statements.emitComponents(securitySchemes: List<SecuritySchemeInfo>, logger: Logger) = filterIsInstance<Model>()
         .associate { definition ->
             definition.identifier.value to when (definition) {
                 is Enum -> definition.emit()
@@ -100,7 +129,53 @@ public object OpenAPIV3Emitter : Emitter {
             }
                 .also { logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}") }
         }
-        .let { OpenAPIV30Components(it) }
+        .let { schemas ->
+            OpenAPIV30Components(
+                schemas = schemas,
+                securitySchemes = securitySchemes.mapNotNull { scheme -> scheme.emit()?.let { scheme.name to it } }.toMap().ifEmpty { null },
+            )
+        }
+
+    private fun ServerInfo.emit(): Server = Server(
+        url = url,
+        description = description,
+        variables = variables
+            .mapValues { (_, variable) -> ServerVariableObject(default = variable.default?.let { JsonPrimitive(it) }, enum = variable.enum?.map { JsonPrimitive(it) }, description = variable.description) }
+            .ifEmpty { null },
+    )
+
+    private fun SecuritySchemeInfo.emit(): OpenAPIV30SecurityScheme? = when (type) {
+        "apiKey" -> OpenAPIV30SecuritySchemeType.API_KEY
+        "http" -> OpenAPIV30SecuritySchemeType.HTTP
+        "oauth2" -> OpenAPIV30SecuritySchemeType.OAUTH2
+        "openIdConnect" -> OpenAPIV30SecuritySchemeType.OPEN_ID_CONNECT
+        else -> null
+    }?.let { schemeType ->
+        OpenAPIV30SecurityScheme(
+            type = schemeType,
+            description = description,
+            name = parameterName,
+            `in` = location,
+            scheme = scheme,
+            bearerFormat = bearerFormat,
+            flows = flows.takeIf { it.isNotEmpty() }?.let {
+                OpenAPIV30OAuthFlows(
+                    implicit = it["implicit"]?.emit(),
+                    password = it["password"]?.emit(),
+                    clientCredentials = it["clientCredentials"]?.emit(),
+                    authorizationCode = it["authorizationCode"]?.emit(),
+                )
+            },
+            openIdConnectUrl = openIdConnectUrl,
+        )
+    }
+
+    private fun OAuthFlowInfo.emit(): OpenAPIV30OAuthFlow = OpenAPIV30OAuthFlow(
+        authorizationUrl = authorizationUrl,
+        tokenUrl = tokenUrl,
+        refreshUrl = refreshUrl,
+        scopes = scopes,
+    )
 
     private fun Statements.emitPaths(logger: Logger) = filterIsInstance<Endpoint>()
         .groupBy { it.path }
@@ -179,8 +254,11 @@ public object OpenAPIV3Emitter : Emitter {
     private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV30Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OpenAPIV30Operation = OpenAPIV30Operation(
+        tags = annotations.tags().ifEmpty { null },
         operationId = identifier.value,
         description = annotations.findDescription() ?: comment?.value,
+        security = annotations.securityRequirements(),
+        servers = annotations.servers().map { it.emit() }.ifEmpty { null },
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + queries.fields.map { it.emitParameter(OpenAPIV30ParameterLocation.QUERY) } + headers.fields.map {
             it.emitParameter(

@@ -8,20 +8,26 @@ import arrow.core.mapOrAccumulate
 import arrow.core.nel
 import arrow.core.raise.Raise
 import arrow.core.raise.either
+import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
+import community.flock.wirespec.compiler.core.exceptions.FileAnnotationWithoutDefinitionException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
+import community.flock.wirespec.compiler.core.parse.AnnotationParser.misplacedHeaderAnnotation
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
+import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseHeader
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.HeaderAnnotation
 import community.flock.wirespec.compiler.core.tokenize.PartDefinition
 import community.flock.wirespec.compiler.core.tokenize.RpcDefinition
 import community.flock.wirespec.compiler.core.tokenize.Token
@@ -45,11 +51,14 @@ public object Parser {
         options: ParseOptions = ParseOptions(),
     ): EitherNel<WirespecException, AST> = either {
         modules
-            .map { it.toProvider(modules.allDefinitions(), logger).parseModule() }
+            .map { it.toProvider(modules.allDefinitions(), logger).parseFile() }
             .flattenOrAccumulate().bind()
-            .toNonEmptyListOrNull()
-            .let { ensureNotNull(it) { EmptyModule().nel() } }
-            .let { AST(it) }
+            .let { files ->
+                files.mapNotNull { it.module }
+                    .toNonEmptyListOrNull()
+                    .let { ensureNotNull(it) { EmptyModule().nel() } }
+                    .let { AST(modules = it, annotations = files.flatMap(ParsedFile::spec)) }
+            }
             .also { it.unusedParts().forEach { part -> logger.warn(unusedPartWarning(part.identifier.value)) } }
             .let { Validator.validate(options, it).bind() }
     }
@@ -90,7 +99,19 @@ private fun NonEmptyList<TokenizedModule>.allDefinitions() = flatMap { it.tokens
     }
     .toSet()
 
-private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = either {
+/** A file holds a module, unless it holds nothing but a header with `@spec:` annotations. */
+private data class ParsedFile(val spec: List<SpecAnnotation>, val module: Module?)
+
+private fun TokenProvider.parseFile(): EitherNel<WirespecException, ParsedFile> = either {
+    val start = token
+    val header = parseHeader().mapLeft { it.nel() }.bind()
+    val module = parseDefinitions().bind().toNonEmptyListOrNull()?.let { Module(fileUri, it, header.file) }
+    ensure(module != null || header.spec.isNotEmpty() || header.file.isNotEmpty()) { EmptyModule().nel() }
+    ensure(module != null || header.file.isEmpty()) { FileAnnotationWithoutDefinitionException(fileUri, start.coordinates).nel() }
+    ParsedFile(spec = header.spec.map { SpecAnnotation(fileUri, it) }, module = module)
+}
+
+private fun TokenProvider.parseDefinitions(): EitherNel<WirespecException, List<Definition>> = either {
     mutableListOf<Either<WirespecException, Definition>>()
         .apply {
             while (hasNext()) {
@@ -98,14 +119,12 @@ private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = 
                     is AnnotationToken -> add(parseDefinition())
                     is Comment -> add(parseDefinition())
                     is WirespecDefinition -> add(parseDefinition())
+                    is HeaderAnnotation -> add(misplacedHeaderAnnotation())
                     else -> eatToken()
                 }
             }
         }
         .mapOrAccumulate { it.bind() }.bind()
-        .toNonEmptyListOrNull()
-        .let { ensureNotNull(it) { EmptyModule().nel() } }
-        .let { Module(fileUri, it) }
 }
 
 private fun TokenProvider.parseDefinition() = either {
@@ -123,6 +142,8 @@ private fun TokenProvider.parseDefinition() = either {
             is RpcDefinition -> with(RpcParser) { parseRpc(comment, annotations) }.bind()
             is PartDefinition -> with(PartParser) { parsePart(comment, annotations) }.bind()
         }
+
+        is HeaderAnnotation -> misplacedHeaderAnnotation().bind()
 
         else -> raiseWrongToken<WirespecDefinition>().bind()
     }

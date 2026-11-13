@@ -26,3 +26,6 @@ internal class NothingToEmitException(language: String) :
             "and a part is only generated through the types, endpoints and rpcs that spread it.",
         Token.Coordinates(),
     )
+
+/** A spec that an emitter cannot emit, reported by [community.flock.wirespec.compiler.core.emit.Emitter.validate]. */
+public class EmitterException(fileUri: FileUri, message: String) : WirespecException(fileUri, message, Token.Coordinates())

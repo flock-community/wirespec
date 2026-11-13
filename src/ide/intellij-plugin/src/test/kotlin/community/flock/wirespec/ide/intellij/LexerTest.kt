@@ -52,6 +52,35 @@ class LexerTest : TestCase() {
         assertEquals(expected, tokenize(source).filterNot { it.type == Types.WHITE_SPACE }.map { it.type to it.text })
     }
 
+    fun testMapsHeaderAnnotationsToAnnotations() {
+        val header = """
+            |@spec:OpenAPIInfo(title: "Todo API")
+            |@file:Owner
+            |
+            |@Deprecated
+            |type TodoDto {}
+        """.trimMargin()
+        val expected = listOf(
+            Types.ANNOTATION to "@spec:OpenAPIInfo",
+            Types.LEFT_PARENTHESES to "(",
+            Types.WIRESPEC_IDENTIFIER to "title",
+            Types.COLON to ":",
+            Types.LITERAL_STRING to "\"Todo API\"",
+            Types.RIGHT_PARENTHESES to ")",
+            Types.ANNOTATION to "@file:Owner",
+            Types.ANNOTATION to "@Deprecated",
+            Types.TYPE_DEF to "type",
+            Types.TYPE_IDENTIFIER to "TodoDto",
+            Types.LEFT_CURLY to "{",
+            Types.RIGHT_CURLY to "}",
+        )
+
+        val tokens = tokenize(header)
+
+        assertEquals(header, tokens.joinToString("") { it.text })
+        assertEquals(expected, tokens.filterNot { it.type == Types.WHITE_SPACE }.map { it.type to it.text })
+    }
+
     private data class LexedToken(val type: IElementType, val text: String, val start: Int, val end: Int)
 
     private fun tokenize(text: String): List<LexedToken> = Lexer().run {

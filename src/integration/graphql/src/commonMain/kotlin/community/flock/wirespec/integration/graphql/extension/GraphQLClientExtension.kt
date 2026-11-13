@@ -101,9 +101,8 @@ public class GraphQLClientExtension(
 
     override fun extend(ir: IR, ast: AST): IR = dialect
         ?.let { dialect ->
-            val definitions = ast.modules.flatMap { it.statements }
-            val operations = GraphQLOperations(definitions)
-            definitions.filterIsInstance<Rpc>()
+            val operations = GraphQLOperations(ast)
+            ast.modules.flatMap { it.statements }.filterIsInstance<Rpc>()
                 .filter { rpc -> rpc.annotations.any { it.name in OPERATIONS } }
                 .mapNotNull { rpc ->
                     operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, operations.close(rpc), operations.path(rpc), ir.serviceOf(rpc)) }

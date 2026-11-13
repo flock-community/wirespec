@@ -11,19 +11,25 @@ import community.flock.kotlinx.openapi.bindings.MediaType
 import community.flock.kotlinx.openapi.bindings.MediaTypeObject
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30ParameterLocation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Response
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Schema
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SecurityScheme
+import community.flock.kotlinx.openapi.bindings.OpenAPIV30SecuritySchemeType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30SingleType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV30TypeArray
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31Response
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31Schema
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31SecurityScheme
+import community.flock.kotlinx.openapi.bindings.OpenAPIV31SecuritySchemeType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31SingleType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV31TypeArray
@@ -46,6 +52,8 @@ import community.flock.kotlinx.openapi.bindings.ResponseOrReference
 import community.flock.kotlinx.openapi.bindings.Schema
 import community.flock.kotlinx.openapi.bindings.SchemaOrReference
 import community.flock.kotlinx.openapi.bindings.SchemaOrReferenceOrBoolean
+import community.flock.kotlinx.openapi.bindings.SecuritySchemeOrReference
+import community.flock.kotlinx.openapi.bindings.Server
 import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -63,21 +71,28 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.converter.common.toDefaultValue
 import community.flock.wirespec.openapi.common.LinkInfo
+import community.flock.wirespec.openapi.common.OAuthFlowInfo
+import community.flock.wirespec.openapi.common.SecuritySchemeInfo
+import community.flock.wirespec.openapi.common.ServerInfo
+import community.flock.wirespec.openapi.common.ServerVariableInfo
 import community.flock.wirespec.openapi.common.className
 import community.flock.wirespec.openapi.common.flatMapRequests
 import community.flock.wirespec.openapi.common.flatMapResponses
 import community.flock.wirespec.openapi.common.getReference
+import community.flock.wirespec.openapi.common.infoAnnotation
 import community.flock.wirespec.openapi.common.isParam
 import community.flock.wirespec.openapi.common.jsonDefault
 import community.flock.wirespec.openapi.common.parseOpenApi
 import community.flock.wirespec.openapi.common.resolveEndpointNameCollisions
 import community.flock.wirespec.openapi.common.sanitize
 import community.flock.wirespec.openapi.common.stringType
+import community.flock.wirespec.openapi.common.tagAnnotation
 import community.flock.wirespec.openapi.common.toAnnotation
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.common.toDict
 import community.flock.wirespec.openapi.common.toIterable
 import community.flock.wirespec.openapi.common.toName
+import community.flock.wirespec.openapi.common.toOperationAnnotations
 import community.flock.wirespec.openapi.common.toOperationList
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -89,7 +104,7 @@ public object OpenAPIV3Parser : Parser {
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = parseOpenApi(moduleContent) {
         OpenAPIV3(jsonDefault(strict))
             .decodeFromString(it)
-            .parse()
+            .let { openApi -> openApi.parse() to openApi.specAnnotations() }
     }
 
     public fun OpenAPIV3Model.parse(): NonEmptyList<Definition> = listOf(
@@ -186,7 +201,10 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
 
                 Endpoint(
                     comment = null,
-                    annotations = operation.description.toDescriptionAnnotationList(),
+                    annotations = operation.description.toDescriptionAnnotationList() +
+                        operation.tags.orEmpty().filterNotNull().map { tagAnnotation(it) } +
+                        operation.security.toOperationAnnotations() +
+                        operation.servers.orEmpty().map { it.toServerInfo().toAnnotation() },
                     identifier = DefinitionIdentifier(name),
                     method = method,
                     path = segments,
@@ -863,4 +881,78 @@ private fun SchemaOrReferenceOrBoolean?.exists() = when (this) {
     is BooleanValue -> this.value
     is OpenAPIReference -> true
     null -> false
+}
+
+/** The metadata of the document, as the `@spec:` annotations that the OpenAPI emitters read, each once as spec annotations are unique. */
+internal fun OpenAPIV3Model.specAnnotations(): List<Annotation> = listOf(
+    info.description.toDescriptionAnnotationList(),
+    listOf(infoAnnotation(info.title, info.version, info.termsOfService, info.contact, info.license)),
+    servers().map { it.toAnnotation() },
+    components?.securitySchemes.orEmpty().mapNotNull { (name, scheme) -> scheme.toSecuritySchemeInfo(name)?.toAnnotation() },
+    security.orEmpty().map { it.toAnnotation() },
+    tags.orEmpty().map { tagAnnotation(it.name, it.description) },
+).flatten().distinct()
+
+private fun OpenAPIV3Model.servers(): List<ServerInfo> = when (this) {
+    is OpenAPIV30Model -> servers
+    is OpenAPIV31Model -> servers
+    else -> null
+}.orEmpty().map { it.toServerInfo() }
+
+private fun Server.toServerInfo(): ServerInfo = ServerInfo(
+    url = url,
+    description = description,
+    variables = variables.orEmpty().mapValues { (_, variable) ->
+        ServerVariableInfo(
+            default = (variable.default as? JsonPrimitive)?.contentOrNull,
+            enum = variable.enum?.map { it.content },
+            description = variable.description,
+        )
+    },
+)
+
+private fun SecuritySchemeOrReference.toSecuritySchemeInfo(name: String): SecuritySchemeInfo? = when (this) {
+    is OpenAPIV30SecurityScheme -> SecuritySchemeInfo(
+        name = name,
+        type = when (type) {
+            OpenAPIV30SecuritySchemeType.API_KEY -> "apiKey"
+            OpenAPIV30SecuritySchemeType.HTTP -> "http"
+            OpenAPIV30SecuritySchemeType.OAUTH2 -> "oauth2"
+            OpenAPIV30SecuritySchemeType.OPEN_ID_CONNECT -> "openIdConnect"
+        },
+        description = description,
+        scheme = scheme,
+        bearerFormat = bearerFormat,
+        parameterName = this.name,
+        location = `in`,
+        flows = listOfNotNull(
+            flows?.implicit?.let { "implicit" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+            flows?.password?.let { "password" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+            flows?.clientCredentials?.let { "clientCredentials" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+            flows?.authorizationCode?.let { "authorizationCode" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+        ).toMap(),
+        openIdConnectUrl = openIdConnectUrl,
+    )
+    is OpenAPIV31SecurityScheme -> SecuritySchemeInfo(
+        name = name,
+        type = when (type) {
+            OpenAPIV31SecuritySchemeType.API_KEY -> "apiKey"
+            OpenAPIV31SecuritySchemeType.HTTP -> "http"
+            OpenAPIV31SecuritySchemeType.OAUTH2 -> "oauth2"
+            OpenAPIV31SecuritySchemeType.OPEN_ID_CONNECT -> "openIdConnect"
+        },
+        description = description,
+        scheme = scheme,
+        bearerFormat = bearerFormat,
+        parameterName = this.name,
+        location = `in`,
+        flows = listOfNotNull(
+            flows?.implicit?.let { "implicit" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+            flows?.password?.let { "password" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+            flows?.clientCredentials?.let { "clientCredentials" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+            flows?.authorizationCode?.let { "authorizationCode" to OAuthFlowInfo(it.authorizationUrl, it.tokenUrl, it.refreshUrl, it.scopes.orEmpty()) },
+        ).toMap(),
+        openIdConnectUrl = openIdConnectUrl,
+    )
+    else -> null
 }

@@ -33,8 +33,6 @@ private fun toDescriptionAnnotation(description: String): Annotation = Annotatio
     Annotation.Parameter("default", Annotation.Value.Single(description)).let(::listOf),
 )
 
-private const val LINK_ANNOTATION_NAME = "Link"
-
 internal data class LinkInfo(
     val name: String,
     val operationId: String?,
@@ -45,7 +43,7 @@ internal data class LinkInfo(
     val serverUrl: String?,
 )
 
-internal fun List<Annotation>.findLinks(): List<LinkInfo> = filter { it.name == LINK_ANNOTATION_NAME }
+internal fun List<Annotation>.findLinks(): List<LinkInfo> = filter { it.name == OpenAPIAnnotations.LINK }
     .mapNotNull { it.toLinkInfo() }
 
 internal fun LinkInfo.toAnnotation(): Annotation {
@@ -65,7 +63,7 @@ internal fun LinkInfo.toAnnotation(): Annotation {
     requestBody?.let { params += Annotation.Parameter("requestBody", Annotation.Value.Single(it)) }
     description?.let { params += Annotation.Parameter("description", Annotation.Value.Single(it)) }
     serverUrl?.let { params += Annotation.Parameter("server", Annotation.Value.Single(it)) }
-    return Annotation(LINK_ANNOTATION_NAME, params)
+    return Annotation(OpenAPIAnnotations.LINK, params)
 }
 
 private fun Annotation.toLinkInfo(): LinkInfo? {

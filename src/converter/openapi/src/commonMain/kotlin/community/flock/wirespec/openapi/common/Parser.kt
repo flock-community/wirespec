@@ -11,10 +11,12 @@ import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 import community.flock.wirespec.compiler.core.parse.ast.Statements
 import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.converter.common.withValidEnumDefaults
@@ -26,14 +28,18 @@ internal fun jsonDefault(strict: Boolean) = Json {
     ignoreUnknownKeys = !strict
 }
 
-internal fun parseOpenApi(moduleContent: ModuleContent, openApiParser: (String) -> Statements) = AST(
-    modules = nonEmptyListOf(
-        Module(
-            fileUri = moduleContent.fileUri,
-            statements = openApiParser(moduleContent.content).let { statements -> statements.map { it.withValidEnumDefaults(statements) } },
+/** [openApiParser] reads the definitions of a document and its metadata, which become `@spec:` annotations. */
+internal fun parseOpenApi(moduleContent: ModuleContent, openApiParser: (String) -> Pair<Statements, List<Annotation>>) = openApiParser(moduleContent.content).let { (statements, spec) ->
+    AST(
+        modules = nonEmptyListOf(
+            Module(
+                fileUri = moduleContent.fileUri,
+                statements = statements.map { it.withValidEnumDefaults(statements) },
+            ),
         ),
-    ),
-)
+        annotations = spec.map { SpecAnnotation(moduleContent.fileUri, it) },
+    )
+}
 
 internal fun PathItem.toOperationList() = Endpoint.Method.entries
     .associateWith {

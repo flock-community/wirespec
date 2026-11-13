@@ -76,8 +76,8 @@ type Score {
 }
 ```
 
-A value can also be an array of strings or a dictionary. A name that is not an identifier, such as `$ref` or
-`x-trace.id`, is written between quotes:
+A value can also be an array of strings, such as `["todos", "audit"]` or the empty `[]`, or a dictionary. A name
+that is not an identifier, such as `$ref` or `x-trace.id`, is written between quotes:
 
 ```wirespec
 @Kafka(topics: ["todos", "audit"], headers: { "x-trace.id": "uuid", retries: "3" })
@@ -96,6 +96,38 @@ type CreateUserRequest {
     email: String
 }
 ```
+
+### The file header
+
+An annotation written as `@spec:Name` applies to the whole specification: every file compiled together. An annotation
+written as `@file:Name` applies to the file it is written in. They take parameters like any other annotation, and
+together they form the file header:
+
+```wirespec
+@spec:OpenAPIServer("https://api.example.com/v2", description: "Production")
+@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", bearerFormat: "JWT")
+@file:Owner("customers")
+
+type Customer {
+    id: String
+}
+```
+
+- The header is the first thing in a file. Only empty lines may come before it, not even a comment.
+- `@spec:` and `@file:` annotations may be mixed in any order.
+- An empty line separates the header from whatever follows it.
+- A `@spec:` or `@file:` annotation anywhere else is an error.
+- A file may hold nothing but a header with `@spec:` annotations, so the annotations of the whole specification can
+  have a file of their own. Such a file cannot hold `@file:` annotations: they describe the definitions in the file.
+- Spec annotations are unique: the same `@spec:` annotation twice, in one file or in two, is an error.
+
+The files of a directory are read in the order of their paths, so the spec annotations of several files come in the
+same order on every machine. An emitter that reads spec annotations decides what else counts as the same: the
+[OpenAPI emitters](../converters/openapi.md#several-files), for example, collect the servers and tags of all files but
+accept each server URL and tag name once, and the default security from one file only.
+
+An emitter or [IR extension](../plugins/plugins.md#ir-extensions) finds the spec annotations on the root of the AST,
+each with the file it is written in, and the file annotations on each module.
 
 ## Default values
 

@@ -40,6 +40,7 @@ private fun List<File>.wirespecSourcesIn(folder: String) = flatMap { entry ->
             .takeIf { it.isDirectory }
             ?.walkTopDown()
             ?.filter { it.isFile && it.name.endsWith(wirespecExtension) }
+            ?.sortedBy { it.path }
             ?.map { Source<Wirespec>(Name(it.name.removeSuffix(wirespecExtension)), it.readText(Charsets.UTF_8)) }
             ?.toList()
             .orEmpty()
@@ -47,6 +48,7 @@ private fun List<File>.wirespecSourcesIn(folder: String) = flatMap { entry ->
         entry.isJar() -> JarFile(entry).use { jar ->
             jar.entries().asSequence()
                 .filter { !it.isDirectory && it.name.startsWith("$folder/") && it.name.endsWith(wirespecExtension) }
+                .sortedBy { it.name }
                 .map { Source<Wirespec>(Name(it.name.substringAfterLast('/').removeSuffix(wirespecExtension)), jar.read(it)) }
                 .toList()
         }

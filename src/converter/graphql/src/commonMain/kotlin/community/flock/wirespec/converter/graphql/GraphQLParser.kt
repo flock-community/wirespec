@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Shape
 import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -70,16 +71,22 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
  * Wirespec cannot express natively —
  * descriptions, directives, field arguments, default values, extensions — is kept in annotations, so the schema can
- * be rebuilt from the Wirespec definitions.
+ * be rebuilt from the Wirespec definitions. The schema and directive definitions belong to the schema as a whole, so
+ * they are `@spec:` annotations.
  */
 public object GraphQLParser : Parser {
 
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = GraphQLDocumentParser(moduleContent.content)
         .parseDocument()
-        .let { GraphQLConverter(it).convert() }
-        .toNonEmptyListOrNull()
-        ?.let { AST(nonEmptyListOf(Module(moduleContent.fileUri, it))) }
-        ?: error("Cannot yield an empty AST from GraphQL document ${moduleContent.fileUri.value}")
+        .let(::GraphQLConverter)
+        .let { converter ->
+            AST(
+                modules = converter.definitions().toNonEmptyListOrNull()
+                    ?.let { nonEmptyListOf(Module(moduleContent.fileUri, it)) }
+                    ?: error("Cannot convert GraphQL document ${moduleContent.fileUri.value}: it defines no types, and Wirespec needs a definition besides the @spec: annotations of its schema and directives"),
+                annotations = converter.specAnnotations().map { SpecAnnotation(moduleContent.fileUri, it) },
+            )
+        }
 }
 
 private class GraphQLConverter(private val document: Document) {
@@ -143,10 +150,18 @@ private class GraphQLConverter(private val document: Document) {
         .filterNot { it is ObjectTypeDefinition && it.name in roots }
         .associateWith { lazy { it.implement() } }
 
-    fun convert(): List<Definition> = document.definitions.flatMap { definition ->
+    /** The schema and directive definitions, which no Wirespec definition stands for. */
+    fun specAnnotations(): List<Annotation> = document.definitions.mapNotNull { definition ->
         when (definition) {
-            is SchemaDefinition -> definition.convert().let(::listOf)
-            is DirectiveDefinition -> definition.convert().let(::listOf)
+            is SchemaDefinition -> definition.convert()
+            is DirectiveDefinition -> definition.convert()
+            is TypeDefinition -> null
+        }
+    }
+
+    fun definitions(): List<Definition> = document.definitions.flatMap { definition ->
+        when (definition) {
+            is SchemaDefinition, is DirectiveDefinition -> emptyList()
             is ScalarTypeDefinition -> definition.convert().let(::listOf)
             is ObjectTypeDefinition -> definition.convert()
             is InterfaceTypeDefinition -> definition.convert()
@@ -156,26 +171,21 @@ private class GraphQLConverter(private val document: Document) {
         }
     } + listOfNotNull(builtInId())
 
-    private fun SchemaDefinition.convert(): Type = type(
-        identifier = claim(if (extension) "SchemaExtension" else "Schema"),
-        annotations = listOf(annotation(SCHEMA, *operationTypes.map { parameter(it.operation.keyword, it.type) }.toTypedArray())) +
-            listOfNotNull(annotation(EXTEND).takeIf { extension }) +
-            description.toAnnotations() +
-            directives.toAnnotations(),
-        entries = emptyList(),
+    private fun SchemaDefinition.convert(): Annotation = annotation(
+        SCHEMA,
+        *operationTypes.map { parameter(it.operation.keyword, it.type) }.toTypedArray(),
+        parameter("extend", "true").takeIf { extension },
+        description?.let { parameter("description", it) },
+        parameter("directives", directives.map { it.print() }),
     )
 
-    private fun DirectiveDefinition.convert(): Type = type(
-        identifier = claim("${name.sanitize()}Directive"),
-        annotations = listOf(
-            annotation(
-                DIRECTIVE_DEFINITION,
-                parameter("name", name),
-                parameter("locations", locations),
-                parameter("repeatable", "true").takeIf { repeatable },
-            ),
-        ) + description.toAnnotations(),
-        entries = arguments.map { it.toField() },
+    private fun DirectiveDefinition.convert(): Annotation = annotation(
+        DIRECTIVE_DEFINITION,
+        parameter("name", name),
+        parameter("locations", locations),
+        parameter("repeatable", "true").takeIf { repeatable },
+        description?.let { parameter("description", it) },
+        parameter("arguments", arguments.associate { it.name to it.argumentParameters() }),
     )
 
     private fun ScalarTypeDefinition.convert(): Refined = Refined(
@@ -408,9 +418,10 @@ private class GraphQLConverter(private val document: Document) {
         defaultValue = native,
     )
 
-    private fun InputValueDefinition.toArgumentAnnotation(): Annotation = annotation(
-        ARGUMENT,
-        parameter("name", name),
+    private fun InputValueDefinition.toArgumentAnnotation(): Annotation = annotation(ARGUMENT, parameter("name", name), *argumentParameters().toTypedArray())
+
+    /** An argument as `@GraphQLArgument` and `@GraphQLDirectiveDefinition` hold it, but for its name. */
+    private fun InputValueDefinition.argumentParameters(): List<Annotation.Parameter> = listOfNotNull(
         parameter("type", type.print()),
         defaultValue?.let { parameter("defaultValue", it.print()) },
         description?.let { parameter("description", it) },
@@ -522,7 +533,8 @@ private class GraphQLConverter(private val document: Document) {
         fun Document.typeReferences(): List<String> = definitions.flatMap { definition ->
             when (definition) {
                 is SchemaDefinition -> definition.operationTypes.map { it.type }
-                is DirectiveDefinition -> definition.arguments.map { it.type.leaf() }
+                // The arguments of a directive keep their GraphQL types in its annotation.
+                is DirectiveDefinition -> emptyList()
                 is ScalarTypeDefinition -> emptyList()
                 is ObjectTypeDefinition -> definition.fields.flatMap { it.references() }
                 is InterfaceTypeDefinition -> definition.fields.flatMap { it.references() }

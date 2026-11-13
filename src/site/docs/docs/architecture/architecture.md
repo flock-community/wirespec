@@ -28,7 +28,7 @@ The first stage scans the raw source string into a sequence of typed tokens — 
 
 ## Parse
 
-The parser consumes the token stream and produces a typed AST. The top-level entry point is `Parser.parse` in `src/compiler/core/.../parse/Parser.kt`. Per-construct parsers handle each Wirespec definition: `TypeParser`, `EndpointParser`, `ChannelParser`, `RpcParser`, `EnumParser`, and `AnnotationParser`. The output is an `AST` value shaped as `Root → Module[] → Definition[]`, where `Definition` is a sealed hierarchy with seven variants: `Type`, `Enum`, `Union`, `Refined`, `Endpoint`, `Channel`, and `Rpc`. References inside definitions resolve against a small reference type system (`Custom`, `Primitive`, `Iterable`, `Dict`, `Any`, `Unit`), each of which can be marked nullable.
+The parser consumes the token stream and produces a typed AST. The top-level entry point is `Parser.parse` in `src/compiler/core/.../parse/Parser.kt`. Per-construct parsers handle each Wirespec definition: `TypeParser`, `EndpointParser`, `ChannelParser`, `RpcParser`, `EnumParser`, and `AnnotationParser`. The output is an `AST` value shaped as `Root → Module[] → Definition[]`. The `@spec:` annotations of the [file headers](../language/language.mdx#the-file-header) live on the `Root`, each with the file it is written in, and the `@file:` annotations on their `Module`. In the AST, `Definition` is a sealed hierarchy with seven variants: `Type`, `Enum`, `Union`, `Refined`, `Endpoint`, `Channel`, and `Rpc`. References inside definitions resolve against a small reference type system (`Custom`, `Primitive`, `Iterable`, `Dict`, `Any`, `Unit`), each of which can be marked nullable.
 
 ## Emit
 
@@ -39,6 +39,10 @@ fun CompilationContext.compile(source) = emit(parse(source))
 ```
 
 The result is a flattened `List<Emitted>` ready to write to disk.
+
+Before an emitter runs, `emit` asks it what keeps it from emitting the AST: `Emitter.validate` returns a list of `EmitterException`s, empty by default. The OpenAPI emitters use it to reject annotations they cannot write, such as a security requirement that names a scheme the spec does not declare, so the compile fails with a message instead of producing a document that misleads the tools reading it.
+
+An emitter that writes a document with a title and version, such as OpenAPI or AsyncAPI, implements `SpecInfoEmitter`. Its `withSpecInfo` takes a `SpecInfo`, the title and version a build sets instead of the ones the spec declares, and the plugins apply it to whatever emitter they create: `Emitter.withSpecInfo` leaves the emitters that write neither as they are.
 
 ## Emitter style
 
