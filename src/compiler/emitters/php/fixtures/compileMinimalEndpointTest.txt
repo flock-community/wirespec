@@ -1,0 +1,237 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Endpoint\GetTodos;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+
+final readonly class Path implements Wirespec\Path
+{
+}
+
+final readonly class Queries implements Wirespec\Queries
+{
+}
+
+final readonly class RequestHeaders implements Wirespec\Request\Headers
+{
+}
+
+/**
+ * @implements Wirespec\Request<null>
+ */
+final readonly class Request implements Wirespec\Request
+{
+    public Path $path;
+    public Wirespec\Method $method;
+    public Queries $queries;
+    public RequestHeaders $headers;
+    public null $body;
+
+    public function __construct()
+    {
+        $this->path = new Path();
+        $this->method = Wirespec\Method::GET;
+        $this->queries = new Queries();
+        $this->headers = new RequestHeaders();
+        $this->body = null;
+    }
+}
+
+/**
+ * @template T
+ * @extends Wirespec\Response<T>
+ */
+interface Response extends Wirespec\Response
+{
+}
+
+/**
+ * @template T
+ * @extends Response<T>
+ */
+interface Response2XX extends Response
+{
+}
+
+/**
+ * @extends Response<list<TodoDto>>
+ */
+interface ResponseListTodoDto extends Response
+{
+}
+
+final readonly class Response200Headers implements Wirespec\Response\Headers
+{
+}
+
+/**
+ * @implements Response2XX<list<TodoDto>>
+ */
+final readonly class Response200 implements Response2XX, ResponseListTodoDto
+{
+    public int $status;
+    public Response200Headers $headers;
+    /**
+     * @var list<TodoDto>
+     */
+    public array $body;
+
+    /**
+     * @param list<TodoDto> $body
+     */
+    public function __construct(array $body)
+    {
+        $this->status = 200;
+        $this->headers = new Response200Headers();
+        $this->body = $body;
+    }
+}
+
+interface Handler extends Wirespec\Handler
+{
+    public function getTodos(Request $request): Response;
+}
+
+interface Call extends Wirespec\Call
+{
+    public function getTodos(): Response;
+}
+
+namespace Community\Flock\Wirespec\Generated\Endpoint;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+
+final class GetTodos implements Wirespec\Endpoint
+{
+    public static function toRawRequest(Wirespec\Serializer $serialization, GetTodos\Request $request): Wirespec\RawRequest
+    {
+        return new Wirespec\RawRequest(method: $request->method->value, path: ['todos'], queries: [], headers: [], body: null);
+    }
+
+    public static function fromRawRequest(
+        Wirespec\Deserializer $serialization,
+        Wirespec\RawRequest $request,
+    ): GetTodos\Request {
+        return new GetTodos\Request();
+    }
+
+    public static function toRawResponse(
+        Wirespec\Serializer $serialization,
+        GetTodos\Response $response,
+    ): Wirespec\RawResponse {
+        return match (true) {
+            $response instanceof GetTodos\Response200 => new Wirespec\RawResponse(statusCode: $response->status, headers: [], body: $serialization->serializeBody($response->body, 'list<' . TodoDto::class . '>')),
+            default => throw new \Exception(('Cannot match response with status: ' . $response->status)),
+        };
+    }
+
+    public static function fromRawResponse(
+        Wirespec\Deserializer $serialization,
+        Wirespec\RawResponse $response,
+    ): GetTodos\Response {
+        return match ($response->statusCode) {
+            200 => new GetTodos\Response200(body: ($response->body !== null ? $serialization->deserializeBody($response->body, 'list<' . TodoDto::class . '>') : throw new \Exception('body is null'))),
+            default => throw new \Exception(('Cannot match response with status: ' . $response->statusCode)),
+        };
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class TodoDto implements Wirespec\Shape
+{
+    public function __construct(
+        public string $description,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Client;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Endpoint\GetTodos;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+
+final readonly class GetTodosClient implements GetTodos\Call
+{
+    public function __construct(
+        public Wirespec\Serialization $serialization,
+        public Wirespec\Transportation $transportation,
+    ) {
+    }
+
+    public function getTodos(): GetTodos\Response
+    {
+        $request = new GetTodos\Request();
+        $rawRequest = GetTodos::toRawRequest($this->serialization, $request);
+        $rawResponse = $this->transportation->transport($rawRequest);
+        return GetTodos::fromRawResponse($this->serialization, $rawResponse);
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+
+final class TodoDtoGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TodoDto
+    {
+        return new TodoDto(description: $generator->generate([...$path, ...['description']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Endpoint\GetTodos;
+use Community\Flock\Wirespec\Generated\Client\GetTodosClient;
+use Community\Flock\Wirespec\Generated\Model\TodoDto;
+
+final readonly class Client implements GetTodos\Call
+{
+    public function __construct(
+        public Wirespec\Serialization $serialization,
+        public Wirespec\Transportation $transportation,
+    ) {
+    }
+
+    public function getTodos(): GetTodos\Response
+    {
+        return (new GetTodosClient(serialization: $this->serialization, transportation: $this->transportation))->getTodos();
+    }
+}

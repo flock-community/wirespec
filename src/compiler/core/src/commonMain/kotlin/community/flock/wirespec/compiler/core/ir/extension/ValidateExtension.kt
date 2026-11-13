@@ -51,7 +51,7 @@ public class ValidateExtension(language: FileExtension) : IrExtension {
     private enum class Dialect { Member, Python, Rust, TypeScript }
 
     private val dialect: Dialect? = when (language) {
-        FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala -> Dialect.Member
+        FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala, FileExtension.Php -> Dialect.Member
         FileExtension.Python -> Dialect.Python
         FileExtension.Rust -> Dialect.Rust
         FileExtension.TypeScript -> Dialect.TypeScript

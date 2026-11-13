@@ -1,0 +1,175 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+interface UserAccount
+{
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class UserAccountPassword implements Wirespec\Shape, UserAccount
+{
+    public function __construct(
+        public string $username,
+        public string $password,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class UserAccountToken implements Wirespec\Shape, UserAccount
+{
+    public function __construct(
+        public string $token,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class User implements Wirespec\Shape
+{
+    public function __construct(
+        public string $username,
+        public UserAccount $account,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\UserAccount;
+use Community\Flock\Wirespec\Generated\Model\UserAccountPassword;
+use Community\Flock\Wirespec\Generated\Model\UserAccountToken;
+
+final class UserAccountGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): UserAccount
+    {
+        $variant = $generator->generate([...$path, ...['variant']], new Wirespec\GeneratorFieldUnion(variants: ['UserAccountPassword', 'UserAccountToken'], annotations: [], type: UserAccount::class));
+        switch ($variant) {
+            case 'UserAccountPassword':
+                return UserAccountPasswordGenerator::generate($generator, [...$path, ...['UserAccountPassword']]);
+            case 'UserAccountToken':
+                return UserAccountTokenGenerator::generate($generator, [...$path, ...['UserAccountToken']]);
+        }
+        throw new \Exception('Unknown variant');
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\UserAccountPassword;
+
+final class UserAccountPasswordGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): UserAccountPassword
+    {
+        return new UserAccountPassword(username: $generator->generate([...$path, ...['username']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), password: $generator->generate([...$path, ...['password']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\UserAccountToken;
+
+final class UserAccountTokenGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): UserAccountToken
+    {
+        return new UserAccountToken(token: $generator->generate([...$path, ...['token']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\User;
+use Community\Flock\Wirespec\Generated\Model\UserAccount;
+
+final class UserGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): User
+    {
+        return new User(username: $generator->generate([...$path, ...['username']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), account: $generator->generate([...$path, ...['account']], new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p0) => UserAccountGenerator::generate($generator, $p0), type: UserAccount::class)));
+    }
+}

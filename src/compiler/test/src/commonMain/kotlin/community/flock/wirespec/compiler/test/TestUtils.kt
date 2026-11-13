@@ -20,7 +20,7 @@ public fun compile(source: String): Compiler = { emitter: () -> Emitter ->
         override val spec = WirespecSpec
         override val emitters = nonEmptySetOf(emitter())
     }.compile(nonEmptyListOf(ModuleContent(FileUri("N/A"), source)))
-        .map { emitted -> emitted.filter { !it.file.contains("Wirespec") } }
+        .map { emitted -> emitted.filter { !it.file.substringAfterLast('/').contains("Wirespec") } }
         .map { emitted -> emitted.joinToString("\n") { it.result } }
         .onLeft(::println)
 }
