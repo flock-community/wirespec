@@ -1,7 +1,7 @@
 package community.flock.wirespec.converter.asyncapi
 
-import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.WirespecType
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Shape
+import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 import community.flock.wirespec.compiler.core.parse.ast.StringFormat
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -50,15 +51,26 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type
  * Every channel becomes a `channel` that carries the payload of its messages, and every schema becomes a type, enum,
  * union or refined type. Whatever Wirespec has no syntax for is kept in annotations: the document, its components,
  * the channels, messages and operations, the names that are no Wirespec names and the JSON Schema keywords Wirespec
- * does not write itself. [AsyncAPIEmitter] rebuilds the document from the Wirespec definitions and their annotations.
+ * does not write itself. What belongs to the document as a whole is in `@spec:` annotations. [AsyncAPIEmitter]
+ * rebuilds the document from the Wirespec definitions and their annotations.
  */
 public object AsyncAPIParser : Parser {
 
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = Json.parseToJsonElement(moduleContent.content)
         .let { it as? JsonObject ?: error("Invalid AsyncAPI document; expected a JSON object") }
         .let { AsyncAPIConverter(it).convert() }
-        .let { AST(nonEmptyListOf(Module(moduleContent.fileUri, it))) }
+        .let { (annotations, definitions) ->
+            AST(
+                modules = definitions.toNonEmptyListOrNull()
+                    ?.let { nonEmptyListOf(Module(moduleContent.fileUri, it)) }
+                    ?: error("Cannot convert AsyncAPI document ${moduleContent.fileUri.value}: it has no channels or schemas, and Wirespec needs a definition besides the @spec: annotations of the document"),
+                annotations = annotations.map { SpecAnnotation(moduleContent.fileUri, it) },
+            )
+        }
 }
+
+/** A converted document: the annotations that belong to the document as a whole, and the definitions. */
+private data class ConvertedDocument(val annotations: List<Annotation>, val definitions: List<Definition>)
 
 /** A converted schema: the reference to it and the definitions it introduced. */
 private data class Converted(val reference: Reference, val definitions: List<Definition> = emptyList())
@@ -92,8 +104,6 @@ private class AsyncAPIConverter(private val document: JsonObject) {
 
     private val componentKeys: Map<String, String> = schemaNames.entries.associate { (key, name) -> name to key }
 
-    private val holderName = claim(HOLDER)
-
     /** The reference each schema converted to, by JSON pointer, so a schema found again is not converted again. */
     private val converted = mutableMapOf<String, Reference>()
 
@@ -109,7 +119,7 @@ private class AsyncAPIConverter(private val document: JsonObject) {
 
     private val channelKeys: Set<String> = document.obj("channels").orEmpty().keys
 
-    fun convert(): NonEmptyList<Definition> {
+    fun convert(): ConvertedDocument {
         val operations = document.obj("operations").orEmpty()
             .takeIf { majorVersion == 3 }
             .orEmpty()
@@ -122,21 +132,17 @@ private class AsyncAPIConverter(private val document: JsonObject) {
             }
         }
         val messages = components?.obj("messages").orEmpty().keys.mapNotNull(::componentMessage)
-        val definitions = channels + messages.flatMap { it.definitions } + schemaNames.keys.flatMap { component(it).definitions }
-        return nonEmptyListOf<Definition>(holder(messages, documentOperations)) + definitions
+        return ConvertedDocument(
+            annotations = documentAnnotations(messages, documentOperations),
+            definitions = channels + messages.flatMap { it.definitions } + schemaNames.keys.flatMap { component(it).definitions },
+        )
     }
 
-    /** The definition that holds what belongs to the document as a whole. */
-    private fun holder(messages: List<ConvertedMessage>, operations: List<Pair<String, JsonObject>>): Type = Type(
-        comment = null,
-        annotations = listOf(annotation(DOCUMENT, parameters = document.documentFields().toParameters())) +
-            listOfNotNull(components?.componentFields()?.let { annotation(COMPONENTS, parameters = it.toParameters()) }) +
-            messages.map { it.annotation } +
-            operations.map { (key, operation) -> operation.toAnnotation(key, channelPointer = null) },
-        identifier = DefinitionIdentifier(holderName),
-        shape = Shape(emptyList()),
-        extends = emptyList(),
-    )
+    /** What belongs to the document as a whole: the document, its components, the component messages and the operations on no channel. */
+    private fun documentAnnotations(messages: List<ConvertedMessage>, operations: List<Pair<String, JsonObject>>): List<Annotation> = listOf(annotation(DOCUMENT, parameters = document.documentFields().toParameters())) +
+        listOfNotNull(components?.componentFields()?.let { annotation(COMPONENTS, parameters = it.toParameters()) }) +
+        messages.map { it.annotation } +
+        operations.map { (key, operation) -> operation.toAnnotation(key, channelPointer = null) }
 
     /** The fields of the document besides the channels, operations and components that Wirespec holds itself. */
     private fun JsonObject.documentFields(): JsonObject = JsonObject(
@@ -623,7 +629,6 @@ private class AsyncAPIConverter(private val document: JsonObject) {
 
         /** The characters Wirespec can write in a field name or enum entry, between backticks when it has to. */
         val NAME_CHARACTERS = Regex("[a-zA-Z0-9_\\-]+")
-        const val HOLDER = "AsyncAPI"
 
         fun JsonElement?.actionOrNull(): Action? = (this as? JsonPrimitive)?.takeIf { it.isString }?.let { action -> Action.entries.find { it.keyword == action.content } }
 

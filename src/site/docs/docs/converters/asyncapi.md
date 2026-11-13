@@ -52,11 +52,8 @@ message carries a union of their payloads, named `<Channel>Message`.
 converts to
 
 ```wirespec
-@AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" })
-@AsyncAPIComponents
-type AsyncAPI {
-
-}
+@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" })
+@spec:AsyncAPIComponents
 
 @Description("Every change to a todo")
 @AsyncAPIChannel(address: "todos/{todoId}/updates")
@@ -77,7 +74,8 @@ type Todo {
 - Every operation on the channel is an `@AsyncAPISend` or `@AsyncAPIReceive`, with the operation id first. It holds the
   fields of the operation, such as its summary, bindings and reply. The channel it is on is implied, and its messages are
   named by their key in the channel: `messages: ["todoUpdated"]`. An operation that is no plain operation on a channel,
-  such as a `$ref` to `components.operations`, is kept on the `AsyncAPI` type.
+  such as a `$ref` to `components.operations`, belongs to the [document](#the-document): it is a `@spec:AsyncAPISend`
+  or `@spec:AsyncAPIReceive`.
 - AsyncAPI 2 describes operations from the side of the client: a client subscribes to what the application sends. A
   `subscribe` operation is therefore an `@AsyncAPISend` and a `publish` operation an `@AsyncAPIReceive`, as in AsyncAPI
   3. Its `message` names the message by its key, or the messages it holds in a `oneOf` as an array.
@@ -85,9 +83,9 @@ type Todo {
 ## Messages
 
 An `@AsyncAPIMessage` holds a message, with its key first. A message that refers to another message holds that
-reference, `"$ref": "#/components/messages/TodoUpdated"`; the messages of `components.messages` are on the `AsyncAPI`
-type. The payload and the headers of a message are schemas, which convert to Wirespec: `payload: "Todo"` names the
-Wirespec type the payload is.
+reference, `"$ref": "#/components/messages/TodoUpdated"`; the messages of `components.messages` belong to the
+[document](#the-document), as `@spec:AsyncAPIMessage`. The payload and the headers of a message are schemas, which
+convert to Wirespec: `payload: "Todo"` names the Wirespec type the payload is.
 
 - A payload that is an object of its own becomes a type named after the message, and its headers a type named
   `<Message>Headers`.
@@ -143,18 +141,35 @@ kept in `@AsyncAPIComponents`. A schema that refers to it carries the Wirespec t
 | Annotation                                                          | On                            | Carries                                                                        |
 |---------------------------------------------------------------------|-------------------------------|--------------------------------------------------------------------------------|
 | `@Description("...")`                                               | channels, definitions, fields | the description of a channel, schema or property                               |
-| `@AsyncAPIDocument(asyncapi: "3.0.0", info: {...}, servers: {...})` | `type AsyncAPI`               | the fields of the document besides its channels, operations and components     |
-| `@AsyncAPIComponents(securitySchemes: {...}, ...)`                  | `type AsyncAPI`               | the components besides the schemas and messages Wirespec holds itself          |
+| `@AsyncAPIDocument(asyncapi: "3.0.0", info: {...}, servers: {...})` | `@spec:`                      | the fields of the document besides its channels, operations and components     |
+| `@AsyncAPIComponents(securitySchemes: {...}, ...)`                  | `@spec:`                      | the components besides the schemas and messages Wirespec holds itself          |
 | `@AsyncAPIChannel(address: "...", bindings: {...})`                 | channels                      | the fields of the channel besides its description and messages                 |
-| `@AsyncAPIMessage("key", name: "...", payload: "Todo")`             | channels, `type AsyncAPI`     | a message of the channel, or of `components.messages`                          |
-| `@AsyncAPISend("id", ...)`, `@AsyncAPIReceive("id", ...)`           | channels, `type AsyncAPI`     | an operation: `send` or `subscribe`, `receive` or `publish`                    |
+| `@AsyncAPIMessage("key", name: "...", payload: "Todo")`             | channels, `@spec:`            | a message of the channel, or of `components.messages`                          |
+| `@AsyncAPISend("id", ...)`, `@AsyncAPIReceive("id", ...)`           | channels, `@spec:`            | an operation: `send` or `subscribe`, `receive` or `publish`                    |
 | `@AsyncAPIName("key")`                                              | channels, definitions, fields | the key of a channel, schema or property that is not the Wirespec name         |
 | `@AsyncAPISchema(format: "uri", omit: ["type"])`                    | definitions, fields           | the JSON Schema keywords to add to, and to leave out of, what Wirespec writes  |
 | `@AsyncAPIInline`                                                   | definitions                   | a schema that is declared where it is used, instead of in `components.schemas` |
 
-_Definitions_ are types, enums, unions and refined types, and _fields_ are the fields of a type.
+_Definitions_ are types, enums, unions and refined types, and _fields_ are the fields of a type. `@spec:` marks what
+belongs to the document as a whole.
 
-The document as a whole has no Wirespec counterpart, so its annotations are on an empty type called `AsyncAPI`.
+### The document
+
+The document as a whole has no Wirespec definition, so what belongs to it is kept in `@spec:` annotations. They are
+written in the file header: the annotations at the top of a file, followed by an empty line, which describe the whole
+specification instead of one definition.
+
+```wirespec
+@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" })
+@spec:AsyncAPIMessage("TodoUpdated", payload: "Todo")
+
+channel TodoUpdates -> Todo
+```
+
+The files of a specification together make one document, so the `@spec:` annotations of all of them count, in the order
+of the files. A document has one `@spec:AsyncAPIDocument` and one `@spec:AsyncAPIComponents`, and each component message
+and operation once, by its key: declaring one in two files is an error. So is `@AsyncAPIDocument` or
+`@AsyncAPIComponents` on a definition, which is where Wirespec converted by earlier versions has them.
 
 ### Parameters
 
@@ -185,8 +200,8 @@ the string `"3.5"` is `protocolVersion: "\"3.5\""`.
 
 ## Wirespec to AsyncAPI
 
-Wirespec converted from AsyncAPI, which has an `@AsyncAPIDocument`, gives back the document it came from. Any other
-Wirespec gets an AsyncAPI 3.0 document:
+Wirespec converted from AsyncAPI, which has an `@spec:AsyncAPIDocument`, gives back the document it came from. Any
+other Wirespec gets an AsyncAPI 3.0 document:
 
 - Every channel gets one message, which carries the type of the channel as payload and is declared in
   `components.messages`, named after the type. Its key is the name of the channel starting with a lowercase letter,
@@ -202,6 +217,8 @@ Wirespec gets an AsyncAPI 3.0 document:
 channel TodoUpdates -> Todo
 ```
 
+- `@spec:AsyncAPIComponents`, `@spec:AsyncAPIMessage` and the operation annotations in the file header add to the
+  components and operations of the document.
 - Types, enums, unions and refined types become `components.schemas`. A comment or `@Description` becomes the
   description.
 - Endpoints and rpcs are left out, because AsyncAPI has nothing like them.
@@ -210,6 +227,8 @@ channel TodoUpdates -> Todo
 
 - **JSON only**: documents written in YAML have to be converted to JSON first.
 - **Formatting**: the order of the keys in an object is not kept, and neither is how the JSON was formatted.
+- **Definitions**: Wirespec needs at least one definition next to the file header, so a document without channels or
+  schemas cannot be converted.
 - **Native types**: a schema reached through a reference that is not to `components.schemas`, such as
   `#/components/messages/TodoUpdated/payload` or another file, is kept in `@AsyncAPISchema` as it is and converts to
   `Any`.

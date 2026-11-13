@@ -5,13 +5,15 @@ import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.exceptions.EmitterException
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.HasAnnotations
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Reference
-import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.Action
 import community.flock.wirespec.converter.asyncapi.AsyncAPIAnnotations.CHANNEL
@@ -36,11 +38,11 @@ import kotlinx.serialization.json.JsonPrimitive
 /**
  * Emits a single AsyncAPI document for all modules.
  *
- * Wirespec converted from AsyncAPI gives back the document it came from: its `@AsyncAPIDocument` holds the version
- * and everything else that belongs to the document as a whole, and the other annotations hold what the definitions
- * cannot. Any other Wirespec gets an AsyncAPI 3.0 document in which every channel has one message, carrying the type
- * of the channel, and a `send` operation, unless annotations say otherwise. Types, enums, unions and refined types
- * become schemas. Endpoints and rpcs have no AsyncAPI counterpart and are left out.
+ * Wirespec converted from AsyncAPI gives back the document it came from: its `@spec:AsyncAPIDocument` holds the
+ * version and everything else that belongs to the document as a whole, and the other annotations hold what the
+ * definitions cannot. Any other Wirespec gets an AsyncAPI 3.0 document in which every channel has one message, carrying
+ * the type of the channel, and a `send` operation, unless annotations say otherwise. Types, enums, unions and refined
+ * types become schemas. Endpoints and rpcs have no AsyncAPI counterpart and are left out.
  */
 public object AsyncAPIEmitter : Emitter {
 
@@ -50,21 +52,58 @@ public object AsyncAPIEmitter : Emitter {
 
     private val json = Json { prettyPrint = true }
 
+    /** The annotations that only the document as a whole has, so only the file header holds them. */
+    private val documentOnly = setOf(DOCUMENT, COMPONENTS)
+
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules
         .onEach { logger.info("Emitting AsyncAPI from ${it.fileUri.value}") }
         .flatMap { it.statements }
-        .let { WirespecToAsyncAPI(it).document() }
+        .let { WirespecToAsyncAPI(ast.annotations.map(SpecAnnotation::annotation), it).document() }
         .let { nonEmptyListOf(Emitted("asyncapi.${extension.value}", json.encodeToString(JsonObject.serializer(), it))) }
+
+    override fun validate(ast: AST): List<EmitterException> = ast.misplacedDocumentAnnotations() + ast.annotations.declaredTwice()
+
+    private fun AST.misplacedDocumentAnnotations(): List<EmitterException> = modules.toList()
+        .flatMap { module -> module.statements.map { module.fileUri to it } }
+        .flatMap { (fileUri, definition) ->
+            (definition as? HasAnnotations)?.annotations.orEmpty()
+                .filter { it.name in documentOnly }
+                .map {
+                    EmitterException(
+                        fileUri,
+                        "@${it.name} on ${definition.identifier.value} describes the whole AsyncAPI document, so it belongs in the file header: write it as @spec:${it.name}",
+                    )
+                }
+        }
+
+    /** All files of a spec make one document, so what it has once can be declared in one file only. */
+    private fun List<SpecAnnotation>.declaredTwice(): List<EmitterException> = mapNotNull { spec -> spec.annotation.declaration()?.let { it to spec } }
+        .groupBy({ it.first }, { it.second })
+        .filterValues { it.size > 1 }
+        .map { (declaration, declared) ->
+            EmitterException(
+                declared[1].fileUri,
+                "$declaration is declared ${declared.size} times (in ${declared.map { it.fileUri.value }.distinct().joinToString()}), but the AsyncAPI document can only have one",
+            )
+        }
+
+    /** What a `@spec:` annotation declares that an AsyncAPI document has only one of: the document, its components, or a component message or operation by key. */
+    private fun Annotation.declaration(): String? = when {
+        name in documentOnly -> "@spec:$name"
+        name == MESSAGE -> value()?.let { "The component message \"$it\"" }
+        Action.entries.any { it.annotationName == name } -> value()?.let { "The operation \"$it\"" }
+        else -> null
+    }
 }
 
-private class WirespecToAsyncAPI(definitions: List<Definition>) {
+private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions: List<Definition>) {
 
-    private val holder: Type? = definitions.filterIsInstance<Type>().find { it.annotations.has(DOCUMENT) }
+    private val document: Annotation? = spec.find(DOCUMENT)
 
     /** Wirespec converted from AsyncAPI says everything in annotations, so nothing is added by default. */
-    private val fromAsyncAPI = holder != null
+    private val fromAsyncAPI = document != null
 
-    private val models = definitions.filterIsInstance<Model>().filterNot { it == holder }
+    private val models = definitions.filterIsInstance<Model>()
 
     private val inlineDefinitions = models.filter { it.annotations.has(INLINE) }.associateBy { it.identifier.value }
 
@@ -76,7 +115,7 @@ private class WirespecToAsyncAPI(definitions: List<Definition>) {
 
     private val channels = definitions.filterIsInstance<Channel>()
 
-    private val root: JsonObject = holder?.annotations?.find(DOCUMENT)?.fields() ?: DEFAULT_DOCUMENT
+    private val root: JsonObject = document?.fields() ?: DEFAULT_DOCUMENT
 
     private val majorVersion = if ((root["asyncapi"] as? JsonPrimitive)?.content?.startsWith("2.") == true) 2 else 3
 
@@ -128,7 +167,7 @@ private class WirespecToAsyncAPI(definitions: List<Definition>) {
                 (annotation.value() ?: action.defaultOperationId(channel.identifier.value)) to
                     annotation.toOperation(action, "#/channels/${channel.key().escapePointer()}", channel.messages().keys)
             }
-    }.toMap() + holder?.annotations.orEmpty().operations().map { (annotation, action) -> annotation.value().orEmpty() to annotation.toOperation(action, channelPointer = null, messageKeys = emptySet()) }
+    }.toMap() + spec.operations().map { (annotation, action) -> annotation.value().orEmpty() to annotation.toOperation(action, channelPointer = null, messageKeys = emptySet()) }
 
     private fun List<Annotation>.operations(): List<Pair<Annotation, Action>> = mapNotNull { annotation ->
         Action.entries.find { it.annotationName == annotation.name }?.let { annotation to it }
@@ -169,9 +208,9 @@ private class WirespecToAsyncAPI(definitions: List<Definition>) {
     }
 
     private fun components(): JsonObject? {
-        val fields = holder?.annotations?.find(COMPONENTS)?.fields()
+        val fields = spec.find(COMPONENTS)?.fields()
         val schemas = componentModels.associate { componentKeys.getValue(it.identifier.value) to with(writer) { it.schema() } }
-        val messages = holder?.annotations.orEmpty().named(MESSAGE).mapNotNull { message -> message.value()?.let { it to message.toMessage() } }.toMap() +
+        val messages = spec.named(MESSAGE).mapNotNull { message -> message.value()?.let { it to message.toMessage() } }.toMap() +
             channels.takeUnless { fromAsyncAPI }.orEmpty().filterNot { it.annotations.has(MESSAGE) }.associate { channel ->
                 channel.defaultMessageKey() to jsonObjectOf("name" to JsonPrimitive(channel.defaultMessageKey()), "payload" to with(writer) { channel.reference.schema() })
             }

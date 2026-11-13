@@ -12,6 +12,7 @@ import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -44,14 +45,11 @@ class AsyncAPIParserTest {
     @Test
     fun convertsTodoToWirespec() {
         loadResource("todo.json").toWirespec() shouldBe """
-            |@AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" }, defaultContentType: "application/json")
-            |@AsyncAPIComponents
-            |@AsyncAPIMessage("TodoUpdated", name: "TodoUpdated", payload: "Todo")
-            |@AsyncAPIMessage("TodoCreated", payload: "Todo")
-            |@AsyncAPIMessage("TodoDeleted", payload: "TodoDeleted")
-            |type AsyncAPI {
-            |
-            |}
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Todo events", version: "1.0.0" }, defaultContentType: "application/json")
+            |@spec:AsyncAPIComponents
+            |@spec:AsyncAPIMessage("TodoUpdated", name: "TodoUpdated", payload: "Todo")
+            |@spec:AsyncAPIMessage("TodoCreated", payload: "Todo")
+            |@spec:AsyncAPIMessage("TodoDeleted", payload: "TodoDeleted")
             |
             |@Description("Every change to a todo")
             |@AsyncAPIChannel(address: "todos/{todoId}/updates", parameters: { todoId: { description: "The id of the todo" } })
@@ -131,11 +129,8 @@ class AsyncAPIParserTest {
               }
             }
         """.toWirespec() shouldBe """
-            |@AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Shapes", version: "1.0.0" })
-            |@AsyncAPIComponents
-            |type AsyncAPI {
-            |
-            |}
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Shapes", version: "1.0.0" })
+            |@spec:AsyncAPIComponents
             |
             |type Shape = Circle | Square
             |
@@ -193,11 +188,8 @@ class AsyncAPIParserTest {
         """
 
         document.toWirespec() shouldBe """
-            |@AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Orders", version: "1.0.0" })
-            |@AsyncAPIComponents
-            |type AsyncAPI {
-            |
-            |}
+            |@spec:AsyncAPIDocument(asyncapi: "3.0.0", info: { title: "Orders", version: "1.0.0" })
+            |@spec:AsyncAPIComponents
             |
             |type OrderId = String(uuid)
             |
@@ -216,6 +208,28 @@ class AsyncAPIParserTest {
         listOf("todo.json", "streetlights.json", "kitchen-sink-v3.json", "kitchen-sink-v2.json").forEach { resource ->
             compile(loadResource(resource).toWirespec())(::KotlinEmitter).shouldBeRight()
         }
+    }
+
+    @Test
+    fun keepsWhatBelongsToTheDocumentAsAWholeInSpecAnnotations() {
+        val converted = AsyncAPIParser.parse(ModuleContent(FileUri("asyncapi.json"), loadResource("kitchen-sink-v3.json")), strict = true)
+
+        converted.annotations.map { it.fileUri.value to it.annotation.name } shouldBe listOf(
+            "asyncapi.json" to "AsyncAPIDocument",
+            "asyncapi.json" to "AsyncAPIComponents",
+            "asyncapi.json" to "AsyncAPIMessage",
+            "asyncapi.json" to "AsyncAPIMessage",
+            "asyncapi.json" to "AsyncAPIMessage",
+            "asyncapi.json" to "AsyncAPISend",
+        )
+        converted.modules.flatMap { it.statements }.map { it.identifier.value } shouldNotContain "AsyncAPI"
+    }
+
+    @Test
+    fun rejectsADocumentWithoutDefinitions() {
+        shouldThrow<IllegalStateException> {
+            """{ "asyncapi": "3.0.0", "info": { "title": "Nothing yet", "version": "0.1.0" }, "servers": { "local": { "host": "localhost", "protocol": "kafka" } } }""".toWirespec()
+        }.message shouldBe "Cannot convert AsyncAPI document asyncapi.json: it has no channels or schemas, and Wirespec needs a definition besides the @spec: annotations of the document"
     }
 
     @Test
@@ -241,6 +255,8 @@ class AsyncAPIParserTest {
         val parsed = parse(WirespecEmitter().emit(converted, noLogger).single().result).shouldBeRight()
 
         parsed.modules.head.statements.toList() shouldBe converted.modules.head.statements.toList()
+        parsed.annotations.map { it.annotation } shouldBe converted.annotations.map { it.annotation }
+        AsyncAPIEmitter.validate(parsed) shouldBe emptyList()
         AsyncAPIEmitter.emit(parsed, noLogger).single().result shouldEqualJson this
     }
 
