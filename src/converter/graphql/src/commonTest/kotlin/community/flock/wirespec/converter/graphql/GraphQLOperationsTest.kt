@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -185,7 +186,7 @@ class GraphQLOperationsTest {
 
     @Test
     fun opensTheDocumentWhereTheSelectionGoes() {
-        val definitions = """
+        val ast = """
             |type Todo {
             |  id: ID!
             |  comments(first: Int!): [String!]
@@ -196,9 +197,9 @@ class GraphQLOperationsTest {
             |  count: Int!
             |}
         """.trimMargin().fromGraphQL()
-        val operations = GraphQLOperations(definitions)
-        val rpcs = definitions.filterIsInstance<Rpc>().associateBy { it.identifier.value }
-        val todo = definitions.filterIsInstance<community.flock.wirespec.compiler.core.parse.ast.Type>().single { it.identifier.value == "Todo" }
+        val operations = GraphQLOperations(ast)
+        val rpcs = ast.definitions().filterIsInstance<Rpc>().associateBy { it.identifier.value }
+        val todo = ast.definitions().filterIsInstance<community.flock.wirespec.compiler.core.parse.ast.Type>().single { it.identifier.value == "Todo" }
 
         operations.open(rpcs.getValue("QueryTodo"), "result") shouldBe "query QueryTodo(\$id: ID!) { result: todo(id: \$id)"
         operations.close(rpcs.getValue("QueryTodo")) shouldBe " }"
@@ -210,7 +211,7 @@ class GraphQLOperationsTest {
 
     @Test
     fun nestsAFieldOfANamespaceTypeInTheFieldsThatLeadToIt() {
-        val definitions = """
+        val ast = """
             |type Notification {
             |  id: String
             |}
@@ -249,10 +250,10 @@ class GraphQLOperationsTest {
             |  id: String
             |} -> Unit
         """.trimMargin().parsed()
-        val operations = GraphQLOperations(definitions)
-        val rpcs = definitions.filterIsInstance<Rpc>().associateBy { it.identifier.value }
+        val operations = GraphQLOperations(ast)
+        val rpcs = ast.definitions().filterIsInstance<Rpc>().associateBy { it.identifier.value }
 
-        definitions.documents() shouldBe mapOf(
+        ast.documents() shouldBe mapOf(
             "Notifications" to "query Notifications { result: notifications { __typename } }",
             "InboxNamespace" to "query InboxNamespace { notifications { result: inbox { __typename } } }",
             "Inbox" to "query Inbox(\$limit: Int!, \$locale: String) { notifications { result: inbox(limit: \$limit, locale: \$locale) { id } } }",
@@ -279,6 +280,22 @@ class GraphQLOperationsTest {
     }
 
     @Test
+    fun takesTheRootTypesFromTheFileHeader() {
+        """
+            |@spec:GraphQLSchema(query: "Root", mutation: "Commands")
+            |
+            |@GraphQLQuery("Root")
+            |rpc Ping {} -> Boolean
+            |
+            |@GraphQLMutation("Commands")
+            |rpc Reset {} -> Unit
+        """.trimMargin().parsed().documents() shouldBe mapOf(
+            "Ping" to "query Ping { result: ping }",
+            "Reset" to "mutation Reset { result: reset }",
+        )
+    }
+
+    @Test
     fun failsOnAFieldOfATypeThatNoFieldLeadsTo() {
         shouldThrow<IllegalStateException> {
             """
@@ -291,17 +308,18 @@ class GraphQLOperationsTest {
         }.message shouldContain "rpc InboxCount: it is a field of NotificationsQuery, but no field leads from Query to that type"
     }
 
-    private fun String.fromGraphQL(): List<Definition> = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
+    private fun String.fromGraphQL(): AST = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
         .let { WirespecEmitter().emit(it, noLogger).single().result }
         .parsed()
 
-    private fun String.parsed(): List<Definition> = object : ParseContext, NoLogger {
+    private fun String.parsed(): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
     }.parse(nonEmptyListOf(ModuleContent(FileUri("schema.ws"), this)))
         .shouldBeRight()
-        .modules.flatMap { it.statements }
 
-    private fun List<Definition>.documents(): Map<String, String> = GraphQLOperations(this).let { operations ->
-        filterIsInstance<Rpc>().mapNotNull { rpc -> operations.document(rpc, "result")?.let { rpc.identifier.value to it } }.toMap()
+    private fun AST.definitions(): List<Definition> = modules.flatMap { it.statements }
+
+    private fun AST.documents(): Map<String, String> = GraphQLOperations(this).let { operations ->
+        definitions().filterIsInstance<Rpc>().mapNotNull { rpc -> operations.document(rpc, "result")?.let { rpc.identifier.value to it } }.toMap()
     }
 }

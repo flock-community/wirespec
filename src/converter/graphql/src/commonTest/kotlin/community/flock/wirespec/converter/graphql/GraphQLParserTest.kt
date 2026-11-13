@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ParseOptions
+import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -291,7 +292,51 @@ class GraphQLParserTest {
         types("type Query @cached { a: Int }") shouldContainExactly listOf("Query")
         types("type Query { a: Int } type User { viewer: Query }") shouldContainExactly listOf("Query", "User")
         types("type Query") shouldContainExactly listOf("Query")
-        types("schema { query: Root } type Root { a: Int }") shouldContainExactly listOf("Schema")
+        types("schema { query: Root } type Root { a: Int }") shouldBe emptyList()
+    }
+
+    @Test
+    fun keepsTheSchemaAndDirectiveDefinitionsInSpecAnnotations() {
+        val source = """
+            |"The entry point"
+            |schema @link(url: "https://example.com") {
+            |  query: Root
+            |}
+            |
+            |extend schema @audit
+            |
+            |"Marks a type as an entity"
+            |directive @key(fields: String!, "Resolved here" resolvable: Boolean = true @deprecated) repeatable on OBJECT | INTERFACE
+            |
+            |directive @audit on SCHEMA
+            |
+            |type Root {
+            |  ping: Boolean
+            |}
+        """.trimMargin()
+        source.toWirespec() shouldBe """
+            |@spec:GraphQLSchema(query: "Root", description: "The entry point", directives: ["@link(url: \"https://example.com\")"])
+            |@spec:GraphQLSchema(extend: "true", directives: ["@audit"])
+            |@spec:GraphQLDirectiveDefinition(name: "key", locations: ["OBJECT", "INTERFACE"], repeatable: "true", description: "Marks a type as an entity", arguments: { fields: { type: "String!" }, resolvable: { type: "Boolean", defaultValue: "true", description: "Resolved here", directives: ["@deprecated"] } })
+            |@spec:GraphQLDirectiveDefinition(name: "audit", locations: ["SCHEMA"])
+            |
+            |@GraphQLQuery("Root")
+            |rpc Ping {} -> Boolean?
+            |
+        """.trimMargin()
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun writesTheSchemaAndDirectiveDefinitionsFirst() {
+        "type Query { a: Int } directive @cached on FIELD_DEFINITION extend schema @audit".convertedBack() shouldBe
+            GraphQLDocumentParser("directive @cached on FIELD_DEFINITION extend schema @audit type Query { a: Int }").parseDocument()
+    }
+
+    @Test
+    fun rejectsADocumentWithoutTypes() {
+        shouldThrow<IllegalStateException> { convert("schema { query: Query } directive @cached on FIELD_DEFINITION") }.message shouldBe
+            "Cannot convert GraphQL document schema.graphql: it defines no types, and Wirespec needs a definition besides the @spec: annotations of its schema and directives"
     }
 
     @Test
@@ -453,7 +498,9 @@ class GraphQLParserTest {
         val parsed = parseWirespec(wirespec, otherModules).shouldBeRight()
 
         parsed.modules.head.statements.toList() shouldBe converted.modules.head.statements.toList()
-        WirespecToGraphQL(parsed.modules.head.statements.toList()).convert() shouldBe document
+        parsed.annotations.map { it.annotation } shouldBe converted.annotations.map { it.annotation }
+        GraphQLEmitter.validate(parsed) shouldBe emptyList()
+        WirespecToGraphQL(parsed.withoutOtherModules()).convert() shouldBe document
         GraphQLDocumentParser(document.print()).parseDocument() shouldBe document
     }
 
@@ -463,7 +510,10 @@ class GraphQLParserTest {
         .shouldBeRight()
         .let { WirespecEmitter().emit(it, noLogger).single().result }
         .let { parseWirespec(it, null).shouldBeRight() }
-        .let { WirespecToGraphQL(it.modules.head.statements.toList()).convert() }
+        .let { WirespecToGraphQL(it).convert() }
+
+    /** The converted schema, without the modules that only declare what it refers to. */
+    private fun AST.withoutOtherModules(): AST = copy(modules = nonEmptyListOf(modules.head))
 
     private fun parseWirespec(source: String, otherModules: String?) = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
