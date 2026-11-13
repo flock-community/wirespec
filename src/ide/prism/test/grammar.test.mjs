@@ -207,6 +207,40 @@ type User {}`,
   });
 });
 
+describe("header", () => {
+  it("highlights the target of spec and file annotations, and their arguments", () => {
+    expectTypes(
+      `@spec:OpenAPIInfo(title: "Customer API", version: "2.3.0")
+@spec:OpenAPIServer("https://api.example.com/v2", description: "Production")
+@file:Owner("customers")
+@file:Internal
+
+@OpenAPITag("Customers")
+endpoint GetCustomer GET /customers/{id: String} -> {
+  200 -> Customer
+}`,
+      [
+        ["@", "annotation > annotation-name/attr-name"],
+        ["spec:", "annotation > annotation-name/attr-name > annotation-target/keyword"],
+        ["OpenAPIInfo", "annotation > annotation-name/attr-name"],
+        ["title", "annotation > property"],
+        ['"Customer API"', "annotation > string"],
+        ["OpenAPIServer", "annotation > annotation-name/attr-name"],
+        ['"https://api.example.com/v2"', "annotation > string"],
+        ["description", "annotation > property"],
+        ["file:", "annotation > annotation-name/attr-name > annotation-target/keyword"],
+        ["Owner", "annotation > annotation-name/attr-name"],
+        ['"customers"', "annotation > string"],
+        ["file:", "annotation > annotation-name/attr-name > annotation-target/keyword", 1],
+        ["Internal", "annotation > annotation-name/attr-name"],
+        ["@OpenAPITag", "annotation > annotation-name/attr-name"],
+        ["endpoint", "keyword"],
+        ["GetCustomer", "function"],
+      ],
+    );
+  });
+});
+
 describe("corpus", () => {
   const sources = corpus();
 

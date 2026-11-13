@@ -17,7 +17,7 @@ The server speaks JSON-RPC 2.0 over either:
 A document is checked together with the other `.ws` files in its directory, the same way the compiler takes a directory as one input: a type or part defined in a sibling file resolves. Siblings are read from disk, except for the ones open in the editor, whose unsaved content wins.
 
 - `textDocument/publishDiagnostics` — surfaces parser errors as squiggles, and warns on a `part` that no `...Part` in the directory spreads. Refreshed for the open documents of a directory when one of them changes, and for all open documents on `workspace/didChangeWatchedFiles`.
-- `textDocument/semanticTokens/full` — colorizes keywords, types, identifiers, HTTP methods, and the `...` spread operator.
+- `textDocument/semanticTokens/full` — colorizes keywords, types, identifiers, HTTP methods, and the `...` spread operator. Annotations, the `@spec:` and `@file:` annotations of the file header included, are left to the editor's grammar.
 - `textDocument/definition` — for a type or part identifier, returns every occurrence in the directory, spreads included.
 - `textDocument/rename` — renames a type or part identifier and every reference to it in the directory, spreads included.
 
