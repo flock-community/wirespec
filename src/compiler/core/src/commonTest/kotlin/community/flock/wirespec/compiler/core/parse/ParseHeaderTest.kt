@@ -32,8 +32,8 @@ class ParseHeaderTest {
             // language=ws
             """
             |@spec:OpenAPIServer("https://api.example.com", description: "Production")
-            |@file:Owner("customers")
             |@spec:Tag("Customers")
+            |@file:Owner("customers")
             |
             |@Deprecated
             |type Customer { id: String }
@@ -88,6 +88,23 @@ class ParseHeaderTest {
             """.trimMargin()
 
         parse("customers.ws" to source).shouldBeRight { it.joinToString { e -> e.message } }.annotations shouldHaveSize 1
+    }
+
+    @Test
+    fun theHeaderStartsWithItsSpecAnnotations() {
+        val source =
+            // language=ws
+            """
+            |@spec:OpenAPIServer("https://api.example.com")
+            |@file:Owner("customers")
+            |@spec:Tag("Customers")
+            |
+            |type Customer { id: String }
+            """.trimMargin()
+
+        parse("customers.ws" to source).shouldBeLeft().map { it.message } shouldBe nonEmptyListOf(
+            "@spec:Tag comes after a @file: annotation: the file header starts with its @spec: annotations, followed by its @file: annotations",
+        )
     }
 
     @Test

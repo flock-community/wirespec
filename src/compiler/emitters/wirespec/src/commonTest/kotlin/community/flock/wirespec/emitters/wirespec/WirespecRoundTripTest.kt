@@ -78,8 +78,8 @@ class WirespecRoundTripTest {
     fun theFileHeaderSurvivesARoundTrip() {
         """
             |@spec:OpenAPIServer("https://api.example.com/v2", description: "Production")
-            |@file:Owner("customers")
             |@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", flows: { implicit: { scopes: { "users:read": "Read users" } } })
+            |@file:Owner("customers")
             |
             |@OpenAPITag("Customers")
             |endpoint GetCustomer GET /customers/{id: String} -> {

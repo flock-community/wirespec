@@ -88,6 +88,13 @@ internal class MisplacedHeaderAnnotationException(fileUri: FileUri, annotation: 
         message = "$annotation belongs in the file header: @spec: and @file: annotations come first in a file, before any definition or comment",
     )
 
+internal class SpecAnnotationAfterFileAnnotationException(fileUri: FileUri, annotation: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "$annotation comes after a @file: annotation: the file header starts with its @spec: annotations, followed by its @file: annotations",
+    )
+
 internal class MissingEmptyLineAfterHeaderException(fileUri: FileUri, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,

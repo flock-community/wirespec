@@ -114,7 +114,8 @@ type Customer {
 ```
 
 - The header is the first thing in a file. Only empty lines may come before it, not even a comment.
-- `@spec:` and `@file:` annotations may be mixed in any order.
+- The `@spec:` annotations come first, followed by the `@file:` annotations. A `@spec:` annotation after a `@file:`
+  annotation is an error.
 - An empty line separates the header from whatever follows it.
 - A `@spec:` or `@file:` annotation anywhere else is an error.
 - A file may hold nothing but a header with `@spec:` annotations, so the annotations of the whole specification can

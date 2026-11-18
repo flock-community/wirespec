@@ -5,6 +5,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import community.flock.wirespec.compiler.core.exceptions.MisplacedHeaderAnnotationException
 import community.flock.wirespec.compiler.core.exceptions.MissingEmptyLineAfterHeaderException
+import community.flock.wirespec.compiler.core.exceptions.SpecAnnotationAfterFileAnnotationException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.tokenize.Brackets
@@ -22,7 +23,6 @@ import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.SpecAnnotation
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
 /** The `@spec:` and `@file:` annotations at the top of a file. */
@@ -37,9 +37,10 @@ internal object AnnotationParser {
         }
     }
 
-    /** Reads the file header, which an empty line separates from whatever follows it. */
+    /** Reads the file header: its `@spec:` annotations, then its `@file:` annotations, and an empty line after them. */
     fun TokenProvider.parseHeader(): Either<WirespecException, Header> = either {
-        buildList { while (token.type is HeaderAnnotation) add(token.type to parseAnnotation().bind()) }
+        buildList { while (token.type is HeaderAnnotation) add(token to parseAnnotation().bind()) }
+            .also { header -> header.specAfterFile()?.let { raise(SpecAnnotationAfterFileAnnotationException(fileUri, it.value, it.coordinates)) } }
             .also { if (it.isNotEmpty()) ensureEmptyLineAfterHeader().bind() }
             .let { Header(spec = it.annotationsOf<SpecAnnotation>(), file = it.annotationsOf<FileAnnotation>()) }
     }
@@ -52,7 +53,12 @@ internal object AnnotationParser {
     }
 }
 
-private inline fun <reified T : HeaderAnnotation> List<Pair<TokenType, Annotation>>.annotationsOf(): List<Annotation> = filter { (type) -> type is T }.map { (_, annotation) -> annotation }
+private inline fun <reified T : HeaderAnnotation> List<Pair<Token, Annotation>>.annotationsOf(): List<Annotation> = filter { (token) -> token.type is T }.map { (_, annotation) -> annotation }
+
+/** The first `@spec:` annotation that comes after a `@file:` annotation, if any. */
+private fun List<Pair<Token, Annotation>>.specAfterFile(): Token? = map { (token) -> token }
+    .dropWhile { it.type is SpecAnnotation }
+    .firstOrNull { it.type is SpecAnnotation }
 
 private fun TokenProvider.ensureEmptyLineAfterHeader(): Either<WirespecException, Unit> = either {
     ensure(token.type is EndOfProgram || token.startLine() - (previous?.coordinates?.line ?: 0) > 1) {
