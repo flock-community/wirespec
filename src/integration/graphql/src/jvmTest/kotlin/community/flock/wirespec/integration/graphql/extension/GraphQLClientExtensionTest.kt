@@ -201,7 +201,7 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Kotlin client nests a field of a namespace type in the field that leads to it`() = runBlocking {
+    fun `Kotlin client nests an operation in the fields of its path`() = runBlocking {
         val server = KotlinServer("""{"data":{"notifications":{"result":[{"id":"1","text":"Hello"}]}}}""")
 
         val inbox = server.client().inbox(10, "nl")
@@ -217,7 +217,7 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Kotlin client reads a scalar and a mutation from a namespace type`() = runBlocking {
+    fun `Kotlin client reads a scalar and a mutation from a nested type`() = runBlocking {
         val count = KotlinServer("""{"data":{"notifications":{"result":3}}}""")
         val markRead = KotlinServer("""{"data":{"notifications":{"result":true}}}""")
 
@@ -229,7 +229,7 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Kotlin client selects the fields of a result in a namespace type`() = runBlocking {
+    fun `Kotlin client selects the fields of a result in a nested type`() = runBlocking {
         val server = KotlinServer("""{"data":{"notifications":{"result":[{"text":"Hello"}]}}}""")
 
         val inbox = server.client().inbox(10, null) { text() }
@@ -239,7 +239,7 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Kotlin client fails on a namespace without data`() {
+    fun `Kotlin client fails on a nested type without data`() {
         val error = assertFailsWith<IllegalStateException> {
             runBlocking { KotlinServer("""{"data":{"notifications":null}}""").client().inboxCount() }
         }
@@ -247,7 +247,7 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Java client nests a field of a namespace type in the field that leads to it`() {
+    fun `Java client nests an operation in the fields of its path`() {
         val server = JavaServer("""{"data":{"notifications":{"result":[{"id":"1","text":"Hello"}]}}}""")
 
         val inbox = server.client().inbox(10, Optional.empty()).join()
@@ -259,8 +259,8 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
-    fun `Scala client nests a field of a namespace type in the field that leads to it`() {
-        assertEquals("query InboxCount { notifications { result: inboxCount } }", scalaCheck("readsFromANamespace"))
+    fun `Scala client nests an operation in the fields of its path`() {
+        assertEquals("query InboxCount { notifications { result: inboxCount } }", scalaCheck("readsFromANestedType"))
     }
 
     @Test
@@ -378,7 +378,7 @@ class GraphQLClientExtensionTest {
             }
         }
         assertEquals(
-            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos", "Notifications", "Inbox", "InboxCount", "MutateNotifications", "MarkRead").map { "$it.Service" },
+            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos", "Inbox", "InboxCount", "MarkRead").map { "$it.Service" },
             KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
         )
     }

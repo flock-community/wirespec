@@ -24,7 +24,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
 import community.flock.wirespec.converter.common.Parser
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ARGUMENT
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BEFORE_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT_PARAMETER
@@ -34,16 +34,20 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_D
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.NAME
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.PATH_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION_MEMBERS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotation
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotationName
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.fieldName
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.parameter
 import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Document
@@ -66,11 +70,13 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
 /**
  * Converts a GraphQL schema (SDL) into Wirespec.
  *
- * Objects and input objects become types, scalars become refined types, enums and unions map onto their Wirespec
- * counterparts and every field of a root operation type (`Query`, `Mutation`, `Subscription`) becomes an `rpc`.
+ * Objects and input objects become types, scalars become refined types, and enums and unions map onto their Wirespec
+ * counterparts. A field is a function when it takes arguments, and a function is an `rpc`: every field of a root
+ * operation type (`Query`, `Mutation`, `Subscription`), every field of a type that only nests operations in one, and
+ * every other field with arguments. An annotation of the rpc says which type it is a field of.
  * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
  * Wirespec cannot express natively —
- * descriptions, directives, field arguments, default values, extensions — is kept in annotations, so the schema can
+ * descriptions, directives, default values, extensions — is kept in annotations, so the schema can
  * be rebuilt from the Wirespec definitions. The schema and directive definitions belong to the schema as a whole, so
  * they are `@spec:` annotations.
  */
@@ -116,7 +122,9 @@ private class GraphQLConverter(private val document: Document) {
         .map { it.name }
         .distinct()
 
-    private val referenced: List<String> = document.typeReferences().distinct().filterNot { it in PRIMITIVES || it in declared }
+    private val references: List<String> = document.typeReferences()
+
+    private val referenced: List<String> = references.distinct().filterNot { it in PRIMITIVES || it in declared }
 
     private val needsBuiltInId = BUILT_IN_ID in referenced
 
@@ -143,6 +151,23 @@ private class GraphQLConverter(private val document: Document) {
     private val interfaceParts: Map<String, String> = interfaceDefinitions.keys
         .filter { name -> declaredInterfaces.values.any { name in it } }
         .associateWith { claim("${names.getValue(it)}Interface") }
+
+    /**
+     * The object types that can be nested in the type that refers to them, by the name of that type: one field refers
+     * to them and nothing else does, so one way leads there. That field takes no arguments and returns the one object.
+     */
+    private val nestedIn: Map<String, String> = document.definitions
+        .filterIsInstance<ObjectTypeDefinition>()
+        .flatMap { parent -> parent.fields.filter { it.isNesting() }.map { it.type.leaf() to parent.name } }
+        .filter { (type, _) -> type.canNest() }
+        .toMap()
+
+    /**
+     * The types that only nest operations in a root operation type, as `Query.notifications: NotificationsQuery` does.
+     * Their fields are operations too, so they become rpcs that name the fields that lead to them, and the type itself
+     * needs no Wirespec definition. A type that only holds data, without a field that takes arguments, is no such type.
+     */
+    private val nested: Set<String> = nestedIn.keys.filter { it.isNestedInRoot() && it.hasOperations() }.toSet()
 
     /** A root operation type becomes rpcs, which leave nothing to spread an interface into. */
     private val implementations: Map<ImplementingTypeDefinition, Lazy<Implementation>> = document.definitions
@@ -196,18 +221,98 @@ private class GraphQLConverter(private val document: Document) {
     )
 
     private fun ObjectTypeDefinition.convert(): List<Definition> = when (name) {
-        in roots -> (names[name] ?: name.sanitize()).let { prefix ->
-            val operation = rootTypes.entries.first { it.value == name }.key
+        in roots -> rootTypes.entries.first { it.value == name }.key.let { operation ->
             when {
                 needsType() -> identifier().let { identifier ->
-                    listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + fields.map { it.toRpc(prefix, operation, identifier, null) }
+                    listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + operations(Nesting(operation, identifier, null, emptyList(), emptyList()))
                 }
-                else -> fields.map { it.toRpc(prefix, operation, name, extensionBlock()) }
+                else -> operations(Nesting(operation, name, extensionBlock(), emptyList(), emptyList()))
             }
         }
+        // Written where the field that leads to it is.
+        in nested -> emptyList()
         else -> implementation().takeUnless { bringsNothing(it) }
-            ?.let { type(identifier(), commonAnnotations(it.listed), it.entries) }
-            .let(::listOfNotNull)
+            ?.let { identifier().let { identifier -> listOf(type(identifier, commonAnnotations(it.listed), it.entries)) + functions(identifier) } }
+            .orEmpty()
+    }
+
+    /**
+     * Where the operations of a type are: in the root type [type] of an [operation], in its `extend` block [extend], through
+     * the fields of [path]. The first rpc through a field describes it, and the others, which take [rest], only name it.
+     */
+    private data class Nesting(val operation: Operation, val type: String, val extend: Int?, val path: List<Annotation.Parameter>, val rest: List<Annotation.Parameter>) {
+        fun through(field: Annotation.Parameter, named: Annotation.Parameter): Nesting = copy(path = path + field, rest = rest + named)
+
+        fun afterFirst(): Nesting = copy(path = rest)
+    }
+
+    private fun ObjectTypeDefinition.operations(nesting: Nesting): List<Definition> = (names[name] ?: name.sanitize()).let { prefix ->
+        fields.flatMapIndexed { index, field -> field.operations(prefix, if (index == 0) nesting else nesting.afterFirst()) }
+    }
+
+    /** A field that leads to a nested type stands for the operations of that type. */
+    private fun FieldDefinition.operations(prefix: String, nesting: Nesting): List<Definition> = when {
+        isNesting() && type.leaf() in nested -> document.definitions.filterIsInstance<ObjectTypeDefinition>().single { it.name == type.leaf() }.let { nestedType ->
+            listOfNotNull(nestedType.holder()) +
+                nestedType.operations(nesting.through(toPathParameter(), parameter(name, type.print())))
+        }
+        else -> listOf(toOperation(prefix, nesting))
+    }
+
+    /** A nested type is rebuilt from its rpcs, so it only needs an empty type of its own to hold its description and directives. */
+    private fun ObjectTypeDefinition.holder(): Type? = takeIf { description != null || directives.isNotEmpty() }
+        ?.let { type(name, commonAnnotations(), emptyList()) }
+
+    /** A field of the path as an rpc holds it: its type, or what describes it when it has more than a type. */
+    private fun FieldDefinition.toPathParameter(): Annotation.Parameter = when {
+        description == null && directives.isEmpty() -> parameter(name, type.print())
+        else -> Annotation.Parameter(
+            name,
+            Annotation.Value.Dict(
+                listOfNotNull(
+                    parameter(TYPE_PARAMETER, type.print()),
+                    description?.let { parameter("description", it) },
+                    parameter("directives", directives.map { it.print() }),
+                ),
+            ),
+        )
+    }
+
+    private fun FieldDefinition.isNesting(): Boolean = arguments.isEmpty() && (type is TypeRef.Named || (type is TypeRef.NonNull && type.type is TypeRef.Named))
+
+    private fun String.canNest(): Boolean = this !in roots &&
+        names[this] == this &&
+        references.count { it == this } == 1 &&
+        document.definitions.filterIsInstance<TypeDefinition>().singleOrNull { it.name == this }.let { it is ObjectTypeDefinition && it.interfaces.isEmpty() && !it.extension }
+
+    private fun String.isNestedInRoot(): Boolean = generateSequence(nestedIn[this]) { nestedIn[it] }.take(nestedIn.size).any { it in roots }
+
+    private fun String.hasOperations(): Boolean = document.definitions
+        .filterIsInstance<ObjectTypeDefinition>()
+        .filter { it.name == this }
+        .flatMap { it.fields }
+        .any { field -> field.arguments.isNotEmpty() || (field.isNesting() && nestedIn[field.type.leaf()] == this && field.type.leaf().hasOperations()) }
+
+    /**
+     * A field with arguments is an rpc of its type, named after both. `before` names the field that follows it, so
+     * the field comes back in its place.
+     */
+    private fun ImplementingTypeDefinition.functions(identifier: String): List<Rpc> = (names[name] ?: name.sanitize()).let { prefix ->
+        fields.mapIndexedNotNull { index, field ->
+            field.takeIf { it.arguments.isNotEmpty() }?.let {
+                claim(prefix + field.name.capitalized()).let { rpc ->
+                    field.toRpc(
+                        identifier = rpc,
+                        annotation = annotation(
+                            FIELD,
+                            parameter(DEFAULT_PARAMETER, identifier),
+                            fields.drop(index + 1).firstOrNull { it.arguments.isEmpty() }?.let { parameter(BEFORE_PARAMETER, it.name) },
+                        ),
+                        named = fieldName(rpc, name),
+                    )
+                }
+            }
+        }
     }
 
     /**
@@ -216,22 +321,25 @@ private class GraphQLConverter(private val document: Document) {
      */
     private fun InterfaceTypeDefinition.convert(): List<Definition> = implementation().takeUnless { bringsNothing(it) }
         ?.let { implementation ->
-            interfaceParts[name]?.takeIf { interfaceDefinitions[name] === this }
-                ?.let { part ->
-                    listOf(
-                        Part(comment = null, identifier = DefinitionIdentifier(part), shape = Shape(implementation.entries)),
-                        implementedBy(listOf(annotation(INTERFACE, part)) + commonAnnotations(implementation.listed)),
-                    )
-                }
-                ?: listOf(type(identifier(), listOf(annotation(INTERFACE)) + commonAnnotations(implementation.listed), implementation.entries))
+            identifier().let { identifier ->
+                interfaceParts[name]?.takeIf { interfaceDefinitions[name] === this }
+                    ?.let { part ->
+                        listOf(
+                            Part(comment = null, identifier = DefinitionIdentifier(part), shape = Shape(implementation.entries)),
+                            implementedBy(identifier, listOf(annotation(INTERFACE, part)) + commonAnnotations(implementation.listed)),
+                        )
+                    }
+                    .let { it ?: listOf(type(identifier, listOf(annotation(INTERFACE)) + commonAnnotations(implementation.listed), implementation.entries)) } +
+                    functions(identifier)
+            }
         }
         .orEmpty()
 
     /** A union needs a member, so an interface that only interfaces implement is an empty type. */
-    private fun InterfaceTypeDefinition.implementedBy(annotations: List<Annotation>): Definition = implementors(name)
+    private fun InterfaceTypeDefinition.implementedBy(identifier: String, annotations: List<Annotation>): Definition = implementors(name)
         .takeIf { it.isNotEmpty() }
-        ?.let { implementors -> Union(null, annotations, DefinitionIdentifier(identifier()), implementors.map { Reference.Custom(it, isNullable = false) }.toSet()) }
-        ?: type(identifier(), annotations, emptyList())
+        ?.let { implementors -> Union(null, annotations, DefinitionIdentifier(identifier), implementors.map { Reference.Custom(it, isNullable = false) }.toSet()) }
+        ?: type(identifier, annotations, emptyList())
 
     /** The object types with a Wirespec type of their own that implement the interface, directly or through another one. */
     private fun implementors(interfaceName: String): List<String> = document.definitions
@@ -268,7 +376,7 @@ private class GraphQLConverter(private val document: Document) {
     // An interface that another of them implements comes after that one, which brings it along when spread.
     private fun ImplementingTypeDefinition.implement(interfaces: List<String>): Implementation = interfaces.distinct()
         .sortedBy { candidate -> interfaces.count { candidate in reachable(it) } }
-        .fold(fields.map { it.toField() }.let { Implementation(it, it) }) { implementation, candidate ->
+        .fold(fields.filter { it.arguments.isEmpty() }.map { it.toField() }.let { Implementation(it, it) }) { implementation, candidate ->
             when (candidate) {
                 in implementation.covered -> implementation
                 else -> spread(implementation, candidate) ?: implementation.copy(listed = implementation.listed + candidate)
@@ -298,7 +406,7 @@ private class GraphQLConverter(private val document: Document) {
     private fun ImplementingTypeDefinition.extensions(): List<ImplementingTypeDefinition> = implementations.keys.filter { it.extension && it.name == name && it::class == this::class }
 
     /** An extension that brings nothing but interfaces its type now implements is left out. */
-    private fun ImplementingTypeDefinition.bringsNothing(implementation: Implementation): Boolean = extension && directives.isEmpty() && implementation.entries.isEmpty() && implementation.listed.isEmpty()
+    private fun ImplementingTypeDefinition.bringsNothing(implementation: Implementation): Boolean = extension && directives.isEmpty() && fields.isEmpty() && implementation.listed.isEmpty()
 
     private fun reachable(name: String): Set<String> = generateSequence(declaredInterfaces[name].orEmpty().toSet()) { found ->
         (found + found.flatMap { declaredInterfaces[it].orEmpty() }).takeIf { it.size > found.size }
@@ -341,7 +449,7 @@ private class GraphQLConverter(private val document: Document) {
     )
 
     private fun FieldDefinition.toField(): Field = Field(
-        annotations = description.toAnnotations() + arguments.map { it.toArgumentAnnotation() } + directives.toAnnotations() + type.toAnnotations(),
+        annotations = description.toAnnotations() + directives.toAnnotations() + type.toAnnotations(),
         identifier = FieldIdentifier(name),
         reference = type.toReference(),
     )
@@ -365,32 +473,39 @@ private class GraphQLConverter(private val document: Document) {
     }
 
     /**
-     * An rpc is named after its field, `addTodo` becomes `AddTodo`, and only takes the root type as prefix when that name is
-     * taken. `@GraphQLName` keeps the field name when it cannot be read back from the rpc name. The root type is only
-     * spelled out when it is not the default for the operation.
+     * An operation is named after its field, `addTodo` becomes `AddTodo`, and only takes the type it is a field of as
+     * prefix when that name is taken. The root type is only spelled out when it is not the default for the operation.
      */
-    private fun FieldDefinition.toRpc(prefix: String, operation: Operation, rootType: String, extensionBlock: Int?): Rpc {
-        val identifier = name.trimStart('_').replaceFirstChar(Char::uppercase)
-            .let { claim(if (it.isValidTypeName() && it !in taken) it else prefix + it) }
-        return Rpc(
-            comment = null,
-            annotations = listOf(
-                annotation(
-                    operation.annotationName,
-                    rootType.takeIf { it != operation.defaultTypeName }?.let { parameter(DEFAULT_PARAMETER, it) },
-                    extensionBlock?.let { parameter("extend", it.toString()) },
+    private fun FieldDefinition.toOperation(prefix: String, nesting: Nesting): Rpc = name.capitalized()
+        .let { claim(if (it.isValidTypeName() && it !in taken) it else prefix + it) }
+        .let { rpc ->
+            toRpc(
+                identifier = rpc,
+                annotation = annotation(
+                    nesting.operation.annotationName,
+                    nesting.type.takeIf { it != nesting.operation.defaultTypeName }?.let { parameter(DEFAULT_PARAMETER, it) },
+                    nesting.extend?.let { parameter("extend", it.toString()) },
+                    nesting.path.takeIf { it.isNotEmpty() }?.let { Annotation.Parameter(PATH_PARAMETER, Annotation.Value.Dict(it)) },
                 ),
-            ) +
-                listOfNotNull(annotation(NAME, name).takeIf { identifier.replaceFirstChar(Char::lowercase) != name }) +
-                description.toAnnotations() +
-                directives.toAnnotations() +
-                type.toAnnotations(),
-            identifier = DefinitionIdentifier(identifier),
-            shape = Shape(arguments.map { it.toParameter() }),
-            result = type.toReference(),
-            error = null,
-        )
-    }
+                named = fieldName(rpc, type = null),
+            )
+        }
+
+    /** `@GraphQLName` keeps the field name when it is not the one the rpc is [named] after. */
+    private fun FieldDefinition.toRpc(identifier: String, annotation: Annotation, named: String): Rpc = Rpc(
+        comment = null,
+        annotations = listOf(annotation) +
+            listOfNotNull(annotation(NAME, name).takeIf { named != name }) +
+            description.toAnnotations() +
+            directives.toAnnotations() +
+            type.toAnnotations(),
+        identifier = DefinitionIdentifier(identifier),
+        shape = Shape(arguments.map { it.toParameter() }),
+        result = type.toReference(),
+        error = null,
+    )
+
+    private fun String.capitalized(): String = trimStart('_').replaceFirstChar(Char::uppercase)
 
     /** A default becomes a Wirespec default when it reads back as the same GraphQL literal, otherwise it stays in an annotation. */
     private fun InputValueDefinition.toField(): Field = type.toReference().let { reference ->
@@ -418,11 +533,9 @@ private class GraphQLConverter(private val document: Document) {
         defaultValue = native,
     )
 
-    private fun InputValueDefinition.toArgumentAnnotation(): Annotation = annotation(ARGUMENT, parameter("name", name), *argumentParameters().toTypedArray())
-
-    /** An argument as `@GraphQLArgument` and `@GraphQLDirectiveDefinition` hold it, but for its name. */
+    /** An argument as `@GraphQLDirectiveDefinition` holds it, but for its name. */
     private fun InputValueDefinition.argumentParameters(): List<Annotation.Parameter> = listOfNotNull(
-        parameter("type", type.print()),
+        parameter(TYPE_PARAMETER, type.print()),
         defaultValue?.let { parameter("defaultValue", it.print()) },
         description?.let { parameter("description", it) },
         parameter("directives", directives.map { it.print() }),

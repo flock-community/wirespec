@@ -375,6 +375,95 @@ class GraphQLEmitterTest {
         )
     }
 
+    @Test
+    fun rejectsArgumentsOnAField() {
+        val user = """
+            |type User {
+            |  @GraphQLArgument(name: "first", type: "Int")
+            |  friends: User[]
+            |}
+        """.trimMargin()
+
+        GraphQLEmitter.validate(parse(user)).map { it.message } shouldBe listOf(
+            "@GraphQLArgument on friends of User: a field that takes arguments is an rpc, so write it as an rpc marked @GraphQLField(\"User\") that takes the arguments as its parameters",
+        )
+    }
+
+    @Test
+    fun anRpcIsAFieldOfTheTypeItsAnnotationNames() {
+        """
+            |type User {
+            |  name: String,
+            |  email: String
+            |}
+            |
+            |@GraphQLField("User", before: "email")
+            |rpc UserFriends {
+            |  first: Integer32?
+            |} -> User[]
+            |
+            |@GraphQLField("User")
+            |rpc Avatar {
+            |  size: Integer32
+            |} -> String?
+            |
+            |@GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account" } })
+            |rpc Find {
+            |  name: String
+            |} -> User?
+            |
+            |@GraphQLQuery(path: { account: "AccountQuery!" })
+            |rpc Me {} -> User
+            |
+            |@GraphQLQuery(path: { account: "AccountQuery!", users: "UserQuery" })
+            |rpc Count {} -> Integer32
+            |
+            |@GraphQLMutation(path: { account: "AccountMutation!" })
+            |rpc Rename {
+            |  name: String
+            |} -> User
+        """.trimMargin().toGraphQL() shouldBe """
+            |type User {
+            |  name: String!
+            |  friends(
+            |    first: Int
+            |  ): [User!]!
+            |  email: String!
+            |  avatar(
+            |    size: Int!
+            |  ): String
+            |}
+            |
+            |type Query {
+            |  account: AccountQuery!
+            |}
+            |
+            |type AccountQuery {
+            |  "The users of the account"
+            |  users: UserQuery
+            |  me: User!
+            |}
+            |
+            |type UserQuery {
+            |  find(
+            |    name: String!
+            |  ): User
+            |  count: Int!
+            |}
+            |
+            |type Mutation {
+            |  account: AccountMutation!
+            |}
+            |
+            |type AccountMutation {
+            |  rename(
+            |    name: String!
+            |  ): User!
+            |}
+            |
+        """.trimMargin()
+    }
+
     private fun String.toGraphQL(): String = GraphQLEmitter.emit(parse(this), noLogger).single().result
 
     /** Parses [todos] as `todos.ws` and [notes], if any, as `notes.ws`. */

@@ -8,10 +8,21 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.exceptions.EmitterException
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.HasAnnotations
+import community.flock.wirespec.compiler.core.parse.ast.Part
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
+import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_DEFINITION
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLDocumentPrinter.print
 
@@ -28,12 +39,15 @@ public object GraphQLEmitter : Emitter {
     /** The annotations that only the schema as a whole has, so only the file header holds them. */
     private val schemaOnly = setOf(SCHEMA, DIRECTIVE_DEFINITION)
 
+    /** How a field held its arguments before a field with arguments became an rpc. */
+    private const val ARGUMENT = "GraphQLArgument"
+
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .also { it.modules.forEach { module -> logger.info("Emitting GraphQL from ${module.fileUri.value}") } }
         .let { WirespecToGraphQL(it).convert().print() }
         .let { nonEmptyListOf(Emitted("schema.graphql", it)) }
 
-    override fun validate(ast: AST): List<EmitterException> = ast.misplacedSchemaAnnotations() + ast.annotations.declaredTwice()
+    override fun validate(ast: AST): List<EmitterException> = ast.misplacedSchemaAnnotations() + ast.fieldsWithArguments() + ast.annotations.declaredTwice()
 
     private fun AST.misplacedSchemaAnnotations(): List<EmitterException> = modules.toList()
         .flatMap { module -> module.statements.map { module.fileUri to it } }
@@ -47,6 +61,27 @@ public object GraphQLEmitter : Emitter {
                     )
                 }
         }
+
+    /** A field with arguments is a function, which Wirespec writes as an rpc: the arguments of a field would be left out. */
+    private fun AST.fieldsWithArguments(): List<EmitterException> = modules.toList()
+        .flatMap { module -> module.statements.map { module.fileUri to it } }
+        .flatMap { (fileUri, definition) ->
+            definition.shapeFields()
+                .filter { field -> field.annotations.any { it.name == ARGUMENT } }
+                .map { field ->
+                    EmitterException(
+                        fileUri,
+                        "@$ARGUMENT on ${field.identifier.value} of ${definition.identifier.value}: a field that takes arguments is an rpc, " +
+                            "so write it as an rpc marked @$FIELD(\"${definition.identifier.value}\") that takes the arguments as its parameters",
+                    )
+                }
+        }
+
+    private fun Definition.shapeFields(): List<Field> = when (this) {
+        is Type -> shape.value.filterIsInstance<Field>()
+        is Part -> shape.value.filterIsInstance<Field>()
+        is Rpc, is Endpoint, is Channel, is Enum, is Union, is Refined -> emptyList()
+    }
 
     /** All files of a spec make one schema, so what it has once can be declared in one file only. */
     private fun List<SpecAnnotation>.declaredTwice(): List<EmitterException> = mapNotNull { spec -> spec.annotation.declaration()?.let { it to spec } }

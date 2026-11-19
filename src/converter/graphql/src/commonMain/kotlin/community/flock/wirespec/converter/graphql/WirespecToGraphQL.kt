@@ -17,7 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ARGUMENT
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BEFORE_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT_PARAMETER
@@ -27,15 +27,19 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_D
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.NAME
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.PATH_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.UNION_MEMBERS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotationName
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.fieldName
 import community.flock.wirespec.converter.graphql.GraphQLModel.DirectiveDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Document
 import community.flock.wirespec.converter.graphql.GraphQLModel.EnumTypeDefinition
@@ -57,8 +61,9 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
 /**
  * The inverse of [GraphQLParser]: rebuilds the GraphQL document from the Wirespec definitions and their annotations,
  * which gives back the schema it was converted from, but for the fields an implementation declares differently from
- * its interface. A type that spreads the part of an interface implements that interface. Wirespec that does not come
- * from GraphQL gets the closest GraphQL counterpart.
+ * its interface. A type that spreads the part of an interface implements that interface. An rpc is a field of the type
+ * its annotation names: a root operation type, a type nested in one through the fields of its `path`, or the type of
+ * `@GraphQLField`. Wirespec that does not come from GraphQL gets the closest GraphQL counterpart.
  *
  * The schema and directive definitions are `@spec:` annotations of the [ast], so they come first, in the order of the
  * file header.
@@ -88,10 +93,10 @@ internal class WirespecToGraphQL(ast: AST) {
         .groupBy({ it.first }, { it.second })
         .mapValues { (_, interfaces) -> interfaces.flatten() }
 
-    /** The rpcs of each root operation type, by type and extension block. */
-    private val rpcs: Map<Pair<String, String?>, List<Rpc>> = definitions.filterIsInstance<Rpc>().groupBy { it.rootType() }
-
     private val types: Map<String, Type> = definitions.filterIsInstance<Type>().associateBy { it.identifier.value }
+
+    /** The definitions that the fields of rpcs are added to: the types, and the unions that are interfaces. */
+    private val fieldHolders: Map<String, Definition> = definitions.filter { it is Type || it is Union }.associateBy { it.identifier.value }
 
     /** The types that no annotation gives a GraphQL kind, which become an object type, an input object or both. */
     private val plainTypes: Map<String, Type> = definitions.filterIsInstance<Type>()
@@ -131,6 +136,12 @@ internal class WirespecToGraphQL(ast: AST) {
         }.any { it.isJson() }
     }
 
+    /** The fields that the rpcs add to each type, by type and extension block, in the order of the rpcs. */
+    private val members: Map<Pair<String, String?>, List<Member>> = definitions.filterIsInstance<Rpc>()
+        .flatMap { it.members() }
+        .groupBy { it.owner }
+        .mapValues { (_, members) -> members.merged() }
+
     /** The GraphQL name of a type, enum, union or scalar. */
     fun graphQLName(definition: String): String = names[definition] ?: definition
 
@@ -139,43 +150,21 @@ internal class WirespecToGraphQL(ast: AST) {
 
     fun fieldDefinition(rpc: Rpc): FieldDefinition = rpc.toFieldDefinition()
 
-    /** The type an rpc is a field of: a root operation type, or a type that a field of one leads to. */
-    fun parentType(rpc: Rpc): String = rpc.rootType().first
+    /** Whether an rpc is a field with arguments of a type, which is no operation of its own. */
+    fun isFieldOfType(rpc: Rpc): Boolean = rpc.annotations.single(FIELD) != null
+
+    /** The GraphQL name of the root type an operation is a field of or nested in. */
+    fun rootType(rpc: Rpc): String = rpc.rootType().first.let { fieldHolders[it]?.graphQLName() ?: it }
 
     /** The root type of an operation: the one `@spec:GraphQLSchema` names, or else the default. */
     fun rootType(operation: Operation): String = spec.named(SCHEMA).firstNotNullOfOrNull { it.single(operation.keyword) } ?: operation.defaultTypeName
 
-    /**
-     * The fields that lead from the root type of its operation to the type [rpc] is a field of, which is none for a field
-     * of the root type itself; null when no fields lead there.
-     */
-    fun path(rpc: Rpc): List<String>? = rootType(operation(rpc)).let { root ->
-        parentType(rpc).let { parent ->
-            when (graphQLName(parent)) {
-                root -> emptyList()
-                else -> generateSequence((rpcs.keys.map { it.first } + types.keys).filter { graphQLName(it) == root }.associateWith { emptyList<String>() }) { found ->
-                    found.flatMap { (type, path) -> type.namespaces().map { (field, namespace) -> namespace to path + field } }
-                        .filterNot { (namespace, _) -> namespace in found }
-                        .takeIf { it.isNotEmpty() }
-                        ?.let { found + it.reversed() }
-                }.last()[parent]
-            }
-        }
-    }
-
-    /** The fields of a type that return one object and take no required argument, with the type each returns. */
-    private fun String.namespaces(): List<Pair<String, String>> = (
-        rpcs.filterKeys { it.first == this }.values.flatten().map { it.toFieldDefinition() to it.result } +
-            types[this]?.shape?.fields.orEmpty().map { it.toFieldDefinition() to it.reference }
-        )
-        .filter { (field, _) -> field.arguments.none { it.type is TypeRef.NonNull && it.defaultValue == null } }
-        .mapNotNull { (field, reference) -> (reference as? Reference.Custom)?.let { field.name to it.value } }
-
-    fun fieldDefinition(field: Field): FieldDefinition = field.toFieldDefinition()
+    /** The fields that lead from the root type to the type an operation is a field of: those of its `path`. */
+    fun path(rpc: Rpc): List<String> = rpc.pathFields().map { it.name }
 
     fun convert(): Document = Document(
         spec.mapNotNull { it.toDefinition() } +
-            definitions.flatMap { listOfNotNull(it.convert(), (it as? Type)?.toInputCopy()) } +
+            definitions.flatMap { it.convert() + listOfNotNull((it as? Type)?.toInputCopy()) } +
             listOfNotNull(ScalarTypeDefinition(null, JSON, emptyList(), false).takeIf { usesJson && JSON !in names.values }),
     )
 
@@ -199,13 +188,17 @@ internal class WirespecToGraphQL(ast: AST) {
         else -> null
     }
 
-    private fun Definition.convert(): GraphQLModel.Definition? = when (this) {
-        // A root operation type without a Wirespec type of its own is rebuilt at its first rpc.
-        is Rpc -> rootType().let { rootType ->
-            rpcs.getValue(rootType)
-                .takeIf { rootType.first !in types && it.first() === this }
-                ?.let { ObjectTypeDefinition(null, rootType.first, emptyList(), emptyList(), it.map { rpc -> rpc.toFieldDefinition() }, rootType.second != null) }
-        }
+    private fun Definition.convert(): List<GraphQLModel.Definition> = when (this) {
+        // A type without a Wirespec definition of its own is rebuilt at the first rpc that adds a field to it.
+        is Rpc ->
+            members
+                .filter { (owner, members) -> (owner.second != null || owner.first !in fieldHolders) && members.first().rpc === this }
+                .map { (owner, members) -> ObjectTypeDefinition(null, owner.first, emptyList(), emptyList(), members.map { it.field }, owner.second != null) }
+        else -> listOfNotNull(convertModel())
+    }
+
+    private fun Definition.convertModel(): GraphQLModel.Definition? = when (this) {
+        is Rpc -> null
         is Refined -> when {
             annotations.has(BUILT_IN) -> null
             else -> ScalarTypeDefinition(description(), graphQLName(), annotations.directives(), annotations.has(EXTEND))
@@ -241,7 +234,7 @@ internal class WirespecToGraphQL(ast: AST) {
      * a union has the fields that all of its members share.
      */
     private fun Definition.toInterface(): InterfaceTypeDefinition = interfaceShape().let { shape ->
-        InterfaceTypeDefinition(description(), graphQLName(), interfaces(shape), annotations.directives(), shape.fields.map { it.toFieldDefinition() }, annotations.has(EXTEND))
+        InterfaceTypeDefinition(description(), graphQLName(), interfaces(shape), annotations.directives(), fieldDefinitions(shape), annotations.has(EXTEND))
     }
 
     private fun Definition.interfaceShape(): Shape = annotations.single(INTERFACE)?.let { parts[it]?.shape } ?: when (this) {
@@ -277,7 +270,7 @@ internal class WirespecToGraphQL(ast: AST) {
                 name = graphQLName(),
                 interfaces = interfaces(shape),
                 directives = directives,
-                fields = fields.map { it.toFieldDefinition() } + rpcs[identifier.value to null].orEmpty().map { it.toFieldDefinition() },
+                fields = fieldDefinitions(shape),
                 extension = extension,
             )
         }
@@ -285,6 +278,47 @@ internal class WirespecToGraphQL(ast: AST) {
 
     private fun Type.toInputCopy(): InputObjectTypeDefinition? = inputNames[identifier.value]?.let { name ->
         InputObjectTypeDefinition(description(), name, emptyList(), shape.fields.map { it.toInputValue() }, false)
+    }
+
+    /** The fields of a shape, and those its rpcs add: before the field an rpc names, or else after the others. */
+    private fun Definition.fieldDefinitions(shape: Shape): List<FieldDefinition> = members[identifier.value to null].orEmpty()
+        .fold(shape.fields.map { it.toFieldDefinition() }) { fields, member ->
+            fields.indexOfFirst { it.name == member.before }.takeIf { it >= 0 }
+                ?.let { fields.take(it) + member.field + fields.drop(it) }
+                ?: (fields + member.field)
+        }
+
+    /** A field that [rpc] adds to the type [owner], in the `extend` block of a root type that [owner] names next to it. */
+    private data class Member(val owner: Pair<String, String?>, val field: FieldDefinition, val before: String?, val rpc: Rpc)
+
+    /**
+     * An rpc is a field of the type its annotation names. An operation with a `path` also adds the fields of that path:
+     * each to the type the field before it returns, starting at the root type.
+     */
+    private fun Rpc.members(): List<Member> = annotations.firstOrNull { it.name == FIELD }
+        ?.let { field -> field.single(DEFAULT_PARAMETER)?.let { listOf(Member(it to null, toFieldDefinition(), field.single(BEFORE_PARAMETER), this)) } }
+        ?: pathFields().let { path ->
+            path.runningFold(rootType()) { _, field -> field.type.leaf() to null }.let { owners ->
+                path.mapIndexed { index, field -> Member(owners[index], field, null, this) } + Member(owners.last(), toFieldDefinition(), null, this)
+            }
+        }
+
+    /** The fields of the `path` of an operation, each with the type it returns, or with all that describes it. */
+    private fun Rpc.pathFields(): List<FieldDefinition> = annotations.firstOrNull { it.name == operation(this).annotationName }
+        ?.dictionaries(PATH_PARAMETER)
+        .orEmpty()
+        .map { FieldDefinition(it.single("description"), it.name, emptyList(), parseType(it.single(TYPE_PARAMETER)!!), it.array("directives").map(::parseDirective)) }
+
+    /** Every rpc through a field of a path names it, and the one that describes it decides its description and directives. */
+    private fun List<Member>.merged(): List<Member> = groupBy { it.field.name }.values.map { same ->
+        same.first().let { first ->
+            first.copy(
+                field = first.field.copy(
+                    description = same.firstNotNullOfOrNull { it.field.description },
+                    directives = same.map { it.field.directives }.firstOrNull { it.isNotEmpty() }.orEmpty(),
+                ),
+            )
+        }
     }
 
     /** The root operation type an rpc is a field of, and the `extend` block it is in. */
@@ -321,23 +355,23 @@ internal class WirespecToGraphQL(ast: AST) {
     private fun Field.toFieldDefinition(): FieldDefinition = FieldDefinition(
         description = annotations.description(),
         name = identifier.value,
-        arguments = annotations.named(ARGUMENT).map { it.toInputValue(it.single("name")!!) },
+        arguments = emptyList(),
         type = typeRef(input = false),
         directives = annotations.directives(),
     )
 
-    /** An argument as `@GraphQLArgument` holds it, or as `@GraphQLDirectiveDefinition` holds the one called [name]. */
+    /** An argument as `@GraphQLDirectiveDefinition` holds the one called [name]. */
     private fun Annotation.toInputValue(name: String): InputValueDefinition = InputValueDefinition(
         description = single("description"),
         name = name,
-        type = parseType(single("type")!!),
+        type = parseType(single(TYPE_PARAMETER)!!),
         defaultValue = single("defaultValue")?.let(::parseValue),
         directives = array("directives").map(::parseDirective),
     )
 
     private fun Rpc.toFieldDefinition(): FieldDefinition = FieldDefinition(
         description = description(),
-        name = annotations.single(NAME) ?: identifier.value.replaceFirstChar(Char::lowercase),
+        name = annotations.single(NAME) ?: fieldName(identifier.value, annotations.single(FIELD)?.let { fieldHolders[it]?.graphQLName() ?: it }),
         arguments = shape.fields.map { it.toInputValue() },
         type = annotations.single(TYPE)?.let(::parseType) ?: result.toTypeRef(input = false),
         directives = annotations.directives(),
@@ -411,11 +445,26 @@ internal class WirespecToGraphQL(ast: AST) {
             ?.map { it.value.fromLiteral() }
             .orEmpty()
 
-        /** A dictionary of dictionaries, such as the arguments of a directive, each entry read as an annotation named after its key. */
+        /**
+         * A dictionary of dictionaries, such as the arguments of a directive, each entry read as an annotation named after
+         * its key. An entry that is a single value, as a field of a path may be, holds just its type.
+         */
         fun Annotation.dictionaries(parameter: String): List<Annotation> = (parameters.find { it.name == parameter }?.value as? Annotation.Value.Dict)
             ?.value
-            ?.map { (key, value) -> Annotation(key, (value as? Annotation.Value.Dict)?.value.orEmpty()) }
+            ?.map { (key, value) ->
+                when (value) {
+                    is Annotation.Value.Dict -> Annotation(key, value.value)
+                    is Annotation.Value.Single -> Annotation(key, listOf(Annotation.Parameter(TYPE_PARAMETER, value)))
+                    is Annotation.Value.Array -> Annotation(key, emptyList())
+                }
+            }
             .orEmpty()
+
+        fun TypeRef.leaf(): String = when (this) {
+            is TypeRef.Named -> name
+            is TypeRef.ListOf -> type.leaf()
+            is TypeRef.NonNull -> type.leaf()
+        }
 
         fun parseType(type: String): TypeRef = (GraphQLDocumentParser("input X { x: $type }").parseDocument().definitions.single() as InputObjectTypeDefinition).fields.single().type
 

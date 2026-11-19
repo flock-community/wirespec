@@ -69,7 +69,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
                 is Union -> model.entries.mapNotNull { operations.composite(it) as? TypeDefinition }.forEach { member ->
                     method(model, "on${Name.of(member.identifier.value).pascalCase()}", " ... on ${operations.graphQLName(member)} ", member)
                 }
-                is TypeDefinition -> model.shape.fields.filter { operations.isSelectable(it) }.forEach { field ->
+                is TypeDefinition -> model.shape.fields.forEach { field ->
                     when (val nested = operations.composite(field.reference)) {
                         null -> method(model, field.identifier.value, " ${field.identifier.value}")
                         else -> method(model, field.identifier.value, " ${field.identifier.value} ", nested)
@@ -120,7 +120,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
                 .groupBy({ it.first }, { it.second })
                 .filterValues { references -> references.distinct().size == 1 }
                 .map { (name, references) -> name to references.first() }
-        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.map { it.identifier.value to it.reference }
+        is TypeDefinition -> shape.fields.map { it.identifier.value to it.reference }
         is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> emptyList()
     }
 
@@ -226,7 +226,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     private fun Definition.nested(): List<Definition> = when (this) {
         is Union -> entries.mapNotNull { operations.composite(it) }
-        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.mapNotNull { operations.composite(it.reference) }
+        is TypeDefinition -> shape.fields.mapNotNull { operations.composite(it.reference) }
         is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> emptyList()
     }
 

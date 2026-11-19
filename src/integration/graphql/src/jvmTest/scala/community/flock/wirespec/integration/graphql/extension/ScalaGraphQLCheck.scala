@@ -60,7 +60,7 @@ object ScalaGraphQLCheck {
     serialization.query
   }
 
-  def readsFromANamespace(): String = {
+  def readsFromANestedType(): String = {
     val data = InboxCountGraphQL.GraphQLData(Some(InboxCountGraphQL.GraphQLDataNotifications(Some(3))))
     val serialization = Recording(InboxCountGraphQL.GraphQLResponse(Some(data), None))
 

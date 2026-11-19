@@ -285,6 +285,259 @@ class GraphQLParserTest {
     }
 
     @Test
+    fun convertsAFieldWithArgumentsToAnRpcOfItsType() {
+        val source = """
+            |interface Node {
+            |  id: ID!
+            |  related(first: Int): [Node!]
+            |}
+            |
+            |type Todo implements Node {
+            |  id: ID!
+            |  related(first: Int): [Node!]
+            |  comments("How many to return" first: Int = 10): [String!]! @deprecated
+            |  title: String!
+            |  history(since: String!): [String!]
+            |}
+            |
+            |extend type Todo {
+            |  tags(prefix: String): [String!]
+            |}
+            |
+            |type Query {
+            |  todo(id: ID!): Todo
+            |}
+        """.trimMargin()
+
+        source.toWirespec() shouldBe """
+            |part NodeInterface {
+            |  id: ID
+            |}
+            |
+            |@GraphQLInterface("NodeInterface")
+            |type Node = Todo
+            |
+            |@GraphQLField("Node")
+            |rpc NodeRelated {
+            |  first: Integer32?
+            |} -> Node[]?
+            |
+            |type Todo {
+            |  ...NodeInterface,
+            |  title: String
+            |}
+            |
+            |@GraphQLField("Todo", before: "title")
+            |rpc TodoRelated {
+            |  first: Integer32?
+            |} -> Node[]?
+            |
+            |@GraphQLField("Todo", before: "title")
+            |@GraphQLDirective("@deprecated")
+            |rpc TodoComments {
+            |  @Description("How many to return")
+            |  @GraphQLDefault("10")
+            |  first: Integer32?
+            |} -> String[]
+            |
+            |@GraphQLField("Todo")
+            |rpc TodoHistory {
+            |  since: String
+            |} -> String[]?
+            |
+            |@GraphQLExtend("Todo")
+            |type TodoExtension {
+            |
+            |}
+            |
+            |@GraphQLField("TodoExtension")
+            |rpc TodoTags {
+            |  prefix: String?
+            |} -> String[]?
+            |
+            |@GraphQLQuery
+            |@GraphQLName("todo")
+            |rpc QueryTodo {
+            |  id: ID
+            |} -> Todo?
+            |
+            |@GraphQLBuiltIn
+            |type ID = String
+            |
+        """.trimMargin()
+        source.shouldRoundTrip()
+    }
+
+    @Test
+    fun namesAnRpcOfATypeAfterTheTypeAndTheField() {
+        val rpcs = convert("type User { name(short: Boolean): String, userName(short: Boolean): String, _id(raw: Boolean): ID } type UserName { a: Int } type Query { user: User, users: [User] }")
+            .filterIsInstance<Rpc>()
+        rpcs.map { rpc -> rpc.identifier.value to rpc.annotations.map { it.name } } shouldContainExactly listOf(
+            "UserName2" to listOf("GraphQLField", "GraphQLName"),
+            "UserUserName" to listOf("GraphQLField"),
+            "UserId" to listOf("GraphQLField", "GraphQLName"),
+            "QueryUser" to listOf("GraphQLQuery", "GraphQLName"),
+            "Users" to listOf("GraphQLQuery"),
+        )
+    }
+
+    @Test
+    fun convertsATypeNestedInARootTypeToThePathOfItsOperations() {
+        val source = """
+            |type Query {
+            |  ping: Boolean
+            |  "Everything about notifications"
+            |  notifications: NotificationsQuery! @deprecated
+            |  todos: [Todo!]!
+            |}
+            |
+            |type Todo {
+            |  id: ID!
+            |}
+            |
+            |"Queries about notifications"
+            |type NotificationsQuery {
+            |  archive: ArchiveQuery
+            |  inbox(limit: Int!): [Todo!]!
+            |  inboxCount: Int!
+            |}
+            |
+            |type ArchiveQuery {
+            |  search(text: String!): [Todo!]!
+            |}
+            |
+            |extend type Query {
+            |  type: TypeQuery
+            |}
+            |
+            |type TypeQuery {
+            |  todo(id: ID!): Todo
+            |}
+        """.trimMargin()
+
+        source.toWirespec() shouldBe """
+            |@GraphQLQuery
+            |rpc Ping {} -> Boolean?
+            |
+            |@Description("Queries about notifications")
+            |type NotificationsQuery {
+            |
+            |}
+            |
+            |@GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] }, archive: "ArchiveQuery" })
+            |rpc Search {
+            |  text: String
+            |} -> Todo[]
+            |
+            |@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+            |rpc Inbox {
+            |  limit: Integer32
+            |} -> Todo[]
+            |
+            |@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+            |rpc InboxCount {} -> Integer32
+            |
+            |@GraphQLQuery
+            |rpc Todos {} -> Todo[]
+            |
+            |type Todo {
+            |  id: ID
+            |}
+            |
+            |@GraphQLQuery(extend: "1", path: { type: "TypeQuery" })
+            |@GraphQLName("todo")
+            |rpc TypeQueryTodo {
+            |  id: ID
+            |} -> Todo?
+            |
+            |@GraphQLBuiltIn
+            |type ID = String
+            |
+        """.trimMargin()
+        // A nested type without a Wirespec type of its own comes back at its first rpc, after the type it is nested in.
+        source.convertedBack() shouldBe GraphQLDocumentParser(
+            """
+            |type Query {
+            |  ping: Boolean
+            |  "Everything about notifications"
+            |  notifications: NotificationsQuery! @deprecated
+            |  todos: [Todo!]!
+            |}
+            |
+            |"Queries about notifications"
+            |type NotificationsQuery {
+            |  archive: ArchiveQuery
+            |  inbox(limit: Int!): [Todo!]!
+            |  inboxCount: Int!
+            |}
+            |
+            |type ArchiveQuery {
+            |  search(text: String!): [Todo!]!
+            |}
+            |
+            |type Todo {
+            |  id: ID!
+            |}
+            |
+            |extend type Query {
+            |  type: TypeQuery
+            |}
+            |
+            |type TypeQuery {
+            |  todo(id: ID!): Todo
+            |}
+            """.trimMargin(),
+        ).parseDocument()
+    }
+
+    @Test
+    fun aNestedTypeNextToTheTypeItIsNestedInSurvivesTheRoundTrip() {
+        """
+            |type Mutation {
+            |  todos: TodoMutations
+            |  session: SessionMutations!
+            |}
+            |
+            |type TodoMutations {
+            |  add(title: String!): ID!
+            |  clear: Boolean
+            |}
+            |
+            |type SessionMutations {
+            |  login(name: String!): Boolean!
+            |}
+        """.trimMargin().shouldRoundTrip()
+    }
+
+    @Test
+    fun nestsOnlyATypeWithOperationsThatOneFieldLeadsTo() {
+        val nested = { source: String -> convert(source).filterIsInstance<Rpc>().filter { rpc -> rpc.annotations.first().parameters.any { it.name == "path" } }.map { it.identifier.value } }
+        nested("type Query { a: A! } type A { f(x: Int): Int }") shouldContainExactly listOf("F")
+        nested("type Query { a: A } type A { b: B! } type B { f(x: Int): Int, g: Int }") shouldContainExactly listOf("F", "G")
+        // Only holds data
+        nested("type Query { a: A! } type A { f: Int }") shouldBe emptyList()
+        // Two fields lead to it
+        nested("type Query { a: A!, b: A } type A { f(x: Int): Int }") shouldBe emptyList()
+        nested("type Query { a: A! } type A { f(x: Int): Int, self: A }") shouldBe emptyList()
+        nested("type Query { a: A! } type A { f(x: Int): Int } union U = A") shouldBe emptyList()
+        // The field that leads to it is a function, or returns a list
+        nested("type Query { a(id: ID!): A! } type A { f(x: Int): Int }") shouldBe emptyList()
+        nested("type Query { a: [A!]! } type A { f(x: Int): Int }") shouldBe emptyList()
+        // It is more than its fields
+        nested("type Query { a: A! } type A implements I { f(x: Int): Int } interface I { f(x: Int): Int }") shouldBe emptyList()
+        nested("type Query { a: A! } type A { f(x: Int): Int } extend type A { g: Int }") shouldBe emptyList()
+        // No root type leads to it
+        nested("type Query { u: [User] } type User { a: A! } type A { f(x: Int): Int }") shouldBe emptyList()
+        listOf(
+            "type Query { a: A!, b: A } type A { f(x: Int): Int }",
+            "type Query { a: A! } type A { f(x: Int): Int, self: A }",
+            "type Query { a(id: ID!): A! } type A { f(x: Int): Int }",
+            "type Query { a: A! } type A { f(x: Int): Int } extend type A { g: Int }",
+            "type Query { u: [User] } type User { a: A! } type A { f(x: Int): Int }",
+        ).forEach { it.shouldRoundTrip() }
+    }
+
+    @Test
     fun keepsARootTypeOnlyWhenItNeedsOne() {
         val types = { source: String -> convert(source).filterIsInstance<Type>().map { it.identifier.value } }
         types("type Query { a: Int }") shouldBe emptyList()
