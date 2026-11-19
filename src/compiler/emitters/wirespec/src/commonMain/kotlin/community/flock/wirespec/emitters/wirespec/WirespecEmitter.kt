@@ -1,7 +1,6 @@
 package community.flock.wirespec.emitters.wirespec
 
 import arrow.core.NonEmptyList
-import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
@@ -39,26 +38,19 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
     override fun notYetImplemented(): String = singleLineComment
 
     /**
-     * The modules are written together in one file, `wirespec.ws`. The `@file:` annotations of a module describe the
-     * definitions of that module only, so among several modules, each one that has them is a file of its own, named
-     * after the module. The first file holds the `@spec:` annotations.
+     * Every module is a file of its own, named after the file it comes from, so the `@file:` annotations of a module
+     * keep describing that module only. A `@spec:` annotation stays in the file it is written in. One that is written
+     * in a file without definitions, which is no module, goes to the first file.
      */
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules.toList()
-        .let { modules ->
-            when (modules.size) {
-                1 -> listOf(DEFAULT_FILE to modules)
-                else -> modules.partition { it.annotations.isEmpty() }
-                    .let { (together, apart) -> listOfNotNull(together.takeIf { it.isNotEmpty() }?.let { DEFAULT_FILE to it }) + apart.map { it.fileName() to listOf(it) } }
-            }
-        }
-        .mapIndexed { index, (file, modules) ->
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules.map { it.fileUri }.let { files ->
+        ast.modules.mapIndexed { index, module ->
             Emitted(
-                "$file.${extension.value}",
-                emitHeader(ast.annotations.takeIf { index == 0 }.orEmpty().map { it.annotation }, modules.flatMap { it.annotations }) +
-                    modules.flatMap { emit(it, logger) }.joinToString("\n") { it.result },
+                "${module.fileName()}.${extension.value}",
+                emitHeader(ast.annotations.filter { it.fileUri == module.fileUri || (index == 0 && it.fileUri !in files) }.map { it.annotation }, module.annotations) +
+                    emit(module, logger).joinToString("\n") { it.result },
             )
         }
-        .toNonEmptyListOrNull()!!
+    }
 
     private fun emitHeader(spec: List<Annotation>, file: List<Annotation>): String =
         (spec.map { it.emit("spec") } + file.map { it.emit("file") })
@@ -66,7 +58,7 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
             ?.joinToString("\n", postfix = "\n\n")
             .orEmpty()
 
-    private fun Module.fileName(): String = fileUri.value.substringAfterLast('/').substringBeforeLast('.')
+    private fun Module.fileName(): String = fileUri.value.substringAfterLast('/').substringBeforeLast('.').ifBlank { DEFAULT_FILE }
 
     private companion object {
         const val DEFAULT_FILE = "wirespec"

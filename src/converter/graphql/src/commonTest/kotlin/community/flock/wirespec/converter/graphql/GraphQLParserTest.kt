@@ -28,6 +28,7 @@ import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -382,7 +383,62 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun convertsATypeNestedInARootTypeToAFileWithThePathOfItsOperations() {
+    fun keepsADocumentWithNestedTypesInOneFile() {
+        val source = """
+            |type Query {
+            |  notifications: NotificationsQuery!
+            |}
+            |
+            |type Mutation {
+            |  notifications: NotificationsMutation!
+            |}
+            |
+            |type NotificationsQuery {
+            |  inbox(limit: Int! = 20): [Notification!]!
+            |  inboxCount: Int!
+            |}
+            |
+            |type NotificationsMutation {
+            |  markRead(id: ID!): Boolean
+            |}
+            |
+            |type Notification {
+            |  id: ID!
+            |}
+        """.trimMargin()
+
+        source.toWirespecFiles() shouldBe mapOf(
+            "schema.ws" to """
+                |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+                |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+                |
+                |type Notification {
+                |  id: ID
+                |}
+                |
+                |@GraphQLScalar
+                |type ID = String
+                |
+                |@GraphQLQuery
+                |rpc Inbox {
+                |  limit: Integer32 = 20
+                |} -> Notification[]
+                |
+                |@GraphQLQuery
+                |rpc InboxCount {} -> Integer32
+                |
+                |@GraphQLMutation
+                |rpc MarkRead {
+                |  id: ID
+                |} -> Boolean?
+                |
+            """.trimMargin(),
+        )
+        source.convertedBack().definitions shouldContainExactlyInAnyOrder GraphQLDocumentParser(source).parseDocument().definitions
+    }
+
+    @Test
+    fun aNestedTypeThatSharesItsOperationIsAFileOfItsOwn() {
         val source = """
             |type Query {
             |  ping: Boolean
@@ -416,7 +472,7 @@ class GraphQLParserTest {
         """.trimMargin()
 
         source.toWirespecFiles() shouldBe mapOf(
-            "wirespec.ws" to """
+            "schema.ws" to """
                 |@GraphQLQuery
                 |rpc Ping {} -> Boolean?
                 |

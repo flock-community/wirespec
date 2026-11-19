@@ -97,10 +97,10 @@ type NotificationsQuery {
 ```
 
 The fields of such a type are operations too, and only they become rpcs. The type is a namespace, and a namespace is a
-file: the nested type gets a file of its own, named after it, whose header says where its operations are. The `path`
-of `@file:GraphQLQuery` names the fields that lead from the root type to the type, with the type every field returns:
+file: the header of the file says where its operations are. The `path` of `@file:GraphQLQuery` names the fields that
+lead from the root type to the type, with the type every field returns:
 
-```wirespec title="NotificationsQuery.ws"
+```wirespec
 @file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
 
 @GraphQLQuery
@@ -119,8 +119,7 @@ Every `@GraphQLQuery` rpc of that file is a field of `NotificationsQuery`. Neith
 - The header holds one annotation per operation, so a file can nest its queries and its mutations:
   `@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })` says where the `@GraphQLMutation` rpcs of
   the file are. The other definitions of the file, such as its types, are not affected.
-- A path can go through several types: `path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" }`. Each
-  nested type has a file of its own, with the whole path to it.
+- A path can go through several types: `path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" }`.
 - A field of the path that has more than a type holds it next to its type: its `description`, its `directives`, and
   `before`, the field that follows it, so the field comes back in its place:
   `path: { notifications: { type: "NotificationsQuery!", description: "...", before: "todos" } }`.
@@ -128,8 +127,12 @@ Every `@GraphQLQuery` rpc of that file is a field of `NotificationsQuery`. Neith
   in, as `@GraphQLQuery` on an rpc does: `@file:GraphQLQuery("QueryRoot", extend: "1", path: { ... })`.
 - A nested type with a description or directives keeps them on an empty `type` in its file, like a root type does.
 
-The converter writes the other definitions to `wirespec.ws`, the file with the `@spec:` annotations. Compile all the
-files together.
+A GraphQL file converts to one Wirespec file, named after it: `campaign.graphqls` becomes `campaign.ws`, with the
+`@file:` annotations of its nested types in its header. A file has one place for its queries, and one for its mutations.
+So a nested type that does not have its operation to itself is written to a file of its own, named after the type,
+with the whole path to it: that happens when the root type also has fields of its own, as in
+`type Query { ping: Boolean, notifications: NotificationsQuery! }`, or nests more than one type. Compile all the files
+together.
 
 A type is nested when all of this holds, so that one path leads to it and nothing but its operations is left out:
 
@@ -546,8 +549,8 @@ extension can generate a typed Kotlin, Java or Scala client that calls them.
   field that the implementation narrows, describes differently or gives extra arguments or directives loses that. An
   `extend type` that only implements an interface the type implements is not kept.
 - **Multiple files**: each file is converted on its own. A schema split over several files references types declared in
-  the other files; convert all of them to compile the result. A schema with nested types converts to several Wirespec
-  files, which can only be nested when each keeps its own header.
+  the other files; convert all of them to compile the result. Each converts to a Wirespec file named after it, and to
+  one more for every nested type that needs a file of its own.
 
 ## Playground
 

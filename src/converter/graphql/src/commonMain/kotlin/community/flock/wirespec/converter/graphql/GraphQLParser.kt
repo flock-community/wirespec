@@ -73,8 +73,8 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  * Objects and input objects become types, scalars become refined types, and enums and unions map onto their Wirespec
  * counterparts. A field is a function when it takes arguments, and a function is an `rpc`: every field of a root
  * operation type (`Query`, `Mutation`, `Subscription`), every field of a type that only nests operations in one, and
- * every other field with arguments. An annotation of the rpc says which type it is a field of. A type nested in a root
- * operation type is a module of its own, whose `@file:` annotation names the fields that lead to the type.
+ * every other field with arguments. An annotation of the rpc says which type it is a field of. For a type nested in a
+ * root operation type, a `@file:` annotation names the fields that lead to the type.
  * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
  * Wirespec cannot express natively —
  * descriptions, directives, default values, extensions — is kept in annotations, so the schema can
@@ -87,7 +87,7 @@ public object GraphQLParser : Parser {
         .parseDocument()
         .let(::GraphQLConverter)
         .let { converter ->
-            (listOfNotNull(converter.definitions().toNonEmptyListOrNull()?.let { Module(moduleContent.fileUri, it, annotations = emptyList()) }) + converter.nestedModules())
+            converter.modules(moduleContent.fileUri)
                 .toNonEmptyListOrNull()
                 ?.let { modules -> AST(modules, annotations = converter.specAnnotations().map { SpecAnnotation(modules.head.fileUri, it) }) }
                 ?: error("Cannot convert GraphQL document ${moduleContent.fileUri.value}: it defines no types, and Wirespec needs a definition besides the @spec: annotations of its schema and directives")
@@ -224,7 +224,7 @@ private class GraphQLConverter(private val document: Document) {
         in roots -> rootDefinitions.getValue(this).let { root ->
             listOfNotNull(type(root.type, commonAnnotations(interfaces), emptyList()).takeIf { needsType() }) + operations(root.annotation(emptyList()))
         }
-        // A module of its own.
+        // Written with the annotation that says where it is nested.
         in nested -> emptyList()
         else -> implementation().takeUnless { bringsNothing(it) }
             ?.let { identifier().let { identifier -> listOf(type(identifier, commonAnnotations(it.listed), it.entries)) + functions(identifier) } }
@@ -259,10 +259,29 @@ private class GraphQLConverter(private val document: Document) {
     }
 
     /**
-     * Every nested type as a module of its own. Its `@file:` annotation says where its operations are: the root type,
-     * and the fields that lead from there to the type.
+     * A document is one module. Its `@file:` annotations say where the operations of its nested types are, one for each
+     * operation: all queries of a module are in one place, and so are all its mutations. A nested type that does not
+     * have its operation to itself, because the root type has fields of its own or nests another type, is therefore a
+     * module of its own, named after the type.
      */
-    fun nestedModules(): List<Module> = document.definitions
+    fun modules(fileUri: FileUri): List<Module> = definitions().let { definitions ->
+        nestedModules()
+            .let { nested -> nested.partition { module -> module.nesting().let { operation -> definitions.none { it.isOperation(operation) } && nested.count { it.nesting() == operation } == 1 } } }
+            .let { (together, apart) ->
+                listOfNotNull((definitions + together.flatMap { it.statements }).toNonEmptyListOrNull()?.let { Module(fileUri, it, together.flatMap { it.annotations }) }) + apart
+            }
+    }
+
+    /** The operation annotation that says where the operations of the module of a nested type are. */
+    private fun Module.nesting(): String = annotations.single().name
+
+    private fun Definition.isOperation(annotation: String): Boolean = this is Rpc && annotations.any { it.name == annotation }
+
+    /**
+     * Every nested type as a module. Its `@file:` annotation says where its operations are: the root type, and the
+     * fields that lead from there to the type.
+     */
+    private fun nestedModules(): List<Module> = document.definitions
         .filterIsInstance<ObjectTypeDefinition>()
         .filter { it.name in nested }
         .mapNotNull { definition ->
