@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
@@ -207,6 +208,55 @@ class GraphQLOperationsTest {
         operations.composite(rpcs.getValue("QueryTodo").result) shouldBe todo
         operations.composite(rpcs.getValue("Count").result) shouldBe null
         todo.shape.value.filterIsInstance<community.flock.wirespec.compiler.core.parse.ast.Field>().map { operations.isSelectable(it) } shouldBe listOf(true, false)
+    }
+
+    @Test
+    fun tellsWhyNoDocumentSelectsEveryFieldAndGivesTheArgumentsToSelectThemWith() {
+        val ast = """
+            |input CreateInput {
+            |  name: String!
+            |}
+            |
+            |type Item {
+            |  id: ID!
+            |  related(first: Int = 10, tags: [String!]): [Item!]
+            |}
+            |
+            |type StoreMutations {
+            |  create(input: CreateInput!): Item!
+            |}
+            |
+            |type Query {
+            |  item(id: ID!): Item
+            |}
+            |
+            |type Mutation {
+            |  store: StoreMutations!
+            |}
+        """.trimMargin().fromGraphQL()
+        val operations = GraphQLOperations(ast)
+        val rpcs = ast.definitions().filterIsInstance<Rpc>().associateBy { it.identifier.value }
+        val fields = ast.definitions().filterIsInstance<community.flock.wirespec.compiler.core.parse.ast.Type>()
+            .flatMap { it.shape.value.filterIsInstance<community.flock.wirespec.compiler.core.parse.ast.Field>() }
+            .associateBy { it.identifier.value }
+
+        operations.unselectable(rpcs.getValue("QueryItem")) shouldBe null
+        operations.unselectable(rpcs.getValue("Store")) shouldBe "Cannot write a GraphQL query for rpc Store: field create of its result takes a required argument. " +
+            "GraphQL selects a finite set of fields, so make the field nullable to leave it out of the query."
+        shouldThrow<IllegalStateException> { operations.document(rpcs.getValue("Store"), "result") }.message shouldBe operations.unselectable(rpcs.getValue("Store"))
+
+        operations.operation(rpcs.getValue("QueryItem")) shouldBe "query QueryItem"
+        operations.field(rpcs.getValue("QueryItem"), "result") shouldBe " { result: item(id: \$id)"
+        operations.arguments(rpcs.getValue("QueryItem")).map { Triple(it.name, it.type, it.reference) } shouldBe listOf(
+            Triple("id", "ID!", Reference.Custom("ID", isNullable = false)),
+        )
+        operations.arguments(fields.getValue("create")).map { Triple(it.name, it.type, it.reference) } shouldBe listOf(
+            Triple("input", "CreateInput!", Reference.Custom("CreateInput", isNullable = false)),
+        )
+        operations.arguments(fields.getValue("related")).map { Triple(it.name, it.type, it.reference) } shouldBe listOf(
+            Triple("first", "Int = 10", Reference.Primitive(Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null), isNullable = true)),
+            Triple("tags", "[String!]", Reference.Iterable(Reference.Primitive(Reference.Primitive.Type.String(null), isNullable = false), isNullable = true)),
+        )
     }
 
     @Test

@@ -20,6 +20,8 @@ import java.util.concurrent.CompletableFuture;
 import community.flock.wirespec.integration.graphql.java.generated.GraphQLClient;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL;
 import community.flock.wirespec.integration.graphql.java.generated.graphql.SearchGraphQL;
+import community.flock.wirespec.integration.graphql.java.generated.graphql.StoreGraphQL;
+import community.flock.wirespec.integration.graphql.java.generated.model.CreateInput;
 import community.flock.wirespec.integration.graphql.java.generated.model.ID;
 import community.flock.wirespec.integration.graphql.java.generated.model.NewTodo;
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority;
@@ -101,6 +103,16 @@ public final class JavaGraphQLExamples {
         Optional<Boolean> done = todo.flatMap(QueryTodoGraphQL.TodoResult::done); // empty: not selected
         // endregion selection
         return List.of(title, owner, done);
+    }
+
+    public static Optional<String> arguments(GraphQLClient client) {
+        // region arguments
+        StoreGraphQL.StoreMutationsResult store = client.store(s -> s
+            .create(new CreateInput("Pen"), item -> item.id())).join();
+
+        Optional<String> id = store.create().flatMap(StoreGraphQL.ItemResult::id);
+        // endregion arguments
+        return id;
     }
 
     public static List<Optional<String>> union(GraphQLClient client) {

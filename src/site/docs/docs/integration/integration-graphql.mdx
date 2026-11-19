@@ -301,6 +301,53 @@ A field of a type takes a selection of that type. A union has an `on<Member>` se
 A call with a selection throws an `IllegalStateException` on GraphQL errors, also for an rpc with an error type: its
 `Result` and `Error` hold the full models.
 
+### Arguments of a field
+
+A field of a type can take arguments of its own, which Wirespec keeps in `@GraphQLArgument`:
+
+```wirespec
+@GraphQLMutation
+@GraphQLName("store")
+rpc Store {} -> StoreMutations
+
+type StoreMutations {
+  @GraphQLArgument(name: "input", type: "CreateInput!")
+  create: Item
+}
+```
+
+A field with a required argument takes its arguments in the selection, before the selection of its own fields:
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin wirespec example=GraphQLExamples.kt#arguments
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java wirespec example=JavaGraphQLExamples.java#arguments
+    ```
+  </TabItem>
+  <TabItem value="scala" label="Scala">
+    ```scala wirespec example=ScalaGraphQLExamples.scala#arguments
+    ```
+  </TabItem>
+</Tabs>
+
+Each argument is sent as a variable of the query, declared after the parameters of the rpc and named by the client:
+
+```graphql
+mutation Store($arg1: CreateInput!) { result: store { create(input: $arg1) { id } } }
+```
+
+An argument is typed as the Wirespec type its GraphQL type names, and as any value when no definition has that name.
+An operation that selects such a field sends its variables as a map by name, so its `GraphQLRequest` has no
+`GraphQLVariables`.
+
+No query can select every field of `StoreMutations`: `create` needs an argument, and is not nullable, so it cannot be
+left out either. Such an operation is only called with a selection. Its client has no call that returns the whole
+result, does not implement the `Service` of the rpc, and has a `SelectedApi` but no `Api`. The same goes for a result
+with a field that is not nullable and refers back to a type it is selected in.
+
 ## A client of your own
 
 The generated clients send every operation the same way. To send them your way, for instance to add a header, log
@@ -408,8 +455,8 @@ GraphQL text and returns itself from every field. A partial result has the same 
   inline fragment for each member, so the serialization can tell the members apart by `__typename`.
 - GraphQL selects a finite set of fields, so a typed call cannot select a field that refers back to a type it is
   selected in, such as `User.todos` inside `Todo.owner`, or a field that takes a required argument. Such a field is
-  left out when it is nullable. When it is not, the build fails with a message that names the field; use a selection
-  for that operation instead.
+  left out when it is nullable. When it is not, the operation has no typed call, and is
+  [only called with a selection](#arguments-of-a-field).
 
 ### Namespace types
 
@@ -464,7 +511,8 @@ left out. Configure the serialization to leave out null values to use the defaul
 ## Limitations
 
 - Subscriptions get no client, because they are not a single request and response.
-- Arguments of nested fields are not passed: a field that requires one cannot be selected.
+- A selection only passes the arguments of a field that requires one: a field whose arguments are all optional is
+  selected without them.
 - A partial result cannot tell a field that was not selected from a field that is `null`: both read as empty.
 - A typed call returns a union as the Wirespec union of its models, which the serialization has to read by
   `__typename`. A partial result has no such need: it is a single type with the fields of every member.
