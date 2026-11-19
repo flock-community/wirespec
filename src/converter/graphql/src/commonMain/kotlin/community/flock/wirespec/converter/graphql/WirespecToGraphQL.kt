@@ -173,6 +173,24 @@ internal class WirespecToGraphQL(ast: AST) {
 
     fun fieldDefinition(field: Field): FieldDefinition = field.toFieldDefinition()
 
+    /**
+     * The Wirespec type that the GraphQL [type] of an argument reads as, the inverse of [toTypeRef]. An argument is typed
+     * in GraphQL syntax, so a type that no definition declares, such as an `ID` without a `type ID`, is any value.
+     */
+    fun reference(type: TypeRef, isNullable: Boolean = true): Reference = when (type) {
+        is TypeRef.NonNull -> reference(type.type, isNullable = false)
+        is TypeRef.ListOf -> Reference.Iterable(reference(type.type), isNullable)
+        is TypeRef.Named -> when (type.name) {
+            "Int" -> Reference.Primitive(Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null), isNullable)
+            "Float" -> Reference.Primitive(Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null), isNullable)
+            "String" -> Reference.Primitive(Reference.Primitive.Type.String(null), isNullable)
+            "Boolean" -> Reference.Primitive(Reference.Primitive.Type.Boolean, isNullable)
+            else -> (names + inputNames).entries.firstOrNull { it.value == type.name }
+                ?.let { Reference.Custom(it.key, isNullable) }
+                ?: Reference.Any(isNullable)
+        }
+    }
+
     fun convert(): Document = Document(
         spec.mapNotNull { it.toDefinition() } +
             definitions.flatMap { listOfNotNull(it.convert(), (it as? Type)?.toInputCopy()) } +

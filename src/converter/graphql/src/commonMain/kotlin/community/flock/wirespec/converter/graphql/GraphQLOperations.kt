@@ -32,7 +32,8 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  *
  * GraphQL selects a finite set of fields, so a field that refers back to a type it is selected in, or that takes a
  * required argument, cannot be selected. Such a field is left out when it is nullable; when it is not, the rpc has no
- * document and [document] throws an [IllegalStateException] that names the field.
+ * document and [document] throws an [IllegalStateException] that names the field. [unselectable] tells beforehand, for a
+ * caller that then selects the fields itself and passes the [arguments] they take.
  */
 public class GraphQLOperations(ast: AST) {
 
@@ -50,12 +51,40 @@ public class GraphQLOperations(ast: AST) {
      * The document of [rpc] up to where the selection of its result goes, for a caller that selects the fields itself:
      * the document is this text, a space and the selection between braces, and [close]. Null for a subscription.
      */
-    public fun open(rpc: Rpc, alias: String): String? = schema.operation(rpc)
+    public fun open(rpc: Rpc, alias: String): String? = operation(rpc)
+        ?.let { operation -> "$operation${arguments(rpc).declared()}${field(rpc, alias)}" }
+
+    /** How the document of [rpc] starts, before its variables: `query QueryTodo`. Null for a subscription. */
+    public fun operation(rpc: Rpc): String? = schema.operation(rpc)
         .takeUnless { it == Operation.SUBSCRIPTION }
-        ?.let { operation ->
-            val field = schema.fieldDefinition(rpc)
-            "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { ${path(rpc).joinToString("") { "$it { " }}$alias: ${field.name}${field.arguments.passed()}"
-        }
+        ?.let { "${it.keyword} ${rpc.identifier.value}" }
+
+    /**
+     * The document of [rpc] after its variables, up to where the selection of its result goes: the fields that lead to
+     * its field, and the field under [alias] with the variables it is passed. A caller that adds variables of its own,
+     * for the arguments of the fields it selects, declares them between [operation] and this.
+     */
+    public fun field(rpc: Rpc, alias: String): String = schema.fieldDefinition(rpc).let { field ->
+        " { ${path(rpc).joinToString("") { "$it { " }}$alias: ${field.name}${field.arguments.passed()}"
+    }
+
+    /** The arguments of the field that [rpc] is, which are the variables of its document. */
+    public fun arguments(rpc: Rpc): List<Argument> = schema.fieldDefinition(rpc).arguments.map { it.toArgument() }
+
+    /** The arguments that [field] takes. */
+    public fun arguments(field: Field): List<Argument> = schema.fieldDefinition(field).arguments.map { it.toArgument() }
+
+    /**
+     * An argument of a field: its [name], its GraphQL [type] with its default, as a variable is declared with, and the
+     * Wirespec type a caller passes for it.
+     */
+    public class Argument(public val name: String, public val type: String, public val reference: Reference)
+
+    /**
+     * Why no document selects every field of the result of [rpc], which leaves a caller to select the fields itself;
+     * null when [document] writes one.
+     */
+    public fun unselectable(rpc: Rpc): String? = rpc.result.unselectable(Trail(rpc.identifier.value))
 
     /** What closes the document of [rpc] after the selection of its result. */
     public fun close(rpc: Rpc): String = " }".repeat(path(rpc).size + 1)
@@ -78,8 +107,14 @@ public class GraphQLOperations(ast: AST) {
     /** The name of [definition] in the GraphQL schema, which an inline fragment names. */
     public fun graphQLName(definition: Definition): String = schema.graphQLName(definition.identifier.value)
 
-    private fun List<InputValueDefinition>.variables(): String = takeIf { it.isNotEmpty() }
-        ?.joinToString(", ", "(", ")") { "$${it.name}: ${it.type.print()}${it.defaultValue?.let { value -> " = ${value.print()}" }.orEmpty()}" }
+    private fun InputValueDefinition.toArgument(): Argument = Argument(
+        name = name,
+        type = "${type.print()}${defaultValue?.let { " = ${it.print()}" }.orEmpty()}",
+        reference = schema.reference(type),
+    )
+
+    private fun List<Argument>.declared(): String = takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "(", ")") { "$${it.name}: ${it.type}" }
         .orEmpty()
 
     private fun List<InputValueDefinition>.passed(): String = takeIf { it.isNotEmpty() }
@@ -105,14 +140,33 @@ public class GraphQLOperations(ast: AST) {
     private fun Field.selection(trail: Trail): String? = trail.field(identifier.value).let { path ->
         when (val reason = unselectable(trail)) {
             null -> "${identifier.value}${reference.selection(path)}"
-            else -> null.also {
-                check(reference.isNullable) {
-                    "Cannot write a GraphQL query for rpc ${path.rpc}: field ${path.text} of its result $reason. " +
-                        "GraphQL selects a finite set of fields, so make the field nullable to leave it out of the query."
+            else -> null.also { check(reference.isNullable) { path.cannotSelect(reason) } }
+        }
+    }
+
+    private fun Trail.cannotSelect(reason: String): String = "Cannot write a GraphQL query for rpc $rpc: field $text of its result $reason. " +
+        "GraphQL selects a finite set of fields, so make the field nullable to leave it out of the query."
+
+    /** What [selection] fails on, found without failing: it visits the same fields. */
+    private fun Reference.unselectable(trail: Trail): String? = when (val model = composite(this)) {
+        is Type -> model.unselectable(trail.enter(model))
+        is Union ->
+            model.entries
+                .mapNotNull { member -> models[(member as? Reference.Custom)?.value] as? Type }
+                .firstNotNullOfOrNull { member -> member.unselectable(trail.enter(model).enter(member)) }
+        else -> null
+    }
+
+    private fun Type.unselectable(trail: Trail): String? = shape.fields
+        .takeUnless { annotations.any { it.name == GraphQLAnnotations.UNION } }
+        ?.firstNotNullOfOrNull { field ->
+            trail.field(field.identifier.value).let { path ->
+                when (val reason = field.unselectable(trail)) {
+                    null -> field.reference.unselectable(path)
+                    else -> path.cannotSelect(reason).takeUnless { field.reference.isNullable }
                 }
             }
         }
-    }
 
     private fun Field.unselectable(trail: Trail): String? = when {
         reference.selected().any { it in trail.types } -> "refers back to a type it is selected in"

@@ -15,6 +15,8 @@ import community.flock.wirespec.integration.jvm.transport.HttpTransportation
 import community.flock.wirespec.integration.graphql.kotlin.generated.GraphQLClient
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.SearchGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.StoreGraphQL
+import community.flock.wirespec.integration.graphql.kotlin.generated.model.CreateInput
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority
@@ -82,6 +84,19 @@ object GraphQLExamples {
         val done: Boolean? = todo?.done // null: not selected
         // endregion selection
         return listOf(title, owner, done)
+    }
+
+    suspend fun arguments(client: GraphQLClient): String? {
+        // region arguments
+        val store: StoreGraphQL.StoreMutationsResult = client.store {
+            create(CreateInput("Pen")) {
+                id()
+            }
+        }
+
+        val id: String? = store.create?.id
+        // endregion arguments
+        return id
     }
 
     suspend fun union(client: GraphQLClient): List<String?> {

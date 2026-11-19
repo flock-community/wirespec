@@ -32,6 +32,7 @@ import community.flock.wirespec.integration.graphql.java.generated.graphql.Clear
 import community.flock.wirespec.integration.graphql.java.generated.graphql.QueryTodoGraphQL as JavaQueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.TodoResult as JavaTodoResult
 import community.flock.wirespec.integration.graphql.java.generated.graphql.TodosGraphQL.UserResult as JavaUserResult
+import community.flock.wirespec.integration.graphql.java.generated.model.CreateInput as JavaCreateInput
 import community.flock.wirespec.integration.graphql.java.generated.model.ID as JavaID
 import community.flock.wirespec.integration.graphql.java.generated.model.Notification as JavaNotification
 import community.flock.wirespec.integration.graphql.java.generated.model.Priority as JavaPriority
@@ -46,7 +47,11 @@ import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.Inb
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL as KotlinQueryTodoGraphQL
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.TodoResult as KotlinTodoResult
 import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.QueryTodoGraphQL.UserResult as KotlinUserResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.StoreGraphQL.ItemResult as KotlinItemResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.graphql.StoreGraphQL.StoreMutationsResult as KotlinStoreMutationsResult
+import community.flock.wirespec.integration.graphql.kotlin.generated.model.CreateInput as KotlinCreateInput
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.ID as KotlinID
+import community.flock.wirespec.integration.graphql.kotlin.generated.model.Item as KotlinItem
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.NewTodo as KotlinNewTodo
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Notification as KotlinNotification
 import community.flock.wirespec.integration.graphql.kotlin.generated.model.Priority as KotlinPriority
@@ -247,6 +252,132 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `Kotlin client passes the arguments of the selected fields as variables`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":{"create":{"id":"7"},"remove":true}}}""")
+
+        val store = server.client().store {
+            create(KotlinCreateInput("Pen")) { id() }
+            remove(KotlinID("1"), null)
+        }
+
+        assertEquals(KotlinStoreMutationsResult(create = KotlinItemResult(id = "7", related = null), remove = true), store)
+        assertEquals(
+            mapOf(
+                "query" to "mutation Store(\$arg1: CreateInput!, \$arg2: ID!, \$arg3: String) " +
+                    "{ result: store { create(input: \$arg1) { id } remove(id: \$arg2, reason: \$arg3) } }",
+                "variables" to mapOf("arg1" to mapOf("name" to "Pen"), "arg2" to "1", "arg3" to null),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `The examples pass an argument to a selected field`() = runBlocking {
+        val response = """{"data":{"result":{"create":{"id":"7"}}}}"""
+        val server = KotlinServer(response)
+
+        assertEquals("7", GraphQLExamples.arguments(server.client()))
+        assertEquals(Optional.of("7"), JavaGraphQLExamples.arguments(JavaServer(response).client()))
+        assertEquals("mutation Store(\$arg1: CreateInput!) { result: store { create(input: \$arg1) { id } } }", server.json()["query"])
+    }
+
+    @Test
+    fun `Kotlin client declares the variables of the selection after those of the rpc`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":{"id":"1"}}}""")
+
+        server.client().queryItem("1") {
+            id()
+            related(2) { related(3) { id() } }
+        }
+
+        assertEquals(
+            mapOf(
+                "query" to "query QueryItem(\$id: String!, \$arg2: Int!, \$arg3: Int!) " +
+                    "{ result: item(id: \$id) { id related(first: \$arg2) { related(first: \$arg3) { id } } } }",
+                "variables" to mapOf("id" to "1", "arg2" to 2, "arg3" to 3),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `Kotlin client leaves a nullable field that takes a required argument out of the full result`() = runBlocking {
+        val server = KotlinServer("""{"data":{"result":{"id":"1"}}}""")
+
+        val item = server.client().queryItem("1")
+
+        assertEquals(KotlinItem("1", null), item)
+        assertEquals(mapOf("query" to "query QueryItem(\$id: String!) { result: item(id: \$id) { id } }", "variables" to mapOf("id" to "1")), server.json())
+    }
+
+    @Test
+    fun `Java client passes the arguments of the selected fields as variables`() {
+        val server = JavaServer("""{"data":{"result":{"remove":true}}}""")
+
+        val store = server.client().store { it.create(JavaCreateInput("Pen")) { item -> item.id() }.remove(JavaID("1"), Optional.empty()) }.join()
+
+        assertEquals(Optional.of(true), store.remove())
+        assertEquals(
+            mapOf(
+                "query" to "mutation Store(\$arg1: CreateInput!, \$arg2: ID!, \$arg3: String) " +
+                    "{ result: store { create(input: \$arg1) { id } remove(id: \$arg2, reason: \$arg3) } }",
+                "variables" to mapOf("arg1" to mapOf("name" to "Pen"), "arg2" to "1", "arg3" to null),
+            ),
+            server.json(),
+        )
+    }
+
+    @Test
+    fun `Scala client passes the arguments of the selected fields as variables`() {
+        assertEquals(
+            "mutation Store(\$arg1: CreateInput!, \$arg2: ID!, \$arg3: String) { result: store { create(input: \$arg1) { id } remove(id: \$arg2, reason: \$arg3) } }",
+            scalaCheck("passesArguments"),
+        )
+    }
+
+    @Test
+    fun `An rpc whose result has a field that requires an argument is only called with a selection`() {
+        val ast = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(
+            nonEmptyListOf(
+                ModuleContent(
+                    FileUri(""),
+                    """
+                    @GraphQLMutation
+                    @GraphQLName("store")
+                    rpc Store {} -> StoreMutations
+
+                    type StoreMutations {
+                      @GraphQLArgument(name: "input", type: "CreateInput!")
+                      create: Item
+                    }
+
+                    @GraphQLInput
+                    type CreateInput {
+                      name: String
+                    }
+
+                    type Item {
+                      id: String
+                    }
+                    """.trimIndent(),
+                ),
+            ),
+        ).getOrNull()!!
+        val emitter = KotlinEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false))
+
+        val files = emitter.applyExtensions(nonEmptyListOf(GraphQLClientExtension(emitter.packageName, FileExtension.Kotlin))).emit(ast, noLogger)
+            .associate { it.file.removePrefix("community/flock/wirespec/generated/") to it.result }
+
+        listOf("fun create(input: CreateInput, selection: ItemSelection.() -> Unit): StoreMutationsSelection", "suspend fun store(selection: StoreMutationsSelection.() -> Unit): StoreMutationsResult")
+            .forEach { assertTrue(it in files.getValue("graphql/StoreGraphQL.kt"), "StoreGraphQL.kt misses $it") }
+        listOf("Store.Service", "object Api", "fun request()")
+            .forEach { assertTrue(it !in files.getValue("graphql/StoreGraphQL.kt"), "StoreGraphQL.kt has $it") }
+        assertTrue("Store.Service" !in files.getValue("GraphQLClient.kt"))
+    }
+
+    @Test
     fun `Java client nests a field of a namespace type in the field that leads to it`() {
         val server = JavaServer("""{"data":{"notifications":{"result":[{"id":"1","text":"Hello"}]}}}""")
 
@@ -378,7 +509,7 @@ class GraphQLClientExtensionTest {
             }
         }
         assertEquals(
-            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos", "Notifications", "Inbox", "InboxCount", "MutateNotifications", "MarkRead").map { "$it.Service" },
+            listOf("QueryTodo", "Todos", "Search", "AddTodo", "CompleteTodo", "ClearTodos", "Notifications", "Inbox", "InboxCount", "MutateNotifications", "MarkRead", "QueryItem").map { "$it.Service" },
             KotlinGraphQLClient::class.java.interfaces.map { "${it.enclosingClass.simpleName}.${it.simpleName}" },
         )
     }

@@ -2,8 +2,8 @@ package community.flock.wirespec.integration.graphql.extension
 
 import community.flock.wirespec.integration.graphql.docs.ScalaGraphQLExamples
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, InboxCountGraphQL, QueryTodoGraphQL, SearchGraphQL}
-import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{CompleteTodoGraphQL, InboxCountGraphQL, QueryTodoGraphQL, SearchGraphQL, StoreGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.model.{CreateInput, ID, Note, Priority, SearchResult, Tag, Todo, TodoError, User}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.CompleteTodo
 import community.flock.wirespec.scala.Wirespec
 
@@ -70,6 +70,17 @@ object ScalaGraphQLCheck {
     serialization.query
   }
 
+  def passesArguments(): String = {
+    val expected = StoreGraphQL.StoreMutationsResult(Some(StoreGraphQL.ItemResult(Some("7"), None)), Some(true))
+    val serialization = Recording(StoreGraphQL.GraphQLSelectedResponse(Some(StoreGraphQL.GraphQLSelectedData(Some(expected))), None))
+
+    val result = GraphQLClient(serialization, transportation).store(store => store.create(CreateInput("Pen"), item => item.id()).remove(ID("1"), None))
+
+    check(result == expected, s"unexpected $result")
+    check(serialization.variables == Map("arg1" -> CreateInput("Pen"), "arg2" -> ID("1"), "arg3" -> null), s"unexpected ${serialization.variables}")
+    serialization.query
+  }
+
   def sendsThroughAClientOfYourOwn(): String = {
     val expected = QueryTodoGraphQL.TodoResult(None, Some("Groceries"), None, None, None)
     val serialization = Recording(QueryTodoGraphQL.GraphQLSelectedResponse(Some(QueryTodoGraphQL.GraphQLSelectedData(Some(expected))), None))
@@ -88,6 +99,8 @@ object ScalaGraphQLCheck {
     private var sent: Any = null
 
     def query: String = sent.asInstanceOf[Product].productElement(0).asInstanceOf[String]
+
+    def variables: Any = sent.asInstanceOf[Product].productElement(1)
 
     def serializeBody[T](t: T, `type`: ClassTag[?]): Array[Byte] = {
       sent = t

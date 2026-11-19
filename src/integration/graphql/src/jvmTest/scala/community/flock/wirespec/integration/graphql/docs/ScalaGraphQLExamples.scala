@@ -8,8 +8,8 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 // endregion create-client
 import community.flock.wirespec.integration.graphql.scala.generated.GraphQLClient
-import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL}
-import community.flock.wirespec.integration.graphql.scala.generated.model.{ID, NewTodo, Priority, Todo}
+import community.flock.wirespec.integration.graphql.scala.generated.graphql.{QueryTodoGraphQL, SearchGraphQL, StoreGraphQL}
+import community.flock.wirespec.integration.graphql.scala.generated.model.{CreateInput, ID, NewTodo, Priority, Todo}
 import community.flock.wirespec.integration.graphql.scala.generated.rpc.{CompleteTodo, QueryTodo}
 
 object ScalaGraphQLExamples {
@@ -73,6 +73,16 @@ object ScalaGraphQLExamples {
     val done: Option[Boolean] = todo.flatMap(_.done) // None: not selected
     // endregion selection
     List(title, owner, done)
+  }
+
+  def arguments(client: GraphQLClient): Option[String] = {
+    // region arguments
+    val store: StoreGraphQL.StoreMutationsResult = client.store(s => s
+      .create(CreateInput("Pen"), item => item.id()))
+
+    val id: Option[String] = store.create.flatMap(_.id)
+    // endregion arguments
+    id
   }
 
   def union(client: GraphQLClient): List[Option[String]] = {

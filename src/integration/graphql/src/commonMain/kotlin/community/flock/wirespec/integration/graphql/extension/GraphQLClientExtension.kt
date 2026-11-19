@@ -62,6 +62,10 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
  * no GraphQL library. A `GraphQLClient` in the root package, next to the `Client` of the endpoints, implements every
  * `Service` at once by delegating to those clients.
  *
+ * A selection passes the arguments of the fields it selects, as variables of the document: `store { create(input) { id() } }`.
+ * An rpc whose result has a field that no document can select and that cannot be left out, because it is not nullable
+ * and takes a required argument or refers back to a type it is selected in, is only called with a selection.
+ *
  * To send the rpcs through a client of your own, each rpc also has an `Api`, a `Wirespec.GraphQLClient` that gives
  * the `Wirespec.GraphQLClientEdge` of the rpc for a serialization, as `Wirespec.Client` does for an endpoint. The edge
  * writes a `Wirespec.GraphQLRequest` as the raw request to send, and reads the raw response as a
@@ -103,10 +107,8 @@ public class GraphQLClientExtension(
         ?.let { dialect ->
             val operations = GraphQLOperations(ast)
             ast.modules.flatMap { it.statements }.filterIsInstance<Rpc>()
-                .filter { rpc -> rpc.annotations.any { it.name in OPERATIONS } }
-                .mapNotNull { rpc ->
-                    operations.open(rpc, RESULT)?.let { open -> Operation(rpc, operations.document(rpc, RESULT)!!, open, operations.close(rpc), operations.path(rpc), ir.serviceOf(rpc)) }
-                }
+                .filter { rpc -> rpc.annotations.any { it.name in OPERATIONS } && operations.operation(rpc) != null }
+                .map { rpc -> Operation(rpc, operations.path(rpc), operations.arguments(rpc), ir.serviceOf(rpc), isTyped = operations.unselectable(rpc) == null) }
                 .takeIf { it.isNotEmpty() }
                 ?.let { ir.withGraphQLTypes(dialect) + Client(dialect, GraphQLQueryBuilder(operations, dialect.language), it).files() }
         }
@@ -126,7 +128,12 @@ public class GraphQLClientExtension(
 
     private fun Element.isWirespec(): Boolean = this is Namespace && name == Name.of(WIRESPEC)
 
-    private class Operation(val rpc: Rpc, document: String, open: String, close: String, path: List<String>, val service: Service) {
+    /**
+     * An rpc with its client. [isTyped] says that a document selects every field of its result. Without one, because a
+     * field that cannot be left out takes a required argument or refers back, the rpc is only called with a selection:
+     * its client has no call that returns the whole result, and so does not implement the `Service` of the rpc.
+     */
+    private class Operation(val rpc: Rpc, path: List<String>, arguments: List<GraphQLOperations.Argument>, val service: Service, val isTyped: Boolean) {
         val name: String = service.rpc.name.pascalCase()
 
         /** The fields the response nests the result in: those that lead to the type the rpc is a field of, and its alias. */
@@ -136,11 +143,11 @@ public class GraphQLClientExtension(
         fun dataEnvelopes(data: String): List<String> = fields.dropLast(1).runningFold(data) { envelope, field -> envelope + Name.of(field).pascalCase() }
 
         /** Each variable keeps the name of the argument it is passed as, and takes the parameter of the `Service` function. */
-        val variables: List<Pair<Field, Parameter>> = rpc.shape.fields
+        val variables: List<GraphQLQueryBuilder.Variable> = arguments
             .zip(service.function.parameters)
-            .map { (field, parameter) -> Field(Name(listOf(field.identifier.value)), parameter.type) to parameter }
+            .map { (argument, parameter) -> GraphQLQueryBuilder.Variable(Field(Name(listOf(argument.name)), parameter.type), argument.type, parameter) }
 
-        val request: GraphQLQueryBuilder.Request = GraphQLQueryBuilder.Request(name, service.function, document, open, close, rpc.result, variables)
+        val request: GraphQLQueryBuilder.Request = GraphQLQueryBuilder.Request(name, service.function, rpc, RESULT, variables, isTyped)
         val builderType: String = request.builder
         val client: String = "$builderType.$GRAPHQL_CLIENT"
         val requestType: String = "$builderType.${GraphQLQueryBuilder.GRAPHQL_REQUEST}"
@@ -179,10 +186,10 @@ public class GraphQLClientExtension(
 
         private fun Operation.client(): Struct = struct(
             name = GRAPHQL_CLIENT,
-            interfaces = listOf(Type.Custom("$name.Service")),
+            interfaces = listOfNotNull(Type.Custom("$name.Service").takeIf { isTyped }),
             elements = listOfNotNull(
-                call(),
-                fromResponse(FROM_RESPONSE, TYPED_RESPONSE, returnType(), dialect.fromResponse(this)),
+                call().takeIf { isTyped },
+                fromResponse(FROM_RESPONSE, TYPED_RESPONSE, returnType(), dialect.fromResponse(this)).takeIf { isTyped },
                 selectedCall(),
                 block?.let { fromResponse(FROM_SELECTED_RESPONSE, TYPED_SELECTED_RESPONSE, selectedReturnType(), dialect.fromSelectedResponse(this)) },
             ),
@@ -202,7 +209,7 @@ public class GraphQLClientExtension(
             edge(CLIENT_EDGE, TYPED_RESPONSE, RESPONSE, DATA),
             response(TYPED_RESPONSE, rpc.result.dataType()),
             api(API, CLIENT_EDGE, TYPED_RESPONSE),
-        ) + block?.let {
+        ).filter { isTyped } + block?.let {
             listOf(
                 edge(SELECTED_CLIENT_EDGE, TYPED_SELECTED_RESPONSE, SELECTED_RESPONSE, SELECTED_DATA),
                 response(TYPED_SELECTED_RESPONSE, builder.resultType(rpc.result.copy(isNullable = false))),
@@ -344,15 +351,17 @@ public class GraphQLClientExtension(
 
         private fun Operation.returnType(): Type = rpc.error?.let { Type.Custom("$name.Response") } ?: rpc.result.convert()
 
-        private fun Operation.envelopes(): List<Struct> = listOf(
-            nested(
-                RESPONSE,
-                listOf(
-                    Field(Name.of("data"), Type.Nullable(Type.Custom(DATA))),
-                    Field(Name.of("errors"), Type.Nullable(Type.Array(errorType()))),
+        private fun Operation.envelopes(): List<Struct> = (
+            listOf(
+                nested(
+                    RESPONSE,
+                    listOf(
+                        Field(Name.of("data"), Type.Nullable(Type.Custom(DATA))),
+                        Field(Name.of("errors"), Type.Nullable(Type.Array(errorType()))),
+                    ),
                 ),
-            ),
-        ) + data(DATA, Type.Nullable(rpc.result.dataType()))
+            ) + data(DATA, Type.Nullable(rpc.result.dataType()))
+            ).filter { isTyped }
 
         /** The data of a response, named [name]: an envelope for each field the [result] is nested in. */
         private fun Operation.data(name: String, result: Type): List<Struct> = dataEnvelopes(name).let { envelopes ->
@@ -384,10 +393,10 @@ public class GraphQLClientExtension(
 
         private fun graphQLClientFile(): LanguageFile = struct(
             name = GRAPHQL_CLIENT,
-            interfaces = operations.map { Type.Custom("${it.name}.Service") },
+            interfaces = operations.filter { it.isTyped }.map { Type.Custom("${it.name}.Service") },
             elements = operations.flatMap { operation ->
                 listOfNotNull(
-                    operation.service.function.copy(returnType = operation.returnType(), isOverride = true),
+                    operation.service.function.copy(returnType = operation.returnType(), isOverride = true).takeIf { operation.isTyped },
                     operation.selectedCall()?.qualifiedIn(operation),
                 ).map { it.delegating(operation) }
             },

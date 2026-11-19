@@ -32,6 +32,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.converter.graphql.GraphQLOperations
+import community.flock.wirespec.compiler.core.parse.ast.Field as AstField
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 
 /**
@@ -53,37 +54,152 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
  */
 internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, private val language: Language) {
 
-    enum class Language { Kotlin, Java, Scala }
+    /**
+     * A target language, with its `GraphQLArguments`: the variables of a document whose selection passes arguments.
+     * `declare` adds a variable of the rpc under its own name, and `pass` adds one for an argument of a selected field,
+     * under a name it makes up from the prefix it is given. Both give the variable as the document refers to it.
+     */
+    enum class Language {
+        Kotlin {
+            override val variables = Type.Dict(Type.String, Type.Nullable(Type.Any))
 
-    /** An rpc: its `Service` function, its document, also up to the selection and after it, its result and its variables. */
-    class Request(val rpc: String, val function: Function, val document: String, val open: String, val close: String, val result: Reference, val variables: List<Pair<Field, Parameter>>) {
-        val builder: String = builder(rpc)
+            override fun arguments(prefix: String) = """
+                |class $GRAPHQL_ARGUMENTS {
+                |    private val declarations = mutableListOf<String>()
+                |    private val variables = mutableMapOf<String, Any?>()
+                |    fun declare(name: String, type: String, value: Any?): String {
+                |        declarations.add("$" + name + ": " + type)
+                |        variables[name] = value
+                |        return "$" + name
+                |    }
+                |    fun pass(type: String, value: Any?): String = declare("$prefix" + (variables.size + 1), type, value)
+                |    fun values(): Map<String, Any?> = variables
+                |    fun toGraphQL(): String = if (declarations.isEmpty()) "" else declarations.joinToString(", ", "(", ")")
+                |}
+            """.trimMargin()
+        },
+
+        /** An absent value is an empty `Optional` in Java, and `null` as a variable. */
+        Java {
+            override val variables = Type.Dict(Type.String, Type.Any)
+
+            override fun arguments(prefix: String) = """
+                |public static final class $GRAPHQL_ARGUMENTS {
+                |    private final java.util.List<String> declarations = new java.util.ArrayList<>();
+                |    private final java.util.Map<String, Object> variables = new java.util.LinkedHashMap<>();
+                |    public String declare(String name, String type, Object value) {
+                |        declarations.add("$" + name + ": " + type);
+                |        variables.put(name, value instanceof java.util.Optional<?> optional ? optional.orElse(null) : value);
+                |        return "$" + name;
+                |    }
+                |    public String pass(String type, Object value) { return declare("$prefix" + (variables.size() + 1), type, value); }
+                |    public java.util.Map<String, Object> values() { return variables; }
+                |    public String toGraphQL() { return declarations.isEmpty() ? "" : "(" + String.join(", ", declarations) + ")"; }
+                |}
+                |
+            """.trimMargin()
+        },
+
+        /** An absent value is `None` in Scala, and `null` as a variable. */
+        Scala {
+            override val variables = Type.Dict(Type.String, Type.Any)
+
+            override fun arguments(prefix: String) = """
+                |class $GRAPHQL_ARGUMENTS {
+                |  private val declarations = scala.collection.mutable.ListBuffer[String]()
+                |  private val variables = scala.collection.mutable.LinkedHashMap[String, Any]()
+                |  def declare(name: String, graphQLType: String, value: Any): String = {
+                |    declarations += "$" + name + ": " + graphQLType
+                |    variables(name) = value match {
+                |      case Some(some) => some
+                |      case None => null
+                |      case other => other
+                |    }
+                |    "$" + name
+                |  }
+                |  def pass(graphQLType: String, value: Any): String = declare("$prefix" + (variables.size + 1), graphQLType, value)
+                |  def values(): Map[String, Any] = variables.toMap
+                |  def toGraphQL(): String = if (declarations.isEmpty) "" else declarations.mkString("(", ", ", ")")
+                |}
+            """.trimMargin()
+        },
+        ;
+
+        /** The type of the variables that a `GraphQLArguments` collected, by name. */
+        abstract val variables: Type
+
+        abstract fun arguments(prefix: String): String
     }
 
-    /** The selection of every type and union that [results] return, through all their fields. */
-    fun selections(results: List<Reference>): List<Struct> = reachable(results).map { model ->
-        struct(model.selection()) {
-            visibility(Visibility.PUBLIC)
-            field(FIELDS, Type.Custom(STRING_BUILDER))
-            when (model) {
-                is Union -> model.entries.mapNotNull { operations.composite(it) as? TypeDefinition }.forEach { member ->
-                    method(model, "on${Name.of(member.identifier.value).pascalCase()}", " ... on ${operations.graphQLName(member)} ", member)
-                }
-                is TypeDefinition -> model.shape.fields.filter { operations.isSelectable(it) }.forEach { field ->
-                    when (val nested = operations.composite(field.reference)) {
-                        null -> method(model, field.identifier.value, " ${field.identifier.value}")
-                        else -> method(model, field.identifier.value, " ${field.identifier.value} ", nested)
-                    }
-                }
-                is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> Unit
-            }
-            function(TO_GRAPHQL) {
+    /**
+     * An rpc: its name, its `Service` function, the rpc itself, the alias its document selects its result under, and its
+     * variables. [isTyped] says that a document selects every field of its result; without one, only a selection calls it.
+     */
+    class Request(val name: String, val function: Function, val rpc: Rpc, val alias: String, val variables: List<Variable>, val isTyped: Boolean) {
+        val builder: String = builder(name)
+        val result: Reference = rpc.result
+    }
+
+    /** A variable of a document: the [field] it is sent as, typed [type] in GraphQL, and the [parameter] that holds its value. */
+    class Variable(val field: Field, val type: String, val parameter: Parameter)
+
+    /**
+     * The selection of every type and union that [results] return, through all their fields. A field that takes a required
+     * argument takes its arguments as parameters, and passes each as a variable of the document.
+     */
+    fun selections(results: List<Reference>): List<Struct> = passesArguments(results).let { passes ->
+        reachable(results).map { model ->
+            struct(model.selection()) {
                 visibility(Visibility.PUBLIC)
-                returnType(Type.String)
-                returns(concat(Literal(if (model is Union) "{ $TYPENAME" else "{", Type.String), FieldCall(field = FIELDS), Literal(" }", Type.String)))
+                field(FIELDS, Type.Custom(STRING_BUILDER))
+                if (passes) field(ARGUMENTS, Type.Custom(GRAPHQL_ARGUMENTS))
+                val arguments = FieldCall(field = ARGUMENTS).takeIf { passes }
+                when (model) {
+                    is Union -> model.entries.mapNotNull { operations.composite(it) as? TypeDefinition }.forEach { member ->
+                        method(model, "on${Name.of(member.identifier.value).pascalCase()}", listOf(Literal(" ... on ${operations.graphQLName(member)} ", Type.String)), emptyList(), member, arguments)
+                    }
+                    is TypeDefinition -> model.shape.fields.forEach { field ->
+                        operations.composite(field.reference).let { nested ->
+                            method(model, field.identifier.value, field.selected(nested != null), field.required(), nested, arguments)
+                        }
+                    }
+                    is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> Unit
+                }
+                function(TO_GRAPHQL) {
+                    visibility(Visibility.PUBLIC)
+                    returnType(Type.String)
+                    returns(concat(Literal(if (model is Union) "{ $TYPENAME" else "{", Type.String), FieldCall(field = FIELDS), Literal(" }", Type.String)))
+                }
             }
         }
     }
+
+    /**
+     * Whether a selection of [results] passes arguments: a field they reach takes a required argument. Its selections
+     * then share the `GraphQLArguments` that collects the variables of the document.
+     */
+    fun passesArguments(results: List<Reference>): Boolean = reachable(results).any { model -> model is TypeDefinition && model.shape.fields.any { it.required().isNotEmpty() } }
+
+    /** The arguments a selection passes to a field: all of them when one is required, none when the field is selected without. */
+    private fun AstField.required(): List<GraphQLOperations.Argument> = operations.arguments(this).takeUnless { operations.isSelectable(this) }.orEmpty()
+
+    /** The GraphQL text that selects a field, with each argument it is passed as the variable `GraphQLArguments` gives for it. */
+    private fun AstField.selected(isNested: Boolean): List<Expression> = required().let { arguments ->
+        when {
+            arguments.isEmpty() -> listOf(Literal(" ${identifier.value}${if (isNested) " " else ""}", Type.String))
+            else -> arguments.flatMapIndexed { index, argument ->
+                listOf(Literal("${if (index == 0) " ${identifier.value}(" else ", "}${argument.name}: ", Type.String), argument.passed())
+            } + Literal(if (isNested) ") " else ")", Type.String)
+        }
+    }
+
+    private fun GraphQLOperations.Argument.passed(): Expression = FunctionCall(
+        receiver = FieldCall(field = ARGUMENTS),
+        name = PASS,
+        arguments = mapOf(Name.of("type") to Literal(type, Type.String), VALUE to VariableReference(parameter())),
+    )
+
+    private fun GraphQLOperations.Argument.parameter(): Name = Name(listOf(Name.of(name).camelCase().sanitized()))
 
     /** A partial result: its struct, and the models its fields refer to, which its file imports. */
     class Result(val struct: Struct, val models: List<String>)
@@ -101,7 +217,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
                     fields = fields.map { (name, reference) -> Field(Name(listOf(name)), Type.Nullable(resultType(reference.copy(isNullable = false)))) },
                     visibility = Visibility.PUBLIC,
                 ),
-                models = fields.mapNotNull { (_, reference) -> reference.model() }.distinct(),
+                models = (fields.mapNotNull { (_, reference) -> reference.model() } + model.argumentModels()).distinct(),
             )
         }
     }
@@ -120,14 +236,21 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
                 .groupBy({ it.first }, { it.second })
                 .filterValues { references -> references.distinct().size == 1 }
                 .map { (name, references) -> name to references.first() }
-        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.map { it.identifier.value to it.reference }
+        is TypeDefinition -> shape.fields.map { it.identifier.value to it.reference }
         is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> emptyList()
     }
 
     /** The model a field of a partial result refers to, which is not a result itself. */
-    private fun Reference.model(): String? = when (this) {
-        is Reference.Iterable -> reference.model()
-        is Reference.Custom -> value.takeIf { operations.composite(this) == null }?.let { Name.of(it).pascalCase() }
+    private fun Reference.model(): String? = takeIf { operations.composite(it) == null }?.custom()
+
+    /** The models that the selection of a type takes as the arguments of its fields. */
+    private fun Definition.argumentModels(): List<String> = (this as? TypeDefinition)?.shape?.fields.orEmpty()
+        .flatMap { it.required() }
+        .mapNotNull { it.reference.custom() }
+
+    private fun Reference.custom(): String? = when (this) {
+        is Reference.Iterable -> reference.custom()
+        is Reference.Custom -> Name.of(value).pascalCase()
         is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> null
     }
 
@@ -146,53 +269,100 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
      * `QueryTodoGraphQL.request(id)` writes the request of an rpc with every field of its result, and
      * `QueryTodoGraphQL.request(id) { ... }` with the fields that the block selects, as a `GraphQLRequest` with the query
      * and its `GraphQLVariables`. It has no fields, so it is an `object` in Kotlin and a record without components in Java.
+     *
+     * A selection that passes arguments adds variables to the document, so its request collects them in a
+     * `GraphQLArguments`, after the variables of the rpc, and sends them by name instead of as `GraphQLVariables`.
      */
     fun builder(request: Request): Struct = struct(request.builder) {
         val selection = operations.composite(request.result)
+        val passes = passesArguments(listOf(request.result))
+        val close = operations.close(request.rpc)
 
-        fun request(selection: Definition?, query: Expression) = function(REQUEST) {
+        fun request(selection: Definition?) = function(REQUEST) {
             visibility(Visibility.PUBLIC)
             request.function.parameters.forEach { arg(it.name, it.type) }
             selection?.let { arg(SELECTION, it.block()) }
             returnType(type(GRAPHQL_REQUEST))
+            if (passes) {
+                assign(ARGUMENTS.value(), newInstance(GRAPHQL_ARGUMENTS))
+                request.variables.forEach { variable ->
+                    functionCall(DECLARE.value(), receiver = VariableReference(ARGUMENTS)) {
+                        arg(Name.of("name"), Literal(variable.field.name.value(), Type.String))
+                        arg(Name.of("type"), Literal(variable.type, Type.String))
+                        arg(VALUE, VariableReference(variable.parameter.name))
+                    }
+                }
+            }
+            val query = when {
+                selection == null -> Literal(operations.document(request.rpc, request.alias)!!, Type.String)
+                // The block declares the variables it passes, so it runs before the document is written.
+                passes -> {
+                    assign(SELECTED.value(), selection.selected(VariableReference(ARGUMENTS)))
+                    concat(
+                        Literal(operations.operation(request.rpc)!!, Type.String),
+                        FunctionCall(receiver = VariableReference(ARGUMENTS), name = TO_GRAPHQL),
+                        Literal("${operations.field(request.rpc, request.alias)} ", Type.String),
+                        VariableReference(SELECTED),
+                        Literal(close, Type.String),
+                    )
+                }
+                else -> concat(Literal("${operations.open(request.rpc, request.alias)!!} ", Type.String), selection.selected(null), Literal(close, Type.String))
+            }
             returns(
                 construct(type(GRAPHQL_REQUEST)) {
                     arg("query", query)
-                    request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
-                        arg("variables", ConstructorStatement(Type.Custom(GRAPHQL_VARIABLES), variables.associate { (field, parameter) -> field.name to VariableReference(parameter.name) }))
+                    when {
+                        passes -> arg("variables", FunctionCall(receiver = VariableReference(ARGUMENTS), name = VALUES))
+                        request.variables.isNotEmpty() -> arg(
+                            "variables",
+                            ConstructorStatement(Type.Custom(GRAPHQL_VARIABLES), request.variables.associate { it.field.name to VariableReference(it.parameter.name) }),
+                        )
                     }
                 },
             )
         }
 
-        request(null, Literal(request.document, Type.String))
-        selection?.let { request(it, concat(Literal("${request.open} ", Type.String), it.selected(), Literal(request.close, Type.String))) }
+        if (request.isTyped) request(null)
+        selection?.let { request(it) }
         // A record nested in a Java record is only public and static when it says so.
         struct(GRAPHQL_REQUEST) {
             visibility(Visibility.PUBLIC)
             implements(Type.Custom("Wirespec.GraphQLRequest"))
             field("query", Type.String, isOverride = true)
-            if (request.variables.isNotEmpty()) field("variables", type(GRAPHQL_VARIABLES))
+            when {
+                passes -> field("variables", language.variables)
+                request.variables.isNotEmpty() -> field("variables", type(GRAPHQL_VARIABLES))
+            }
         }
-        request.variables.takeIf { it.isNotEmpty() }?.let { variables ->
-            struct(GRAPHQL_VARIABLES) {
+        when {
+            passes -> raw(language.arguments(request.variables.map { it.field.name.value() }.variablePrefix()))
+            request.variables.isNotEmpty() -> struct(GRAPHQL_VARIABLES) {
                 visibility(Visibility.PUBLIC)
-                variables.forEach { (field, _) -> field(field.name, field.type) }
+                request.variables.forEach { field(it.field.name, it.field.type) }
             }
         }
     }
 
-    /** Adds [text] to the selected fields, after the fields that the block selects of [nested] when there is one, and returns `this`. */
-    private fun StructBuilder.method(model: Definition, name: String, text: String, nested: Definition? = null) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
+    /** What `GraphQLArguments` starts the name of a variable with, so it is no variable of the rpc: those have these names. */
+    private fun List<String>.variablePrefix(): String = generateSequence("arg") { "_$it" }.first { prefix -> none { it.startsWith(prefix) } }
+
+    /**
+     * Adds the [text] that selects a field, with the [arguments] it is passed as parameters, to the selected fields, and
+     * after it the fields that the block selects of [nested] when there is one. Returns `this`. [shared] is the
+     * `GraphQLArguments` of a selection that passes arguments, which the selection of [nested] shares.
+     */
+    private fun StructBuilder.method(model: Definition, name: String, text: List<Expression>, arguments: List<GraphQLOperations.Argument>, nested: Definition?, shared: Expression?) = function(Name(listOf(Name.of(name).camelCase().sanitized()))) {
         visibility(Visibility.PUBLIC)
+        arguments.forEach { arg(it.parameter(), it.reference.convert()) }
         nested?.let { arg(SELECTION, it.block()) }
         returnType(type(model.selection()))
-        val appended = FunctionCall(receiver = FieldCall(field = FIELDS), name = APPEND, arguments = mapOf(VALUE to Literal(text, Type.String)))
-        nested
-            ?.let { functionCall(APPEND.value(), receiver = appended) { arg(VALUE, it.selected()) } }
-            ?: functionCall(APPEND.value(), receiver = FieldCall(field = FIELDS)) { arg(VALUE, Literal(text, Type.String)) }
+        (text + listOfNotNull(nested?.selected(shared))).let { parts ->
+            functionCall(APPEND.value(), receiver = parts.dropLast(1).fold(FieldCall(field = FIELDS) as Expression) { receiver, part -> receiver.append(part) }) { arg(VALUE, parts.last()) }
+        }
         returns(RawExpression("this"))
     }
+
+    private fun Expression.append(value: Expression): Expression = FunctionCall(receiver = this, name = APPEND, arguments = mapOf(VALUE to value))
 
     /** The block that selects the fields of a type: on `this` in Kotlin, a function of the selection in Java and Scala. */
     private fun Definition.block(): Type = Type.Custom(selection()).let { selection ->
@@ -202,8 +372,11 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         }
     }
 
-    /** Runs the `selection` block on a new selection of this type, and gives its fields between braces. */
-    private fun Definition.selected(): Expression = ConstructorStatement(Type.Custom(selection()), mapOf(FIELDS to newStringBuilder()))
+    /** Runs the `selection` block on a new selection of this type, which shares [arguments] when it has them, and gives its fields between braces. */
+    private fun Definition.selected(arguments: Expression?): Expression = ConstructorStatement(
+        Type.Custom(selection()),
+        mapOf(FIELDS to newInstance(STRING_BUILDER)) + arguments?.let { mapOf(ARGUMENTS to it) }.orEmpty(),
+    )
         .let { empty ->
             when (language) {
                 Language.Kotlin -> FunctionCall(receiver = empty, name = APPLY, arguments = mapOf(Name.of("block") to VariableReference(SELECTION)))
@@ -213,9 +386,9 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         .let { FunctionCall(receiver = it, name = TO_GRAPHQL) }
 
     // An IR constructor call without arguments has no parentheses in Kotlin.
-    private fun newStringBuilder(): Expression = when (language) {
-        Language.Kotlin -> FunctionCall(name = Name(listOf(STRING_BUILDER)))
-        Language.Java, Language.Scala -> ConstructorStatement(Type.Custom(STRING_BUILDER))
+    private fun newInstance(type: String): Expression = when (language) {
+        Language.Kotlin -> FunctionCall(name = Name(listOf(type)))
+        Language.Java, Language.Scala -> ConstructorStatement(Type.Custom(type))
     }
 
     private fun concat(vararg parts: Expression): Expression = parts.reduce { left, right -> BinaryOp(left, BinaryOp.Operator.PLUS, right) }
@@ -226,7 +399,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
 
     private fun Definition.nested(): List<Definition> = when (this) {
         is Union -> entries.mapNotNull { operations.composite(it) }
-        is TypeDefinition -> shape.fields.filter { operations.isSelectable(it) }.mapNotNull { operations.composite(it.reference) }
+        is TypeDefinition -> shape.fields.mapNotNull { operations.composite(it.reference) }
         is Endpoint, is Channel, is Rpc, is Enum, is Refined, is Part -> emptyList()
     }
 
@@ -247,8 +420,14 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
         const val DSL_MARKER = "GraphQLDsl"
         const val GRAPHQL_REQUEST = "GraphQLRequest"
         const val GRAPHQL_VARIABLES = "GraphQLVariables"
+        const val GRAPHQL_ARGUMENTS = "GraphQLArguments"
 
         private val FIELDS = Name(listOf("graphQLFields"))
+        private val ARGUMENTS = Name(listOf("graphQLArguments"))
+        private val SELECTED = Name(listOf("selected"))
+        private val DECLARE = Name(listOf("declare"))
+        private val PASS = Name(listOf("pass"))
+        private val VALUES = Name(listOf("values"))
         private val SELECTION = Name.of("selection")
         val REQUEST = Name(listOf("request"))
         private val TO_GRAPHQL = Name(listOf("toGraphQL"))
