@@ -183,11 +183,11 @@ The compiler checks every default against its field. Each of these fields is a c
 The error points at the value, for example: `Invalid default value 11 for field score of type Integer`. A regular
 expression constraint on a `String` field is not checked against its default.
 
-Defaults are only allowed on the fields of a `type`. Endpoint queries and headers, and rpc parameters, cannot have
-defaults:
+Defaults are only allowed on the fields of a `type` and the [parameters of an rpc](rpc#default-values). Endpoint queries
+and headers cannot have defaults:
 
 ```wirespec
-// Error: Default values are only allowed on fields of a type definition, not on: limit
+// Error: Default values are only allowed on the fields of a type and the parameters of an rpc, not on: limit
 endpoint GetTodos GET /todos ? {limit: Integer = 10} -> {
     200 -> Todo[]
 }

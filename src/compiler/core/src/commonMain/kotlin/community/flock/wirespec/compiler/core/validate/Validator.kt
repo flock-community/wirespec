@@ -108,8 +108,14 @@ public object Validator {
         .flatMap { it.statements }
         .let { definitions ->
             definitions
-                .filterIsInstance<Type>()
-                .flatMap { it.shape.fields }
+                .toList()
+                .flatMap { definition ->
+                    when (definition) {
+                        is Type -> definition.shape.fields
+                        is Rpc -> definition.shape.fields
+                        is Endpoint, is Channel, is Enum, is Union, is Refined, is Part -> emptyList()
+                    }
+                }
                 .mapNotNull { field ->
                     (field.defaultValue as? DefaultValue.EnumValue)
                         ?.takeUnless { it.isEntryOf(field.reference, definitions) }

@@ -62,7 +62,7 @@ internal class DefaultValueNotAllowedException(fileUri: FileUri, fieldName: Stri
     ParserException(
         fileUri,
         coordinates = coordinates,
-        message = "Default values are only allowed on fields of a type definition, not on: $fieldName",
+        message = "Default values are only allowed on the fields of a type and the parameters of an rpc, not on: $fieldName",
     )
 
 internal class InvalidDefaultValueException(fileUri: FileUri, fieldName: String, value: String, reference: Reference, coordinates: Token.Coordinates) :

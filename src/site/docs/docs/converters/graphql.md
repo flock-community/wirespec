@@ -147,8 +147,7 @@ type User {
 
 @GraphQLField("User", before: "email")
 rpc UserFriends {
-  @GraphQLDefault("10")
-  first: Integer32?
+  first: Integer32? = 10
 } -> User[]
 ```
 
@@ -324,7 +323,8 @@ A type that spreads a plain part, one that no `@GraphQLInterface` names, impleme
 
 ### Default values
 
-A default value of an input field becomes a Wirespec [default value](../language/types.mdx) when Wirespec can hold it
+A default value of an input field or of an argument becomes a Wirespec [default value](../language/types.mdx), on the
+field of the type or the parameter of the `rpc`, when Wirespec can hold it
 exactly: a string, integer, float, boolean or `null` on a field of the matching type, or an entry of an enum declared in
 the same document.
 
@@ -348,8 +348,7 @@ type Filter {
 Every other default is kept in `@GraphQLDefault`, in GraphQL syntax. That covers lists, input objects, defaults on
 custom scalars and `ID`, entries of an enum declared in another document or added by `extend enum` (Wirespec checks an
 enum default against the entries of the enum itself), and literals that Wirespec would write differently, such as `2` on
-a `Float` or `1e3`. Arguments of fields become `rpc` parameters, which cannot have a Wirespec default, so their defaults
-are always kept in `@GraphQLDefault`. The arguments of a directive keep their defaults in its
+a `Float` or `1e3`. The arguments of a directive keep their defaults in its
 [definition](#schema-and-directives), in GraphQL syntax.
 
 ### Schema and directives

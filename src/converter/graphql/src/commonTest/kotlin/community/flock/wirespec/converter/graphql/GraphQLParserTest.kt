@@ -336,8 +336,7 @@ class GraphQLParserTest {
             |@GraphQLDirective("@deprecated")
             |rpc TodoComments {
             |  @Description("How many to return")
-            |  @GraphQLDefault("10")
-            |  first: Integer32?
+            |  first: Integer32? = 10
             |} -> String[]
             |
             |@GraphQLField("Todo")
@@ -659,7 +658,7 @@ class GraphQLParserTest {
         val source = """
             input I { a: Int = 1, b: Float = 0.5, c: Boolean = true, d: String = "x", e: String = null, f: Int! = -3, g: Float = 2, h: Float = 1e3, i: Role = ADMIN, j: [Int] = [1], k: ID = "x" }
             enum Role { ADMIN }
-            type Query { q(a: Int = 1): Int }
+            type Query { q(a: Int = 1, b: [Int] = [1]): Int }
         """.trimIndent()
         val fields = convert(source).definition<Type>("I").shape.fields
         fields.map { it.defaultValue } shouldContainExactly listOf(
@@ -682,10 +681,10 @@ class GraphQLParserTest {
             listOf("GraphQLDefault"),
             listOf("GraphQLDefault"),
         )
-        convert(source).definition<Rpc>("Q").shape.fields.single().run {
-            defaultValue shouldBe null
-            annotations.map { it.name } shouldContainExactly listOf("GraphQLDefault")
-        }
+        convert(source).definition<Rpc>("Q").shape.fields.map { it.defaultValue to it.annotations.map { annotation -> annotation.name } } shouldContainExactly listOf(
+            DefaultValue.IntegerValue("1") to emptyList(),
+            null to listOf("GraphQLDefault"),
+        )
         source.shouldRoundTrip()
     }
 

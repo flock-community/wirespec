@@ -500,7 +500,7 @@ private class GraphQLConverter(private val document: Document) {
             directives.toAnnotations() +
             type.toAnnotations(),
         identifier = DefinitionIdentifier(identifier),
-        shape = Shape(arguments.map { it.toParameter() }),
+        shape = Shape(arguments.map { it.toField() }),
         result = type.toReference(),
         error = null,
     )
@@ -519,9 +519,6 @@ private class GraphQLConverter(private val document: Document) {
     private fun DefaultValue.EnumValue.isEntryOf(enum: String): Boolean = document.definitions
         .filterIsInstance<EnumTypeDefinition>()
         .any { !it.extension && it.name == enum && it.values.any { entry -> entry.name == value } }
-
-    /** Wirespec only allows defaults on the fields of a type, so an rpc parameter keeps its default in an annotation. */
-    private fun InputValueDefinition.toParameter(): Field = toField(type.toReference(), null)
 
     private fun InputValueDefinition.toField(reference: Reference, native: DefaultValue?): Field = Field(
         annotations = description.toAnnotations() +
