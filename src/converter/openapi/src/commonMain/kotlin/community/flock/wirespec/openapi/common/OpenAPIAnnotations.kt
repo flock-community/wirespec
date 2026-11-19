@@ -92,8 +92,8 @@ internal fun List<SpecAnnotation>.toSpecMetadata(): SpecMetadata = map { it.anno
             version = info?.string("version"),
             description = annotations.findDescription(),
             termsOfService = info?.string("termsOfService"),
-            contact = info?.dict("contact")?.let { ContactObject(name = it.string("name"), url = it.string("url"), email = it.string("email")) },
-            license = info?.dict("license")?.let { license -> license.string("name")?.let { LicenseObject(name = it, identifier = license.string("identifier"), url = license.string("url")) } },
+            contact = info?.dict("contact")?.toContact(),
+            license = info?.dict("license")?.toLicense(),
             servers = annotations.servers().distinctBy { it.url },
             securitySchemes = annotations.named(OpenAPIAnnotations.SECURITY_SCHEME).mapNotNull { it.toSecurityScheme() }.distinctBy { it.name },
             security = firstOrNull { it.annotation.name == OpenAPIAnnotations.SECURITY }
@@ -105,6 +105,11 @@ internal fun List<SpecAnnotation>.toSpecMetadata(): SpecMetadata = map { it.anno
         )
     }
 }
+
+private fun List<Annotation.Parameter>.toContact(): ContactObject = ContactObject(name = string("name"), url = string("url"), email = string("email"))
+
+/** A license needs a name, so without one there is none. */
+private fun List<Annotation.Parameter>.toLicense(): LicenseObject? = string("name")?.let { name -> LicenseObject(name = name, identifier = string("identifier"), url = string("url")) }
 
 internal fun List<Annotation>.servers(): List<ServerInfo> = named(OpenAPIAnnotations.SERVER).mapNotNull { it.toServer() }
 
@@ -184,7 +189,7 @@ private fun List<SpecAnnotation>.securitySchemes(): Map<String, SecuritySchemeIn
 
 private fun List<SpecAnnotation>.specProblems(): List<EmitterException> = listOf(
     filter { it.annotation.name in OpenAPIAnnotations.NOT_ON_SPEC }.map {
-        EmitterException(it.fileUri, "@spec:${it.annotation.name} in ${it.fileUri.value} does not apply to the spec: it goes on ${if (it.annotation.name == OpenAPIAnnotations.LINK) "a response" else "an endpoint"}")
+        EmitterException(it.fileUri, "${it.label()} in ${it.fileUri.value} does not apply to the spec: it goes on ${it.annotation.target()}")
     },
     listOf(OpenAPIAnnotations.INFO, OpenAPIAnnotations.DESCRIPTION).mapNotNull { name ->
         filter { it.annotation.name == name }.takeIf { it.size > 1 }?.let { declared ->
@@ -198,9 +203,7 @@ private fun List<SpecAnnotation>.specProblems(): List<EmitterException> = listOf
     declaredTwice(OpenAPIAnnotations.SERVER, "server"),
     declaredTwice(OpenAPIAnnotations.TAG, "tag"),
     filter { it.annotation.name == OpenAPIAnnotations.SECURITY_SCHEME }.mapNotNull { declared ->
-        declared.annotation.schemeProblem()?.let { problem ->
-            EmitterException(declared.fileUri, "@spec:${OpenAPIAnnotations.SECURITY_SCHEME}${declared.annotation.positionalString()?.let { "(\"$it\")" }.orEmpty()} in ${declared.fileUri.value} $problem")
-        }
+        declared.annotation.schemeProblem()?.let { problem -> EmitterException(declared.fileUri, "${declared.label()} in ${declared.fileUri.value} $problem") }
     },
     flatMap { declared -> declared.annotation.serverOrTagProblems().map { EmitterException(declared.fileUri, "@spec:$it in ${declared.fileUri.value}") } },
 ).flatten()
@@ -213,6 +216,12 @@ private fun List<SpecAnnotation>.declaredTwice(name: String, label: String): Lis
     .map { (key, declared) ->
         EmitterException(declared.last().fileUri, "The $label \"$key\" is declared ${declared.size} times, in ${declared.files()}: a spec declares each $label once")
     }
+
+/** How the annotation reads in the file header, with its name if it has one: `@spec:OpenAPISecurityScheme("bearerAuth")`. */
+private fun SpecAnnotation.label(): String = "@spec:${annotation.name}" + annotation.positionalString()?.let { "(\"$it\")" }.orEmpty()
+
+/** Where an OpenAPI annotation that does not apply to the spec goes instead. */
+private fun Annotation.target(): String = if (name == OpenAPIAnnotations.LINK) "a response" else "an endpoint"
 
 private fun List<SpecAnnotation>.files(): String = map { it.fileUri.value }.distinct().joinToString(" and ")
 

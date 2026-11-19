@@ -242,8 +242,10 @@ class KotlinEmitterTest {
                 Module(
                     FileUri(""),
                     nonEmptyListOf(node),
+                    annotations = emptyList(),
                 ),
             ),
+            annotations = emptyList(),
         )
         it.emit(ast, logger).first().result
     }

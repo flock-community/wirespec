@@ -14,14 +14,14 @@ public sealed interface Node
  */
 public data class Root(
     val modules: NonEmptyList<Module>,
-    val annotations: List<SpecAnnotation> = emptyList(),
+    val annotations: List<SpecAnnotation>,
 ) : Node
 
 /** A file of the specification. Its [annotations] are the `@file:` annotations in its header. */
 public data class Module(
     val fileUri: FileUri,
     val statements: Statements,
-    val annotations: List<Annotation> = emptyList(),
+    val annotations: List<Annotation>,
 ) : Node
 
 /** A `@spec:` annotation, with the file it is written in, so a conflict between two files can name both. */

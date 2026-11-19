@@ -318,7 +318,7 @@ class OpenAPIV3SpecAnnotationsTest {
 
         errors("api.ws" to source) shouldBe listOf(
             "@spec:OpenAPINoSecurity in api.ws does not apply to the spec: it goes on an endpoint",
-            "@spec:OpenAPILink in api.ws does not apply to the spec: it goes on a response",
+            "@spec:OpenAPILink(\"GetCustomer\") in api.ws does not apply to the spec: it goes on a response",
             "@file:OpenAPITag in api.ws: an OpenAPI document has no metadata per file, so write @spec:OpenAPITag",
             "@OpenAPIInfo on GetCustomer describes the document: write it in the file header as @spec:OpenAPIInfo (api.ws)",
             "@OpenAPISecurityScheme on GetCustomer describes the document: write it in the file header as @spec:OpenAPISecurityScheme (api.ws)",
@@ -351,7 +351,7 @@ class OpenAPIV3SpecAnnotationsTest {
         val source = "@spec:OpenAPIInfo(title: \"Customer API\", version: \"2.3.0\")\n\ntype Customer { id: String }"
         val ast = parse(source).shouldBeRight()
 
-        listOf(OpenAPIV3Emitter, OpenAPIV2Emitter).map { it.withSpecInfo(SpecInfo(version = "2.4.0-SNAPSHOT")) }.forEach { emitter ->
+        listOf(OpenAPIV3Emitter, OpenAPIV2Emitter).map { it.withSpecInfo(SpecInfo(title = null, version = "2.4.0-SNAPSHOT")) }.forEach { emitter ->
             Json.parseToJsonElement(emitter.emit(ast, noLogger).single().result)
                 .at("info") shouldEqualJson """{ "title": "Customer API", "version": "2.4.0-SNAPSHOT" }"""
         }

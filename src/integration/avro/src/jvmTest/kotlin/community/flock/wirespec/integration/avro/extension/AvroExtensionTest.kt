@@ -100,7 +100,7 @@ class AvroExtensionTest {
 
     @Test
     fun emitKotlinCollections() {
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(collections, nested))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(collections, nested), annotations = emptyList())), annotations = emptyList())
         val emitted = kotlinEmitter.emit(ast, noLogger).avro("packageName/avro/CollectionsAvro.kt").orEmpty()
 
         // Maps and arrays of primitives already hold the types the writer wants and pass through
@@ -141,7 +141,7 @@ class AvroExtensionTest {
 
     @Test
     fun emitKotlinRecursiveSchema() {
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(recursive, nested))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(recursive, nested), annotations = emptyList())), annotations = emptyList())
         val emitted = kotlinEmitter.emit(ast, noLogger).avro("packageName/avro/NodeAvro.kt").orEmpty()
 
         // The self-reference is a bare Avro name: the record is already defined by the time the
@@ -165,7 +165,7 @@ class AvroExtensionTest {
 
     @Test
     fun emitJavaType() {
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type), annotations = emptyList())), annotations = emptyList())
         val expected =
             """
             |package packageName.avro;
@@ -194,7 +194,7 @@ class AvroExtensionTest {
         val constrained = type.copy(
             shape = Shape(listOf(field("id", Reference.Primitive(Reference.Primitive.Type.String(StringFormat.UUID.regExp), isNullable = false)))),
         )
-        val emitted = javaEmitter.emit(AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(constrained)))), noLogger)
+        val emitted = javaEmitter.emit(AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(constrained), annotations = emptyList())), annotations = emptyList()), noLogger)
             .avro("packageName/avro/IdentifierAvro.java").orEmpty()
 
         // Avro hands back every string as Utf8, whatever its constraint.
@@ -203,7 +203,7 @@ class AvroExtensionTest {
 
     @Test
     fun emitJavaEnum() {
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum), annotations = emptyList())), annotations = emptyList())
         val expected =
             """
             |package packageName.avro;
@@ -227,7 +227,7 @@ class AvroExtensionTest {
 
     @Test
     fun emitKotlinType() {
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type), annotations = emptyList())), annotations = emptyList())
         val expected =
             """
             |package packageName.avro
@@ -251,7 +251,7 @@ class AvroExtensionTest {
 
     @Test
     fun emitKotlinEnum() {
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum), annotations = emptyList())), annotations = emptyList())
         val expected =
             """
             |package packageName.avro

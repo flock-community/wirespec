@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.exceptions
 
 import community.flock.wirespec.compiler.core.FileUri
-import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.tokenize.Token
 
@@ -84,11 +83,11 @@ internal class DuplicateFieldError(fieldName: String, owner: String) :
         message = "Field '$fieldName' is defined more than once in $owner",
     )
 
-/** Names the annotation by its positional value, `@spec:OpenAPIServer("https://api.example.com")`, as that is what tells two apart. */
-internal class DuplicateSpecAnnotationError(annotation: Annotation, files: List<FileUri>) :
+internal class DuplicateSpecAnnotationError(fileUri: FileUri, annotation: String, files: List<FileUri>) :
     WirespecException(
-        files.last(),
-        "@spec:${annotation.name}${(annotation.parameters.find { it.name == "default" }?.value as? Annotation.Value.Single)?.let { "(\"${it.value}\")" }.orEmpty()} " +
-            "is declared ${files.size} times, in ${files.map { it.value }.distinct().joinToString(" and ")}: a spec annotation is unique",
+        fileUri,
+        "$annotation is declared ${files.size} times, in ${files.names()}: a spec annotation is unique",
         Token.Coordinates(),
     )
+
+private fun List<FileUri>.names(): String = map { it.value }.distinct().joinToString(" and ")

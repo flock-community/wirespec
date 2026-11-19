@@ -23,10 +23,6 @@ internal class TokenProvider(
     var token: Token = tokens.head
         private set
 
-    /** The token eaten last, so a rule can look at where the previous construct ended. */
-    var previous: Token? = null
-        private set
-
     private val tokenIterator = tokens.tail.iterator()
     private var nextToken = nextToken()
 
@@ -39,7 +35,6 @@ internal class TokenProvider(
     fun eatToken(): Either<WirespecException, Token> = either {
         val previousToken = token.also(::logToken)
         token = nextToken ?: raise(NextException(fileUri, previousToken.coordinates))
-        previous = previousToken
         nextToken = nextToken()
         printTokens(previousToken)
         previousToken

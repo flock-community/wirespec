@@ -82,7 +82,7 @@ public object GraphQLParser : Parser {
         .let { converter ->
             AST(
                 modules = converter.definitions().toNonEmptyListOrNull()
-                    ?.let { nonEmptyListOf(Module(moduleContent.fileUri, it)) }
+                    ?.let { nonEmptyListOf(Module(moduleContent.fileUri, it, annotations = emptyList())) }
                     ?: error("Cannot convert GraphQL document ${moduleContent.fileUri.value}: it defines no types, and Wirespec needs a definition besides the @spec: annotations of its schema and directives"),
                 annotations = converter.specAnnotations().map { SpecAnnotation(moduleContent.fileUri, it) },
             )

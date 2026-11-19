@@ -63,13 +63,13 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
     override fun emit(
         ast: AST,
         logger: Logger,
-    ): NonEmptyList<Emitted> = emit(ast, SpecInfo(), logger)
+    ): NonEmptyList<Emitted> = emit(ast, null, logger)
 
     override fun withSpecInfo(info: SpecInfo): Emitter = object : SpecInfoEmitter by this {
         override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, info, logger)
     }
 
-    private fun emit(ast: AST, info: SpecInfo, logger: Logger): NonEmptyList<Emitted> = Emitted(
+    private fun emit(ast: AST, info: SpecInfo?, logger: Logger): NonEmptyList<Emitted> = Emitted(
         "OpenAPI.${extension.value}",
         json.encodeToString(emitSwaggerObject(ast, logger, info)),
     ).let { nonEmptyListOf(it) }
@@ -78,23 +78,23 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
 
     /** The document for every module of [ast], with the metadata of its `@spec:` annotations. */
     /** [info] sets the title and version instead of `@spec:OpenAPIInfo`. */
-    public fun emitSwaggerObject(ast: AST, logger: Logger, info: SpecInfo = SpecInfo()): OpenAPIV2Model = ast.modules
+    public fun emitSwaggerObject(ast: AST, logger: Logger, info: SpecInfo? = null): OpenAPIV2Model = ast.modules
         .flatMap { module ->
             logger.info("Combining Nodes from ${module.fileUri.value} ")
             module.statements
         }
         .let { emitSwaggerObject(it, ast.annotations.toSpecMetadata(), info, logger) }
 
-    public fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = emitSwaggerObject(statements, emptyList<SpecAnnotation>().toSpecMetadata(), SpecInfo(), logger)
+    public fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = emitSwaggerObject(statements, emptyList<SpecAnnotation>().toSpecMetadata(), null, logger)
 
-    private fun emitSwaggerObject(statements: Statements, spec: SpecMetadata, info: SpecInfo, logger: Logger): OpenAPIV2Model = spec.securitySchemes
+    private fun emitSwaggerObject(statements: Statements, spec: SpecMetadata, info: SpecInfo?, logger: Logger): OpenAPIV2Model = spec.securitySchemes
         .associate { it.name to it.emit(logger) }
         .let { schemes ->
             val unsupported = schemes.filterValues { it == null }.keys
             spec.servers.emit(logger).let { server ->
                 OpenAPIV20Model(
                     swagger = "2.0",
-                    info = spec.toInfo(title = info.title, version = info.version),
+                    info = spec.toInfo(title = info?.title, version = info?.version),
                     host = server?.host,
                     basePath = server?.basePath,
                     schemes = server?.schemes,
@@ -112,17 +112,24 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
     /** Swagger 2 has one host and base path, served over one or more schemes. */
     private data class SwaggerServer(val host: String?, val basePath: String?, val schemes: List<String>?)
 
-    private fun List<ServerInfo>.emit(logger: Logger): SwaggerServer? = map { it.resolvedUrl() }.let { urls ->
+    /** A URL in the parts Swagger 2 keeps apart: `https://api.example.com/v2` has `https`, `api.example.com` and `/v2`. */
+    private data class UrlParts(val url: String, val scheme: String?, val host: String?, val basePath: String?)
+
+    private fun String.toUrlParts(): UrlParts = substringAfter("://", missingDelimiterValue = this).let { address ->
+        UrlParts(
+            url = this,
+            scheme = substringBefore("://", missingDelimiterValue = "").ifEmpty { null },
+            host = address.substringBefore('/').ifEmpty { null },
+            basePath = address.substringAfter('/', missingDelimiterValue = "").ifEmpty { null }?.let { "/$it" },
+        )
+    }
+
+    /** The first server gives the host and base path; the servers with the same ones give the schemes. */
+    private fun List<ServerInfo>.emit(logger: Logger): SwaggerServer? = map { it.resolvedUrl().toUrlParts() }.let { urls ->
         urls.firstOrNull()?.let { first ->
-            urls.partition { it.substringAfter("://") == first.substringAfter("://") }.let { (sameHost, otherHosts) ->
-                otherHosts.forEach { logger.warn("Swagger 2 has one host and base path, so the server $it is left out") }
-                first.substringAfter("://", missingDelimiterValue = first).let { address ->
-                    SwaggerServer(
-                        host = address.substringBefore('/').ifEmpty { null },
-                        basePath = address.drop(address.substringBefore('/').length).ifEmpty { null },
-                        schemes = sameHost.mapNotNull { url -> url.substringBefore("://", missingDelimiterValue = "").ifEmpty { null } }.distinct().ifEmpty { null },
-                    )
-                }
+            urls.partition { it.host == first.host && it.basePath == first.basePath }.let { (sameAddress, otherAddresses) ->
+                otherAddresses.forEach { logger.warn("Swagger 2 has one host and base path, so the server ${it.url} is left out") }
+                SwaggerServer(host = first.host, basePath = first.basePath, schemes = sameAddress.mapNotNull { it.scheme }.distinct().ifEmpty { null })
             }
         }
     }
@@ -141,10 +148,10 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
             // Swagger 2 has no bearer scheme; the usual stand-in is an API key in the Authorization header.
             else -> OpenAPIV20SecurityScheme(
                 type = OpenAPIV20SecuritySchemeType.API_KEY,
-                description = description ?: "A ${scheme ?: "bearer"} token${bearerFormat?.let { " ($it)" }.orEmpty()} in the Authorization header: ${scheme?.replaceFirstChar(Char::uppercase) ?: "Bearer"} <token>",
+                description = description ?: authorizationDescription(),
                 name = "Authorization",
                 `in` = "header",
-            ).also { logger.warn("Swagger 2 has no ${scheme ?: "bearer"} scheme, so the security scheme $name is written as an API key in the Authorization header") }
+            ).also { logger.warn("Swagger 2 has no ${httpScheme()} scheme, so the security scheme $name is written as an API key in the Authorization header") }
         }
 
         "oauth2" -> OAUTH2_FLOWS.firstNotNullOfOrNull { (flow, swaggerFlow) -> flows[flow]?.let { swaggerFlow to it } }?.let { (swaggerFlow, flow) ->
@@ -160,6 +167,13 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
 
         else -> null.also { logger.warn("Swagger 2 has no $type security schemes, so the security scheme $name is left out") }
     }
+
+    /** What the Authorization header holds: `A bearer token (JWT) in the Authorization header: Bearer <token>`. */
+    private fun SecuritySchemeInfo.authorizationDescription(): String = "A ${httpScheme()} token${formatSuffix()} in the Authorization header: ${httpScheme().replaceFirstChar(Char::uppercase)} <token>"
+
+    private fun SecuritySchemeInfo.httpScheme(): String = scheme ?: "bearer"
+
+    private fun SecuritySchemeInfo.formatSuffix(): String = bearerFormat?.let { " ($it)" }.orEmpty()
 
     /** OpenAPI 3 flows and their Swagger 2 names, in the order the first one present is chosen. */
     private val OAUTH2_FLOWS = listOf("implicit" to "implicit", "password" to "password", "clientCredentials" to "application", "authorizationCode" to "accessCode")

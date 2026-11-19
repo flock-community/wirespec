@@ -120,7 +120,7 @@ class SpringKotlinExtensionTest {
             ),
             extends = emptyList(),
         )
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(inline))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(inline), annotations = emptyList())), annotations = emptyList())
 
         val emitted = springEmitter(PackageName.Companion("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)

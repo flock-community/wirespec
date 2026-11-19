@@ -67,7 +67,7 @@ public object AsyncAPIParser : Parser {
         .let { (annotations, definitions) ->
             AST(
                 modules = definitions.toNonEmptyListOrNull()
-                    ?.let { nonEmptyListOf(Module(moduleContent.fileUri, it)) }
+                    ?.let { nonEmptyListOf(Module(moduleContent.fileUri, it, annotations = emptyList())) }
                     ?: error("Cannot convert AsyncAPI document ${moduleContent.fileUri.value}: it has no channels or schemas, and Wirespec needs a definition besides the @spec: annotations of the document"),
                 annotations = annotations.map { SpecAnnotation(moduleContent.fileUri, it) },
             )
@@ -165,13 +165,22 @@ private class AsyncAPIConverter(private val document: JsonObject) {
      */
     private fun documentAnnotations(messages: List<ConvertedMessage>, operations: List<Pair<String, JsonObject>>): List<Annotation> = listOf(annotation(DOCUMENT, parameters = document.documentFields().toParameters())) +
         info?.description().toDescription() +
-        listOfNotNull(info?.let { annotation(INFO, parameters = JsonObject(it.without("description" to { value -> value.isString() }, "tags" to { majorVersion == 3 && tags != null })).toParameters()) }) +
-        tags.orEmpty().map { tag -> (tag as JsonObject).let { annotation(TAG, it.string("name"), JsonObject(it - "name").toParameters()) } } +
-        servers.orEmpty().map { (key, server) -> annotation(SERVER, key, JsonObject((server as JsonObject).mapValues { (field, value) -> if (field == "security") value.toSchemeNames() else value }).toParameters()) } +
+        listOfNotNull(info?.toInfoAnnotation()) +
+        tags.orEmpty().map { (it as JsonObject).toTagAnnotation() } +
+        servers.orEmpty().map { (key, server) -> (server as JsonObject).toServerAnnotation(key) } +
         listOfNotNull(components?.componentFields()?.let { annotation(COMPONENTS, parameters = it.toParameters()) }) +
         securitySchemes.orEmpty().map { (key, scheme) -> annotation(SECURITY_SCHEME, key, (scheme as JsonObject).toParameters()) } +
         messages.map { it.annotation } +
         operations.map { (key, operation) -> operation.toAnnotation(key, channelPointer = null) }
+
+    /** The info without what has an annotation of its own: the description, and the tags in AsyncAPI 3. */
+    private fun JsonObject.toInfoAnnotation(): Annotation = without("description" to { it.isString() }, "tags" to { majorVersion == 3 && tags != null })
+        .let { annotation(INFO, parameters = JsonObject(it).toParameters()) }
+
+    private fun JsonObject.toTagAnnotation(): Annotation = annotation(TAG, string("name"), JsonObject(this - "name").toParameters())
+
+    private fun JsonObject.toServerAnnotation(key: String): Annotation = mapValues { (field, value) -> if (field == "security") value.toSchemeNames() else value }
+        .let { annotation(SERVER, key, JsonObject(it).toParameters()) }
 
     /** Security that names declared schemes without scopes is written as their names, `security: ["saslScram"]`, and any other as it is. */
     private fun JsonElement.toSchemeNames(): JsonElement = (this as? JsonArray)

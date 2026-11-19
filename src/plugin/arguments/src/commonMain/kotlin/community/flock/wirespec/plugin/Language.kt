@@ -41,7 +41,7 @@ public enum class Language {
 public fun Language.toEmitter(
     packageName: PackageName,
     emitShared: EmitShared,
-    specInfo: SpecInfo = SpecInfo(),
+    specInfo: SpecInfo? = null,
 ): Emitter = when (this) {
     Language.Java -> JavaEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinEmitter(packageName, emitShared)
@@ -54,4 +54,4 @@ public fun Language.toEmitter(
     Language.OpenAPIV3 -> OpenAPIV3Emitter
     Language.Avro -> AvroJsonEmitter
     Language.AsyncAPI -> AsyncAPIEmitter
-}.withSpecInfo(specInfo)
+}.let { emitter -> specInfo?.let { emitter.withSpecInfo(it) } ?: emitter }

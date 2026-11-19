@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
@@ -123,10 +124,19 @@ public object Validator {
     private fun validateSpecAnnotations(ast: AST): EitherNel<WirespecException, AST> = ast.annotations
         .groupBy { it.annotation }
         .filterValues { it.size > 1 }
-        .map { (annotation, declared) -> DuplicateSpecAnnotationError(annotation, declared.map { it.fileUri }) }
+        .map { (annotation, declared) -> DuplicateSpecAnnotationError(declared.last().fileUri, annotation.label(), declared.map { it.fileUri }) }
         .toNonEmptyListOrNull()
         ?.left()
         ?: ast.right()
+
+    /** How the annotation reads in the file header, with its positional value: `@spec:OpenAPIServer("https://api.example.com")`. */
+    private fun Annotation.label(): String = "@spec:$name" + positionalValue()?.let { "(\"$it\")" }.orEmpty()
+
+    private fun Annotation.positionalValue(): String? = parameters
+        .find { it.name == "default" }
+        ?.value
+        ?.let { it as? Annotation.Value.Single }
+        ?.value
 
     private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.validateNoDuplicates<Channel>(::DuplicateChannelError)
 

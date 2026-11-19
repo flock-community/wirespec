@@ -23,45 +23,48 @@ import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.SpecAnnotation
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
 /** The `@spec:` and `@file:` annotations at the top of a file. */
 internal data class Header(val spec: List<Annotation>, val file: List<Annotation>)
 
+/** An annotation and the tokens it starts and ends with, which tell where in the file it is written. */
+private data class ParsedAnnotation(val annotation: Annotation, val first: Token, val last: Token)
+
 internal object AnnotationParser {
     fun TokenProvider.parseAnnotations(): Either<WirespecException, List<Annotation>> = either {
         buildList {
             while (token.type is AnnotationToken) {
-                add(parseAnnotation().bind())
+                add(parseAnnotation().bind().annotation)
             }
         }
     }
 
     /** Reads the file header: its `@spec:` annotations, then its `@file:` annotations, and an empty line after them. */
     fun TokenProvider.parseHeader(): Either<WirespecException, Header> = either {
-        buildList { while (token.type is HeaderAnnotation) add(token to parseAnnotation().bind()) }
+        buildList { while (token.type is HeaderAnnotation) add(parseAnnotation().bind()) }
             .also { header -> header.specAfterFile()?.let { raise(SpecAnnotationAfterFileAnnotationException(fileUri, it.value, it.coordinates)) } }
-            .also { if (it.isNotEmpty()) ensureEmptyLineAfterHeader().bind() }
+            .also { header -> header.lastOrNull()?.let { ensureEmptyLineAfter(it.last).bind() } }
             .let { Header(spec = it.annotationsOf<SpecAnnotation>(), file = it.annotationsOf<FileAnnotation>()) }
     }
 
     /** Reads a header annotation outside the header and raises, so parsing goes on after it. */
     fun TokenProvider.misplacedHeaderAnnotation(): Either<WirespecException, Nothing> = either {
-        val annotation = token
-        parseAnnotation().bind()
-        raise(MisplacedHeaderAnnotationException(fileUri, annotation.value, annotation.coordinates))
+        parseAnnotation().bind().first.let { raise(MisplacedHeaderAnnotationException(fileUri, it.value, it.coordinates)) }
     }
 }
 
-private inline fun <reified T : HeaderAnnotation> List<Pair<Token, Annotation>>.annotationsOf(): List<Annotation> = filter { (token) -> token.type is T }.map { (_, annotation) -> annotation }
+private inline fun <reified T : HeaderAnnotation> List<ParsedAnnotation>.annotationsOf(): List<Annotation> = filter { it.first.type is T }.map { it.annotation }
 
 /** The first `@spec:` annotation that comes after a `@file:` annotation, if any. */
-private fun List<Pair<Token, Annotation>>.specAfterFile(): Token? = map { (token) -> token }
+private fun List<ParsedAnnotation>.specAfterFile(): Token? = map { it.first }
     .dropWhile { it.type is SpecAnnotation }
     .firstOrNull { it.type is SpecAnnotation }
 
-private fun TokenProvider.ensureEmptyLineAfterHeader(): Either<WirespecException, Unit> = either {
-    ensure(token.type is EndOfProgram || token.startLine() - (previous?.coordinates?.line ?: 0) > 1) {
+/** The header ends on the line of its [last] token, and what follows it has to start at least two lines further. */
+private fun TokenProvider.ensureEmptyLineAfter(last: Token): Either<WirespecException, Unit> = either {
+    ensure(token.type is EndOfProgram || token.startLine() - last.coordinates.line > 1) {
         MissingEmptyLineAfterHeaderException(fileUri, token.coordinates)
     }
 }
@@ -69,19 +72,18 @@ private fun TokenProvider.ensureEmptyLineAfterHeader(): Either<WirespecException
 /** A token's coordinates are where it ends, and a comment can span several lines. */
 private fun Token.startLine(): Int = coordinates.line - value.count { it == '\n' }
 
-private fun TokenProvider.parseAnnotation() = either {
-    val name = token.value.drop(1).substringAfter(':').also { eatToken().bind() }
-    val parameters = when (token.type) {
+private fun TokenProvider.parseAnnotation(): Either<WirespecException, ParsedAnnotation> = either {
+    val first = eatToken().bind()
+    val name = first.value.drop(1).substringAfter(':')
+    when (token.type) {
         is LeftParenthesis -> {
-            eatToken().bind() // consume (
-            parseAnnotationParameters().bind().also {
-                expect<RightParenthesis>().bind()
-            }
+            expect<LeftParenthesis>().bind()
+            val parameters = parseAnnotationParameters().bind()
+            ParsedAnnotation(Annotation(name, parameters), first, expect<RightParenthesis>().bind())
         }
 
-        else -> emptyList()
+        else -> ParsedAnnotation(Annotation(name, emptyList()), first, first)
     }
-    Annotation(name, parameters)
 }
 
 private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException, List<Annotation.Parameter>> = either {
@@ -97,13 +99,13 @@ private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException,
 }
 
 private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, List<Annotation.Parameter>> = either {
-    when (token.type) {
-        is LeftBracket, is Brackets -> {
+    when {
+        token.type.startsArray() -> {
             val arr = parseArray().bind()
             listOf(Annotation.Parameter("default", Annotation.Value.Array(arr)))
         }
 
-        is LeftCurly -> {
+        token.type is LeftCurly -> {
             val dictParams = parseDict().bind()
             listOf(Annotation.Parameter("default", Annotation.Value.Dict(dictParams)))
         }
@@ -130,18 +132,18 @@ private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, 
 }
 
 private fun TokenProvider.parseAnnotationValue(): Either<WirespecException, Annotation.Value> = either {
-    when (token.type) {
-        is LeftBracket, is Brackets -> {
+    when {
+        token.type.startsArray() -> {
             val arr = parseArray().bind()
             Annotation.Value.Array(arr)
         }
 
-        is LeftCurly -> {
+        token.type is LeftCurly -> {
             val dictParams = parseDict().bind()
             Annotation.Value.Dict(dictParams)
         }
 
-        LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
+        token.type == LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
         else -> Annotation.Value.Single(token.value)
     }.also {
         if (it is Annotation.Value.Single) {
@@ -168,10 +170,15 @@ private fun TokenProvider.parseDict(): Either<WirespecException, List<Annotation
     params
 }
 
-/** The tokenizer reads `[]` as one token, the suffix of a type such as `String[]`: here it is an empty array. */
+/**
+ * An array starts with `[`, or is the empty `[]`: the tokenizer reads `[]` as one [Brackets] token, the suffix of a type
+ * such as `String[]`, so an empty array never has a [LeftBracket] of its own.
+ */
+private fun TokenType.startsArray(): Boolean = this is LeftBracket || this is Brackets
+
 private fun TokenProvider.parseArray(): Either<WirespecException, List<Annotation.Value.Single>> = either {
     when (token.type) {
-        is Brackets -> emptyList<Annotation.Value.Single>().also { eatToken().bind() }
+        is Brackets -> expect<Brackets>().bind().let { emptyList() }
         else -> {
             expect<LeftBracket>().bind()
             val items = mutableListOf<Annotation.Value.Single>()

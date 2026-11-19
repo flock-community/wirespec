@@ -26,8 +26,8 @@ public interface Emitter : HasExtension {
 
 /** The title and version a build gives the spec, such as the version of the project, instead of the ones the spec declares. */
 public data class SpecInfo(
-    val title: String? = null,
-    val version: String? = null,
+    val title: String?,
+    val version: String?,
 )
 
 /** An emitter that writes a document with a title and version, such as OpenAPI or AsyncAPI, so a build can set them. */

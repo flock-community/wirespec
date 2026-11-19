@@ -75,8 +75,8 @@ import kotlinx.serialization.json.JsonPrimitive
 public object OpenAPIV3Emitter : SpecInfoEmitter {
     /** A title and version that win over the ones in `@spec:OpenAPIInfo`. */
     public data class Options(
-        val title: String? = null,
-        val version: String? = null,
+        val title: String?,
+        val version: String?,
     )
 
     override val extension: FileExtension = FileExtension.JSON

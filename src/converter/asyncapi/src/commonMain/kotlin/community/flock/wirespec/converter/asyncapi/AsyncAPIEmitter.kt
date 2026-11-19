@@ -65,13 +65,13 @@ public object AsyncAPIEmitter : SpecInfoEmitter {
     /** The spec annotations whose positional value is the key of what they declare. */
     private val keyed = setOf(SERVER, SECURITY_SCHEME, TAG)
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, SpecInfo(), logger)
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, null, logger)
 
     override fun withSpecInfo(info: SpecInfo): Emitter = object : SpecInfoEmitter by this {
         override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = emit(ast, info, logger)
     }
 
-    private fun emit(ast: AST, info: SpecInfo, logger: Logger): NonEmptyList<Emitted> = ast.modules
+    private fun emit(ast: AST, info: SpecInfo?, logger: Logger): NonEmptyList<Emitted> = ast.modules
         .onEach { logger.info("Emitting AsyncAPI from ${it.fileUri.value}") }
         .flatMap { it.statements }
         .let { WirespecToAsyncAPI(ast.annotations.map(SpecAnnotation::annotation), it, info).document() }
@@ -166,7 +166,7 @@ public object AsyncAPIEmitter : SpecInfoEmitter {
     }
 }
 
-private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions: List<Definition>, private val info: SpecInfo) {
+private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions: List<Definition>, private val info: SpecInfo?) {
 
     private val document: Annotation? = spec.find(DOCUMENT)
 
@@ -213,9 +213,11 @@ private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions
         ?.let { JsonArray(orEmpty() + it) }
 
     private fun JsonObject?.withServers(): JsonObject? = spec.named(SERVER)
-        .mapNotNull { server -> server.value()?.let { it to JsonObject(server.fields().mapValues { (field, value) -> if (field == "security") value.toSecurity() else value }) } }
+        .mapNotNull { server -> server.value()?.let { it to server.toServer() } }
         .takeIf { it.isNotEmpty() }
         ?.let { JsonObject(orEmpty() + it) }
+
+    private fun Annotation.toServer(): JsonObject = JsonObject(fields().mapValues { (field, value) -> if (field == "security") value.toSecurity() else value })
 
     /** `security: ["saslScram"]` names security schemes: a reference to each in AsyncAPI 3, a requirement without scopes in AsyncAPI 2. */
     private fun JsonElement.toSecurity(): JsonElement = (this as? JsonArray)
@@ -233,7 +235,7 @@ private class WirespecToAsyncAPI(private val spec: List<Annotation>, definitions
         ?: this
 
     /** The title and version of the build replace the ones of the document, each where it is set. */
-    private fun JsonObject.withInfo(): JsonObject = listOfNotNull(info.title?.let { "title" to JsonPrimitive(it) }, info.version?.let { "version" to JsonPrimitive(it) })
+    private fun JsonObject.withInfo(): JsonObject = listOfNotNull(info?.title?.let { "title" to JsonPrimitive(it) }, info?.version?.let { "version" to JsonPrimitive(it) })
         .takeIf { it.isNotEmpty() }
         ?.let { JsonObject(this + ("info" to JsonObject((this["info"] as? JsonObject).orEmpty() + it))) }
         ?: this

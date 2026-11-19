@@ -5,8 +5,15 @@ import community.flock.wirespec.compiler.core.parse.ast.Comment
 
 internal interface WirespecMetaDataEmitter {
 
-    /** An annotation; a [target] such as `spec` or `file` makes it a header annotation: `@spec:Name`. */
-    fun Annotation.emit(target: String? = null): String = "@${target?.let { "$it:" }.orEmpty()}$name${parameters.takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") { it.emit() }.orEmpty()}"
+    fun Annotation.emit(): String = "@$name${emitParameters()}"
+
+    /** A header annotation, whose [target] is `spec` or `file`: `@spec:Name(...)`. */
+    fun Annotation.emit(target: String): String = "@$target:$name${emitParameters()}"
+
+    private fun Annotation.emitParameters(): String = parameters
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "(", ")") { it.emit() }
+        .orEmpty()
 
     fun Comment.emit(): String = "/* $value */"
 

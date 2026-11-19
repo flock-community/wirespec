@@ -35,6 +35,7 @@ internal fun parseOpenApi(moduleContent: ModuleContent, openApiParser: (String) 
             Module(
                 fileUri = moduleContent.fileUri,
                 statements = statements.map { it.withValidEnumDefaults(statements) },
+                annotations = emptyList(),
             ),
         ),
         annotations = spec.map { SpecAnnotation(moduleContent.fileUri, it) },

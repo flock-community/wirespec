@@ -247,7 +247,7 @@ class AsyncAPIEmitterTest {
             converted to """{ "title": "Todo events", "version": "1.1.0-SNAPSHOT", "description": "Everything that happens to a todo" }""",
             wirespec to """{ "title": "Wirespec", "version": "1.1.0-SNAPSHOT" }""",
         ).forEach { (source, info) ->
-            AsyncAPIEmitter.withSpecInfo(SpecInfo(version = "1.1.0-SNAPSHOT"))
+            AsyncAPIEmitter.withSpecInfo(SpecInfo(title = null, version = "1.1.0-SNAPSHOT"))
                 .emit(parse(source).shouldBeRight(), noLogger)
                 .single()
                 .result
@@ -295,7 +295,7 @@ class AsyncAPIEmitterTest {
         document.getValue("components").jsonObject.getValue("securitySchemes").toString() shouldEqualJson """
             { "saslScram": { "type": "scramSha256", "description": "SASL/SCRAM" } }
         """
-        AsyncAPIEmitter.withSpecInfo(SpecInfo(version = "1.1.0")).emit(parse(source).shouldBeRight(), noLogger).single().result
+        AsyncAPIEmitter.withSpecInfo(SpecInfo(title = null, version = "1.1.0")).emit(parse(source).shouldBeRight(), noLogger).single().result
             .let { Json.parseToJsonElement(it).jsonObject.getValue("info").jsonObject.getValue("version").toString() } shouldBe "\"1.1.0\""
     }
 
