@@ -210,10 +210,10 @@ class GraphQLOperationsTest {
     }
 
     @Test
-    fun nestsTheOperationsOfAFileInTheFieldsOfItsPath() {
-        val ast = parsed(
-            """
+    fun nestsAnOperationInTheFieldsOfThePathToTheTypeItNames() {
+        val ast = """
             |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+            |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!", archive: { type: "ArchiveQuery", description: "What was read" } })
             |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
             |
             |type Notification {
@@ -221,40 +221,36 @@ class GraphQLOperationsTest {
             |}
             |
             |@GraphQLQuery
+            |rpc Ping {} -> Boolean
+            |
+            |@GraphQLQuery("NotificationsQuery")
             |rpc Inbox {
             |  limit: Integer32,
             |  locale: String?
             |} -> Notification[]
             |
-            |@GraphQLQuery
+            |@GraphQLQuery("NotificationsQuery")
             |rpc InboxCount {} -> Integer32
             |
-            |@GraphQLMutation
+            |@GraphQLQuery("ArchiveQuery")
+            |rpc Unread {} -> Notification[]
+            |
+            |@GraphQLMutation("NotificationsMutation")
             |rpc MarkRead {
             |  id: String
             |} -> Unit
-            """.trimMargin(),
-            """
-            |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!", archive: { type: "ArchiveQuery", description: "What was read" } })
-            |
-            |@GraphQLQuery
-            |rpc Unread {} -> Notification[]
-            """.trimMargin(),
-            """
-            |@GraphQLQuery
-            |rpc Ping {} -> Boolean
-            """.trimMargin(),
-        )
+        """.trimMargin().parsed()
         val operations = GraphQLOperations(ast)
         val rpcs = ast.definitions().filterIsInstance<Rpc>().associateBy { it.identifier.value }
 
         ast.documents() shouldBe mapOf(
+            "Ping" to "query Ping { result: ping }",
             "Inbox" to "query Inbox(\$limit: Int!, \$locale: String) { notifications { result: inbox(limit: \$limit, locale: \$locale) { id } } }",
             "InboxCount" to "query InboxCount { notifications { result: inboxCount } }",
-            "MarkRead" to "mutation MarkRead(\$id: String!) { notifications { result: markRead(id: \$id) } }",
             "Unread" to "query Unread { notifications { archive { result: unread { id } } } }",
-            "Ping" to "query Ping { result: ping }",
+            "MarkRead" to "mutation MarkRead(\$id: String!) { notifications { result: markRead(id: \$id) } }",
         )
+        operations.path(rpcs.getValue("Ping")) shouldBe emptyList()
         operations.path(rpcs.getValue("InboxCount")) shouldBe listOf("notifications")
         operations.path(rpcs.getValue("Unread")) shouldBe listOf("notifications", "archive")
         operations.open(rpcs.getValue("Unread"), "result") shouldBe "query Unread { notifications { archive { result: unread"

@@ -23,9 +23,9 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
  * ```
  *
- * The operations of a file whose header has a `path`, `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`,
- * are fields of the type that path leads to, so their documents nest them in the fields of the path:
- * `query Inbox { notifications { result: inbox { id } } }`.
+ * An rpc that names a type a `path` in the header of its file leads to, `@GraphQLQuery("NotificationsQuery")` with
+ * `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`, is a field of that type, so its document nests
+ * it in the fields of the path: `query Inbox { notifications { result: inbox { id } } }`.
  *
  * Every parameter of the rpc is a variable, typed and defaulted as the field argument it is passed to. The field is
  * aliased, so a client reads it under the same name whatever the field is called, and selects every field of its result,
@@ -69,7 +69,7 @@ public class GraphQLOperations(ast: AST) {
 
     /**
      * The fields that lead from the root operation type to the type [rpc] is a field of, which its document nests the
-     * field in and its response nests the result in: those of the `path` of its file, `notifications` for a field of the
+     * field in and its response nests the result in: those of the `path` in its file, `notifications` for a field of the
      * `NotificationsQuery` that `Query.notifications` returns. None for a field of the root operation type itself.
      */
     public fun path(rpc: Rpc): List<String> = schema.rootType(schema.operation(rpc)).let { root ->

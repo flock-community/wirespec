@@ -49,7 +49,7 @@ GraphQL types are nullable unless marked with `!`; Wirespec references are requi
 | `union`                                       | `type X = A \| B`                                                                               |
 | `scalar`                                      | refined `type X = String`                                                                       |
 | fields of `Query`, `Mutation`, `Subscription` | [`rpc`](#operations), one per field                                                             |
-| fields of a type nested in one of those       | [`rpc`](#nested-types), one per field, in a file with a `path` in its header                    |
+| fields of a type nested in one of those       | [`rpc`](#nested-types) that names the type, one per field, with its `path` in the file header   |
 | any other field with arguments                | [`rpc`](#fields-with-arguments) with `@GraphQLField`                                            |
 | `schema`                                      | `@spec:GraphQLSchema(query: "...", ...)` in the [file header](#schema-and-directives)           |
 | `directive @x`                                | `@spec:GraphQLDirectiveDefinition(name: "x", ...)` in the [file header](#schema-and-directives) |
@@ -76,6 +76,7 @@ rpc AddTodo {
   for a field `todo`, it gets the type it is a field of as prefix (`QueryTodo`) and `@GraphQLName("todo")` keeps the
   field name.
 - A root type with another name than the default is named in the annotation: `@GraphQLQuery("QueryRoot")`.
+- An rpc that names a [nested type](#nested-types) is a field of that type.
 - The rpcs of an `extend type Query` block are marked `@GraphQLQuery(extend: "1")`, the next block `"2"`, and so on.
 
 The root type is rebuilt from its rpcs and needs no Wirespec definition of its own. It only gets one, an empty `type`
@@ -96,43 +97,67 @@ type NotificationsQuery {
 }
 ```
 
-The fields of such a type are operations too, and only they become rpcs. The type is a namespace, and a namespace is a
-file: the header of the file says where its operations are. The `path` of `@file:GraphQLQuery` names the fields that
-lead from the root type to the type, with the type every field returns:
+The fields of such a type are operations too, and only they become rpcs. The type is a namespace: the header of the
+file declares it, and every rpc of the type names it.
 
 ```wirespec
 @file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
 
-@GraphQLQuery
+@GraphQLQuery("NotificationsQuery")
 rpc Inbox {
   limit: Integer32
 } -> Notification[]
 
-@GraphQLQuery
+@GraphQLQuery("NotificationsQuery")
 rpc InboxCount {} -> Integer32
 ```
 
-Every `@GraphQLQuery` rpc of that file is a field of `NotificationsQuery`. Neither that type nor the field
-`notifications` has a Wirespec definition: both are rebuilt from the path. The
-[GraphQL client](../integration/integration-graphql.mdx#nested-types) nests its queries in the fields of the path.
+- `@file:GraphQLQuery(path: ...)` names the fields that lead from the root type to the nested type, with the type every
+  field returns. The last of them is the namespace: here `NotificationsQuery`, which `Query.notifications` returns.
+- `@GraphQLQuery("NotificationsQuery")` on an rpc makes it a field of that type. An rpc that names no type, or the root
+  type, is a field of the root type.
 
-- The header holds one annotation per operation, so a file can nest its queries and its mutations:
-  `@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })` says where the `@GraphQLMutation` rpcs of
-  the file are. The other definitions of the file, such as its types, are not affected.
-- A path can go through several types: `path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" }`.
+Neither `NotificationsQuery` nor the field `notifications` has a Wirespec definition: both are rebuilt from the path.
+The [GraphQL client](../integration/integration-graphql.mdx#nested-types) nests the query of the rpc in the fields of
+the path.
+
+A file declares as many namespaces as it needs, one annotation each, next to the operations of the root types
+themselves. So a GraphQL file always converts to one Wirespec file, named after it: `campaign.graphqls` becomes
+`campaign.ws`.
+
+```wirespec
+@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@file:GraphQLQuery(path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" })
+@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+
+@GraphQLQuery
+rpc Ping {} -> Boolean
+
+@GraphQLQuery("NotificationsQuery")
+rpc Inbox {
+  limit: Integer32
+} -> Notification[]
+
+@GraphQLQuery("ArchiveQuery")
+rpc Search {
+  text: String
+} -> Notification[]
+
+@GraphQLMutation("NotificationsMutation")
+rpc MarkRead {
+  id: ID
+} -> Boolean?
+```
+
+- A path can go through several types, as the one to `ArchiveQuery` does. Each nested type with operations has an
+  annotation of its own, with the whole path to it.
 - A field of the path that has more than a type holds it next to its type: its `description`, its `directives`, and
   `before`, the field that follows it, so the field comes back in its place:
   `path: { notifications: { type: "NotificationsQuery!", description: "...", before: "todos" } }`.
 - The annotation takes the root type when it is not the default, and the `extend` block the first field of the path is
-  in, as `@GraphQLQuery` on an rpc does: `@file:GraphQLQuery("QueryRoot", extend: "1", path: { ... })`.
-- A nested type with a description or directives keeps them on an empty `type` in its file, like a root type does.
-
-A GraphQL file converts to one Wirespec file, named after it: `campaign.graphqls` becomes `campaign.ws`, with the
-`@file:` annotations of its nested types in its header. A file has one place for its queries, and one for its mutations.
-So a nested type that does not have its operation to itself is written to a file of its own, named after the type,
-with the whole path to it: that happens when the root type also has fields of its own, as in
-`type Query { ping: Boolean, notifications: NotificationsQuery! }`, or nests more than one type. Compile all the files
-together.
+  in, as `@GraphQLQuery` on an rpc of a root type does: `@file:GraphQLQuery("QueryRoot", extend: "1", path: { ... })`.
+- A nested type with a description or directives keeps them on an empty `type`, like a root type does.
+- The annotation counts for the file it is written in: an rpc names a namespace of its own file.
 
 A type is nested when all of this holds, so that one path leads to it and nothing but its operations is left out:
 
@@ -418,7 +443,8 @@ Wirespec converted by earlier versions has them, on a `type Schema` or `type ...
 | `@GraphQLImplements(["Node"])`                                                 | types, unions       | the interfaces an object or interface implements without spreading them (see above)                                                                                                         |
 | `@GraphQLDefault("MEDIUM")`                                                    | fields              | a default value that cannot be a Wirespec default (see above), in GraphQL syntax                                                                                                            |
 | `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                    | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
-| `@GraphQLQuery(path: { notifications: "NotificationsQuery!" })`                | `@file:`            | where the operations of the file are: in the [type nested](#nested-types) in a root operation type that these fields lead to, each with its type, or with its `type`, `description`, `directives` and `before`; also for `@GraphQLMutation` and `@GraphQLSubscription` |
+| `@GraphQLQuery(path: { notifications: "NotificationsQuery!" })`                | `@file:`            | a [type nested](#nested-types) in a root operation type: the fields that lead to it, each with its type, or with its `type`, `description`, `directives` and `before`; also for `@GraphQLMutation` and `@GraphQLSubscription`                    |
+| `@GraphQLQuery("NotificationsQuery")`                                          | rpcs                | an `rpc` that is a field of the nested type that a path in the header of its file leads to                                                                                                  |
 | `@GraphQLField("User", before: "email")`                                       | rpcs                | an `rpc` that is a [field with arguments](#fields-with-arguments) of the named type, and the field it comes before                                                                          |
 | `@GraphQLName("todo")`                                                         | rpcs                | the field name of an `rpc` whose name does not read back as that field name                                                                                                                 |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`     | enums               | the description and directives of an enum value; one for every such value                                                                                                                   |
@@ -519,8 +545,8 @@ counterpart:
 - A union or type marked `@GraphQLInterface` becomes an interface, as described in
   [Writing interfaces in Wirespec](#writing-interfaces-in-wirespec). A part only adds its fields.
 - An `rpc` becomes a field of `Query`, unless it is marked `@GraphQLMutation`, `@GraphQLSubscription` or
-  `@GraphQLField`. In a file with a `path` in its header it becomes a field of the type the path leads to, and the
-  fields and types of the path are written with it. Its error type is not written, because GraphQL returns errors next to the data.
+  `@GraphQLField`. When it names a type that a `path` in the header of its file leads to, it becomes a field of that
+  type, and the fields and types of the path are written with it. Its error type is not written, because GraphQL returns errors next to the data.
 - A field cannot take arguments: `@GraphQLArgument` on a field, where Wirespec converted by earlier versions has them,
   is an error. Write the field as an rpc marked `@GraphQLField`.
 - GraphQL only takes input objects as arguments. A type that an `rpc` takes, directly or through its fields, becomes an
@@ -540,17 +566,16 @@ extension can generate a typed Kotlin, Java or Scala client that calls them.
 - **Formatting**: `#` comments, commas and the optional leading `&` and `|` separators are insignificant in GraphQL and
   are not kept. Descriptions are kept by value, so a block string description comes back as a regular string.
 - **Order**: the schema and directive definitions are in the file header, so they come back first, in the order they
-  were written, whatever their place among the types. A [nested type](#nested-types) is a file of its own, and the
-  definitions come back in the order of the files, so it comes back where its file is read. The order of the fields in
-  a type is kept.
+  were written, whatever their place among the types. A type without a Wirespec definition of its own, a root type or
+  a [nested type](#nested-types), comes back at the first rpc that adds a field to it, so a root type with nothing but
+  nested types comes back right before the first of them. The order of the fields in a type is kept.
 - **Types**: Wirespec needs at least one definition next to the file header, so a document with only a schema and
   directive definitions cannot be converted.
 - **Interfaces**: a type that implements an interface takes the interface fields as the interface declares them, so a
   field that the implementation narrows, describes differently or gives extra arguments or directives loses that. An
   `extend type` that only implements an interface the type implements is not kept.
 - **Multiple files**: each file is converted on its own. A schema split over several files references types declared in
-  the other files; convert all of them to compile the result. Each converts to a Wirespec file named after it, and to
-  one more for every nested type that needs a file of its own.
+  the other files; convert all of them to compile the result. Each converts to one Wirespec file, named after it.
 
 ## Playground
 

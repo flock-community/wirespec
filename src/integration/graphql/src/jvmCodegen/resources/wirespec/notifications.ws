@@ -6,16 +6,16 @@ type Notification {
   text: String
 }
 
-@GraphQLQuery
+@GraphQLQuery("NotificationsQuery")
 rpc Inbox {
   limit: Integer32,
   locale: String?
 } -> Notification[]
 
-@GraphQLQuery
+@GraphQLQuery("NotificationsQuery")
 rpc InboxCount {} -> Integer32
 
-@GraphQLMutation
+@GraphQLMutation("NotificationsMutation")
 rpc MarkRead {
   id: String
 } -> Unit

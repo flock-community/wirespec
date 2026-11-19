@@ -383,68 +383,18 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun keepsADocumentWithNestedTypesInOneFile() {
-        val source = """
-            |type Query {
-            |  notifications: NotificationsQuery!
-            |}
-            |
-            |type Mutation {
-            |  notifications: NotificationsMutation!
-            |}
-            |
-            |type NotificationsQuery {
-            |  inbox(limit: Int! = 20): [Notification!]!
-            |  inboxCount: Int!
-            |}
-            |
-            |type NotificationsMutation {
-            |  markRead(id: ID!): Boolean
-            |}
-            |
-            |type Notification {
-            |  id: ID!
-            |}
-        """.trimMargin()
-
-        source.toWirespecFiles() shouldBe mapOf(
-            "schema.ws" to """
-                |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
-                |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
-                |
-                |type Notification {
-                |  id: ID
-                |}
-                |
-                |@GraphQLBuiltIn
-                |type ID = String
-                |
-                |@GraphQLQuery
-                |rpc Inbox {
-                |  limit: Integer32 = 20
-                |} -> Notification[]
-                |
-                |@GraphQLQuery
-                |rpc InboxCount {} -> Integer32
-                |
-                |@GraphQLMutation
-                |rpc MarkRead {
-                |  id: ID
-                |} -> Boolean?
-                |
-            """.trimMargin(),
-        )
-        source.convertedBack().definitions shouldContainExactlyInAnyOrder GraphQLDocumentParser(source).parseDocument().definitions
-    }
-
-    @Test
-    fun aNestedTypeThatSharesItsOperationIsAFileOfItsOwn() {
+    fun convertsATypeNestedInARootTypeToRpcsThatNameIt() {
         val source = """
             |type Query {
             |  ping: Boolean
             |  "Everything about notifications"
             |  notifications: NotificationsQuery! @deprecated
             |  todos: [Todo!]!
+            |  type: TypeQuery
+            |}
+            |
+            |type Mutation {
+            |  notifications: NotificationsMutation!
             |}
             |
             |type Todo {
@@ -462,8 +412,8 @@ class GraphQLParserTest {
             |  search(text: String!): [Todo!]!
             |}
             |
-            |extend type Query {
-            |  type: TypeQuery
+            |type NotificationsMutation {
+            |  markRead(id: ID!): Boolean
             |}
             |
             |type TypeQuery {
@@ -473,6 +423,11 @@ class GraphQLParserTest {
 
         source.toWirespecFiles() shouldBe mapOf(
             "schema.ws" to """
+                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" } })
+                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" }, archive: { type: "ArchiveQuery", before: "inbox" } })
+                |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+                |@file:GraphQLQuery(path: { type: "TypeQuery" })
+                |
                 |@GraphQLQuery
                 |rpc Ping {} -> Boolean?
                 |
@@ -483,95 +438,63 @@ class GraphQLParserTest {
                 |  id: ID
                 |}
                 |
-                |@GraphQLBuiltIn
-                |type ID = String
-                |
-            """.trimMargin(),
-            "NotificationsQuery.ws" to """
-                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" } })
-                |
                 |@Description("Queries about notifications")
                 |type NotificationsQuery {
                 |
                 |}
                 |
-                |@GraphQLQuery
+                |@GraphQLQuery("NotificationsQuery")
                 |rpc Inbox {
                 |  limit: Integer32 = 10
                 |} -> Todo[]
                 |
-                |@GraphQLQuery
+                |@GraphQLQuery("NotificationsQuery")
                 |rpc InboxCount {} -> Integer32
                 |
-            """.trimMargin(),
-            "ArchiveQuery.ws" to """
-                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" }, archive: { type: "ArchiveQuery", before: "inbox" } })
-                |
-                |@GraphQLQuery
+                |@GraphQLQuery("ArchiveQuery")
                 |rpc Search {
                 |  text: String
                 |} -> Todo[]
                 |
-            """.trimMargin(),
-            "TypeQuery.ws" to """
-                |@file:GraphQLQuery(extend: "1", path: { type: "TypeQuery" })
+                |@GraphQLMutation("NotificationsMutation")
+                |rpc MarkRead {
+                |  id: ID
+                |} -> Boolean?
                 |
-                |@GraphQLQuery
+                |@GraphQLQuery("TypeQuery")
                 |@GraphQLName("todo")
                 |rpc TypeQueryTodo {
                 |  id: ID
                 |} -> Todo?
                 |
+                |@GraphQLBuiltIn
+                |type ID = String
+                |
             """.trimMargin(),
         )
-        // The definitions come back in the order of the files, and a nested type at its first rpc.
-        source.convertedBack() shouldBe GraphQLDocumentParser(
-            """
-            |type Query {
-            |  ping: Boolean
-            |  "Everything about notifications"
-            |  notifications: NotificationsQuery! @deprecated
-            |  todos: [Todo!]!
-            |}
-            |
-            |type Todo {
-            |  id: ID!
-            |}
-            |
-            |"Queries about notifications"
-            |type NotificationsQuery {
-            |  archive: ArchiveQuery
-            |  inbox(limit: Int! = 10): [Todo!]!
-            |  inboxCount: Int!
-            |}
-            |
-            |type ArchiveQuery {
-            |  search(text: String!): [Todo!]!
-            |}
-            |
-            |extend type Query {
-            |  type: TypeQuery
-            |}
-            |
-            |type TypeQuery {
-            |  todo(id: ID!): Todo
-            |}
-            """.trimMargin(),
-        ).parseDocument()
+        // A type without a Wirespec definition comes back at the first rpc that adds a field to it.
+        source.convertedBack().definitions shouldContainExactlyInAnyOrder GraphQLDocumentParser(source).parseDocument().definitions
     }
 
     @Test
-    fun aNestedTypeAfterTheOtherTypesSurvivesTheRoundTrip() {
+    fun nestedTypesOfARootTypeAndItsExtensionSurviveTheRoundTrip() {
         """
-            |type Mutation {
+            |schema {
+            |  mutation: Commands
+            |}
+            |
+            |type Commands {
             |  todos: TodoMutations
             |  ping: Boolean
-            |  session: SessionMutations!
             |}
             |
             |type TodoMutations {
             |  add(title: String!): ID!
             |  clear: Boolean
+            |}
+            |
+            |extend type Commands {
+            |  session: SessionMutations!
             |}
             |
             |type SessionMutations {
@@ -583,9 +506,11 @@ class GraphQLParserTest {
     @Test
     fun nestsOnlyATypeWithOperationsThatOneFieldLeadsTo() {
         val nested = { source: String ->
-            GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true).modules
-                .filter { it.annotations.isNotEmpty() }
-                .flatMap { it.statements }
+            GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true).modules.head
+                .takeIf { it.annotations.isNotEmpty() }
+                ?.statements.orEmpty()
+                .filterIsInstance<Rpc>()
+                .filter { it.annotations.first().parameters.isNotEmpty() }
                 .map { it.identifier.value }
         }
         nested("type Query { a: A! } type A { f(x: Int): Int }") shouldContainExactly listOf("F")

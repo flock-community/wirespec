@@ -422,20 +422,10 @@ class GraphQLEmitterTest {
     }
 
     @Test
-    fun theOperationsOfAFileAreFieldsOfTheTypeItsPathLeadsTo() {
-        val users = """
-            |@file:GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account", before: "me" } })
-            |
-            |@GraphQLQuery
-            |rpc Find {
-            |  name: String
-            |} -> User?
-            |
-            |@GraphQLQuery
-            |rpc Count {} -> Integer32
-        """.trimMargin()
-        val account = """
+    fun anOperationIsAFieldOfTheNestedTypeItNames() {
+        """
             |@file:GraphQLQuery(path: { account: "AccountQuery!" })
+            |@file:GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account", before: "me" } })
             |@file:GraphQLMutation(path: { account: "AccountMutation!" })
             |
             |type User {
@@ -443,16 +433,30 @@ class GraphQLEmitterTest {
             |}
             |
             |@GraphQLQuery
+            |rpc Ping {} -> Boolean
+            |
+            |@GraphQLQuery("UserQuery")
+            |rpc Find {
+            |  name: String
+            |} -> User?
+            |
+            |@GraphQLQuery("UserQuery")
+            |rpc Count {} -> Integer32
+            |
+            |@GraphQLQuery("AccountQuery")
             |rpc Me {} -> User
             |
-            |@GraphQLMutation
+            |@GraphQLMutation("AccountMutation")
             |rpc Rename {
             |  name: String
             |} -> User
-        """.trimMargin()
-
-        GraphQLEmitter.emit(parse(users, account), noLogger).single().result shouldBe """
+        """.trimMargin().toGraphQL() shouldBe """
+            |type User {
+            |  name: String!
+            |}
+            |
             |type Query {
+            |  ping: Boolean!
             |  account: AccountQuery!
             |}
             |
@@ -467,10 +471,6 @@ class GraphQLEmitterTest {
             |    name: String!
             |  ): User
             |  count: Int!
-            |}
-            |
-            |type User {
-            |  name: String!
             |}
             |
             |type Mutation {
