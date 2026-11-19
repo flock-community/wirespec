@@ -18,7 +18,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BEFORE_PARAMETER
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DESCRIPTION
@@ -33,6 +32,7 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.NAME
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.PATH_PARAMETER
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCALAR
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE_PARAMETER
@@ -206,7 +206,7 @@ internal class WirespecToGraphQL(ast: AST) {
     private fun Definition.convertModel(): GraphQLModel.Definition? = when (this) {
         is Rpc -> null
         is Refined -> when {
-            annotations.has(BUILT_IN) -> null
+            annotations.has(SCALAR) -> null
             else -> ScalarTypeDefinition(description(), graphQLName(), annotations.directives(), annotations.has(EXTEND))
         }
         is Enum -> EnumTypeDefinition(

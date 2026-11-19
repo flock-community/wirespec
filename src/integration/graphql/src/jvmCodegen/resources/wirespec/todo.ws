@@ -34,7 +34,7 @@ type TodoError {
   message: String
 }
 
-@GraphQLBuiltIn
+@GraphQLScalar
 type ID = String
 
 @GraphQLQuery
