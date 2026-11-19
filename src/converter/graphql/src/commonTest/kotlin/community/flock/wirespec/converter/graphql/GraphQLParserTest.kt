@@ -1,10 +1,11 @@
 package community.flock.wirespec.converter.graphql
 
-import arrow.core.nonEmptyListOf
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.AST
@@ -381,7 +382,7 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun convertsATypeNestedInARootTypeToThePathOfItsOperations() {
+    fun convertsATypeNestedInARootTypeToAFileWithThePathOfItsOperations() {
         val source = """
             |type Query {
             |  ping: Boolean
@@ -397,7 +398,7 @@ class GraphQLParserTest {
             |"Queries about notifications"
             |type NotificationsQuery {
             |  archive: ArchiveQuery
-            |  inbox(limit: Int!): [Todo!]!
+            |  inbox(limit: Int! = 10): [Todo!]!
             |  inboxCount: Int!
             |}
             |
@@ -414,46 +415,60 @@ class GraphQLParserTest {
             |}
         """.trimMargin()
 
-        source.toWirespec() shouldBe """
-            |@GraphQLQuery
-            |rpc Ping {} -> Boolean?
-            |
-            |@Description("Queries about notifications")
-            |type NotificationsQuery {
-            |
-            |}
-            |
-            |@GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] }, archive: "ArchiveQuery" })
-            |rpc Search {
-            |  text: String
-            |} -> Todo[]
-            |
-            |@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
-            |rpc Inbox {
-            |  limit: Integer32
-            |} -> Todo[]
-            |
-            |@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
-            |rpc InboxCount {} -> Integer32
-            |
-            |@GraphQLQuery
-            |rpc Todos {} -> Todo[]
-            |
-            |type Todo {
-            |  id: ID
-            |}
-            |
-            |@GraphQLQuery(extend: "1", path: { type: "TypeQuery" })
-            |@GraphQLName("todo")
-            |rpc TypeQueryTodo {
-            |  id: ID
-            |} -> Todo?
-            |
-            |@GraphQLBuiltIn
-            |type ID = String
-            |
-        """.trimMargin()
-        // A nested type without a Wirespec type of its own comes back at its first rpc, after the type it is nested in.
+        source.toWirespecFiles() shouldBe mapOf(
+            "wirespec.ws" to """
+                |@GraphQLQuery
+                |rpc Ping {} -> Boolean?
+                |
+                |@GraphQLQuery
+                |rpc Todos {} -> Todo[]
+                |
+                |type Todo {
+                |  id: ID
+                |}
+                |
+                |@GraphQLBuiltIn
+                |type ID = String
+                |
+            """.trimMargin(),
+            "NotificationsQuery.ws" to """
+                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" } })
+                |
+                |@Description("Queries about notifications")
+                |type NotificationsQuery {
+                |
+                |}
+                |
+                |@GraphQLQuery
+                |rpc Inbox {
+                |  limit: Integer32 = 10
+                |} -> Todo[]
+                |
+                |@GraphQLQuery
+                |rpc InboxCount {} -> Integer32
+                |
+            """.trimMargin(),
+            "ArchiveQuery.ws" to """
+                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" }, archive: { type: "ArchiveQuery", before: "inbox" } })
+                |
+                |@GraphQLQuery
+                |rpc Search {
+                |  text: String
+                |} -> Todo[]
+                |
+            """.trimMargin(),
+            "TypeQuery.ws" to """
+                |@file:GraphQLQuery(extend: "1", path: { type: "TypeQuery" })
+                |
+                |@GraphQLQuery
+                |@GraphQLName("todo")
+                |rpc TypeQueryTodo {
+                |  id: ID
+                |} -> Todo?
+                |
+            """.trimMargin(),
+        )
+        // The definitions come back in the order of the files, and a nested type at its first rpc.
         source.convertedBack() shouldBe GraphQLDocumentParser(
             """
             |type Query {
@@ -463,19 +478,19 @@ class GraphQLParserTest {
             |  todos: [Todo!]!
             |}
             |
+            |type Todo {
+            |  id: ID!
+            |}
+            |
             |"Queries about notifications"
             |type NotificationsQuery {
             |  archive: ArchiveQuery
-            |  inbox(limit: Int!): [Todo!]!
+            |  inbox(limit: Int! = 10): [Todo!]!
             |  inboxCount: Int!
             |}
             |
             |type ArchiveQuery {
             |  search(text: String!): [Todo!]!
-            |}
-            |
-            |type Todo {
-            |  id: ID!
             |}
             |
             |extend type Query {
@@ -490,10 +505,11 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun aNestedTypeNextToTheTypeItIsNestedInSurvivesTheRoundTrip() {
+    fun aNestedTypeAfterTheOtherTypesSurvivesTheRoundTrip() {
         """
             |type Mutation {
             |  todos: TodoMutations
+            |  ping: Boolean
             |  session: SessionMutations!
             |}
             |
@@ -510,7 +526,12 @@ class GraphQLParserTest {
 
     @Test
     fun nestsOnlyATypeWithOperationsThatOneFieldLeadsTo() {
-        val nested = { source: String -> convert(source).filterIsInstance<Rpc>().filter { rpc -> rpc.annotations.first().parameters.any { it.name == "path" } }.map { it.identifier.value } }
+        val nested = { source: String ->
+            GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true).modules
+                .filter { it.annotations.isNotEmpty() }
+                .flatMap { it.statements }
+                .map { it.identifier.value }
+        }
         nested("type Query { a: A! } type A { f(x: Int): Int }") shouldContainExactly listOf("F")
         nested("type Query { a: A } type A { b: B! } type B { f(x: Int): Int, g: Int }") shouldContainExactly listOf("F", "G")
         // Only holds data
@@ -733,8 +754,12 @@ class GraphQLParserTest {
     private fun convert(source: String): List<Definition> = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true)
         .modules.flatMap { it.statements }
 
-    private fun String.toWirespec(): String = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
-        .let { WirespecEmitter().emit(it, noLogger).single().result }
+    private fun String.toWirespec(): String = toWirespecFiles().values.single()
+
+    /** The Wirespec files a schema converts to, by name. */
+    private fun String.toWirespecFiles(): Map<String, String> = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
+        .let { WirespecEmitter().emit(it, noLogger) }
+        .associate { it.file to it.result }
 
     private inline fun <reified T : Definition> List<Definition>.definition(name: String): T = single { it.identifier.value == name }.shouldBeInstanceOf<T>()
 
@@ -746,10 +771,9 @@ class GraphQLParserTest {
         val converted = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
             .let { Validator.validate(ParseOptions(), it) }
             .shouldBeRight()
-        val wirespec = WirespecEmitter().emit(converted, noLogger).single().result
-        val parsed = parseWirespec(wirespec, otherModules).shouldBeRight()
+        val parsed = parseWirespec(WirespecEmitter().emit(converted, noLogger), otherModules).shouldBeRight()
 
-        parsed.modules.head.statements.toList() shouldBe converted.modules.head.statements.toList()
+        parsed.withoutOtherModules().modules.map { it.statements.toList() to it.annotations } shouldBe converted.modules.map { it.statements.toList() to it.annotations }
         parsed.annotations.map { it.annotation } shouldBe converted.annotations.map { it.annotation }
         GraphQLEmitter.validate(parsed) shouldBe emptyList()
         WirespecToGraphQL(parsed.withoutOtherModules()).convert() shouldBe document
@@ -760,17 +784,20 @@ class GraphQLParserTest {
     private fun String.convertedBack(): GraphQLModel.Document = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
         .let { Validator.validate(ParseOptions(), it) }
         .shouldBeRight()
-        .let { WirespecEmitter().emit(it, noLogger).single().result }
+        .let { WirespecEmitter().emit(it, noLogger) }
         .let { parseWirespec(it, null).shouldBeRight() }
         .let { WirespecToGraphQL(it).convert() }
 
-    /** The converted schema, without the modules that only declare what it refers to. */
-    private fun AST.withoutOtherModules(): AST = copy(modules = nonEmptyListOf(modules.head))
+    /** The converted schema, without the module that only declares what it refers to. */
+    private fun AST.withoutOtherModules(): AST = copy(modules = modules.filterNot { it.fileUri.value == OTHER_MODULES }.toNonEmptyListOrNull()!!)
 
-    private fun parseWirespec(source: String, otherModules: String?) = object : ParseContext, NoLogger {
+    private fun parseWirespec(files: List<Emitted>, otherModules: String?) = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
     }.parse(
-        nonEmptyListOf(ModuleContent(FileUri("schema.ws"), source)) +
-            listOfNotNull(otherModules?.let { ModuleContent(FileUri("other.ws"), it) }),
+        (files.map { ModuleContent(FileUri(it.file), it.result) } + listOfNotNull(otherModules?.let { ModuleContent(FileUri(OTHER_MODULES), it) })).toNonEmptyListOrNull()!!,
     )
+
+    private companion object {
+        const val OTHER_MODULES = "other.ws"
+    }
 }

@@ -23,8 +23,9 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
  * ```
  *
- * An rpc with a `path`, `@GraphQLQuery(path: { notifications: "NotificationsQuery!" })`, is a field of the type that path
- * leads to, so its document nests it in the fields of the path: `query Inbox { notifications { result: inbox { id } } }`.
+ * The operations of a file whose header has a `path`, `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`,
+ * are fields of the type that path leads to, so their documents nest them in the fields of the path:
+ * `query Inbox { notifications { result: inbox { id } } }`.
  *
  * Every parameter of the rpc is a variable, typed and defaulted as the field argument it is passed to. The field is
  * aliased, so a client reads it under the same name whatever the field is called, and selects every field of its result,
@@ -68,13 +69,13 @@ public class GraphQLOperations(ast: AST) {
 
     /**
      * The fields that lead from the root operation type to the type [rpc] is a field of, which its document nests the
-     * field in and its response nests the result in: those of its `path`, `notifications` for a field of the
+     * field in and its response nests the result in: those of the `path` of its file, `notifications` for a field of the
      * `NotificationsQuery` that `Query.notifications` returns. None for a field of the root operation type itself.
      */
     public fun path(rpc: Rpc): List<String> = schema.rootType(schema.operation(rpc)).let { root ->
         check(schema.rootType(rpc) == root) {
             "Cannot write a GraphQL query for rpc ${rpc.identifier.value}: it is a field of ${schema.rootType(rpc)}, which is not the root type $root. " +
-                "Name the fields that lead from $root to its type in the path of the rpc, like `@${schema.operation(rpc).annotationName}(path: { field: \"${schema.rootType(rpc)}\" })`."
+                "Name the fields that lead from $root to its type in the header of its file, like `@file:${schema.operation(rpc).annotationName}(path: { field: \"${schema.rootType(rpc)}\" })`."
         }
         schema.path(rpc)
     }

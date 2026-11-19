@@ -1,7 +1,7 @@
 package community.flock.wirespec.converter.graphql
 
-import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
@@ -73,7 +73,8 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  * Objects and input objects become types, scalars become refined types, and enums and unions map onto their Wirespec
  * counterparts. A field is a function when it takes arguments, and a function is an `rpc`: every field of a root
  * operation type (`Query`, `Mutation`, `Subscription`), every field of a type that only nests operations in one, and
- * every other field with arguments. An annotation of the rpc says which type it is a field of.
+ * every other field with arguments. An annotation of the rpc says which type it is a field of. A type nested in a root
+ * operation type is a module of its own, whose `@file:` annotation names the fields that lead to the type.
  * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
  * Wirespec cannot express natively —
  * descriptions, directives, default values, extensions — is kept in annotations, so the schema can
@@ -86,12 +87,10 @@ public object GraphQLParser : Parser {
         .parseDocument()
         .let(::GraphQLConverter)
         .let { converter ->
-            AST(
-                modules = converter.definitions().toNonEmptyListOrNull()
-                    ?.let { nonEmptyListOf(Module(moduleContent.fileUri, it, annotations = emptyList())) }
-                    ?: error("Cannot convert GraphQL document ${moduleContent.fileUri.value}: it defines no types, and Wirespec needs a definition besides the @spec: annotations of its schema and directives"),
-                annotations = converter.specAnnotations().map { SpecAnnotation(moduleContent.fileUri, it) },
-            )
+            (listOfNotNull(converter.definitions().toNonEmptyListOrNull()?.let { Module(moduleContent.fileUri, it, annotations = emptyList()) }) + converter.nestedModules())
+                .toNonEmptyListOrNull()
+                ?.let { modules -> AST(modules, annotations = converter.specAnnotations().map { SpecAnnotation(modules.head.fileUri, it) }) }
+                ?: error("Cannot convert GraphQL document ${moduleContent.fileUri.value}: it defines no types, and Wirespec needs a definition besides the @spec: annotations of its schema and directives")
         }
 }
 
@@ -164,8 +163,9 @@ private class GraphQLConverter(private val document: Document) {
 
     /**
      * The types that only nest operations in a root operation type, as `Query.notifications: NotificationsQuery` does.
-     * Their fields are operations too, so they become rpcs that name the fields that lead to them, and the type itself
-     * needs no Wirespec definition. A type that only holds data, without a field that takes arguments, is no such type.
+     * Their fields are operations too, so they become the rpcs of a module that names the fields that lead to the type,
+     * and the type itself needs no Wirespec definition. A type that only holds data, without a field that takes
+     * arguments, is no such type.
      */
     private val nested: Set<String> = nestedIn.keys.filter { it.isNestedInRoot() && it.hasOperations() }.toSet()
 
@@ -221,61 +221,95 @@ private class GraphQLConverter(private val document: Document) {
     )
 
     private fun ObjectTypeDefinition.convert(): List<Definition> = when (name) {
-        in roots -> rootTypes.entries.first { it.value == name }.key.let { operation ->
-            when {
-                needsType() -> identifier().let { identifier ->
-                    listOf<Definition>(type(identifier, commonAnnotations(interfaces), emptyList())) + operations(Nesting(operation, identifier, null, emptyList(), emptyList()))
-                }
-                else -> operations(Nesting(operation, name, extensionBlock(), emptyList(), emptyList()))
-            }
+        in roots -> rootDefinitions.getValue(this).let { root ->
+            listOfNotNull(type(root.type, commonAnnotations(interfaces), emptyList()).takeIf { needsType() }) + operations(root.annotation(emptyList()))
         }
-        // Written where the field that leads to it is.
+        // A module of its own.
         in nested -> emptyList()
         else -> implementation().takeUnless { bringsNothing(it) }
             ?.let { identifier().let { identifier -> listOf(type(identifier, commonAnnotations(it.listed), it.entries)) + functions(identifier) } }
             .orEmpty()
     }
 
+    /** A root operation type as its operations name it: the root type [type] of an [operation], and its `extend` block [extend]. */
+    private data class Root(val operation: Operation, val type: String, val extend: Int?)
+
+    private val rootDefinitions: Map<ObjectTypeDefinition, Root> by lazy {
+        document.definitions
+            .filterIsInstance<ObjectTypeDefinition>()
+            .filter { it.name in roots }
+            .associateWith { definition ->
+                rootTypes.entries.first { it.value == definition.name }.key.let { operation ->
+                    if (definition.needsType()) Root(operation, definition.identifier(), null) else Root(operation, definition.name, definition.extensionBlock())
+                }
+            }
+    }
+
+    /** The root type is only spelled out when it is not the default for the operation. */
+    private fun Root.annotation(path: List<Annotation.Parameter>): Annotation = annotation(
+        operation.annotationName,
+        type.takeIf { it != operation.defaultTypeName }?.let { parameter(DEFAULT_PARAMETER, it) },
+        extend?.let { parameter("extend", it.toString()) },
+        path.takeIf { it.isNotEmpty() }?.let { Annotation.Parameter(PATH_PARAMETER, Annotation.Value.Dict(it)) },
+    )
+
+    /** The fields of a type as operations. A field that leads to a nested type is written with the module of that type. */
+    private fun ObjectTypeDefinition.operations(annotation: Annotation): List<Rpc> = (names[name] ?: name.sanitize()).let { prefix ->
+        fields.filterNot { it.leadsToNested() }.map { it.toOperation(prefix, annotation) }
+    }
+
     /**
-     * Where the operations of a type are: in the root type [type] of an [operation], in its `extend` block [extend], through
-     * the fields of [path]. The first rpc through a field describes it, and the others, which take [rest], only name it.
+     * Every nested type as a module of its own. Its `@file:` annotation says where its operations are: the root type,
+     * and the fields that lead from there to the type.
      */
-    private data class Nesting(val operation: Operation, val type: String, val extend: Int?, val path: List<Annotation.Parameter>, val rest: List<Annotation.Parameter>) {
-        fun through(field: Annotation.Parameter, named: Annotation.Parameter): Nesting = copy(path = path + field, rest = rest + named)
-
-        fun afterFirst(): Nesting = copy(path = rest)
-    }
-
-    private fun ObjectTypeDefinition.operations(nesting: Nesting): List<Definition> = (names[name] ?: name.sanitize()).let { prefix ->
-        fields.flatMapIndexed { index, field -> field.operations(prefix, if (index == 0) nesting else nesting.afterFirst()) }
-    }
-
-    /** A field that leads to a nested type stands for the operations of that type. */
-    private fun FieldDefinition.operations(prefix: String, nesting: Nesting): List<Definition> = when {
-        isNesting() && type.leaf() in nested -> document.definitions.filterIsInstance<ObjectTypeDefinition>().single { it.name == type.leaf() }.let { nestedType ->
-            listOfNotNull(nestedType.holder()) +
-                nestedType.operations(nesting.through(toPathParameter(), parameter(name, type.print())))
+    fun nestedModules(): List<Module> = document.definitions
+        .filterIsInstance<ObjectTypeDefinition>()
+        .filter { it.name in nested }
+        .mapNotNull { definition ->
+            route(definition.name).let { route ->
+                rootDefinitions.getValue(route.first().first).let { root ->
+                    (listOfNotNull(definition.holder()) + definition.operations(annotation(root.operation.annotationName)))
+                        .toNonEmptyListOrNull()
+                        ?.let { Module(FileUri("${definition.name}.ws"), it, annotations = listOf(root.annotation(route.map { (parent, field) -> field.toPathParameter(parent) }))) }
+                }
+            }
         }
-        else -> listOf(toOperation(prefix, nesting))
+
+    /** The fields that lead from a root type to a nested type, each with the type it is a field of. */
+    private fun route(type: String): List<Pair<ObjectTypeDefinition, FieldDefinition>> = generateSequence(leadTo(type)) { (parent, _) -> leadTo(parent.name) }.toList().reversed()
+
+    private fun leadTo(type: String): Pair<ObjectTypeDefinition, FieldDefinition>? = nestedIn[type]?.let { parent ->
+        document.definitions
+            .filterIsInstance<ObjectTypeDefinition>()
+            .filter { it.name == parent }
+            .firstNotNullOf { definition -> definition.fields.find { it.isNesting() && it.type.leaf() == type }?.let { definition to it } }
     }
+
+    private fun FieldDefinition.leadsToNested(): Boolean = isNesting() && type.leaf() in nested
 
     /** A nested type is rebuilt from its rpcs, so it only needs an empty type of its own to hold its description and directives. */
     private fun ObjectTypeDefinition.holder(): Type? = takeIf { description != null || directives.isNotEmpty() }
         ?.let { type(name, commonAnnotations(), emptyList()) }
 
-    /** A field of the path as an rpc holds it: its type, or what describes it when it has more than a type. */
-    private fun FieldDefinition.toPathParameter(): Annotation.Parameter = when {
-        description == null && directives.isEmpty() -> parameter(name, type.print())
-        else -> Annotation.Parameter(
-            name,
-            Annotation.Value.Dict(
-                listOfNotNull(
-                    parameter(TYPE_PARAMETER, type.print()),
-                    description?.let { parameter("description", it) },
-                    parameter("directives", directives.map { it.print() }),
+    /**
+     * A field of the path: its type, or what describes it when it has more than a type. `before` names the field that
+     * follows it in [parent], so the field comes back in its place.
+     */
+    private fun FieldDefinition.toPathParameter(parent: ObjectTypeDefinition): Annotation.Parameter = parent.fields.dropWhile { it != this }.drop(1).firstOrNull()?.name.let { before ->
+        when {
+            description == null && directives.isEmpty() && before == null -> parameter(name, type.print())
+            else -> Annotation.Parameter(
+                name,
+                Annotation.Value.Dict(
+                    listOfNotNull(
+                        parameter(TYPE_PARAMETER, type.print()),
+                        description?.let { parameter("description", it) },
+                        parameter("directives", directives.map { it.print() }),
+                        before?.let { parameter(BEFORE_PARAMETER, it) },
+                    ),
                 ),
-            ),
-        )
+            )
+        }
     }
 
     private fun FieldDefinition.isNesting(): Boolean = arguments.isEmpty() && (type is TypeRef.Named || (type is TypeRef.NonNull && type.type is TypeRef.Named))
@@ -474,22 +508,11 @@ private class GraphQLConverter(private val document: Document) {
 
     /**
      * An operation is named after its field, `addTodo` becomes `AddTodo`, and only takes the type it is a field of as
-     * prefix when that name is taken. The root type is only spelled out when it is not the default for the operation.
+     * prefix when that name is taken.
      */
-    private fun FieldDefinition.toOperation(prefix: String, nesting: Nesting): Rpc = name.capitalized()
+    private fun FieldDefinition.toOperation(prefix: String, annotation: Annotation): Rpc = name.capitalized()
         .let { claim(if (it.isValidTypeName() && it !in taken) it else prefix + it) }
-        .let { rpc ->
-            toRpc(
-                identifier = rpc,
-                annotation = annotation(
-                    nesting.operation.annotationName,
-                    nesting.type.takeIf { it != nesting.operation.defaultTypeName }?.let { parameter(DEFAULT_PARAMETER, it) },
-                    nesting.extend?.let { parameter("extend", it.toString()) },
-                    nesting.path.takeIf { it.isNotEmpty() }?.let { Annotation.Parameter(PATH_PARAMETER, Annotation.Value.Dict(it)) },
-                ),
-                named = fieldName(rpc, type = null),
-            )
-        }
+        .let { rpc -> toRpc(identifier = rpc, annotation = annotation, named = fieldName(rpc, type = null)) }
 
     /** `@GraphQLName` keeps the field name when it is not the one the rpc is [named] after. */
     private fun FieldDefinition.toRpc(identifier: String, annotation: Annotation, named: String): Rpc = Rpc(

@@ -62,8 +62,9 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  * The inverse of [GraphQLParser]: rebuilds the GraphQL document from the Wirespec definitions and their annotations,
  * which gives back the schema it was converted from, but for the fields an implementation declares differently from
  * its interface. A type that spreads the part of an interface implements that interface. An rpc is a field of the type
- * its annotation names: a root operation type, a type nested in one through the fields of its `path`, or the type of
- * `@GraphQLField`. Wirespec that does not come from GraphQL gets the closest GraphQL counterpart.
+ * its annotation names: a root operation type, or the type of `@GraphQLField`. The operations of a file whose header
+ * has a `path`, `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`, are fields of the type that path
+ * leads to. Wirespec that does not come from GraphQL gets the closest GraphQL counterpart.
  *
  * The schema and directive definitions are `@spec:` annotations of the [ast], so they come first, in the order of the
  * file header.
@@ -73,6 +74,11 @@ internal class WirespecToGraphQL(ast: AST) {
     private val definitions: List<Definition> = ast.modules.flatMap { it.statements }
 
     private val spec: List<Annotation> = ast.annotations.map { it.annotation }
+
+    /** The `@file:` annotations of the file each rpc is in, which say where the operations of that file are nested. */
+    private val fileAnnotations: Map<String, List<Annotation>> = ast.modules.toList()
+        .flatMap { module -> module.statements.filterIsInstance<Rpc>().map { it.identifier.value to module.annotations } }
+        .toMap()
 
     private val names: Map<String, String> = definitions
         .filterNot { it is Rpc || it.annotations.has(EXTEND) }
@@ -159,7 +165,7 @@ internal class WirespecToGraphQL(ast: AST) {
     /** The root type of an operation: the one `@spec:GraphQLSchema` names, or else the default. */
     fun rootType(operation: Operation): String = spec.named(SCHEMA).firstNotNullOfOrNull { it.single(operation.keyword) } ?: operation.defaultTypeName
 
-    /** The fields that lead from the root type to the type an operation is a field of: those of its `path`. */
+    /** The fields that lead from the root type to the type an operation is a field of: those of the `path` of its file. */
     fun path(rpc: Rpc): List<String> = rpc.pathFields().map { it.name }
 
     fun convert(): Document = Document(
@@ -193,7 +199,7 @@ internal class WirespecToGraphQL(ast: AST) {
         is Rpc ->
             members
                 .filter { (owner, members) -> (owner.second != null || owner.first !in fieldHolders) && members.first().rpc === this }
-                .map { (owner, members) -> ObjectTypeDefinition(null, owner.first, emptyList(), emptyList(), members.map { it.field }, owner.second != null) }
+                .map { (owner, members) -> ObjectTypeDefinition(null, owner.first, emptyList(), emptyList(), members.placedAmong(emptyList()), owner.second != null) }
         else -> listOfNotNull(convertModel())
     }
 
@@ -280,36 +286,56 @@ internal class WirespecToGraphQL(ast: AST) {
         InputObjectTypeDefinition(description(), name, emptyList(), shape.fields.map { it.toInputValue() }, false)
     }
 
-    /** The fields of a shape, and those its rpcs add: before the field an rpc names, or else after the others. */
+    /** The fields of a shape, and those its rpcs add. */
     private fun Definition.fieldDefinitions(shape: Shape): List<FieldDefinition> = members[identifier.value to null].orEmpty()
-        .fold(shape.fields.map { it.toFieldDefinition() }) { fields, member ->
-            fields.indexOfFirst { it.name == member.before }.takeIf { it >= 0 }
-                ?.let { fields.take(it) + member.field + fields.drop(it) }
-                ?: (fields + member.field)
-        }
-
-    /** A field that [rpc] adds to the type [owner], in the `extend` block of a root type that [owner] names next to it. */
-    private data class Member(val owner: Pair<String, String?>, val field: FieldDefinition, val before: String?, val rpc: Rpc)
+        .placedAmong(shape.fields.map { it.toFieldDefinition() })
 
     /**
-     * An rpc is a field of the type its annotation names. An operation with a `path` also adds the fields of that path:
-     * each to the type the field before it returns, starting at the root type.
+     * A field that [rpc] adds to the type [owner], in the `extend` block of a root type that [owner] names next to it.
+     * It comes [before] the field of that name. A field that [nests] a type is one of a path, and not the rpc itself.
+     */
+    private data class Member(val owner: Pair<String, String?>, val field: FieldDefinition, val before: String?, val nests: Boolean, val rpc: Rpc)
+
+    /**
+     * Each field goes before the field it names. A field that names none comes after [fields], in the order of the rpcs,
+     * and one that nests a type after those: its file can be read before or after the file of the type it is a field of.
+     */
+    private fun List<Member>.placedAmong(fields: List<FieldDefinition>): List<FieldDefinition> = partition { it.before == null }.let { (last, placed) ->
+        place(fields + last.sortedBy { it.nests }.map { it.field }, placed)
+    }
+
+    private tailrec fun place(fields: List<FieldDefinition>, pending: List<Member>): List<FieldDefinition> = when (val next = pending.firstOrNull { member -> fields.any { it.name == member.before } }) {
+        null -> fields + pending.map { it.field }
+        else -> place(fields.indexOfFirst { it.name == next.before }.let { fields.take(it) + next.field + fields.drop(it) }, pending - next)
+    }
+
+    /**
+     * An rpc is a field of the type its annotation names. An operation in a file with a `path` also adds the fields of
+     * that path: each to the type the field before it returns, starting at the root type.
      */
     private fun Rpc.members(): List<Member> = annotations.firstOrNull { it.name == FIELD }
-        ?.let { field -> field.single(DEFAULT_PARAMETER)?.let { listOf(Member(it to null, toFieldDefinition(), field.single(BEFORE_PARAMETER), this)) } }
+        ?.let { field -> field.single(DEFAULT_PARAMETER)?.let { listOf(Member(it to null, toFieldDefinition(), field.single(BEFORE_PARAMETER), nests = false, this)) } }
         ?: pathFields().let { path ->
-            path.runningFold(rootType()) { _, field -> field.type.leaf() to null }.let { owners ->
-                path.mapIndexed { index, field -> Member(owners[index], field, null, this) } + Member(owners.last(), toFieldDefinition(), null, this)
+            path.runningFold(rootType()) { _, field -> field.single(TYPE_PARAMETER)!!.let(::parseType).leaf() to null }.let { owners ->
+                path.mapIndexed { index, field -> Member(owners[index], field.toPathField(), field.single(BEFORE_PARAMETER), nests = true, this) } +
+                    Member(owners.last(), toFieldDefinition(), null, nests = false, this)
             }
         }
 
-    /** The fields of the `path` of an operation, each with the type it returns, or with all that describes it. */
-    private fun Rpc.pathFields(): List<FieldDefinition> = annotations.firstOrNull { it.name == operation(this).annotationName }
+    /** What says where an operation is: the annotation of its file, for all operations of that kind in it, or else its own. */
+    private fun Rpc.nesting(): Annotation? = operation(this).annotationName.let { name ->
+        fileAnnotations[identifier.value].orEmpty().firstOrNull { it.name == name } ?: annotations.firstOrNull { it.name == name }
+    }
+
+    /** The fields of the `path` of the file an operation is in, each with the type it returns, or with all that describes it. */
+    private fun Rpc.pathFields(): List<Annotation> = fileAnnotations[identifier.value].orEmpty()
+        .firstOrNull { it.name == operation(this).annotationName }
         ?.dictionaries(PATH_PARAMETER)
         .orEmpty()
-        .map { FieldDefinition(it.single("description"), it.name, emptyList(), parseType(it.single(TYPE_PARAMETER)!!), it.array("directives").map(::parseDirective)) }
 
-    /** Every rpc through a field of a path names it, and the one that describes it decides its description and directives. */
+    private fun Annotation.toPathField(): FieldDefinition = FieldDefinition(single("description"), name, emptyList(), parseType(single(TYPE_PARAMETER)!!), array("directives").map(::parseDirective))
+
+    /** Every file names the fields of its path, and the one that describes a field decides its description, directives and place. */
     private fun List<Member>.merged(): List<Member> = groupBy { it.field.name }.values.map { same ->
         same.first().let { first ->
             first.copy(
@@ -317,13 +343,14 @@ internal class WirespecToGraphQL(ast: AST) {
                     description = same.firstNotNullOfOrNull { it.field.description },
                     directives = same.map { it.field.directives }.firstOrNull { it.isNotEmpty() }.orEmpty(),
                 ),
+                before = same.firstNotNullOfOrNull { it.before },
             )
         }
     }
 
-    /** The root operation type an rpc is a field of, and the `extend` block it is in. */
+    /** The root operation type an rpc is a field of or nested in, and the `extend` block it is in. */
     private fun Rpc.rootType(): Pair<String, String?> = operation(this).let { operation ->
-        annotations.firstOrNull { it.name == operation.annotationName }
+        nesting()
             ?.let { (it.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to it.single("extend") }
             ?: (operation.defaultTypeName to null)
     }

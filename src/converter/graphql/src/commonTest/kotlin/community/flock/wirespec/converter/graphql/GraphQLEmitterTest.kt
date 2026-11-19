@@ -399,34 +399,18 @@ class GraphQLEmitterTest {
             |
             |@GraphQLField("User", before: "email")
             |rpc UserFriends {
-            |  first: Integer32?
+            |  first: Integer32? = 10
             |} -> User[]
             |
             |@GraphQLField("User")
             |rpc Avatar {
             |  size: Integer32
             |} -> String?
-            |
-            |@GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account" } })
-            |rpc Find {
-            |  name: String
-            |} -> User?
-            |
-            |@GraphQLQuery(path: { account: "AccountQuery!" })
-            |rpc Me {} -> User
-            |
-            |@GraphQLQuery(path: { account: "AccountQuery!", users: "UserQuery" })
-            |rpc Count {} -> Integer32
-            |
-            |@GraphQLMutation(path: { account: "AccountMutation!" })
-            |rpc Rename {
-            |  name: String
-            |} -> User
         """.trimMargin().toGraphQL() shouldBe """
             |type User {
             |  name: String!
             |  friends(
-            |    first: Int
+            |    first: Int = 10
             |  ): [User!]!
             |  email: String!
             |  avatar(
@@ -434,6 +418,40 @@ class GraphQLEmitterTest {
             |  ): String
             |}
             |
+        """.trimMargin()
+    }
+
+    @Test
+    fun theOperationsOfAFileAreFieldsOfTheTypeItsPathLeadsTo() {
+        val users = """
+            |@file:GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account", before: "me" } })
+            |
+            |@GraphQLQuery
+            |rpc Find {
+            |  name: String
+            |} -> User?
+            |
+            |@GraphQLQuery
+            |rpc Count {} -> Integer32
+        """.trimMargin()
+        val account = """
+            |@file:GraphQLQuery(path: { account: "AccountQuery!" })
+            |@file:GraphQLMutation(path: { account: "AccountMutation!" })
+            |
+            |type User {
+            |  name: String
+            |}
+            |
+            |@GraphQLQuery
+            |rpc Me {} -> User
+            |
+            |@GraphQLMutation
+            |rpc Rename {
+            |  name: String
+            |} -> User
+        """.trimMargin()
+
+        GraphQLEmitter.emit(parse(users, account), noLogger).single().result shouldBe """
             |type Query {
             |  account: AccountQuery!
             |}
@@ -449,6 +467,10 @@ class GraphQLEmitterTest {
             |    name: String!
             |  ): User
             |  count: Int!
+            |}
+            |
+            |type User {
+            |  name: String!
             |}
             |
             |type Mutation {

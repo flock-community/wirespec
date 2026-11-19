@@ -1,6 +1,6 @@
 package community.flock.wirespec.converter.graphql
 
-import arrow.core.nonEmptyListOf
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
@@ -210,37 +210,50 @@ class GraphQLOperationsTest {
     }
 
     @Test
-    fun nestsAnOperationInTheFieldsOfItsPath() {
-        val ast = """
+    fun nestsTheOperationsOfAFileInTheFieldsOfItsPath() {
+        val ast = parsed(
+            """
+            |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+            |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+            |
             |type Notification {
             |  id: String
             |}
             |
-            |@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+            |@GraphQLQuery
             |rpc Inbox {
             |  limit: Integer32,
             |  locale: String?
             |} -> Notification[]
             |
-            |@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+            |@GraphQLQuery
             |rpc InboxCount {} -> Integer32
             |
-            |@GraphQLQuery(path: { notifications: "NotificationsQuery!", archive: { type: "ArchiveQuery", description: "What was read" } })
-            |rpc Unread {} -> Notification[]
-            |
-            |@GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+            |@GraphQLMutation
             |rpc MarkRead {
             |  id: String
             |} -> Unit
-        """.trimMargin().parsed()
+            """.trimMargin(),
+            """
+            |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!", archive: { type: "ArchiveQuery", description: "What was read" } })
+            |
+            |@GraphQLQuery
+            |rpc Unread {} -> Notification[]
+            """.trimMargin(),
+            """
+            |@GraphQLQuery
+            |rpc Ping {} -> Boolean
+            """.trimMargin(),
+        )
         val operations = GraphQLOperations(ast)
         val rpcs = ast.definitions().filterIsInstance<Rpc>().associateBy { it.identifier.value }
 
         ast.documents() shouldBe mapOf(
             "Inbox" to "query Inbox(\$limit: Int!, \$locale: String) { notifications { result: inbox(limit: \$limit, locale: \$locale) { id } } }",
             "InboxCount" to "query InboxCount { notifications { result: inboxCount } }",
-            "Unread" to "query Unread { notifications { archive { result: unread { id } } } }",
             "MarkRead" to "mutation MarkRead(\$id: String!) { notifications { result: markRead(id: \$id) } }",
+            "Unread" to "query Unread { notifications { archive { result: unread { id } } } }",
+            "Ping" to "query Ping { result: ping }",
         )
         operations.path(rpcs.getValue("InboxCount")) shouldBe listOf("notifications")
         operations.path(rpcs.getValue("Unread")) shouldBe listOf("notifications", "archive")
@@ -304,16 +317,18 @@ class GraphQLOperationsTest {
                 |rpc InboxCount {} -> Integer32
             """.trimMargin().parsed().documents()
         }.message shouldContain "rpc InboxCount: it is a field of NotificationsQuery, which is not the root type Query. " +
-            "Name the fields that lead from Query to its type in the path of the rpc, like `@GraphQLQuery(path: { field: \"NotificationsQuery\" })`."
+            "Name the fields that lead from Query to its type in the header of its file, like `@file:GraphQLQuery(path: { field: \"NotificationsQuery\" })`."
     }
 
     private fun String.fromGraphQL(): AST = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)
-        .let { WirespecEmitter().emit(it, noLogger).single().result }
-        .parsed()
+        .let { WirespecEmitter().emit(it, noLogger) }
+        .let { files -> parsed(*files.map { it.result }.toTypedArray()) }
 
-    private fun String.parsed(): AST = object : ParseContext, NoLogger {
+    private fun String.parsed(): AST = parsed(this)
+
+    private fun parsed(vararg files: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(nonEmptyListOf(ModuleContent(FileUri("schema.ws"), this)))
+    }.parse(files.mapIndexed { index, file -> ModuleContent(FileUri("schema$index.ws"), file) }.toNonEmptyListOrNull()!!)
         .shouldBeRight()
 
     private fun AST.definitions(): List<Definition> = modules.flatMap { it.statements }

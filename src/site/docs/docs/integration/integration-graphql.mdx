@@ -426,14 +426,23 @@ type NotificationsQuery {
 }
 ```
 
-Only the operation is an rpc. Its `path` names the fields that lead to it from the root type, each with the type it
+Only the operations are rpcs. The nested type is a namespace, and a namespace is a file: the header of the file says
+where its operations are. The `path` names the fields that lead to them from the root type, each with the type it
 returns, so neither `NotificationsQuery` nor the field `notifications` needs a definition of its own:
 
-```wirespec
-@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+```wirespec title="notifications.ws"
+@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+
+@GraphQLQuery
 rpc Inbox {
   limit: Integer32
 } -> Notification[]
+
+@GraphQLMutation
+rpc MarkRead {
+  id: String
+} -> Unit
 ```
 
 The query of `Inbox` nests its field in the fields of the path, and the client reads the result from there:
@@ -442,9 +451,10 @@ The query of `Inbox` nests its field in the fields of the path, and the client r
 query Inbox($limit: Int!) { notifications { result: inbox(limit: $limit) { id text } } }
 ```
 
-A path can go through several fields, in order: `path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" }`.
-Its fields take no arguments. The [GraphQL converter](../converters/graphql.md#nested-types) writes the path of every
-operation of a nested type.
+Every `@GraphQLQuery` rpc of the file is nested in the path of `@file:GraphQLQuery`, and every `@GraphQLMutation` rpc in
+that of `@file:GraphQLMutation`. A path can go through several fields, in order:
+`path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" }`. Its fields take no arguments. The
+[GraphQL converter](../converters/graphql.md#nested-types) writes a file for every nested type of a schema.
 
 ## Configuration
 

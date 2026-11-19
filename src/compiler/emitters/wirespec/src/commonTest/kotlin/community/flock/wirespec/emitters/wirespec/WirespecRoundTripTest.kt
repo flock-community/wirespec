@@ -87,6 +87,31 @@ class WirespecRoundTripTest {
             |}
         """.trimMargin().shouldRoundTrip()
     }
+
+    @Test
+    fun aFileWithFileAnnotationsStaysAFileOfItsOwn() {
+        val customers = """
+            |@spec:OpenAPIInfo(title: "Shop", version: "1.0.0")
+            |@file:Owner("customers")
+            |
+            |type Customer {
+            |  id: String
+            |}
+            |
+        """.trimMargin()
+        val orders = "type Order {\n  id: String\n}\n"
+        val invoices = "type Invoice {\n  id: String\n}\n"
+        val files = nonEmptyListOf("shop/customers.ws" to customers, "shop/orders.ws" to orders, "shop/invoices.ws" to invoices)
+            .map { (file, source) -> ModuleContent(FileUri(file), source) }
+        val ast = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(files).orFail { "source did not parse: $it" }
+
+        val emitted = WirespecEmitter().emit(ast, noLogger).map { it.file to it.result }
+        if (emitted != listOf("wirespec.ws" to "@spec:OpenAPIInfo(title: \"Shop\", version: \"1.0.0\")\n\n$orders\n$invoices", "customers.ws" to customers.substringAfter("\n"))) {
+            fail("the files were not kept apart:\n${emitted.joinToString("\n") { (file, result) -> "--- $file ---\n$result" }}")
+        }
+    }
 }
 
 private fun String.shouldRoundTrip() {

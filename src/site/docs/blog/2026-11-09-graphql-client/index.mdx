@@ -338,11 +338,13 @@ val queryTodo: QueryTodo.Service = QueryTodoGraphQL.GraphQLClient(serialization,
 ## Operations behind a namespace
 
 Many schemas group their operations in a type that a field of `Query` returns, like `Query.notifications { inbox }`.
-Only the operation is an rpc: its `path` names the fields that lead to it, each with the type it returns, and the
-client nests the query in them:
+Only the operations are rpcs. Put them in a file of their own: the `path` in its header names the fields that lead to
+them, each with the type it returns, and the client nests the queries in them:
 
 ```wirespec
-@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+
+@GraphQLQuery
 rpc Inbox {
   limit: Integer32
 } -> Notification[]
@@ -353,7 +355,7 @@ query Inbox($limit: Int!) { notifications { result: inbox(limit: $limit) { id te
 ```
 
 `client.inbox(limit = 50)` still returns a plain `List<Notification>`: the client unwraps the namespace for you. The
-converter writes these rpcs for the nested types of a schema. The
+converter writes such a file for every nested type of a schema. The
 [documentation](/docs/integration/graphql#nested-types) has the details.
 
 ## Try it

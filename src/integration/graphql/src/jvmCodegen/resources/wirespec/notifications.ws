@@ -1,18 +1,21 @@
+@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+
 type Notification {
   id: String,
   text: String
 }
 
-@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@GraphQLQuery
 rpc Inbox {
   limit: Integer32,
   locale: String?
 } -> Notification[]
 
-@GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@GraphQLQuery
 rpc InboxCount {} -> Integer32
 
-@GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+@GraphQLMutation
 rpc MarkRead {
   id: String
 } -> Unit
