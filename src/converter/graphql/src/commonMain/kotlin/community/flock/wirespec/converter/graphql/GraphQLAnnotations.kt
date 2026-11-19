@@ -42,6 +42,11 @@ internal object GraphQLAnnotations {
     fun parameter(name: String, values: List<String>): Annotation.Parameter? = values.takeIf { it.isNotEmpty() }
         ?.let { Annotation.Parameter(name, Annotation.Value.Array(it.map { value -> Annotation.Value.Single(value.toLiteral()) })) }
 
+    /** A dictionary of dictionaries, such as the arguments of a directive by name. */
+    fun parameter(name: String, entries: Map<String, List<Annotation.Parameter>>): Annotation.Parameter? = entries.takeIf { it.isNotEmpty() }
+        ?.map { (key, parameters) -> Annotation.Parameter(key, Annotation.Value.Dict(parameters)) }
+        ?.let { Annotation.Parameter(name, Annotation.Value.Dict(it)) }
+
     private fun String.toLiteral(): String = buildString {
         this@toLiteral.forEach { char ->
             when (char) {

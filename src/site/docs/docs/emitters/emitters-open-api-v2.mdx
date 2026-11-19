@@ -74,6 +74,51 @@ An endpoint becomes an operation on its path, with the name of the endpoint as `
 ```json wirespec select=paths./todos/{id}
 ```
 
+## Metadata of the document
+
+The Todo example has no metadata, so the document gets the title `Wirespec` and the version `0.0.0`. The emitter
+writes the same [`@spec:` annotations](../converters/openapi.md#metadata-of-the-document) as the OpenAPI v3 emitter, in
+the shape of Swagger 2:
+
+```wirespec
+@spec:OpenAPIInfo(title: "Todo API", version: "1.0.0")
+@spec:OpenAPIServer("https://api.example.com/v1", description: "Production")
+@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", bearerFormat: "JWT")
+@spec:OpenAPISecurity("bearerAuth")
+
+@OpenAPITag("Todos")
+endpoint GetTodos GET /todos -> {
+  200 -> Todo[]
+}
+```
+
+This part of the document comes out as:
+
+```json
+{
+  "info": { "title": "Todo API", "version": "1.0.0" },
+  "host": "api.example.com",
+  "basePath": "/v1",
+  "schemes": ["https"],
+  "paths": { "/todos": { "get": { "tags": ["Todos"], "operationId": "GetTodos" } } },
+  "securityDefinitions": {
+    "bearerAuth": {
+      "type": "apiKey",
+      "description": "A bearer token (JWT) in the Authorization header: Bearer <token>",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [{ "bearerAuth": [] }]
+}
+```
+
+- The first server becomes `host` and `basePath`, and the servers with that host and base path give the `schemes`.
+  Swagger 2 has one host, so the emitter leaves other servers out, with a warning.
+- Swagger 2 has no bearer scheme, so a bearer scheme becomes an API key in the `Authorization` header, with a warning.
+  An `openIdConnect` scheme has no counterpart at all: the emitter leaves it out, together with the requirements that
+  need it.
+
 ## Channel and RPC
 
 OpenAPI describes HTTP APIs, so channels and RPCs have no counterpart. The emitter leaves `TodoEvents` and

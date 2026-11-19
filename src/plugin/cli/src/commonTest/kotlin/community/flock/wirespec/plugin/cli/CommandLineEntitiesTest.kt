@@ -36,6 +36,8 @@ class CommandLineEntitiesTest {
                     Options.Strict -> null
                     Options.IgnoreDefaults -> null
                     Options.Sync -> null
+                    Options.SpecTitle -> "Customer API"
+                    Options.SpecVersion -> "2.3.0"
                 },
             )
         }.toTypedArray()

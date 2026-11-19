@@ -59,6 +59,21 @@ type Todo {
 }
 """
 
+    /**
+     * A file header with `@spec:` and `@file:` annotations, followed by a definition.
+     *
+     * Line numbers (0-indexed) referenced by tests:
+     *  - 0 : `@spec:OpenAPIInfo(title: "Todo API")`
+     *  - 3 : `type Todo {`
+     */
+    const val HEADER = """@spec:OpenAPIInfo(title: "Todo API")
+@file:Owner("todos")
+
+type Todo {
+  done: Boolean
+}
+"""
+
     /** A broken document — missing type after `name:`. Used to verify diagnostic reporting. */
     const val BROKEN = """type Person {
   name:

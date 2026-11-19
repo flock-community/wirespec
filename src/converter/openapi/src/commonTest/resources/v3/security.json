@@ -1,0 +1,90 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Customer API",
+    "description": "Everything about customers",
+    "termsOfService": "https://example.com/terms",
+    "contact": { "name": "Team", "url": "https://example.com", "email": "team@example.com" },
+    "license": { "name": "Apache 2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0" },
+    "version": "2.3.0"
+  },
+  "servers": [
+    { "url": "https://api.example.com/v2", "description": "Production" },
+    {
+      "url": "https://{env}.example.com/v2",
+      "description": "Test",
+      "variables": { "env": { "enum": ["test", "acc"], "default": "test", "description": "The environment" } }
+    }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Customers", "description": "Manage customers" },
+    { "name": "Monitoring" }
+  ],
+  "paths": {
+    "/customers/{id}": {
+      "get": {
+        "tags": ["Customers"],
+        "operationId": "GetCustomer",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "The customer",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Customer" } } }
+          }
+        }
+      }
+    },
+    "/customers": {
+      "post": {
+        "tags": ["Customers", "Admin"],
+        "operationId": "CreateCustomer",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Customer" } } },
+          "required": true
+        },
+        "responses": { "201": { "description": "Created" } },
+        "security": [
+          { "oauth": ["customers:write"] },
+          { "bearerAuth": [], "apiKey": [] },
+          { "oidc": ["openid"], "apiKey": [] }
+        ],
+        "servers": [{ "url": "https://files.example.com/v2" }]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Monitoring"],
+        "operationId": "Health",
+        "responses": { "200": { "description": "Healthy" } },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Customer": {
+        "type": "object",
+        "required": ["id"],
+        "properties": { "id": { "type": "string" } }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT", "description": "A JWT" },
+      "apiKey": { "type": "apiKey", "name": "X-Api-Key", "in": "header" },
+      "oauth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": { "tokenUrl": "https://auth.example.com/token", "scopes": { "customers:write": "Change customers" } },
+          "authorizationCode": {
+            "authorizationUrl": "https://auth.example.com/authorize",
+            "tokenUrl": "https://auth.example.com/token",
+            "refreshUrl": "https://auth.example.com/refresh",
+            "scopes": { "customers:read": "Read customers" }
+          }
+        }
+      },
+      "oidc": { "type": "openIdConnect", "openIdConnectUrl": "https://auth.example.com/.well-known/openid-configuration" }
+    }
+  }
+}

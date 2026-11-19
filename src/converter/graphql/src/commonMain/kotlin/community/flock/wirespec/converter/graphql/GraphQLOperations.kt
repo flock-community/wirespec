@@ -1,5 +1,6 @@
 package community.flock.wirespec.converter.graphql
 
+import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
@@ -16,7 +17,7 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
 
 /**
  * Writes the executable GraphQL document that calls an rpc, against the schema that [GraphQLEmitter] emits for the same
- * [definitions]:
+ * [ast]:
  *
  * ```graphql
  * query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
@@ -33,11 +34,11 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * required argument, cannot be selected. Such a field is left out when it is nullable; when it is not, the rpc has no
  * document and [document] throws an [IllegalStateException] that names the field.
  */
-public class GraphQLOperations(definitions: List<Definition>) {
+public class GraphQLOperations(ast: AST) {
 
-    private val schema = WirespecToGraphQL(definitions)
+    private val schema = WirespecToGraphQL(ast)
 
-    private val models: Map<String, Definition> = definitions
+    private val models: Map<String, Definition> = ast.modules.flatMap { it.statements }
         .filter { it is Type || it is Union || it is Enum || it is Refined }
         .associateBy { it.identifier.value }
 

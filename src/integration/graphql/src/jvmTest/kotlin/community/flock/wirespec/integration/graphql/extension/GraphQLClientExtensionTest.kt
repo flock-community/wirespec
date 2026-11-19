@@ -417,6 +417,31 @@ class GraphQLClientExtensionTest {
     }
 
     @Test
+    fun `A field of the root type that the file header names is queried at the top level`() {
+        val ast = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(
+            nonEmptyListOf(
+                ModuleContent(
+                    FileUri(""),
+                    """
+                    @spec:GraphQLSchema(query: "Root")
+
+                    @GraphQLQuery("Root")
+                    rpc Ping {} -> Boolean
+                    """.trimIndent(),
+                ),
+            ),
+        ).getOrNull()!!
+        val emitter = KotlinEmitter(PackageName("community.flock.wirespec.generated"), EmitShared(false))
+
+        val files = emitter.applyExtensions(nonEmptyListOf(GraphQLClientExtension(emitter.packageName, FileExtension.Kotlin))).emit(ast, noLogger)
+            .associate { it.file.removePrefix("community/flock/wirespec/generated/") to it.result }
+
+        assertTrue("\"query Ping { result: ping }\"" in files.getValue("graphql/PingGraphQL.kt"))
+    }
+
+    @Test
     fun `The types of the client edges are added to the shared Wirespec file, and only by the extension`() {
         val ast = object : ParseContext, NoLogger {
             override val spec = WirespecSpec

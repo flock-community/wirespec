@@ -200,9 +200,10 @@ class AvroIdlEmitterTest {
         val module = community.flock.wirespec.compiler.core.parse.ast.Module(
             fileUri = FileUri("unknown"),
             statements = ast.modules.first().statements,
+            annotations = emptyList(),
         )
         val output = AvroIdlEmitter.emit(
-            community.flock.wirespec.compiler.core.parse.ast.Root(nonEmptyListOf(module)),
+            community.flock.wirespec.compiler.core.parse.ast.Root(nonEmptyListOf(module), annotations = emptyList()),
             noLogger,
         )
         output.first().result shouldStartWith "protocol WirespecProtocol {"
@@ -372,9 +373,10 @@ class AvroIdlEmitterTest {
         val moduleWithUri = community.flock.wirespec.compiler.core.parse.ast.Module(
             fileUri = FileUri("path/to/myfile.ws"),
             statements = ast.modules.first().statements,
+            annotations = emptyList(),
         )
         val output = AvroIdlEmitter.emit(
-            community.flock.wirespec.compiler.core.parse.ast.Root(nonEmptyListOf(moduleWithUri)),
+            community.flock.wirespec.compiler.core.parse.ast.Root(nonEmptyListOf(moduleWithUri), annotations = emptyList()),
             noLogger,
         )
         output.first().result shouldContain "protocol MyfileProtocol {"

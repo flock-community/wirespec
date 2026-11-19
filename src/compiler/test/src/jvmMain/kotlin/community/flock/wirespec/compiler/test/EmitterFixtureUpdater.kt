@@ -84,7 +84,7 @@ private fun nodeFixtures(emitterFactory: () -> Emitter): Map<String, () -> Strin
         override val emitters = nonEmptySetOf(emitterFactory())
     }
     fun emit(node: Definition): String {
-        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(node))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(node), annotations = emptyList())), annotations = emptyList())
         return ctx.emitters.first().emit(ast, ctx.logger).first().result
     }
     return linkedMapOf(

@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ExclamationMark
 import community.flock.wirespec.compiler.core.tokenize.FieldIdentifier
+import community.flock.wirespec.compiler.core.tokenize.FileAnnotation
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
@@ -41,6 +42,7 @@ import community.flock.wirespec.compiler.core.tokenize.RpcDefinition
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.SpecAnnotation
 import community.flock.wirespec.compiler.core.tokenize.SpecificType
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
@@ -103,6 +105,8 @@ public object WirespecSpec : LanguageSpec {
         Regex("\\[") to LeftBracket,
         Regex("\\]") to RightBracket,
         Regex("(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
+        Regex("@spec:[A-Z][a-zA-Z0-9_]*") to SpecAnnotation,
+        Regex("@file:[A-Z][a-zA-Z0-9_]*") to FileAnnotation,
         Regex("@[A-Z][a-zA-Z0-9_]*") to Annotation,
         Regex("[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
         Regex("[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,

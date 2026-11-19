@@ -74,17 +74,34 @@ The following OpenAPI constructs are currently **not** converted or ignored duri
 - **Example**
 - **Discriminator**
 - **XML**
-- **Security** definitions
 
 ## Annotations
 
-| Annotation                                  | On                                        | Carries                                                                          |
-|---------------------------------------------|-------------------------------------------|----------------------------------------------------------------------------------|
-| `@Description("...")`                       | endpoints, responses, definitions, fields | the description of an operation, response, schema, property, parameter or header |
-| `@Link("GetUser", operationId: "...", ...)` | responses                                 | a response link of OpenAPI 3, one annotation per link (see [Links](#links))      |
+Annotations carry what Wirespec has no syntax for. `@Description` is generic: every converter and emitter reads it.
+The annotations that only mean something to OpenAPI start with `OpenAPI`.
+
+| Annotation                                       | On                                        | Carries                                                                            |
+|--------------------------------------------------|-------------------------------------------|------------------------------------------------------------------------------------|
+| `@Description("...")`                            | endpoints, responses, definitions, fields | the description of an operation, response, schema, property, parameter or header  |
+| `@spec:Description("...")`                       | the spec                                  | `info.description`                                                                 |
+| `@spec:OpenAPIInfo(title: "...", version: "...")` | the spec                                  | the rest of `info` (see [Info](#info))                                             |
+| `@OpenAPIServer("https://...")`                  | the spec, endpoints                       | a server of the document, or of one operation (see [Servers](#servers))            |
+| `@spec:OpenAPISecurityScheme("name", ...)`       | the spec                                  | a security scheme in `components.securitySchemes` (see [Security](#security))     |
+| `@OpenAPISecurity(...)`                          | the spec, endpoints                       | a security requirement: the default of the document, or of one operation           |
+| `@OpenAPINoSecurity`                             | endpoints                                 | `security: []`: an operation anyone may call                                       |
+| `@OpenAPITag("...")`                             | the spec, endpoints                       | a tag of an operation, or a tag of the document with its description (see [Tags](#tags)) |
+| `@OpenAPILink("GetUser", operationId: "...")`    | responses                                 | a response link of OpenAPI 3, one annotation per link (see [Links](#links))        |
 
 _Definitions_ are types, enums and unions, and _fields_ are the fields of a type, the parameters and headers of an
 endpoint and the headers of a response.
+
+_The spec_ means the [file header](../language/language.mdx#the-file-header): an annotation written as `@spec:Name` at
+the top of a file applies to the whole specification, every file compiled together. `@file:` annotations, which apply
+to one file, mean nothing to OpenAPI: the emitters reject `@file:OpenAPI…` annotations.
+
+:::warning
+`@Link` is now called `@OpenAPILink`. Rename it in your specifications: the OpenAPI emitters no longer read `@Link`.
+:::
 
 ## Descriptions
 
@@ -100,19 +117,212 @@ type User {
 }
 ```
 
+The description of the document itself, `info.description`, becomes a `@spec:Description`.
+
+## Metadata of the document
+
+The `info`, `servers`, `security`, `tags` and `components.securitySchemes` of a document describe the API as a whole.
+They are written as `@spec:` annotations in the header of any file of the spec. A file may hold nothing but such a
+header, which is a good place for them:
+
+```wirespec title="api.ws"
+@spec:Description("Everything about customers")
+@spec:OpenAPIInfo(title: "Customer API", version: "2.3.0")
+@spec:OpenAPIServer("https://api.example.com/v2", description: "Production")
+@spec:OpenAPIServer("https://api.test.example.com/v2", description: "Test")
+@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", bearerFormat: "JWT")
+@spec:OpenAPISecurity("bearerAuth")
+```
+
+Other files add what belongs to them, such as the tags of their endpoints:
+
+```wirespec title="customers.ws"
+@spec:OpenAPITag("Customers", description: "Manage customers")
+
+type Customer {
+  id: String,
+  name: String
+}
+
+@OpenAPITag("Customers")
+endpoint GetCustomer GET /customers/{id: String} -> {
+  200 -> Customer
+}
+```
+
+```wirespec title="monitoring.ws"
+@spec:OpenAPITag("Monitoring", description: "Health checks")
+
+@OpenAPITag("Monitoring")
+@OpenAPINoSecurity
+endpoint Health GET /health -> {
+  200 -> Unit
+}
+```
+
+The OpenAPI 3 emitter writes this metadata as:
+
+```json
+{
+  "openapi": "3.0.0",
+  "servers": [
+    { "url": "https://api.example.com/v2", "description": "Production" },
+    { "url": "https://api.test.example.com/v2", "description": "Test" }
+  ],
+  "components": {
+    "schemas": { "Customer": { "...": "..." } },
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  },
+  "info": { "title": "Customer API", "description": "Everything about customers", "version": "2.3.0" },
+  "paths": {
+    "/customers/{id}": { "get": { "tags": ["Customers"], "operationId": "GetCustomer", "...": "..." } },
+    "/health": { "get": { "tags": ["Monitoring"], "operationId": "Health", "security": [], "...": "..." } }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Customers", "description": "Manage customers" },
+    { "name": "Monitoring", "description": "Health checks" }
+  ]
+}
+```
+
+`GetCustomer` has no `security` of its own, so it needs the bearer token of the document. `Health` needs nothing.
+
+### Info
+
+`@spec:OpenAPIInfo` takes the fields of the [Info Object](https://spec.openapis.org/oas/v3.0.3#info-object), except
+the description, which is a `@spec:Description`:
+
+```wirespec
+@spec:OpenAPIInfo(
+  title: "Customer API",
+  version: "2.3.0",
+  termsOfService: "https://example.com/terms",
+  contact: { name: "Team", url: "https://example.com", email: "team@example.com" },
+  license: { name: "Apache 2.0", url: "https://www.apache.org/licenses/LICENSE-2.0" }
+)
+```
+
+Without it, the title is `Wirespec` and the version `0.0.0`. A build can set the title and version instead, for example
+to stamp its own version on the document, see [the title and version of the spec](../plugins/plugins.md#the-title-and-version-of-the-spec).
+
+### Servers
+
+`@OpenAPIServer` takes the URL and the fields of the [Server Object](https://spec.openapis.org/oas/v3.0.3#server-object).
+On the spec it is a server of the document, of which code generators usually take the first as the default base URL.
+On an endpoint it is a server of that operation only:
+
+```wirespec
+@spec:OpenAPIServer("https://{env}.example.com/v2", description: "Test", variables: { env: { default: "test", enum: ["test", "acc"] } })
+
+@OpenAPIServer("https://files.example.com/v2")
+endpoint UploadFile PUT Bytes /files/{name: String} -> {
+  201 -> Unit
+}
+```
+
+### Tags
+
+`@OpenAPITag` on an endpoint adds a tag to its operation; repeat it for several tags. Code generators such as
+OpenAPI Generator group the operations of a tag into one API class. `@spec:OpenAPITag` adds a tag to the document, to
+give it a description or to put the tags in order; a tag of an operation needs no `@spec:OpenAPITag`.
+
+### Security
+
+`@spec:OpenAPISecurityScheme` declares a [security scheme](https://spec.openapis.org/oas/v3.0.3#security-scheme-object).
+Its positional value is the name of the scheme, and its parameters are the fields of the Security Scheme Object:
+
+```wirespec
+@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", bearerFormat: "JWT")
+@spec:OpenAPISecurityScheme("apiKey", type: "apiKey", name: "X-Api-Key", in: "header")
+@spec:OpenAPISecurityScheme("oauth", type: "oauth2", flows: {
+  clientCredentials: { tokenUrl: "https://auth.example.com/token", scopes: { "customers:write": "Change customers" } }
+})
+@spec:OpenAPISecurityScheme("oidc", type: "openIdConnect", openIdConnectUrl: "https://auth.example.com/.well-known/openid-configuration")
+```
+
+`@OpenAPISecurity` is a security requirement. On the spec it is the default of every operation, on an endpoint it
+replaces that default for its operation:
+
+| Annotation                                               | Requirement                                 | Meaning                                      |
+|----------------------------------------------------------|---------------------------------------------|----------------------------------------------|
+| `@OpenAPISecurity("bearerAuth")`                         | `{ "bearerAuth": [] }`                      | the scheme                                   |
+| `@OpenAPISecurity("oauth", scopes: ["customers:write"])` | `{ "oauth": ["customers:write"] }`          | the scheme, with scopes                      |
+| `@OpenAPISecurity(["mtls", "bearerAuth"])`               | `{ "mtls": [], "bearerAuth": [] }`          | all of the schemes                           |
+| `@OpenAPISecurity({ oauth: ["read"], mtls: [] })`        | `{ "oauth": ["read"], "mtls": [] }`         | all of the schemes, with scopes              |
+| `@OpenAPISecurity(...)` repeated                         | one requirement per annotation              | any one of the requirements                  |
+| `@OpenAPINoSecurity`                                     | `security: []`                              | no security, even when the spec has a default |
+
+Only `oauth2` and `openIdConnect` schemes have scopes.
+
+### Several files
+
+Spec annotations may come from any number of files, and like every spec annotation they are
+[unique](../language/language.mdx#the-file-header): the same one twice is an error. Files are read in the order of their
+paths, and their spec annotations combine like this:
+
+| Annotation                    | Across files                                                              |
+|-------------------------------|---------------------------------------------------------------------------|
+| `@spec:Description`           | once in the whole spec                                                    |
+| `@spec:OpenAPIInfo`           | once in the whole spec                                                    |
+| `@spec:OpenAPIServer`         | all servers, in file order; each URL once                                 |
+| `@spec:OpenAPISecurityScheme` | all security schemes; each name once                                      |
+| `@spec:OpenAPISecurity`       | from one file only; repeated in that file, any one requirement is enough  |
+| `@spec:OpenAPITag`            | all tags, in file order; each name once                                   |
+
+The default security comes from one file, so that no file can add an alternative that weakens the security of every
+endpoint. Keep the servers in one file as well: the first server is the default base URL of most code generators.
+
+### Validation
+
+The OpenAPI emitters check the annotations before they write anything, and fail with a message that names the endpoint
+or the files involved when:
+
+- `@OpenAPISecurity` names a scheme that no `@spec:OpenAPISecurityScheme` declares;
+- a requirement gives scopes for a scheme that is not `oauth2` or `openIdConnect`;
+- a security scheme has no `type`, an unknown one, or misses what its type needs: `scheme` for `http`, `name` and `in`
+  for `apiKey`, `flows` for `oauth2`, `openIdConnectUrl` for `openIdConnect`;
+- a spec annotation, or a server URL, security scheme or tag name, is declared more than once, as listed above;
+- an annotation has the wrong target: `@OpenAPIInfo` or `@OpenAPISecurityScheme` without `spec:`,
+  `@spec:OpenAPINoSecurity`, `@spec:OpenAPILink`, or any `@file:OpenAPI…`;
+- a server has no URL, a server variable no default, or a tag no name;
+- an endpoint has both `@OpenAPISecurity` and `@OpenAPINoSecurity`.
+
+### Swagger 2
+
+The OpenAPI v2 emitter writes the same metadata in the shape of Swagger 2:
+
+- The first server becomes `host` and `basePath`, and the servers with that host and base path give the `schemes`. A
+  server variable becomes its default value. Swagger 2 has one host, so other servers are left out, with a warning.
+- Security schemes become `securityDefinitions`. Swagger 2 has no bearer scheme, so an `http` scheme other than `basic`
+  becomes an API key in the `Authorization` header, with a warning. An `oauth2` scheme keeps one flow: `implicit`,
+  `password`, `clientCredentials` (Swagger 2 calls it `application`) or `authorizationCode` (`accessCode`), in that
+  order. `openIdConnect` schemes and API keys in a cookie have no Swagger 2 counterpart: they are left out, together with
+  the requirements that need them.
+- Tags and security requirements stay as they are.
+
+### Converting OpenAPI to Wirespec
+
+The converter writes all of this metadata as annotations, so a document survives the way to Wirespec and back: `info`,
+`servers`, `security`, `tags` and `components.securitySchemes` become `@spec:` annotations in the header of the
+converted file, and the `tags`, `security` and `servers` of an operation become annotations on its endpoint. A Swagger 2
+document's `host`, `basePath` and `schemes` become a server per scheme, and its `securityDefinitions` security schemes.
+
 ## Links
 
-OpenAPI v3 [response links](https://spec.openapis.org/oas/v3.1.0#link-object) round-trip through the `@Link` annotation on a response variant. One annotation describes one outgoing link.
+OpenAPI v3 [response links](https://spec.openapis.org/oas/v3.1.0#link-object) round-trip through the `@OpenAPILink` annotation on a response variant. One annotation describes one outgoing link.
 
 ```wirespec
 type User { id: String, name: String }
 
 endpoint CreateUser POST User /users -> {
-    @Link("GetUser",
+    @OpenAPILink("GetUser",
           operationId: "GetUserById",
           parameters: {id: "$response.body#/id"},
           description: "Fetch the just-created user")
-    @Link("DeleteUser",
+    @OpenAPILink("DeleteUser",
           operationId: "DeleteUser",
           parameters: {id: "$response.body#/id"})
     201 -> User

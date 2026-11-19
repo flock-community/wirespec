@@ -648,6 +648,41 @@ class ParseAnnotationTest {
                 }
             }
     }
+
+    @Test
+    fun testEmptyArrays() {
+        val source =
+            // language=ws
+            """
+            |@Positional([])
+            |@Named(scopes: [])
+            |@Nested({ bearerAuth: [], oauth: ["read"] })
+            |type User = String
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRightOrReport()
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .annotations shouldBe listOf(
+            Annotation("Positional", listOf(Annotation.Parameter("default", Annotation.Value.Array(emptyList())))),
+            Annotation("Named", listOf(Annotation.Parameter("scopes", Annotation.Value.Array(emptyList())))),
+            Annotation(
+                "Nested",
+                listOf(
+                    Annotation.Parameter(
+                        "default",
+                        Annotation.Value.Dict(
+                            listOf(
+                                Annotation.Parameter("bearerAuth", Annotation.Value.Array(emptyList())),
+                                Annotation.Parameter("oauth", Annotation.Value.Array(listOf(Annotation.Value.Single("read")))),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+    }
 }
 
 private fun Either<NonEmptyList<WirespecException>, NonEmptyList<Definition>>.shouldBeRightOrReport() = shouldBeRight { exceptions -> exceptions.joinToString { it.message } }

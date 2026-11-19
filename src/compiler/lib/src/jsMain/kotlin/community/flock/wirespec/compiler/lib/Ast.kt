@@ -24,6 +24,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.ShapeEntry
+import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
@@ -32,11 +33,13 @@ import community.flock.wirespec.compiler.core.parse.ast.Shape as AstShape
 
 public fun WsAST.consume(): AST = AST(
     modules = modules.map { it.consume() }.toNonEmptyListOrNull()!!,
+    annotations = annotations.map { SpecAnnotation(FileUri("unknown"), it.consume()) },
 )
 
 public fun WsModule.consume(): Module = Module(
     fileUri = FileUri("unknown"),
     statements = statements.map { it.consume() }.toNonEmptyListOrNull()!!,
+    annotations = annotations.map { it.consume() },
 )
 
 public fun WsDefinition.consume(): Definition = when (this) {
@@ -227,9 +230,9 @@ private fun WsPrimitive.consumeType(): Reference.Primitive.Type {
     }
 }
 
-public fun AST.produce(): WsAST = WsAST(modules.map { it.produce() }.toTypedArray())
+public fun AST.produce(): WsAST = WsAST(modules.map { it.produce() }.toTypedArray(), annotations.map { it.annotation }.produce())
 
-public fun Module.produce(): WsModule = WsModule(statements.map { it.produce() }.toTypedArray())
+public fun Module.produce(): WsModule = WsModule(statements.map { it.produce() }.toTypedArray(), annotations.produce())
 
 public fun Definition.produce(): WsDefinition = when (this) {
     is Type -> WsType(
@@ -410,11 +413,15 @@ public sealed interface WsNode
 @JsExport
 public class WsAST(
     public val modules: Array<WsModule>,
+    /** The `@spec:` annotations of every module. */
+    public val annotations: Array<WsAnnotation>,
 ) : WsNode
 
 @JsExport
 public class WsModule(
     public val statements: Array<WsDefinition>,
+    /** The `@file:` annotations of the module. */
+    public val annotations: Array<WsAnnotation>,
 ) : WsNode
 
 @JsExport

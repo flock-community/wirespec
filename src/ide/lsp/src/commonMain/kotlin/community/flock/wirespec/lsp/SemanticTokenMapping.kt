@@ -1,7 +1,9 @@
 package community.flock.wirespec.lsp
 
+import community.flock.wirespec.compiler.core.tokenize.Annotation
 import community.flock.wirespec.compiler.core.tokenize.DromedaryCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Ellipsis
+import community.flock.wirespec.compiler.core.tokenize.HeaderAnnotation
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Keyword
 import community.flock.wirespec.compiler.core.tokenize.Method
@@ -41,6 +43,9 @@ internal fun TokenType.toTokenKind(): TokenKind? = when (this) {
     is SnakeCaseIdentifier,
     is ScreamingSnakeCaseIdentifier,
     -> TokenKind.FIELD
+
+    // Left to the editor's grammar, which sets the `spec:` or `file:` target of a header annotation apart from its name.
+    is Annotation, is HeaderAnnotation -> null
 
     else -> null
 }

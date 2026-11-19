@@ -82,3 +82,12 @@ internal class DuplicateFieldError(fieldName: String, owner: String) :
         coordinates = Token.Coordinates(),
         message = "Field '$fieldName' is defined more than once in $owner",
     )
+
+internal class DuplicateSpecAnnotationError(fileUri: FileUri, annotation: String, files: List<FileUri>) :
+    WirespecException(
+        fileUri,
+        "$annotation is declared ${files.size} times, in ${files.names()}: a spec annotation is unique",
+        Token.Coordinates(),
+    )
+
+private fun List<FileUri>.names(): String = map { it.value }.distinct().joinToString(" and ")

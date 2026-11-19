@@ -16,11 +16,14 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 
 - **input:** Path to the input Wirespec file or directory. The Maven and Gradle plugins can also read them from the
   classpath, see [Maven](./plugins-maven.md#wirespec-files-from-the-classpath) and
-  [Gradle](./plugins-gradle.md#wirespec-files-from-the-classpath).
+  [Gradle](./plugins-gradle.md#wirespec-files-from-the-classpath). The files of a directory are compiled in the order
+  of their paths, so the output is the same on every machine.
 - **output:** Path to the output directory where the generated code will be placed.
-- **language:** The target language for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`). A run generates one language: run the plugin once per language to generate several.
+- **language:** The target language for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`, `AsyncAPI`). A run generates one language: run the plugin once per language to generate several.
 - **package name:** The package name for the generated code.
 - **share:** A flag to indicate whether shared code should be emitted.
+- **spec title and version:** The title and version of the document, instead of the ones the spec declares, see
+  [The title and version of the spec](#the-title-and-version-of-the-spec).
 - **strict:** A flag to enable strict mode during compilation.
 - **ignore defaults:** A flag to leave field default values out of the emitted code. Required to compile a spec with
   [defaults](../language/types.mdx#default-values) to a language that does not support them yet. See
@@ -117,6 +120,40 @@ The flag only changes the server side. The `Call` interfaces, the generated clie
 asynchronous, so a synchronous handler can still call other services in parallel, outside the transaction, from a
 coroutine scope it opens itself. Scala handlers already abstract over their effect type and Rust keeps its handlers
 as they are, so the flag does not change those languages.
+
+## The title and version of the spec
+
+The languages that write a document with a title and a version, `OpenAPIV2`, `OpenAPIV3` and `AsyncAPI`, take them from
+the spec: from [`@spec:OpenAPIInfo`](../converters/openapi.md#info) and
+[`@spec:AsyncAPIInfo`](../converters/asyncapi.md#info-servers-security-and-tags), or `Wirespec` and `0.0.0` when the
+spec declares none. A build can set them instead, each on its own, for example to stamp the version of the project on the document:
+
+| Plugin | Title          | Version          |
+|--------|----------------|------------------|
+| CLI    | `--spec-title` | `--spec-version` |
+| Maven  | `specTitle`    | `specVersion`    |
+| Gradle | `specTitle`    | `specVersion`    |
+
+```xml
+<configuration>
+    <input>${project.basedir}/src/main/wirespec</input>
+    <output>${project.build.directory}/generated-sources/openapi</output>
+    <language>OpenAPIV3</language>
+    <specVersion>${project.version}</specVersion>
+</configuration>
+```
+
+```kotlin
+tasks.register<CompileWirespecTask>("wirespec-asyncapi") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated/asyncapi")
+    language.set(Language.AsyncAPI)
+    specVersion.set(project.version.toString())
+}
+```
+
+The other languages write no title or version and leave both alone. An emitter of your own that writes a document with
+a title and version implements `SpecInfoEmitter` to receive them.
 
 ## IR extensions
 

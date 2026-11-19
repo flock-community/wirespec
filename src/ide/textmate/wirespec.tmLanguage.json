@@ -42,11 +42,13 @@
       "patterns": [
         {
           "name": "meta.annotation.wirespec",
-          "begin": "(@)([A-Z][A-Za-z0-9_]*)\\s*(\\()",
+          "begin": "(@)(?:(spec|file)(:))?([A-Z][A-Za-z0-9_]*)\\s*(\\()",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.annotation.wirespec" },
-            "2": { "name": "storage.type.annotation.wirespec" },
-            "3": { "name": "punctuation.section.arguments.begin.wirespec" }
+            "2": { "name": "storage.modifier.annotation-target.wirespec" },
+            "3": { "name": "punctuation.separator.annotation-target.wirespec" },
+            "4": { "name": "storage.type.annotation.wirespec" },
+            "5": { "name": "punctuation.section.arguments.begin.wirespec" }
           },
           "end": "\\)",
           "endCaptures": { "0": { "name": "punctuation.section.arguments.end.wirespec" } },
@@ -54,10 +56,12 @@
         },
         {
           "name": "meta.annotation.wirespec",
-          "match": "(@)([A-Z][A-Za-z0-9_]*)",
+          "match": "(@)(?:(spec|file)(:))?([A-Z][A-Za-z0-9_]*)",
           "captures": {
             "1": { "name": "punctuation.definition.annotation.wirespec" },
-            "2": { "name": "storage.type.annotation.wirespec" }
+            "2": { "name": "storage.modifier.annotation-target.wirespec" },
+            "3": { "name": "punctuation.separator.annotation-target.wirespec" },
+            "4": { "name": "storage.type.annotation.wirespec" }
           }
         }
       ]

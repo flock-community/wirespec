@@ -305,6 +305,54 @@ type User {
   });
 });
 
+describe("header", () => {
+  const source = `@spec:OpenAPIInfo(title: "Customer API", version: "2.3.0")
+@spec:OpenAPIServer("https://api.example.com/v2", description: "Production")
+@file:Owner("customers")
+@file:Internal
+
+@OpenAPITag("Customers")
+endpoint GetCustomer GET /customers/{id: String} -> {
+  200 -> Customer
+}`;
+
+  it("highlights the target of spec and file annotations", () => {
+    expectScopes(source, [
+      ["@", "punctuation.definition.annotation.wirespec"],
+      ["spec", "storage.modifier.annotation-target.wirespec"],
+      [":", "punctuation.separator.annotation-target.wirespec"],
+      ["OpenAPIInfo", "storage.type.annotation.wirespec"],
+      ["spec", "storage.modifier.annotation-target.wirespec", 1],
+      ["OpenAPIServer", "storage.type.annotation.wirespec"],
+      ["file", "storage.modifier.annotation-target.wirespec"],
+      ["Owner", "storage.type.annotation.wirespec"],
+      ["file", "storage.modifier.annotation-target.wirespec", 1],
+      ["Internal", "storage.type.annotation.wirespec"],
+      ["OpenAPITag", "storage.type.annotation.wirespec"],
+    ]);
+  });
+
+  it("highlights their arguments like those of any annotation", () => {
+    expectScopes(source, [
+      ["(", "punctuation.section.arguments.begin.wirespec"],
+      ["title", "variable.parameter.annotation.wirespec"],
+      [":", "punctuation.separator.key-value.wirespec", 1],
+      ["Customer API", "string.quoted.double.wirespec"],
+      ["https://api.example.com/v2", "string.quoted.double.wirespec"],
+      ["description", "variable.parameter.annotation.wirespec"],
+      ["customers", "string.quoted.double.wirespec"],
+      [")", "punctuation.section.arguments.end.wirespec"],
+    ]);
+  });
+
+  it("leaves the definitions after the header alone", () => {
+    expectScopes(source, [
+      ["endpoint", "keyword.declaration.endpoint.wirespec"],
+      ["GetCustomer", "entity.name.function.endpoint.wirespec"],
+    ]);
+  });
+});
+
 describe("recovery", () => {
   it("does not let an unclosed block swallow the next definition", () => {
     const after = tokenize("type A {\n  a: String\n\ntype B {}").find((it) => it.text === "B");

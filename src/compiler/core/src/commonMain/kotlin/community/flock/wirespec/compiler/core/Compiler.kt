@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.Stage.TOKENIZED
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.HasEmitters
 import community.flock.wirespec.compiler.core.emit.ensureDefaultsSupportedBy
+import community.flock.wirespec.compiler.core.emit.ensureValidFor
 import community.flock.wirespec.compiler.core.emit.withoutDefaults
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.ir.emit.ensureEmittableBy
@@ -59,6 +60,7 @@ public fun EmitContext.emit(
     .map { if (ignoreDefaults) it.withoutDefaults() else it }
     .flatMap { it.ensureDefaultsSupportedBy(emitters) }
     .flatMap { it.ensureEmittableBy(emitters) }
+    .flatMap { it.ensureValidFor(emitters) }
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 

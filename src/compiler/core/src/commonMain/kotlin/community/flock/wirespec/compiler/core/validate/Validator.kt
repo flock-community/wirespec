@@ -11,18 +11,19 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateRpcError
+import community.flock.wirespec.compiler.core.exceptions.DuplicateSpecAnnotationError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.InvalidEnumDefaultError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
-import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -44,11 +45,12 @@ public object Validator {
                 validateChannels(resolved),
                 validateRpcs(resolved),
                 validateEnumDefaults(resolved),
-            ) { a, _, _, _, _, _ -> a }
+                validateSpecAnnotations(resolved),
+            ) { a, _, _, _, _, _, _ -> a }
         }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
-        .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
+        .map { module -> runValidateOptions(options)(module.statements).map { module.copy(statements = it) } }
         .let { either { it.bindAll() } }
         .map { ast.copy(modules = it) }
 
@@ -117,6 +119,24 @@ public object Validator {
         .toNonEmptyListOrNull()
         ?.left()
         ?: ast.right()
+
+    /** A spec annotation is unique: the same one twice, in one file or in two, is an error. */
+    private fun validateSpecAnnotations(ast: AST): EitherNel<WirespecException, AST> = ast.annotations
+        .groupBy { it.annotation }
+        .filterValues { it.size > 1 }
+        .map { (annotation, declared) -> DuplicateSpecAnnotationError(declared.last().fileUri, annotation.label(), declared.map { it.fileUri }) }
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
+
+    /** How the annotation reads in the file header, with its positional value: `@spec:OpenAPIServer("https://api.example.com")`. */
+    private fun Annotation.label(): String = "@spec:$name" + positionalValue()?.let { "(\"$it\")" }.orEmpty()
+
+    private fun Annotation.positionalValue(): String? = parameters
+        .find { it.name == "default" }
+        ?.value
+        ?.let { it as? Annotation.Value.Single }
+        ?.value
 
     private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.validateNoDuplicates<Channel>(::DuplicateChannelError)
 

@@ -28,10 +28,14 @@
     comment: { pattern: /\/\*[\s\S]*?\*\/|\/\/.*/, greedy: true },
     string,
     annotation: {
-      pattern: /@[A-Z]\w*(?:\s*\((?:[^()"]|"(?:\\.|[^"\\])*")*\))?/,
+      pattern: /@(?:(?:spec|file):)?[A-Z]\w*(?:\s*\((?:[^()"]|"(?:\\.|[^"\\])*")*\))?/,
       greedy: true,
       inside: {
-        "annotation-name": { pattern: /^@[A-Z]\w*/, alias: "attr-name" },
+        "annotation-name": {
+          pattern: /^@(?:(?:spec|file):)?[A-Z]\w*/,
+          alias: "attr-name",
+          inside: { "annotation-target": { pattern: /(^@)(?:spec|file):/, lookbehind: true, alias: "keyword" } },
+        },
         string,
         regex,
         property: /\b[A-Za-z_][\w-]*(?=\s*:)/,

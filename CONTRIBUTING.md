@@ -52,6 +52,7 @@ git push -u fork feature/my-awesome-feature
 
 Some things that will increase the chance that your merge request is accepted:
 
+- Follow the [style guide](STYLE_GUIDE.md): every change is reviewed against it.
 - Write in a functional style (we use [Arrow](https://arrow-kt.io/))
 - Write test scripts.
 - Write a [good commit message](https://www.conventionalcommits.org/).

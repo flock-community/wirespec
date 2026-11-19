@@ -32,8 +32,10 @@ internal object AvroIdlParser : Parser {
                 Module(
                     moduleContent.fileUri,
                     definitions.toNonEmptyListOrNull() ?: error("Cannot yield empty AST from protocol ${protocol.name}"),
+                    annotations = emptyList(),
                 ),
             ),
+            annotations = emptyList(),
         )
     }
 

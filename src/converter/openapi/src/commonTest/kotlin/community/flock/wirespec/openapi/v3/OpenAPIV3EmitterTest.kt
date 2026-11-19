@@ -766,8 +766,8 @@ class OpenAPIV3EmitterTest {
             |type User { id: String, name: String }
             |
             |endpoint CreateUser POST User /users -> {
-            |    @Link("GetUser", operationId: "GetUserById", parameters: {id: "$response.body#/id"}, description: "Fetch the just-created user")
-            |    @Link("DeleteUser", operationId: "DeleteUser", parameters: {id: "$response.body#/id"})
+            |    @OpenAPILink("GetUser", operationId: "GetUserById", parameters: {id: "$response.body#/id"}, description: "Fetch the just-created user")
+            |    @OpenAPILink("DeleteUser", operationId: "DeleteUser", parameters: {id: "$response.body#/id"})
             |    201 -> User
             |}
             """.trimMargin()

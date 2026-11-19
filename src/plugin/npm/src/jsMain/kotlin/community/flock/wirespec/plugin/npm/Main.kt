@@ -171,13 +171,13 @@ public fun emit(
         Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).extended().emit(ast, noLogger)
         Emitters.OPENAPI_V2 ->
             OpenAPIV2Emitter
-                .emitSwaggerObject(ast.modules.flatMap { it.statements }, noLogger)
+                .emitSwaggerObject(ast, noLogger)
                 .let(encode(OpenAPIV2ModelSerializer))
                 .let { Emitted("openapi.json", it) }
                 .let { nonEmptyListOf(it) }
         Emitters.OPENAPI_V3 ->
             OpenAPIV3Emitter
-                .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null, noLogger)
+                .emitOpenAPIObject(ast, null, noLogger)
                 .let(encode(OpenAPIV3ModelSerializer))
                 .let { Emitted("openapi.json", it) }
                 .let { nonEmptyListOf(it) }

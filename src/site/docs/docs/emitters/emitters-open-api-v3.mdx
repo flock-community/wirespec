@@ -75,6 +75,43 @@ An endpoint becomes an operation on its path, with the name of the endpoint as `
 ```json wirespec select=paths./todos/{id}
 ```
 
+## Metadata of the document
+
+The Todo example has no metadata, so the document gets the title `Wirespec` and the version `0.0.0`. The `info`,
+`servers`, `security`, `tags` and `components.securitySchemes` of the document come from
+[`@spec:` annotations](../language/language.mdx#the-file-header) in the header of any file of the spec, and the
+`tags`, `security` and `servers` of an operation from annotations on its endpoint:
+
+```wirespec
+@spec:OpenAPIInfo(title: "Todo API", version: "1.0.0")
+@spec:OpenAPIServer("https://api.example.com/v1", description: "Production")
+@spec:OpenAPISecurityScheme("bearerAuth", type: "http", scheme: "bearer", bearerFormat: "JWT")
+@spec:OpenAPISecurity("bearerAuth")
+
+@OpenAPITag("Todos")
+endpoint GetTodos GET /todos -> {
+  200 -> Todo[]
+}
+```
+
+This part of the document comes out as:
+
+```json
+{
+  "servers": [{ "url": "https://api.example.com/v1", "description": "Production" }],
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } }
+  },
+  "info": { "title": "Todo API", "version": "1.0.0" },
+  "paths": { "/todos": { "get": { "tags": ["Todos"], "operationId": "GetTodos" } } },
+  "security": [{ "bearerAuth": [] }]
+}
+```
+
+The emitter checks these annotations first, and fails rather than write a document that names a security scheme it
+does not declare. The [OpenAPI converter](../converters/openapi.md#metadata-of-the-document) lists every annotation and
+how the annotations of several files combine.
+
 ## Channel and RPC
 
 OpenAPI describes HTTP APIs, so channels and RPCs have no counterpart. The emitter leaves `TodoEvents` and

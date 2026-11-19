@@ -63,6 +63,8 @@ public fun Directory.wirespecSources(logger: Logger): Either<WirespecFileError, 
         .let(SystemFileSystem::list)
         .filter(::isRegularFile)
         .filter(::isWirespecFile)
+        // The file system lists a folder in no particular order; the order of the files decides the order of the output.
+        .sortedBy { it.toString() }
         .map { FilePath(it.toString()) to SystemFileSystem.source(it).buffered().readString() }
         .also { paths ->
             logger.info("Found ${paths.size} file(s) to process in ${this@wirespecSources.path.value}")

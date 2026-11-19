@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ExclamationMark
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.HeaderAnnotation
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftBracket
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
@@ -78,6 +79,7 @@ public class Lexer : IntellijLexer() {
             is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
             is TypeIdentifier -> Types.TYPE_IDENTIFIER
             is WhiteSpace -> Types.WHITE_SPACE
+            is HeaderAnnotation -> Types.ANNOTATION
             else -> tokenTypeByClass[type::class]
         }
     }

@@ -24,6 +24,10 @@ internal object AsyncAPIAnnotations {
     const val NAME = "AsyncAPIName"
     const val DOCUMENT = "AsyncAPIDocument"
     const val COMPONENTS = "AsyncAPIComponents"
+    const val INFO = "AsyncAPIInfo"
+    const val SERVER = "AsyncAPIServer"
+    const val SECURITY_SCHEME = "AsyncAPISecurityScheme"
+    const val TAG = "AsyncAPITag"
     const val CHANNEL = "AsyncAPIChannel"
     const val MESSAGE = "AsyncAPIMessage"
     const val SCHEMA = "AsyncAPISchema"
@@ -33,6 +37,9 @@ internal object AsyncAPIAnnotations {
     const val OMIT = "omit"
 
     const val DEFAULT_PARAMETER = "default"
+
+    /** Where the names in `security: ["saslScram"]` of an `@spec:AsyncAPIServer` point in AsyncAPI 3. */
+    const val SECURITY_SCHEMES_POINTER = "#/components/securitySchemes/"
 
     /** What the application does on a channel: `send` and `receive` in AsyncAPI 3, `subscribe` and `publish` in 2. */
     enum class Action(val keyword: String, val v2Keyword: String) {

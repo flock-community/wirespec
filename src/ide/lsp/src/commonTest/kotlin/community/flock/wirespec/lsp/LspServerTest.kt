@@ -369,11 +369,90 @@ class LspServerTest {
     }
 
     @Test
+    fun `a well-formed file header publishes empty diagnostics`() {
+        initialize()
+        openDocument(URI, Fixtures.HEADER)
+
+        assertEquals(JsonArray(emptyList()), diagnosticsOf(URI))
+    }
+
+    @Test
+    fun `header annotations are left to the grammar, their arguments and the definitions after them are not`() {
+        initialize()
+        openDocument(URI, Fixtures.HEADER)
+
+        assertEquals(
+            listOf(
+                listOf(0, 18, 5, SemanticTokenLegend.TYPE_VARIABLE), // title
+                listOf(3, 0, 4, SemanticTokenLegend.TYPE_KEYWORD), // type
+                listOf(3, 5, 4, SemanticTokenLegend.TYPE_TYPE), // Todo
+                listOf(4, 2, 4, SemanticTokenLegend.TYPE_VARIABLE), // done
+                listOf(4, 8, 7, SemanticTokenLegend.TYPE_TYPE), // Boolean
+            ),
+            semanticTokensOf(URI),
+        )
+    }
+
+    @Test
+    fun `prepareRename refuses the name of a header annotation`() {
+        initialize()
+        openDocument(URI, Fixtures.HEADER)
+
+        // `@spec:OpenAPIInfo(...)` on line 0 — cursor on `OpenAPIInfo`.
+        assertNullResult(transport.request("textDocument/prepareRename", positionParams(line = 0, character = 9)))
+    }
+
+    @Test
+    fun `a header annotation below a definition is reported on the annotation`() {
+        initialize()
+        openDocument(URI, "type Todo {\n  done: Boolean\n}\n\n@spec:OpenAPIInfo(title: \"Todo API\")\ntype User {\n  name: String\n}\n")
+
+        val diagnostic = diagnosticsOf(URI).single().jsonObject
+        val message = diagnostic["message"]!!.jsonPrimitive.content
+        assertTrue(message.startsWith("@spec:OpenAPIInfo belongs in the file header"), "got $message")
+        val range = diagnostic["range"]!!.jsonObject
+        assertEquals(4, range["start"]!!.jsonObject["line"]!!.jsonPrimitive.int)
+        assertEquals(0, range["start"]!!.jsonObject["character"]!!.jsonPrimitive.int)
+        assertEquals(17, range["end"]!!.jsonObject["character"]!!.jsonPrimitive.int)
+    }
+
+    @Test
+    fun `a header without an empty line after it is reported`() {
+        initialize()
+        openDocument(URI, "@file:Owner(\"todos\")\ntype Todo {\n  done: Boolean\n}\n")
+
+        assertEquals(
+            "Leave an empty line between the file header and what follows it",
+            diagnosticsOf(URI).single().jsonObject["message"]!!.jsonPrimitive.content,
+        )
+    }
+
+    @Test
+    fun `a file with only spec annotations is checked together with the definitions of its siblings`() {
+        filesOnDisk[DIRECTORY] = mapOf("name.ws" to Fixtures.NAME)
+        initialize()
+        openDocument("$DIRECTORY/spec.ws", "@spec:OpenAPIInfo(title: \"Todo API\")\n")
+
+        assertEquals(JsonArray(emptyList()), diagnosticsOf("$DIRECTORY/spec.ws"))
+    }
+
+    @Test
     fun `a file uri maps to the path of its directory`() {
         assertEquals("/home/me/my specs", "file:///home/me/my%20specs".fileUriToPath())
         assertEquals("c:/specs", "file:///c%3A/specs".fileUriToPath())
         assertEquals("caf\u00e9 1.ws", "caf\u00e9 1.ws".encodeUriComponent().also { assertEquals("caf%C3%A9%201.ws", it) }.decodeUriComponent())
     }
+
+    /** Decodes the delta-encoded semantic tokens of [uri] into absolute `[line, character, length, type]` groups. */
+    private fun semanticTokensOf(uri: String): List<List<Int>> = transport
+        .request("textDocument/semanticTokens/full", buildJsonObject { put("textDocument", buildJsonObject { put("uri", uri) }) })["result"]!!
+        .jsonObject["data"]!!.jsonArray
+        .map { it.jsonPrimitive.int }
+        .chunked(5)
+        .runningFold(listOf(0, 0, 0, 0)) { (line, character), (deltaLine, deltaChar, length, type) ->
+            listOf(line + deltaLine, if (deltaLine == 0) character + deltaChar else deltaChar, length, type)
+        }
+        .drop(1)
 
     private fun diagnosticsOf(uri: String): JsonArray = transport
         .notificationsOf("textDocument/publishDiagnostics")

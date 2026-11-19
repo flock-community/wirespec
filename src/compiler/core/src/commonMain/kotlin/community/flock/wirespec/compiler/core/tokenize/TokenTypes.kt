@@ -44,6 +44,11 @@ public data object ScreamingSnakeCaseIdentifier : CaseVariant
 
 public data object Annotation : TokenType
 
+/** An annotation in the file header, at the top of a file: `@spec:Name` or `@file:Name`. */
+public sealed interface HeaderAnnotation : TokenType
+public data object SpecAnnotation : HeaderAnnotation
+public data object FileAnnotation : HeaderAnnotation
+
 internal sealed interface TypeDefinitionStart : TokenType
 public data object LeftCurly : TypeDefinitionStart
 public data object LeftParenthesis : TypeDefinitionStart

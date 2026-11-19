@@ -13,6 +13,8 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV20Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20ParameterLocation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Response
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20SecurityScheme
+import community.flock.kotlinx.openapi.bindings.OpenAPIV20SecuritySchemeType
 import community.flock.kotlinx.openapi.bindings.OpenAPIV20Type
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
 import community.flock.kotlinx.openapi.bindings.Parameter
@@ -25,6 +27,7 @@ import community.flock.kotlinx.openapi.bindings.SchemaOrReference
 import community.flock.kotlinx.openapi.bindings.SchemaOrReferenceOrBoolean
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
@@ -37,19 +40,26 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.converter.common.toDefaultValue
 import community.flock.wirespec.openapi.common.APPLICATION_JSON
+import community.flock.wirespec.openapi.common.OAuthFlowInfo
+import community.flock.wirespec.openapi.common.SecuritySchemeInfo
+import community.flock.wirespec.openapi.common.ServerInfo
 import community.flock.wirespec.openapi.common.className
 import community.flock.wirespec.openapi.common.flatMapRequests
 import community.flock.wirespec.openapi.common.flatMapResponses
 import community.flock.wirespec.openapi.common.getReference
+import community.flock.wirespec.openapi.common.infoAnnotation
 import community.flock.wirespec.openapi.common.jsonDefault
 import community.flock.wirespec.openapi.common.parseOpenApi
 import community.flock.wirespec.openapi.common.resolveEndpointNameCollisions
 import community.flock.wirespec.openapi.common.sanitize
 import community.flock.wirespec.openapi.common.stringType
+import community.flock.wirespec.openapi.common.tagAnnotation
+import community.flock.wirespec.openapi.common.toAnnotation
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.common.toDict
 import community.flock.wirespec.openapi.common.toIterable
 import community.flock.wirespec.openapi.common.toName
+import community.flock.wirespec.openapi.common.toOperationAnnotations
 import community.flock.wirespec.openapi.common.toOperationList
 import community.flock.kotlinx.openapi.bindings.Reference as OpenAPIReference
 
@@ -58,7 +68,7 @@ public object OpenAPIV2Parser : Parser {
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = parseOpenApi(moduleContent) {
         OpenAPIV2(jsonDefault(strict))
             .decodeFromString(it)
-            .parse()
+            .let { swagger -> swagger.parse() to swagger.specAnnotations() }
     }
 
     public fun OpenAPIV2Model.parse(): NonEmptyList<Definition> = listOf(
@@ -150,7 +160,9 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                 listOf(
                     Endpoint(
                         comment = null,
-                        annotations = operation.description.toDescriptionAnnotationList(),
+                        annotations = operation.description.toDescriptionAnnotationList() +
+                            operation.tags.orEmpty().filterNotNull().map { tagAnnotation(it) } +
+                            operation.security.toOperationAnnotations(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         method = method,
                         path = segments,
@@ -643,3 +655,42 @@ private fun SchemaOrReferenceOrBoolean?.exists() = when (this) {
     is OpenAPIReference -> true
     null -> false
 }
+
+/** The metadata of the document, as the `@spec:` annotations that the OpenAPI emitters read, each once as spec annotations are unique. */
+internal fun OpenAPIV2Model.specAnnotations(): List<Annotation> = listOf(
+    info.description.toDescriptionAnnotationList(),
+    listOf(infoAnnotation(info.title, info.version, info.termsOfService, info.contact, info.license)),
+    servers().map { it.toAnnotation() },
+    securityDefinitions.orEmpty().mapNotNull { (name, scheme) -> (scheme as? OpenAPIV20SecurityScheme)?.toSecuritySchemeInfo(name)?.toAnnotation() },
+    security.orEmpty().map { it.toAnnotation() },
+    tags.orEmpty().map { tagAnnotation(it.name, it.description) },
+).flatten().distinct()
+
+/** A server per scheme; without schemes the host and base path alone, as Swagger 2 then uses the scheme of the document. */
+private fun OpenAPIV2Model.servers(): List<ServerInfo> = listOfNotNull(host, basePath)
+    .takeIf { it.isNotEmpty() }
+    ?.joinToString("")
+    ?.let { address -> schemes?.takeIf { host != null }.orEmpty().map { "$it://$address" }.ifEmpty { listOf(address) } }
+    .orEmpty()
+    .map { ServerInfo(url = it, description = null, variables = emptyMap()) }
+
+private fun OpenAPIV20SecurityScheme.toSecuritySchemeInfo(name: String): SecuritySchemeInfo = SecuritySchemeInfo(
+    name = name,
+    type = when (type) {
+        OpenAPIV20SecuritySchemeType.BASIC -> "http"
+        OpenAPIV20SecuritySchemeType.API_KEY -> "apiKey"
+        OpenAPIV20SecuritySchemeType.OAUTH2 -> "oauth2"
+    },
+    description = description,
+    scheme = "basic".takeIf { type == OpenAPIV20SecuritySchemeType.BASIC },
+    bearerFormat = null,
+    parameterName = this.name,
+    location = `in`,
+    flows = OAUTH2_FLOWS[flow]
+        ?.let { mapOf(it to OAuthFlowInfo(authorizationUrl = authorizationUrl, tokenUrl = tokenUrl, refreshUrl = null, scopes = scopes.orEmpty())) }
+        .orEmpty(),
+    openIdConnectUrl = null,
+)
+
+/** The Swagger 2 flows and their OpenAPI 3 names. */
+private val OAUTH2_FLOWS = mapOf("implicit" to "implicit", "password" to "password", "application" to "clientCredentials", "accessCode" to "authorizationCode")

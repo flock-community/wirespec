@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.SpecInfo
 import community.flock.wirespec.compiler.core.instantiate
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
 import community.flock.wirespec.compiler.core.ir.extension.SyncExtension
@@ -79,6 +80,16 @@ public abstract class BaseWirespecTask : DefaultTask() {
     @get:Option(option = "sync", description = "emit endpoint handlers, channels and rpc services as synchronous functions")
     public abstract val sync: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    @get:Option(option = "specTitle", description = "the title of the spec, instead of the one it declares: for OpenAPI and AsyncAPI")
+    public abstract val specTitle: Property<String>
+
+    @get:Input
+    @get:Optional
+    @get:Option(option = "specVersion", description = "the version of the spec, instead of the one it declares: for OpenAPI and AsyncAPI")
+    public abstract val specVersion: Property<String>
+
     @Internal
     public val wirespecLogger: Logger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)
@@ -103,7 +114,7 @@ public abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun emitter(): Emitter = language.get()
-        .toEmitter(packageNameValue(), sharedValue())
+        .toEmitter(packageNameValue(), sharedValue(), SpecInfo(specTitle.orNull, specVersion.orNull))
         .let { it.withExtensions(listOfNotNull(SyncExtension(it.extension).takeIf { sync.getOrElse(false) }) + extensionInstances(it.extension)) }
 
     protected fun writer(directory: Directory, testDirectory: Directory? = null): (NonEmptyList<Emitted>) -> Unit = { emittedList ->

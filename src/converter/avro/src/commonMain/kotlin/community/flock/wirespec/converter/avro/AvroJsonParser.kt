@@ -40,6 +40,9 @@ public object AvroJsonParser : Parser {
             is AvroModel.UnionType -> TODO()
         }
         val definitions = result.map { it.withValidEnumDefaults(result) }
-        return AST(nonEmptyListOf(Module(moduleContent.fileUri, definitions.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST"))))
+        return AST(
+            modules = nonEmptyListOf(Module(moduleContent.fileUri, definitions.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST"), annotations = emptyList())),
+            annotations = emptyList(),
+        )
     }
 }
