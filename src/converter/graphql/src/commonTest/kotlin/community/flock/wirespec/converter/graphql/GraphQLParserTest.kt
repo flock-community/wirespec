@@ -103,7 +103,7 @@ class GraphQLParserTest {
             |@GraphQLSubscription
             |rpc TodoAdded {} -> Todo
             |
-            |@GraphQLScalar
+            |@GraphQLBuiltIn
             |type ID = String
             |
         """.trimMargin()
@@ -141,7 +141,7 @@ class GraphQLParserTest {
             |  id: ID
             |} -> Node?
             |
-            |@GraphQLScalar
+            |@GraphQLBuiltIn
             |type ID = String
             |
         """.trimMargin()
@@ -362,7 +362,7 @@ class GraphQLParserTest {
             |  id: ID
             |} -> Todo?
             |
-            |@GraphQLScalar
+            |@GraphQLBuiltIn
             |type ID = String
             |
         """.trimMargin()
@@ -416,7 +416,7 @@ class GraphQLParserTest {
                 |  id: ID
                 |}
                 |
-                |@GraphQLScalar
+                |@GraphQLBuiltIn
                 |type ID = String
                 |
                 |@GraphQLQuery
@@ -483,7 +483,7 @@ class GraphQLParserTest {
                 |  id: ID
                 |}
                 |
-                |@GraphQLScalar
+                |@GraphQLBuiltIn
                 |type ID = String
                 |
             """.trimMargin(),

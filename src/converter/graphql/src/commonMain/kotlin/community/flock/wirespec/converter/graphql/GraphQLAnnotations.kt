@@ -26,7 +26,7 @@ internal object GraphQLAnnotations {
     const val ENUM_VALUE = "GraphQLEnumValue"
     const val TYPE = "GraphQLType"
     const val UNION_MEMBERS = "GraphQLUnionMembers"
-    const val SCALAR = "GraphQLScalar"
+    const val BUILT_IN = "GraphQLBuiltIn"
 
     const val DEFAULT_PARAMETER = "default"
     const val PATH_PARAMETER = "path"

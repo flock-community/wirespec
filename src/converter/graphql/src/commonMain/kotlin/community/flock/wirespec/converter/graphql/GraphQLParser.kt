@@ -25,6 +25,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BEFORE_PARAMETER
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DESCRIPTION
@@ -39,7 +40,6 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.NAME
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.PATH_PARAMETER
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCALAR
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.TYPE_PARAMETER
@@ -645,7 +645,7 @@ private class GraphQLConverter(private val document: Document) {
 
     private fun builtInId(): Refined? = Refined(
         comment = null,
-        annotations = listOf(annotation(SCALAR)),
+        annotations = listOf(annotation(BUILT_IN)),
         identifier = DefinitionIdentifier(BUILT_IN_ID),
         reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = false),
     ).takeIf { needsBuiltInId }

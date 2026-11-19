@@ -24,7 +24,7 @@ rejected.
 | `scalar X`| `type X = String`, a refined type                 |
 
 Because `ID` is built into GraphQL it is not declared in the schema, so the converter adds `type ID = String` marked
-with `@GraphQLScalar` when the schema uses it.
+with `@GraphQLBuiltIn` when the schema uses it.
 
 ### Nullability and lists
 
@@ -431,7 +431,7 @@ Wirespec converted by earlier versions has them, on a `type Schema` or `type ...
 | `@GraphQLName("_Service")`                                                     | definitions         | the GraphQL name of a definition whose name is not a valid Wirespec type name                                                                                                               |
 | `@GraphQLType("[_Any!]!")`                                                     | rpcs, fields        | the exact type of a reference to an undeclared type whose name Wirespec cannot spell                                                                                                        |
 | `@GraphQLUnionMembers([...])`                                                  | unions              | the same, for union members                                                                                                                                                                 |
-| `@GraphQLScalar`                                                               | `type ID`           | the `ID` type the converter added                                                                                                                                                           |
+| `@GraphQLBuiltIn`                                                              | `type ID`           | the `ID` type the converter added                                                                                                                                                           |
 
 _Definitions_ are types, enums, unions, refined types and rpcs, and _fields_ are the fields of a type and the
 parameters of an rpc. `@spec:` and `@file:` annotations are in the [file header](#schema-and-directives).
@@ -505,7 +505,7 @@ rpc AddTodo {
   input: NewTodo
 } -> Todo
 
-@GraphQLScalar
+@GraphQLBuiltIn
 type ID = String
 ```
 
