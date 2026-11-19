@@ -47,3 +47,7 @@ Regenerate after intentional output changes (substitute the language):
 ```
 
 Review the fixture diff before committing.
+
+## Git Branches
+
+Always give branches a name that describes the work done on them, e.g. `fix-kotlin-emitter-nullable-refinements` or `add-rust-enum-fixtures` — never a generated or meaningless identifier.
