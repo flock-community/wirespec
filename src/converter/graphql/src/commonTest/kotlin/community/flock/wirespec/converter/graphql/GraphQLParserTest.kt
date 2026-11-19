@@ -539,6 +539,49 @@ class GraphQLParserTest {
     }
 
     @Test
+    fun everyWayToGroupOperationsInATypeComesBackAsItWas() {
+        val todo = "type T { id: ID! }"
+        // The schema, and the rpcs that name a nested type.
+        mapOf(
+            "type Query { ns: NS! } type NS { f(x: Int): T } $todo" to listOf("F"),
+            "type Query { ns: NS } type NS { f(x: Int): T } $todo" to listOf("F"),
+            "type Query { a: A! } type A { b: B! g(x: Int): T } type B { f(x: Int): T } $todo" to listOf("G", "F"),
+            "type Query { a: A! } type A { b: B! } type B { f(x: Int): T } $todo" to listOf("F"),
+            "type Mutation { a: A! } type A { b: B } type B { c: C! } type C { f(x: Int): T } $todo" to listOf("F"),
+            "type Query { a: A! ping: Boolean b: B } type A { f(x: Int): T } type B { g(x: Int): T } $todo" to listOf("F", "G"),
+            "type Query { ns: NSQ! } type Mutation { ns: NSM! } type NSQ { f(x: Int): T } type NSM { g(x: Int): T } $todo" to listOf("F", "G"),
+            "type Query { ping: Boolean } extend type Query { ns: NS! } type NS { f(x: Int): T } $todo" to listOf("F"),
+            "schema { query: Q mutation: M } type Q { ns: NS! } type M { ns: NM } type NS { f(x: Int): T } type NM { g(x: Int): T } $todo" to listOf("F", "G"),
+            "type Query { \"where\" ns: NS! @deprecated } \"what\" type NS @tag { \"how\" f(x: Int): T } directive @tag on OBJECT $todo" to listOf("F"),
+            "type Query { ns: NS! @shareable } type NS @key(fields: \"id\") { id: ID! f(x: Int): T } directive @shareable on FIELD_DEFINITION directive @key(fields: String!) on OBJECT $todo" to listOf("Id", "F"),
+            "type Query { viewer: V } type V { name: String friends(first: Int): [T!] } $todo" to listOf("Name", "Friends"),
+            "type Subscription { ns: NS! } type NS { f(x: Int): T } $todo" to listOf("F"),
+            "type Query { ns: NS! ping: Boolean } type NS { f(x: Int): T query: Query! } $todo" to listOf("F", "NSQuery"),
+            "type Query { inbox: Inbox! } type Inbox { inbox(x: Int): T list: [T!] } $todo" to listOf("InboxInbox", "List"),
+            // Not nested: more than one field leads to the type, or the type is more than its fields.
+            "type Query { ns: NS! } type Mutation { ns: NS! } type NS { f(x: Int): T } $todo" to emptyList(),
+            "type Query { a: NS! b: NS! } type NS { f(x: Int): T } $todo" to emptyList(),
+            "type Query { ns: NS! any: U } type NS { f(x: Int): T } union U = NS | T $todo" to emptyList(),
+            "type Query { ns: NS! } type NS { f(x: Int): T } extend type NS { g(x: Int): T } $todo" to emptyList(),
+            "interface Node { id: ID! } type Query { ns: NS! } type NS implements Node { id: ID! f(x: Int): T } $todo" to emptyList(),
+            // Not nested: the field that leads to the type is a function, or returns a list.
+            "type Query { project(id: ID!): P! } type P { tasks(done: Boolean): [T!]! } $todo" to emptyList(),
+            "type Query { ns: [NS!]! } type NS { f(x: Int): T } $todo" to emptyList(),
+            // Not nested: nothing tells a type without a field with arguments from data.
+            "type Mutation { session: S! } type S { logout: Boolean refresh: T } $todo" to emptyList(),
+            // No type at all: the operations are grouped by their names.
+            "type Query { notifications_inbox(limit: Int): [T!] notificationsCount: Int } $todo" to emptyList(),
+        ).forEach { (source, nested) ->
+            val module = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true).modules.single()
+            val namespaces = module.annotations.map { it.namespace() }
+            module.statements.filterIsInstance<Rpc>()
+                .filter { rpc -> rpc.annotations.first().parameters.any { it.name == "default" && (it.value as Annotation.Value.Single).value in namespaces } }
+                .map { it.identifier.value } shouldContainExactly nested
+            source.convertedBack().definitions shouldContainExactlyInAnyOrder GraphQLDocumentParser(source).parseDocument().definitions
+        }
+    }
+
+    @Test
     fun keepsARootTypeOnlyWhenItNeedsOne() {
         val types = { source: String -> convert(source).filterIsInstance<Type>().map { it.identifier.value } }
         types("type Query { a: Int }") shouldBe emptyList()
@@ -734,6 +777,11 @@ class GraphQLParserTest {
 
     private fun convert(source: String): List<Definition> = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true)
         .modules.flatMap { it.statements }
+
+    /** The type that the path of a `@file:` annotation leads to: the type of its last field, whatever its nullability. */
+    private fun Annotation.namespace(): String = (parameters.single { it.name == "path" }.value as Annotation.Value.Dict).value.last().value
+        .let { field -> (field as? Annotation.Value.Dict)?.value?.single { it.name == "type" }?.value ?: field }
+        .let { (it as Annotation.Value.Single).value.trimEnd('!') }
 
     private fun String.toWirespec(): String = toWirespecFiles().values.single()
 
