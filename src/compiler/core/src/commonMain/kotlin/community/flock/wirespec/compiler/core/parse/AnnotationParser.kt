@@ -23,7 +23,6 @@ import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.SpecAnnotation
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
 /** The `@spec:` and `@file:` annotations at the top of a file. */
@@ -99,13 +98,13 @@ private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException,
 }
 
 private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, List<Annotation.Parameter>> = either {
-    when {
-        token.type.startsArray() -> {
+    when (token.type) {
+        is LeftBracket, is Brackets -> {
             val arr = parseArray().bind()
             listOf(Annotation.Parameter("default", Annotation.Value.Array(arr)))
         }
 
-        token.type is LeftCurly -> {
+        is LeftCurly -> {
             val dictParams = parseDict().bind()
             listOf(Annotation.Parameter("default", Annotation.Value.Dict(dictParams)))
         }
@@ -132,18 +131,18 @@ private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, 
 }
 
 private fun TokenProvider.parseAnnotationValue(): Either<WirespecException, Annotation.Value> = either {
-    when {
-        token.type.startsArray() -> {
+    when (token.type) {
+        is LeftBracket, is Brackets -> {
             val arr = parseArray().bind()
             Annotation.Value.Array(arr)
         }
 
-        token.type is LeftCurly -> {
+        is LeftCurly -> {
             val dictParams = parseDict().bind()
             Annotation.Value.Dict(dictParams)
         }
 
-        token.type == LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
+        LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
         else -> Annotation.Value.Single(token.value)
     }.also {
         if (it is Annotation.Value.Single) {
@@ -174,8 +173,6 @@ private fun TokenProvider.parseDict(): Either<WirespecException, List<Annotation
  * An array starts with `[`, or is the empty `[]`: the tokenizer reads `[]` as one [Brackets] token, the suffix of a type
  * such as `String[]`, so an empty array never has a [LeftBracket] of its own.
  */
-private fun TokenType.startsArray(): Boolean = this is LeftBracket || this is Brackets
-
 private fun TokenProvider.parseArray(): Either<WirespecException, List<Annotation.Value.Single>> = either {
     when (token.type) {
         is Brackets -> expect<Brackets>().bind().let { emptyList() }

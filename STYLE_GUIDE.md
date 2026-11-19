@@ -61,7 +61,7 @@ cannot check.
    * An array starts with `[`, or is the empty `[]`: the tokenizer reads `[]` as one [Brackets] token, the suffix of a type
    * such as `String[]`, so an empty array never has a [LeftBracket] of its own.
    */
-  private fun TokenType.startsArray(): Boolean = this is LeftBracket || this is Brackets
+  private fun TokenProvider.parseArray(): Either<WirespecException, List<Annotation.Value.Single>> = ...
   ```
 
 - **Be sparing with other comments.** No narration, and no KDoc that restates the signature. Comment only constraints
@@ -75,7 +75,53 @@ cannot check.
 - **Match the surrounding code.** The naming, idiom and structure of the file you're editing win over personal
   preference.
 
-## Parser
+## Compiler
+
+The compiler works in stages. Each stage hands the next one its result, or the errors it found:
+
+1. **Tokenize.** `tokenize` splits the source of a file into tokens, with the matchers of the `LanguageSpec`.
+2. **Parse.** The parser reads the tokens of each file through a `TokenProvider`, and builds one `AST` of all the files.
+3. **Validate.** The `Validator` checks the whole `AST`, across files.
+4. **Emit.** Every emitter checks the `AST` for its own target in `Emitter.validate`, and then emits it.
+
+`compile` runs them in this order, and a stage only runs when the one before it succeeded.
+
+- **Put a check in the stage that owns it.** What may follow what is syntax: the parser checks it and raises a
+  `ParserException`. A rule about the spec as a whole, across files, belongs in the `Validator`, as a `ValidationError`.
+  What one target cannot express belongs in that emitter's `validate`, as an `EmitterException`. In the file header,
+  for example:
+  - the parser checks that the `@spec:` annotations come before the `@file:` annotations;
+  - the validator checks that a spec annotation is unique;
+  - the OpenAPI emitter checks that a security requirement names a declared scheme.
+- **Raise errors; don't throw them.** Every stage returns an `Either`. A parse function is an `either { }` block: it
+  binds what it calls with `.bind()`, and fails with `raise` or `ensure`. An error is a `WirespecException` with its
+  file and, when one token is to blame, that token's coordinates, so the CLI and the IDE can point at it.
+- **Report every independent error at once.** Files, definitions and validations that don't depend on each other are
+  checked with `flattenOrAccumulate`, `mapOrAccumulate` and `zipOrAccumulate`, so one compile shows every mistake
+  instead of only the first.
+
+### Tokenizer
+
+- **The first matcher that fits wins.** The `LanguageSpec` lists its matchers in order, and a longer token comes before
+  a shorter one it starts with: `[]` before `[`. So the parser gets the longer token: an empty array is one `Brackets`
+  token, not a `LeftBracket` and a `RightBracket`. Where that matters, the parser handles both forms.
+
+### Parser
+
+- **A parse function reads the current token, `token`, and consumes it.** `TokenProvider` keeps no history. What came
+  before is in the values that parse functions return (see *Return what a caller needs* under Design).
+- **Branch on the current token with `when (token.type)`.** There is one branch per token type, and `else` for the
+  rest. Tokens that are read the same way share a branch. Don't move a type check into a helper and switch to a `when`
+  without a subject: a reader of the parser looks for the token types in the branches.
+
+  ```kotlin
+  when (token.type) {
+      is LeftBracket, is Brackets -> Annotation.Value.Array(parseArray().bind())
+      is LeftCurly -> Annotation.Value.Dict(parseDict().bind())
+      LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
+      else -> Annotation.Value.Single(token.value)
+  }
+  ```
 
 - **Consume a token whose type you know with `expect<T>()`,** not with `eatToken()` after a type check. It says what
   the parser expects, and when the input has another token, it reports that one:
@@ -83,3 +129,6 @@ cannot check.
   ```kotlin
   is Brackets -> expect<Brackets>().bind().let { emptyList() }
   ```
+
+- **Reject a token the parser doesn't expect with `raiseWrongToken<T>()`** in the `else` branch, with the type it
+  expected: `else -> raiseWrongToken<WirespecType>().bind()`.
